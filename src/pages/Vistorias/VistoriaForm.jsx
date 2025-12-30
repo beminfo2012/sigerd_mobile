@@ -21,9 +21,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         solicitante: '',
         cpf: '',
         telefone: '',
+        enderecoSolicitante: '',
 
         // Localização
-        endereco: '',
+        endereco: '', // Occurrence Address
         coordenadas: '',
         dataHora: new Date().toISOString().slice(0, 16),
 
@@ -37,6 +38,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     })
 
     const [saving, setSaving] = useState(false)
+    const [gettingLoc, setGettingLoc] = useState(false)
     const [tiposVistoria, setTiposVistoria] = useState([])
 
     useEffect(() => {
@@ -50,11 +52,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 agente: userProfile?.full_name || '',
                 matricula: userProfile?.matricula || ''
             }))
-
-            // Auto-fill coords ONLY on new form if permission granted
-            if (navigator.geolocation && !formData.coordenadas) {
-                getLocation()
-            }
         }
 
         // Fetch types
@@ -77,18 +74,26 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     }, [userProfile, initialData])
 
     const getLocation = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                setFormData(prev => ({
-                    ...prev,
-                    coordenadas: `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`
-                }))
-            }, (err) => {
-                console.error("Erro GPS:", err)
-            })
-        } else {
+        if (!navigator.geolocation) {
             alert("GPS não suportado neste dispositivo.")
+            return
         }
+
+        setGettingLoc(true)
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const coords = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`
+                setFormData(prev => ({ ...prev, coordenadas: coords }))
+                setGettingLoc(false)
+                alert("Coordenadas atualizadas com sucesso!")
+            },
+            (err) => {
+                console.error("Erro GPS:", err)
+                setGettingLoc(false)
+                alert("Erro ao obter localização. Verifique se o GPS está ativado.")
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        )
     }
 
     const handleChange = (field, value) => {
@@ -133,7 +138,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         try {
             await saveVistoriaOffline(formData)
             alert('Vistoria salva com sucesso!')
-            onBack() // Convert to "Go Back to List"
+            onBack()
         } catch (error) {
             console.error(error)
             alert('Erro ao salvar vistoria.')
@@ -161,11 +166,11 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
             <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-xl mx-auto">
 
-                {/* Identificação */}
+                {/* 1. Identificação */}
                 <section className={sectionClasses}>
                     <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
                         <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                        Identificação
+                        1. Identificação
                     </h2>
                     <div className="grid grid-cols-2 gap-5">
                         <div>
@@ -186,20 +191,68 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </div>
                 </section>
 
-                {/* Localização com GPS */}
+                {/* 2. Responsável (Agente) */}
                 <section className={sectionClasses}>
                     <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
                         <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                        Localização
+                        2. Responsável Técnico
                     </h2>
                     <div>
-                        <label className={labelClasses}>Endereço</label>
+                        <label className={labelClasses}>Agente</label>
+                        <input type="text" className={inputClasses} value={formData.agente} onChange={e => handleChange('agente', e.target.value)} />
+                    </div>
+                    <div>
+                        <label className={labelClasses}>Matrícula</label>
+                        <input type="text" className={inputClasses} value={formData.matricula} onChange={e => handleChange('matricula', e.target.value)} />
+                    </div>
+                </section>
+
+                {/* 3. Solicitante */}
+                <section className={sectionClasses}>
+                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
+                        <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
+                        3. Solicitante
+                    </h2>
+                    <div>
+                        <label className={labelClasses}>Nome Completo</label>
+                        <input type="text" className={inputClasses} value={formData.solicitante} onChange={e => handleChange('solicitante', e.target.value)} />
+                    </div>
+                    <div>
+                        <label className={labelClasses}>Endereço do Solicitante</label>
+                        <input
+                            type="text"
+                            className={inputClasses}
+                            placeholder="Rua, Número, Bairro (Se diferente da ocorrência)"
+                            value={formData.enderecoSolicitante}
+                            onChange={e => handleChange('enderecoSolicitante', e.target.value)}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={labelClasses}>CPF</label>
+                            <input type="text" inputMode="numeric" className={inputClasses} value={formData.cpf} onChange={e => handleChange('cpf', e.target.value)} />
+                        </div>
+                        <div>
+                            <label className={labelClasses}>Telefone</label>
+                            <input type="tel" className={inputClasses} value={formData.telefone} onChange={e => handleChange('telefone', e.target.value)} />
+                        </div>
+                    </div>
+                </section>
+
+                {/* 4. Localização da Ocorrência */}
+                <section className={sectionClasses}>
+                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
+                        <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
+                        4. Local da Ocorrência
+                    </h2>
+                    <div>
+                        <label className={labelClasses}>Endereço da Ocorrência</label>
                         <div className="relative">
                             <MapPin size={20} className="absolute left-4 top-4 text-[#2a5299]" />
                             <input
                                 type="text"
                                 className={`${inputClasses} pl-12`}
-                                placeholder="Endereço completo"
+                                placeholder="Onde ocorreu o evento?"
                                 value={formData.endereco}
                                 onChange={e => handleChange('endereco', e.target.value)}
                             />
@@ -219,38 +272,21 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 <button
                                     type="button"
                                     onClick={getLocation}
-                                    className="bg-[#2a5299] text-white p-3.5 rounded-xl shadow-lg hover:bg-[#1e3c72] active:scale-95 transition-all"
+                                    className={`p-3.5 rounded-xl shadow-lg active:scale-95 transition-all text-white flex items-center justify-center gap-2 ${gettingLoc ? 'bg-gray-400' : 'bg-[#2a5299] hover:bg-[#1e3c72]'}`}
                                     title="Pegar Localização Atual"
+                                    disabled={gettingLoc}
                                 >
-                                    <Crosshair size={24} />
+                                    <Crosshair size={24} className={gettingLoc ? 'animate-spin' : ''} />
+                                    {gettingLoc ? 'Buscando...' : ''}
                                 </button>
                             </div>
-                            <p className="text-xs text-gray-400 mt-1 ml-1">Clique na mira para atualizar via satélite.</p>
                         </div>
                     </div>
                 </section>
 
-                {/* Responsável & Solicitante (Simplified Layout) */}
+                {/* 5. Detalhes */}
                 <section className={sectionClasses}>
-                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2">Responsável & Solicitante</h2>
-                    <div>
-                        <label className={labelClasses}>Agente</label>
-                        <input type="text" className={inputClasses} value={formData.agente} onChange={e => handleChange('agente', e.target.value)} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className={labelClasses}>Solicitante</label>
-                            <input type="text" className={inputClasses} value={formData.solicitante} onChange={e => handleChange('solicitante', e.target.value)} />
-                        </div>
-                        <div>
-                            <label className={labelClasses}>Telefone</label>
-                            <input type="tel" className={inputClasses} value={formData.telefone} onChange={e => handleChange('telefone', e.target.value)} />
-                        </div>
-                    </div>
-                </section>
-
-                <section className={sectionClasses}>
-                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2">Detalhes</h2>
+                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2">5. Detalhes</h2>
                     <div>
                         <label className={labelClasses}>Tipo</label>
                         <select className={inputClasses} value={formData.tipoInfo} onChange={e => handleChange('tipoInfo', e.target.value)}>
@@ -280,15 +316,26 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </div>
                 </section>
 
-                {/* Submit */}
-                <button
-                    type="submit"
-                    disabled={saving}
-                    className="w-full bg-[#2a5299] text-white p-4 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition-all flex justify-center items-center gap-3"
-                >
-                    <Save size={24} />
-                    {saving ? 'Salvando...' : 'Salvar Vistoria'}
-                </button>
+                {/* Submit & Actions */}
+                <div className="space-y-4 pt-6">
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className="w-full bg-[#2a5299] text-white p-4 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition-all flex justify-center items-center gap-3"
+                    >
+                        <Save size={24} />
+                        {saving ? 'Safando...' : 'Salvar Vistoria'}
+                    </button>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <button type="button" onClick={() => alert("Exportar PDF")} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50">
+                            <Share size={20} /> Exportar
+                        </button>
+                        <button type="button" onClick={() => alert("Excluir")} className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50">
+                            <Trash2 size={20} /> Excluir
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     )
