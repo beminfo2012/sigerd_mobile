@@ -190,14 +190,6 @@ const Login = ({ onLogin }) => {
                     color: '#999'
                 }}>
                     <p>© 2024 Defesa Civil de Santa Maria de Jetibá</p>
-                    {/* DEBUG SECTION */}
-                    <div style={{ marginTop: '20px', padding: '10px', background: '#f0f0f0', borderRadius: '4px', fontSize: '10px', fontFamily: 'monospace', color: '#333' }}>
-                        <strong>Status do Sistema (Debug):</strong><br />
-                        Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ Configurada' : '❌ AUSENTE'}<br />
-                        Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Configurada' : '❌ AUSENTE'}<br />
-                        GeoRescue URL: {import.meta.env.VITE_GEORESCUE_URL ? '✅ Configurada' : '❌ AUSENTE'}<br />
-                        API URL: {import.meta.env.VITE_API_BASE_URL}
-                    </div>
                 </div>
             </div>
 
