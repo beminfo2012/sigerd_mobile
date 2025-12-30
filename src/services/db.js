@@ -22,54 +22,102 @@ export const initDB = async () => {
     })
 }
 
+// Helper to convert base64 to blob
+const base64ToBlob = (base64) => {
+    try {
+        const parts = base64.split(';base64,')
+        const contentType = parts[0].split(':')[1]
+        const raw = window.atob(parts[1])
+        const rawLength = raw.length
+        const uInt8Array = new Uint8Array(rawLength)
+        for (let i = 0; i < rawLength; ++i) {
+            uInt8Array[i] = raw.charCodeAt(i)
+        }
+        return new Blob([uInt8Array], { type: contentType })
+    } catch (e) {
+        console.error('Base64 conversion error:', e)
+        return null
+    }
+}
+
 export const saveVistoriaOffline = async (data) => {
     const db = await initDB()
 
-    // Save to IndexedDB first (offline support)
+    // 1. Save to IndexedDB first (keep base64 for offline usage)
     const localId = await db.add('vistorias', {
         ...data,
         createdAt: new Date().toISOString(),
         synced: false
     })
 
-    // Try to sync with Supabase immediately if online
-    try {
-        const { data: supabaseData, error } = await supabase
-            .from('vistorias')
-            .insert([{
-                vistoria_id: data.vistoriaId,
-                processo: data.processo,
-                agente: data.agente,
-                matricula: data.matricula,
-                solicitante: data.solicitante,
-                cpf: data.cpf,
-                telefone: data.telefone,
-                endereco: data.endereco,
-                coordenadas: data.coordenadas,
-                data_hora: data.dataHora,
-                tipo_info: data.tipoInfo,
-                observacoes: data.observacoes,
-                fotos: data.fotos,
-                documentos: data.documentos
-            }])
-            .select()
+    // 2. Try to sync with Supabase immediately if online
+    if (navigator.onLine) {
+        try {
+            let processedPhotos = []
 
-        if (!error) {
-            // Mark as synced in IndexedDB
-            const tx = db.transaction('vistorias', 'readwrite')
-            const store = tx.objectStore('vistorias')
-            const record = await store.get(localId)
-            if (record) {
-                record.synced = true
-                await store.put(record)
+            // Upload Photos to Storage
+            if (data.fotos && data.fotos.length > 0) {
+                processedPhotos = await Promise.all(data.fotos.map(async (foto) => {
+                    if (foto.data && foto.data.startsWith('data:image')) {
+                        const blob = base64ToBlob(foto.data)
+                        if (blob) {
+                            const fileName = `${data.vistoriaId}/${foto.id}.jpg`
+                            const { error: uploadError } = await supabase.storage
+                                .from('vistorias')
+                                .upload(fileName, blob, { upsert: true })
+
+                            if (!uploadError) {
+                                const { data: urlData } = supabase.storage
+                                    .from('vistorias')
+                                    .getPublicUrl(fileName)
+                                return { ...foto, data: urlData.publicUrl }
+                            }
+                        }
+                    }
+                    return foto // Return original if upload fails or not base64
+                }))
             }
-            await tx.done
-            console.log('Vistoria synced to Supabase:', supabaseData)
-        } else {
-            console.warn('Supabase sync failed, will retry later:', error)
+
+            // Insert into Database with URLs
+            const { data: supabaseData, error } = await supabase
+                .from('vistorias')
+                .insert([{
+                    vistoria_id: data.vistoriaId,
+                    processo: data.processo,
+                    agente: data.agente,
+                    matricula: data.matricula,
+                    solicitante: data.solicitante,
+                    cpf: data.cpf,
+                    telefone: data.telefone,
+                    endereco: data.endereco,
+                    coordenadas: data.coordenadas,
+                    data_hora: data.dataHora,
+                    tipo_info: data.tipoInfo,
+                    observacoes: data.observacoes,
+                    fotos: processedPhotos, // URLs now
+                    documentos: data.documentos // TODO: Handle docs likely
+                }])
+                .select()
+
+            if (!error) {
+                // Mark as synced in IndexedDB
+                const tx = db.transaction('vistorias', 'readwrite')
+                const store = tx.objectStore('vistorias')
+                const record = await store.get(localId)
+                if (record) {
+                    record.synced = true
+                    // Optionally update local record photos to URLs to save space? 
+                    // No, keep base64 for offline viewing reliability until re-fetch logic is robust.
+                    await store.put(record)
+                }
+                await tx.done
+                console.log('Vistoria synced to Supabase (with Storage):', supabaseData)
+            } else {
+                console.warn('Supabase sync failed, will retry later:', error)
+            }
+        } catch (error) {
+            console.warn('Offline mode - Supabase not available:', error)
         }
-    } catch (error) {
-        console.warn('Offline mode - Supabase not available:', error)
     }
 
     return localId
