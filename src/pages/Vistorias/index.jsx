@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Save, Camera, FileText, MapPin, Trash2, Share, File as FileIcon } from 'lucide-react'
 import { saveVistoriaOffline } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
+import { UserContext } from '../../App'
 
 const Vistorias = () => {
+    const userProfile = useContext(UserContext)
+
     const [formData, setFormData] = useState({
         // Identificação
         vistoriaId: '', // Auto-generated or read-only
@@ -41,7 +44,10 @@ const Vistorias = () => {
         // Generate random Vistoria ID
         setFormData(prev => ({
             ...prev,
-            vistoriaId: Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+            vistoriaId: Math.floor(Math.random() * 10000).toString().padStart(4, '0'),
+            // Auto-fill from user profile
+            agente: userProfile?.full_name || '',
+            matricula: userProfile?.matricula || ''
         }))
 
         // Auto-fill coords
@@ -92,7 +98,7 @@ const Vistorias = () => {
         }
 
         fetchTipos()
-    }, [])
+    }, [userProfile])
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
@@ -230,27 +236,43 @@ const Vistorias = () => {
                             onChange={e => handleChange('solicitante', e.target.value)}
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-5">
-                        <div>
-                            <label className={labelClasses}>CPF</label>
-                            <input
-                                type="text"
-                                className={inputClasses}
-                                placeholder="000.000.000-00"
-                                value={formData.cpf}
-                                onChange={e => handleChange('cpf', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className={labelClasses}>Telefone</label>
-                            <input
-                                type="text"
-                                className={inputClasses}
-                                placeholder="(00) 00000-0000"
-                                value={formData.telefone}
-                                onChange={e => handleChange('telefone', e.target.value)}
-                            />
-                        </div>
+                    {/* Matricula */}
+                    <div>
+                        <label className={labelClasses}>Matrícula</label>
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            className={inputClasses}
+                            value={formData.matricula}
+                            onChange={e => handleChange('matricula', e.target.value)}
+                            placeholder="00000"
+                        />
+                    </div>
+
+                    {/* CPF */}
+                    <div>
+                        <label className={labelClasses}>CPF do Solicitante</label>
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            className={inputClasses}
+                            value={formData.cpf}
+                            onChange={e => handleChange('cpf', e.target.value)}
+                            placeholder="000.000.000-00"
+                        />
+                    </div>
+
+                    {/* Telefone */}
+                    <div>
+                        <label className={labelClasses}>Telefone</label>
+                        <input
+                            type="tel"
+                            inputMode="numeric"
+                            className={inputClasses}
+                            value={formData.telefone}
+                            onChange={e => handleChange('telefone', e.target.value)}
+                            placeholder="(00) 00000-0000"
+                        />
                     </div>
                 </section>
 
