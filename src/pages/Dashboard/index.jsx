@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain } from 'lucide-react'
 
 const Dashboard = () => {
+    const navigate = useNavigate()
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -65,7 +67,7 @@ const Dashboard = () => {
             </div>
 
             {/* Pluviômetros Card (Replácing Response Time) */}
-            <div 
+            <div
                 onClick={() => onNavigate('pluviometros')}
                 className="bg-white p-5 rounded-[20px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
             >
