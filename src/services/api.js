@@ -5,19 +5,38 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/sige
 export const api = {
     async getDashboardData() {
         try {
-            // Fetch real operational stats if possible, or keep mock
-            // But definitely fetch real locations for the map
+            // Fetch all vistorias with position and type for the map and breakdown
             const { data: vistorias } = await supabase
                 .from('vistorias')
-                .select('latitude, longitude, risk_level')
-                .not('latitude', 'is', null)
-                .limit(50)
+                .select('latitude, longitude, risk_level, tipo_info')
 
-            const locations = vistorias?.map(v => ({
+            const locations = vistorias?.filter(v => v.latitude && v.longitude).map(v => ({
                 lat: parseFloat(v.latitude),
                 lng: parseFloat(v.longitude),
                 risk: v.risk_level
             })) || []
+
+            // Calculate real breakdown
+            const total = vistorias?.length || 0;
+            const counts = {};
+            vistorias?.forEach(v => {
+                const type = v.tipo_info || 'Outros';
+                counts[type] = (counts[type] || 0) + 1;
+            });
+
+            const colors = {
+                'Risco Geológico': 'bg-orange-500',
+                'Inundação/Alagamento': 'bg-blue-500',
+                'Estrutural/Predial': 'bg-gray-400',
+                'Outros': 'bg-slate-300'
+            };
+
+            const breakdown = Object.keys(counts).map(label => ({
+                label,
+                count: counts[label],
+                percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                color: colors[label] || 'bg-blue-400'
+            })).sort((a, b) => b.count - a.count);
 
             // Fetch INMET alerts
             let inmetAlertsCount = 0;
@@ -25,34 +44,25 @@ export const api = {
                 const inmetResp = await fetch('/api/inmet');
                 if (inmetResp.ok) {
                     const alerts = await inmetResp.json();
-                    inmetAlertsCount = alerts.length;
+                    inmetAlertsCount = Array.isArray(alerts) ? alerts.length : 0;
                 }
             } catch (e) { console.error('INMET fetch error:', e); }
 
-            // Return rich mock data mixed with real map data
             return {
                 stats: {
-                    pendingVistorias: 12,
-                    pendingVistoriasDiff: 3,
-                    activeOccurrences: inmetAlertsCount, // Show real INMET alert count
-                    activeOccurrencesDiff: 0,
-                    avgResponseTime: 34,
-                    avgResponseTimeTrend: 12,
+                    totalVistorias: total,
+                    activeOccurrences: inmetAlertsCount,
                     inmetAlertsCount
                 },
-                breakdown: [
-                    { label: 'Risco Geológico', percentage: 45, count: 18, color: 'bg-orange-500' },
-                    { label: 'Inundação/Alagamento', percentage: 30, count: 12, color: 'bg-blue-500' },
-                    { label: 'Estrutural/Predial', percentage: 25, count: 10, color: 'bg-gray-400' }
-                ],
-                locations // Real coordinates
+                breakdown,
+                locations
             }
         } catch (error) {
             console.error('API Error:', error)
             return {
-                stats: { pendingVistorias: 12, activeOccurrences: 5, avgResponseTime: 34 },
+                stats: { totalVistorias: 0, activeOccurrences: 0, inmetAlertsCount: 0 },
                 breakdown: [],
-                locations: [] // Fallback
+                locations: []
             }
         }
     }
