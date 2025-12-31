@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal } from '../../services/db'
@@ -129,6 +129,54 @@ const Dashboard = () => {
         } finally {
             setSyncing(false)
         }
+    }
+
+    const handleExportKML = () => {
+        if (!data || !data.locations || data.locations.length === 0) {
+            alert('Não há dados de localização para exportar.')
+            return
+        }
+
+        const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Mapeamento de Vistorias - SIGERD</name>
+    <description>Exportação de vistorias e ocorrências - Defesa Civil</description>
+    <Style id="icon-risk">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>https://maps.google.com/mapfiles/kml/paddle/red-circle.png</href>
+        </Icon>
+      </IconStyle>
+    </Style>`
+
+        const kmlFooter = `
+  </Document>
+</kml>`
+
+        const placemarks = data.locations.map((loc, idx) => `
+    <Placemark>
+      <name>Vistoria ${idx + 1} (${loc.risk})</name>
+      <styleUrl>#icon-risk</styleUrl>
+      <Point>
+        <coordinates>${loc.lng},${loc.lat},0</coordinates>
+      </Point>
+    </Placemark>`).join('')
+
+        const kmlContent = kmlHeader + placemarks + kmlFooter
+        const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+
+        const now = new Date()
+        const dateStr = now.toISOString().split('T')[0]
+        link.href = url
+        link.download = `Vistorias_Defesa_Civil_${dateStr}.kml`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
     }
 
     const getWeatherIcon = (code) => {
@@ -300,9 +348,22 @@ const Dashboard = () => {
             {/* Map Section */}
             <div className="bg-white p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden mb-6">
                 <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 className="font-bold text-slate-800 text-sm">Mapa de Concentração</h3>
-                    <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                        <Map size={16} />
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-sm">Mapa de Concentração</h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Ocorrências Atuais</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleExportKML}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-xl transition-colors flex items-center gap-2"
+                            title="Exportar para KML"
+                        >
+                            <Download size={16} />
+                            <span className="text-[10px] font-black uppercase">Exportar KML</span>
+                        </button>
+                        <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                            <Map size={16} />
+                        </div>
                     </div>
                 </div>
                 <div className="h-72 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100 shadow-inner">
