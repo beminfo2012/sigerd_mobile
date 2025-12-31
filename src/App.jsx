@@ -6,6 +6,7 @@ import { Home, Map, FileText, Activity, Menu as MenuIcon } from 'lucide-react'
 import Dashboard from './pages/Dashboard'
 import GeoRescue from './pages/GeoRescue'
 import Vistorias from './pages/Vistorias'
+import Pluviometros from './pages/Pluviometros'
 import Monitoramento from './pages/Monitoramento'
 import Menu from './pages/Menu'
 import Login from './pages/Login'
@@ -84,6 +85,7 @@ function App() {
                             <Route path="/" element={<Dashboard />} />
                             <Route path="/georescue" element={<GeoRescue />} />
                             <Route path="/vistorias" element={<Vistorias />} />
+                            <Route path="/pluviometros" element={<Pluviometros onBack={() => setActiveTab('dashboard')} />} />
                             <Route path="/monitoramento" element={<Monitoramento />} />
                             <Route path="/menu" element={<Menu />} />
                         </Routes>
