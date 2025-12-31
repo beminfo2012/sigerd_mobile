@@ -4,7 +4,7 @@ import { api } from '../../services/api'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { getPendingSyncCount, syncPendingData } from '../../services/db'
+import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal } from '../../services/db'
 
 const Dashboard = () => {
     const navigate = useNavigate()
@@ -18,14 +18,77 @@ const Dashboard = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                const [result, weatherResult, pendingCount] = await Promise.all([
-                    api.getDashboardData(),
-                    fetch('/api/weather').then(r => r.ok ? r.json() : null),
-                    getPendingSyncCount()
-                ])
-                setData(result)
-                setWeather(weatherResult)
+                // 1. Get Sync Count first (Critical, should not fail)
+                const pendingCount = await getPendingSyncCount().catch(() => 0)
                 setSyncCount(pendingCount)
+
+                // 2. Fetch other data independently
+                const [dashResult, weatherResult] = await Promise.all([
+                    api.getDashboardData().catch(err => {
+                        console.warn('Supabase fetch failed, showing local data only:', err)
+                        return null
+                    }),
+                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null)
+                ])
+
+                let finalData = dashResult || {
+                    stats: { totalVistorias: 0, activeOccurrences: 0, inmetAlertsCount: 0 },
+                    breakdown: [],
+                    locations: []
+                }
+
+                // 3. Merge with unsynced local data if needed
+                if (pendingCount > 0) {
+                    const localItems = await syncPendingData.getAllVistoriasLocal().catch(() => []) // Wait, I need to import it
+                    // Actually let's just use the helper I'm about to add to imports
+                }
+
+                // 3. Merge with local data for a complete view (synced + unsynced)
+                const localVistorias = await getAllVistoriasLocal().catch(() => [])
+
+                // If we didn't get data from API, rebuild it from local
+                if (!dashResult) {
+                    const total = localVistorias.length
+                    const counts = {}
+                    localVistorias.forEach(v => {
+                        const type = v.tipoInfo || v.tipo_info || 'Outros'
+                        counts[type] = (counts[type] || 0) + 1
+                    })
+
+                    finalData.stats.totalVistorias = total
+                    finalData.breakdown = Object.keys(counts).map(label => ({
+                        label,
+                        count: counts[label],
+                        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                        color: 'bg-blue-400' // Generic offline color
+                    }))
+                    finalData.locations = localVistorias.filter(v => v.coordenadas).map(v => {
+                        const parts = v.coordenadas.split(',')
+                        return { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]), risk: 'Local' }
+                    })
+                } else {
+                    // We have API data, let's just ensure unsynced items are also in locations
+                    // Supabase already has the synced ones. localVistorias has BOTH.
+                    // To avoid duplicates, we could filter localVistorias for unsynced only
+                    const unsynced = localVistorias.filter(v => v.synced === false)
+                    unsynced.forEach(v => {
+                        if (v.coordenadas) {
+                            const parts = v.coordenadas.split(',')
+                            finalData.locations.push({
+                                lat: parseFloat(parts[0]),
+                                lng: parseFloat(parts[1]),
+                                risk: 'Pendente'
+                            })
+                        }
+                    })
+                    finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length
+                }
+
+                setWeather(weatherResult)
+                setData(finalData)
+            } catch (err) {
+                console.error('Fatal dashboard load error:', err)
+                setData({ stats: { totalVistorias: 0 }, breakdown: [], locations: [] })
             } finally {
                 setLoading(false)
             }

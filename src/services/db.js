@@ -211,6 +211,11 @@ export const getPendingVistorias = async () => {
     return db.getAllFromIndex('vistorias', 'synced', false)
 }
 
+export const getAllVistoriasLocal = async () => {
+    const db = await initDB()
+    return db.getAll('vistorias')
+}
+
 // GeoRescue Logic
 export const importInstallations = async (data) => {
     const db = await initDB()
