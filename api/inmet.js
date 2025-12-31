@@ -10,23 +10,30 @@ export default async function handler(request, response) {
 
         const data = await apiResponse.json();
 
+        const now = new Date();
         const activeAlerts = [];
 
         const processList = (list) => {
             if (!list) return;
             list.forEach(alert => {
                 if (alert.geocodes && alert.geocodes.includes(targetGeocode)) {
-                    activeAlerts.push({
-                        id: alert.id,
-                        tipo: alert.aviso_tipo || alert.descricao,
-                        severidade: alert.aviso_severidade || alert.severidade,
-                        inicio: alert.inicio,
-                        fim: alert.fim,
-                        riscos: alert.riscos,
-                        instrucoes: alert.instrucoes,
-                        msg: alert.msg,
-                        descricao: alert.descricao || alert.aviso_tipo
-                    });
+                    const startDate = new Date(alert.inicio);
+                    const endDate = new Date(alert.fim);
+
+                    // Strict filtering: only alerts occurring RIGHT NOW
+                    if (startDate <= now && endDate >= now) {
+                        activeAlerts.push({
+                            id: alert.id,
+                            tipo: alert.aviso_tipo || alert.descricao,
+                            severidade: alert.aviso_severidade || alert.severidade,
+                            inicio: alert.inicio,
+                            fim: alert.fim,
+                            riscos: alert.riscos,
+                            instrucoes: alert.instrucoes,
+                            msg: alert.msg,
+                            descricao: alert.descricao || alert.aviso_tipo
+                        });
+                    }
                 }
             });
         };
