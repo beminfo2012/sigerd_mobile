@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle } from 'lucide-react'
 import html2canvas from 'html2canvas'
 
-const Pluviometros = ({ onBack }) => {
+const Pluviometros = () => {
+    const navigate = useNavigate()
     const [stations, setStations] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -83,7 +84,7 @@ const Pluviometros = ({ onBack }) => {
             {/* Header */}
             <div className="bg-white px-5 py-4 shadow-sm sticky top-0 z-10 border-b border-gray-100 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                    <button onClick={() => navigate('/')} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full">
                         <ArrowLeft size={24} />
                     </button>
                     <h1 className="text-xl font-black text-gray-800 tracking-tight">Pluviômetros</h1>
@@ -94,7 +95,7 @@ const Pluviometros = ({ onBack }) => {
             </div>
 
             {/* Content to Capture */}
-            <div ref={reportRef} className="p-5 bg-slate-50">
+            <div ref={reportRef} className="p-5 bg-slate-50 pb-20">
                 <div className="bg-[#2a5299] text-white p-6 rounded-2xl shadow-lg mb-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <CloudRain size={120} />
@@ -159,7 +160,7 @@ const Pluviometros = ({ onBack }) => {
 
             {/* Fab Button */}
             {!loading && !error && (
-                <div className="fixed bottom-6 right-6 z-20">
+                <div className="fixed bottom-24 right-6 z-20">
                     <button
                         onClick={shareImage}
                         className="bg-green-600 text-white p-4 rounded-full shadow-lg shadow-green-600/30 active:scale-95 transition-all flex items-center gap-2 font-bold pr-6"
