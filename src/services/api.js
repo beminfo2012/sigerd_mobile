@@ -28,17 +28,17 @@ export const api = {
             });
 
             const colors = {
-                'Risco Geológico': 'bg-orange-500',
-                'Inundação/Alagamento': 'bg-blue-500',
-                'Estrutural/Predial': 'bg-gray-400',
-                'Outros': 'bg-slate-300'
+                'risco geológico': 'bg-orange-500',
+                'inundação/alagamento': 'bg-blue-500',
+                'estrutural/predial': 'bg-gray-400',
+                'outros': 'bg-slate-300'
             };
 
             const breakdown = Object.keys(counts).map(label => ({
                 label,
                 count: counts[label],
                 percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
-                color: colors[label] || 'bg-blue-400'
+                color: colors[label.toLowerCase().trim()] || 'bg-blue-400'
             })).sort((a, b) => b.count - a.count);
 
             // Fetch INMET alerts
