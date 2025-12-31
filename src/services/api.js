@@ -8,13 +8,16 @@ export const api = {
             // Fetch all vistorias with position and type for the map and breakdown
             const { data: vistorias } = await supabase
                 .from('vistorias')
-                .select('latitude, longitude, risk_level, tipo_info')
+                .select('coordenadas, tipo_info')
 
-            const locations = vistorias?.filter(v => v.latitude && v.longitude).map(v => ({
-                lat: parseFloat(v.latitude),
-                lng: parseFloat(v.longitude),
-                risk: v.risk_level
-            })) || []
+            const locations = vistorias?.filter(v => v.coordenadas).map(v => {
+                const parts = v.coordenadas.split(',')
+                return {
+                    lat: parseFloat(parts[0]),
+                    lng: parseFloat(parts[1]),
+                    risk: 'Alto' // Default for visualization until risk mapping is implemented
+                }
+            }) || []
 
             // Calculate real breakdown
             const total = vistorias?.length || 0;
