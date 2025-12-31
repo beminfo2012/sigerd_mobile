@@ -68,7 +68,7 @@ const Dashboard = () => {
 
             {/* Pluviômetros Card (Replácing Response Time) */}
             <div
-                onClick={() => onNavigate('pluviometros')}
+                onClick={() => navigate('/pluviometros')}
                 className="bg-white p-5 rounded-[20px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
             >
                 <div className="flex items-center gap-4">
