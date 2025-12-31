@@ -324,7 +324,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         className="w-full bg-[#2a5299] text-white p-4 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition-all flex justify-center items-center gap-3"
                     >
                         <Save size={24} />
-                        {saving ? 'Safando...' : 'Salvar Vistoria'}
+                        {saving ? 'Salvando...' : 'Salvar Vistoria'}
                     </button>
 
                     <div className="grid grid-cols-2 gap-4">
