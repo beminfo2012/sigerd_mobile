@@ -28,9 +28,12 @@ const MapUpdater = ({ center }) => {
     }, [center, map]);
     return null;
 }
+return null;
+}
 
 const GeoRescue = () => {
-    const [position, setPosition] = useState([-20.0, -40.5]) // Default coords (ES)
+    const [position, setPosition] = useState([-20.3155, -40.3128]) // Default ES coords
+    const [hasPosition, setHasPosition] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchResults, setSearchResults] = useState([])
     const [selectedInstallation, setSelectedInstallation] = useState(null)
@@ -46,8 +49,13 @@ const GeoRescue = () => {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     setPosition([pos.coords.latitude, pos.coords.longitude])
+                    setHasPosition(true)
                 },
-                () => console.log('Location access denied')
+                (err) => {
+                    console.log('Location access denied or error:', err)
+                    // Keep default but maybe alert user preferably
+                },
+                { enableHighAccuracy: true }
             )
         }
     }, [])
@@ -205,7 +213,7 @@ const GeoRescue = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <MapUpdater center={selectedInstallation ? position : null} />
+                <MapUpdater center={selectedInstallation ? [selectedInstallation.pee_lat || selectedInstallation.client_lat, selectedInstallation.pee_lng || selectedInstallation.client_lng] : (hasPosition ? position : null)} />
 
                 {/* User Location Marker */}
                 <Marker position={position}>
