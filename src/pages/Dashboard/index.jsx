@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain } from 'lucide-react'
+import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 
 const Dashboard = () => {
     const navigate = useNavigate()
@@ -87,7 +89,7 @@ const Dashboard = () => {
             </div>
 
             {/* Bottom Section - Categories */}
-            <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100">
+            <div className="bg-white p-6 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-6">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="font-bold text-slate-800 text-sm">Tipos de Vistoria (Semanal)</h3>
                     <a href="#" className="text-xs font-bold text-blue-600 hover:text-blue-700">Ver detalhes</a>
@@ -110,6 +112,32 @@ const Dashboard = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            </div>
+
+            {/* Map Section */}
+            <div className="bg-white p-4 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden">
+                <h3 className="font-bold text-slate-800 text-xs uppercase mb-3 ml-2">Concentração de Vistorias</h3>
+                <div className="h-64 w-full rounded-xl overflow-hidden bg-slate-100 relative z-0">
+                    <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false}>
+                        <TileLayer
+                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        />
+                        {data.locations && data.locations.map((loc, idx) => (
+                            <CircleMarker
+                                key={idx}
+                                center={[loc.lat, loc.lng]}
+                                radius={8}
+                                pathOptions={{
+                                    color: loc.risk === 'Alto' ? '#ef4444' : '#f97316',
+                                    fillColor: loc.risk === 'Alto' ? '#ef4444' : '#f97316',
+                                    fillOpacity: 0.6,
+                                    stroke: false
+                                }}
+                            />
+                        ))}
+                    </MapContainer>
                 </div>
             </div>
 
