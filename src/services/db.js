@@ -123,6 +123,17 @@ export const saveVistoriaOffline = async (data) => {
     return localId
 }
 
+export const getPendingSyncCount = async () => {
+    const db = await initDB()
+    try {
+        return await db.countFromIndex('vistorias', 'synced', 0) // synced=false usually stored as 0 or false
+    } catch (e) {
+        // Fallback for different idb versions or data types
+        const all = await db.getAllFromIndex('vistorias', 'synced', false)
+        return all.length
+    }
+}
+
 export const getPendingVistorias = async () => {
     const db = await initDB()
     return db.getAllFromIndex('vistorias', 'synced', false)

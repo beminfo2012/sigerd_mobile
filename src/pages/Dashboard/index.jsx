@@ -1,26 +1,30 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import { getPendingSyncCount } from '../../services/db'
 
 const Dashboard = () => {
     const navigate = useNavigate()
     const [data, setData] = useState(null)
     const [weather, setWeather] = useState(null)
+    const [syncCount, setSyncCount] = useState(0)
     const [showForecast, setShowForecast] = useState(false)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const load = async () => {
             try {
-                const [result, weatherResult] = await Promise.all([
+                const [result, weatherResult, pendingCount] = await Promise.all([
                     api.getDashboardData(),
-                    fetch('/api/weather').then(r => r.ok ? r.json() : null)
+                    fetch('/api/weather').then(r => r.ok ? r.json() : null),
+                    getPendingSyncCount()
                 ])
                 setData(result)
                 setWeather(weatherResult)
+                setSyncCount(pendingCount)
             } finally {
                 setLoading(false)
             }
@@ -94,18 +98,26 @@ const Dashboard = () => {
 
             {/* Top Cards Row */}
             <div className="grid grid-cols-2 gap-4 mb-5">
-                {/* Vistorias Card */}
+                {/* Sync Card (Health) */}
                 <div className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative">
-                    <div className="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600 mb-3">
-                        <ClipboardList size={20} strokeWidth={2.5} />
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${syncCount > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                        {syncCount > 0 ? <CloudUpload size={20} strokeWidth={2.5} /> : <CheckCircle size={20} strokeWidth={2.5} />}
                     </div>
-                    {data.stats.pendingVistoriasDiff && (
-                        <div className="absolute top-5 right-5 bg-red-50 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-100">
-                            {data.stats.pendingVistoriasDiff} urgentes
+                    {syncCount > 0 ? (
+                        <div className="absolute top-5 right-5 bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 animate-pulse">
+                            Pendente
+                        </div>
+                    ) : (
+                        <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
+                            OK
                         </div>
                     )}
-                    <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">{data.stats.pendingVistorias}</div>
-                    <div className="text-xs font-bold text-slate-400 leading-tight">Vistorias Pendentes</div>
+                    <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">
+                        {syncCount > 0 ? syncCount : '100%'}
+                    </div>
+                    <div className="text-xs font-bold text-slate-400 leading-tight">
+                        {syncCount > 0 ? 'Itens p/ Sincronizar' : 'Dados Sincronizados'}
+                    </div>
                 </div>
 
                 {/* Ocorrências Card */}
