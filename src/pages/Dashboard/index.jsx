@@ -37,17 +37,11 @@ const Dashboard = () => {
                     locations: []
                 }
 
-                // 3. Merge with unsynced local data if needed
-                if (pendingCount > 0) {
-                    const localItems = await syncPendingData.getAllVistoriasLocal().catch(() => []) // Wait, I need to import it
-                    // Actually let's just use the helper I'm about to add to imports
-                }
-
                 // 3. Merge with local data for a complete view (synced + unsynced)
                 const localVistorias = await getAllVistoriasLocal().catch(() => [])
 
-                // If we didn't get data from API, rebuild it from local
                 if (!dashResult) {
+                    // FULL OFFLINE: Rebuild state from local storage
                     const total = localVistorias.length
                     const counts = {}
                     localVistorias.forEach(v => {
@@ -60,17 +54,17 @@ const Dashboard = () => {
                         label,
                         count: counts[label],
                         percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
-                        color: 'bg-blue-400' // Generic offline color
-                    }))
+                        color: 'bg-blue-400'
+                    })).sort((a, b) => b.count - a.count)
+
                     finalData.locations = localVistorias.filter(v => v.coordenadas).map(v => {
                         const parts = v.coordenadas.split(',')
                         return { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]), risk: 'Local' }
                     })
                 } else {
-                    // We have API data, let's just ensure unsynced items are also in locations
-                    // Supabase already has the synced ones. localVistorias has BOTH.
-                    // To avoid duplicates, we could filter localVistorias for unsynced only
+                    // ONLINE: Overlay local unsynced items onto cloud data
                     const unsynced = localVistorias.filter(v => v.synced === false)
+
                     unsynced.forEach(v => {
                         if (v.coordenadas) {
                             const parts = v.coordenadas.split(',')
@@ -80,8 +74,25 @@ const Dashboard = () => {
                                 risk: 'Pendente'
                             })
                         }
+
+                        // Update breakdown
+                        const type = v.tipoInfo || v.tipo_info || 'Outros'
+                        const existing = finalData.breakdown.find(b => b.label.toLowerCase() === type.toLowerCase())
+                        if (existing) {
+                            existing.count++
+                        } else {
+                            finalData.breakdown.push({ label: type, count: 1, percentage: 0, color: 'bg-slate-300' })
+                        }
                     })
+
                     finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length
+
+                    // Recalculate percentages
+                    const newTotal = finalData.stats.totalVistorias
+                    finalData.breakdown.forEach(b => {
+                        b.percentage = newTotal > 0 ? Math.round((b.count / newTotal) * 100) : 0
+                    })
+                    finalData.breakdown.sort((a, b) => b.count - a.count)
                 }
 
                 setWeather(weatherResult)
