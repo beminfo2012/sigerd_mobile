@@ -54,17 +54,26 @@ const Dashboard = () => {
                 </div>
 
                 {/* Ocorrências Card */}
-                <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative">
+                <div
+                    onClick={() => navigate('/alerts')}
+                    className="bg-white p-5 rounded-[20px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative cursor-pointer active:scale-95 transition-all hover:bg-slate-50"
+                >
                     <div className="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600 mb-3">
                         <AlertTriangle size={20} strokeWidth={2.5} />
                     </div>
-                    {data.stats.activeOccurrencesDiff && (
-                        <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
-                            +{data.stats.activeOccurrencesDiff} novas
+                    {data.stats.inmetAlertsCount > 0 ? (
+                        <div className="absolute top-5 right-5 bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-100 animate-pulse">
+                            {data.stats.inmetAlertsCount} Alertas INMET
                         </div>
+                    ) : (
+                        data.stats.activeOccurrencesDiff && (
+                            <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
+                                +{data.stats.activeOccurrencesDiff} novas
+                            </div>
+                        )
                     )}
                     <div className="text-3xl font-black text-slate-800 mb-1 leading-none">{data.stats.activeOccurrences}</div>
-                    <div className="text-xs font-bold text-slate-400 leading-tight">Ocorrências Ativas</div>
+                    <div className="text-xs font-bold text-slate-400 leading-tight">Avisos e Ocorrências</div>
                 </div>
             </div>
 

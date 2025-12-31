@@ -19,6 +19,16 @@ export const api = {
                 risk: v.risk_level
             })) || []
 
+            // Fetch INMET alerts
+            let inmetAlertsCount = 0;
+            try {
+                const inmetResp = await fetch('/api/inmet');
+                if (inmetResp.ok) {
+                    const alerts = await inmetResp.json();
+                    inmetAlertsCount = alerts.length;
+                }
+            } catch (e) { console.error('INMET fetch error:', e); }
+
             // Return rich mock data mixed with real map data
             return {
                 stats: {
@@ -28,6 +38,7 @@ export const api = {
                     activeOccurrencesDiff: 2,
                     avgResponseTime: 34,
                     avgResponseTimeTrend: 12,
+                    inmetAlertsCount
                 },
                 breakdown: [
                     { label: 'Risco Geológico', percentage: 45, count: 18, color: 'bg-orange-500' },
