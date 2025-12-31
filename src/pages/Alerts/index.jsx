@@ -21,11 +21,15 @@ const Alerts = () => {
             const resp = await fetch('/api/inmet')
             if (resp.ok) {
                 const data = await resp.json()
-                setAlerts(data)
-                if (data.length > 0) setSelectedAlert(data[0])
+                const validAlerts = Array.isArray(data) ? data : []
+                setAlerts(validAlerts)
+                if (validAlerts.length > 0) setSelectedAlert(validAlerts[0])
+                else setSelectedAlert(null)
             }
         } catch (e) {
             console.error(e)
+            setAlerts([])
+            setSelectedAlert(null)
         } finally {
             setLoading(false)
         }
@@ -189,7 +193,7 @@ const Alerts = () => {
                                             {selectedAlert?.riscos && (
                                                 <div style={{ marginBottom: '4%' }}>{selectedAlert.riscos}</div>
                                             )}
-                                            {selectedAlert?.instrucoes && (
+                                            {selectedAlert?.instrucoes && typeof selectedAlert.instrucoes === 'string' && (
                                                 <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
                                                     {selectedAlert.instrucoes.split('\n').map((li, i) => (
                                                         <li key={i} style={{ marginBottom: '2%' }}>{li.replace(/^[-•*]\s*/, '')}</li>

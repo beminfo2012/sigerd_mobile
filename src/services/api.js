@@ -34,8 +34,8 @@ export const api = {
                 stats: {
                     pendingVistorias: 12,
                     pendingVistoriasDiff: 3,
-                    activeOccurrences: 5,
-                    activeOccurrencesDiff: 2,
+                    activeOccurrences: inmetAlertsCount, // Show real INMET alert count
+                    activeOccurrencesDiff: 0,
                     avgResponseTime: 34,
                     avgResponseTimeTrend: 12,
                     inmetAlertsCount
