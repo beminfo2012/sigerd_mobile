@@ -220,7 +220,7 @@ const Dashboard = () => {
                             </button>
                             <div className="text-center mb-6">
                                 <div className="text-[10px] font-black uppercase tracking-[4px] opacity-70 mb-2">Previsão 7 Dias</div>
-                                <h2 className="text-2xl font-black">Santa Maria de Jetibá</h2>
+                                <h2 className="text-2xl font-black text-white">Santa Maria de Jetibá</h2>
                             </div>
                             <div className="flex justify-around items-center bg-white/10 rounded-[32px] p-6 backdrop-blur-md">
                                 <div className="text-center">
