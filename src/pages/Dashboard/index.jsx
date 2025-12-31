@@ -4,13 +4,14 @@ import { api } from '../../services/api'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { getPendingSyncCount } from '../../services/db'
+import { getPendingSyncCount, syncPendingData } from '../../services/db'
 
 const Dashboard = () => {
     const navigate = useNavigate()
     const [data, setData] = useState(null)
     const [weather, setWeather] = useState(null)
     const [syncCount, setSyncCount] = useState(0)
+    const [syncing, setSyncing] = useState(false)
     const [showForecast, setShowForecast] = useState(false)
     const [loading, setLoading] = useState(true)
 
@@ -31,6 +32,30 @@ const Dashboard = () => {
         }
         load()
     }, [])
+
+    const handleSync = async () => {
+        if (syncCount === 0 || syncing) return
+
+        setSyncing(true)
+        try {
+            const result = await syncPendingData()
+            if (result.success) {
+                // Reload dashboard data to reflect synced items
+                const [newData, newCount] = await Promise.all([
+                    api.getDashboardData(),
+                    getPendingSyncCount()
+                ])
+                setData(newData)
+                setSyncCount(newCount)
+                alert(`${result.count} vistorias sincronizadas com sucesso!`)
+            }
+        } catch (e) {
+            console.error('Sync failed:', e)
+            alert('Erro ao sincronizar dados.')
+        } finally {
+            setSyncing(false)
+        }
+    }
 
     const getWeatherIcon = (code) => {
         // WMO Weather interpretation codes
@@ -99,13 +124,20 @@ const Dashboard = () => {
             {/* Top Cards Row */}
             <div className="grid grid-cols-2 gap-4 mb-5">
                 {/* Sync Card (Health) */}
-                <div className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative">
+                <div
+                    onClick={handleSync}
+                    className={`bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all ${syncCount > 0 ? 'cursor-pointer active:scale-95 hover:bg-orange-50/30' : ''}`}
+                >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${syncCount > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
-                        {syncCount > 0 ? <CloudUpload size={20} strokeWidth={2.5} /> : <CheckCircle size={20} strokeWidth={2.5} />}
+                        {syncing ? (
+                            <CloudUpload size={20} strokeWidth={2.5} className="animate-bounce" />
+                        ) : (
+                            syncCount > 0 ? <CloudUpload size={20} strokeWidth={2.5} /> : <CheckCircle size={20} strokeWidth={2.5} />
+                        )}
                     </div>
                     {syncCount > 0 ? (
-                        <div className="absolute top-5 right-5 bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 animate-pulse">
-                            Pendente
+                        <div className={`absolute top-5 right-5 bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 ${syncing ? 'animate-pulse' : ''}`}>
+                            {syncing ? 'Sincronizando...' : 'Pendente'}
                         </div>
                     ) : (
                         <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">
@@ -116,7 +148,7 @@ const Dashboard = () => {
                         {syncCount > 0 ? syncCount : '100%'}
                     </div>
                     <div className="text-xs font-bold text-slate-400 leading-tight">
-                        {syncCount > 0 ? 'Itens p/ Sincronizar' : 'Dados Sincronizados'}
+                        {syncing ? 'Enviando para nuvem...' : (syncCount > 0 ? 'Clique para Sincronizar' : 'Dados Sincronizados')}
                     </div>
                 </div>
 

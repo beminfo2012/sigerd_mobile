@@ -134,6 +134,78 @@ export const getPendingSyncCount = async () => {
     }
 }
 
+export const syncPendingData = async () => {
+    const db = await initDB()
+    const pending = await db.getAllFromIndex('vistorias', 'synced', false)
+
+    if (pending.length === 0) return { success: true, count: 0 }
+
+    let syncedCount = 0
+    for (const item of pending) {
+        try {
+            let processedPhotos = []
+            // Upload Photos
+            if (item.fotos && item.fotos.length > 0) {
+                processedPhotos = await Promise.all(item.fotos.map(async (foto) => {
+                    if (foto.data && foto.data.startsWith('data:image')) {
+                        const blob = base64ToBlob(foto.data)
+                        if (blob) {
+                            const fileName = `${item.vistoriaId}/${foto.id}.jpg`
+                            const { error: uploadError } = await supabase.storage
+                                .from('vistorias')
+                                .upload(fileName, blob, { upsert: true })
+
+                            if (!uploadError) {
+                                const { data: urlData } = supabase.storage
+                                    .from('vistorias')
+                                    .getPublicUrl(fileName)
+                                return { ...foto, data: urlData.publicUrl }
+                            }
+                        }
+                    }
+                    return foto
+                }))
+            }
+
+            // Sync to Supabase
+            const { error } = await supabase
+                .from('vistorias')
+                .insert([{
+                    vistoria_id: item.vistoriaId,
+                    processo: item.processo,
+                    agente: item.agente,
+                    matricula: item.matricula,
+                    solicitante: item.solicitante,
+                    cpf: item.cpf,
+                    telefone: item.telefone,
+                    endereco: item.endereco,
+                    coordenadas: item.coordenadas,
+                    data_hora: item.dataHora,
+                    tipo_info: item.tipoInfo,
+                    observacoes: item.observacoes,
+                    fotos: processedPhotos,
+                    documentos: item.documentos
+                }])
+
+            if (!error) {
+                const tx = db.transaction('vistorias', 'readwrite')
+                const store = tx.objectStore('vistorias')
+                const record = await store.get(item.id)
+                if (record) {
+                    record.synced = true
+                    await store.put(record)
+                }
+                await tx.done
+                syncedCount++
+            }
+        } catch (e) {
+            console.error('Individual sync error:', e)
+        }
+    }
+
+    return { success: true, count: syncedCount }
+}
+
 export const getPendingVistorias = async () => {
     const db = await initDB()
     return db.getAllFromIndex('vistorias', 'synced', false)
