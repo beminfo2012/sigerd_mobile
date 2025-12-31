@@ -13,9 +13,9 @@ export const initDB = async () => {
                 store.createIndex('installation_number', 'installation_number', { unique: false })
             }
 
-            // Store for Vistorias (Offline Sync)
-            if (!db.objectStoreNames.contains('vistorias')) {
-                const store = db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true })
+            // Store for Interdições (Offline Sync)
+            if (!db.objectStoreNames.contains('interdicoes')) {
+                const store = db.createObjectStore('interdicoes', { keyPath: 'id', autoIncrement: true })
                 store.createIndex('synced', 'synced', { unique: false })
             }
         },
@@ -125,84 +125,129 @@ export const saveVistoriaOffline = async (data) => {
 
 export const getPendingSyncCount = async () => {
     const db = await initDB()
-    try {
-        return await db.countFromIndex('vistorias', 'synced', false)
-    } catch (e) {
-        const all = await db.getAllFromIndex('vistorias', 'synced', false)
-        return all.length
-    }
+    const p1 = await db.countFromIndex('vistorias', 'synced', false).catch(() => 0)
+    const p2 = await db.countFromIndex('interdicoes', 'synced', false).catch(() => 0)
+    return p1 + p2
 }
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const pending = await db.getAllFromIndex('vistorias', 'synced', false)
 
-    if (pending.length === 0) return { success: true, count: 0 }
-
+    // Sync Vistorias
+    const pendingVistorias = await db.getAllFromIndex('vistorias', 'synced', false)
     let syncedCount = 0
-    for (const item of pending) {
-        try {
-            let processedPhotos = []
-            // Upload Photos
-            if (item.fotos && item.fotos.length > 0) {
-                processedPhotos = await Promise.all(item.fotos.map(async (foto) => {
-                    if (foto.data && foto.data.startsWith('data:image')) {
-                        const blob = base64ToBlob(foto.data)
-                        if (blob) {
-                            const fileName = `${item.vistoriaId}/${foto.id}.jpg`
-                            const { error: uploadError } = await supabase.storage
-                                .from('vistorias')
-                                .upload(fileName, blob, { upsert: true })
 
-                            if (!uploadError) {
-                                const { data: urlData } = supabase.storage
-                                    .from('vistorias')
-                                    .getPublicUrl(fileName)
-                                return { ...foto, data: urlData.publicUrl }
-                            }
-                        }
-                    }
-                    return foto
-                }))
-            }
+    for (const item of pendingVistorias) {
+        const success = await syncSingleItem('vistorias', item, db)
+        if (success) syncedCount++
+    }
 
-            // Sync to Supabase
-            const { error } = await supabase
-                .from('vistorias')
-                .insert([{
-                    vistoria_id: item.vistoriaId,
-                    processo: item.processo,
-                    agente: item.agente,
-                    matricula: item.matricula,
-                    solicitante: item.solicitante,
-                    cpf: item.cpf,
-                    telefone: item.telefone,
-                    endereco: item.endereco,
-                    coordenadas: item.coordenadas,
-                    data_hora: item.dataHora,
-                    tipo_info: item.tipoInfo,
-                    observacoes: item.observacoes,
-                    fotos: processedPhotos,
-                    documentos: item.documentos
-                }])
-
-            if (!error) {
-                const tx = db.transaction('vistorias', 'readwrite')
-                const store = tx.objectStore('vistorias')
-                const record = await store.get(item.id)
-                if (record) {
-                    record.synced = true
-                    await store.put(record)
-                }
-                await tx.done
-                syncedCount++
-            }
-        } catch (e) {
-            console.error('Individual sync error:', e)
-        }
+    // Sync Interdições
+    const pendingInterdicoes = await db.getAllFromIndex('interdicoes', 'synced', false)
+    for (const item of pendingInterdicoes) {
+        const success = await syncSingleItem('interdicoes', item, db)
+        if (success) syncedCount++
     }
 
     return { success: true, count: syncedCount }
+}
+
+const syncSingleItem = async (type, item, db) => {
+    try {
+        let processedPhotos = []
+        // Upload Photos
+        if (item.fotos && item.fotos.length > 0) {
+            processedPhotos = await Promise.all(item.fotos.map(async (foto) => {
+                if (foto.data && foto.data.startsWith('data:image')) {
+                    const blob = base64ToBlob(foto.data)
+                    if (blob) {
+                        const folder = type === 'vistorias' ? 'vistorias' : 'interdicoes'
+                        const id = type === 'vistorias' ? item.vistoriaId : item.interdicaoId
+                        const fileName = `${id}/${foto.id}.jpg`
+                        const { error: uploadError } = await supabase.storage
+                            .from(folder)
+                            .upload(fileName, blob, { upsert: true })
+
+                        if (!uploadError) {
+                            const { data: urlData } = supabase.storage
+                                .from(folder)
+                                .getPublicUrl(fileName)
+                            return { ...foto, data: urlData.publicUrl }
+                        }
+                    }
+                }
+                return foto
+            }))
+        }
+
+        const table = type === 'vistorias' ? 'vistorias' : 'interdicoes'
+        let payload = {}
+
+        if (type === 'vistorias') {
+            payload = {
+                vistoria_id: item.vistoriaId,
+                processo: item.processo,
+                agente: item.agente,
+                matricula: item.matricula,
+                solicitante: item.solicitante,
+                cpf: item.cpf,
+                telefone: item.telefone,
+                endereco: item.endereco,
+                coordenadas: item.coordenadas,
+                data_hora: item.dataHora,
+                tipo_info: item.tipoInfo,
+                observacoes: item.observacoes,
+                fotos: processedPhotos,
+                documentos: item.documentos
+            }
+        } else {
+            payload = {
+                interdicao_id: item.interdicaoId,
+                data_hora: item.dataHora,
+                municipio: item.municipio,
+                bairro: item.bairro,
+                endereco: item.endereco,
+                tipo_alvo: item.tipoAlvo,
+                tipo_alvo_especificar: item.tipoAlvoEspecificar,
+                latitude: item.latitude,
+                longitude: item.longitude,
+                coordenadas: item.coordenadas,
+                responsavel_nome: item.responsavelNome,
+                responsavel_cpf: item.responsavelCpf,
+                responsavel_telefone: item.responsavelTelefone,
+                responsavel_email: item.responsavelEmail,
+                risco_tipo: item.riscoTipo,
+                risco_grau: item.riscoGrau,
+                situacao_observada: item.situacaoObservada,
+                medida_tipo: item.medidaTipo,
+                medida_prazo: item.medidaPrazo,
+                medida_prazo_data: item.medidaPrazoData,
+                evacuacao_necessaria: item.evacuacaoNecessaria,
+                fotos: processedPhotos,
+                relatorio_tecnico: item.relatorioTecnico,
+                recomendacoes: item.recomendacoes,
+                orgaos_acionados: item.orgaosAcionados
+            }
+        }
+
+        const { error } = await supabase.from(table).insert([payload])
+
+        if (!error) {
+            const tx = db.transaction(type, 'readwrite')
+            const store = tx.objectStore(type)
+            const record = await store.get(item.id)
+            if (record) {
+                record.synced = true
+                await store.put(record)
+            }
+            await tx.done
+            return true
+        }
+        return false
+    } catch (e) {
+        console.error(`Sync error for ${type}:`, e)
+        return false
+    }
 }
 
 export const getPendingVistorias = async () => {
@@ -213,6 +258,22 @@ export const getPendingVistorias = async () => {
 export const getAllVistoriasLocal = async () => {
     const db = await initDB()
     return db.getAll('vistorias')
+}
+
+export const saveInterdicaoOffline = async (data) => {
+    const db = await initDB()
+    const localId = await db.add('interdicoes', {
+        ...data,
+        createdAt: new Date().toISOString(),
+        synced: false
+    })
+
+    if (navigator.onLine) {
+        const item = await db.get('interdicoes', localId)
+        await syncSingleItem('interdicoes', item, db)
+    }
+
+    return localId
 }
 
 // GeoRescue Logic
