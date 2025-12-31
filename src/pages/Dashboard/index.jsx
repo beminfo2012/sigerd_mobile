@@ -168,7 +168,7 @@ const Dashboard = () => {
             <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6">
                 <div className="flex justify-between items-center mb-6 px-1">
                     <h3 className="font-bold text-slate-800 text-sm">Vistorias por Tipologia</h3>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Dados Mensais</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Dados em Tempo Real</span>
                 </div>
 
                 <div className="space-y-6">
