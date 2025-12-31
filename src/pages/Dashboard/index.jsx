@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain } from 'lucide-react'
 
 const Dashboard = () => {
     const [data, setData] = useState(null)
@@ -64,29 +64,23 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Middle Stats Card - Response Time */}
-            <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between">
+            {/* Pluviômetros Card (Replácing Response Time) */}
+            <div 
+                onClick={() => onNavigate('pluviometros')}
+                className="bg-white p-5 rounded-[20px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
+            >
                 <div className="flex items-center gap-4">
-                    <div className="bg-purple-50 w-12 h-12 rounded-xl flex items-center justify-center text-purple-600">
-                        <Timer size={22} strokeWidth={2.5} />
+                    <div className="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center text-[#2a5299]">
+                        <CloudRain size={24} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <div className="text-xs font-bold text-slate-400 mb-0.5">Tempo Médio de Resposta</div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-slate-800">{data.stats.avgResponseTime} min</span>
-                            <span className="text-xs font-bold text-green-500 flex items-center">
-                                ↘ {data.stats.avgResponseTimeTrend}%
-                            </span>
-                        </div>
+                        <div className="text-xs font-bold text-slate-400 mb-0.5 uppercase tracking-wide">Monitoramento</div>
+                        <div className="text-xl font-black text-slate-800">Pluviômetros</div>
+                        <div className="text-xs font-medium text-blue-600">Ver índices automáticos</div>
                     </div>
                 </div>
-                {/* Simulated Chart Bars */}
-                <div className="flex items-end gap-1 h-8">
-                    <div className="w-2 bg-purple-100 rounded-t-sm h-[60%]"></div>
-                    <div className="w-2 bg-purple-100 rounded-t-sm h-[40%]"></div>
-                    <div className="w-2 bg-purple-100 rounded-t-sm h-[80%]"></div>
-                    <div className="w-2 bg-purple-100 rounded-t-sm h-[50%]"></div>
-                    <div className="w-2 bg-purple-500 rounded-t-sm h-[30%]"></div>
+                <div className="bg-slate-100 p-2 rounded-full text-slate-400">
+                    <ChevronRight size={20} />
                 </div>
             </div>
 
