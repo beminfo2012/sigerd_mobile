@@ -6,11 +6,14 @@ const normalizeData = (data, type) => {
     if (isVistoria) {
         return {
             vistoriaId: data.vistoriaId || data.vistoria_id || '---',
+            processo: data.processo || data.processo_sei || '---',
             dataHora: data.dataHora || data.data_hora || data.created_at,
             solicitante: data.solicitante || '---',
+            cpf: data.cpf || '---',
+            telefone: data.telefone || '---',
             endereco: data.endereco || '---',
             bairro: data.bairro || '---',
-            tipoInfo: data.tipoInfo || data.tipo_info || 'Vistoria Geral',
+            tipoInfo: data.tipoInfo || data.tipo_info || '---',
             observacoes: data.observacoes || '---',
             agente: data.agente || '---',
             matricula: data.matricula || '---',
@@ -23,6 +26,7 @@ const normalizeData = (data, type) => {
             interdicaoId: data.interdicaoId || data.interdicao_id || '---',
             dataHora: data.dataHora || data.data_hora || data.created_at,
             responsavelNome: data.responsavelNome || data.responsavel_nome || '---',
+            responsavelCpf: data.responsavelCpf || data.responsavel_cpf || '---',
             endereco: data.endereco || '---',
             bairro: data.bairro || '---',
             municipio: data.municipio || '---',
@@ -44,71 +48,118 @@ const normalizeData = (data, type) => {
 export const generatePDF = async (rawData, type) => {
     const data = normalizeData(rawData, type);
     const isVistoria = type === 'vistoria';
-    const title = isVistoria ? 'Extrato de Vistoria' : 'Extrato de Interdição';
+    const title = isVistoria ? 'EXTRATO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
     const filename = `${type}_${(data.vistoriaId || data.interdicaoId || 'doc').replace('/', '_')}.pdf`;
 
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '0';
     container.style.top = '100vh';
-    container.style.width = '800px';
-    container.style.padding = '40px';
+    container.style.width = '840px'; // A4 proportional
+    container.style.padding = '0';
     container.style.backgroundColor = 'white';
-    container.style.fontFamily = 'Arial, sans-serif';
-    container.style.color = '#333';
+    container.style.fontFamily = "'Inter', Arial, sans-serif";
+    container.style.color = '#1a1a1a';
     container.style.zIndex = '-9999';
 
     const headerHtml = `
-        <div style="text-align: center; border-bottom: 2px solid #2a5299; padding-bottom: 20px; margin-bottom: 30px;">
-            <img src="/logo_nova.png" style="height: 100px; margin-bottom: 15px;" />
-            <h1 style="margin: 0; font-size: 24px; color: #2a5299; text-transform: uppercase; font-weight: 900; letter-spacing: 1px;">Defesa Civil de Santa Maria de Jetibá</h1>
-            <h2 style="margin: 10px 0 0 0; font-size: 20px; color: #555; font-weight: bold; border: 1px solid #ddd; display: inline-block; padding: 5px 20px; border-radius: 8px; background: #f9f9f9;">${title}</h2>
+        <div style="background-color: #f8fafc; border-bottom: 4px solid #2a5299; padding: 40px; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <img src="/logo_nova.png" style="height: 120px; width: auto; display: block; margin: 0 auto;" />
+            </div>
+            <h1 style="margin: 0; font-size: 26px; color: #1e3a8a; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; line-height: 1.2;">
+                Prefeitura Municipal de Santa Maria de Jetibá
+            </h1>
+            <h2 style="margin: 5px 0 20px 0; font-size: 18px; color: #2a5299; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL
+            </h2>
+            <div style="display: inline-block; background: #2a5299; color: white; padding: 8px 30px; border-radius: 4px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                ${title}
+            </div>
         </div>
     `;
 
-    const renderInfo = (label, value) => `
-        <div style="margin-bottom: 12px; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px;">
-            <span style="font-size: 10px; color: #2a5299; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 2px;">${label}</span>
-            <span style="font-size: 14px; color: #333; font-weight: 500;">${value || '---'}</span>
+    const sectionTitle = (title) => `
+        <div style="background: #f1f5f9; border-left: 6px solid #2a5299; padding: 8px 15px; margin: 25px 0 15px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;">
+            ${title}
         </div>
     `;
 
-    let bodyHtml = '';
+    const renderField = (label, value) => `
+        <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">${label}</div>
+            <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.4;">${value || 'Não informado'}</div>
+        </div>
+    `;
+
+    let contentHtml = '';
     if (isVistoria) {
-        bodyHtml = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="grid-column: span 1;">${renderInfo('ID Vistoria', data.vistoriaId)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Data/Hora', new Date(data.dataHora).toLocaleString('pt-BR'))}</div>
-                <div style="grid-column: span 2;">${renderInfo('Solicitante', data.solicitante)}</div>
-                <div style="grid-column: span 2;">${renderInfo('Endereço', data.endereco)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Bairro', data.bairro)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Tipo', data.tipoInfo)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Latitude', data.latitude)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Longitude', data.longitude)}</div>
-                <div style="grid-column: span 2;">${renderInfo('Relatório / Observações', data.observacoes)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Agente Responsável', data.agente)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Matrícula', data.matricula)}</div>
+        contentHtml = `
+            <div style="padding: 0 40px 40px 40px;">
+                ${sectionTitle('1. Identificação do Documento')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                    ${renderField('Número da Vistoria', data.vistoriaId)}
+                    ${renderField('Número do Processo', data.processo)}
+                    ${renderField('Data e Hora da Emissão', new Date(data.dataHora).toLocaleString('pt-BR'))}
+                    ${renderField('Agente Responsável', data.agente)}
+                    ${renderField('Matrícula do Agente', data.matricula)}
+                </div>
+
+                ${sectionTitle('2. Dados do Solicitante')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                    <div style="grid-column: span 2;">${renderField('Nome / Razão Social', data.solicitante)}</div>
+                    ${renderField('CPF / CNPJ', data.cpf)}
+                    ${renderField('Telefone de Contato', data.telefone)}
+                </div>
+
+                ${sectionTitle('3. Localização')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                    <div style="grid-column: span 2;">${renderField('Endereço Completo', data.endereco)}</div>
+                    ${renderField('Bairro / Localidade', data.bairro)}
+                    ${renderField('Coordenadas (Lat, Long)', `${data.latitude}, ${data.longitude}`)}
+                </div>
+
+                ${sectionTitle('4. Detalhamento Técnico')}
+                <div style="display: grid; grid-template-columns: 1fr; gap: 0 30px;">
+                    ${renderField('Tipo de Vistoria', data.tipoInfo)}
+                    ${renderField('Relatório de Observações', data.observacoes)}
+                </div>
             </div>
         `;
     } else {
-        bodyHtml = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="grid-column: span 1;">${renderInfo('ID Interdição', data.interdicaoId)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Data/Hora', new Date(data.dataHora).toLocaleString('pt-BR'))}</div>
-                <div style="grid-column: span 2;">${renderInfo('Responsável pelo Imóvel', data.responsavelNome)}</div>
-                <div style="grid-column: span 2;">${renderInfo('Endereço', data.endereco)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Bairro', data.bairro)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Município', data.municipio)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Latitude', data.latitude)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Longitude', data.longitude)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Tipo de Alvo', data.tipoAlvo)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Tipo de Interdição', data.medidaTipo)}</div>
-                <div style="grid-column: span 2;">${renderInfo('Natureza do Risco', Array.isArray(data.riscoTipo) ? data.riscoTipo.join(', ') : data.riscoTipo)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Grau de Risco', data.riscoGrau)}</div>
-                <div style="grid-column: span 1;">${renderInfo('Prazo de Interdição', data.medidaPrazo)}</div>
-                <div style="grid-column: span 2;">${renderInfo('Situação Observada', data.situacaoObservada)}</div>
-                <div style="grid-column: span 2;">${renderInfo('Relatório Técnico', data.relatorioTecnico)}</div>
-                <div style="grid-column: span 2;">${renderInfo('Recomendações Técnicas', data.recomendacoes)}</div>
+        contentHtml = `
+            <div style="padding: 0 40px 40px 40px;">
+                ${sectionTitle('1. Identificação da Ordem')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                    ${renderField('Número de Controle', data.interdicaoId)}
+                    ${renderField('Data e Hora da Ação', new Date(data.dataHora).toLocaleString('pt-BR'))}
+                    <div style="grid-column: span 2;">${renderField('Responsável pelo Imóvel', data.responsavelNome)}</div>
+                    ${renderField('CPF / CNPJ do Responsável', data.responsavelCpf)}
+                </div>
+
+                ${sectionTitle('2. Local da Interdição')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                    <div style="grid-column: span 2;">${renderField('Endereço', data.endereco)}</div>
+                    ${renderField('Bairro', data.bairro)}
+                    ${renderField('Município', data.municipio)}
+                    ${renderField('Latitude', data.latitude)}
+                    ${renderField('Longitude', data.longitude)}
+                </div>
+
+                ${sectionTitle('3. Natureza do Evento e Medidas')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                    ${renderField('Tipo de Alvo', data.tipoAlvo)}
+                    ${renderField('Natureza do Risco', Array.isArray(data.riscoTipo) ? data.riscoTipo.join(', ') : data.riscoTipo)}
+                    ${renderField('Grau de Risco Constatado', data.riscoGrau)}
+                    ${renderField('Medida Aplicada', `${data.medidaTipo} (Prazo: ${data.medidaPrazo})`)}
+                </div>
+
+                ${sectionTitle('4. Fundamentação Técnica')}
+                <div style="display: grid; grid-template-columns: 1fr; gap: 0 30px;">
+                    ${renderField('Situação Observada', data.situacaoObservada)}
+                    ${renderField('Parecer Técnico', data.relatorioTecnico)}
+                    ${renderField('Recomendações Técnicas', data.recomendacoes)}
+                </div>
             </div>
         `;
     }
@@ -116,13 +167,15 @@ export const generatePDF = async (rawData, type) => {
     let photosHtml = '';
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
-            <div style="margin-top: 40px; border-top: 2px solid #2a5299; padding-top: 20px; page-break-before: auto;">
-                <h3 style="font-size: 16px; color: #2a5299; text-transform: uppercase; text-align: center; margin-bottom: 20px;">Registro Fotográfico</h3>
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                    ${data.fotos.map(f => `
-                        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px; background: #fdfdfd; width: 80%; text-align: center;">
-                            <img src="${f.data || f}" style="max-width: 100%; height: auto; max-height: 450px; border-radius: 4px;" />
-                            ${f.legenda ? `<p style="font-size: 11px; margin-top: 10px; color: #555; font-style: italic;">${f.legenda}</p>` : ''}
+            <div style="padding: 0 40px 40px 40px; page-break-before: auto;">
+                ${sectionTitle('5. Anexo Fotográfico')}
+                <div style="display: grid; grid-template-columns: 1fr; gap: 30px; justify-items: center;">
+                    ${data.fotos.map((f, idx) => `
+                        <div style="width: 100%; max-width: 600px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 4px; object-fit: contain; margin: 0 auto; display: block;" />
+                            <div style="margin-top: 15px; font-size: 12px; color: #475569; font-weight: 600; font-family: sans-serif; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+                                FOTO ${idx + 1} - ${f.legenda || 'Registro de campo'}
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -131,19 +184,22 @@ export const generatePDF = async (rawData, type) => {
     }
 
     const footerHtml = `
-        <div style="margin-top: 60px; text-align: center; page-break-inside: avoid;">
-            <div style="display: inline-block; width: 350px; border-top: 1px solid #333; padding-top: 10px;">
-                <p style="margin: 0; font-size: 14px; font-weight: bold; color: #222;">Assinatura do Agente</p>
-                <p style="margin: 0; font-size: 11px; color: #666;">Defesa Civil de Santa Maria de Jetibá</p>
+        <div style="margin-top: 40px; padding: 60px 40px 40px 40px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
+            <div style="display: inline-block; width: 320px; border-top: 2px solid #1e3a8a; padding-top: 15px; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Assinatura do Agente</p>
+                <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 600;">Defesa Civil Municipal</p>
             </div>
-            <p style="font-size: 9px; color: #999; margin-top: 30px;">
+            
+            <div style="max-width: 600px; margin: 20px auto; padding: 15px; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 10px; color: #94a3b8; line-height: 1.5;">
+                <p style="margin: 0 0 5px 0; font-weight: bold; color: #64748b;">AUTENTICIDADE DO DOCUMENTO</p>
                 Este documento é um extrato oficial gerado pelo Sistema SIGERD Mobile em ${new Date().toLocaleString('pt-BR')}.
-                A autenticidade deste documento pode ser verificada nos registros internos da Defesa Civil Municipal.
-            </p>
+                A autenticidade e validade técnica deste documento devem ser confirmadas junto aos arquivos oficiais 
+                da Coordenadoria Municipal de Defesa Civil de Santa Maria de Jetibá.
+            </div>
         </div>
     `;
 
-    container.innerHTML = `<div style="padding: 10px;">${headerHtml}${bodyHtml}${photosHtml}${footerHtml}</div>`;
+    container.innerHTML = `<div style="max-width: 840px; margin: 0 auto; border: 1px solid #e2e8f0; min-height: 1100px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1);">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
     document.body.appendChild(container);
 
     const waitForImages = () => {
@@ -156,14 +212,15 @@ export const generatePDF = async (rawData, type) => {
 
     try {
         await waitForImages();
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         const canvas = await html2canvas(container, {
             scale: 2,
             useCORS: true,
             allowTaint: true,
-            backgroundColor: 'white',
-            windowWidth: 800
+            backgroundColor: '#ffffff',
+            windowWidth: 840,
+            logging: false
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
