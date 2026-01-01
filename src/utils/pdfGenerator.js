@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 /**
@@ -120,25 +120,57 @@ export const generatePDF = async (data, type) => {
 
     document.body.appendChild(container);
 
+    // Wait for all images to load before capturing
+    const waitForImages = () => {
+        const images = container.getElementsByTagName('img');
+        const promises = Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve; // Continue even if one fails
+            });
+        });
+        return Promise.all(promises);
+    };
+
     try {
+        await waitForImages();
+
+        // Added some delay to ensure layout is settled
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         const canvas = await html2canvas(container, {
-            scale: 2, // Higher quality
+            scale: 2,
             useCORS: true,
-            logging: false,
-            backgroundColor: 'white'
+            allowTaint: true,
+            logging: true, // Enable for troubleshooting
+            backgroundColor: 'white',
+            windowWidth: 800,
+            onclone: (clonedDoc) => {
+                const element = clonedDoc.body.querySelector('[style*="left: -9999px"]');
+                if (element) {
+                    element.style.left = '0';
+                    element.style.position = 'relative';
+                }
+            }
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
         const pdf = new jsPDF('p', 'mm', 'a4');
         const imgProps = pdf.getImageProperties(imgData);
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
+        // If content is very long, maybe we need multi-page? 
+        // For now, let's just make sure one page works well.
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(filename);
+
+        // Final feedback
+        alert('PDF gerado com sucesso!');
     } catch (error) {
         console.error('Error generating PDF:', error);
-        alert('Erro ao gerar PDF. Tente novamente.');
+        alert(`Erro ao gerar PDF: ${error.message}`);
     } finally {
         document.body.removeChild(container);
     }
