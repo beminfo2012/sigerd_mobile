@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, AlertOctagon } from 'lucide-react'
 import { supabase } from '../../services/supabase'
+import { generatePDF } from '../../utils/pdfGenerator'
 
 const InterdicaoList = ({ onNew, onEdit }) => {
     const [interdicoes, setInterdicoes] = useState([])
@@ -110,8 +111,9 @@ const InterdicaoList = ({ onNew, onEdit }) => {
 
                             <div className="flex justify-end gap-2 border-t border-gray-50 pt-3">
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); alert('Funcionalidade de PDF em breve!') }}
+                                    onClick={(e) => { e.stopPropagation(); generatePDF(item, 'interdicao') }}
                                     className="p-2 text-gray-400 hover:text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Exportar PDF"
                                 >
                                     <Share size={18} />
                                 </button>

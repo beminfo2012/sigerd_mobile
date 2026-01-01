@@ -4,6 +4,7 @@ import { saveVistoriaOffline } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
+import { generatePDF } from '../../utils/pdfGenerator'
 
 const VistoriaForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
@@ -328,8 +329,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </button>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <button type="button" onClick={() => alert("Exportar PDF")} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50">
-                            <Share size={20} /> Exportar
+                        <button type="button" onClick={() => generatePDF(formData, 'vistoria')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors">
+                            <Share size={20} /> Exportar PDF
                         </button>
                         <button type="button" onClick={() => alert("Excluir")} className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50">
                             <Trash2 size={20} /> Excluir

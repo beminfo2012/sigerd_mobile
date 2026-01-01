@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X } from 'lucide-react'
 import { saveInterdicaoOffline } from '../../services/db'
 import FileInput from '../../components/FileInput'
+import { generatePDF } from '../../utils/pdfGenerator'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const [formData, setFormData] = useState({
@@ -412,11 +413,16 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         )}
                     </button>
 
-                    {initialData && (
-                        <button type="button" onClick={() => alert("Excluir")} className="w-full mt-4 flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors">
-                            <Trash2 size={20} /> Excluir Registro
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                        <button type="button" onClick={() => generatePDF(formData, 'interdicao')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm">
+                            <Share size={20} /> Exportar PDF
                         </button>
-                    )}
+                        {initialData && (
+                            <button type="button" onClick={() => alert("Excluir")} className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors">
+                                <Trash2 size={20} /> Excluir
+                            </button>
+                        )}
+                    </div>
                 </div>
 
             </form>
