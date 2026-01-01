@@ -6,7 +6,7 @@ import { generatePDF } from '../../utils/pdfGenerator'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const [formData, setFormData] = useState({
-        interdicaoId: `INT-${Date.now()}`,
+        interdicaoId: '',
         dataHora: new Date().toISOString().slice(0, 16),
         municipio: 'Santa Maria de Jetibá',
         bairro: '',
@@ -61,6 +61,8 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 recomendacoes: initialData.recomendacoes,
                 orgaosAcionados: initialData.orgaos_acionados || initialData.orgaosAcionados
             })
+        } else {
+            getNextId()
         }
     }, [initialData])
 
@@ -124,6 +126,33 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(p => p.id !== id) }))
     }
 
+    const getNextId = async () => {
+        const currentYear = new Date().getFullYear()
+        const { data, error } = await supabase
+            .from('interdicoes')
+            .select('interdicao_id')
+            .filter('interdicao_id', 'like', `%/${currentYear}`)
+
+        let nextNum = 1
+        if (data && data.length > 0) {
+            const ids = data.map(v => {
+                const parts = (v.interdicao_id || '').split('/')
+                return parseInt(parts[0])
+            }).filter(n => !isNaN(n)).sort((a, b) => a - b)
+
+            for (let i = 0; i < ids.length; i++) {
+                if (ids[i] === nextNum) {
+                    nextNum++
+                } else if (ids[i] > nextNum) {
+                    break
+                }
+            }
+        }
+
+        const formattedId = `${nextNum.toString().padStart(2, '0')}/${currentYear}`
+        setFormData(prev => ({ ...prev, interdicaoId: formattedId }))
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setSaving(true)
@@ -166,6 +195,12 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     </h2>
 
                     <div className="grid grid-cols-2 gap-5">
+                        <div className="col-span-2">
+                            <label className={labelClasses}>Nº Interdição</label>
+                            <div className="bg-blue-50/50 text-[#2a5299] font-black text-lg p-3.5 rounded-xl border border-blue-100/50 flex justify-between items-center shadow-inner">
+                                {formData.interdicaoId || 'Gerando...'}
+                            </div>
+                        </div>
                         <div className="col-span-2">
                             <label className={labelClasses}>Data e Hora</label>
                             <input type="datetime-local" value={formData.dataHora} onChange={e => handleChange('dataHora', e.target.value)} className={inputClasses} />
@@ -350,10 +385,10 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{formData.fotos.length} fotos</span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-4 gap-3 justify-items-center">
                         <FileInput onFileSelect={handlePhotoSelect} label="+" />
                         {formData.fotos.map((foto, idx) => (
-                            <div key={foto.id} className="relative aspect-square rounded-xl overflow-hidden shadow-md group">
+                            <div key={foto.id} className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md group">
                                 <img src={foto.data} className="w-full h-full object-cover" alt="Preview" />
                                 <button type="button" onClick={() => removePhoto(foto.id)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                     <X size={12} />

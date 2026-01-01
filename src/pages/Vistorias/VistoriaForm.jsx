@@ -25,7 +25,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         enderecoSolicitante: '',
 
         // Localização
-        endereco: '', // Occurrence Address
+        endereco: '',
+        bairro: '',
+        latitude: '',
+        longitude: '',
         coordenadas: '',
         dataHora: new Date().toISOString().slice(0, 16),
 
@@ -46,13 +49,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         if (initialData) {
             setFormData(initialData)
         } else {
-            // Initialize new form
-            setFormData(prev => ({
-                ...prev,
-                vistoriaId: Math.floor(Math.random() * 10000).toString().padStart(4, '0'),
-                agente: userProfile?.full_name || '',
-                matricula: userProfile?.matricula || ''
-            }))
+            getNextId()
         }
 
         // Fetch types
@@ -83,8 +80,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         setGettingLoc(true)
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                const coords = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`
-                setFormData(prev => ({ ...prev, coordenadas: coords }))
+                const { latitude, longitude } = pos.coords
+                setFormData(prev => ({
+                    ...prev,
+                    latitude: latitude.toFixed(6),
+                    longitude: longitude.toFixed(6),
+                    coordenadas: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+                }))
                 setGettingLoc(false)
                 alert("Coordenadas atualizadas com sucesso!")
             },
@@ -131,6 +133,38 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     const removeDoc = (id) => {
         setFormData(prev => ({ ...prev, documentos: prev.documentos.filter(d => d.id !== id) }))
+    }
+
+    const getNextId = async () => {
+        const currentYear = new Date().getFullYear()
+        const { data, error } = await supabase
+            .from('vistorias')
+            .select('vistoria_id')
+            .filter('vistoria_id', 'like', `%/${currentYear}`)
+
+        let nextNum = 1
+        if (data && data.length > 0) {
+            const ids = data.map(v => {
+                const parts = (v.vistoria_id || '').split('/')
+                return parseInt(parts[0])
+            }).filter(n => !isNaN(n)).sort((a, b) => a - b)
+
+            for (let i = 0; i < ids.length; i++) {
+                if (ids[i] === nextNum) {
+                    nextNum++
+                } else if (ids[i] > nextNum) {
+                    break
+                }
+            }
+        }
+
+        const formattedId = `${nextNum.toString().padStart(2, '0')}/${currentYear}`
+        setFormData(prev => ({
+            ...prev,
+            vistoriaId: formattedId,
+            agente: userProfile?.full_name || '',
+            matricula: userProfile?.matricula || ''
+        }))
     }
 
     const handleSubmit = async (e) => {
@@ -259,6 +293,16 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             />
                         </div>
                     </div>
+                    <div>
+                        <label className={labelClasses}>Bairro</label>
+                        <input
+                            type="text"
+                            className={inputClasses}
+                            placeholder="Bairro da ocorrência"
+                            value={formData.bairro}
+                            onChange={e => handleChange('bairro', e.target.value)}
+                        />
+                    </div>
                     <div className="grid grid-cols-1 gap-5">
                         <div>
                             <label className={labelClasses}>Coordenadas</label>
@@ -306,10 +350,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <h2 className="font-bold text-gray-800 text-lg">Evidências</h2>
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{formData.fotos.length} fotos</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-4 gap-3 justify-items-center">
                         <FileInput onFileSelect={handlePhotoSelect} label="+" />
                         {formData.fotos.map(foto => (
-                            <div key={foto.id} className="relative aspect-square rounded-xl overflow-hidden shadow-md">
+                            <div key={foto.id} className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md">
                                 <img src={foto.data} className="w-full h-full object-cover" />
                                 <button type="button" onClick={() => removePhoto(foto.id)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500"><Trash2 size={12} /></button>
                             </div>
