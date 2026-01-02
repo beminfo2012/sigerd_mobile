@@ -12,10 +12,14 @@ export const api = {
 
             const locations = vistorias?.filter(v => v.coordenadas).map(v => {
                 const parts = v.coordenadas.split(',')
+                const subtypes = v.subtipos_risco || []
+                // Use subtypes if available, otherwise fallback to category
+                const riskLabel = subtypes.length > 0 ? subtypes.join(', ') : (v.categoria_risco || 'Indefinido')
+
                 return {
                     lat: parseFloat(parts[0]),
                     lng: parseFloat(parts[1]),
-                    risk: 'Alto'
+                    risk: riskLabel
                 }
             }) || []
 
@@ -57,7 +61,7 @@ export const api = {
 
             return {
                 stats: {
-                    totalVistorias: total,
+                    totalVistorias: totalReports,
                     activeOccurrences: inmetAlertsCount,
                     inmetAlertsCount
                 },

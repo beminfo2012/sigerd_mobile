@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2 } from 'lucide-react'
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
 
@@ -63,7 +63,9 @@ const Dashboard = () => {
 
                     finalData.locations = localVistorias.filter(v => v.coordenadas).map(v => {
                         const parts = v.coordenadas.split(',')
-                        return { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]), risk: 'Local' }
+                        const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                        const riskLabel = subtypes.length > 0 ? subtypes.join(', ') : (v.categoriaRisco || v.categoria_risco || 'Local')
+                        return { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]), risk: riskLabel }
                     })
                 } else {
                     const unsynced = localVistorias.filter(v => v.synced === false)
@@ -71,10 +73,12 @@ const Dashboard = () => {
                     unsynced.forEach(v => {
                         if (v.coordenadas) {
                             const parts = v.coordenadas.split(',')
+                            const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                            const riskLabel = subtypes.length > 0 ? subtypes.join(', ') : (v.categoriaRisco || v.categoria_risco || 'Pendente')
                             finalData.locations.push({
                                 lat: parseFloat(parts[0]),
                                 lng: parseFloat(parts[1]),
-                                risk: 'Pendente'
+                                risk: riskLabel
                             })
                         }
 
@@ -378,12 +382,19 @@ const Dashboard = () => {
                                 center={[loc.lat, loc.lng]}
                                 radius={8}
                                 pathOptions={{
-                                    color: loc.risk === 'Alto' ? '#ef4444' : '#f97316',
-                                    fillColor: loc.risk === 'Alto' ? '#ef4444' : '#f97316',
+                                    color: loc.risk.includes('Alto') ? '#ef4444' : '#f97316',
+                                    fillColor: loc.risk.includes('Alto') ? '#ef4444' : '#f97316',
                                     fillOpacity: 0.6,
                                     stroke: false
                                 }}
-                            />
+                            >
+                                <Popup>
+                                    <div className="text-center">
+                                        <div className="font-bold text-slate-800 mb-1">Risco Identificado</div>
+                                        <div className="text-sm text-slate-600">{loc.risk}</div>
+                                    </div>
+                                </Popup>
+                            </CircleMarker>
                         ))}
                     </MapContainer>
                 </div>
