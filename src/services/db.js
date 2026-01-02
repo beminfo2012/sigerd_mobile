@@ -356,6 +356,22 @@ export const clearLocalData = async () => {
     }
 }
 
+export const resetDatabase = async () => {
+    const db = await initDB()
+    db.close()
+
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.deleteDatabase(DB_NAME)
+        req.onsuccess = () => resolve()
+        req.onerror = () => reject()
+        req.onblocked = () => {
+            console.warn('DB delete blocked, reloading page...')
+            window.location.reload()
+            resolve()
+        }
+    })
+}
+
 // GeoRescue Logic
 export const importInstallations = async (data) => {
     const db = await initDB()
