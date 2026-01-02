@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
 import { generatePDF } from '../../utils/pdfGenerator'
+import { compressImage } from '../../utils/imageOptimizer'
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -64,7 +65,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         latitude: '',
         longitude: '',
         coordenadas: '',
-        dataHora: new Date().toISOString().slice(0, 16),
+        dataHora: new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).toISOString().slice(0, 16),
 
         // 5. Detalhes (Evolução)
         categoriaRisco: '',
@@ -94,8 +95,15 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         if (initialData) {
             setFormData({
                 ...initialData,
-                // Ensure arrays are handled
+                // Map snake_case from DB to camelCase for form state
+                vistoriaId: initialData.vistoria_id || initialData.vistoriaId,
+                dataHora: initialData.data_hora || initialData.dataHora,
+                enderecoSolicitante: initialData.endereco_solicitante || initialData.enderecoSolicitante,
+                categoriaRisco: initialData.categoria_risco || initialData.categoriaRisco,
                 subtiposRisco: initialData.subtipos_risco || initialData.subtiposRisco || [],
+                nivelRisco: initialData.nivel_risco || initialData.nivelRisco || 'Baixo',
+                situacaoObservada: initialData.situacao_observada || initialData.situacaoObservada || 'Estabilizado',
+                populacaoEstimada: initialData.populacao_estimada || initialData.populacaoEstimada,
                 gruposVulneraveis: initialData.grupos_vulneraveis || initialData.gruposVulneraveis || [],
                 medidasTomadas: initialData.medidas_tomadas || initialData.medidasTomadas || [],
                 encaminhamentos: initialData.encaminhamentos || []
@@ -157,11 +165,23 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         const newPhotos = await Promise.all(files.map(file => {
             return new Promise((resolve) => {
                 const reader = new FileReader()
-                reader.onloadend = () => resolve({
-                    id: Date.now() + Math.random(),
-                    data: reader.result,
-                    name: file.name
-                })
+                reader.onloadend = async () => {
+                    try {
+                        const compressed = await compressImage(reader.result)
+                        resolve({
+                            id: Date.now() + Math.random(),
+                            data: compressed,
+                            name: file.name
+                        })
+                    } catch (e) {
+                        console.error("Compression error:", e)
+                        resolve({
+                            id: Date.now() + Math.random(),
+                            data: reader.result,
+                            name: file.name
+                        })
+                    }
+                }
                 reader.readAsDataURL(file)
             })
         }))

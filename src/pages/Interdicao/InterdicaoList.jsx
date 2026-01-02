@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, AlertOctagon } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
+import { deleteInterdicaoLocal, getAllInterdicoesLocal } from '../../services/db'
 
 const InterdicaoList = ({ onNew, onEdit }) => {
     const [interdicoes, setInterdicoes] = useState([])
@@ -15,14 +16,37 @@ const InterdicaoList = ({ onNew, onEdit }) => {
     const fetchInterdicoes = async () => {
         setLoading(true)
         try {
-            const { data, error } = await supabase
+            // 1. Cloud
+            const { data: cloudData, error } = await supabase
                 .from('interdicoes')
-                .select('*')
+                .select('id, interdicao_id, created_at, medida_tipo, endereco, responsavel_nome')
                 .order('created_at', { ascending: false })
 
-            if (data) {
-                setInterdicoes(data)
-            }
+            // 2. Local
+            const localData = await getAllInterdicoesLocal().catch(() => [])
+
+            // 3. Merge
+            const merged = [...(cloudData || [])]
+            localData.forEach(localItem => {
+                const alreadyInCloud = merged.some(c =>
+                    (c.interdicao_id === localItem.interdicaoId && c.interdicao_id) ||
+                    (c.id === localItem.id)
+                )
+
+                if (!alreadyInCloud) {
+                    merged.push({
+                        ...localItem,
+                        id: localItem.id,
+                        interdicao_id: localItem.interdicaoId,
+                        created_at: localItem.createdAt || new Date().toISOString(),
+                        isLocal: true,
+                        synced: localItem.synced
+                    })
+                }
+            })
+
+            merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            setInterdicoes(merged)
         } catch (error) {
             console.error(error)
         } finally {
@@ -35,6 +59,7 @@ const InterdicaoList = ({ onNew, onEdit }) => {
         if (window.confirm('Tem certeza que deseja excluir esta interdição?')) {
             const { error } = await supabase.from('interdicoes').delete().eq('id', id)
             if (!error) {
+                await deleteInterdicaoLocal(id)
                 setInterdicoes(prev => prev.filter(v => v.id !== id))
             } else {
                 alert('Erro ao excluir.')
@@ -91,9 +116,17 @@ const InterdicaoList = ({ onNew, onEdit }) => {
                             className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm active:scale-[0.99] transition-transform cursor-pointer"
                         >
                             <div className="flex justify-between items-start mb-2">
-                                <span className="bg-blue-50 text-[#2a5299] text-xs font-bold px-2 py-1 rounded-md">
-                                    #{item.interdicao_id || '---'}
-                                </span>
+                                <div className="flex gap-2 items-center">
+                                    <span className="bg-blue-50 text-[#2a5299] text-xs font-bold px-2 py-1 rounded-md">
+                                        #{item.interdicao_id || '---'}
+                                    </span>
+                                    {item.isLocal && !item.synced && (
+                                        <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 flex items-center gap-1">
+                                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                                            Pendente
+                                        </span>
+                                    )}
+                                </div>
                                 <span className="text-xs text-gray-400 font-medium flex items-center gap-1">
                                     <Calendar size={12} />
                                     {new Date(item.created_at).toLocaleDateString('pt-BR')}

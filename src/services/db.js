@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 export const initDB = async () => {
     return openDB(DB_NAME, DB_VERSION, {
@@ -11,6 +11,12 @@ export const initDB = async () => {
             if (!db.objectStoreNames.contains('installations')) {
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
+            }
+
+            // Store for Vistorias (Offline Sync)
+            if (!db.objectStoreNames.contains('vistorias')) {
+                const store = db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true })
+                store.createIndex('synced', 'synced', { unique: false })
             }
 
             // Store for Interdições (Offline Sync)
@@ -89,13 +95,24 @@ export const saveVistoriaOffline = async (data) => {
                     solicitante: data.solicitante,
                     cpf: data.cpf,
                     telefone: data.telefone,
+                    endereco_solicitante: data.enderecoSolicitante,
                     endereco: data.endereco,
+                    bairro: data.bairro,
+                    latitude: parseFloat(data.latitude) || null,
+                    longitude: parseFloat(data.longitude) || null,
                     coordenadas: data.coordenadas,
                     data_hora: data.dataHora,
-                    tipo_info: data.tipoInfo,
+                    categoria_risco: data.categoriaRisco,
+                    subtipos_risco: data.subtiposRisco,
+                    nivel_risco: data.nivelRisco,
+                    situacao_observada: data.situacaoObservada,
+                    populacao_estimada: data.populacaoEstimada,
+                    grupos_vulneraveis: data.gruposVulneraveis,
                     observacoes: data.observacoes,
-                    fotos: processedPhotos, // URLs now
-                    documentos: data.documentos // TODO: Handle docs likely
+                    medidas_tomadas: data.medidasTomadas,
+                    encaminhamentos: data.encaminhamentos,
+                    fotos: processedPhotos,
+                    documentos: data.documentos
                 }])
                 .select()
 
@@ -192,11 +209,22 @@ const syncSingleItem = async (type, item, db) => {
                 solicitante: item.solicitante,
                 cpf: item.cpf,
                 telefone: item.telefone,
+                endereco_solicitante: item.enderecoSolicitante,
                 endereco: item.endereco,
+                bairro: item.bairro,
+                latitude: parseFloat(item.latitude) || null,
+                longitude: parseFloat(item.longitude) || null,
                 coordenadas: item.coordenadas,
                 data_hora: item.dataHora,
-                tipo_info: item.tipoInfo,
+                categoria_risco: item.categoriaRisco,
+                subtipos_risco: item.subtiposRisco,
+                nivel_risco: item.nivelRisco,
+                situacao_observada: item.situacaoObservada,
+                populacao_estimada: item.populacaoEstimada,
+                grupos_vulneraveis: item.gruposVulneraveis,
                 observacoes: item.observacoes,
+                medidas_tomadas: item.medidasTomadas,
+                encaminhamentos: item.encaminhamentos,
                 fotos: processedPhotos,
                 documentos: item.documentos
             }
@@ -255,9 +283,46 @@ export const getPendingVistorias = async () => {
     return db.getAllFromIndex('vistorias', 'synced', false)
 }
 
+export const deleteVistoriaLocal = async (id) => {
+    const db = await initDB()
+    // Find internal id if external id is provided
+    let localId = id
+    if (typeof id === 'string') {
+        const all = await db.getAll('vistorias')
+        const found = all.find(v => v.id === id || v.vistoria_id === id)
+        if (found) localId = found.id
+    }
+    await db.delete('vistorias', localId)
+}
+
+export const deleteInterdicaoLocal = async (id) => {
+    const db = await initDB()
+    let localId = id
+    if (typeof id === 'string') {
+        const all = await db.getAll('interdicoes')
+        const found = all.find(i => i.id === id || i.interdicao_id === id)
+        if (found) localId = found.id
+    }
+    await db.delete('interdicoes', localId)
+}
+
 export const getAllVistoriasLocal = async () => {
     const db = await initDB()
-    return db.getAll('vistorias')
+    const all = await db.getAll('vistorias')
+    // Ensure normalization for display mapping
+    return all.map(v => ({
+        ...v,
+        tipo_info: v.tipo_info || v.tipoInfo || v.categoriaRisco || 'Vistoria Geral'
+    }))
+}
+
+export const getAllInterdicoesLocal = async () => {
+    const db = await initDB()
+    const all = await db.getAll('interdicoes')
+    return all.map(i => ({
+        ...i,
+        tipo_info: i.tipo_info || i.tipoInfo || i.riscoTipo || 'Interdição'
+    }))
 }
 
 export const saveInterdicaoOffline = async (data) => {
@@ -274,6 +339,21 @@ export const saveInterdicaoOffline = async (data) => {
     }
 
     return localId
+}
+
+export const clearLocalData = async () => {
+    const db = await initDB()
+    const stores = []
+    if (db.objectStoreNames.contains('vistorias')) stores.push('vistorias')
+    if (db.objectStoreNames.contains('interdicoes')) stores.push('interdicoes')
+
+    if (stores.length > 0) {
+        const tx = db.transaction(stores, 'readwrite')
+        for (const s of stores) {
+            await tx.objectStore(s).clear()
+        }
+        await tx.done
+    }
 }
 
 // GeoRescue Logic

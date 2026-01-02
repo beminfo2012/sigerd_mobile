@@ -11,18 +11,19 @@ const normalizeData = (data, type) => {
             solicitante: data.solicitante || '---',
             cpf: data.cpf || '---',
             telefone: data.telefone || '---',
+            enderecoSolicitante: data.enderecoSolicitante || data.endereco_solicitante || '---',
             endereco: data.endereco || '---',
             bairro: data.bairro || '---',
             latitude: data.latitude || '---',
             longitude: data.longitude || '---',
-            categoriaRisco: data.categoriaRisco || '---',
-            subtiposRisco: data.subtiposRisco || [],
-            nivelRisco: data.nivelRisco || 'Baixo',
-            situacaoObservada: data.situacaoObservada || 'Estabilizado',
-            populacaoEstimada: data.populacaoEstimada || '---',
-            gruposVulneraveis: data.gruposVulneraveis || [],
+            categoriaRisco: data.categoriaRisco || data.categoria_risco || '---',
+            subtiposRisco: data.subtiposRisco || data.subtipos_risco || [],
+            nivelRisco: data.nivelRisco || data.nivel_risco || 'Baixo',
+            situacaoObservada: data.situacaoObservada || data.situacao_observada || 'Estabilizado',
+            populacaoEstimada: data.populacaoEstimada || data.populacao_estimada || '---',
+            gruposVulneraveis: data.gruposVulneraveis || data.grupos_vulneraveis || [],
             observacoes: data.observacoes || '---',
-            medidasTomadas: data.medidasTomadas || [],
+            medidasTomadas: data.medidasTomadas || data.medidas_tomadas || [],
             encaminhamentos: data.encaminhamentos || [],
             agente: data.agente || '---',
             matricula: data.matricula || '---',
@@ -55,7 +56,7 @@ const normalizeData = (data, type) => {
 export const generatePDF = async (rawData, type) => {
     const data = normalizeData(rawData, type);
     const isVistoria = type === 'vistoria';
-    const title = isVistoria ? 'EXTRATO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
+    const title = isVistoria ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
     const filename = `${type}_${(data.vistoriaId || data.interdicaoId || 'doc').replace('/', '_')}.pdf`;
 
     const container = document.createElement('div');
@@ -106,7 +107,7 @@ export const generatePDF = async (rawData, type) => {
             'Alto': '#f97316',
             'Iminente': '#ef4444'
         };
-        return `<span style="background: ${colors[nivel] || '#64748b'}; color: white; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 800;">${nivel.toUpperCase()}</span>`;
+        return `<span style="background: ${colors[nivel] || '#64748b'}; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 800; display: inline-block; line-height: 1; vertical-align: middle;">${nivel.toUpperCase()}</span>`;
     };
 
     let contentHtml = '';
@@ -117,7 +118,7 @@ export const generatePDF = async (rawData, type) => {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                     ${renderField('Número da Vistoria', data.vistoriaId)}
                     ${renderField('Número do Processo', data.processo)}
-                    ${renderField('Data e Hora da Emissão', new Date(data.dataHora).toLocaleString('pt-BR'))}
+                    ${renderField('Data e Hora da Emissão', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
                     ${renderField('Agente Responsável', data.agente)}
                     ${renderField('Matrícula do Agente', data.matricula)}
                 </div>
@@ -125,6 +126,9 @@ export const generatePDF = async (rawData, type) => {
                 ${sectionTitle('2. Localização e Solicitante')}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                     <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
+                    ${renderField('CPF', data.cpf)}
+                    ${renderField('Telefone', data.telefone)}
+                    <div style="grid-column: span 2;">${renderField('Endereço do Solicitante', data.enderecoSolicitante)}</div>
                     <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
                     ${renderField('Bairro / Localidade', data.bairro)}
                     ${renderField('Coordenadas (Lat, Long)', `${data.latitude}, ${data.longitude}`)}
@@ -157,7 +161,7 @@ export const generatePDF = async (rawData, type) => {
                 ${sectionTitle('1. Identificação da Ordem')}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                     ${renderField('Número de Controle', data.interdicaoId)}
-                    ${renderField('Data e Hora da Ação', new Date(data.dataHora).toLocaleString('pt-BR'))}
+                    ${renderField('Data e Hora da Ação', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
                     <div style="grid-column: span 2;">${renderField('Responsável pelo Imóvel', data.responsavelNome)}</div>
                 </div>
 
@@ -196,7 +200,7 @@ export const generatePDF = async (rawData, type) => {
                 <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a;">${data.agente}</p>
                 <p style="margin: 0; font-size: 12px; color: #64748b;">Agente de Defesa Civil - Matrícula ${data.matricula}</p>
             </div>
-            <p style="margin-top: 20px; font-size: 10px; color: #94a3b8;">Documento oficial gerado em ${new Date().toLocaleString('pt-BR')} pelo Sistema SIGERD Mobile.</p>
+            <p style="margin-top: 20px; font-size: 10px; color: #94a3b8;">Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema SIGERD Mobile.</p>
         </div>
     `;
 

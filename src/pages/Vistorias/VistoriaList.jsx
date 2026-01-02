@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
+import { deleteVistoriaLocal, getAllVistoriasLocal } from '../../services/db'
 
 const VistoriaList = ({ onNew, onEdit }) => {
     const [vistorias, setVistorias] = useState([])
@@ -15,15 +16,47 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const fetchVistorias = async () => {
         setLoading(true)
         try {
-            // Fetch from Supabase
-            const { data, error } = await supabase
+            // 1. Fetch from Supabase
+            const { data: cloudData, error } = await supabase
                 .from('vistorias')
-                .select('*')
+                .select(`
+                    id, vistoria_id, created_at, processo, agente, matricula, 
+                    solicitante, cpf, telefone, endereco_solicitante, endereco, bairro, 
+                    latitude, longitude, coordenadas, data_hora, categoria_risco, 
+                    subtipos_risco, nivel_risco, situacao_observada, populacao_estimada, 
+                    grupos_vulneraveis, observacoes, medidas_tomadas, encaminhamentos
+                `)
                 .order('created_at', { ascending: false })
 
-            if (data) {
-                setVistorias(data)
-            }
+            // 2. Fetch from Local
+            const localData = await getAllVistoriasLocal().catch(() => [])
+
+            // 3. Merge and De-duplicate
+            const merged = [...(cloudData || [])]
+
+            // Add local items that aren't in cloud yet (unsynced)
+            localData.forEach(localItem => {
+                const alreadyInCloud = merged.some(c =>
+                    (c.vistoria_id === localItem.vistoriaId && c.vistoria_id) ||
+                    (c.id === localItem.id)
+                )
+
+                if (!alreadyInCloud) {
+                    merged.push({
+                        ...localItem,
+                        id: localItem.id, // Keep local ID
+                        vistoria_id: localItem.vistoriaId,
+                        created_at: localItem.createdAt || new Date().toISOString(),
+                        isLocal: true,
+                        synced: localItem.synced
+                    })
+                }
+            })
+
+            // Sort merged by date
+            merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+            setVistorias(merged)
         } catch (error) {
             console.error(error)
         } finally {
@@ -36,6 +69,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
         if (window.confirm('Tem certeza que deseja excluir esta vistoria?')) {
             const { error } = await supabase.from('vistorias').delete().eq('id', id)
             if (!error) {
+                await deleteVistoriaLocal(id)
                 setVistorias(prev => prev.filter(v => v.id !== id))
             } else {
                 alert('Erro ao excluir.')
@@ -93,9 +127,17 @@ const VistoriaList = ({ onNew, onEdit }) => {
                             className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm active:scale-[0.99] transition-transform cursor-pointer"
                         >
                             <div className="flex justify-between items-start mb-2">
-                                <span className="bg-blue-50 text-[#2a5299] text-xs font-bold px-2 py-1 rounded-md">
-                                    #{vistoria.vistoria_id || '---'}
-                                </span>
+                                <div className="flex gap-2 items-center">
+                                    <span className="bg-blue-50 text-[#2a5299] text-xs font-bold px-2 py-1 rounded-md">
+                                        #{vistoria.vistoria_id || '---'}
+                                    </span>
+                                    {vistoria.isLocal && !vistoria.synced && (
+                                        <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 flex items-center gap-1">
+                                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                                            Pendente
+                                        </span>
+                                    )}
+                                </div>
                                 <span className="text-xs text-gray-400 font-medium flex items-center gap-1">
                                     <Calendar size={12} />
                                     {new Date(vistoria.created_at).toLocaleDateString('pt-BR')}

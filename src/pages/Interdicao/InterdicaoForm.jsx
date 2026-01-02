@@ -3,11 +3,12 @@ import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, Sh
 import { saveInterdicaoOffline } from '../../services/db'
 import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
+import { compressImage } from '../../utils/imageOptimizer'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const [formData, setFormData] = useState({
         interdicaoId: '',
-        dataHora: new Date().toISOString().slice(0, 16),
+        dataHora: new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).toISOString().slice(0, 16),
         municipio: 'Santa Maria de Jetibá',
         bairro: '',
         endereco: '',
@@ -111,11 +112,23 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         const newPhotos = await Promise.all(files.map(file => {
             return new Promise((resolve) => {
                 const reader = new FileReader()
-                reader.onloadend = () => resolve({
-                    id: Date.now() + Math.random(),
-                    data: reader.result,
-                    legenda: ''
-                })
+                reader.onloadend = async () => {
+                    try {
+                        const compressed = await compressImage(reader.result)
+                        resolve({
+                            id: Date.now() + Math.random(),
+                            data: compressed,
+                            legenda: ''
+                        })
+                    } catch (e) {
+                        console.error("Compression error:", e)
+                        resolve({
+                            id: Date.now() + Math.random(),
+                            data: reader.result,
+                            legenda: ''
+                        })
+                    }
+                }
                 reader.readAsDataURL(file)
             })
         }))

@@ -4,7 +4,7 @@ import { api } from '../../services/api'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal } from '../../services/db'
+import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
 
 const Dashboard = () => {
     const navigate = useNavigate()
@@ -75,13 +75,18 @@ const Dashboard = () => {
                             })
                         }
 
-                        // Update breakdown
-                        const type = v.tipoInfo || v.tipo_info || 'Outros'
+                        // Update breakdown - db.js now ensures tipo_info is populated
+                        const type = v.tipo_info
                         const existing = finalData.breakdown.find(b => b.label.toLowerCase() === type.toLowerCase())
                         if (existing) {
                             existing.count++
                         } else {
-                            finalData.breakdown.push({ label: type, count: 1, percentage: 0, color: 'bg-slate-300' })
+                            finalData.breakdown.push({
+                                label: type,
+                                count: 1,
+                                percentage: 0,
+                                color: 'bg-slate-300'
+                            })
                         }
                     })
 
@@ -96,6 +101,12 @@ const Dashboard = () => {
                 }
 
                 setWeather(weatherResult)
+
+                // Final safety check: if total is 0, ensure breakdown is empty
+                if (finalData.stats.totalVistorias === 0) {
+                    finalData.breakdown = []
+                }
+
                 setData(finalData)
             } catch (err) {
                 console.error('Fatal dashboard load error:', err)
@@ -128,6 +139,21 @@ const Dashboard = () => {
             alert('Erro ao sincronizar dados.')
         } finally {
             setSyncing(false)
+        }
+    }
+
+    const handleClearCache = async () => {
+        if (!window.confirm('⚠️ AVISO: Isso irá apagar TODAS as vistorias do seu celular (mesmo as pendentes) e resetar a base de dados local. Use apenas se o gráfico estiver com erro. Continuar?')) return
+
+        try {
+            setLoading(true)
+            await resetDatabase()
+            alert('Banco de dados resetado com sucesso! Reiniciando...')
+            window.location.reload()
+        } catch (e) {
+            console.error('Reset failed:', e)
+            await clearLocalData().catch(() => { })
+            window.location.reload()
         }
     }
 
@@ -272,6 +298,14 @@ const Dashboard = () => {
                     <div className="text-xs font-bold text-slate-400 leading-tight">
                         {syncing ? 'Enviando para nuvem...' : (syncCount > 0 ? 'Clique para Sincronizar' : 'Dados Sincronizados')}
                     </div>
+                    {syncCount > 0 && !syncing && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleClearCache(); }}
+                            className="mt-2 text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors"
+                        >
+                            Limpar Pendências
+                        </button>
+                    )}
                 </div>
 
                 {/* Ocorrências Card */}
@@ -345,7 +379,10 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Map Section */}
+            {/* Footer Version */}
+            <div className="text-center py-4 opacity-20 hover:opacity-100 transition-opacity">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD Mobile v1.1.3</span>
+            </div>
             <div className="bg-white p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden mb-6">
                 <div className="flex justify-between items-center mb-4 px-1">
                     <div>
