@@ -153,6 +153,25 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         })
     }
 
+    const handlePhotoSelect = async (files) => {
+        const newPhotos = await Promise.all(files.map(file => {
+            return new Promise((resolve) => {
+                const reader = new FileReader()
+                reader.onloadend = () => resolve({
+                    id: Date.now() + Math.random(),
+                    data: reader.result,
+                    name: file.name
+                })
+                reader.readAsDataURL(file)
+            })
+        }))
+        setFormData(prev => ({ ...prev, fotos: [...prev.fotos, ...newPhotos] }))
+    }
+
+    const removePhoto = (id) => {
+        setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(p => p.id !== id) }))
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
 
