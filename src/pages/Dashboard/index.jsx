@@ -41,15 +41,23 @@ const Dashboard = () => {
                     const total = localVistorias.length
                     const counts = {}
                     localVistorias.forEach(v => {
-                        const type = v.tipoInfo || v.tipo_info || 'Outros'
-                        counts[type] = (counts[type] || 0) + 1
+                        const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                        if (subtypes.length === 0) {
+                            const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
+                            counts[cat] = (counts[cat] || 0) + 1
+                        } else {
+                            subtypes.forEach(sub => {
+                                counts[sub] = (counts[sub] || 0) + 1
+                            })
+                        }
                     })
 
+                    const totalOccurrences = Object.values(counts).reduce((a, b) => a + b, 0)
                     finalData.stats.totalVistorias = total
                     finalData.breakdown = Object.keys(counts).map(label => ({
                         label,
                         count: counts[label],
-                        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                        percentage: totalOccurrences > 0 ? Math.round((counts[label] / totalOccurrences) * 100) : 0,
                         color: 'bg-blue-400'
                     })).sort((a, b) => b.count - a.count)
 
@@ -70,25 +78,32 @@ const Dashboard = () => {
                             })
                         }
 
-                        const type = v.tipo_info || v.tipoInfo || 'Outros'
-                        const existing = finalData.breakdown.find(b => b.label.toLowerCase() === type.toLowerCase())
-                        if (existing) {
-                            existing.count++
+                        const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                        if (subtypes.length === 0) {
+                            const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
+                            const existing = finalData.breakdown.find(b => b.label.toLowerCase() === cat.toLowerCase())
+                            if (existing) {
+                                existing.count++
+                            } else {
+                                finalData.breakdown.push({ label: cat, count: 1, percentage: 0, color: 'bg-slate-300' })
+                            }
                         } else {
-                            finalData.breakdown.push({
-                                label: type,
-                                count: 1,
-                                percentage: 0,
-                                color: 'bg-slate-300'
+                            subtypes.forEach(sub => {
+                                const existing = finalData.breakdown.find(b => b.label.toLowerCase() === sub.toLowerCase())
+                                if (existing) {
+                                    existing.count++
+                                } else {
+                                    finalData.breakdown.push({ label: sub, count: 1, percentage: 0, color: 'bg-slate-300' })
+                                }
                             })
                         }
                     })
 
                     finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length
 
-                    const newTotal = finalData.stats.totalVistorias
+                    const totalOccurrences = finalData.breakdown.reduce((acc, b) => acc + b.count, 0)
                     finalData.breakdown.forEach(b => {
-                        b.percentage = newTotal > 0 ? Math.round((b.count / newTotal) * 100) : 0
+                        b.percentage = totalOccurrences > 0 ? Math.round((b.count / totalOccurrences) * 100) : 0
                     })
                     finalData.breakdown.sort((a, b) => b.count - a.count)
                 }
@@ -381,7 +396,7 @@ const Dashboard = () => {
             )}
 
             <div className="text-center py-8 opacity-20 hover:opacity-100 transition-opacity">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD Mobile v1.1.3</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD Mobile v1.1.4</span>
             </div>
         </div>
     )
