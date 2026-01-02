@@ -334,10 +334,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             <label className={labelClasses}>Nível de Risco</label>
                             <div className="grid grid-cols-2 gap-2 mt-2">
                                 {[
-                                    { id: 'Baixo', label: '🟢 Baixo', color: 'bg-green-100 text-green-700 border-green-200' },
-                                    { id: 'Médio', label: '🟡 Médio', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-                                    { id: 'Alto', label: '🟠 Alto', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-                                    { id: 'Iminente', label: '🔴 Iminente', color: 'bg-red-100 text-red-700 border-red-200' }
+                                    { id: 'Baixo', label: 'Baixo', color: 'bg-green-100 text-green-700 border-green-200' },
+                                    { id: 'Médio', label: 'Médio', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+                                    { id: 'Alto', label: 'Alto', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+                                    { id: 'Iminente', label: 'Iminente', color: 'bg-red-100 text-red-700 border-red-200' }
                                 ].map(nivel => (
                                     <button key={nivel.id} type="button" onClick={() => setFormData({ ...formData, nivelRisco: nivel.id })} className={`p-4 rounded-xl font-bold border-2 transition-all ${formData.nivelRisco === nivel.id ? nivel.color : 'bg-white text-slate-400 border-slate-50'}`}>
                                         {nivel.label}
