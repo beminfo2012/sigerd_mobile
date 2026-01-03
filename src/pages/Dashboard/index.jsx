@@ -41,10 +41,8 @@ const Dashboard = () => {
                     const total = localVistorias.length
                     const counts = {}
                     localVistorias.forEach(v => {
-                        localVistorias.forEach(v => {
-                            const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
-                            counts[cat] = (counts[cat] || 0) + 1
-                        })
+                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
+                        counts[cat] = (counts[cat] || 0) + 1
                     })
 
                     // Color palette for distinct categories

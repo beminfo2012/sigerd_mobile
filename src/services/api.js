@@ -9,11 +9,13 @@ export const api = {
             const { data: vistorias } = await supabase
                 .from('vistorias')
                 .select('coordenadas, categoria_risco, subtipos_risco')
+                .order('created_at', { ascending: false })
+                .limit(5000)
 
             const locations = vistorias?.filter(v => v.coordenadas).map(v => {
                 const parts = v.coordenadas.split(',')
                 const subtypes = v.subtipos_risco || []
-                const category = v.categoria_risco || 'Indefinido'
+                const category = v.categoria_risco || 'Outros'
 
                 return {
                     lat: parseFloat(parts[0]),
