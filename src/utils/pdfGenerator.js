@@ -223,7 +223,6 @@ export const generatePDF = async (rawData, type) => {
                             <img 
                                 src="${data.assinaturaAgente}" 
                                 style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 1px solid #e2e8f0;" 
-                                crossorigin="anonymous"
                             />
                         ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 10px;"></div>'}
                     </div>
