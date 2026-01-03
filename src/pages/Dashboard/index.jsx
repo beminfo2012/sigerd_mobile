@@ -429,10 +429,10 @@ const Dashboard = () => {
                             {weather.daily.map((day, idx) => (
                                 <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
                                     <div className="flex items-center gap-4">
-                                        <div className="text-2xl">{getWeatherIcon(day.weatherCode)}</div>
+                                        <div className="text-2xl">{getWeatherIcon(day.code || day.weatherCode)}</div>
                                         <div>
                                             <div className="text-sm font-bold text-slate-800">
-                                                {new Date(day.time).toLocaleDateString('pt-BR', { weekday: 'long' })}
+                                                {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}
                                             </div>
                                             <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                                                 <CloudRain size={10} className="text-blue-500" />
