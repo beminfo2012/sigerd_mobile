@@ -69,7 +69,10 @@ const Alerts = () => {
                 backgroundColor: '#ffffff',
                 windowWidth: 1080,
                 windowHeight: format === 'stories' ? 1920 : 1080,
-                logging: false
+                logging: false,
+                onclone: (doc) => {
+                    // Force specific font weights or fixes during cloning if needed
+                }
             })
 
             const dataURL = canvas.toDataURL('image/jpeg', 0.95)
@@ -78,7 +81,7 @@ const Alerts = () => {
             link.href = dataURL
             link.click()
         } catch (err) {
-            console.error('Error sharing/generating:', err)
+            console.error('Error generating image:', err)
         }
     }
 
@@ -195,90 +198,88 @@ const Alerts = () => {
                                                 boxSizing: 'border-box'
                                             }}
                                         >
-                                            {/* Top Space for vertical alignment balance */}
-                                            <div style={{ height: '80px' }} />
+                                            {/* Top Space */}
+                                            <div style={{ height: '60px' }} />
 
-                                            {/* Design matching mockup image */}
-                                            <div style={{ flex: 1, padding: '0 80px 80px', display: 'flex', flexDirection: 'column', gap: '40px', overflow: 'hidden' }}>
+                                            {/* Design matching mockup image - Tightened spacing */}
+                                            <div style={{ flex: 1, padding: '0 80px 40px', display: 'flex', flexDirection: 'column', gap: '30px', overflow: 'hidden' }}>
                                                 {/* Header Area */}
-                                                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                                                <div style={{ textAlign: 'center', marginBottom: '5px' }}>
                                                     <h1 style={{ margin: 0, fontSize: '100px', fontWeight: 900, color: '#2d2d2d', letterSpacing: '4px', textTransform: 'uppercase' }}>DEFESA CIVIL</h1>
-                                                    <p style={{ margin: '10px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
+                                                    <p style={{ margin: '5px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
                                                 </div>
 
-                                                {/* Severity Pill - Center with Flex alignment */}
-                                                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                                {/* Severity Pill - Center with explicit Centering for html2canvas */}
+                                                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                                                     <div style={{
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
+                                                        display: 'inline-block',
                                                         backgroundColor: sev.color,
                                                         color: '#ffffff',
-                                                        padding: '0 100px',
-                                                        height: '140px', // Fixed height to ensure vertical centering
+                                                        padding: '24px 100px',
                                                         borderRadius: '100px',
                                                         fontSize: '48px',
                                                         fontWeight: 900,
                                                         letterSpacing: '2px',
-                                                        textTransform: 'uppercase'
+                                                        textTransform: 'uppercase',
+                                                        lineHeight: 1, // Fixes baseline alignment issues
+                                                        textAlign: 'center'
                                                     }}>
-                                                        <span style={{ transform: 'translateY(-2px)' }}>{sev.text}</span>
+                                                        {/* Adding a slight padding-bottom to balance the optical center of large caps */}
+                                                        <span style={{ position: 'relative', top: '2px' }}>{sev.text}</span>
                                                     </div>
                                                 </div>
 
-                                                {/* Information Block */}
-                                                <div style={{ padding: '40px 0', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                {/* Information Block - Tighter */}
+                                                <div style={{ padding: '20px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
                                                         <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo}
                                                     </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
                                                         <span style={{ fontWeight: 800 }}>Grau de severidade: </span>
                                                         <span style={{ color: sev.color, fontWeight: 700 }}>{String(sev.text).charAt(0) + String(sev.text).slice(1).toLowerCase()}</span>
                                                     </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
                                                         <span style={{ fontWeight: 800 }}>Início: </span>{formatDate(selectedAlert?.inicio)}
                                                     </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
                                                         <span style={{ fontWeight: 800 }}>Fim: </span>{formatDate(selectedAlert?.fim)}
                                                     </div>
                                                 </div>
 
                                                 <div style={{ height: '2px', background: '#f0f0f0', width: '100%' }} />
 
-                                                {/* Risk Section */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                                {/* Risk Section - Tighter */}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                     <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
-                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.4 }}>{selectedAlert?.riscos}</div>
+                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.3 }}>{selectedAlert?.riscos}</div>
                                                 </div>
 
-                                                {/* Instructions Section - Scaled down if too long or clipped */}
-                                                {format === 'stories' && (
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
-                                                        <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
-                                                        <div style={{ fontSize: '36px', color: '#4d4d4d', lineHeight: 1.5 }}>
-                                                            {String(selectedAlert?.instrucoes || '').split('\n').filter(l => l.trim()).slice(0, 5).map((line, i) => (
-                                                                <div key={i} style={{ marginBottom: '15px', position: 'relative', paddingLeft: '40px' }}>
-                                                                    <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
-                                                                    {line.replace(/^[-•*]\s*/, '')}
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                                {/* Instructions Section - More compact */}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
+                                                    <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
+                                                    <div style={{ fontSize: '36px', color: '#4d4d4d', lineHeight: 1.3 }}>
+                                                        {String(selectedAlert?.instrucoes || '').split('\n').filter(l => l.trim()).slice(0, 4).map((line, i) => (
+                                                            <div key={i} style={{ marginBottom: '10px', position: 'relative', paddingLeft: '40px' }}>
+                                                                <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
+                                                                {line.replace(/^[-•*]\s*/, '')}
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
 
-                                            {/* Bottom bar - Forced to bottom of artRef parent */}
+                                            {/* Bottom bar - Thinner */}
                                             <div style={{
                                                 backgroundColor: sev.color,
-                                                padding: '40px 60px',
+                                                padding: '25px 60px',
                                                 display: 'flex',
                                                 justifyContent: 'flex-end',
                                                 fontSize: '32px',
                                                 fontWeight: 800,
                                                 color: '#ffffff',
-                                                marginTop: 'auto', // Pushes to the bottom of the flex container
                                                 width: '100%',
-                                                boxSizing: 'border-box'
+                                                boxSizing: 'border-box',
+                                                marginTop: 'auto'
                                             }}>
                                                 Fonte: INMET
                                             </div>
@@ -291,7 +292,7 @@ const Alerts = () => {
                 </div>
             </div>
 
-            {/* Floating Nav Hook */}
+            {/* Status Indicator */}
             <div className="fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
                 <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto pointer-events-auto">
                     <div className="flex items-center gap-3 text-slate-400">
