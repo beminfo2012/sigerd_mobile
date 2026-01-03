@@ -6,6 +6,8 @@ import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
+import SignaturePad from '../../components/FileInput' // Wait, I used a placeholder let me check my import
+import SignaturePadComp from '../../components/SignaturePad'
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -85,8 +87,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         encaminhamentos: [],
 
         fotos: [],
-        documentos: []
+        documentos: [],
+        assinaturaAgente: null,
+        assinaturaSolicitante: null
     })
+
+    const [activeSignature, setActiveSignature] = useState(null) // 'agente' | 'solicitante'
 
     const [saving, setSaving] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
@@ -106,7 +112,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 populacaoEstimada: initialData.populacao_estimada || initialData.populacaoEstimada,
                 gruposVulneraveis: initialData.grupos_vulneraveis || initialData.gruposVulneraveis || [],
                 medidasTomadas: initialData.medidas_tomadas || initialData.medidasTomadas || [],
-                encaminhamentos: initialData.encaminhamentos || []
+                encaminhamentos: initialData.encaminhamentos || [],
+                assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
+                assinaturaSolicitante: initialData.assinatura_solicitante || initialData.assinaturaSolicitante || null
             })
         } else {
             getNextId()
@@ -478,7 +486,54 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
                 <section className={sectionClasses}>
                     <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-2">
-                        <h2 className="font-bold text-gray-800 text-lg">Registro Fotográfico</h2>
+                        <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                            <span className="w-1.5 h-6 bg-[#2a5299] rounded-full"></span> 6. Assinaturas
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                        {/* Agente Signature */}
+                        <div className="space-y-2">
+                            <label className={labelClasses}>Assinatura do Agente</label>
+                            <div
+                                onClick={() => setActiveSignature('agente')}
+                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
+                            >
+                                {formData.assinaturaAgente ? (
+                                    <img src={formData.assinaturaAgente} className="h-full w-auto object-contain" />
+                                ) : (
+                                    <div className="text-center">
+                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Solicitante Signature */}
+                        <div className="space-y-2">
+                            <label className={labelClasses}>Assinatura do Solicitante</label>
+                            <div
+                                onClick={() => setActiveSignature('solicitante')}
+                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
+                            >
+                                {formData.assinaturaSolicitante ? (
+                                    <img src={formData.assinaturaSolicitante} className="h-full w-auto object-contain" />
+                                ) : (
+                                    <div className="text-center">
+                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className={sectionClasses}>
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-2">
+                        <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                            <span className="w-1.5 h-6 bg-[#2a5299] rounded-full"></span> 7. Registro Fotográfico
+                        </h2>
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-bold">{formData.fotos.length} anexos</span>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
@@ -502,6 +557,21 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </div>
                 </div>
             </form>
+
+            {/* Signature Modal */}
+            {activeSignature && (
+                <SignaturePadComp
+                    title={activeSignature === 'agente' ? "Assinatura do Agente" : "Assinatura do Solicitante"}
+                    onCancel={() => setActiveSignature(null)}
+                    onSave={(dataUrl) => {
+                        setFormData(prev => ({
+                            ...prev,
+                            [activeSignature === 'agente' ? 'assinaturaAgente' : 'assinaturaSolicitante']: dataUrl
+                        }))
+                        setActiveSignature(null)
+                    }}
+                />
+            )}
         </div>
     )
 }

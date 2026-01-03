@@ -27,7 +27,9 @@ const normalizeData = (data, type) => {
             encaminhamentos: data.encaminhamentos || [],
             agente: data.agente || '---',
             matricula: data.matricula || '---',
-            fotos: data.fotos || []
+            fotos: data.fotos || [],
+            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
+            assinaturaSolicitante: data.assinaturaSolicitante || data.assinatura_solicitante || null
         };
     } else {
         return {
@@ -48,7 +50,9 @@ const normalizeData = (data, type) => {
             recomendacoes: data.recomendacoes || '---',
             latitude: data.latitude || '---',
             longitude: data.longitude || '---',
-            fotos: data.fotos || []
+            fotos: data.fotos || [],
+            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
+            assinaturaSolicitante: data.assinaturaSolicitante || data.assinatura_solicitante || null
         };
     }
 };
@@ -196,11 +200,34 @@ export const generatePDF = async (rawData, type) => {
 
     const footerHtml = `
         <div style="margin-top: 40px; padding: 40px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
-            <div style="display: inline-block; width: 320px; border-top: 2px solid #1e3a8a; padding-top: 10px;">
-                <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a;">${data.agente}</p>
-                <p style="margin: 0; font-size: 12px; color: #64748b;">Agente de Defesa Civil - Matrícula ${data.matricula}</p>
+            <div style="display: flex; justify-content: space-around; gap: 40px; margin-bottom: 20px;">
+                <!-- Agent Signature Column -->
+                <div style="flex: 1; text-align: center;">
+                    <div style="height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px;">
+                        ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="max-height: 80px; width: auto; max-width: 200px;" />` : ''}
+                    </div>
+                    <div style="border-top: 2px solid #1e3a8a; padding-top: 8px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a;">${data.agente}</p>
+                        <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 600;">AGENTE DE DEFESA CIVIL</p>
+                        <p style="margin: 0; font-size: 10px; color: #94a3b8;">Matrícula: ${data.matricula}</p>
+                    </div>
+                </div>
+
+                <!-- Solicitor Signature Column -->
+                <div style="flex: 1; text-align: center;">
+                    <div style="height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px;">
+                        ${data.assinaturaSolicitante ? `<img src="${data.assinaturaSolicitante}" style="max-height: 80px; width: auto; max-width: 200px;" />` : ''}
+                    </div>
+                    <div style="border-top: 2px solid #1e3a8a; padding-top: 8px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a;">${isVistoria ? (data.solicitante || 'SOLICITANTE') : (data.responsavelNome || 'RESPONSÁVEL')}</p>
+                        <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 600;">${isVistoria ? 'SOLICITANTE / PROPRIETÁRIO' : 'CIENTE DO RESPONSÁVEL'}</p>
+                        <p style="margin: 0; font-size: 10px; color: #94a3b8;">CPF: ${isVistoria ? (data.cpf || '---') : (data.responsavelCpf || '---')}</p>
+                    </div>
+                </div>
             </div>
-            <p style="margin-top: 20px; font-size: 10px; color: #94a3b8;">Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema SIGERD Mobile.</p>
+            <p style="margin-top: 30px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
+                Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema SIGERD Mobile.
+            </p>
         </div>
     `;
 
