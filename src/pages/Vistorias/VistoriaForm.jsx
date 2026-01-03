@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Save, Camera, FileText, MapPin, Trash2, Share, File as FileIcon, ArrowLeft, Crosshair, AlertTriangle, Users, ClipboardCheck, Send } from 'lucide-react'
+import { Save, Camera, FileText, MapPin, Trash2, Share, File as FileIcon, ArrowLeft, Crosshair, AlertTriangle, Users, ClipboardCheck, Send, Edit2 } from 'lucide-react'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
-import SignaturePad from '../../components/FileInput' // Wait, I used a placeholder let me check my import
 import SignaturePadComp from '../../components/SignaturePad'
 
 const RISK_DATA = {
