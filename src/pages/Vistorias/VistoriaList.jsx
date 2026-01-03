@@ -131,7 +131,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                     <span className="bg-blue-50 text-[#2a5299] text-xs font-bold px-2 py-1 rounded-md">
                                         #{vistoria.vistoria_id || '---'}
                                     </span>
-                                    {vistoria.isLocal && !vistoria.synced && (
+                                    {vistoria.isLocal && (vistoria.synced === false || vistoria.synced === undefined || vistoria.synced === 0) && (
                                         <span className="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 flex items-center gap-1">
                                             <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
                                             Pendente

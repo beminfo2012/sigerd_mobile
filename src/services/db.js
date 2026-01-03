@@ -147,16 +147,24 @@ export const saveVistoriaOffline = async (data) => {
 
 export const getPendingSyncCount = async () => {
     const db = await initDB()
-    const p1 = await db.countFromIndex('vistorias', 'synced', false).catch(() => 0)
-    const p2 = await db.countFromIndex('interdicoes', 'synced', false).catch(() => 0)
+
+    // Using getAll and filter to catch undefined, false or 0 values reliably
+    const vistorias = await db.getAll('vistorias').catch(() => [])
+    const interdicoes = await db.getAll('interdicoes').catch(() => [])
+
+    const p1 = vistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0).length
+    const p2 = interdicoes.filter(i => i.synced === false || i.synced === undefined || i.synced === 0).length
+
     return p1 + p2
 }
 
 export const syncPendingData = async () => {
     const db = await initDB()
 
-    // Sync Vistorias
-    const pendingVistorias = await db.getAllFromIndex('vistorias', 'synced', false)
+    // Sync Vistorias - Robust filter to include undefined or legacy flags
+    const allVistorias = await db.getAll('vistorias')
+    const pendingVistorias = allVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
+
     let syncedCount = 0
 
     for (const item of pendingVistorias) {
@@ -165,7 +173,9 @@ export const syncPendingData = async () => {
     }
 
     // Sync Interdições
-    const pendingInterdicoes = await db.getAllFromIndex('interdicoes', 'synced', false)
+    const allInterdicoes = await db.getAll('interdicoes')
+    const pendingInterdicoes = allInterdicoes.filter(i => i.synced === false || i.synced === undefined || i.synced === 0)
+
     for (const item of pendingInterdicoes) {
         const success = await syncSingleItem('interdicoes', item, db)
         if (success) syncedCount++
@@ -184,7 +194,9 @@ const syncSingleItem = async (type, item, db) => {
                     const blob = base64ToBlob(foto.data)
                     if (blob) {
                         const folder = type === 'vistorias' ? 'vistorias' : 'interdicoes'
-                        const id = type === 'vistorias' ? item.vistoriaId : item.interdicaoId
+                        const id = type === 'vistorias'
+                            ? (item.vistoriaId || item.vistoria_id || item.id)
+                            : (item.interdicaoId || item.interdicao_id || item.id)
                         const fileName = `${id}/${foto.id}.jpg`
                         const { error: uploadError } = await supabase.storage
                             .from(folder)
@@ -207,7 +219,7 @@ const syncSingleItem = async (type, item, db) => {
 
         if (type === 'vistorias') {
             payload = {
-                vistoria_id: item.vistoriaId,
+                vistoria_id: item.vistoriaId || item.vistoria_id || item.id,
                 processo: item.processo,
                 agente: item.agente,
                 matricula: item.matricula,

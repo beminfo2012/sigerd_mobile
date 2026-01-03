@@ -80,7 +80,7 @@ const Dashboard = () => {
                         }
                     })
                 } else {
-                    const unsynced = localVistorias.filter(v => v.synced === false)
+                    const unsynced = localVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
 
                     unsynced.forEach(v => {
                         if (v.coordenadas) {
