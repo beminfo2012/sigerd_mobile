@@ -110,13 +110,31 @@ const Alerts = () => {
         if (!artRef.current) return
 
         try {
+            // Aguardar um momento para garantir que tudo está renderizado
+            await new Promise(resolve => setTimeout(resolve, 100))
+
             const canvas = await html2canvas(artRef.current, {
-                allowTaint: true,
-                useCORS: false,
-                scale: 2,
+                allowTaint: false,
+                useCORS: true,
+                scale: 3, // Alta qualidade
                 backgroundColor: '#f5f5f5',
-                logging: false
+                logging: false,
+                windowWidth: artRef.current.scrollWidth,
+                windowHeight: artRef.current.scrollHeight,
+                scrollY: 0,
+                scrollX: 0,
+                imageTimeout: 0,
+                removeContainer: true,
+                foreignObjectRendering: false,
+                // Capturar fontes do Google Fonts
+                onclone: (clonedDoc) => {
+                    const clonedElement = clonedDoc.querySelector('[data-html2canvas-ignore]')
+                    if (clonedElement) {
+                        clonedElement.style.display = 'none'
+                    }
+                }
             })
+
 
             const dataURL = canvas.toDataURL('image/jpeg', 0.95)
 
