@@ -196,17 +196,17 @@ const Alerts = () => {
                                             }}
                                         >
                                             {/* Top Space */}
-                                            <div style={{ height: '50px' }} />
+                                            <div style={{ height: '40px' }} />
 
                                             {/* Design matching mockup image - Tightened spacing */}
-                                            <div style={{ flex: 1, padding: '0 80px 20px', display: 'flex', flexDirection: 'column', gap: '25px', overflow: 'hidden' }}>
+                                            <div style={{ flex: 1, padding: '0 80px 20px', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden' }}>
                                                 {/* Header Area */}
                                                 <div style={{ textAlign: 'center', marginBottom: '0px' }}>
                                                     <h1 style={{ margin: 0, fontSize: '100px', fontWeight: 900, color: '#2d2d2d', letterSpacing: '4px', textTransform: 'uppercase' }}>DEFESA CIVIL</h1>
                                                     <p style={{ margin: '5px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
                                                 </div>
 
-                                                {/* Severity Pill - Final Fix for Center Alignment */}
+                                                {/* Severity Pill - Uniform Thickness Adjust */}
                                                 <div style={{ textAlign: 'center', marginBottom: '5px', display: 'flex', justifyContent: 'center' }}>
                                                     <div style={{
                                                         display: 'flex',
@@ -214,8 +214,8 @@ const Alerts = () => {
                                                         justifyContent: 'center',
                                                         backgroundColor: sev.color,
                                                         color: '#ffffff',
-                                                        padding: '0 100px',
-                                                        height: '130px', // Fixed height
+                                                        padding: '0 80px',
+                                                        height: '110px', // Reduced from 130px for better uniformity
                                                         borderRadius: '100px',
                                                         fontSize: '48px',
                                                         fontWeight: 900,
@@ -223,13 +223,12 @@ const Alerts = () => {
                                                         textTransform: 'uppercase',
                                                         lineHeight: 1
                                                     }}>
-                                                        {/* Offset manually to fix font-baseline issues in canvas rendering */}
-                                                        <span style={{ marginBottom: '5px' }}>{sev.text}</span>
+                                                        <span style={{ marginBottom: '4px' }}>{sev.text}</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Information Block - Compact */}
-                                                <div style={{ padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <div style={{ padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                     <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
                                                         <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo}
                                                     </div>
@@ -247,18 +246,18 @@ const Alerts = () => {
 
                                                 <div style={{ height: '2px', background: '#f0f0f0', width: '100%' }} />
 
-                                                {/* Risk Section - Larger font per request */}
+                                                {/* Risk Section - Fixed Large Font */}
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                    <div style={{ fontSize: '44px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
-                                                    <div style={{ fontSize: '42px', color: '#4d4d4d', lineHeight: 1.3, fontWeight: 500 }}>{selectedAlert?.riscos}</div>
+                                                    <div style={{ fontSize: '46px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
+                                                    <div style={{ fontSize: '42px', color: '#4d4d4d', lineHeight: 1.25, fontWeight: 500 }}>{selectedAlert?.riscos || 'Nenhum risco especificado.'}</div>
                                                 </div>
 
                                                 {/* Instructions Section - Compact */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '5px' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '0px' }}>
                                                     <div style={{ fontSize: '44px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
-                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.25 }}>
-                                                        {String(selectedAlert?.instrucoes || '').split('\n').filter(l => l.trim()).slice(0, 4).map((line, i) => (
-                                                            <div key={i} style={{ marginBottom: '8px', position: 'relative', paddingLeft: '40px' }}>
+                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.2 }}>
+                                                        {String(selectedAlert?.instrucoes || 'Consulte a Defesa Civil.').split('\n').filter(l => l.trim()).slice(0, 4).map((line, i) => (
+                                                            <div key={i} style={{ marginBottom: '6px', position: 'relative', paddingLeft: '40px' }}>
                                                                 <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
                                                                 {line.replace(/^[-•*]\s*/, '')}
                                                             </div>
@@ -270,7 +269,7 @@ const Alerts = () => {
                                             {/* Bottom bar - Minimal thickness */}
                                             <div style={{
                                                 backgroundColor: sev.color,
-                                                padding: '15px 60px', // Thinner padding
+                                                padding: '12px 60px', // Even thinner
                                                 display: 'flex',
                                                 justifyContent: 'flex-end',
                                                 fontSize: '32px',
