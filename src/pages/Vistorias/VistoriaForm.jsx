@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useContext } from 'react'
 import { Save, Camera, FileText, MapPin, Trash2, Share, File as FileIcon, ArrowLeft, Crosshair, AlertTriangle, Users, ClipboardCheck, Send, Edit2, CheckCircle2, Circle } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal } from '../../services/db'
