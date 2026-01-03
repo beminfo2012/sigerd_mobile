@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RefreshCw, Upload } from 'lucide-react'
-import html2canvas from 'html2canvas'
+import { toJpeg } from 'html-to-image'
 
 const Alerts = () => {
     const navigate = useNavigate()
@@ -113,56 +113,27 @@ const Alerts = () => {
             // Aguardar renderização
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Definir dimensões base e escala
+            // Configurar resolução
             const isStories = format === 'stories'
-            const baseWidth = isStories ? 360 : 500
-            const baseHeight = isStories ? 640 : 500
-            const scale = isStories ? 3 : 2 // 360*3 = 1080 (1080x1920), 500*2 = 1000 (1000x1000)
+            const pixelRatio = isStories ? 3 : 2 // 3x para Stories (1080x1920), 2x para Feed (1000x1000)
 
-            const canvas = await html2canvas(artRef.current, {
-                allowTaint: false,
-                useCORS: true,
-                scale: scale,
+            const dataUrl = await toJpeg(artRef.current, {
+                quality: 1.0,
+                pixelRatio: pixelRatio,
                 backgroundColor: '#f5f5f5',
-                logging: false,
-                // Forçar viewport exato para garantir que o layout não quebre
-                windowWidth: baseWidth,
-                windowHeight: baseHeight,
-                width: baseWidth,
-                height: baseHeight,
-                scrollY: 0,
-                scrollX: 0,
-                imageTimeout: 0,
-                removeContainer: true,
-                // Travar dimensões do elemento clonado
-                onclone: (clonedDoc, clonedElement) => {
-                    // Garantir que o elemento capturado tenha o tamanho base exato
-                    const element = clonedElement || clonedDoc.querySelector('[data-html2canvas-ignore]')?.nextSibling
-                    if (element) {
-                        element.style.width = `${baseWidth}px`
-                        element.style.height = `${baseHeight}px`
-                        element.style.maxWidth = 'none'
-                        element.style.maxHeight = 'none'
-                        // Ajustar o container de info para ocupar o espaço restante corretamente
-                        const infoCard = element.querySelector('div[style*="background: white"]')
-                        if (infoCard) {
-                            infoCard.style.height = 'auto'
-                            infoCard.style.flex = '1'
-                        }
-                    }
-
-                    // Remover elementos ignorados
-                    const ignored = clonedDoc.querySelector('[data-html2canvas-ignore]')
-                    if (ignored) ignored.style.display = 'none'
+                // Forçar dimensões estáticas para evitar bugs de layout responsivo durante a captura
+                width: isStories ? 360 : 500,
+                height: isStories ? 640 : 500,
+                style: {
+                    transform: 'none', // Evitar transformações indesejadas
+                    margin: 0,
                 }
             })
-
-            const dataURL = canvas.toDataURL('image/jpeg', 1.0)
 
             // Create download link
             const link = document.createElement('a')
             link.download = `alerta-defesa-civil-${Date.now()}.jpg`
-            link.href = dataURL
+            link.href = dataUrl
             link.click()
         } catch (error) {
             console.error('Erro ao gerar imagem:', error)
