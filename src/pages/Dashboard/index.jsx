@@ -404,8 +404,57 @@ const Dashboard = () => {
             </div>
 
             {showForecast && weather && (
-                <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-                    {/* Forecast modal content same as before but encapsulated correctly */}
+                <div
+                    onClick={() => setShowForecast(false)}
+                    className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200"
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800">Previsão 7 Dias</h3>
+                                <div className="text-xs font-bold text-slate-400">Santa Maria de Jetibá</div>
+                            </div>
+                            <button
+                                onClick={() => setShowForecast(false)}
+                                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors"
+                            >
+                                <ArrowLeft size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {weather.daily.map((day, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-2xl">{getWeatherIcon(day.weatherCode)}</div>
+                                        <div>
+                                            <div className="text-sm font-bold text-slate-800">
+                                                {new Date(day.time).toLocaleDateString('pt-BR', { weekday: 'long' })}
+                                            </div>
+                                            <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                                <CloudRain size={10} className="text-blue-500" />
+                                                {day.rainProb}% chance
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-right">
+                                            <div className="text-sm font-black text-slate-800">{Math.round(day.tempMax)}°</div>
+                                            <div className="text-[10px] font-bold text-slate-400">Max</div>
+                                        </div>
+                                        <div className="h-8 w-px bg-slate-100" />
+                                        <div className="text-right">
+                                            <div className="text-sm font-black text-slate-400">{Math.round(day.tempMin)}°</div>
+                                            <div className="text-[10px] font-bold text-slate-300">Min</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
 
