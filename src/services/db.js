@@ -2,33 +2,33 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 export const initDB = async () => {
     return openDB(DB_NAME, DB_VERSION, {
-        upgrade(db) {
-            // Store for Electrical Installations (GeoRescue)
+        upgrade(db, oldVersion) {
+            // ... existing stores code ...
             if (!db.objectStoreNames.contains('installations')) {
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
             }
 
-            // Store for Vistorias (Offline Sync)
             if (!db.objectStoreNames.contains('vistorias')) {
                 const store = db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true })
                 store.createIndex('synced', 'synced', { unique: false })
             }
 
-            // Store for Interdições (Offline Sync)
             if (!db.objectStoreNames.contains('interdicoes')) {
                 const store = db.createObjectStore('interdicoes', { keyPath: 'id', autoIncrement: true })
                 store.createIndex('synced', 'synced', { unique: false })
             }
 
-            // Store for Remote Vistorias Cache (Performance/Offline)
-            if (!db.objectStoreNames.contains('remote_vistorias_cache')) {
-                db.createObjectStore('remote_vistorias_cache', { keyPath: 'id' })
+            // Store for Remote Vistorias Cache - Version 3 improvement: Use vistoria_id or id
+            if (db.objectStoreNames.contains('remote_vistorias_cache')) {
+                db.deleteObjectStore('remote_vistorias_cache')
             }
+            // Use autoIncrement to avoid key errors, but we will manage unique records in api.js
+            db.createObjectStore('remote_vistorias_cache', { keyPath: 'vistoria_id' })
         },
     })
 }

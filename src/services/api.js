@@ -16,30 +16,54 @@ export const api = {
                 try {
                     let lastCreatedAt = '1970-01-01T00:00:00Z'
                     if (cachedVistorias.length > 0) {
-                        // Find most recent created_at in cache
                         lastCreatedAt = cachedVistorias.reduce((max, v) =>
-                            v.created_at > max ? v.created_at : max, lastCreatedAt)
+                            (v.created_at || '1970') > max ? (v.created_at || '1970') : max, lastCreatedAt)
                     }
 
                     // Fetch records created AFTER our last cached record
-                    let { data: newVistorias } = await supabase
-                        .from('vistorias')
-                        .select('id, coordenadas, categoria_risco, subtipos_risco, created_at')
-                        .gt('created_at', lastCreatedAt)
-                        .order('created_at', { ascending: false });
+                    let currentOffset = 0
+                    let fetchedBatch = []
 
-                    if (newVistorias && newVistorias.length > 0) {
-                        // Update cache with new records
-                        await saveRemoteVistoriasCache(newVistorias)
+                    do {
+                        // Use select('*') to be safe with column names
+                        const { data: batch, error: fetchError } = await supabase
+                            .from('vistorias')
+                            .select('*')
+                            .gt('created_at', lastCreatedAt)
+                            .order('created_at', { ascending: true })
+                            .range(currentOffset, currentOffset + 999);
 
-                        // Merge new records - using Map to prevent duplicates
+                        if (fetchError) {
+                            console.error('Supabase fetch error:', fetchError)
+                            break
+                        }
+
+                        if (batch && batch.length > 0) {
+                            fetchedBatch = [...fetchedBatch, ...batch]
+                            currentOffset += batch.length
+                            if (batch.length < 1000) break
+                        } else {
+                            break
+                        }
+                    } while (true)
+
+                    if (fetchedBatch.length > 0) {
+                        await saveRemoteVistoriasCache(fetchedBatch)
+
                         const mergedMap = new Map()
-                        allVistorias.forEach(v => mergedMap.set(v.id, v))
-                        newVistorias.forEach(v => mergedMap.set(v.id, v))
+                        // Use vistoria_id as primary key for merging
+                        allVistorias.forEach(v => {
+                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
+                            if (key) mergedMap.set(key, v)
+                        })
+                        fetchedBatch.forEach(v => {
+                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
+                            if (key) mergedMap.set(key, v)
+                        })
                         allVistorias = Array.from(mergedMap.values())
                     }
                 } catch (e) {
-                    console.warn('Incremental fetch failed, using cached data:', e)
+                    console.warn('Incremental fetch failed:', e)
                 }
             }
 
