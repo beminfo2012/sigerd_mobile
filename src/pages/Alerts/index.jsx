@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw, Share2, AlertTriangle, Calendar, Info, Download, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Upload } from 'lucide-react'
 import html2canvas from 'html2canvas'
 
 const Alerts = () => {
@@ -9,6 +9,20 @@ const Alerts = () => {
     const [loading, setLoading] = useState(true)
     const [selectedAlert, setSelectedAlert] = useState(null)
     const [format, setFormat] = useState('stories') // 'stories' or 'feed'
+    const [mapImage, setMapImage] = useState(null)
+
+    // Form fields
+    const [alertType, setAlertType] = useState('')
+    const [severity, setSeverity] = useState('Grande Perigo')
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+    const [risks, setRisks] = useState('')
+    const [instructions, setInstructions] = useState(`- Desligue aparelhos elétricos, quadro geral de energia.
+- Observe alteração nas encostas.
+- Permaneça em local abrigado.
+- Em caso de situação de inundação, ou similar, proteja seus pertences da água envoltos em sacos plásticos.
+- Obtenha mais informações junto à Defesa Civil (telefone 199) e ao Corpo de Bombeiros (telefone 193).`)
+
     const artRef = useRef(null)
 
     useEffect(() => {
@@ -23,282 +37,538 @@ const Alerts = () => {
                 const data = await resp.json()
                 const validAlerts = Array.isArray(data) ? data : []
                 setAlerts(validAlerts)
-                if (validAlerts.length > 0) setSelectedAlert(validAlerts[0])
-                else setSelectedAlert(null)
+                if (validAlerts.length > 0) {
+                    loadAlertToForm(validAlerts[0])
+                }
             } else {
                 setAlerts([])
             }
         } catch (e) {
             console.error(e)
             setAlerts([])
-            setSelectedAlert(null)
         } finally {
             setLoading(false)
         }
     }
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return '...'
+    const loadAlertToForm = (alert) => {
+        if (!alert) return
+
+        setSelectedAlert(alert)
+        setAlertType(alert.descricao || alert.aviso_tipo || '')
+        setSeverity(alert.severidade || alert.aviso_severidade || 'Grande Perigo')
+        setStartDate(formatDateToInput(alert.inicio))
+        setEndDate(formatDateToInput(alert.fim))
+        setRisks(alert.riscos ? alert.riscos.join('\\n') : alert.descricao || '')
+        if (alert.instrucoes) {
+            setInstructions(alert.instrucoes.join('\\n'))
+        }
+    }
+
+    const formatDateToInput = (dateStr) => {
+        if (!dateStr) return ''
         try {
             const date = new Date(dateStr)
             if (isNaN(date.getTime())) return dateStr
-            return date.toLocaleString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }).replace(',', '') + 'h'
-        } catch (e) { return dateStr }
+
+            const day = String(date.getDate()).padStart(2, '0')
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const year = date.getFullYear()
+            const hours = String(date.getHours()).padStart(2, '0')
+            const minutes = String(date.getMinutes()).padStart(2, '0')
+
+            return `${day}/${month}/${year} ${hours}h${minutes}min`
+        } catch (e) {
+            return dateStr
+        }
     }
 
-    const getSeverityDetails = (sev) => {
-        if (!sev) return { color: '#94a3b8', bg: '#f1f5f9', text: 'INDEFINIDO', hex: '#64748b' }
-        const s = String(sev).toLowerCase()
-        if (s.includes('grande perigo')) return { color: '#c62828', bg: '#c62828', text: 'GRANDE PERIGO', hex: '#c62828' }
-        if (s.includes('perigo')) return { color: '#ef6c00', bg: '#ef6c00', text: 'PERIGO', hex: '#ef6c00' }
-        return { color: '#fbc02d', bg: '#fbc02d', text: 'PERIGO POTENCIAL', hex: '#fbc02d' }
+    const getSeverityClass = () => {
+        if (severity.includes('Potencial')) return 'amarelo'
+        if (severity.includes('Grande')) return 'vermelho'
+        return 'laranja'
     }
 
-    const generateArt = async () => {
+    const getSeverityColor = () => {
+        if (severity.includes('Potencial')) return '#f1c40f'
+        if (severity.includes('Grande')) return '#c62828'
+        return '#e67e22'
+    }
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            const reader = new FileReader()
+            reader.onload = (event) => {
+                setMapImage(event.target.result)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const downloadImage = async () => {
         if (!artRef.current) return
+
         try {
             const canvas = await html2canvas(artRef.current, {
-                scale: 3,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                windowWidth: 1080,
-                windowHeight: format === 'stories' ? 1920 : 1080,
+                allowTaint: true,
+                useCORS: false,
+                scale: 2,
+                backgroundColor: '#f5f5f5',
                 logging: false
             })
 
             const dataURL = canvas.toDataURL('image/jpeg', 0.95)
+
+            // Create download link
             const link = document.createElement('a')
             link.download = `alerta-defesa-civil-${Date.now()}.jpg`
             link.href = dataURL
             link.click()
-        } catch (err) {
-            console.error('Error generating image:', err)
+        } catch (error) {
+            console.error('Erro ao gerar imagem:', error)
+            alert('Erro ao gerar imagem: ' + error.message)
         }
     }
 
-    const sev = getSeverityDetails(selectedAlert?.severidade)
+    const instructionsList = instructions
+        .split('\\n')
+        .map(line => line.trim())
+        .filter(line => line)
+        .map(line => line.replace(/^[-•*]\\s*/, ''))
 
     return (
-        <div className="flex flex-col h-screen bg-slate-100 font-sans overflow-hidden">
-            {/* Header */}
-            <div className="bg-white px-4 py-4 flex items-center gap-4 border-b border-slate-200 shrink-0">
-                <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors">
-                    <ArrowLeft size={24} />
-                </button>
-                <div className="flex-1">
-                    <h1 className="text-xl font-black text-slate-800 tracking-tight">Avisos INMET</h1>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Santa Maria de Jetibá</p>
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f4f4f9' }}>
+            {/* Sidebar */}
+            <aside style={{
+                width: '350px',
+                background: 'white',
+                padding: '20px',
+                borderRight: '1px solid #ddd',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '15px',
+                boxShadow: '2px 0 5px rgba(0,0,0,0.05)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        style={{
+                            padding: '8px',
+                            border: 'none',
+                            background: '#f0f0f0',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <h1 style={{ fontSize: '1.2rem', color: '#003366', margin: 0, fontWeight: 'bold' }}>
+                        Gerador de Alertas
+                    </h1>
                 </div>
-                <button onClick={fetchAlerts} className={`p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors ${loading ? 'animate-spin' : ''}`}>
-                    <RefreshCw size={20} />
-                </button>
-            </div>
 
-            <div className="flex-1 overflow-y-auto pb-32">
-                <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center py-20">
-                            <RefreshCw className="animate-spin text-blue-600 mb-4" size={40} />
-                            <p className="font-bold text-slate-500">Buscando avisos...</p>
-                        </div>
-                    ) : alerts.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-white rounded-[32px] border border-slate-200">
-                            <div className="w-16 h-16 bg-green-50 rounded-3xl flex items-center justify-center mb-4 text-green-500">
-                                <Info size={32} />
-                            </div>
-                            <h2 className="text-lg font-black text-slate-800 mb-1">Céu Limpo</h2>
-                            <p className="text-sm font-bold text-slate-400">Nenhum aviso vigente no momento.</p>
-                        </div>
-                    ) : (
-                        <div className="grid lg:grid-cols-2 gap-8 items-start">
-                            {/* Controls Column */}
-                            <div className="space-y-6 order-2 lg:order-1">
-                                <div className="bg-white p-6 rounded-[32px] border border-slate-200 space-y-6 shadow-sm">
-                                    <div className="space-y-4">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Selecione o Aviso</label>
-                                        <div className="grid gap-3">
-                                            {alerts.map((alert, idx) => (
-                                                <button
-                                                    key={alert.id || idx}
-                                                    onClick={() => setSelectedAlert(alert)}
-                                                    className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${selectedAlert?.id === alert.id ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-slate-50 hover:border-slate-200'}`}
-                                                >
-                                                    <div>
-                                                        <div className="font-black text-slate-800 text-sm leading-tight mb-1">{alert.tipo}</div>
-                                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{alert.severidade}</div>
-                                                    </div>
-                                                    <div className={`w-3 h-3 rounded-full`} style={{ background: getSeverityDetails(alert.severidade).color }} />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Formato da Mídia</label>
-                                        <div className="flex p-1 bg-slate-100 rounded-2xl">
-                                            <button onClick={() => setFormat('stories')} className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${format === 'stories' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>STORIES</button>
-                                            <button onClick={() => setFormat('feed')} className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${format === 'feed' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>FEED</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={generateArt}
-                                        className="flex-1 bg-slate-800 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-slate-200"
-                                    >
-                                        <Download size={20} /> Baixar JPG
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            const text = `⚠️ *AVISO DE RISCO INMET*\n\n🔹 *Tipo:* ${selectedAlert?.tipo}\n🔸 *Severidade:* ${selectedAlert?.severidade}\n\n📅 *Vigência:* de ${formatDate(selectedAlert?.inicio)} até ${formatDate(selectedAlert?.fim)}\n\n⚠️ *Riscos:* ${selectedAlert?.riscos}\n\n📱 Mais informações em: app.sigerd.com.br`;
-                                            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
-                                        }}
-                                        className="bg-green-600 text-white px-6 py-5 rounded-[24px] font-black flex items-center justify-center active:scale-95 transition-all shadow-xl shadow-green-100"
-                                    >
-                                        <Share2 size={24} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Preview Column */}
-                            <div className="order-1 lg:order-2 flex flex-col items-center">
-                                <div className="bg-slate-200/50 p-4 border border-slate-300 border-dashed rounded-[40px] flex items-center justify-center overflow-hidden w-full max-w-[440px]">
-                                    <div
-                                        className="bg-white shadow-2xl relative overflow-hidden"
-                                        style={{
-                                            width: format === 'stories' ? '324px' : '400px',
-                                            height: format === 'stories' ? '576px' : '400px',
-                                        }}
-                                    >
-                                        <div
-                                            ref={artRef}
-                                            style={{
-                                                width: '1080px',
-                                                height: format === 'stories' ? '1920px' : '1080px',
-                                                backgroundColor: '#ffffff',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0,
-                                                transform: format === 'stories' ? 'scale(0.3)' : 'scale(0.3703)',
-                                                transformOrigin: 'top left',
-                                                fontFamily: 'sans-serif',
-                                                borderTop: `40px solid ${sev.color}`,
-                                                boxSizing: 'border-box'
-                                            }}
-                                        >
-                                            {/* Top Space */}
-                                            <div style={{ height: '40px' }} />
-
-                                            {/* Design matching mockup image - Tightened spacing */}
-                                            <div style={{ flex: 1, padding: '0 80px 20px', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden' }}>
-                                                {/* Header Area */}
-                                                <div style={{ textAlign: 'center', marginBottom: '0px' }}>
-                                                    <h1 style={{ margin: 0, fontSize: '100px', fontWeight: 900, color: '#2d2d2d', letterSpacing: '4px', textTransform: 'uppercase' }}>DEFESA CIVIL</h1>
-                                                    <p style={{ margin: '5px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
-                                                </div>
-
-                                                {/* Severity Pill - Uniform Thickness Adjust */}
-                                                <div style={{ textAlign: 'center', marginBottom: '5px', display: 'flex', justifyContent: 'center' }}>
-                                                    <div style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        backgroundColor: sev.color,
-                                                        color: '#ffffff',
-                                                        padding: '0 80px',
-                                                        height: '110px', // Reduced from 130px for better uniformity
-                                                        borderRadius: '100px',
-                                                        fontSize: '48px',
-                                                        fontWeight: 900,
-                                                        letterSpacing: '2px',
-                                                        textTransform: 'uppercase',
-                                                        lineHeight: 1
-                                                    }}>
-                                                        <span style={{ marginBottom: '4px' }}>{sev.text}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Information Block - Compact */}
-                                                <div style={{ padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
-                                                        <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo}
-                                                    </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
-                                                        <span style={{ fontWeight: 800 }}>Grau de severidade: </span>
-                                                        <span style={{ color: sev.color, fontWeight: 700 }}>{String(sev.text).charAt(0) + String(sev.text).slice(1).toLowerCase()}</span>
-                                                    </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
-                                                        <span style={{ fontWeight: 800 }}>Início: </span>{formatDate(selectedAlert?.inicio)}
-                                                    </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
-                                                        <span style={{ fontWeight: 800 }}>Fim: </span>{formatDate(selectedAlert?.fim)}
-                                                    </div>
-                                                </div>
-
-                                                <div style={{ height: '2px', background: '#f0f0f0', width: '100%' }} />
-
-                                                {/* Risk Section - Fixed Large Font */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                    <div style={{ fontSize: '46px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
-                                                    <div style={{ fontSize: '42px', color: '#4d4d4d', lineHeight: 1.25, fontWeight: 500 }}>{selectedAlert?.riscos || 'Nenhum risco especificado.'}</div>
-                                                </div>
-
-                                                {/* Instructions Section - Compact */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '0px' }}>
-                                                    <div style={{ fontSize: '44px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
-                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.2 }}>
-                                                        {String(selectedAlert?.instrucoes || 'Consulte a Defesa Civil.').split('\n').filter(l => l.trim()).slice(0, 4).map((line, i) => (
-                                                            <div key={i} style={{ marginBottom: '6px', position: 'relative', paddingLeft: '40px' }}>
-                                                                <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
-                                                                {line.replace(/^[-•*]\s*/, '')}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Bottom bar - Minimal thickness */}
-                                            <div style={{
-                                                backgroundColor: sev.color,
-                                                padding: '12px 60px', // Even thinner
-                                                display: 'flex',
-                                                justifyContent: 'flex-end',
-                                                fontSize: '32px',
-                                                fontWeight: 800,
-                                                color: '#ffffff',
-                                                width: '100%',
-                                                boxSizing: 'border-box',
-                                                marginTop: 'auto'
-                                            }}>
-                                                Fonte: INMET
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Status Hook */}
-            <div className="fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto pointer-events-auto">
-                    <div className="flex items-center gap-3 text-slate-400">
-                        <ImageIcon size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Avisos INMET</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>
+                        Carregar Alerta do INMET
+                    </label>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                        <select
+                            value={selectedAlert ? alerts.indexOf(selectedAlert) : ''}
+                            onChange={(e) => {
+                                if (e.target.value !== '') {
+                                    loadAlertToForm(alerts[parseInt(e.target.value)])
+                                }
+                            }}
+                            style={{
+                                flex: 1,
+                                padding: '8px',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            <option value="">
+                                {loading ? 'Carregando...' : alerts.length === 0 ? 'Nenhum alerta ativo' : 'Selecione um alerta...'}
+                            </option>
+                            {alerts.map((alert, index) => (
+                                <option key={index} value={index}>
+                                    [{alert.severidade}] {alert.aviso_tipo}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={fetchAlerts}
+                            title="Atualizar lista"
+                            style={{
+                                padding: '8px 12px',
+                                border: 'none',
+                                background: '#003366',
+                                color: 'white',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <RefreshCw size={16} />
+                        </button>
                     </div>
                 </div>
-            </div>
+
+                <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '5px 0' }} />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>Aviso de:</label>
+                    <input
+                        type="text"
+                        value={alertType}
+                        onChange={(e) => setAlertType(e.target.value)}
+                        placeholder="Ex: Acumulado de Chuva"
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '0.9rem'
+                        }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>Grau de severidade:</label>
+                    <select
+                        value={severity}
+                        onChange={(e) => setSeverity(e.target.value)}
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '0.9rem'
+                        }}
+                    >
+                        <option value="Perigo Potencial">Perigo Potencial (Amarelo)</option>
+                        <option value="Perigo">Perigo (Laranja)</option>
+                        <option value="Grande Perigo">Grande Perigo (Vermelho)</option>
+                    </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>Início:</label>
+                    <input
+                        type="text"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        placeholder="DD/MM/AAAA HH:mm"
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '0.9rem'
+                        }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>Fim:</label>
+                    <input
+                        type="text"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        placeholder="DD/MM/AAAA HH:mm"
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '0.9rem'
+                        }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>Riscos Potenciais:</label>
+                    <textarea
+                        value={risks}
+                        onChange={(e) => setRisks(e.target.value)}
+                        rows="5"
+                        placeholder="Descrição dos riscos..."
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '0.9rem',
+                            fontFamily: 'inherit',
+                            resize: 'vertical'
+                        }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>
+                        Imagem do Alerta (Upload):
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        style={{ fontSize: '0.85rem' }}
+                    />
+                </div>
+
+                <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '5px 0' }} />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>Instruções:</label>
+                    <textarea
+                        value={instructions}
+                        onChange={(e) => setInstructions(e.target.value)}
+                        rows="6"
+                        style={{
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '0.9rem',
+                            fontFamily: 'inherit',
+                            resize: 'vertical'
+                        }}
+                    />
+                </div>
+
+                <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '5px 0' }} />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: '500', color: '#555' }}>Formato da Imagem</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                            onClick={() => setFormat('stories')}
+                            style={{
+                                flex: 1,
+                                padding: '10px',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: '500',
+                                background: format === 'stories' ? '#003366' : '#eee',
+                                color: format === 'stories' ? 'white' : '#333',
+                                transition: 'background 0.2s'
+                            }}
+                        >
+                            Stories (9:16)
+                        </button>
+                        <button
+                            onClick={() => setFormat('feed')}
+                            style={{
+                                flex: 1,
+                                padding: '10px',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: '500',
+                                background: format === 'feed' ? '#003366' : '#eee',
+                                color: format === 'feed' ? 'white' : '#333',
+                                transition: 'background 0.2s'
+                            }}
+                        >
+                            Feed (1:1)
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    onClick={downloadImage}
+                    style={{
+                        padding: '12px',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        background: '#003366',
+                        color: 'white',
+                        fontSize: '1rem',
+                        marginTop: 'auto'
+                    }}
+                >
+                    Baixar Imagem
+                </button>
+            </aside>
+
+            {/* Preview Area */}
+            <main style={{
+                flex: 1,
+                background: '#e0e0e0',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '20px',
+                overflow: 'auto'
+            }}>
+                {/* Capture Container */}
+                <div
+                    ref={artRef}
+                    style={{
+                        background: '#f5f5f5',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        width: format === 'stories' ? '540px' : '800px',
+                        height: format === 'stories' ? '960px' : '800px',
+                        flexShrink: 0
+                    }}
+                >
+                    {/* Red top bar */}
+                    <div style={{
+                        height: '15px',
+                        width: '100%',
+                        background: getSeverityColor()
+                    }} />
+
+                    {/* Header Section */}
+                    <div style={{
+                        padding: '40px 20px 30px',
+                        textAlign: 'center',
+                        background: '#f5f5f5'
+                    }}>
+                        <h1 style={{
+                            fontFamily: "'Oswald', sans-serif",
+                            fontSize: '3rem',
+                            fontWeight: 700,
+                            color: '#333',
+                            letterSpacing: '2px',
+                            margin: '0 0 10px 0',
+                            textTransform: 'uppercase'
+                        }}>
+                            DEFESA CIVIL
+                        </h1>
+                        <h2 style={{
+                            fontFamily: "'Oswald', sans-serif",
+                            fontSize: '1.5rem',
+                            fontWeight: 400,
+                            color: '#666',
+                            letterSpacing: '3px',
+                            margin: '0 0 25px 0',
+                            textTransform: 'uppercase'
+                        }}>
+                            SANTA MARIA DE JETIBÁ
+                        </h2>
+                        <div style={{
+                            display: 'inline-block',
+                            background: getSeverityColor(),
+                            color: severity.includes('Potencial') ? '#333' : 'white',
+                            padding: '12px 40px',
+                            borderRadius: '30px',
+                            fontFamily: "'Oswald', sans-serif",
+                            fontSize: '1.4rem',
+                            fontWeight: 600,
+                            letterSpacing: '2px',
+                            textTransform: 'uppercase'
+                        }}>
+                            {severity.toUpperCase()}
+                        </div>
+
+                        {mapImage && (
+                            <img
+                                src={mapImage}
+                                alt="Mapa do Alerta"
+                                style={{
+                                    width: '100%',
+                                    maxHeight: '200px',
+                                    objectFit: 'contain',
+                                    marginTop: '20px',
+                                    borderRadius: '8px'
+                                }}
+                            />
+                        )}
+                    </div>
+
+                    {/* Info Card */}
+                    <div style={{
+                        flex: 1,
+                        background: 'white',
+                        padding: '30px',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        <div style={{
+                            marginBottom: '20px',
+                            fontSize: '1.3rem',
+                            lineHeight: 1.6,
+                            borderBottom: '1px solid #eee',
+                            paddingBottom: '15px'
+                        }}>
+                            <p style={{ margin: '5px 0' }}>
+                                <strong>Aviso de:</strong> {alertType || '...'}
+                            </p>
+                            <p style={{ margin: '5px 0' }}>
+                                <strong>Grau de severidade:</strong> {severity}
+                            </p>
+                            <p style={{ margin: '5px 0' }}>
+                                <strong>Início:</strong> {startDate || '...'}
+                            </p>
+                            <p style={{ margin: '5px 0' }}>
+                                <strong>Fim:</strong> {endDate || '...'}
+                            </p>
+                        </div>
+
+                        <div style={{
+                            fontSize: '1.1rem',
+                            color: '#444',
+                            lineHeight: 1.4,
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                        }}>
+                            <div>
+                                <strong>Riscos Potenciais:</strong>
+                                <p style={{ fontSize: '1.2rem', lineHeight: 1.5, margin: '5px 0' }}>
+                                    {risks || '...'}
+                                </p>
+                            </div>
+
+                            <div style={{
+                                marginTop: '10px',
+                                borderTop: '1px solid #eee',
+                                paddingTop: '10px'
+                            }}>
+                                <strong>Instruções:</strong>
+                                <ul style={{
+                                    listStyleType: 'disc',
+                                    paddingLeft: '20px',
+                                    marginTop: '5px'
+                                }}>
+                                    {instructionsList.map((item, idx) => (
+                                        <li key={idx} style={{ marginBottom: '5px' }}>{item}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{
+                        background: getSeverityColor(),
+                        color: 'white',
+                        textAlign: 'right',
+                        padding: '8px 15px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold'
+                    }}>
+                        Fonte: INMET
+                    </div>
+                </div>
+            </main>
+
+            {/* Google Fonts */}
+            <link
+                href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap"
+                rel="stylesheet"
+            />
         </div>
     )
 }
