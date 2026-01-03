@@ -110,33 +110,54 @@ const Alerts = () => {
         if (!artRef.current) return
 
         try {
-            // Aguardar um momento para garantir que tudo está renderizado
+            // Aguardar renderização
             await new Promise(resolve => setTimeout(resolve, 100))
+
+            // Definir dimensões base e escala
+            const isStories = format === 'stories'
+            const baseWidth = isStories ? 360 : 500
+            const baseHeight = isStories ? 640 : 500
+            const scale = isStories ? 3 : 2 // 360*3 = 1080 (1080x1920), 500*2 = 1000 (1000x1000)
 
             const canvas = await html2canvas(artRef.current, {
                 allowTaint: false,
                 useCORS: true,
-                scale: 3, // Alta qualidade
+                scale: scale,
                 backgroundColor: '#f5f5f5',
                 logging: false,
-                windowWidth: artRef.current.scrollWidth,
-                windowHeight: artRef.current.scrollHeight,
+                // Forçar viewport exato para garantir que o layout não quebre
+                windowWidth: baseWidth,
+                windowHeight: baseHeight,
+                width: baseWidth,
+                height: baseHeight,
                 scrollY: 0,
                 scrollX: 0,
                 imageTimeout: 0,
                 removeContainer: true,
-                foreignObjectRendering: false,
-                // Capturar fontes do Google Fonts
-                onclone: (clonedDoc) => {
-                    const clonedElement = clonedDoc.querySelector('[data-html2canvas-ignore]')
-                    if (clonedElement) {
-                        clonedElement.style.display = 'none'
+                // Travar dimensões do elemento clonado
+                onclone: (clonedDoc, clonedElement) => {
+                    // Garantir que o elemento capturado tenha o tamanho base exato
+                    const element = clonedElement || clonedDoc.querySelector('[data-html2canvas-ignore]')?.nextSibling
+                    if (element) {
+                        element.style.width = `${baseWidth}px`
+                        element.style.height = `${baseHeight}px`
+                        element.style.maxWidth = 'none'
+                        element.style.maxHeight = 'none'
+                        // Ajustar o container de info para ocupar o espaço restante corretamente
+                        const infoCard = element.querySelector('div[style*="background: white"]')
+                        if (infoCard) {
+                            infoCard.style.height = 'auto'
+                            infoCard.style.flex = '1'
+                        }
                     }
+
+                    // Remover elementos ignorados
+                    const ignored = clonedDoc.querySelector('[data-html2canvas-ignore]')
+                    if (ignored) ignored.style.display = 'none'
                 }
             })
 
-
-            const dataURL = canvas.toDataURL('image/jpeg', 0.95)
+            const dataURL = canvas.toDataURL('image/jpeg', 1.0)
 
             // Create download link
             const link = document.createElement('a')
