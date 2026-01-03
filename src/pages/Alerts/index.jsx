@@ -69,10 +69,7 @@ const Alerts = () => {
                 backgroundColor: '#ffffff',
                 windowWidth: 1080,
                 windowHeight: format === 'stories' ? 1920 : 1080,
-                logging: false,
-                onclone: (doc) => {
-                    // Force specific font weights or fixes during cloning if needed
-                }
+                logging: false
             })
 
             const dataURL = canvas.toDataURL('image/jpeg', 0.95)
@@ -199,67 +196,69 @@ const Alerts = () => {
                                             }}
                                         >
                                             {/* Top Space */}
-                                            <div style={{ height: '60px' }} />
+                                            <div style={{ height: '50px' }} />
 
                                             {/* Design matching mockup image - Tightened spacing */}
-                                            <div style={{ flex: 1, padding: '0 80px 40px', display: 'flex', flexDirection: 'column', gap: '30px', overflow: 'hidden' }}>
+                                            <div style={{ flex: 1, padding: '0 80px 20px', display: 'flex', flexDirection: 'column', gap: '25px', overflow: 'hidden' }}>
                                                 {/* Header Area */}
-                                                <div style={{ textAlign: 'center', marginBottom: '5px' }}>
+                                                <div style={{ textAlign: 'center', marginBottom: '0px' }}>
                                                     <h1 style={{ margin: 0, fontSize: '100px', fontWeight: 900, color: '#2d2d2d', letterSpacing: '4px', textTransform: 'uppercase' }}>DEFESA CIVIL</h1>
                                                     <p style={{ margin: '5px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
                                                 </div>
 
-                                                {/* Severity Pill - Center with explicit Centering for html2canvas */}
-                                                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                                                {/* Severity Pill - Final Fix for Center Alignment */}
+                                                <div style={{ textAlign: 'center', marginBottom: '5px', display: 'flex', justifyContent: 'center' }}>
                                                     <div style={{
-                                                        display: 'inline-block',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
                                                         backgroundColor: sev.color,
                                                         color: '#ffffff',
-                                                        padding: '24px 100px',
+                                                        padding: '0 100px',
+                                                        height: '130px', // Fixed height
                                                         borderRadius: '100px',
                                                         fontSize: '48px',
                                                         fontWeight: 900,
                                                         letterSpacing: '2px',
                                                         textTransform: 'uppercase',
-                                                        lineHeight: 1, // Fixes baseline alignment issues
-                                                        textAlign: 'center'
+                                                        lineHeight: 1
                                                     }}>
-                                                        {/* Adding a slight padding-bottom to balance the optical center of large caps */}
-                                                        <span style={{ position: 'relative', top: '2px' }}>{sev.text}</span>
+                                                        {/* Offset manually to fix font-baseline issues in canvas rendering */}
+                                                        <span style={{ marginBottom: '5px' }}>{sev.text}</span>
                                                     </div>
                                                 </div>
 
-                                                {/* Information Block - Tighter */}
-                                                <div style={{ padding: '20px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
+                                                {/* Information Block - Compact */}
+                                                <div style={{ padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
                                                         <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo}
                                                     </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
                                                         <span style={{ fontWeight: 800 }}>Grau de severidade: </span>
                                                         <span style={{ color: sev.color, fontWeight: 700 }}>{String(sev.text).charAt(0) + String(sev.text).slice(1).toLowerCase()}</span>
                                                     </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
                                                         <span style={{ fontWeight: 800 }}>Início: </span>{formatDate(selectedAlert?.inicio)}
                                                     </div>
-                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.2 }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.1 }}>
                                                         <span style={{ fontWeight: 800 }}>Fim: </span>{formatDate(selectedAlert?.fim)}
                                                     </div>
                                                 </div>
 
                                                 <div style={{ height: '2px', background: '#f0f0f0', width: '100%' }} />
 
-                                                {/* Risk Section - Tighter */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                                    <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
-                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.3 }}>{selectedAlert?.riscos}</div>
+                                                {/* Risk Section - Larger font per request */}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                    <div style={{ fontSize: '44px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
+                                                    <div style={{ fontSize: '42px', color: '#4d4d4d', lineHeight: 1.3, fontWeight: 500 }}>{selectedAlert?.riscos}</div>
                                                 </div>
 
-                                                {/* Instructions Section - More compact */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
-                                                    <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
-                                                    <div style={{ fontSize: '36px', color: '#4d4d4d', lineHeight: 1.3 }}>
+                                                {/* Instructions Section - Compact */}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '5px' }}>
+                                                    <div style={{ fontSize: '44px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
+                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.25 }}>
                                                         {String(selectedAlert?.instrucoes || '').split('\n').filter(l => l.trim()).slice(0, 4).map((line, i) => (
-                                                            <div key={i} style={{ marginBottom: '10px', position: 'relative', paddingLeft: '40px' }}>
+                                                            <div key={i} style={{ marginBottom: '8px', position: 'relative', paddingLeft: '40px' }}>
                                                                 <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
                                                                 {line.replace(/^[-•*]\s*/, '')}
                                                             </div>
@@ -268,10 +267,10 @@ const Alerts = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Bottom bar - Thinner */}
+                                            {/* Bottom bar - Minimal thickness */}
                                             <div style={{
                                                 backgroundColor: sev.color,
-                                                padding: '25px 60px',
+                                                padding: '15px 60px', // Thinner padding
                                                 display: 'flex',
                                                 justifyContent: 'flex-end',
                                                 fontSize: '32px',
@@ -292,7 +291,7 @@ const Alerts = () => {
                 </div>
             </div>
 
-            {/* Status Indicator */}
+            {/* Status Hook */}
             <div className="fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
                 <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto pointer-events-auto">
                     <div className="flex items-center gap-3 text-slate-400">
