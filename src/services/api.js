@@ -5,14 +5,32 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/sige
 export const api = {
     async getDashboardData() {
         try {
-            // Fetch all vistorias with position and subtypes for the map and breakdown
-            const { data: vistorias } = await supabase
+            let allVistorias = [];
+            let { data: vistorias, error: fetchError } = await supabase
                 .from('vistorias')
                 .select('coordenadas, categoria_risco, subtipos_risco')
-                .order('created_at', { ascending: false })
-                .limit(5000)
+                .order('created_at', { ascending: false });
 
-            const locations = vistorias?.filter(v => v.coordenadas).map(v => {
+            if (vistorias) allVistorias = [...vistorias];
+
+            // If we hit the default limit (usually 1000), fetch next pages
+            while (vistorias && vistorias.length === 1000) {
+                const { data: nextBatch } = await supabase
+                    .from('vistorias')
+                    .select('coordenadas, categoria_risco, subtipos_risco')
+                    .order('created_at', { ascending: false })
+                    .range(allVistorias.length, allVistorias.length + 999);
+
+                if (nextBatch && nextBatch.length > 0) {
+                    allVistorias = [...allVistorias, ...nextBatch];
+                    vistorias = nextBatch;
+                } else {
+                    break;
+                }
+            }
+
+            const vistoriasData = allVistorias;
+            const locations = vistoriasData.filter(v => v.coordenadas).map(v => {
                 const parts = v.coordenadas.split(',')
                 const subtypes = v.subtipos_risco || []
                 const category = v.categoria_risco || 'Outros'
@@ -26,10 +44,10 @@ export const api = {
             }) || []
 
             // Calculate breakdown by Category
-            const totalReports = vistorias?.length || 0;
+            const totalReports = vistoriasData.length;
             const counts = {};
 
-            vistorias?.forEach(v => {
+            vistoriasData.forEach(v => {
                 const cat = v.categoria_risco || 'Outros';
                 counts[cat] = (counts[cat] || 0) + 1;
             });
