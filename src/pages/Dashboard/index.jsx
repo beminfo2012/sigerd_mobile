@@ -127,6 +127,16 @@ const Dashboard = () => {
         load()
     }, [])
 
+    useEffect(() => {
+        const handleSyncComplete = () => {
+            console.log('[Dashboard] Sync complete detected, reloading data...')
+            window.location.reload()
+        }
+
+        window.addEventListener('sync-complete', handleSyncComplete)
+        return () => window.removeEventListener('sync-complete', handleSyncComplete)
+    }, [])
+
     const handleSync = async () => {
         if (syncCount === 0 || syncing) return
         setSyncing(true)
@@ -215,6 +225,7 @@ const Dashboard = () => {
         </div>
     )
     if (!data) return <div className="p-8 text-center text-red-500">Erro ao carregar dados.</div>
+
 
     return (
         <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
+import SyncBackground from './components/SyncBackground'
 
 // Components
 import Dashboard from './pages/Dashboard'
@@ -67,6 +68,7 @@ function App() {
         <UserContext.Provider value={userProfile}>
             <Router>
                 <div className="app-container">
+                    <SyncBackground />
                     {/* Mobile Header */}
                     <header className="mobile-header">
                         <div className="header-logo-area">
