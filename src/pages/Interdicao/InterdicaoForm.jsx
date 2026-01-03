@@ -301,11 +301,11 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className={labelClasses}>CPF/CNPJ</label>
-                                    <input type="text" value={formData.responsavelCpf} onChange={e => handleChange('responsavelCpf', e.target.value)} className={inputClasses} />
+                                    <input type="tel" inputMode="numeric" pattern="[0-9]*" value={formData.responsavelCpf} onChange={e => handleChange('responsavelCpf', e.target.value.replace(/\D/g, ''))} className={inputClasses} />
                                 </div>
                                 <div>
                                     <label className={labelClasses}>Telefone</label>
-                                    <input type="tel" value={formData.responsavelTelefone} onChange={e => handleChange('responsavelTelefone', e.target.value)} className={inputClasses} />
+                                    <input type="tel" inputMode="tel" value={formData.responsavelTelefone} onChange={e => handleChange('responsavelTelefone', e.target.value)} className={inputClasses} />
                                 </div>
                             </div>
                             <div>

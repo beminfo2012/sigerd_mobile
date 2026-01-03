@@ -338,11 +338,11 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClasses}>CPF</label>
-                                <input type="text" className={inputClasses} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
+                                <input type="tel" inputMode="numeric" pattern="[0-9]*" className={inputClasses} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value.replace(/\D/g, '') })} />
                             </div>
                             <div>
                                 <label className={labelClasses}>Telefone</label>
-                                <input type="text" className={inputClasses} value={formData.telefone} onChange={e => setFormData({ ...formData, telefone: e.target.value })} />
+                                <input type="tel" inputMode="tel" className={inputClasses} value={formData.telefone} onChange={e => setFormData({ ...formData, telefone: e.target.value })} />
                             </div>
                         </div>
                     </div>
@@ -492,7 +492,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                             <h3 className="flex items-center gap-2 font-bold text-slate-700 mb-4"><Users size={20} /> População Exposta</h3>
                             <div className="space-y-4">
-                                <input type="number" placeholder="Nº estimado de pessoas" className={inputClasses} value={formData.populacaoEstimada} onChange={e => setFormData({ ...formData, populacaoEstimada: e.target.value })} />
+                                <input type="number" inputMode="numeric" placeholder="Nº estimado de pessoas" className={inputClasses} value={formData.populacaoEstimada} onChange={e => setFormData({ ...formData, populacaoEstimada: e.target.value })} />
                                 <div className="grid grid-cols-3 gap-2">
                                     {['Crianças', 'Idosos', 'PCD'].map(g => (
                                         <button key={g} type="button" onClick={() => toggleArrayItem('gruposVulneraveis', g)} className={`p-2.5 rounded-lg text-xs font-bold border transition-all ${formData.gruposVulneraveis.includes(g) ? 'bg-[#2a5299] border-[#2a5299] text-white' : 'bg-white text-slate-400'}`}>
