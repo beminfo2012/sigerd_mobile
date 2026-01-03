@@ -26,11 +26,10 @@ const Alerts = () => {
                 if (validAlerts.length > 0) setSelectedAlert(validAlerts[0])
                 else setSelectedAlert(null)
             } else {
-                console.warn('API /api/inmet returned error status:', resp.status)
                 setAlerts([])
             }
         } catch (e) {
-            console.error('Failed to fetch alerts:', e)
+            console.error(e)
             setAlerts([])
             setSelectedAlert(null)
         } finally {
@@ -50,10 +49,7 @@ const Alerts = () => {
                 hour: '2-digit',
                 minute: '2-digit'
             }).replace(',', '') + 'h'
-        } catch (e) {
-            console.warn('Date formatting error:', e)
-            return dateStr
-        }
+        } catch (e) { return dateStr }
     }
 
     const getSeverityDetails = (sev) => {
@@ -72,7 +68,8 @@ const Alerts = () => {
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 windowWidth: 1080,
-                windowHeight: format === 'stories' ? 1920 : 1080
+                windowHeight: format === 'stories' ? 1920 : 1080,
+                logging: false
             })
 
             const dataURL = canvas.toDataURL('image/jpeg', 0.95)
@@ -81,8 +78,7 @@ const Alerts = () => {
             link.href = dataURL
             link.click()
         } catch (err) {
-            console.error('Erro ao gerar imagem:', err)
-            alert('Erro ao gerar a imagem. Tente novamente.')
+            console.error('Error sharing/generating:', err)
         }
     }
 
@@ -195,37 +191,45 @@ const Alerts = () => {
                                                 transform: format === 'stories' ? 'scale(0.3)' : 'scale(0.3703)',
                                                 transformOrigin: 'top left',
                                                 fontFamily: 'sans-serif',
-                                                borderTop: `40px solid ${sev.color}`
+                                                borderTop: `40px solid ${sev.color}`,
+                                                boxSizing: 'border-box'
                                             }}
                                         >
-                                            <div style={{ flex: 1, padding: '80px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                                            {/* Top Space for vertical alignment balance */}
+                                            <div style={{ height: '80px' }} />
+
+                                            {/* Design matching mockup image */}
+                                            <div style={{ flex: 1, padding: '0 80px 80px', display: 'flex', flexDirection: 'column', gap: '40px', overflow: 'hidden' }}>
                                                 {/* Header Area */}
-                                                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                                                     <h1 style={{ margin: 0, fontSize: '100px', fontWeight: 900, color: '#2d2d2d', letterSpacing: '4px', textTransform: 'uppercase' }}>DEFESA CIVIL</h1>
                                                     <p style={{ margin: '10px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
                                                 </div>
 
-                                                {/* Severity Pill */}
-                                                <div style={{ textAlign: 'center' }}>
+                                                {/* Severity Pill - Center with Flex alignment */}
+                                                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                                                     <div style={{
-                                                        display: 'inline-block',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
                                                         backgroundColor: sev.color,
                                                         color: '#ffffff',
-                                                        padding: '30px 100px',
+                                                        padding: '0 100px',
+                                                        height: '140px', // Fixed height to ensure vertical centering
                                                         borderRadius: '100px',
                                                         fontSize: '48px',
                                                         fontWeight: 900,
                                                         letterSpacing: '2px',
                                                         textTransform: 'uppercase'
                                                     }}>
-                                                        {sev.text}
+                                                        <span style={{ transform: 'translateY(-2px)' }}>{sev.text}</span>
                                                     </div>
                                                 </div>
 
-                                                {/* Details */}
-                                                <div style={{ padding: '60px 0', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                {/* Information Block */}
+                                                <div style={{ padding: '40px 0', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                     <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
-                                                        <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo || '...'}
+                                                        <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo}
                                                     </div>
                                                     <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
                                                         <span style={{ fontWeight: 800 }}>Grau de severidade: </span>
@@ -241,35 +245,40 @@ const Alerts = () => {
 
                                                 <div style={{ height: '2px', background: '#f0f0f0', width: '100%' }} />
 
-                                                {/* Risks */}
+                                                {/* Risk Section */}
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                                     <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
-                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.4 }}>{selectedAlert?.riscos || 'Nenhum risco detectado.'}</div>
+                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.4 }}>{selectedAlert?.riscos}</div>
                                                 </div>
 
-                                                {/* Instructions */}
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
-                                                    <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
-                                                    <div style={{ fontSize: '36px', color: '#4d4d4d', lineHeight: 1.5 }}>
-                                                        {String(selectedAlert?.instrucoes || '').split('\n').filter(l => l.trim()).slice(0, 5).map((line, i) => (
-                                                            <div key={i} style={{ marginBottom: '15px', position: 'relative', paddingLeft: '40px' }}>
-                                                                <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
-                                                                {line.replace(/^[-•*]\s*/, '')}
-                                                            </div>
-                                                        ))}
-                                                        {!selectedAlert?.instrucoes && <div>Consulte a Defesa Civil para mais informações.</div>}
+                                                {/* Instructions Section - Scaled down if too long or clipped */}
+                                                {format === 'stories' && (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
+                                                        <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
+                                                        <div style={{ fontSize: '36px', color: '#4d4d4d', lineHeight: 1.5 }}>
+                                                            {String(selectedAlert?.instrucoes || '').split('\n').filter(l => l.trim()).slice(0, 5).map((line, i) => (
+                                                                <div key={i} style={{ marginBottom: '15px', position: 'relative', paddingLeft: '40px' }}>
+                                                                    <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
+                                                                    {line.replace(/^[-•*]\s*/, '')}
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
 
+                                            {/* Bottom bar - Forced to bottom of artRef parent */}
                                             <div style={{
                                                 backgroundColor: sev.color,
-                                                padding: '30px 50px',
+                                                padding: '40px 60px',
                                                 display: 'flex',
                                                 justifyContent: 'flex-end',
                                                 fontSize: '32px',
                                                 fontWeight: 800,
-                                                color: '#ffffff'
+                                                color: '#ffffff',
+                                                marginTop: 'auto', // Pushes to the bottom of the flex container
+                                                width: '100%',
+                                                boxSizing: 'border-box'
                                             }}>
                                                 Fonte: INMET
                                             </div>
@@ -282,7 +291,7 @@ const Alerts = () => {
                 </div>
             </div>
 
-            {/* Bottom Status Hook */}
+            {/* Floating Nav Hook */}
             <div className="fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
                 <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto pointer-events-auto">
                     <div className="flex items-center gap-3 text-slate-400">
