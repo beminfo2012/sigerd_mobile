@@ -13,40 +13,48 @@ export const api = {
             const locations = vistorias?.filter(v => v.coordenadas).map(v => {
                 const parts = v.coordenadas.split(',')
                 const subtypes = v.subtipos_risco || []
-                // Use subtypes if available, otherwise fallback to category
-                const riskLabel = subtypes.length > 0 ? subtypes.join(', ') : (v.categoria_risco || 'Indefinido')
+                const category = v.categoria_risco || 'Indefinido'
 
                 return {
                     lat: parseFloat(parts[0]),
                     lng: parseFloat(parts[1]),
-                    risk: riskLabel
+                    risk: category,
+                    details: subtypes.length > 0 ? subtypes.join(', ') : category
                 }
             }) || []
 
-            // Calculate breakdown by subtypes
+            // Calculate breakdown by Category
             const totalReports = vistorias?.length || 0;
             const counts = {};
 
             vistorias?.forEach(v => {
-                const subtypes = v.subtipos_risco || [];
-                if (subtypes.length === 0) {
-                    const cat = v.categoria_risco || 'Outros';
-                    counts[cat] = (counts[cat] || 0) + 1;
-                } else {
-                    subtypes.forEach(sub => {
-                        counts[sub] = (counts[sub] || 0) + 1;
-                    });
-                }
+                const cat = v.categoria_risco || 'Outros';
+                counts[cat] = (counts[cat] || 0) + 1;
             });
 
-            // We use total as the sum of all subtype occurrences for percentage
-            const totalOccurrences = Object.values(counts).reduce((a, b) => a + b, 0);
+            // We use total reports for percentage since we are back to 1:1 category mapping
+            const totalOccurrences = totalReports;
 
-            const breakdown = Object.keys(counts).map(label => ({
+            // Color palette for distinct categories
+            const colorPalette = {
+                'Deslizamento': 'bg-orange-500',
+                'Alagamento': 'bg-blue-500',
+                'Inundação': 'bg-cyan-500',
+                'Enxurrada': 'bg-teal-500',
+                'Vendaval': 'bg-gray-500',
+                'Granizo': 'bg-indigo-500',
+                'Incêndio': 'bg-red-500',
+                'Estrutural': 'bg-purple-500',
+                'Outros': 'bg-slate-400'
+            };
+
+            const defaultColors = ['bg-pink-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'];
+
+            const breakdown = Object.keys(counts).map((label, idx) => ({
                 label,
                 count: counts[label],
                 percentage: totalOccurrences > 0 ? Math.round((counts[label] / totalOccurrences) * 100) : 0,
-                color: 'bg-blue-400'
+                color: colorPalette[label] || defaultColors[idx % defaultColors.length]
             })).sort((a, b) => b.count - a.count);
 
             // Fetch INMET alerts

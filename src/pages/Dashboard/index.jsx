@@ -41,31 +41,45 @@ const Dashboard = () => {
                     const total = localVistorias.length
                     const counts = {}
                     localVistorias.forEach(v => {
-                        const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                        if (subtypes.length === 0) {
+                        localVistorias.forEach(v => {
                             const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
                             counts[cat] = (counts[cat] || 0) + 1
-                        } else {
-                            subtypes.forEach(sub => {
-                                counts[sub] = (counts[sub] || 0) + 1
-                            })
-                        }
+                        })
                     })
 
-                    const totalOccurrences = Object.values(counts).reduce((a, b) => a + b, 0)
+                    // Color palette for distinct categories
+                    const colorPalette = {
+                        'Deslizamento': 'bg-orange-500',
+                        'Alagamento': 'bg-blue-500',
+                        'Inundação': 'bg-cyan-500',
+                        'Enxurrada': 'bg-teal-500',
+                        'Vendaval': 'bg-gray-500',
+                        'Granizo': 'bg-indigo-500',
+                        'Incêndio': 'bg-red-500',
+                        'Estrutural': 'bg-purple-500',
+                        'Outros': 'bg-slate-400'
+                    };
+                    const defaultColors = ['bg-pink-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'];
+
+                    const totalOccurrences = total
                     finalData.stats.totalVistorias = total
-                    finalData.breakdown = Object.keys(counts).map(label => ({
+                    finalData.breakdown = Object.keys(counts).map((label, idx) => ({
                         label,
                         count: counts[label],
                         percentage: totalOccurrences > 0 ? Math.round((counts[label] / totalOccurrences) * 100) : 0,
-                        color: 'bg-blue-400'
+                        color: colorPalette[label] || defaultColors[idx % defaultColors.length]
                     })).sort((a, b) => b.count - a.count)
 
                     finalData.locations = localVistorias.filter(v => v.coordenadas).map(v => {
                         const parts = v.coordenadas.split(',')
+                        const cat = v.categoriaRisco || v.categoria_risco || 'Local'
                         const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                        const riskLabel = subtypes.length > 0 ? subtypes.join(', ') : (v.categoriaRisco || v.categoria_risco || 'Local')
-                        return { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]), risk: riskLabel }
+                        return {
+                            lat: parseFloat(parts[0]),
+                            lng: parseFloat(parts[1]),
+                            risk: cat,
+                            details: subtypes.length > 0 ? subtypes.join(', ') : cat
+                        }
                     })
                 } else {
                     const unsynced = localVistorias.filter(v => v.synced === false)
@@ -73,33 +87,22 @@ const Dashboard = () => {
                     unsynced.forEach(v => {
                         if (v.coordenadas) {
                             const parts = v.coordenadas.split(',')
+                            const cat = v.categoriaRisco || v.categoria_risco || 'Pendente'
                             const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                            const riskLabel = subtypes.length > 0 ? subtypes.join(', ') : (v.categoriaRisco || v.categoria_risco || 'Pendente')
                             finalData.locations.push({
                                 lat: parseFloat(parts[0]),
                                 lng: parseFloat(parts[1]),
-                                risk: riskLabel
+                                risk: cat,
+                                details: subtypes.length > 0 ? subtypes.join(', ') : cat
                             })
                         }
 
-                        const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                        if (subtypes.length === 0) {
-                            const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
-                            const existing = finalData.breakdown.find(b => b.label.toLowerCase() === cat.toLowerCase())
-                            if (existing) {
-                                existing.count++
-                            } else {
-                                finalData.breakdown.push({ label: cat, count: 1, percentage: 0, color: 'bg-slate-300' })
-                            }
+                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
+                        const existing = finalData.breakdown.find(b => b.label.toLowerCase() === cat.toLowerCase())
+                        if (existing) {
+                            existing.count++
                         } else {
-                            subtypes.forEach(sub => {
-                                const existing = finalData.breakdown.find(b => b.label.toLowerCase() === sub.toLowerCase())
-                                if (existing) {
-                                    existing.count++
-                                } else {
-                                    finalData.breakdown.push({ label: sub, count: 1, percentage: 0, color: 'bg-slate-300' })
-                                }
-                            })
+                            finalData.breakdown.push({ label: cat, count: 1, percentage: 0, color: 'bg-slate-300' })
                         }
                     })
 
@@ -390,8 +393,8 @@ const Dashboard = () => {
                             >
                                 <Popup>
                                     <div className="text-center">
-                                        <div className="font-bold text-slate-800 mb-1">Risco Identificado</div>
-                                        <div className="text-sm text-slate-600">{loc.risk}</div>
+                                        <div className="font-bold text-slate-800 mb-1">{loc.risk}</div>
+                                        <div className="text-sm text-slate-600">{loc.details}</div>
                                     </div>
                                 </Popup>
                             </CircleMarker>
