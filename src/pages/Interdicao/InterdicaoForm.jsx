@@ -8,7 +8,16 @@ import { compressImage } from '../../utils/imageOptimizer'
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const [formData, setFormData] = useState({
         interdicaoId: '',
-        dataHora: new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).toISOString().slice(0, 16),
+        dataHora: (() => {
+            const now = new Date();
+            const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+            const year = brasiliaTime.getFullYear();
+            const month = String(brasiliaTime.getMonth() + 1).padStart(2, '0');
+            const day = String(brasiliaTime.getDate()).padStart(2, '0');
+            const hours = String(brasiliaTime.getHours()).padStart(2, '0');
+            const minutes = String(brasiliaTime.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        })(),
         municipio: 'Santa Maria de Jetibá',
         bairro: '',
         endereco: '',

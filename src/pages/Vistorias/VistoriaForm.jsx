@@ -67,7 +67,16 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         latitude: '',
         longitude: '',
         coordenadas: '',
-        dataHora: new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).toISOString().slice(0, 16),
+        dataHora: (() => {
+            const now = new Date();
+            const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+            const year = brasiliaTime.getFullYear();
+            const month = String(brasiliaTime.getMonth() + 1).padStart(2, '0');
+            const day = String(brasiliaTime.getDate()).padStart(2, '0');
+            const hours = String(brasiliaTime.getHours()).padStart(2, '0');
+            const minutes = String(brasiliaTime.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        })(),
 
         // 5. Detalhes (Evolução)
         categoriaRisco: '',

@@ -119,8 +119,8 @@ export const generatePDF = async (rawData, type) => {
             <div style="padding: 0 40px 40px 40px;">
                 ${sectionTitle('1. Identificação e Responsável')}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    ${renderField('Número da Vistoria', data.vistoriaId)}
-                    ${renderField('Número do Processo', data.processo)}
+                    ${renderField('Data/Hora', data.dataHora ? new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '---')}
+                    ${renderField('Protocolo/Processo', data.processo)}
                     ${renderField('Data e Hora da Emissão', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
                     ${renderField('Agente Responsável', data.agente)}
                     ${renderField('Matrícula do Agente', data.matricula)}
@@ -215,13 +215,19 @@ export const generatePDF = async (rawData, type) => {
         <div style="margin-top: 40px; padding: 40px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px;">
                 <!-- Agent Signature Column -->
-                <div style="text-align: center; width: 350px;">
-                    <div style="height: 100px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px;">
-                        ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="max-height: 100px; width: auto; max-width: 300px; display: block;" />` : '<div style="height: 40px; border-bottom: 1px solid #cbd5e1; width: 200px; margin-bottom: 10px;"></div>'}
+                <div style="text-align: center; width: 350px; margin: 0 auto;">
+                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px; overflow: hidden;">
+                        ${data.assinaturaAgente ? `
+                            <img 
+                                src="${data.assinaturaAgente}" 
+                                style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 1px solid #e2e8f0;" 
+                                crossorigin="anonymous"
+                            />
+                        ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 10px;"></div>'}
                     </div>
-                    <div style="border-top: 2px solid #1e3a8a; padding-top: 10px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
-                        <p style="margin: 3px 0; font-size: 11px; color: #64748b; font-weight: 700; letter-spacing: 1px;">AGENTE DE DEFESA CIVIL</p>
+                    <div style="padding-top: 10px;">
+                        <p style="margin: 0; font-size: 15px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
+                        <p style="margin: 2px 0; font-size: 11px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">AGENTE DE DEFESA CIVIL</p>
                         <p style="margin: 0; font-size: 10px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
                     </div>
                 </div>
@@ -245,14 +251,21 @@ export const generatePDF = async (rawData, type) => {
 
     try {
         await waitForImages();
-        // Give a bit more time for canvas rendering of base64 images
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Increased delay for base64 rendering and added scroll to ensure fixed element visibility
+        await new Promise(resolve => setTimeout(resolve, 2500));
+
         const canvas = await html2canvas(container, {
             scale: 2,
             useCORS: true,
-            logging: false,
-            allowTaint: true,
-            backgroundColor: '#ffffff'
+            logging: true, // Enabled for debugging if needed
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            windowWidth: 840,
+            onclone: (clonedDoc) => {
+                // Ensure the cloned container is visible
+                const clonedContainer = clonedDoc.querySelector('div');
+                if (clonedContainer) clonedContainer.style.top = '0';
+            }
         });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const pdf = new jsPDF('p', 'mm', 'a4');
