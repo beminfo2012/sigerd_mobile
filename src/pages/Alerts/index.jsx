@@ -368,17 +368,18 @@ const Alerts = () => {
 
                         {/* Header Section */}
                         <div style={{
-                            padding: '30px 20px 25px',
+                            padding: '15px 15px 15px',
                             textAlign: 'center',
-                            background: '#f5f5f5'
+                            background: '#f5f5f5',
+                            width: '100%'
                         }}>
                             <h1 style={{
                                 fontFamily: "'Oswald', sans-serif",
-                                fontSize: format === 'stories' ? '2.2rem' : '2.8rem',
+                                fontSize: format === 'stories' ? '2.0rem' : '2.8rem',
                                 fontWeight: 700,
                                 color: '#333',
-                                letterSpacing: '2px',
-                                margin: '0 0 8px 0',
+                                letterSpacing: '1px',
+                                margin: '0 0 4px 0',
                                 textTransform: 'uppercase'
                             }}>
                                 DEFESA CIVIL
@@ -388,8 +389,8 @@ const Alerts = () => {
                                 fontSize: format === 'stories' ? '1.1rem' : '1.3rem',
                                 fontWeight: 400,
                                 color: '#666',
-                                letterSpacing: '2px',
-                                margin: '0 0 20px 0',
+                                letterSpacing: '1px',
+                                margin: '0 0 15px 0',
                                 textTransform: 'uppercase'
                             }}>
                                 SANTA MARIA DE JETIBÁ
@@ -408,7 +409,9 @@ const Alerts = () => {
                                 letterSpacing: '1.5px',
                                 textTransform: 'uppercase',
                                 boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                                textAlign: 'center'
+                                textAlign: 'center',
+                                width: 'auto',
+                                minWidth: '200px'
                             }}>
                                 {severity.toUpperCase()}
                             </div>
@@ -429,18 +432,19 @@ const Alerts = () => {
                         </div>
 
                         {/* Info Card */}
+                        {/* Info Card */}
                         <div style={{
                             background: 'white',
-                            padding: format === 'stories' ? '20px' : '25px',
+                            padding: format === 'stories' ? '15px 20px' : '25px',
                             position: 'relative',
                             display: 'flex',
                             flexDirection: 'column',
                             fontSize: format === 'stories' ? '0.85rem' : '1rem',
                             minHeight: 0,
-                            overflow: 'auto'
+                            overflow: 'hidden' // Evita scrollbars na imagem final
                         }}>
                             <div style={{
-                                marginBottom: '15px',
+                                marginBottom: '10px',
                                 lineHeight: 1.5,
                                 borderBottom: '2px solid #f0f0f0',
                                 paddingBottom: '12px'
