@@ -90,7 +90,7 @@ function App() {
                             <Route path="/vistorias" element={<Vistorias />} />
                             <Route path="/pluviometros" element={<Pluviometros onBack={() => setActiveTab('dashboard')} />} />
                             <Route path="/interdicao" element={<Interdicao />} />
-                            <Route path="/menu" element={<Menu />} />
+                            <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
                             <Route path="/alerts" element={<Alerts />} />
                         </Routes>
                     </main>
