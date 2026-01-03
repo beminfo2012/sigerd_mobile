@@ -49,46 +49,43 @@ const Alerts = () => {
         } catch (e) { return dateStr }
     }
 
-    const getSeverityColor = (sev) => {
-        if (!sev) return 'gray'
+    const getSeverityDetails = (sev) => {
+        if (!sev) return { color: '#94a3b8', bg: '#f1f5f9', text: 'INDEFINIDO', hex: '#64748b' }
         const s = sev.toLowerCase()
-        if (s.includes('grande perigo')) return 'red'
-        if (s.includes('perigo')) return 'orange'
-        return 'yellow'
-    }
-
-    const getSeverityHex = (sev) => {
-        const color = getSeverityColor(sev)
-        if (color === 'red') return '#c62828'
-        if (color === 'orange') return '#e67e22'
-        return '#f1c40f'
+        if (s.includes('grande perigo')) return { color: '#c62828', bg: '#c62828', text: 'GRANDE PERIGO', hex: '#c62828' }
+        if (s.includes('perigo')) return { color: '#ef6c00', bg: '#ef6c00', text: 'PERIGO', hex: '#ef6c00' }
+        return { color: '#fbc02d', bg: '#fbc02d', text: 'PERIGO POTENCIAL', hex: '#fbc02d' }
     }
 
     const generateArt = async () => {
         if (!artRef.current) return
         const canvas = await html2canvas(artRef.current, {
-            scale: 2,
+            scale: 3,
             useCORS: true,
-            backgroundColor: '#f5f5f5'
+            backgroundColor: '#ffffff',
+            windowWidth: 1080,
+            windowHeight: format === 'stories' ? 1920 : 1080
         })
 
-        const dataURL = canvas.toDataURL('image/jpeg', 0.9)
+        const dataURL = canvas.toDataURL('image/jpeg', 0.95)
         const link = document.createElement('a')
-        link.download = `alerta-${selectedAlert?.id || Date.now()}.jpg`
+        link.download = `alerta-defesa-civil-${Date.now()}.jpg`
         link.href = dataURL
         link.click()
     }
 
+    const sev = getSeverityDetails(selectedAlert?.severidade)
+
     return (
-        <div className="flex flex-col h-screen bg-slate-50 font-sans overflow-hidden">
+        <div className="flex flex-col h-screen bg-slate-100 font-sans overflow-hidden">
             {/* Header */}
-            <div className="bg-white px-4 py-4 flex items-center gap-4 border-b border-slate-100 shrink-0">
+            <div className="bg-white px-4 py-4 flex items-center gap-4 border-b border-slate-200 shrink-0">
                 <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors">
                     <ArrowLeft size={24} />
                 </button>
                 <div className="flex-1">
-                    <h1 className="text-xl font-black text-slate-800">Alertas INMET</h1>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</p>
+                    <h1 className="text-xl font-black text-slate-800 tracking-tight">Gerador de Arte</h1>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Módulo INMET</p>
                 </div>
                 <button onClick={fetchAlerts} className={`p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors ${loading ? 'animate-spin' : ''}`}>
                     <RefreshCw size={20} />
@@ -96,173 +93,190 @@ const Alerts = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto pb-32">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                        <RefreshCw className="animate-spin text-blue-600 mb-4" size={40} />
-                        <p className="font-bold text-slate-500">Buscando avisos...</p>
-                    </div>
-                ) : alerts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
-                        <div className="w-16 h-16 bg-green-50 rounded-3xl flex items-center justify-center mb-4">
-                            <Info className="text-green-500" size={32} />
+                <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <RefreshCw className="animate-spin text-blue-600 mb-4" size={40} />
+                            <p className="font-bold text-slate-500">Buscando avisos...</p>
                         </div>
-                        <h2 className="text-lg font-black text-slate-800 mb-2">Sem avisos vigentes</h2>
-                        <p className="text-sm font-medium text-slate-500">Não há alertas meteorológicos ativos para sua região no momento.</p>
-                    </div>
-                ) : (
-                    <div className="p-4 space-y-6">
-                        {/* Selector */}
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Selecionar Alerta</label>
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                {alerts.map((alert) => (
-                                    <button
-                                        key={alert.id}
-                                        onClick={() => setSelectedAlert(alert)}
-                                        className={`shrink-0 px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-3 ${selectedAlert?.id === alert.id ? 'border-blue-600 bg-blue-50' : 'border-white bg-white shadow-sm'}`}
-                                    >
-                                        <div className={`w-3 h-3 rounded-full bg-${getSeverityColor(alert.severidade)}-500`} />
-                                        <div className="text-left">
-                                            <div className="text-xs font-black text-slate-800 leading-none">{alert.tipo}</div>
-                                            <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">{alert.severidade}</div>
-                                        </div>
-                                    </button>
-                                ))}
+                    ) : alerts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-white rounded-[32px] border border-slate-200">
+                            <div className="w-16 h-16 bg-green-50 rounded-3xl flex items-center justify-center mb-4 text-green-500">
+                                <Info size={32} />
                             </div>
+                            <h2 className="text-lg font-black text-slate-800 mb-1">Céu Limpo</h2>
+                            <p className="text-sm font-bold text-slate-400">Nenhum aviso vigente no momento.</p>
                         </div>
-
-                        {/* Format Switch */}
-                        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-slate-100">
-                            <button onClick={() => setFormat('stories')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${format === 'stories' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}>
-                                <ImageIcon size={18} /> Stories
-                            </button>
-                            <button onClick={() => setFormat('feed')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${format === 'feed' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}>
-                                < ImageIcon size={18} /> Feed
-                            </button>
-                        </div>
-
-                        {/* Generator Preview Area */}
-                        <div className="flex flex-col items-center">
-                            <div className="w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl border-4 border-white mb-6">
-                                {/* Art to Capture */}
-                                <div
-                                    ref={artRef}
-                                    style={{
-                                        aspectRatio: format === 'stories' ? '9/16' : '1/1',
-                                        width: '100%',
-                                        backgroundColor: '#f5f5f5',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        position: 'relative',
-                                        fontFamily: 'sans-serif'
-                                    }}
-                                >
-                                    {/* Red Top Bar */}
-                                    <div style={{ height: '2%', background: getSeverityHex(selectedAlert?.severidade), width: '100%' }} />
-
-                                    {/* Info Header */}
-                                    <div style={{ padding: '8% 5% 5%', textAlign: 'center' }}>
-                                        <h1 style={{ margin: 0, fontSize: format === 'stories' ? '2.2rem' : '2.8rem', fontWeight: 900, color: '#1e293b', textTransform: 'uppercase', letterSpacing: '1px' }}>AVISO DE RISCO</h1>
-                                        <p style={{ margin: '2% 0 8%', fontSize: format === 'stories' ? '0.9rem' : '1.1rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '3px' }}>METEOROLÓGICO</p>
-
-                                        <div style={{
-                                            display: 'inline-block',
-                                            padding: '3% 10%',
-                                            borderRadius: '50px',
-                                            backgroundColor: getSeverityHex(selectedAlert?.severidade),
-                                            color: getSeverityColor(selectedAlert?.severidade) === 'yellow' ? '#1e293b' : 'white',
-                                            fontSize: format === 'stories' ? '1rem' : '1.2rem',
-                                            fontWeight: 900,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '2px',
-                                            boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                                        }}>
-                                            {selectedAlert?.severidade?.toUpperCase() || 'GRANDE PERIGO'}
+                    ) : (
+                        <div className="grid lg:grid-cols-2 gap-8 items-start">
+                            {/* Controls Column */}
+                            <div className="space-y-6 order-2 lg:order-1">
+                                <div className="bg-white p-6 rounded-[32px] border border-slate-200 space-y-6 shadow-sm">
+                                    <div className="space-y-4">
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Selecione o Aviso</label>
+                                        <div className="grid gap-3">
+                                            {alerts.map((alert) => (
+                                                <button
+                                                    key={alert.id}
+                                                    onClick={() => setSelectedAlert(alert)}
+                                                    className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${selectedAlert?.id === alert.id ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-slate-50 hover:border-slate-200'}`}
+                                                >
+                                                    <div>
+                                                        <div className="font-black text-slate-800 text-sm leading-tight mb-1">{alert.tipo}</div>
+                                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{alert.severidade}</div>
+                                                    </div>
+                                                    <div className={`w-3 h-3 rounded-full`} style={{ background: getSeverityDetails(alert.severidade).color }} />
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
 
-                                    {/* Dynamic Map/Image Holder - Simulating the manual upload area but with icon */}
-                                    <div style={{ flex: 1, margin: '0 5% 5%', backgroundColor: 'white', borderRadius: '24px', position: 'relative', overflow: 'hidden', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
-                                        <div style={{ padding: '6% 6% 4%', borderBottom: '1px solid #f1f5f9' }}>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#3b82f6', marginBottom: '1%' }}>TIPO DE EVENTO</div>
-                                            <div style={{ fontSize: format === 'stories' ? '1.1rem' : '1.4rem', fontWeight: 900, color: '#1e293b' }}>{selectedAlert?.tipo || '...'}</div>
-                                        </div>
-
-                                        <div style={{ flex: 1, padding: '5% 6%', color: '#475569', fontSize: format === 'stories' ? '0.85rem' : '1rem', lineHeight: 1.5 }}>
-                                            <div style={{ fontWeight: 900, fontSize: '0.65rem', color: '#94a3b8', marginBottom: '2%' }}>RISCOS E RECOMENDAÇÕES</div>
-                                            {selectedAlert?.riscos && (
-                                                <div style={{ marginBottom: '4%' }}>{selectedAlert.riscos}</div>
-                                            )}
-                                            {selectedAlert?.instrucoes && typeof selectedAlert.instrucoes === 'string' && (
-                                                <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
-                                                    {selectedAlert.instrucoes.split('\n').map((li, i) => (
-                                                        <li key={i} style={{ marginBottom: '2%' }}>{li.replace(/^[-•*]\s*/, '')}</li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-
-                                        {/* Validity Section */}
-                                        <div style={{ padding: '4% 6%', backgroundColor: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5%' }}>
-                                                <div>
-                                                    <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8' }}>INÍCIO</div>
-                                                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#1e293b' }}>{formatDate(selectedAlert?.inicio)}</div>
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8' }}>PREVISÃO FIM</div>
-                                                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#1e293b' }}>{formatDate(selectedAlert?.fim)}</div>
-                                                </div>
-                                            </div>
+                                    <div className="space-y-4">
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Formato da Mídia</label>
+                                        <div className="flex p-1 bg-slate-100 rounded-2xl">
+                                            <button onClick={() => setFormat('stories')} className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${format === 'stories' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>STORIES</button>
+                                            <button onClick={() => setFormat('feed')} className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${format === 'feed' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>FEED</button>
                                         </div>
                                     </div>
+                                </div>
 
-                                    {/* Footer */}
-                                    <div style={{
-                                        padding: '4% 5%',
-                                        backgroundColor: getSeverityHex(selectedAlert?.severidade),
-                                        color: getSeverityColor(selectedAlert?.severidade) === 'yellow' ? '#1e293b' : 'white',
-                                        textAlign: 'center',
-                                        fontSize: '0.65rem',
-                                        fontWeight: 800,
-                                        letterSpacing: '1px'
-                                    }}>
-                                        DEFESA CIVIL - SANTA MARIA DE JETIBÁ/ES
-                                    </div>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={generateArt}
+                                        className="flex-1 bg-slate-800 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-slate-200"
+                                    >
+                                        <Download size={20} /> Baixar JPG
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const text = `⚠️ *AVISO DE RISCO INMET*\n\n🔹 *Tipo:* ${selectedAlert?.tipo}\n🔸 *Severidade:* ${selectedAlert?.severidade}\n\n📅 *Vigência:* de ${formatDate(selectedAlert?.inicio)} até ${formatDate(selectedAlert?.fim)}\n\n⚠️ *Riscos:* ${selectedAlert?.riscos}\n\n📱 Mais informações em: app.sigerd.com.br`;
+                                            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+                                        }}
+                                        className="bg-green-600 text-white px-6 py-5 rounded-[24px] font-black flex items-center justify-center active:scale-95 transition-all shadow-xl shadow-green-100"
+                                    >
+                                        <Share2 size={24} />
+                                    </button>
                                 </div>
                             </div>
 
-                            <div className="flex gap-4 w-full max-w-sm">
-                                <button
-                                    onClick={generateArt}
-                                    className="flex-1 bg-white border-2 border-slate-200 text-slate-700 py-4 rounded-3xl font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-sm"
-                                >
-                                    <Download size={20} /> Baixar Arte
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const text = `⚠️ *AVISO DE RISCO INMET*\n\n🔹 *Tipo:* ${selectedAlert?.tipo}\n🔸 *Severidade:* ${selectedAlert?.severidade}\n\n📍 *Município:* Santa Maria de Jetibá\n⏰ *Fim:* ${formatDate(selectedAlert?.fim)}\n\n⚠️ ${selectedAlert?.riscos}\n\n📱 Mais informações em: app.sigerd.com.br`;
-                                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
-                                    }}
-                                    className="flex-1 bg-green-600 text-white py-4 rounded-3xl font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg"
-                                >
-                                    <Share2 size={20} /> Compartilhar
-                                </button>
+                            {/* Preview Column */}
+                            <div className="order-1 lg:order-2 flex flex-col items-center">
+                                <div className="bg-slate-200/50 p-4 border border-slate-300 border-dashed rounded-[40px] flex items-center justify-center overflow-hidden w-full max-w-[440px]">
+                                    <div
+                                        className="bg-white shadow-2xl relative overflow-hidden"
+                                        style={{
+                                            width: format === 'stories' ? '324px' : '400px',
+                                            height: format === 'stories' ? '576px' : '400px',
+                                        }}
+                                    >
+                                        <div
+                                            ref={artRef}
+                                            style={{
+                                                width: '1080px',
+                                                height: format === 'stories' ? '1920px' : '1080px',
+                                                backgroundColor: '#ffffff',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                transform: format === 'stories' ? 'scale(0.3)' : 'scale(0.3703)',
+                                                transformOrigin: 'top left',
+                                                fontFamily: 'sans-serif',
+                                                borderTop: `40px solid ${sev.color}`
+                                            }}
+                                        >
+                                            {/* Design matching mockup image */}
+                                            <div style={{ flex: 1, padding: '80px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                                                {/* Header Area */}
+                                                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                                    <h1 style={{ margin: 0, fontSize: '100px', fontWeight: 900, color: '#2d2d2d', letterSpacing: '4px', textTransform: 'uppercase' }}>DEFESA CIVIL</h1>
+                                                    <p style={{ margin: '10px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
+                                                </div>
+
+                                                {/* Severity Pill - Center */}
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <div style={{
+                                                        display: 'inline-block',
+                                                        backgroundColor: sev.color,
+                                                        color: '#ffffff',
+                                                        padding: '30px 100px',
+                                                        borderRadius: '100px',
+                                                        fontSize: '48px',
+                                                        fontWeight: 900,
+                                                        letterSpacing: '2px',
+                                                        textTransform: 'uppercase'
+                                                    }}>
+                                                        {sev.text}
+                                                    </div>
+                                                </div>
+
+                                                {/* Information Block */}
+                                                <div style={{ padding: '60px 0', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                        <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo}
+                                                    </div>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                        <span style={{ fontWeight: 800 }}>Grau de severidade: </span>
+                                                        <span style={{ color: sev.color, fontWeight: 700 }}>{sev.text.charAt(0) + sev.text.slice(1).toLowerCase()}</span>
+                                                    </div>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                        <span style={{ fontWeight: 800 }}>Início: </span>{formatDate(selectedAlert?.inicio)}
+                                                    </div>
+                                                    <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
+                                                        <span style={{ fontWeight: 800 }}>Fim: </span>{formatDate(selectedAlert?.fim)}
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ height: '2px', background: '#f0f0f0', width: '100%' }} />
+
+                                                {/* Risk Section */}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                                    <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
+                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.4 }}>{selectedAlert?.riscos}</div>
+                                                </div>
+
+                                                {/* Instructions */}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
+                                                    <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
+                                                    <div style={{ fontSize: '36px', color: '#4d4d4d', lineHeight: 1.5 }}>
+                                                        {selectedAlert?.instrucoes?.split('\n').slice(0, 5).map((line, i) => (
+                                                            <div key={i} style={{ marginBottom: '15px', position: 'relative', paddingLeft: '40px' }}>
+                                                                <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
+                                                                {line.replace(/^[-•*]\s*/, '')}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Bottom bar */}
+                                            <div style={{
+                                                backgroundColor: sev.color,
+                                                padding: '30px 50px',
+                                                display: 'flex',
+                                                justifyContent: 'flex-end',
+                                                fontSize: '32px',
+                                                fontWeight: 800,
+                                                color: '#ffffff'
+                                            }}>
+                                                Fonte: INMET
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
-            {/* Bottom Floating Nav Hint */}
-            <div className="fixed bottom-6 left-6 right-6 z-50">
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between">
+            {/* Bottom Status Hook */}
+            <div className="fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
+                <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto">
                     <div className="flex items-center gap-3 text-slate-400">
                         <ImageIcon size={20} />
-                        <span className="text-xs font-bold uppercase tracking-wider">Módulo Gerador INMET</span>
-                    </div>
-                    <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
-                        <AlertTriangle className="text-blue-600" size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Módulo Gerador INMET</span>
                     </div>
                 </div>
             </div>
