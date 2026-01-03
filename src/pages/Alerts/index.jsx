@@ -25,9 +25,12 @@ const Alerts = () => {
                 setAlerts(validAlerts)
                 if (validAlerts.length > 0) setSelectedAlert(validAlerts[0])
                 else setSelectedAlert(null)
+            } else {
+                console.warn('API /api/inmet returned error status:', resp.status)
+                setAlerts([])
             }
         } catch (e) {
-            console.error(e)
+            console.error('Failed to fetch alerts:', e)
             setAlerts([])
             setSelectedAlert(null)
         } finally {
@@ -39,6 +42,7 @@ const Alerts = () => {
         if (!dateStr) return '...'
         try {
             const date = new Date(dateStr)
+            if (isNaN(date.getTime())) return dateStr
             return date.toLocaleString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',
@@ -46,12 +50,15 @@ const Alerts = () => {
                 hour: '2-digit',
                 minute: '2-digit'
             }).replace(',', '') + 'h'
-        } catch (e) { return dateStr }
+        } catch (e) {
+            console.warn('Date formatting error:', e)
+            return dateStr
+        }
     }
 
     const getSeverityDetails = (sev) => {
         if (!sev) return { color: '#94a3b8', bg: '#f1f5f9', text: 'INDEFINIDO', hex: '#64748b' }
-        const s = sev.toLowerCase()
+        const s = String(sev).toLowerCase()
         if (s.includes('grande perigo')) return { color: '#c62828', bg: '#c62828', text: 'GRANDE PERIGO', hex: '#c62828' }
         if (s.includes('perigo')) return { color: '#ef6c00', bg: '#ef6c00', text: 'PERIGO', hex: '#ef6c00' }
         return { color: '#fbc02d', bg: '#fbc02d', text: 'PERIGO POTENCIAL', hex: '#fbc02d' }
@@ -59,19 +66,24 @@ const Alerts = () => {
 
     const generateArt = async () => {
         if (!artRef.current) return
-        const canvas = await html2canvas(artRef.current, {
-            scale: 3,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-            windowWidth: 1080,
-            windowHeight: format === 'stories' ? 1920 : 1080
-        })
+        try {
+            const canvas = await html2canvas(artRef.current, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                windowWidth: 1080,
+                windowHeight: format === 'stories' ? 1920 : 1080
+            })
 
-        const dataURL = canvas.toDataURL('image/jpeg', 0.95)
-        const link = document.createElement('a')
-        link.download = `alerta-defesa-civil-${Date.now()}.jpg`
-        link.href = dataURL
-        link.click()
+            const dataURL = canvas.toDataURL('image/jpeg', 0.95)
+            const link = document.createElement('a')
+            link.download = `alerta-defesa-civil-${Date.now()}.jpg`
+            link.href = dataURL
+            link.click()
+        } catch (err) {
+            console.error('Erro ao gerar imagem:', err)
+            alert('Erro ao gerar a imagem. Tente novamente.')
+        }
     }
 
     const sev = getSeverityDetails(selectedAlert?.severidade)
@@ -115,9 +127,9 @@ const Alerts = () => {
                                     <div className="space-y-4">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">Selecione o Aviso</label>
                                         <div className="grid gap-3">
-                                            {alerts.map((alert) => (
+                                            {alerts.map((alert, idx) => (
                                                 <button
-                                                    key={alert.id}
+                                                    key={alert.id || idx}
                                                     onClick={() => setSelectedAlert(alert)}
                                                     className={`w-full p-4 rounded-2xl border-2 text-left transition-all flex items-center justify-between ${selectedAlert?.id === alert.id ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-slate-50 hover:border-slate-200'}`}
                                                 >
@@ -186,7 +198,6 @@ const Alerts = () => {
                                                 borderTop: `40px solid ${sev.color}`
                                             }}
                                         >
-                                            {/* Design matching mockup image */}
                                             <div style={{ flex: 1, padding: '80px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
                                                 {/* Header Area */}
                                                 <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -194,7 +205,7 @@ const Alerts = () => {
                                                     <p style={{ margin: '10px 0 0', fontSize: '48px', fontWeight: 400, color: '#7d7d7d', letterSpacing: '8px', textTransform: 'uppercase' }}>SANTA MARIA DE JETIBÁ</p>
                                                 </div>
 
-                                                {/* Severity Pill - Center */}
+                                                {/* Severity Pill */}
                                                 <div style={{ textAlign: 'center' }}>
                                                     <div style={{
                                                         display: 'inline-block',
@@ -211,14 +222,14 @@ const Alerts = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Information Block */}
+                                                {/* Details */}
                                                 <div style={{ padding: '60px 0', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                                     <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
-                                                        <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo}
+                                                        <span style={{ fontWeight: 800 }}>Aviso de: </span>{selectedAlert?.tipo || '...'}
                                                     </div>
                                                     <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
                                                         <span style={{ fontWeight: 800 }}>Grau de severidade: </span>
-                                                        <span style={{ color: sev.color, fontWeight: 700 }}>{sev.text.charAt(0) + sev.text.slice(1).toLowerCase()}</span>
+                                                        <span style={{ color: sev.color, fontWeight: 700 }}>{String(sev.text).charAt(0) + String(sev.text).slice(1).toLowerCase()}</span>
                                                     </div>
                                                     <div style={{ fontSize: '42px', color: '#000000', lineHeight: 1.4 }}>
                                                         <span style={{ fontWeight: 800 }}>Início: </span>{formatDate(selectedAlert?.inicio)}
@@ -230,27 +241,27 @@ const Alerts = () => {
 
                                                 <div style={{ height: '2px', background: '#f0f0f0', width: '100%' }} />
 
-                                                {/* Risk Section */}
+                                                {/* Risks */}
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                                     <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Riscos Potenciais:</div>
-                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.4 }}>{selectedAlert?.riscos}</div>
+                                                    <div style={{ fontSize: '38px', color: '#4d4d4d', lineHeight: 1.4 }}>{selectedAlert?.riscos || 'Nenhum risco detectado.'}</div>
                                                 </div>
 
                                                 {/* Instructions */}
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
                                                     <div style={{ fontSize: '40px', fontWeight: 800, color: '#2d2d2d' }}>Instruções:</div>
                                                     <div style={{ fontSize: '36px', color: '#4d4d4d', lineHeight: 1.5 }}>
-                                                        {selectedAlert?.instrucoes?.split('\n').slice(0, 5).map((line, i) => (
+                                                        {String(selectedAlert?.instrucoes || '').split('\n').filter(l => l.trim()).slice(0, 5).map((line, i) => (
                                                             <div key={i} style={{ marginBottom: '15px', position: 'relative', paddingLeft: '40px' }}>
                                                                 <div style={{ position: 'absolute', left: 0, top: '15px', width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
                                                                 {line.replace(/^[-•*]\s*/, '')}
                                                             </div>
                                                         ))}
+                                                        {!selectedAlert?.instrucoes && <div>Consulte a Defesa Civil para mais informações.</div>}
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Bottom bar */}
                                             <div style={{
                                                 backgroundColor: sev.color,
                                                 padding: '30px 50px',
@@ -273,10 +284,10 @@ const Alerts = () => {
 
             {/* Bottom Status Hook */}
             <div className="fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto">
+                <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto pointer-events-auto">
                     <div className="flex items-center gap-3 text-slate-400">
                         <ImageIcon size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Avisos INMET</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Avisos INMET</span>
                     </div>
                 </div>
             </div>
