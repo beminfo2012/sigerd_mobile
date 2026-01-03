@@ -29,7 +29,6 @@ const normalizeData = (data, type) => {
             matricula: data.matricula || '---',
             fotos: data.fotos || [],
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
-            assinaturaSolicitante: data.assinaturaSolicitante || data.assinatura_solicitante || null,
             checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
         };
     } else {
@@ -52,8 +51,7 @@ const normalizeData = (data, type) => {
             latitude: data.latitude || '---',
             longitude: data.longitude || '---',
             fotos: data.fotos || [],
-            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
-            assinaturaSolicitante: data.assinaturaSolicitante || data.assinatura_solicitante || null
+            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null
         };
     }
 };
@@ -215,28 +213,16 @@ export const generatePDF = async (rawData, type) => {
 
     const footerHtml = `
         <div style="margin-top: 40px; padding: 40px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
-            <div style="display: flex; justify-content: space-around; gap: 40px; margin-bottom: 20px;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px;">
                 <!-- Agent Signature Column -->
-                <div style="flex: 1; text-align: center;">
-                    <div style="height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px;">
-                        ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="max-height: 80px; width: auto; max-width: 200px;" />` : ''}
+                <div style="text-align: center; width: 350px;">
+                    <div style="height: 100px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px;">
+                        ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="max-height: 100px; width: auto; max-width: 300px; display: block;" />` : '<div style="height: 40px; border-bottom: 1px solid #cbd5e1; width: 200px; margin-bottom: 10px;"></div>'}
                     </div>
-                    <div style="border-top: 2px solid #1e3a8a; padding-top: 8px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a;">${data.agente}</p>
-                        <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 600;">AGENTE DE DEFESA CIVIL</p>
-                        <p style="margin: 0; font-size: 10px; color: #94a3b8;">Matrícula: ${data.matricula}</p>
-                    </div>
-                </div>
-
-                <!-- Solicitor Signature Column -->
-                <div style="flex: 1; text-align: center;">
-                    <div style="height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px;">
-                        ${data.assinaturaSolicitante ? `<img src="${data.assinaturaSolicitante}" style="max-height: 80px; width: auto; max-width: 200px;" />` : ''}
-                    </div>
-                    <div style="border-top: 2px solid #1e3a8a; padding-top: 8px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a;">${isVistoria ? (data.solicitante || 'SOLICITANTE') : (data.responsavelNome || 'RESPONSÁVEL')}</p>
-                        <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 600;">${isVistoria ? 'SOLICITANTE / PROPRIETÁRIO' : 'CIENTE DO RESPONSÁVEL'}</p>
-                        <p style="margin: 0; font-size: 10px; color: #94a3b8;">CPF: ${isVistoria ? (data.cpf || '---') : (data.responsavelCpf || '---')}</p>
+                    <div style="border-top: 2px solid #1e3a8a; padding-top: 10px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
+                        <p style="margin: 3px 0; font-size: 11px; color: #64748b; font-weight: 700; letter-spacing: 1px;">AGENTE DE DEFESA CIVIL</p>
+                        <p style="margin: 0; font-size: 10px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
                     </div>
                 </div>
             </div>
@@ -259,8 +245,15 @@ export const generatePDF = async (rawData, type) => {
 
     try {
         await waitForImages();
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const canvas = await html2canvas(container, { scale: 2, useCORS: true, logging: false });
+        // Give a bit more time for canvas rendering of base64 images
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const canvas = await html2canvas(container, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
+        });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pageWidth = pdf.internal.pageSize.getWidth();

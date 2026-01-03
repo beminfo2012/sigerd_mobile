@@ -89,11 +89,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         fotos: [],
         documentos: [],
         assinaturaAgente: null,
-        assinaturaSolicitante: null,
         checklistRespostas: {} // { "pergunta": true/false }
     })
 
-    const [activeSignature, setActiveSignature] = useState(null) // 'agente' | 'solicitante'
+    const [showSignaturePad, setShowSignaturePad] = useState(false)
 
     const [saving, setSaving] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
@@ -115,7 +114,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 medidasTomadas: initialData.medidas_tomadas || initialData.medidasTomadas || [],
                 encaminhamentos: initialData.encaminhamentos || [],
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
-                assinaturaSolicitante: initialData.assinatura_solicitante || initialData.assinaturaSolicitante || null,
                 checklistRespostas: initialData.checklist_respostas || initialData.checklistRespostas || {}
             })
         } else {
@@ -537,41 +535,20 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             <span className="w-1.5 h-6 bg-[#2a5299] rounded-full"></span> 6. Assinaturas
                         </h2>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                        {/* Agente Signature */}
-                        <div className="space-y-2">
-                            <label className={labelClasses}>Assinatura do Agente</label>
-                            <div
-                                onClick={() => setActiveSignature('agente')}
-                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
-                            >
-                                {formData.assinaturaAgente ? (
-                                    <img src={formData.assinaturaAgente} className="h-full w-auto object-contain" />
-                                ) : (
-                                    <div className="text-center">
-                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Solicitante Signature */}
-                        <div className="space-y-2">
-                            <label className={labelClasses}>Assinatura do Solicitante</label>
-                            <div
-                                onClick={() => setActiveSignature('solicitante')}
-                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
-                            >
-                                {formData.assinaturaSolicitante ? (
-                                    <img src={formData.assinaturaSolicitante} className="h-full w-auto object-contain" />
-                                ) : (
-                                    <div className="text-center">
-                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
-                                    </div>
-                                )}
-                            </div>
+                    <div className="mt-4">
+                        <label className={labelClasses}>Assinatura do Agente</label>
+                        <div
+                            onClick={() => setShowSignaturePad(true)}
+                            className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
+                        >
+                            {formData.assinaturaAgente ? (
+                                <img src={formData.assinaturaAgente} className="h-full w-auto object-contain" />
+                            ) : (
+                                <div className="text-center">
+                                    <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -606,16 +583,16 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             </form>
 
             {/* Signature Modal */}
-            {activeSignature && (
+            {showSignaturePad && (
                 <SignaturePadComp
-                    title={activeSignature === 'agente' ? "Assinatura do Agente" : "Assinatura do Solicitante"}
-                    onCancel={() => setActiveSignature(null)}
+                    title="Assinatura do Agente"
+                    onCancel={() => setShowSignaturePad(false)}
                     onSave={(dataUrl) => {
                         setFormData(prev => ({
                             ...prev,
-                            [activeSignature === 'agente' ? 'assinaturaAgente' : 'assinaturaSolicitante']: dataUrl
+                            assinaturaAgente: dataUrl
                         }))
-                        setActiveSignature(null)
+                        setShowSignaturePad(false)
                     }}
                 />
             )}
