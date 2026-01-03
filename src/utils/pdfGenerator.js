@@ -50,6 +50,8 @@ const normalizeData = (data, type) => {
             recomendacoes: data.recomendacoes || '---',
             latitude: data.latitude || '---',
             longitude: data.longitude || '---',
+            agente: data.agente || '---',
+            matricula: data.matricula || '---',
             fotos: data.fotos || [],
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null
         };
@@ -202,7 +204,7 @@ export const generatePDF = async (rawData, type) => {
                 <div style="display: grid; grid-template-columns: 1fr; gap: 30px; justify-items: center;">
                     ${data.fotos.map((f, idx) => `
                         <div style="width: 100%; max-width: 600px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; text-align: center;">
-                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 4px; object-fit: contain; margin: 0 auto; display: block;" />
+                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 4px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
                             <div style="margin-top: 15px; font-size: 12px; color: #475569; font-weight: 600;">FOTO ${idx + 1}</div>
                         </div>
                     `).join('')}

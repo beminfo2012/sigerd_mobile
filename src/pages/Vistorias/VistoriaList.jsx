@@ -19,13 +19,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
             // 1. Fetch from Supabase
             const { data: cloudData, error } = await supabase
                 .from('vistorias')
-                .select(`
-                    id, vistoria_id, created_at, processo, agente, matricula, 
-                    solicitante, cpf, telefone, endereco_solicitante, endereco, bairro, 
-                    latitude, longitude, coordenadas, data_hora, categoria_risco, 
-                    subtipos_risco, nivel_risco, situacao_observada, populacao_estimada, 
-                    grupos_vulneraveis, observacoes, medidas_tomadas, encaminhamentos
-                `)
+                .select('*')
                 .order('created_at', { ascending: false })
 
             // 2. Fetch from Local

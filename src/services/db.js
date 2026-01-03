@@ -63,83 +63,8 @@ export const saveVistoriaOffline = async (data) => {
 
     // 2. Try to sync with Supabase immediately if online
     if (navigator.onLine) {
-        try {
-            let processedPhotos = []
-
-            // Upload Photos to Storage
-            if (data.fotos && data.fotos.length > 0) {
-                processedPhotos = await Promise.all(data.fotos.map(async (foto) => {
-                    if (foto.data && foto.data.startsWith('data:image')) {
-                        const blob = base64ToBlob(foto.data)
-                        if (blob) {
-                            const fileName = `${data.vistoriaId}/${foto.id}.jpg`
-                            const { error: uploadError } = await supabase.storage
-                                .from('vistorias')
-                                .upload(fileName, blob, { upsert: true })
-
-                            if (!uploadError) {
-                                const { data: urlData } = supabase.storage
-                                    .from('vistorias')
-                                    .getPublicUrl(fileName)
-                                return { ...foto, data: urlData.publicUrl }
-                            }
-                        }
-                    }
-                    return foto // Return original if upload fails or not base64
-                }))
-            }
-
-            // Insert into Database with URLs
-            const { data: supabaseData, error } = await supabase
-                .from('vistorias')
-                .insert([{
-                    vistoria_id: data.vistoriaId,
-                    processo: data.processo,
-                    agente: data.agente,
-                    matricula: data.matricula,
-                    solicitante: data.solicitante,
-                    cpf: data.cpf,
-                    telefone: data.telefone,
-                    endereco_solicitante: data.enderecoSolicitante,
-                    endereco: data.endereco,
-                    bairro: data.bairro,
-                    latitude: parseFloat(data.latitude) || null,
-                    longitude: parseFloat(data.longitude) || null,
-                    coordenadas: data.coordenadas,
-                    data_hora: data.dataHora,
-                    categoria_risco: data.categoriaRisco,
-                    subtipos_risco: data.subtiposRisco,
-                    nivel_risco: data.nivelRisco,
-                    situacao_observada: data.situacaoObservada,
-                    populacao_estimada: data.populacaoEstimada,
-                    grupos_vulneraveis: data.gruposVulneraveis,
-                    observacoes: data.observacoes,
-                    medidas_tomadas: data.medidasTomadas,
-                    encaminhamentos: data.encaminhamentos,
-                    fotos: processedPhotos,
-                    documentos: data.documentos
-                }])
-                .select()
-
-            if (!error) {
-                // Mark as synced in IndexedDB
-                const tx = db.transaction('vistorias', 'readwrite')
-                const store = tx.objectStore('vistorias')
-                const record = await store.get(localId)
-                if (record) {
-                    record.synced = true
-                    // Optionally update local record photos to URLs to save space? 
-                    // No, keep base64 for offline viewing reliability until re-fetch logic is robust.
-                    await store.put(record)
-                }
-                await tx.done
-                console.log('Vistoria synced to Supabase (with Storage):', supabaseData)
-            } else {
-                console.warn('Supabase sync failed, will retry later:', error)
-            }
-        } catch (error) {
-            console.warn('Offline mode - Supabase not available:', error)
-        }
+        const item = await db.get('vistorias', localId)
+        await syncSingleItem('vistorias', item, db)
     }
 
     return localId
@@ -243,7 +168,9 @@ const syncSingleItem = async (type, item, db) => {
                 medidas_tomadas: item.medidasTomadas,
                 encaminhamentos: item.encaminhamentos,
                 fotos: processedPhotos,
-                documentos: item.documentos
+                documentos: item.documentos,
+                assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
+                checklist_respostas: item.checklistRespostas || item.checklist_respostas
             }
         } else {
             payload = {
@@ -271,7 +198,8 @@ const syncSingleItem = async (type, item, db) => {
                 fotos: processedPhotos,
                 relatorio_tecnico: item.relatorioTecnico,
                 recomendacoes: item.recomendacoes,
-                orgaos_acionados: item.orgaosAcionados
+                orgaos_acionados: item.orgaosAcionados,
+                assinatura_agente: item.assinaturaAgente || item.assinatura_agente
             }
         }
 

@@ -573,7 +573,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <FileInput onFileSelect={handlePhotoSelect} label="+" />
                         {formData.fotos.map(foto => (
                             <div key={foto.id} className="relative aspect-square rounded-xl overflow-hidden shadow-md group">
-                                <img src={foto.data} className="w-full h-full object-cover" />
+                                <img src={foto.data || foto} className="w-full h-full object-cover" />
                                 <button type="button" onClick={() => removePhoto(foto.id)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-lg"><Trash2 size={12} /></button>
                             </div>
                         ))}

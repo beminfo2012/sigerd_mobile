@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react'
-import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X } from 'lucide-react'
+import React, { useState, useEffect, useContext } from 'react'
+import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2 } from 'lucide-react'
 import { saveInterdicaoOffline } from '../../services/db'
 import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
+import SignaturePadComp from '../../components/SignaturePad'
+import { UserContext } from '../../App'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
+    const userProfile = useContext(UserContext)
     const [formData, setFormData] = useState({
         interdicaoId: '',
         dataHora: (() => {
@@ -40,8 +43,13 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         fotos: [],
         relatorioTecnico: '',
         recomendacoes: '',
-        orgaosAcionados: ''
+        orgaosAcionados: '',
+        agente: userProfile?.nome || '',
+        matricula: userProfile?.matricula || '',
+        assinaturaAgente: null
     })
+
+    const [showSignaturePad, setShowSignaturePad] = useState(false)
 
     const [saving, setSaving] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
@@ -69,7 +77,10 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 evacuacaoNecessaria: initialData.evacuacao_necessaria ?? initialData.evacuacaoNecessaria,
                 relatorioTecnico: initialData.relatorio_tecnico || initialData.relatorioTecnico,
                 recomendacoes: initialData.recomendacoes,
-                orgaosAcionados: initialData.orgaos_acionados || initialData.orgaosAcionados
+                orgaosAcionados: initialData.orgaos_acionados || initialData.orgaosAcionados,
+                agente: initialData.agente || initialData.agente || '',
+                matricula: initialData.matricula || initialData.matricula || '',
+                assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null
             })
         } else {
             getNextId()
@@ -411,7 +422,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         <FileInput onFileSelect={handlePhotoSelect} label="+" />
                         {formData.fotos.map((foto, idx) => (
                             <div key={foto.id} className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md group">
-                                <img src={foto.data} className="w-full h-full object-cover" alt="Preview" />
+                                <img src={foto.data || foto} className="w-full h-full object-cover" alt="Preview" />
                                 <button type="button" onClick={() => removePhoto(foto.id)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                     <X size={12} />
                                 </button>
@@ -454,6 +465,23 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         <label className={labelClasses}>Órgãos a serem acionados</label>
                         <input type="text" value={formData.orgaosAcionados} onChange={e => handleChange('orgaosAcionados', e.target.value)} className={inputClasses} placeholder="Ex: Obras, Assistência Social..." />
                     </div>
+
+                    <div className="pt-4 border-t border-gray-100">
+                        <label className={labelClasses}>Assinatura do Agente</label>
+                        <div
+                            onClick={() => setShowSignaturePad(true)}
+                            className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
+                        >
+                            {formData.assinaturaAgente ? (
+                                <img src={formData.assinaturaAgente} className="h-full w-auto object-contain" />
+                            ) : (
+                                <div className="text-center">
+                                    <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </section>
 
                 {/* Submit button */}
@@ -483,6 +511,18 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 </div>
 
             </form>
+
+            {/* Signature Modal */}
+            {showSignaturePad && (
+                <SignaturePadComp
+                    title="Assinatura do Agente"
+                    onCancel={() => setShowSignaturePad(false)}
+                    onSave={(dataUrl) => {
+                        setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }))
+                        setShowSignaturePad(false)
+                    }}
+                />
+            )}
         </div>
     )
 }
