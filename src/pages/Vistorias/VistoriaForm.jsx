@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react'
-import { Save, Camera, FileText, MapPin, Trash2, Share, File as FileIcon, ArrowLeft, Crosshair, AlertTriangle, Users, ClipboardCheck, Send, Edit2 } from 'lucide-react'
+import { Save, Camera, FileText, MapPin, Trash2, Share, File as FileIcon, ArrowLeft, Crosshair, AlertTriangle, Users, ClipboardCheck, Send, Edit2, CheckCircle2, Circle } from 'lucide-react'
+import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
@@ -88,7 +88,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         fotos: [],
         documentos: [],
         assinaturaAgente: null,
-        assinaturaSolicitante: null
+        assinaturaSolicitante: null,
+        checklistRespostas: {} // { "pergunta": true/false }
     })
 
     const [activeSignature, setActiveSignature] = useState(null) // 'agente' | 'solicitante'
@@ -113,7 +114,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 medidasTomadas: initialData.medidas_tomadas || initialData.medidasTomadas || [],
                 encaminhamentos: initialData.encaminhamentos || [],
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
-                assinaturaSolicitante: initialData.assinatura_solicitante || initialData.assinaturaSolicitante || null
+                assinaturaSolicitante: initialData.assinatura_solicitante || initialData.assinaturaSolicitante || null,
+                checklistRespostas: initialData.checklist_respostas || initialData.checklistRespostas || {}
             })
         } else {
             getNextId()
@@ -382,6 +384,51 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 {Object.keys(RISK_DATA).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                         </div>
+
+                        {/* 5.1.1 Checklist Inteligente */}
+                        {formData.categoriaRisco && CHECKLIST_DATA[formData.categoriaRisco] && (
+                            <div className="bg-blue-50/30 p-5 rounded-2xl border-2 border-blue-100/50 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-black text-blue-900 text-sm uppercase tracking-wider flex items-center gap-2">
+                                        <CheckCircle2 size={18} className="text-blue-600" /> Checklist Técnico
+                                    </h3>
+                                    <span className="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full uppercase">Obrigatório</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {CHECKLIST_DATA[formData.categoriaRisco].map((item, idx) => (
+                                        <div
+                                            key={idx}
+                                            onClick={() => setFormData(prev => ({
+                                                ...prev,
+                                                checklistRespostas: {
+                                                    ...prev.checklistRespostas,
+                                                    [item]: !prev.checklistRespostas[item]
+                                                }
+                                            }))}
+                                            className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex items-start gap-3 ${formData.checklistRespostas[item] ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`}
+                                        >
+                                            <div className={`mt-0.5 shrink-0 ${formData.checklistRespostas[item] ? 'text-white' : 'text-slate-300'}`}>
+                                                {formData.checklistRespostas[item] ? <CheckCircle2 size={20} fill="currentColor" className="text-blue-200" /> : <Circle size={20} />}
+                                            </div>
+                                            <span className="text-sm font-bold leading-tight">{item}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const simAnswers = Object.keys(formData.checklistRespostas).filter(k => formData.checklistRespostas[k]);
+                                        if (simAnswers.length === 0) return alert("Marque pelo menos um item para consolidar.");
+                                        const text = `CONSTATAÇÕES TÉCNICAS:\n${simAnswers.map(a => `[SIM] ${a}`).join('\n')}\n\n`;
+                                        setFormData(prev => ({ ...prev, observacoes: text + prev.observacoes }));
+                                    }}
+                                    className="w-full p-3 bg-white border-2 border-blue-200 text-blue-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-50 transition-colors shadow-sm"
+                                >
+                                    Consolidar em Observações
+                                </button>
+                            </div>
+                        )}
 
                         {/* 5.2 Subtipos Dinâmicos */}
                         {formData.categoriaRisco && (

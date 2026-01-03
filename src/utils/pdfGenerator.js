@@ -29,7 +29,8 @@ const normalizeData = (data, type) => {
             matricula: data.matricula || '---',
             fotos: data.fotos || [],
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
-            assinaturaSolicitante: data.assinaturaSolicitante || data.assinatura_solicitante || null
+            assinaturaSolicitante: data.assinaturaSolicitante || data.assinatura_solicitante || null,
+            checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
         };
     } else {
         return {
@@ -156,6 +157,20 @@ export const generatePDF = async (rawData, type) => {
                     ${renderField('Medidas Recomendadas', data.medidasTomadas.join('; ') || 'Orientação padrão')}
                     ${renderField('Encaminhamentos Efetuados', data.encaminhamentos.join(', ') || 'Nenhum')}
                 </div>
+
+                ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
+                    ${sectionTitle('5. Constatações Técnicas (Checklist)')}
+                    <div style="background: #fafafa; border-radius: 8px; padding: 20px; border: 1px solid #f1f5f9;">
+                        ${Object.keys(data.checklistRespostas)
+                    .filter(k => data.checklistRespostas[k])
+                    .map(item => `
+                                <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 13px; color: #334155; line-height: 1.4;">
+                                    <div style="color: #2a5299; font-weight: bold; font-size: 16px;">✓</div>
+                                    <div style="font-weight: 600;">${item}</div>
+                                </div>
+                            `).join('')}
+                    </div>
+                ` : ''}
             </div>
         `;
     } else {
@@ -185,7 +200,7 @@ export const generatePDF = async (rawData, type) => {
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
             <div style="padding: 0 40px 40px 40px; page-break-before: auto;">
-                ${sectionTitle('5. Anexo Fotográfico')}
+                ${sectionTitle('6. Anexo Fotográfico')}
                 <div style="display: grid; grid-template-columns: 1fr; gap: 30px; justify-items: center;">
                     ${data.fotos.map((f, idx) => `
                         <div style="width: 100%; max-width: 600px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; text-align: center;">
