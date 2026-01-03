@@ -84,8 +84,8 @@ const Alerts = () => {
                     <ArrowLeft size={24} />
                 </button>
                 <div className="flex-1">
-                    <h1 className="text-xl font-black text-slate-800 tracking-tight">Gerador de Arte</h1>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Módulo INMET</p>
+                    <h1 className="text-xl font-black text-slate-800 tracking-tight">Avisos INMET</h1>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[2px]">Santa Maria de Jetibá</p>
                 </div>
                 <button onClick={fetchAlerts} className={`p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors ${loading ? 'animate-spin' : ''}`}>
                     <RefreshCw size={20} />
@@ -276,7 +276,7 @@ const Alerts = () => {
                 <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-2xl flex items-center justify-between max-w-xl mx-auto">
                     <div className="flex items-center gap-3 text-slate-400">
                         <ImageIcon size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Módulo Gerador INMET</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Avisos INMET</span>
                     </div>
                 </div>
             </div>
