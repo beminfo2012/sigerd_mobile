@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { Save, Camera, FileText, MapPin, Trash2, Share, File as FileIcon, ArrowLeft, Crosshair, AlertTriangle, Users, ClipboardCheck, Send } from 'lucide-react'
-import { saveVistoriaOffline } from '../../services/db'
+import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
@@ -115,22 +115,45 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
-        try {
-            const { data } = await supabase
-                .from('vistorias')
-                .select('vistoria_id')
-                .filter('vistoria_id', 'like', `%/${currentYear}`)
-                .order('vistoria_id', { ascending: false })
-                .limit(1)
+        let maxNum = 0
 
-            let nextNum = 1
-            if (data && data.length > 0) {
-                const latestId = data[0].vistoria_id
-                const currentNum = parseInt(latestId.split('/')[0])
-                if (!isNaN(currentNum)) {
-                    nextNum = currentNum + 1
+        try {
+            // 1. Check Supabase (if online)
+            if (navigator.onLine) {
+                const { data } = await supabase
+                    .from('vistorias')
+                    .select('vistoria_id')
+                    .filter('vistoria_id', 'like', `%/${currentYear}`)
+                    .order('vistoria_id', { ascending: false })
+                    .limit(1)
+
+                if (data && data.length > 0) {
+                    const num = parseInt(data[0].vistoria_id.split('/')[0])
+                    if (!isNaN(num)) maxNum = Math.max(maxNum, num)
                 }
             }
+
+            // 2. Check Remote Cache (historical data)
+            const cached = await getRemoteVistoriasCache()
+            cached.forEach(v => {
+                const vid = v.vistoria_id || v.vistoriaId
+                if (vid && vid.endsWith(`/${currentYear}`)) {
+                    const num = parseInt(vid.split('/')[0])
+                    if (!isNaN(num)) maxNum = Math.max(maxNum, num)
+                }
+            })
+
+            // 3. Check Local Queue (unsynced vistorias)
+            const local = await getAllVistoriasLocal()
+            local.forEach(v => {
+                const vid = v.vistoria_id || v.vistoriaId
+                if (vid && vid.endsWith(`/${currentYear}`)) {
+                    const num = parseInt(vid.split('/')[0])
+                    if (!isNaN(num)) maxNum = Math.max(maxNum, num)
+                }
+            })
+
+            const nextNum = maxNum + 1
             setFormData(prev => ({
                 ...prev,
                 vistoriaId: `${nextNum.toString().padStart(2, '0')}/${currentYear}`,
@@ -139,10 +162,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             }))
         } catch (e) {
             console.error('Error getting next ID:', e)
-            // Fallback to 01/Year if offline or error
+            // Even on error, if we found any maxNum, use it + 1. 
+            // If it stayed 0, then fallback to 01
+            const nextNum = (maxNum || 0) + 1
             setFormData(prev => ({
                 ...prev,
-                vistoriaId: `01/${currentYear}`,
+                vistoriaId: `${nextNum.toString().padStart(2, '0')}/${currentYear}`,
                 agente: userProfile?.full_name || '',
                 matricula: userProfile?.matricula || ''
             }))
