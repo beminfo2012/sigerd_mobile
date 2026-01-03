@@ -65,6 +65,8 @@ const VistoriaList = ({ onNew, onEdit }) => {
             if (!error) {
                 await deleteVistoriaLocal(id)
                 setVistorias(prev => prev.filter(v => v.id !== id))
+                // Dispatch event to notify forms to recalculate next ID
+                window.dispatchEvent(new CustomEvent('vistoria-deleted'))
             } else {
                 alert('Erro ao excluir.')
             }

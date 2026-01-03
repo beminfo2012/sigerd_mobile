@@ -130,6 +130,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         }
     }, [initialData])
 
+    // Listen for deletion events to recalculate ID
+    useEffect(() => {
+        const handleDeletion = () => {
+            if (!initialData) {
+                getNextId()
+            }
+        }
+        window.addEventListener('vistoria-deleted', handleDeletion)
+        return () => window.removeEventListener('vistoria-deleted', handleDeletion)
+    }, [initialData])
+
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
         let maxNum = 0
@@ -301,7 +312,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
                         <div>
                             <label className={labelClasses}>Nº Processo</label>
-                            <input type="text" className={inputClasses} value={formData.processo} onChange={e => setFormData({ ...formData, processo: e.target.value })} />
+                            <input type="tel" inputMode="numeric" pattern="[0-9]*" className={inputClasses} value={formData.processo} onChange={e => setFormData({ ...formData, processo: e.target.value.replace(/\D/g, '') })} />
                         </div>
                     </div>
                 </section>

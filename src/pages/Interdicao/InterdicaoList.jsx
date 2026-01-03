@@ -61,6 +61,8 @@ const InterdicaoList = ({ onNew, onEdit }) => {
             if (!error) {
                 await deleteInterdicaoLocal(id)
                 setInterdicoes(prev => prev.filter(v => v.id !== id))
+                // Dispatch event to notify forms to recalculate next ID
+                window.dispatchEvent(new CustomEvent('interdicao-deleted'))
             } else {
                 alert('Erro ao excluir.')
             }

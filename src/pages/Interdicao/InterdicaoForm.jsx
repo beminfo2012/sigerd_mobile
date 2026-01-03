@@ -87,6 +87,17 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         }
     }, [initialData])
 
+    // Listen for deletion events to recalculate ID
+    useEffect(() => {
+        const handleDeletion = () => {
+            if (!initialData) {
+                getNextId()
+            }
+        }
+        window.addEventListener('interdicao-deleted', handleDeletion)
+        return () => window.removeEventListener('interdicao-deleted', handleDeletion)
+    }, [initialData])
+
     const getLocation = () => {
         if (!navigator.geolocation) {
             alert("GPS não suportado neste dispositivo.")
