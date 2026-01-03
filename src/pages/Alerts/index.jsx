@@ -3,6 +3,181 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RefreshCw, Upload } from 'lucide-react'
 import { toJpeg } from 'html-to-image'
 
+// Componente isolado da Arte para garantir consistência entre Preview e Exportação
+const AlertArt = ({ format, severity, alertType, startDate, endDate, risks, instructionsList, mapImage, severityColor }) => {
+    return (
+        <div style={{
+            width: format === 'stories' ? '360px' : '500px',
+            height: format === 'stories' ? '640px' : '500px',
+            maxWidth: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#f5f5f5', // Fundo base
+            overflow: 'hidden', // Evita overflow na exportação
+            fontFamily: "'Roboto', sans-serif" // Garante fonte base
+        }}>
+            {/* Top bar */}
+            <div style={{
+                height: '12px',
+                width: '100%',
+                background: severityColor,
+                flexShrink: 0
+            }} />
+
+            {/* Header Section */}
+            <div style={{
+                padding: '15px 15px 10px',
+                textAlign: 'center',
+                background: '#f5f5f5',
+                width: '100%',
+                flexShrink: 0
+            }}>
+                <h1 style={{
+                    fontFamily: "'Oswald', sans-serif",
+                    fontSize: format === 'stories' ? '2.0rem' : '2.8rem',
+                    fontWeight: 700,
+                    color: '#333',
+                    letterSpacing: '1px',
+                    margin: '0 0 4px 0',
+                    lineHeight: 1.2,
+                    textTransform: 'uppercase'
+                }}>
+                    DEFESA CIVIL
+                </h1>
+                <h2 style={{
+                    fontFamily: "'Oswald', sans-serif",
+                    fontSize: format === 'stories' ? '1.1rem' : '1.3rem',
+                    fontWeight: 400,
+                    color: '#666',
+                    letterSpacing: '1px',
+                    margin: '0 0 12px 0',
+                    textTransform: 'uppercase'
+                }}>
+                    SANTA MARIA DE JETIBÁ
+                </h2>
+                <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: severityColor,
+                    color: severity.includes('Potencial') ? '#333' : 'white',
+                    padding: format === 'stories' ? '8px 30px' : '12px 40px',
+                    borderRadius: '25px',
+                    fontFamily: "'Oswald', sans-serif",
+                    fontSize: format === 'stories' ? '1.1rem' : '1.3rem',
+                    fontWeight: 600,
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                    textAlign: 'center',
+                    minWidth: '200px'
+                }}>
+                    {severity.toUpperCase()}
+                </div>
+
+                {mapImage && (
+                    <img
+                        src={mapImage}
+                        alt="Mapa do Alerta"
+                        style={{
+                            width: '100%',
+                            maxHeight: format === 'stories' ? '140px' : '180px',
+                            objectFit: 'contain',
+                            marginTop: '15px',
+                            borderRadius: '8px'
+                        }}
+                    />
+                )}
+            </div>
+
+            {/* Info Card */}
+            <div style={{
+                background: 'white',
+                padding: format === 'stories' ? '15px 20px' : '25px',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                fontSize: format === 'stories' ? '0.85rem' : '1rem',
+                minHeight: 0,
+                borderTop: '1px solid #eee'
+            }}>
+                <div style={{
+                    marginBottom: '10px',
+                    lineHeight: 1.4,
+                    borderBottom: '2px solid #f0f0f0',
+                    paddingBottom: '10px',
+                    flexShrink: 0
+                }}>
+                    <p style={{ margin: '3px 0', fontSize: format === 'stories' ? '0.9rem' : '1.05rem' }}>
+                        <strong>Aviso de:</strong> {alertType || '...'}
+                    </p>
+                    <p style={{ margin: '3px 0', fontSize: format === 'stories' ? '0.85rem' : '0.95rem' }}>
+                        <strong>Severidade:</strong> {severity}
+                    </p>
+                    <p style={{ margin: '3px 0', fontSize: format === 'stories' ? '0.8rem' : '0.9rem' }}>
+                        <strong>Início:</strong> {startDate || '...'}
+                    </p>
+                    <p style={{ margin: '3px 0', fontSize: format === 'stories' ? '0.8rem' : '0.9rem' }}>
+                        <strong>Fim:</strong> {endDate || '...'}
+                    </p>
+                </div>
+
+                <div style={{
+                    color: '#444',
+                    lineHeight: 1.35,
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    overflow: 'hidden' // Garante que texto longo não quebre layout
+                }}>
+                    <div style={{ flexShrink: 0 }}>
+                        <strong style={{ fontSize: format === 'stories' ? '0.85rem' : '1rem' }}>Riscos Potenciais:</strong>
+                        <p style={{ lineHeight: 1.35, margin: '4px 0', fontSize: format === 'stories' ? '0.8rem' : '0.9rem' }}>
+                            {risks || '...'}
+                        </p>
+                    </div>
+
+                    <div style={{
+                        marginTop: '5px',
+                        borderTop: '2px solid #f0f0f0',
+                        paddingTop: '8px',
+                        flex: 1,
+                        overflow: 'hidden'
+                    }}>
+                        <strong style={{ fontSize: format === 'stories' ? '0.85rem' : '1rem' }}>Instruções:</strong>
+                        <ul style={{
+                            listStyleType: 'disc',
+                            paddingLeft: '18px',
+                            marginTop: '4px',
+                            fontSize: format === 'stories' ? '0.75rem' : '0.88rem',
+                            marginBottom: 0
+                        }}>
+                            {instructionsList.map((item, idx) => (
+                                <li key={idx} style={{ marginBottom: '2px' }}>{item}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+                background: severityColor,
+                color: 'white',
+                textAlign: 'right',
+                padding: '6px 12px',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                flexShrink: 0
+            }}>
+                Fonte: INMET
+            </div>
+        </div>
+    )
+}
+
 const Alerts = () => {
     const navigate = useNavigate()
     const [alerts, setAlerts] = useState([])
@@ -23,7 +198,8 @@ const Alerts = () => {
 - Em caso de situação de inundação, ou similar, proteja seus pertences da água envoltos em sacos plásticos.
 - Obtenha mais informações junto à Defesa Civil (telefone 199) e ao Corpo de Bombeiros (telefone 193).`)
 
-    const artRef = useRef(null)
+    const artRef = useRef(null) // Referência apenas para visualização
+    const exportRef = useRef(null) // Referência oculta para exportação fiel
 
     useEffect(() => {
         fetchAlerts()
@@ -59,9 +235,9 @@ const Alerts = () => {
         setSeverity(alert.severidade || alert.aviso_severidade || 'Grande Perigo')
         setStartDate(formatDateToInput(alert.inicio))
         setEndDate(formatDateToInput(alert.fim))
-        setRisks(alert.riscos ? alert.riscos.join('\\n') : alert.descricao || '')
+        setRisks(alert.riscos ? alert.riscos.join('\n') : alert.descricao || '')
         if (alert.instrucoes) {
-            setInstructions(alert.instrucoes.join('\\n'))
+            setInstructions(alert.instrucoes.join('\n'))
         }
     }
 
@@ -83,12 +259,6 @@ const Alerts = () => {
         }
     }
 
-    const getSeverityClass = () => {
-        if (severity.includes('Potencial')) return 'amarelo'
-        if (severity.includes('Grande')) return 'vermelho'
-        return 'laranja'
-    }
-
     const getSeverityColor = () => {
         if (severity.includes('Potencial')) return '#f1c40f'
         if (severity.includes('Grande')) return '#c62828'
@@ -107,30 +277,28 @@ const Alerts = () => {
     }
 
     const downloadImage = async () => {
-        if (!artRef.current) return
+        if (!exportRef.current) return
 
         try {
             // Aguardar renderização
-            await new Promise(resolve => setTimeout(resolve, 100))
+            await new Promise(resolve => setTimeout(resolve, 200))
 
-            // Configurar resolução
             const isStories = format === 'stories'
-            const pixelRatio = isStories ? 3 : 2 // 3x para Stories (1080x1920), 2x para Feed (1000x1000)
+            const pixelRatio = isStories ? 3 : 2
 
-            const dataUrl = await toJpeg(artRef.current, {
+            // IMPORTANT: Capturar do exportRef (off-screen)
+            const dataUrl = await toJpeg(exportRef.current, {
                 quality: 1.0,
                 pixelRatio: pixelRatio,
                 backgroundColor: '#f5f5f5',
-                // Forçar dimensões estáticas para evitar bugs de layout responsivo durante a captura
                 width: isStories ? 360 : 500,
                 height: isStories ? 640 : 500,
                 style: {
-                    transform: 'none', // Evitar transformações indesejadas
+                    transform: 'none',
                     margin: 0,
                 }
             })
 
-            // Create download link
             const link = document.createElement('a')
             link.download = `alerta-defesa-civil-${Date.now()}.jpg`
             link.href = dataUrl
@@ -142,10 +310,12 @@ const Alerts = () => {
     }
 
     const instructionsList = instructions
-        .split('\\n')
+        .split('\n')
         .map(line => line.trim())
         .filter(line => line)
-        .map(line => line.replace(/^[-•*]\\s*/, ''))
+        .map(line => line.replace(/^[-•*]\s*/, ''))
+
+    const severityColor = getSeverityColor()
 
     return (
         <div className="bg-slate-50 min-h-screen p-5 pb-24">
@@ -169,7 +339,7 @@ const Alerts = () => {
                     </h2>
 
                     <div className="space-y-4">
-                        {/* INMET Alert Loader */}
+                        {/* Carregar Alerta */}
                         <div>
                             <label className="text-xs font-bold text-slate-500 mb-2 block">
                                 Carregar Alerta do INMET
@@ -205,316 +375,116 @@ const Alerts = () => {
 
                         <div className="border-t border-slate-100 my-4" />
 
-                        {/* Alert Type */}
+                        {/* Aviso de e Severidade */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                Aviso de:
-                            </label>
-                            <input
-                                type="text"
-                                value={alertType}
-                                onChange={(e) => setAlertType(e.target.value)}
-                                placeholder="Ex: Tempestade"
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                        </div>
+                            <label className="text-xs font-bold text-slate-500 mb-2 block">Aviso de:</label>
+                            <input type="text" value={alertType} onChange={(e) => setAlertType(e.target.value)}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm mb-4" />
 
-                        {/* Severity */}
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                Grau de severidade:
-                            </label>
-                            <select
-                                value={severity}
-                                onChange={(e) => setSeverity(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
+                            <label className="text-xs font-bold text-slate-500 mb-2 block">Severidade:</label>
+                            <select value={severity} onChange={(e) => setSeverity(e.target.value)}
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm">
                                 <option value="Perigo Potencial">Perigo Potencial (Amarelo)</option>
                                 <option value="Perigo">Perigo (Laranja)</option>
                                 <option value="Grande Perigo">Grande Perigo (Vermelho)</option>
                             </select>
                         </div>
 
-                        {/* Date Range */}
+                        {/* Datas */}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                    Início:
-                                </label>
-                                <input
-                                    type="text"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    placeholder="DD/MM/AAAA HH:mm"
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                                <label className="text-xs font-bold text-slate-500 mb-2 block">Início:</label>
+                                <input type="text" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm" />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                    Fim:
-                                </label>
-                                <input
-                                    type="text"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    placeholder="DD/MM/AAAA HH:mm"
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                                <label className="text-xs font-bold text-slate-500 mb-2 block">Fim:</label>
+                                <input type="text" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm" />
                             </div>
                         </div>
 
-                        {/* Risks */}
+                        {/* Riscos */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                Riscos Potenciais:
-                            </label>
-                            <textarea
-                                value={risks}
-                                onChange={(e) => setRisks(e.target.value)}
-                                rows="4"
-                                placeholder="Descrição dos riscos..."
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
-                            />
+                            <label className="text-xs font-bold text-slate-500 mb-2 block">Riscos:</label>
+                            <textarea value={risks} onChange={(e) => setRisks(e.target.value)} rows="3"
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm resize-none" />
                         </div>
 
-                        {/* Image Upload */}
+                        {/* Imagem */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                Imagem do Alerta:
-                            </label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="w-full px-4 py-3 border-2 border-dashed border-slate-200 rounded-xl text-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
-                            />
+                            <label className="text-xs font-bold text-slate-500 mb-2 block">Imagem (Opcional):</label>
+                            <input type="file" accept="image/*" onChange={handleImageUpload}
+                                className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                        </div>
+
+                        {/* Instruções */}
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 mb-2 block">Instruções:</label>
+                            <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows="4"
+                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm resize-none" />
                         </div>
 
                         <div className="border-t border-slate-100 my-4" />
 
-                        {/* Instructions */}
+                        {/* Formato */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                Instruções:
-                            </label>
-                            <textarea
-                                value={instructions}
-                                onChange={(e) => setInstructions(e.target.value)}
-                                rows="5"
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
-                            />
-                        </div>
-
-                        <div className="border-t border-slate-100 my-4" />
-
-                        {/* Format Selection */}
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">
-                                Formato da Imagem:
-                            </label>
+                            <label className="text-xs font-bold text-slate-500 mb-2 block">Formato:</label>
                             <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => setFormat('stories')}
-                                    className={`py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95 ${format === 'stories'
-                                        ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                        }`}
-                                >
+                                <button onClick={() => setFormat('stories')}
+                                    className={`py-3 px-4 rounded-xl font-bold text-sm ${format === 'stories' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
                                     Stories (9:16)
                                 </button>
-                                <button
-                                    onClick={() => setFormat('feed')}
-                                    className={`py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95 ${format === 'feed'
-                                        ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                        }`}
-                                >
+                                <button onClick={() => setFormat('feed')}
+                                    className={`py-3 px-4 rounded-xl font-bold text-sm ${format === 'feed' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
                                     Feed (1:1)
                                 </button>
                             </div>
                         </div>
 
-                        {/* Download Button */}
-                        <button
-                            onClick={downloadImage}
-                            className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold hover:bg-blue-700 transition-colors active:scale-95 flex items-center justify-center gap-2 mt-2"
-                        >
-                            <Upload size={20} />
-                            Baixar Imagem
+                        <button onClick={downloadImage}
+                            className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 mt-2 hover:bg-blue-700">
+                            <Upload size={20} /> Baixar Imagem
                         </button>
                     </div>
                 </div>
 
                 {/* Preview Area */}
-                <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex justify-center items-center min-h-[600px]">
-                    {/* Capture Container */}
-                    <div
-                        ref={artRef}
-                        className="bg-slate-50 shadow-lg rounded-2xl overflow-hidden"
-                        style={{
-                            width: format === 'stories' ? '360px' : '500px',
-                            height: format === 'stories' ? '640px' : '500px',
-                            maxWidth: '100%',
-                            display: 'flex',
-                            flexDirection: 'column'
-                        }}
-                    >
-                        {/* Top bar */}
-                        <div style={{
-                            height: '12px',
-                            width: '100%',
-                            background: getSeverityColor()
-                        }} />
-
-                        {/* Header Section */}
-                        <div style={{
-                            padding: '15px 15px 15px',
-                            textAlign: 'center',
-                            background: '#f5f5f5',
-                            width: '100%'
-                        }}>
-                            <h1 style={{
-                                fontFamily: "'Oswald', sans-serif",
-                                fontSize: format === 'stories' ? '2.0rem' : '2.8rem',
-                                fontWeight: 700,
-                                color: '#333',
-                                letterSpacing: '1px',
-                                margin: '0 0 4px 0',
-                                textTransform: 'uppercase'
-                            }}>
-                                DEFESA CIVIL
-                            </h1>
-                            <h2 style={{
-                                fontFamily: "'Oswald', sans-serif",
-                                fontSize: format === 'stories' ? '1.1rem' : '1.3rem',
-                                fontWeight: 400,
-                                color: '#666',
-                                letterSpacing: '1px',
-                                margin: '0 0 15px 0',
-                                textTransform: 'uppercase'
-                            }}>
-                                SANTA MARIA DE JETIBÁ
-                            </h2>
-                            <div style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: getSeverityColor(),
-                                color: severity.includes('Potencial') ? '#333' : 'white',
-                                padding: format === 'stories' ? '10px 30px' : '12px 40px',
-                                borderRadius: '25px',
-                                fontFamily: "'Oswald', sans-serif",
-                                fontSize: format === 'stories' ? '1.1rem' : '1.3rem',
-                                fontWeight: 600,
-                                letterSpacing: '1.5px',
-                                textTransform: 'uppercase',
-                                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                                textAlign: 'center',
-                                width: 'auto',
-                                minWidth: '200px'
-                            }}>
-                                {severity.toUpperCase()}
-                            </div>
-
-                            {mapImage && (
-                                <img
-                                    src={mapImage}
-                                    alt="Mapa do Alerta"
-                                    style={{
-                                        width: '100%',
-                                        maxHeight: format === 'stories' ? '140px' : '180px',
-                                        objectFit: 'contain',
-                                        marginTop: '15px',
-                                        borderRadius: '8px'
-                                    }}
-                                />
-                            )}
-                        </div>
-
-                        {/* Info Card */}
-                        {/* Info Card */}
-                        <div style={{
-                            background: 'white',
-                            padding: format === 'stories' ? '15px 20px' : '25px',
-                            position: 'relative',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            fontSize: format === 'stories' ? '0.85rem' : '1rem',
-                            minHeight: 0,
-                            overflow: 'hidden' // Evita scrollbars na imagem final
-                        }}>
-                            <div style={{
-                                marginBottom: '10px',
-                                lineHeight: 1.5,
-                                borderBottom: '2px solid #f0f0f0',
-                                paddingBottom: '12px'
-                            }}>
-                                <p style={{ margin: '4px 0', fontSize: format === 'stories' ? '0.9rem' : '1.05rem' }}>
-                                    <strong>Aviso de:</strong> {alertType || '...'}
-                                </p>
-                                <p style={{ margin: '4px 0', fontSize: format === 'stories' ? '0.85rem' : '0.95rem' }}>
-                                    <strong>Severidade:</strong> {severity}
-                                </p>
-                                <p style={{ margin: '4px 0', fontSize: format === 'stories' ? '0.8rem' : '0.9rem' }}>
-                                    <strong>Início:</strong> {startDate || '...'}
-                                </p>
-                                <p style={{ margin: '4px 0', fontSize: format === 'stories' ? '0.8rem' : '0.9rem' }}>
-                                    <strong>Fim:</strong> {endDate || '...'}
-                                </p>
-                            </div>
-
-                            <div style={{
-                                color: '#444',
-                                lineHeight: 1.4,
-                                flex: 1,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '8px',
-                                fontSize: format === 'stories' ? '0.8rem' : '0.95rem'
-                            }}>
-                                <div>
-                                    <strong>Riscos Potenciais:</strong>
-                                    <p style={{ lineHeight: 1.4, margin: '4px 0' }}>
-                                        {risks || '...'}
-                                    </p>
-                                </div>
-
-                                <div style={{
-                                    marginTop: '8px',
-                                    borderTop: '2px solid #f0f0f0',
-                                    paddingTop: '8px'
-                                }}>
-                                    <strong>Instruções:</strong>
-                                    <ul style={{
-                                        listStyleType: 'disc',
-                                        paddingLeft: '18px',
-                                        marginTop: '4px',
-                                        fontSize: format === 'stories' ? '0.75rem' : '0.88rem'
-                                    }}>
-                                        {instructionsList.map((item, idx) => (
-                                            <li key={idx} style={{ marginBottom: '3px' }}>{item}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div style={{
-                            background: getSeverityColor(),
-                            color: 'white',
-                            textAlign: 'right',
-                            padding: '6px 12px',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold'
-                        }}>
-                            Fonte: INMET
-                        </div>
+                <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex justify-center items-center min-h-[600px] overflow-hidden">
+                    <div ref={artRef} className="shadow-lg rounded-2xl overflow-hidden scale-90 md:scale-100 transition-transform">
+                        <AlertArt
+                            format={format}
+                            severity={severity}
+                            alertType={alertType}
+                            startDate={startDate}
+                            endDate={endDate}
+                            risks={risks}
+                            instructionsList={instructionsList}
+                            mapImage={mapImage}
+                            severityColor={severityColor}
+                        />
                     </div>
                 </div>
             </div>
 
-            {/* Google Fonts */}
+            {/* Hidden Export Container - BLINDADO CONTRA LAYOUT EXTERNO */}
+            <div style={{ position: 'fixed', top: -10000, left: -10000, pointerEvents: 'none', visibility: 'visible' }}>
+                <div ref={exportRef}>
+                    <AlertArt
+                        format={format}
+                        severity={severity}
+                        alertType={alertType}
+                        startDate={startDate}
+                        endDate={endDate}
+                        risks={risks}
+                        instructionsList={instructionsList}
+                        mapImage={mapImage}
+                        severityColor={severityColor}
+                    />
+                </div>
+            </div>
+
+            {/* Fonts */}
             <link
                 href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap"
                 rel="stylesheet"
