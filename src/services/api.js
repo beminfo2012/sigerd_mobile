@@ -1,31 +1,45 @@
 import { supabase } from './supabase'
+import { getRemoteVistoriasCache, saveRemoteVistoriasCache } from './db'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/sigerd/api'
 
 export const api = {
     async getDashboardData() {
         try {
-            let allVistorias = [];
-            let { data: vistorias, error: fetchError } = await supabase
-                .from('vistorias')
-                .select('coordenadas, categoria_risco, subtipos_risco')
-                .order('created_at', { ascending: false });
+            // 1. Load from local cache first (Persistence/Offline)
+            let cachedVistorias = await getRemoteVistoriasCache()
 
-            if (vistorias) allVistorias = [...vistorias];
+            // 2. Try to fetch only NEW vistorias from Supabase (Incremental Update)
+            let allVistorias = [...cachedVistorias]
 
-            // If we hit the default limit (usually 1000), fetch next pages
-            while (vistorias && vistorias.length === 1000) {
-                const { data: nextBatch } = await supabase
-                    .from('vistorias')
-                    .select('coordenadas, categoria_risco, subtipos_risco')
-                    .order('created_at', { ascending: false })
-                    .range(allVistorias.length, allVistorias.length + 999);
+            if (navigator.onLine) {
+                try {
+                    let lastCreatedAt = '1970-01-01T00:00:00Z'
+                    if (cachedVistorias.length > 0) {
+                        // Find most recent created_at in cache
+                        lastCreatedAt = cachedVistorias.reduce((max, v) =>
+                            v.created_at > max ? v.created_at : max, lastCreatedAt)
+                    }
 
-                if (nextBatch && nextBatch.length > 0) {
-                    allVistorias = [...allVistorias, ...nextBatch];
-                    vistorias = nextBatch;
-                } else {
-                    break;
+                    // Fetch records created AFTER our last cached record
+                    let { data: newVistorias } = await supabase
+                        .from('vistorias')
+                        .select('id, coordenadas, categoria_risco, subtipos_risco, created_at')
+                        .gt('created_at', lastCreatedAt)
+                        .order('created_at', { ascending: false });
+
+                    if (newVistorias && newVistorias.length > 0) {
+                        // Update cache with new records
+                        await saveRemoteVistoriasCache(newVistorias)
+
+                        // Merge new records - using Map to prevent duplicates
+                        const mergedMap = new Map()
+                        allVistorias.forEach(v => mergedMap.set(v.id, v))
+                        newVistorias.forEach(v => mergedMap.set(v.id, v))
+                        allVistorias = Array.from(mergedMap.values())
+                    }
+                } catch (e) {
+                    console.warn('Incremental fetch failed, using cached data:', e)
                 }
             }
 

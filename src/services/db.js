@@ -24,6 +24,11 @@ export const initDB = async () => {
                 const store = db.createObjectStore('interdicoes', { keyPath: 'id', autoIncrement: true })
                 store.createIndex('synced', 'synced', { unique: false })
             }
+
+            // Store for Remote Vistorias Cache (Performance/Offline)
+            if (!db.objectStoreNames.contains('remote_vistorias_cache')) {
+                db.createObjectStore('remote_vistorias_cache', { keyPath: 'id' })
+            }
         },
     })
 }
@@ -425,4 +430,20 @@ export const searchInstallations = async (query) => {
 export const getInstallationsCount = async () => {
     const db = await initDB()
     return db.count('installations')
+}
+
+// Remote Vistorias Cache Helpers
+export const getRemoteVistoriasCache = async () => {
+    const db = await initDB()
+    return db.getAll('remote_vistorias_cache')
+}
+
+export const saveRemoteVistoriasCache = async (data) => {
+    const db = await initDB()
+    const tx = db.transaction('remote_vistorias_cache', 'readwrite')
+    const store = tx.objectStore('remote_vistorias_cache')
+    for (const item of data) {
+        await store.put(item)
+    }
+    await tx.done
 }

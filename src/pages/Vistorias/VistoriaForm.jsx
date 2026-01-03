@@ -115,21 +115,38 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
-        const { data } = await supabase.from('vistorias').select('vistoria_id').filter('vistoria_id', 'like', `%/${currentYear}`)
-        let nextNum = 1
-        if (data && data.length > 0) {
-            const ids = data.map(v => parseInt((v.vistoria_id || '').split('/')[0])).filter(n => !isNaN(n)).sort((a, b) => a - b)
-            for (let i = 0; i < ids.length; i++) {
-                if (ids[i] === nextNum) nextNum++
-                else if (ids[i] > nextNum) break
+        try {
+            const { data } = await supabase
+                .from('vistorias')
+                .select('vistoria_id')
+                .filter('vistoria_id', 'like', `%/${currentYear}`)
+                .order('vistoria_id', { ascending: false })
+                .limit(1)
+
+            let nextNum = 1
+            if (data && data.length > 0) {
+                const latestId = data[0].vistoria_id
+                const currentNum = parseInt(latestId.split('/')[0])
+                if (!isNaN(currentNum)) {
+                    nextNum = currentNum + 1
+                }
             }
+            setFormData(prev => ({
+                ...prev,
+                vistoriaId: `${nextNum.toString().padStart(2, '0')}/${currentYear}`,
+                agente: userProfile?.full_name || '',
+                matricula: userProfile?.matricula || ''
+            }))
+        } catch (e) {
+            console.error('Error getting next ID:', e)
+            // Fallback to 01/Year if offline or error
+            setFormData(prev => ({
+                ...prev,
+                vistoriaId: `01/${currentYear}`,
+                agente: userProfile?.full_name || '',
+                matricula: userProfile?.matricula || ''
+            }))
         }
-        setFormData(prev => ({
-            ...prev,
-            vistoriaId: `${nextNum.toString().padStart(2, '0')}/${currentYear}`,
-            agente: userProfile?.full_name || '',
-            matricula: userProfile?.matricula || ''
-        }))
     }
 
     const getLocation = () => {
