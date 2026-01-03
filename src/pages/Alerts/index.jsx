@@ -141,7 +141,7 @@ const Alerts = () => {
         <div className="bg-slate-50 min-h-screen p-5 pb-24">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-xl font-black text-gray-800 tracking-tight">Gerador de Alertas</h1>
+                <h1 className="text-xl font-black text-gray-800 tracking-tight">Avisos INMET</h1>
                 <button
                     onClick={() => navigate('/dashboard')}
                     className="bg-white p-2 rounded-xl border border-slate-100 shadow-sm hover:bg-slate-50 transition-colors active:scale-95"
@@ -344,7 +344,9 @@ const Alerts = () => {
                         style={{
                             width: format === 'stories' ? '360px' : '500px',
                             height: format === 'stories' ? '640px' : '500px',
-                            maxWidth: '100%'
+                            maxWidth: '100%',
+                            display: 'flex',
+                            flexDirection: 'column'
                         }}
                     >
                         {/* Top bar */}
@@ -383,7 +385,9 @@ const Alerts = () => {
                                 SANTA MARIA DE JETIBÁ
                             </h2>
                             <div style={{
-                                display: 'inline-block',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                                 background: getSeverityColor(),
                                 color: severity.includes('Potencial') ? '#333' : 'white',
                                 padding: format === 'stories' ? '10px 30px' : '12px 40px',
@@ -393,7 +397,8 @@ const Alerts = () => {
                                 fontWeight: 600,
                                 letterSpacing: '1.5px',
                                 textTransform: 'uppercase',
-                                boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                                textAlign: 'center'
                             }}>
                                 {severity.toUpperCase()}
                             </div>
@@ -415,13 +420,14 @@ const Alerts = () => {
 
                         {/* Info Card */}
                         <div style={{
-                            flex: 1,
                             background: 'white',
                             padding: format === 'stories' ? '20px' : '25px',
                             position: 'relative',
                             display: 'flex',
                             flexDirection: 'column',
-                            fontSize: format === 'stories' ? '0.85rem' : '1rem'
+                            fontSize: format === 'stories' ? '0.85rem' : '1rem',
+                            minHeight: 0,
+                            overflow: 'auto'
                         }}>
                             <div style={{
                                 marginBottom: '15px',
