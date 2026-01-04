@@ -122,9 +122,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
                             onClick={() => onEdit(vistoria)}
                             className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm active:scale-[0.99] transition-transform cursor-pointer"
                         >
-                            <div className="flex justify-between items-start mb-2">
+                            <div className="flex justify-between items-start mb-3">
                                 <div className="flex gap-2 items-center">
-                                    <span className="bg-blue-50 text-[#2a5299] text-xs font-bold px-2 py-1 rounded-md">
+                                    <span className="bg-slate-100 text-slate-600 text-xs font-black px-2.5 py-1 rounded-lg border border-slate-200">
                                         #{vistoria.vistoria_id || '---'}
                                     </span>
                                     {vistoria.isLocal && (vistoria.synced === false || vistoria.synced === undefined || vistoria.synced === 0) && (
@@ -133,18 +133,36 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                             Pendente
                                         </span>
                                     )}
+                                    {/* Badges de Risco */}
+                                    {vistoria.nivelRisco && vistoria.nivelRisco !== 'Baixo' && (
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 uppercase ${vistoria.nivelRisco === 'Iminente' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                vistoria.nivelRisco === 'Alto' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                                    'bg-yellow-50 text-yellow-600 border-yellow-100'
+                                            }`}>
+                                            {vistoria.nivelRisco}
+                                        </span>
+                                    )}
                                 </div>
-                                <span className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                                <span className="text-xs text-gray-400 font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
                                     <Calendar size={12} />
                                     {new Date(vistoria.created_at).toLocaleDateString('pt-BR')}
                                 </span>
                             </div>
 
-                            <h3 className="font-bold text-gray-800 mb-1 line-clamp-1">{vistoria.tipo_info || 'Vistoria Geral'}</h3>
+                            <div className="mb-3">
+                                <h3 className="font-black text-gray-800 text-lg leading-tight mb-1">
+                                    {vistoria.solicitante || 'Solicitante Não Identificado'}
+                                </h3>
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">
+                                    {vistoria.categoriaRisco || vistoria.tipo_info || 'Vistoria Geral'}
+                                </p>
+                            </div>
 
-                            <div className="flex items-start gap-2 text-sm text-gray-500 mb-3">
-                                <MapPin size={16} className="mt-0.5 shrink-0" />
-                                <p className="line-clamp-2">{vistoria.endereco || 'Sem endereço'}</p>
+                            <div className="flex items-start gap-2 text-sm text-gray-600 bg-slate-50 p-2.5 rounded-xl border border-dashed border-slate-200 mb-3">
+                                <MapPin size={16} className="mt-0.5 shrink-0 text-[#2a5299]" />
+                                <p className="line-clamp-2 font-medium leading-snug">
+                                    {vistoria.endereco || 'Endereço não informado'}
+                                </p>
                             </div>
 
                             <div className="flex justify-end gap-2 border-t border-gray-50 pt-3">
