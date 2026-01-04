@@ -433,69 +433,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Situational Report Card */}
-            <div className="bg-gradient-to-br from-[#1e3c72] to-[#2a5299] p-6 rounded-[32px] shadow-xl text-white relative overflow-hidden mb-6">
-                <div className="absolute top-0 right-0 p-8 opacity-10">
-                    <FileText size={140} />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                            <FileText size={24} className="text-white" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black leading-tight">Relatório Situacional</h3>
-                            <p className="text-xs text-blue-100 font-medium">Suporte à Decisão</p>
-                        </div>
-                    </div>
 
-                    <p className="text-sm text-blue-100 mb-6 leading-relaxed max-w-[85%]">
-                        Gera um documento PDF oficial compilando todos os indicadores, mapa de risco e dados meteorológicos atuais para análise de cenário.
-                    </p>
-
-                    <button
-                        onClick={async () => {
-                            if (loading) return;
-                            const btn = document.getElementById('btn-report');
-                            const originalText = btn.innerText;
-                            btn.innerText = "Gerando...";
-                            btn.disabled = true;
-
-                            try {
-                                // 1. Fetch fresh Pluviometer data
-                                /*
-                                let pluvioData = [];
-                                try {
-                                    const res = await fetch('/api/pluviometros');
-                                    if(res.ok) pluvioData = await res.json();
-                                } catch (e) {
-                                    console.warn("Failed to fetch pluvio for report", e);
-                                }
-
-                                // 2. Capture Map Element
-                                const mapElement = document.querySelector('.leaflet-container');
-
-                                // 3. Generate PDF
-                                await generateSituationalReport(data, weather, pluvioData, mapElement);
-                                */
-                                alert("Funcionalidade em manutenção. Tente novamente mais tarde.");
-
-                            } catch (e) {
-                                console.error(e);
-                                alert("Erro ao gerar relatório.");
-                            } finally {
-                                btn.innerText = originalText;
-                                btn.disabled = false;
-                            }
-                        }}
-                        id="btn-report"
-                        className="bg-white text-[#2a5299] px-6 py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-all flex items-center gap-2 hover:bg-blue-50"
-                    >
-                        <Printer size={18} />
-                        Gerar Relatório Completo
-                    </button>
-                </div>
-            </div>
 
             {
                 showForecast && weather && (
