@@ -93,15 +93,15 @@ export const generatePDF = async (rawData, type) => {
     `;
 
     const sectionTitle = (title) => `
-        <div style="background: #f1f5f9; border-left: 6px solid #2a5299; padding: 8px 15px; margin: 25px 0 15px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;">
+        <div style="background: #f8fafc; border-left: 6px solid #2a5299; padding: 12px 20px; margin: 35px 0 20px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 15px; letter-spacing: 0.5px; border-radius: 0 8px 8px 0;">
             ${title}
         </div>
     `;
 
     const renderField = (label, value) => `
-        <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">${label}</div>
-            <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.4;">${value || 'Não informado'}</div>
+        <div style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">${label}</div>
+            <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.5;">${value || 'Não informado'}</div>
         </div>
     `;
 
@@ -112,24 +112,25 @@ export const generatePDF = async (rawData, type) => {
             'Alto': '#f97316',
             'Iminente': '#ef4444'
         };
-        return `<span style="background: ${colors[nivel] || '#64748b'}; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 800; display: inline-block; line-height: 1; vertical-align: middle;">${nivel.toUpperCase()}</span>`;
+        // Fix: adjusted padding and line-height to prevent text clipping
+        return `<span style="background: ${colors[nivel] || '#64748b'}; color: white; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 800; display: inline-block; line-height: 1.4; vertical-align: middle; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2);">${nivel.toUpperCase()}</span>`;
     };
 
     let contentHtml = '';
     if (isVistoria) {
         contentHtml = `
-            <div style="padding: 0 40px 40px 40px;">
+            <div style="padding: 0 45px 45px 45px;">
                 ${sectionTitle('1. Identificação e Responsável')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    ${renderField('Data/Hora', data.dataHora ? new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '---')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px;">
+                    ${renderField('Data do Registro', data.dataHora ? new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '---')}
                     ${renderField('Protocolo/Processo', data.processo)}
-                    ${renderField('Data e Hora da Emissão', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
+                    ${renderField('Emissão do Laudo', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
                     ${renderField('Agente Responsável', data.agente)}
                     ${renderField('Matrícula do Agente', data.matricula)}
                 </div>
 
                 ${sectionTitle('2. Localização e Solicitante')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px;">
                     <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
                     ${renderField('CPF', data.cpf)}
                     ${renderField('Telefone', data.telefone)}
@@ -140,31 +141,31 @@ export const generatePDF = async (rawData, type) => {
                 </div>
 
                 ${sectionTitle('3. Diagnóstico de Risco')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px;">
                     ${renderField('Categoria Principal', data.categoriaRisco)}
-                    <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">NÍVEL DE RISCO</div>
+                    <div style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 5px;">NÍVEL DE RISCO</div>
                         <div>${getNivelBadge(data.nivelRisco)}</div>
                     </div>
                     <div style="grid-column: span 2;">${renderField('Subtipos Identificados', data.subtiposRisco.join(', ') || 'Nenhum específico')}</div>
-                    ${renderField('Situação Observada', data.situacaoObservada)}
-                    ${renderField('População Exposta', `${data.populacaoEstimada} pessoas (${data.gruposVulneraveis.join(', ') || 'Nenhum grupo sensível'})`)}
+                    <div style="grid-column: span 2;">${renderField('Situação Observada', data.situacaoObservada)}</div>
+                    <div style="grid-column: span 2;">${renderField('População Exposta', `${data.populacaoEstimada} pessoas (${data.gruposVulneraveis.join(', ') || 'Nenhum grupo sensível'})`)}</div>
                 </div>
 
                 ${sectionTitle('4. Parecer e Recomendações')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 0 30px;">
-                    ${renderField('Descrição Técnica', data.observacoes)}
+                <div style="display: grid; grid-template-columns: 1fr; gap: 0 40px;">
+                    ${renderField('Descrição Técnica Detalhada', data.observacoes)}
                     ${renderField('Medidas Recomendadas', data.medidasTomadas.join('; ') || 'Orientação padrão')}
                     ${renderField('Encaminhamentos Efetuados', data.encaminhamentos.join(', ') || 'Nenhum')}
                 </div>
 
                 ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
                     ${sectionTitle('5. Constatações Técnicas (Checklist)')}
-                    <div style="background: #fafafa; border-radius: 8px; padding: 20px; border: 1px solid #f1f5f9;">
+                    <div style="background: #fafafa; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0;">
                         ${Object.keys(data.checklistRespostas)
                     .filter(k => data.checklistRespostas[k])
                     .map(item => `
-                                <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 13px; color: #334155; line-height: 1.4;">
+                                <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; font-size: 13px; color: #334155; line-height: 1.5;">
                                     <div style="color: #2a5299; font-weight: bold; font-size: 16px;">✓</div>
                                     <div style="font-weight: 600;">${item}</div>
                                 </div>
@@ -176,16 +177,16 @@ export const generatePDF = async (rawData, type) => {
     } else {
         // Interdição layout (keep existing logic but with new styling)
         contentHtml = `
-            <div style="padding: 0 40px 40px 40px;">
+            <div style="padding: 0 45px 45px 45px;">
                 ${sectionTitle('1. Identificação da Ordem')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px;">
                     ${renderField('Número de Controle', data.interdicaoId)}
                     ${renderField('Data e Hora da Ação', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
                     <div style="grid-column: span 2;">${renderField('Responsável pelo Imóvel', data.responsavelNome)}</div>
                 </div>
 
                 ${sectionTitle('2. Local e Fundamentação')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px;">
                     <div style="grid-column: span 2;">${renderField('Endereço', data.endereco)}</div>
                     ${renderField('Risco Constatado', data.riscoGrau)}
                     ${renderField('Medida Aplicada', data.medidaTipo)}
@@ -199,13 +200,13 @@ export const generatePDF = async (rawData, type) => {
     let photosHtml = '';
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
-            <div style="padding: 0 40px 40px 40px; page-break-before: auto;">
+            <div style="padding: 0 45px 45px 45px; page-break-before: always;">
                 ${sectionTitle('6. Anexo Fotográfico')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 30px; justify-items: center;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 40px; justify-items: center;">
                     ${data.fotos.map((f, idx) => `
-                        <div style="width: 100%; max-width: 600px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; text-align: center;">
-                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 4px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
-                            <div style="margin-top: 15px; font-size: 12px; color: #475569; font-weight: 600;">FOTO ${idx + 1}</div>
+                        <div style="width: 100%; max-width: 640px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 500px; border-radius: 6px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
+                            <div style="margin-top: 20px; font-size: 13px; color: #475569; font-weight: 700; text-transform: uppercase;">FOTO ${idx + 1}</div>
                         </div>
                     `).join('')}
                 </div>
