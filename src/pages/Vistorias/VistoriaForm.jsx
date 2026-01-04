@@ -8,6 +8,7 @@ import { UserContext } from '../../App'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
+import VoiceInput from '../../components/VoiceInput'
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -516,7 +517,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
                         {/* 5.6 Observações Técnicas */}
                         <div>
-                            <label className={labelClasses}>Observações Técnicas</label>
+                            <div className="flex justify-between items-center mb-1.5">
+                                <label className={labelClasses} style={{ marginBottom: 0 }}>Observações Técnicas</label>
+                                <VoiceInput onResult={(text) => setFormData(prev => ({ ...prev, observacoes: (prev.observacoes ? prev.observacoes + ' ' : '') + text }))} />
+                            </div>
                             <textarea rows="4" className={inputClasses} placeholder="Descrever condições observadas, indícios técnicos e fatores agravantes." value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} />
                         </div>
 

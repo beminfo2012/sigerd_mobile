@@ -5,6 +5,7 @@ import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
+import VoiceInput from '../../components/VoiceInput'
 import { UserContext } from '../../App'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
@@ -463,12 +464,18 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     </h2>
 
                     <div>
-                        <label className={labelClasses}>Relatório Técnico</label>
+                        <div className="flex justify-between items-center mb-1.5">
+                            <label className={labelClasses} style={{ marginBottom: 0 }}>Relatório Técnico</label>
+                            <VoiceInput onResult={(text) => setFormData(prev => ({ ...prev, relatorioTecnico: (prev.relatorioTecnico ? prev.relatorioTecnico + ' ' : '') + text }))} />
+                        </div>
                         <textarea rows="4" value={formData.relatorioTecnico} onChange={e => handleChange('relatorioTecnico', e.target.value)} className={inputClasses} placeholder="Detalhes técnicos da vistoria..." />
                     </div>
 
                     <div>
-                        <label className={labelClasses}>Recomendações Imediatas</label>
+                        <div className="flex justify-between items-center mb-1.5">
+                            <label className={labelClasses} style={{ marginBottom: 0 }}>Recomendações Imediatas</label>
+                            <VoiceInput onResult={(text) => setFormData(prev => ({ ...prev, recomendacoes: (prev.recomendacoes ? prev.recomendacoes + ' ' : '') + text }))} />
+                        </div>
                         <textarea rows="2" value={formData.recomendacoes} onChange={e => handleChange('recomendacoes', e.target.value)} className={inputClasses} placeholder="O que o morador/município deve fazer..." />
                     </div>
 
