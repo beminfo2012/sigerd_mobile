@@ -80,6 +80,25 @@ const Pluviometros = () => {
         return { bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-600', label: 'NORMAL' }
     }
 
+    const [selectedStation, setSelectedStation] = useState(null)
+
+    const RiskBadge = ({ level, size = 'sm' }) => {
+        const colors = {
+            'NORMAL': { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
+            'OBSERVAÇÃO': { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-200' },
+            'ATENÇÃO': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+            'ALERTA MÁXIMO': { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' }
+        }
+        const style = colors[level] || colors['NORMAL']
+        const sizeClass = size === 'lg' ? 'px-4 py-2 text-sm' : 'px-2 py-0.5 text-[10px]'
+
+        return (
+            <span className={`${style.bg} ${style.text} ${style.border} border ${sizeClass} font-black rounded-full uppercase tracking-wide`}>
+                {level}
+            </span>
+        )
+    }
+
     return (
         <div className="bg-slate-50 min-h-screen pb-10">
             {/* Header */}
@@ -125,7 +144,11 @@ const Pluviometros = () => {
                         {stations.map(station => {
                             const risk = getRiskLevel(station.acc24hr)
                             return (
-                                <div key={station.id} className={`bg-white p-5 rounded-2xl shadow-sm border ${risk.border} relative overflow-hidden`}>
+                                <div
+                                    key={station.id}
+                                    onClick={() => setSelectedStation(station)}
+                                    className={`bg-white p-5 rounded-2xl shadow-sm border ${risk.border} relative overflow-hidden active:scale-[0.98] transition-transform cursor-pointer`}
+                                >
                                     <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-black uppercase rounded-bl-xl ${risk.bg} ${risk.text}`}>
                                         {risk.label}
                                     </div>
@@ -145,6 +168,9 @@ const Pluviometros = () => {
                                                 {station.acc24hr?.toFixed(1)} <span className="text-sm font-medium text-gray-400">mm</span>
                                             </div>
                                         </div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-gray-50 text-[10px] text-center text-gray-400 uppercase font-bold tracking-widest">
+                                        Toque para ver detalhes
                                     </div>
                                 </div>
                             )
@@ -169,6 +195,70 @@ const Pluviometros = () => {
                         <Share2 size={24} />
                         Compartilhar
                     </button>
+                </div>
+            )}
+
+            {/* Details Modal */}
+            {selectedStation && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Detalhes da Estação</h3>
+                                <h2 className="text-2xl font-black text-gray-800 leading-tight">{selectedStation.name}</h2>
+                                <div className="text-sm text-gray-500 mt-1">ID: {selectedStation.id}</div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedStation(null)}
+                                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                                <ArrowLeft size={20} className="text-gray-600" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <span className="font-bold text-gray-600">Nível de Risco Atual</span>
+                                <RiskBadge level={getRiskLevel(selectedStation.acc24hr).label} size="lg" />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 text-center">
+                                    <div className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Última Hora</div>
+                                    <div className="text-4xl font-black text-blue-600">
+                                        {selectedStation.acc1hr?.toFixed(1)}
+                                        <span className="text-lg font-medium text-blue-400 ml-1">mm</span>
+                                    </div>
+                                </div>
+                                <div className={`p-5 rounded-2xl border text-center ${getRiskLevel(selectedStation.acc24hr).bg} ${getRiskLevel(selectedStation.acc24hr).border}`}>
+                                    <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${getRiskLevel(selectedStation.acc24hr).text} opacity-70`}>24 Horas</div>
+                                    <div className={`text-4xl font-black ${getRiskLevel(selectedStation.acc24hr).text}`}>
+                                        {selectedStation.acc24hr?.toFixed(1)}
+                                        <span className={`text-lg font-medium ml-1 opacity-60`}>mm</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
+                                <h4 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                    <Calendar size={16} className="text-gray-400" />
+                                    Última Atualização
+                                </h4>
+                                <p className="text-gray-600 font-medium">
+                                    {selectedStation.lastUpdate
+                                        ? new Date(selectedStation.lastUpdate).toLocaleString('pt-BR')
+                                        : 'Dados recentes (Automático)'}
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setSelectedStation(null)}
+                                className="w-full py-4 bg-[#2a5299] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
