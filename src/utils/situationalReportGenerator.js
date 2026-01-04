@@ -69,7 +69,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                     </div>
                     <div style="flex: 1; background: #fff1f2; padding: 15px; border-radius: 8px; border: 1px solid #fecdd3; text-align: center;">
                         <div style="font-size: 32px; font-weight: 900; color: #e11d48;">${dashboardData.stats.activeOccurrences || 0}</div>
-                        <div style="font-size: 12px; font-weight: bold; color: #be123c; text-transform: uppercase;">Ocorrências Ativas</div>
+                        <div style="font-size: 12px; font-weight: bold; color: #be123c; text-transform: uppercase;">Avisos Ativos</div>
                     </div>
                     <div style="flex: 1; background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #ffedd5; text-align: center;">
                         <div style="font-size: 32px; font-weight: 900; color: #ea580c;">${dashboardData.stats.inmetAlertsCount || 0}</div>
@@ -144,25 +144,38 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                 </div>
             </div>
 
-            <!-- 5. Concentration Map -->
+            <!-- 5. Concentration Map & Locations -->
             <div style="page-break-inside: avoid;">
-                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">5. Mapa de Concentração</h2>
+                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">5. Detalhamento Geográfico e Riscos</h2>
                 ${mapImage ? `
-                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
                         <img src="${mapImage}" style="width: 100%; display: block;" />
                     </div>
-                ` : '<div style="background: #f1f5f9; padding: 20px; text-align: center; color: #64748b; border-radius: 8px;">Imagem do mapa indisponível</div>'}
+                ` : '<div style="background: #f1f5f9; padding: 20px; text-align: center; color: #64748b; border-radius: 8px; margin-bottom: 20px;">Imagem do mapa indisponível</div>'}
                 
-                <div style="margin-top: 20px;">
-                    <h3 style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 10px;">Locais Mapeados:</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                        ${dashboardData.locations.slice(0, 15).map(l => `
-                            <span style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #475569;">
-                                ${l.risk}
-                            </span>
-                        `).join('')}
-                         ${dashboardData.locations.length > 15 ? `<span style="font-size: 11px; padding: 4px;">... (+${dashboardData.locations.length - 15})</span>` : ''}
-                    </div>
+                <div>
+                    <h3 style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 10px;">Últimos Registros Mapeados:</h3>
+                    <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                        <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                            <tr>
+                                <th style="padding: 8px; text-align: left; color: #475569;">Tipologia</th>
+                                <th style="padding: 8px; text-align: left; color: #475569;">Subtipos / Detalhes</th>
+                                <th style="padding: 8px; text-align: right; color: #475569;">Coordenadas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dashboardData.locations.slice(0, 15).map((l, i) => `
+                                <tr style="border-bottom: 1px solid #f1f5f9; background: ${i % 2 === 0 ? '#ffffff' : '#fcfcfc'};">
+                                    <td style="padding: 8px; font-weight: 700; color: #334155;">${l.risk}</td>
+                                    <td style="padding: 8px; color: #64748b;">${l.details}</td>
+                                    <td style="padding: 8px; text-align: right; font-family: monospace; color: #475569;">
+                                        ${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    ${dashboardData.locations.length > 15 ? `<div style="text-align: center; padding: 10px; font-size: 10px; color: #94a3b8; font-style: italic;">...e mais ${dashboardData.locations.length - 15} registros não listados.</div>` : ''}
                 </div>
             </div>
 

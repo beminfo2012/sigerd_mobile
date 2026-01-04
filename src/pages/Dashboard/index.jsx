@@ -321,7 +321,7 @@ const Dashboard = () => {
                         </div>
                     )}
                     <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">{data.stats.activeOccurrences}</div>
-                    <div className="text-xs font-bold text-slate-400 leading-tight">Avisos e Ocorrências</div>
+                    <div className="text-xs font-bold text-slate-400 leading-tight">Avisos</div>
                 </div>
             </div>
 
