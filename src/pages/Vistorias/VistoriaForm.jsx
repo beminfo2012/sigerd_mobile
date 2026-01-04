@@ -366,7 +366,18 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </h2>
                     <div className="space-y-4">
                         <div>
-                            <label className={labelClasses}>Endereço da Ocorrência</label>
+                            <div className="flex justify-between items-center">
+                                <label className={labelClasses}>Endereço da Ocorrência</label>
+                                {formData.enderecoSolicitante && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, endereco: prev.enderecoSolicitante }))}
+                                        className="text-[10px] font-bold text-[#2a5299] hover:bg-blue-50 px-2 py-1 rounded transition-colors uppercase tracking-wide border border-transparent hover:border-blue-100"
+                                    >
+                                        Mesmo do Solicitante
+                                    </button>
+                                )}
+                            </div>
                             <div className="relative">
                                 <MapPin size={20} className="absolute left-4 top-4 text-[#2a5299]" />
                                 <input type="text" className={`${inputClasses} pl-12`} value={formData.endereco} onChange={e => setFormData({ ...formData, endereco: e.target.value })} />
