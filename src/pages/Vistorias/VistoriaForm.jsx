@@ -313,7 +313,20 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
                         <div>
                             <label className={labelClasses}>Nº Processo</label>
-                            <input type="tel" inputMode="numeric" pattern="[0-9]*" className={inputClasses} value={formData.processo} onChange={e => setFormData({ ...formData, processo: e.target.value.replace(/\D/g, '') })} />
+                            <div className="relative">
+                                <span className="absolute left-3.5 top-3.5 text-gray-400 font-bold select-none">{new Date().getFullYear()}-</span>
+                                <input
+                                    type="text"
+                                    className={`${inputClasses} pl-[60px] uppercase font-mono`}
+                                    placeholder="XXXXX"
+                                    maxLength={8}
+                                    value={formData.processo.replace(`${new Date().getFullYear()}-`, '')}
+                                    onChange={e => {
+                                        const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                        setFormData({ ...formData, processo: `${new Date().getFullYear()}-${val}` })
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -350,11 +363,42 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClasses}>CPF</label>
-                                <input type="tel" inputMode="numeric" pattern="[0-9]*" className={inputClasses} value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value.replace(/\D/g, '') })} />
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    maxLength={14}
+                                    placeholder="000.000.000-00"
+                                    className={inputClasses}
+                                    value={formData.cpf}
+                                    onChange={e => {
+                                        let v = e.target.value.replace(/\D/g, '');
+                                        if (v.length > 11) v = v.slice(0, 11);
+                                        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                        v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                        setFormData({ ...formData, cpf: v });
+                                    }}
+                                />
                             </div>
                             <div>
                                 <label className={labelClasses}>Telefone</label>
-                                <input type="tel" inputMode="tel" className={inputClasses} value={formData.telefone} onChange={e => setFormData({ ...formData, telefone: e.target.value })} />
+                                <div className="relative">
+                                    <span className="absolute left-3.5 top-3.5 text-gray-500 font-bold select-none">(27)</span>
+                                    <input
+                                        type="tel"
+                                        inputMode="tel"
+                                        maxLength={10}
+                                        placeholder="90000-0000"
+                                        className={`${inputClasses} pl-12`}
+                                        value={formData.telefone.replace(/^\(27\) /, '')}
+                                        onChange={e => {
+                                            let v = e.target.value.replace(/\D/g, '');
+                                            if (v.length > 9) v = v.slice(0, 9);
+                                            v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+                                            setFormData({ ...formData, telefone: `(27) ${v}` });
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
