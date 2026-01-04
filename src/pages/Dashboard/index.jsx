@@ -5,7 +5,7 @@ import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain,
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
-import { generateSituationalReport } from '../../utils/situationalReportGenerator'
+// import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 
 const Dashboard = () => {
     const navigate = useNavigate()
@@ -463,10 +463,11 @@ const Dashboard = () => {
 
                             try {
                                 // 1. Fetch fresh Pluviometer data
+                                /*
                                 let pluvioData = [];
                                 try {
                                     const res = await fetch('/api/pluviometros');
-                                    if (res.ok) pluvioData = await res.json();
+                                    if(res.ok) pluvioData = await res.json();
                                 } catch (e) {
                                     console.warn("Failed to fetch pluvio for report", e);
                                 }
@@ -476,6 +477,8 @@ const Dashboard = () => {
 
                                 // 3. Generate PDF
                                 await generateSituationalReport(data, weather, pluvioData, mapElement);
+                                */
+                                alert("Funcionalidade em manutenção. Tente novamente mais tarde.");
 
                             } catch (e) {
                                 console.error(e);
