@@ -343,10 +343,30 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6">
+            <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6 relative">
                 <div className="flex justify-between items-center mb-6 px-1">
                     <h3 className="font-bold text-slate-800 text-sm">Vistorias por Tipologia</h3>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Tempo Real</span>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Tempo Real</span>
+                        <button
+                            onClick={() => {
+                                const csvContent = "data:text/csv;charset=utf-8,"
+                                    + "Tipologia;Quantidade;Porcentagem\n"
+                                    + data.breakdown.map(e => `${e.label};${e.count};${e.percentage}%`).join("\n");
+                                const encodedUri = encodeURI(csvContent);
+                                const link = document.createElement("a");
+                                link.setAttribute("href", encodedUri);
+                                link.setAttribute("download", `sigerd_stats_${new Date().toISOString().split('T')[0]}.csv`);
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            title="Exportar CSV"
+                        >
+                            <Download size={14} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="space-y-6">
