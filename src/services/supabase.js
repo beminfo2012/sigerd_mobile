@@ -8,7 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // GeoRescue project - for electrical installations
 // GeoRescue project - for electrical installations
-const georescueUrl = import.meta.env.VITE_GEORESCUE_URL || 'https://miijkslcxxlxnbpxzlub.supabase.co'
-const georescueKey = import.meta.env.VITE_GEORESCUE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1paWprc2xjeHhseG5icHh6bHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NjE0OTMsImV4cCI6MjA1MTAzNzQ5M30.Hy0Jjk5lQzFHIQoZTQQQbqQFWPxAHnVpSrJGhqCjqtQ'
+const georescueUrl = import.meta.env.VITE_GEORESCUE_URL
+const georescueKey = import.meta.env.VITE_GEORESCUE_ANON_KEY
 
 export const georescue = createClient(georescueUrl, georescueKey)
