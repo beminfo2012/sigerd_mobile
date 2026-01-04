@@ -152,7 +152,7 @@ const Pluviometros = () => {
                                     <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-black uppercase rounded-bl-xl ${risk.bg} ${risk.text}`}>
                                         {risk.label}
                                     </div>
-                                    <h3 className="font-bold text-gray-800 text-lg mb-1 pr-20 truncate">{station.name}</h3>
+                                    <h3 className="font-bold text-gray-800 text-lg mb-1 pr-20 truncate leading-relaxed py-1">{station.name}</h3>
                                     <div className="text-xs text-gray-400 mb-4">ID: {station.id}</div>
 
                                     <div className="grid grid-cols-2 gap-4">
@@ -200,8 +200,8 @@ const Pluviometros = () => {
 
             {/* Details Modal */}
             {selectedStation && (
-                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 relative">
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Detalhes da Estação</h3>
