@@ -123,7 +123,7 @@ export const generatePDF = async (rawData, type) => {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                     ${renderField('Data do Registro', data.dataHora ? new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '---')}
                     ${renderField('Protocolo/Processo', data.processo)}
-                    ${renderField('Emissão do Laudo', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
+                    ${renderField('Emissão do Laudo', new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
                     ${renderField('Agente Responsável', data.agente)}
                     ${renderField('Matrícula do Agente', data.matricula)}
                 </div>
