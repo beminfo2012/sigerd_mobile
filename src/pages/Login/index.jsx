@@ -10,6 +10,12 @@ const Login = ({ onLogin }) => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
+
+        if (!navigator.onLine) {
+            setError('⚠️ Sem internet. Conecte-se para entrar pela primeira vez.')
+            return
+        }
+
         setLoading(true)
 
         try {

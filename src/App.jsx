@@ -56,8 +56,14 @@ function App() {
     }
 
     const handleLogout = () => {
-        localStorage.removeItem('auth')
-        setIsAuthenticated(false)
+        if (!navigator.onLine) {
+            alert('🚫 Você está offline!\n\nNão é seguro sair agora, pois você não conseguirá entrar novamente sem internet.\n\nFique conectado para usar o sistema offline.')
+            return
+        }
+        if (window.confirm("Tem certeza que deseja sair?")) {
+            localStorage.removeItem('auth')
+            setIsAuthenticated(false)
+        }
     }
 
     if (!isAuthenticated) {
