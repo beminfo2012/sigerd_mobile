@@ -62,7 +62,10 @@ export const generatePDF = async (rawData, type) => {
     const data = normalizeData(rawData, type);
     const isVistoria = type === 'vistoria';
     const title = isVistoria ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
-    const filename = `${type}_${(data.vistoriaId || data.interdicaoId || 'doc').replace('/', '_')}.pdf`;
+    const cleanId = (data.vistoriaId || data.interdicaoId || 'doc').replace(/[\/\\]/g, '_');
+    const cleanName = (isVistoria ? data.solicitante : data.responsavelNome) || '';
+    const nameSuffix = cleanName !== '---' ? `_${cleanName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)}` : '';
+    const filename = `${type}_${cleanId}${nameSuffix}.pdf`;
 
     const container = document.createElement('div');
     container.style.position = 'fixed';
