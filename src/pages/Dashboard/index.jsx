@@ -5,7 +5,7 @@ import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain,
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
-// import { generateSituationalReport } from '../../utils/situationalReportGenerator'
+import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 
 const Dashboard = () => {
     const navigate = useNavigate()
@@ -397,6 +397,47 @@ const Dashboard = () => {
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Ocorrências Atuais</p>
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            id="btn-report-mini"
+                            onClick={async (e) => {
+                                if (loading) return;
+                                const btn = e.currentTarget;
+                                const icon = btn.querySelector('svg');
+                                const text = btn.querySelector('span');
+                                const originalText = text.innerText;
+
+                                text.innerText = "GERANDO...";
+                                btn.disabled = true;
+
+                                try {
+                                    // 1. Fetch fresh Pluviometer data
+                                    let pluvioData = [];
+                                    try {
+                                        const res = await fetch('/api/pluviometros');
+                                        if (res.ok) pluvioData = await res.json();
+                                    } catch (e) {
+                                        console.warn("Failed to fetch pluvio for report", e);
+                                    }
+
+                                    // 2. Capture Map Element
+                                    const mapElement = document.querySelector('.leaflet-container');
+
+                                    // 3. Generate PDF
+                                    await generateSituationalReport(data, weather, pluvioData, mapElement);
+
+                                } catch (e) {
+                                    console.error(e);
+                                    alert("Erro ao gerar relatório.");
+                                } finally {
+                                    text.innerText = originalText;
+                                    btn.disabled = false;
+                                }
+                            }}
+                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-xl transition-colors flex items-center gap-2"
+                        >
+                            <Printer size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-tighter">RELATÓRIO</span>
+                        </button>
                         <button
                             onClick={handleExportKML}
                             className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-xl transition-colors flex items-center gap-2"
