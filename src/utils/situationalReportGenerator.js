@@ -183,10 +183,48 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                 </div>
             </div>
 
-            <!-- Footer -->
-            <div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; font-size: 10px; color: #94a3b8;">
-                <p>Relatório gerado automaticamente pelo sistema SIGERD Mobile.</p>
-                <p>Este documento é para uso exclusivo da Defesa Civil e órgãos competentes.</p>
+            <!-- Forecast + Pluviometers Row -->
+            <div style="margin-bottom: 30px; display: flex; gap: 30px;">
+                 <!-- Forecast -->
+                 <div style="flex: 1;">
+                    <h3 style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">Previsão (3 Dias)</h3>
+                    ${weatherData && weatherData.daily ? `
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${weatherData.daily.slice(1, 4).map(day => `
+                                <div style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 8px; border-radius: 6px;">
+                                    <div style="font-size: 11px; font-weight: bold; color: #64748b;">
+                                        ${new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' })}
+                                    </div>
+                                    <div style="font-size: 11px; font-weight: 800; color: #1e293b;">
+                                        ${Math.round(day.tempMax)}° <span style="color: #94a3b8; font-weight: normal;">/ ${Math.round(day.tempMin)}°</span>
+                                    </div>
+                                    <div style="font-size: 10px; color: #3b82f6; font-weight: 600;">
+                                        ${day.rainProb}% Chuva
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<div style="font-size: 11px; color: #94a3b8;">Previsão indisponível</div>'}
+                 </div>
+
+                 <!-- Signatures Area (New) -->
+                 <div style="flex: 1.5; display: flex; flex-direction: column; justify-content: flex-end;">
+                    <div style="display: flex; gap: 20px; margin-top: 10px;">
+                        <div style="flex: 1; border-top: 1px solid #94a3b8; padding-top: 5px; text-align: center;">
+                            <div style="font-size: 10px; font-weight: bold; color: #1e293b;">Responsável Operacional</div>
+                            <div style="font-size: 9px; color: #94a3b8;">Defesa Civil</div>
+                        </div>
+                        <div style="flex: 1; border-top: 1px solid #94a3b8; padding-top: 5px; text-align: center;">
+                            <div style="font-size: 10px; font-weight: bold; color: #1e293b;">Autoridade Competente</div>
+                            <div style="font-size: 9px; color: #94a3b8;">Visto</div>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- Warning about Auto-Generation -->
+            <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 9px; color: #cbd5e1; font-style: italic;">
+                * Documento para simples conferência. A validade oficial depende da assinatura das autoridades competentes acima.
             </div>
         </div>
     `;
