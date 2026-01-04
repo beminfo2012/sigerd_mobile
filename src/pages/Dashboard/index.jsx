@@ -77,7 +77,8 @@ const Dashboard = () => {
                             lat: parseFloat(parts[0]),
                             lng: parseFloat(parts[1]),
                             risk: cat,
-                            details: subtypes.length > 0 ? subtypes.join(', ') : cat
+                            details: subtypes.length > 0 ? subtypes.join(', ') : cat,
+                            date: v.created_at || v.data_hora || new Date().toISOString()
                         }
                     })
                 } else {
@@ -92,7 +93,8 @@ const Dashboard = () => {
                                 lat: parseFloat(parts[0]),
                                 lng: parseFloat(parts[1]),
                                 risk: cat,
-                                details: subtypes.length > 0 ? subtypes.join(', ') : cat
+                                details: subtypes.length > 0 ? subtypes.join(', ') : cat,
+                                date: v.created_at || v.data_hora || new Date().toISOString()
                             })
                         }
 

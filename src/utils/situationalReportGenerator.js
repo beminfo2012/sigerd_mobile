@@ -155,20 +155,24 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                 
                 <div>
                     <h3 style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 10px;">Últimos Registros Mapeados:</h3>
-                    <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
                         <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
                             <tr>
-                                <th style="padding: 8px; text-align: left; color: #475569;">Tipologia</th>
-                                <th style="padding: 8px; text-align: left; color: #475569;">Subtipos / Detalhes</th>
-                                <th style="padding: 8px; text-align: right; color: #475569;">Coordenadas</th>
+                                <th style="padding: 6px; text-align: left; color: #475569;">Data/Hora</th>
+                                <th style="padding: 6px; text-align: left; color: #475569;">Tipologia</th>
+                                <th style="padding: 6px; text-align: left; color: #475569;">Subtipos / Detalhes</th>
+                                <th style="padding: 6px; text-align: right; color: #475569;">Coordenadas</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${dashboardData.locations.slice(0, 15).map((l, i) => `
                                 <tr style="border-bottom: 1px solid #f1f5f9; background: ${i % 2 === 0 ? '#ffffff' : '#fcfcfc'};">
-                                    <td style="padding: 8px; font-weight: 700; color: #334155;">${l.risk}</td>
-                                    <td style="padding: 8px; color: #64748b;">${l.details}</td>
-                                    <td style="padding: 8px; text-align: right; font-family: monospace; color: #475569;">
+                                    <td style="padding: 6px; color: #64748b; font-weight: 600;">
+                                        ${l.date ? new Date(l.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                    </td>
+                                    <td style="padding: 6px; font-weight: 700; color: #334155;">${l.risk}</td>
+                                    <td style="padding: 6px; color: #64748b;">${l.details}</td>
+                                    <td style="padding: 6px; text-align: right; font-family: monospace; color: #475569;">
                                         ${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}
                                     </td>
                                 </tr>
@@ -221,7 +225,11 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             heightLeft -= pdfHeight;
         }
 
-        pdf.save(`Relatorio_Situacional_${new Date().toISOString().split('T')[0]}.pdf`);
+        // AUTO-OPEN PDF instead of Save
+        window.open(pdf.output('bloburl'), '_blank');
+
+        // Also trigger save as backup (optional, but good for mobile where popups block)
+        // pdf.save(`Relatorio_Situacional_${new Date().toISOString().split('T')[0]}.pdf`);
 
     } catch (error) {
         console.error("Error generating situational report:", error);
