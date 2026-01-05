@@ -77,7 +77,8 @@ export const api = {
                     lat: parseFloat(parts[0]),
                     lng: parseFloat(parts[1]),
                     risk: category,
-                    details: subtypes.length > 0 ? subtypes.join(', ') : category
+                    details: subtypes.length > 0 ? subtypes.join(', ') : category,
+                    date: v.created_at || v.data_hora || new Date().toISOString()
                 }
             }) || []
 
