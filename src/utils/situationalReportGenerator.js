@@ -270,18 +270,18 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             heightLeft -= pdfHeight;
         }
 
-        // Use pdf.save which triggers a download on mobile, 
-        // usually accompanied by a prompt to open in the native PDF reader.
+        // OPEN PDF IN NATIVE READER / NEW TAB
+        // For mobile devices, we use a Blob URL which most browsers can then pass to the native PDF viewer.
+        const blob = pdf.output('blob');
+        const blobURL = URL.createObjectURL(blob);
         const fileName = `Relatorio_Situacional_${new Date().toISOString().split('T')[0]}.pdf`;
-        pdf.save(fileName);
 
-        // Fallback or secondary open for browsers that support it
-        try {
-            const blob = pdf.output('blob');
-            const blobURL = URL.createObjectURL(blob);
-            window.open(blobURL, '_blank');
-        } catch (e) {
-            console.warn("Blob URL open failed, using download only", e);
+        // 1. Force the browser to open it in a new tab (which triggers the PDF viewer)
+        const viewer = window.open(blobURL, '_blank');
+
+        // 2. If blocked or on some Android browsers, also trigger a direct download as fallback
+        if (!viewer || viewer.closed || typeof viewer.closed === 'undefined') {
+            pdf.save(fileName);
         }
 
     } catch (error) {
