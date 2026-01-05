@@ -433,17 +433,31 @@ const Dashboard = () => {
                                                         const threshold = new Date();
                                                         threshold.setHours(threshold.getHours() - opt.hours);
 
+                                                        // Update locations
                                                         filteredData.locations = data.locations.filter(l => {
                                                             const d = new Date(l.date);
                                                             return d >= threshold;
                                                         });
 
+                                                        // Recalculate breakdown for the selected timeframe
+                                                        const counts = {};
+                                                        filteredData.locations.forEach(l => {
+                                                            const cat = l.risk || 'Outros';
+                                                            counts[cat] = (counts[cat] || 0) + 1;
+                                                        });
+
+                                                        const total = filteredData.locations.length;
+                                                        filteredData.breakdown = Object.keys(counts).map((label) => ({
+                                                            label,
+                                                            count: counts[label],
+                                                            percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                                                            // color will be inherited or doesn't matter much for the PDF table/list
+                                                        })).sort((a, b) => b.count - a.count);
+
                                                         // Update stats for report
                                                         filteredData.stats = {
                                                             ...data.stats,
-                                                            totalVistorias: filteredData.locations.length,
-                                                            // Note: activeOccurrences is usually alerts/warnings count, 
-                                                            // we keep it as is or filter if needed based on date
+                                                            totalVistorias: total,
                                                         };
                                                     }
 
