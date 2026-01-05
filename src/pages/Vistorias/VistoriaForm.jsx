@@ -284,7 +284,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
             if (error || (data && data.error)) {
                 const errorMsg = (data && data.error) || error?.message || "Erro desconhecido";
-                throw new Error(errorMsg);
+                const details = data?.details ? `\nDetalhes: ${data.details}` : "";
+                throw new Error(`${errorMsg}${details}`);
             }
             if (data.refinedText) {
                 if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?")) {
