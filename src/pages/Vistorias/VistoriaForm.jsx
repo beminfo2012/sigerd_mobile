@@ -107,6 +107,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [saving, setSaving] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
     const [refining, setRefining] = useState(false)
+    const [gettingLoc, setGettingLoc] = useState(false)
 
     useEffect(() => {
         if (initialData) {
@@ -158,8 +159,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     .limit(1)
 
                 if (data && data.length > 0) {
-                    const num = parseInt(data[0].vistoria_id.split('/')[0])
-                    if (!isNaN(num)) maxNum = Math.max(maxNum, num)
+                    const vid = data[0].vistoria_id || "";
+                    const parts = vid.split("/");
+                    if (parts.length > 0) {
+                        const num = parseInt(parts[0]);
+                        if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                    }
                 }
             }
 
