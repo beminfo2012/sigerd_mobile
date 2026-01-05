@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2 } from 'lucide-react'
+import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2, Sparkles } from 'lucide-react'
 import { saveInterdicaoOffline } from '../../services/db'
 import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
+import { supabase } from '../../services/supabase'
 import { UserContext } from '../../App'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
@@ -54,6 +55,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
 
     const [saving, setSaving] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
+    const [refining, setRefining] = useState(false)
 
     useEffect(() => {
         if (initialData) {
@@ -129,6 +131,32 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
+    }
+
+    const handleAIRefine = async () => {
+        if (!formData.situacaoObservada.trim()) return alert("Digite algo na situação observada primeiro.");
+        setRefining(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('refine-report', {
+                body: {
+                    text: formData.situacaoObservada,
+                    category: formData.riscoTipo.join(', '),
+                    context: `Local: ${formData.endereco}, Alvo: ${formData.tipoAlvo}`
+                }
+            });
+
+            if (error) throw error;
+            if (data.refinedText) {
+                if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?")) {
+                    setFormData(prev => ({ ...prev, situacaoObservada: data.refinedText }));
+                }
+            }
+        } catch (e) {
+            console.error("AI Refine error:", e);
+            alert("Erro ao refinar com IA. Verifique sua conexão.");
+        } finally {
+            setRefining(false);
+        }
     }
 
     const toggleRisco = (tipo) => {
@@ -374,8 +402,25 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     </div>
 
                     <div>
-                        <label className={labelClasses}>Situação Observada</label>
-                        <textarea rows="3" value={formData.situacaoObservada} onChange={e => handleChange('situacaoObservada', e.target.value)} className={inputClasses} placeholder="Descreva os danos e evidências..." />
+                        <div className="flex justify-between items-center mb-1.5">
+                            <label className={labelClasses} style={{ marginBottom: 0 }}>Situação Observada</label>
+                            <button
+                                type="button"
+                                onClick={handleAIRefine}
+                                disabled={refining}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${refining ? 'bg-slate-100 text-slate-400 animate-pulse' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md active:scale-95'}`}
+                            >
+                                <Sparkles size={12} className={refining ? 'animate-spin' : ''} />
+                                {refining ? 'Refinando...' : 'Refinar com IA'}
+                            </button>
+                        </div>
+                        <textarea
+                            rows="3"
+                            value={formData.situacaoObservada}
+                            onChange={e => handleChange('situacaoObservada', e.target.value)}
+                            className={`${inputClasses} ${refining ? 'opacity-50' : ''}`}
+                            placeholder="Descreva os danos e evidências..."
+                        />
                     </div>
                 </section>
 
