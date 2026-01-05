@@ -238,7 +238,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 const reader = new FileReader()
                 reader.onloadend = async () => {
                     try {
-                        const compressed = await compressImage(reader.result)
+                        const coords = formData.latitude && formData.longitude ? {
+                            lat: formData.latitude,
+                            lng: formData.longitude
+                        } : null;
+
+                        const compressed = await compressImage(reader.result, { coordinates: coords });
                         resolve({
                             id: Date.now() + Math.random(),
                             data: compressed,
