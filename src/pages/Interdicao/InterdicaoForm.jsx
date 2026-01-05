@@ -145,7 +145,10 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 }
             });
 
-            if (error) throw error;
+            if (error) {
+                const errorMsg = error.message || (data && data.error) || "Erro desconhecido";
+                throw new Error(errorMsg);
+            }
             if (data.refinedText) {
                 if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?")) {
                     setFormData(prev => ({ ...prev, situacaoObservada: data.refinedText }));
@@ -153,7 +156,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
             }
         } catch (e) {
             console.error("AI Refine error:", e);
-            alert("Erro ao refinar com IA. Verifique sua conexão.");
+            alert(`Erro ao refinar com IA: ${e.message}`);
         } finally {
             setRefining(false);
         }
