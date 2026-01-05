@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement) => {
+export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período') => {
     // Create a temporary container for the PDF content
     const container = document.createElement('div');
     container.style.position = 'absolute';
@@ -23,7 +23,13 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
     };
 
     // Sort Pluviometers by 24h accumulation
-    const sortedPluvios = [...pluviometerData].sort((a, b) => (b.acc24hr || 0) - (a.acc24hr || 0)).slice(0, 5); // Top 5
+    const sortedPluvios = [...pluviometerData].sort((a, b) => (b.acc24hr || 0) - (a.acc24hr || 0));
+    const topPluvios = sortedPluvios.slice(0, 5); // Top 5 for table
+
+    // Calculate Average 24h Accumulation
+    const avgAcc24 = pluviometerData.length > 0
+        ? (pluviometerData.reduce((acc, p) => acc + (p.acc24hr || 0), 0) / pluviometerData.length).toFixed(1)
+        : '0.0';
 
     // Capture Map if provided
     let mapImage = null;
@@ -50,7 +56,8 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                     <img src="/logo_defesa_civil.png" style="height: 60px; display: block;" />
                     <div>
                         <h1 style="margin: 0; font-size: 24px; color: #2a5299; text-transform: uppercase; font-weight: 900;">Relatório Situacional</h1>
-                        <p style="margin: 5px 0 0; font-size: 14px; color: #64748b;">Defesa Civil de Santa Maria de Jetibá - ES</p>
+                        <p style="margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: bold;">Período: ${timeframeLabel}</p>
+                        <p style="margin: 2px 0 0; font-size: 12px; color: #94a3b8;">Defesa Civil de Santa Maria de Jetibá - ES</p>
                     </div>
                 </div>
                 <div style="text-align: right;">
@@ -72,8 +79,8 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                         <div style="font-size: 12px; font-weight: bold; color: #be123c; text-transform: uppercase;">Avisos Ativos</div>
                     </div>
                     <div style="flex: 1; background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #ffedd5; text-align: center;">
-                        <div style="font-size: 32px; font-weight: 900; color: #ea580c;">${dashboardData.stats.inmetAlertsCount || 0}</div>
-                        <div style="font-size: 12px; font-weight: bold; color: #c2410c; text-transform: uppercase;">Alertas Vigentes</div>
+                        <div style="font-size: 32px; font-weight: 900; color: #ea580c;">${avgAcc24}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: #c2410c; text-transform: uppercase;">Média de Chuva (24h)</div>
                     </div>
                 </div>
             </div>
@@ -108,7 +115,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                             </tr>
                         </thead>
                         <tbody>
-                            ${sortedPluvios.map(p => {
+                            ${topPluvios.map(p => {
         const risk = getRiskLevel(p.acc24hr);
         return `
                                     <tr style="border-bottom: 1px solid #e2e8f0;">
@@ -263,11 +270,19 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             heightLeft -= pdfHeight;
         }
 
-        // AUTO-OPEN PDF instead of Save
-        window.open(pdf.output('bloburl'), '_blank');
+        // Use pdf.save which triggers a download on mobile, 
+        // usually accompanied by a prompt to open in the native PDF reader.
+        const fileName = `Relatorio_Situacional_${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(fileName);
 
-        // Also trigger save as backup (optional, but good for mobile where popups block)
-        // pdf.save(`Relatorio_Situacional_${new Date().toISOString().split('T')[0]}.pdf`);
+        // Fallback or secondary open for browsers that support it
+        try {
+            const blob = pdf.output('blob');
+            const blobURL = URL.createObjectURL(blob);
+            window.open(blobURL, '_blank');
+        } catch (e) {
+            console.warn("Blob URL open failed, using download only", e);
+        }
 
     } catch (error) {
         console.error("Error generating situational report:", error);

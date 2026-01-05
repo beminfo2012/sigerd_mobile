@@ -15,6 +15,8 @@ const Dashboard = () => {
     const [syncing, setSyncing] = useState(false)
     const [showForecast, setShowForecast] = useState(false)
     const [loading, setLoading] = useState(true)
+    const [showReportMenu, setShowReportMenu] = useState(false)
+    const [generatingReport, setGeneratingReport] = useState(false)
 
     useEffect(() => {
         const load = async () => {
@@ -399,47 +401,93 @@ const Dashboard = () => {
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Ocorrências Atuais</p>
                     </div>
                     <div className="flex gap-2">
-                        <button
-                            id="btn-report-mini"
-                            onClick={async (e) => {
-                                if (loading) return;
-                                const btn = e.currentTarget;
-                                const icon = btn.querySelector('svg');
-                                const text = btn.querySelector('span');
-                                const originalText = text.innerText;
+                        <div className="relative">
+                            <button
+                                id="btn-report-mini"
+                                onClick={() => setShowReportMenu(!showReportMenu)}
+                                className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-xl transition-colors flex items-center gap-2"
+                            >
+                                <Printer size={16} />
+                                <span className="text-[10px] font-black uppercase tracking-tighter">RELATÓRIO</span>
+                            </button>
 
-                                text.innerText = "GERANDO...";
-                                btn.disabled = true;
+                            {showReportMenu && (
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {[
+                                        { label: 'Últimas 24h', hours: 24 },
+                                        { label: 'Últimas 48h', hours: 48 },
+                                        { label: 'Últimas 96h', hours: 96 },
+                                        { label: 'Todo o Período', hours: 0 }
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.hours}
+                                            onClick={async () => {
+                                                setShowReportMenu(false);
+                                                setGeneratingReport(true);
+                                                try {
+                                                    // 1. Filter Data by timeframe
+                                                    const filteredData = { ...data };
+                                                    let timeframeLabel = opt.label;
 
-                                try {
-                                    // 1. Fetch fresh Pluviometer data
-                                    let pluvioData = [];
-                                    try {
-                                        const res = await fetch('/api/pluviometros');
-                                        if (res.ok) pluvioData = await res.json();
-                                    } catch (e) {
-                                        console.warn("Failed to fetch pluvio for report", e);
-                                    }
+                                                    if (opt.hours > 0) {
+                                                        const threshold = new Date();
+                                                        threshold.setHours(threshold.getHours() - opt.hours);
 
-                                    // 2. Capture Map Element
-                                    const mapElement = document.querySelector('.leaflet-container');
+                                                        filteredData.locations = data.locations.filter(l => {
+                                                            const d = new Date(l.date);
+                                                            return d >= threshold;
+                                                        });
 
-                                    // 3. Generate PDF
-                                    await generateSituationalReport(data, weather, pluvioData, mapElement);
+                                                        // Update stats for report
+                                                        filteredData.stats = {
+                                                            ...data.stats,
+                                                            totalVistorias: filteredData.locations.length,
+                                                            // Note: activeOccurrences is usually alerts/warnings count, 
+                                                            // we keep it as is or filter if needed based on date
+                                                        };
+                                                    }
 
-                                } catch (e) {
-                                    console.error(e);
-                                    alert("Erro ao gerar relatório.");
-                                } finally {
-                                    text.innerText = originalText;
-                                    btn.disabled = false;
-                                }
-                            }}
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-xl transition-colors flex items-center gap-2"
-                        >
-                            <Printer size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-tighter">RELATÓRIO</span>
-                        </button>
+                                                    // 2. Fetch fresh Pluviometer data
+                                                    let pluvioData = [];
+                                                    try {
+                                                        const res = await fetch('/api/pluviometros');
+                                                        if (res.ok) pluvioData = await res.json();
+                                                    } catch (e) {
+                                                        console.warn("Failed to fetch pluvio for report", e);
+                                                    }
+
+                                                    // 3. Capture Map Element
+                                                    const mapElement = document.querySelector('.leaflet-container');
+
+                                                    // 4. Generate PDF
+                                                    await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel);
+
+                                                } catch (e) {
+                                                    console.error(e);
+                                                    alert("Erro ao gerar relatório.");
+                                                } finally {
+                                                    setGeneratingReport(false);
+                                                }
+                                            }}
+                                            className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                        >
+                                            {opt.label}
+                                            <ChevronRight size={14} className="text-slate-300" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {generatingReport && (
+                                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
+                                    <div className="bg-white p-8 rounded-[32px] shadow-2xl text-center max-w-xs w-full animate-in zoom-in duration-300">
+                                        <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+                                        <h3 className="text-lg font-black text-slate-800 mb-2">Gerando Relatório</h3>
+                                        <p className="text-sm text-slate-500 font-medium">Compilando dados e capturando mapa...</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                         <button
                             onClick={handleExportKML}
                             className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-xl transition-colors flex items-center gap-2"
