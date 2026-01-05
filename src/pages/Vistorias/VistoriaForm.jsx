@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, Circle, Sparkles } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, Circle, Sparkles, ArrowLeft } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
