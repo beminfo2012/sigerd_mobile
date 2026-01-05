@@ -146,7 +146,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
             });
 
             if (error || (data && data.error)) {
-                throw new Error(data?.error || error?.message || "Erro de conexão");
+                throw new Error(data?.error || error?.message || "Serviço de IA indisponível no momento.");
             }
             if (data.refinedText) {
                 if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?")) {
