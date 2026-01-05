@@ -145,8 +145,8 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 }
             });
 
-            if (error) {
-                const errorMsg = error.message || (data && data.error) || "Erro desconhecido";
+            if (error || (data && data.error)) {
+                const errorMsg = (data && data.error) || error?.message || "Erro desconhecido";
                 throw new Error(errorMsg);
             }
             if (data.refinedText) {
