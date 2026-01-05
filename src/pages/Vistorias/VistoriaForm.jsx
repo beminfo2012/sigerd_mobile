@@ -283,9 +283,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             });
 
             if (error || (data && data.error)) {
-                const errorMsg = (data && data.error) || error?.message || "Erro desconhecido";
-                const details = data?.details ? `\n\nDETALHES: ${data.details}` : "";
-                throw new Error(`${errorMsg}${details}`);
+                throw new Error(data?.error || error?.message || "Erro de conexão");
             }
             if (data.refinedText) {
                 if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?")) {
