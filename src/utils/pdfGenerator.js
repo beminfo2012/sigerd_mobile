@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import QRCode from 'qrcode';
 
 const normalizeData = (data, type) => {
     const isVistoria = type === 'vistoria';
@@ -216,27 +217,56 @@ export const generatePDF = async (rawData, type) => {
         `;
     }
 
+    // Generate QR Code
+    let qrCodeUrl = '';
+    const reportId = data.vistoriaId !== '---' && data.vistoriaId ? data.vistoriaId : rawData.id;
+    if (reportId) {
+        try {
+            const verificationLink = `${window.location.origin}/validar/${reportId}`;
+            qrCodeUrl = await QRCode.toDataURL(verificationLink, {
+                margin: 1,
+                width: 100,
+                color: {
+                    dark: '#2a5299',
+                    light: '#ffffff'
+                }
+            });
+        } catch (e) {
+            console.error('Error generating QR:', e);
+        }
+    }
+
     const footerHtml = `
-        <div style="margin-top: 40px; padding: 40px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px;">
-                <!-- Agent Signature Column -->
-                <div style="text-align: center; width: 350px; margin: 0 auto;">
-                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px; overflow: hidden;">
+        <div style="margin-top: 40px; padding: 30px 40px; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
+            <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                
+                <!-- Agent Signature Column (Centered relative to available space) -->
+                <div style="flex: 1; text-align: center; padding-right: 20px;">
+                    <div style="height: 100px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px; overflow: hidden;">
                         ${data.assinaturaAgente ? `
                             <img 
                                 src="${data.assinaturaAgente}" 
-                                style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 1px solid #e2e8f0;" 
+                                style="max-height: 100px; width: auto; max-width: 250px; display: block; border-bottom: 1px solid #e2e8f0;" 
                             />
-                        ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 10px;"></div>'}
+                        ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 200px; margin-bottom: 10px;"></div>'}
                     </div>
-                    <div style="padding-top: 10px;">
-                        <p style="margin: 0; font-size: 15px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
-                        <p style="margin: 2px 0; font-size: 11px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">AGENTE DE DEFESA CIVIL</p>
-                        <p style="margin: 0; font-size: 10px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
+                    <div style="padding-top: 5px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
+                        <p style="margin: 2px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">AGENTE DE DEFESA CIVIL</p>
+                        <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
                     </div>
                 </div>
+
+                <!-- QR Code Verification Column -->
+                ${qrCodeUrl ? `
+                <div style="width: 100px; text-align: center; flex-shrink: 0;">
+                    <img src="${qrCodeUrl}" style="width: 80px; height: 80px; display: block; margin: 0 auto; border: 1px solid #e2e8f0; padding: 4px; background: white; border-radius: 4px;" />
+                    <p style="margin: 5px 0 0 0; font-size: 8px; font-weight: 700; color: #2a5299; text-transform: uppercase;">Validar Autenticidade</p>
+                </div>
+                ` : ''}
             </div>
-            <p style="margin-top: 30px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
+            
+            <p style="margin-top: 20px; text-align: center; font-size: 8px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
                 Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema SIGERD Mobile.
             </p>
         </div>
