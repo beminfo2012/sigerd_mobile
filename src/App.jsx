@@ -12,7 +12,6 @@ import Interdicao from './pages/Interdicao'
 import Menu from './pages/Menu'
 import Login from './pages/Login'
 import Alerts from './pages/Alerts'
-import ReportVerification from './pages/Public/ReportVerification'
 import { supabase } from './services/supabase'
 
 // Create context for user profile
@@ -67,75 +66,67 @@ function App() {
         }
     }
 
+    if (!isAuthenticated) {
+        return <Login onLogin={handleLogin} />
+    }
+
     return (
         <UserContext.Provider value={userProfile}>
             <Router>
-                <Routes>
-                    {/* Public Route */}
-                    <Route path="/validar/:reportId" element={<ReportVerification />} />
-
-                    {/* Protected Routes */}
-                    <Route path="*" element={
-                        !isAuthenticated ? (
-                            <Login onLogin={handleLogin} />
-                        ) : (
-                            <div className="app-container">
-                                <SyncBackground />
-                                {/* Mobile Header */}
-                                <header className="mobile-header">
-                                    <div className="header-logo-area">
-                                        <img src="/logo_defesa_civil.png?v=2" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
-                                        <h1>SIGERD <span>Mobile</span></h1>
-                                    </div>
-                                    <div className="header-user" onClick={handleLogout}>
-                                        <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
-                                            {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-                                        </div>
-                                    </div>
-                                </header>
-
-                                {/* Main Content Area */}
-                                <main className="main-content">
-                                    <Routes>
-                                        <Route path="/" element={<Dashboard />} />
-                                        <Route path="/georescue" element={<GeoRescue />} />
-                                        <Route path="/vistorias" element={<Vistorias />} />
-                                        <Route path="/pluviometros" element={<Pluviometros onBack={() => setActiveTab('dashboard')} />} />
-                                        <Route path="/interdicao" element={<Interdicao />} />
-                                        <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
-                                        <Route path="/alerts" element={<Alerts />} />
-                                    </Routes>
-                                </main>
-
-                                {/* Bottom Navigation */}
-                                <nav className="bottom-nav">
-                                    <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                                        <Home size={24} />
-                                        <span>Início</span>
-                                    </Link>
-                                    <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
-                                        <Map size={24} />
-                                        <span>GeoRescue</span>
-                                    </Link>
-                                    {/* FAB Action Button */}
-                                    <div className="nav-item fab-container">
-                                        <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
-                                            <FileText size={24} />
-                                        </Link>
-                                    </div>
-                                    <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
-                                        <AlertOctagon size={24} />
-                                        <span>Interdição</span>
-                                    </Link>
-                                    <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
-                                        <MenuIcon size={24} />
-                                        <span>Menu</span>
-                                    </Link>
-                                </nav>
+                <div className="app-container">
+                    <SyncBackground />
+                    {/* Mobile Header */}
+                    <header className="mobile-header">
+                        <div className="header-logo-area">
+                            <img src="/logo_defesa_civil.png?v=2" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
+                            <h1>SIGERD <span>Mobile</span></h1>
+                        </div>
+                        <div className="header-user" onClick={handleLogout}>
+                            <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
+                                {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
                             </div>
-                        )
-                    } />
-                </Routes>
+                        </div>
+                    </header>
+
+                    {/* Main Content Area */}
+                    <main className="main-content">
+                        <Routes>
+                            <Route path="/" element={<Dashboard />} />
+                            <Route path="/georescue" element={<GeoRescue />} />
+                            <Route path="/vistorias" element={<Vistorias />} />
+                            <Route path="/pluviometros" element={<Pluviometros onBack={() => setActiveTab('dashboard')} />} />
+                            <Route path="/interdicao" element={<Interdicao />} />
+                            <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
+                            <Route path="/alerts" element={<Alerts />} />
+                        </Routes>
+                    </main>
+
+                    {/* Bottom Navigation */}
+                    <nav className="bottom-nav">
+                        <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                            <Home size={24} />
+                            <span>Início</span>
+                        </Link>
+                        <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
+                            <Map size={24} />
+                            <span>GeoRescue</span>
+                        </Link>
+                        {/* FAB Action Button */}
+                        <div className="nav-item fab-container">
+                            <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
+                                <FileText size={24} />
+                            </Link>
+                        </div>
+                        <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
+                            <AlertOctagon size={24} />
+                            <span>Interdição</span>
+                        </Link>
+                        <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
+                            <MenuIcon size={24} />
+                            <span>Menu</span>
+                        </Link>
+                    </nav>
+                </div>
             </Router>
         </UserContext.Provider>
     )
