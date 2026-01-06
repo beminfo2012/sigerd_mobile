@@ -51,6 +51,25 @@ const RISK_DATA = {
     'Outros': ['Outro Risco (descrever)', 'Situação Atípica', 'Risco Não Classificado']
 }
 
+const ENCAMINHAMENTOS_LIST = [
+    'Secretaria de Interior',
+    'Secretaria de Ação Social',
+    'Secretaria de Serviços Urbanos',
+    'Secretaria de Saúde',
+    'Secretaria de Defesa Social',
+    'Secretaria de Educação',
+    'Secretaria de Meio Ambiente',
+    'Secretaria de Agropecuária',
+    'Secretaria de Obras',
+    'Bombeiros Voluntários',
+    'Bombeiros Militar',
+    'Policia Militar',
+    'Policia Militar Ambiental',
+    'SAMU',
+    'Defesa Civil Estadual',
+    'Outros'
+]
+
 const VistoriaForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
 
@@ -651,15 +670,46 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
 
                         {/* 8. Encaminhamentos */}
+                        {/* 8. Encaminhamentos */}
                         <div>
                             <label className={labelClasses}>Encaminhamentos</label>
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                {['Obras', 'Assistência Social', 'Meio Ambiente', 'Outros'].map(enc => (
-                                    <button key={enc} type="button" onClick={() => toggleArrayItem('encaminhamentos', enc)} className={`p-3 rounded-xl text-sm font-bold border transition-all ${formData.encaminhamentos.includes(enc) ? 'bg-blue-600 text-white' : 'bg-white text-slate-500'}`}>
+
+                            <select
+                                className={inputClasses}
+                                value=""
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val && !formData.encaminhamentos.includes(val)) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            encaminhamentos: [...(prev.encaminhamentos || []), val]
+                                        }));
+                                    }
+                                }}
+                            >
+                                <option value="">Selecione para adicionar...</option>
+                                {ENCAMINHAMENTOS_LIST.map(enc => (
+                                    <option key={enc} value={enc} disabled={formData.encaminhamentos.includes(enc)}>
                                         {enc}
-                                    </button>
+                                    </option>
                                 ))}
-                            </div>
+                            </select>
+
+                            {formData.encaminhamentos.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {formData.encaminhamentos.map(enc => (
+                                        <button
+                                            key={enc}
+                                            type="button"
+                                            onClick={() => toggleArrayItem('encaminhamentos', enc)}
+                                            className="px-3 py-2 rounded-lg text-sm font-bold bg-blue-50 text-[#2a5299] border border-blue-100 flex items-center gap-2 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-colors group"
+                                        >
+                                            {enc}
+                                            <Trash2 size={14} className="group-hover:block" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
