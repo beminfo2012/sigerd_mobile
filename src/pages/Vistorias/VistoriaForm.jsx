@@ -10,6 +10,7 @@ import { compressImage } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { checkRiskArea } from '../../services/riskAreas'
+import { refineReportText } from '../../services/ai'
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -319,20 +320,15 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         if (!formData.observacoes.trim()) return alert("Digite algo nas observações primeiro.");
         setRefining(true);
         try {
-            const { data, error } = await supabase.functions.invoke('refine-report', {
-                body: {
-                    text: formData.observacoes,
-                    category: formData.categoriaRisco,
-                    context: `Cidadão: ${formData.solicitante}, Local: ${formData.endereco}`
-                }
-            });
+            const refinedText = await refineReportText(
+                formData.observacoes,
+                formData.categoriaRisco,
+                `Cidadão: ${formData.solicitante}, Local: ${formData.endereco}`
+            );
 
-            if (error || (data && data.error)) {
-                throw new Error(data?.error || error?.message || "Serviço de IA indisponível no momento.");
-            }
-            if (data.refinedText) {
+            if (refinedText) {
                 if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?")) {
-                    setFormData(prev => ({ ...prev, observacoes: data.refinedText }));
+                    setFormData(prev => ({ ...prev, observacoes: refinedText }));
                 }
             }
         } catch (e) {
