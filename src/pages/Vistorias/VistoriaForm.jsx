@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, Circle, Sparkles, ArrowLeft } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, Circle, Sparkles, ArrowLeft, Siren } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
@@ -9,6 +9,7 @@ import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
+import { checkRiskArea } from '../../services/riskAreas'
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -127,6 +128,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [generatingReport, setGeneratingReport] = useState(false)
     const [refining, setRefining] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
+    const [detectedRiskArea, setDetectedRiskArea] = useState(null)
 
     useEffect(() => {
         if (initialData) {
@@ -233,12 +235,36 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         setGettingLoc(true)
         navigator.geolocation.getCurrentPosition(
             (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+
                 setFormData(prev => ({
                     ...prev,
-                    latitude: pos.coords.latitude.toFixed(6),
-                    longitude: pos.coords.longitude.toFixed(6),
-                    coordenadas: `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`
+                    latitude: lat.toFixed(6),
+                    longitude: lng.toFixed(6),
+                    coordenadas: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
                 }))
+
+                // Check Risk Area
+                const riskInfo = checkRiskArea(lat, lng);
+                setDetectedRiskArea(riskInfo);
+
+                if (riskInfo) {
+                    alert(`⚠️ ALERTA: Você está em uma Área de Risco Mapeada!\n\nLocal: ${riskInfo.name}\nFonte: ${riskInfo.source}`);
+
+                    // Auto-append to observations if not already there
+                    setFormData(prev => {
+                        const riskNote = `[SISTEMA] Vistoria realizada em área de risco mapeada: ${riskInfo.name} (${riskInfo.source}).`;
+                        if (!prev.observacoes.includes(riskNote)) {
+                            return {
+                                ...prev,
+                                observacoes: riskNote + (prev.observacoes ? '\n\n' + prev.observacoes : '')
+                            }
+                        }
+                        return prev;
+                    });
+                }
+
                 setGettingLoc(false)
             },
             () => { setGettingLoc(false); alert("Erro ao obter GPS."); },
@@ -358,6 +384,19 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"><ArrowLeft size={24} /></button>
                 <h1 className="text-2xl font-black text-gray-800 tracking-tight">Nova Vistoria</h1>
             </div>
+
+            {detectedRiskArea && (
+                <div className="bg-red-50 mx-4 mt-4 mb-0 p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-red-100 p-2 rounded-full">
+                        <Siren className="text-red-600 animate-pulse" size={24} />
+                    </div>
+                    <div>
+                        <h3 className="font-extrabold text-red-700 uppercase tracking-wide text-sm">Área de Risco Detectada</h3>
+                        <p className="text-red-600 font-bold leading-tight mt-1">{detectedRiskArea.name}</p>
+                        <p className="text-red-500 text-xs mt-1 font-medium">Fonte: {detectedRiskArea.source}</p>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="p-4 space-y-6 max-w-xl mx-auto">
                 <section className={sectionClasses}>
