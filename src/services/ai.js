@@ -5,8 +5,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // For this quick fix, we are using the provided key directly.
 const API_KEY = "AIzaSyAxTyNhjuow54hCB-g_RAtRXZ52zybKgpU";
 const genAI = new GoogleGenerativeAI(API_KEY);
-// Using gemini-1.5-flash-001 for specific version pinning
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+// Using gemini-2.5-flash as detected in available models list (2026)
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
