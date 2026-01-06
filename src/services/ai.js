@@ -5,7 +5,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // For this quick fix, we are using the provided key directly.
 const API_KEY = "AIzaSyAxTyNhjuow54hCB-g_RAtRXZ52zybKgpU";
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+// Using gemini-1.5-flash as it is faster and more stable for this use case
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
@@ -26,7 +27,7 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
         1. Use terminologia técnica adequada (ex: 'colapso' em vez de 'caiu', 'patologias' em vez de 'problemas').
         2. Seja objetivo e impessoal (use voz passiva: 'Observou-se...', 'Constatou-se...').
         3. Mantenha as informações factuais, mas melhore a clareza e coesão.
-        4. Se o texto original for muito curto, expanda com termos técnicos prováveis para aquele contexto, mas sem inventar fatos inverídicos.
+        4. Se o texto original for muito curto, expanda com termos técnicos prováveis para aquele contexto.
         5. O resultado deve ser APENAS o parágrafo reescrito, sem introduções ou explicações.
 
         TEXTO REFINADO:
@@ -36,7 +37,8 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
         const response = await result.response;
         return response.text().trim();
     } catch (error) {
-        console.error("Erro ao chamar Gemini:", error);
-        throw new Error("Falha ao comunicar com a IA do Google.");
+        console.error("Erro detalhado do Gemini:", error);
+        // Expose the real error message for debugging
+        throw new Error(`Erro na IA: ${error.message || error.toString()}`);
     }
 };
