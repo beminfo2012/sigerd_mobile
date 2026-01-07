@@ -29,6 +29,7 @@ const normalizeData = (data, type) => {
             matricula: data.matricula || '---',
             fotos: data.fotos || [],
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
+            apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null,
             checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
         };
     } else {
@@ -216,11 +217,13 @@ export const generatePDF = async (rawData, type) => {
         `;
     }
 
+    const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
+
     const footerHtml = `
         <div style="margin-top: 40px; padding: 40px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <div style="display: flex; flex-direction: row; align-items: flex-end; justify-content: ${hasApoio ? 'space-between' : 'center'}; gap: 20px;">
                 <!-- Agent Signature Column -->
-                <div style="text-align: center; width: 350px; margin: 0 auto;">
+                <div style="text-align: center; width: ${hasApoio ? '380px' : '450px'};">
                     <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px; overflow: hidden;">
                         ${data.assinaturaAgente ? `
                             <img 
@@ -230,11 +233,30 @@ export const generatePDF = async (rawData, type) => {
                         ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 10px;"></div>'}
                     </div>
                     <div style="padding-top: 10px;">
-                        <p style="margin: 0; font-size: 15px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
-                        <p style="margin: 2px 0; font-size: 11px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">AGENTE DE DEFESA CIVIL</p>
-                        <p style="margin: 0; font-size: 10px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
+                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
+                        <p style="margin: 2px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">AGENTE DE DEFESA CIVIL</p>
+                        <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
                     </div>
                 </div>
+
+                ${hasApoio ? `
+                <!-- Support Signature Column -->
+                <div style="text-align: center; width: 380px;">
+                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px; overflow: hidden;">
+                        <img 
+                            src="${data.apoioTecnico.assinatura}" 
+                            style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 1px solid #e2e8f0;" 
+                        />
+                    </div>
+                    <div style="padding-top: 10px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.apoioTecnico.nome}</p>
+                        <p style="margin: 2px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">APOIO TÉCNICO (OBRAS/ENG)</p>
+                        <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">
+                            CREA: ${data.apoioTecnico.crea} | Mat.: ${data.apoioTecnico.matricula}
+                        </p>
+                    </div>
+                </div>
+                ` : ''}
             </div>
             <p style="margin-top: 30px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
                 Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema SIGERD Mobile.

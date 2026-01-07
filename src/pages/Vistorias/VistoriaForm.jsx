@@ -122,10 +122,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         fotos: [],
         documentos: [],
         assinaturaAgente: null,
+        apoioTecnico: {
+            nome: '',
+            crea: '',
+            matricula: '',
+            assinatura: null
+        },
         checklistRespostas: {} // { "pergunta": true/false }
     })
 
     const [showSignaturePad, setShowSignaturePad] = useState(false)
+    const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' ou 'apoio'
 
     const [saving, setSaving] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
@@ -150,6 +157,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 medidasTomadas: initialData.medidas_tomadas || initialData.medidasTomadas || [],
                 encaminhamentos: initialData.encaminhamentos || [],
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
+                apoioTecnico: initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null },
                 checklistRespostas: initialData.checklist_respostas || initialData.checklistRespostas || {}
             })
         } else {
@@ -781,19 +789,94 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             <span className="w-1.5 h-6 bg-[#2a5299] rounded-full"></span> 6. Assinaturas
                         </h2>
                     </div>
-                    <div className="mt-4">
-                        <label className={labelClasses}>Assinatura do Agente</label>
-                        <div
-                            onClick={() => setShowSignaturePad(true)}
-                            className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
-                        >
-                            {formData.assinaturaAgente ? (
-                                <img src={formData.assinaturaAgente} className="h-full w-auto object-contain" />
-                            ) : (
-                                <div className="text-center">
-                                    <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        {/* Agente Signature */}
+                        <div>
+                            <label className={labelClasses}>Assinatura do Agente</label>
+                            <div
+                                onClick={() => {
+                                    setActiveSignatureType('agente')
+                                    setShowSignaturePad(true)
+                                }}
+                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
+                            >
+                                {formData.assinaturaAgente ? (
+                                    <img src={formData.assinaturaAgente} className="h-full w-auto object-contain" />
+                                ) : (
+                                    <div className="text-center">
+                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Support Signature */}
+                        <div className="pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6">
+                            <label className={labelClasses}>Apoio Técnico (Obras/Engenharia)</label>
+                            <div className="space-y-3 mb-4">
+                                <input
+                                    type="text"
+                                    placeholder="Nome do Técnico"
+                                    className={`${inputClasses} text-sm py-2`}
+                                    value={formData.apoioTecnico.nome}
+                                    onChange={e => setFormData({
+                                        ...formData,
+                                        apoioTecnico: { ...formData.apoioTecnico, nome: e.target.value }
+                                    })}
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="CREA/CAU"
+                                        className={`${inputClasses} text-sm py-2`}
+                                        value={formData.apoioTecnico.crea}
+                                        onChange={e => setFormData({
+                                            ...formData,
+                                            apoioTecnico: { ...formData.apoioTecnico, crea: e.target.value }
+                                        })}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Matrícula"
+                                        className={`${inputClasses} text-sm py-2`}
+                                        value={formData.apoioTecnico.matricula}
+                                        onChange={e => setFormData({
+                                            ...formData,
+                                            apoioTecnico: { ...formData.apoioTecnico, matricula: e.target.value }
+                                        })}
+                                    />
                                 </div>
+                            </div>
+
+                            <div
+                                onClick={() => {
+                                    setActiveSignatureType('apoio')
+                                    setShowSignaturePad(true)
+                                }}
+                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
+                            >
+                                {formData.apoioTecnico.assinatura ? (
+                                    <img src={formData.apoioTecnico.assinatura} className="h-full w-auto object-contain" />
+                                ) : (
+                                    <div className="text-center">
+                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Assinatura do Apoio</span>
+                                    </div>
+                                )}
+                            </div>
+                            {formData.apoioTecnico.assinatura && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setFormData({ ...formData, apoioTecnico: { ...formData.apoioTecnico, assinatura: null } })
+                                    }}
+                                    className="text-[10px] text-red-500 font-bold mt-1 uppercase"
+                                >
+                                    Limpar Assinatura
+                                </button>
                             )}
                         </div>
                     </div>
@@ -831,13 +914,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             {/* Signature Modal */}
             {showSignaturePad && (
                 <SignaturePadComp
-                    title="Assinatura do Agente"
+                    title={activeSignatureType === 'agente' ? "Assinatura do Agente" : "Assinatura do Apoio Técnico"}
                     onCancel={() => setShowSignaturePad(false)}
                     onSave={(dataUrl) => {
-                        setFormData(prev => ({
-                            ...prev,
-                            assinaturaAgente: dataUrl
-                        }))
+                        if (activeSignatureType === 'agente') {
+                            setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }))
+                        } else {
+                            setFormData(prev => ({
+                                ...prev,
+                                apoioTecnico: { ...formData.apoioTecnico, assinatura: dataUrl }
+                            }))
+                        }
                         setShowSignaturePad(false)
                     }}
                 />
