@@ -7,6 +7,9 @@ import 'leaflet/dist/leaflet.css'
 import { api } from '../../services/api'
 import { getAllVistoriasLocal } from '../../services/db'
 
+// Fix: Support Leaflet plugins that expect window.L
+window.L = L;
+
 // Custom component to handle the Heatmap layer directly via Leaflet
 const HeatmapLayer = ({ points, show }) => {
     const map = useMap()
@@ -46,16 +49,21 @@ const GeoDashboard = () => {
                     getAllVistoriasLocal()
                 ])
 
-                const normalizedLocal = local.filter(v => v.coordenadas).map(v => {
-                    const [lat, lng] = v.coordenadas.split(',').map(n => parseFloat(n.trim()))
-                    return {
-                        lat,
-                        lng,
-                        risk: v.categoriaRisco || v.categoria_risco || 'Outros',
-                        details: v.subtiposRisco?.join(', ') || '',
-                        date: v.data_hora || v.created_at || new Date().toISOString()
+                const normalizedLocal = local.filter(v => v.coordenadas && typeof v.coordenadas === 'string' && v.coordenadas.includes(',')).map(v => {
+                    try {
+                        const [lat, lng] = v.coordenadas.split(',').map(n => parseFloat(n.trim()))
+                        if (isNaN(lat) || isNaN(lng)) return null
+                        return {
+                            lat,
+                            lng,
+                            risk: v.categoriaRisco || v.categoria_risco || 'Outros',
+                            details: Array.isArray(v.subtiposRisco) ? v.subtiposRisco.join(', ') : (v.subtipos_risco || ''),
+                            date: v.data_hora || v.created_at || new Date().toISOString()
+                        }
+                    } catch (e) {
+                        return null
                     }
-                })
+                }).filter(Boolean)
 
                 // Combine and deduplicate if necessary (simplified here)
                 setVistorias([...remote, ...normalizedLocal])
