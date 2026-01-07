@@ -8,6 +8,7 @@ import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { supabase } from '../../services/supabase'
 import { UserContext } from '../../App'
+import bairrosData from '../../../Bairros.json'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
@@ -291,7 +292,20 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         </div>
                         <div>
                             <label className={labelClasses}>Bairro / Localidade</label>
-                            <input type="text" value={formData.bairro} onChange={e => handleChange('bairro', e.target.value)} className={inputClasses} required />
+                            <input
+                                type="text"
+                                list="bairros-list"
+                                value={formData.bairro}
+                                onChange={e => handleChange('bairro', e.target.value)}
+                                className={inputClasses}
+                                required
+                                placeholder="Digite ou selecione..."
+                            />
+                            <datalist id="bairros-list">
+                                {bairrosData.map(b => b.nome).sort().map(nome => (
+                                    <option key={nome} value={nome} />
+                                ))}
+                            </datalist>
                         </div>
                         <div className="col-span-2">
                             <label className={labelClasses}>Endereço Completo</label>
