@@ -404,7 +404,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     }
 
     const inputClasses = "w-full bg-slate-50 p-3.5 rounded-xl border border-gray-200 outline-none focus:border-[#2a5299] focus:ring-2 focus:ring-[#2a5299]/20 transition-all text-gray-700 font-medium"
-    const labelClasses = "text-sm text-[#2a5299] font-bold block mb-1.5 uppercase tracking-wide opacity-90"
+    const labelClasses = "text-[10px] sm:text-xs md:text-sm text-[#2a5299] font-bold block mb-1.5 uppercase tracking-wide opacity-90 min-h-[1.2rem] sm:min-h-[1.5rem]"
     const sectionClasses = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-5"
 
     return (
@@ -580,8 +580,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </datalist>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
+                        <div className="grid grid-cols-2 gap-4 items-end">
+                            <div className="flex flex-col">
                                 <label className={labelClasses}>Bairro</label>
                                 <input
                                     type="text"
@@ -597,7 +597,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     ))}
                                 </datalist>
                             </div>
-                            <div>
+                            <div className="flex flex-col">
                                 <label className={labelClasses}>Coordenadas (Lat, Lng)</label>
                                 <div className="flex gap-2">
                                     <input
@@ -610,7 +610,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                             const parts = val.split(',');
                                             let updates = { coordenadas: val };
 
-                                            // Try to parse Lat/Lng automatically
                                             if (parts.length >= 2) {
                                                 const lat = parseFloat(parts[0].trim());
                                                 const lng = parseFloat(parts[1].trim());
