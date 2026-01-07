@@ -63,8 +63,9 @@ const GeoRescue = () => {
             const count = await getInstallationsCount()
             // If count is low or empty, re-import
             if (count === 0 || count < 20000) {
-                console.log('Importing UC data...')
-                const response = await fetch('/unidadesconsumidoras.json')
+                console.log('Importing UC data from GitHub...')
+                // Load from GitHub Raw URL (bypasses Vercel file size limits)
+                const response = await fetch('https://raw.githubusercontent.com/beminfo2012/sigerd_mobile/master/public/unidadesconsumidoras.json')
                 const ucData = await response.json()
                 await importInstallations(ucData)
             }
