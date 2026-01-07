@@ -12,6 +12,7 @@ import VoiceInput from '../../components/VoiceInput'
 import { checkRiskArea } from '../../services/riskAreas'
 import { refineReportText } from '../../services/ai'
 import bairrosData from '../../../Bairros.json'
+import logradourosData from '../../../Logradouros.json'
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -518,7 +519,19 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             </div>
                             <div className="relative">
                                 <MapPin size={20} className="absolute left-4 top-4 text-[#2a5299]" />
-                                <input type="text" className={`${inputClasses} pl-12`} value={formData.endereco} onChange={e => setFormData({ ...formData, endereco: e.target.value })} />
+                                <input
+                                    type="text"
+                                    list="logradouros-list"
+                                    className={`${inputClasses} pl-12`}
+                                    value={formData.endereco}
+                                    onChange={e => setFormData({ ...formData, endereco: e.target.value })}
+                                    placeholder="Comece a digitar o nome da rua..."
+                                />
+                                <datalist id="logradouros-list">
+                                    {logradourosData.map(l => l.nome).sort().map(nome => (
+                                        <option key={nome} value={nome} />
+                                    ))}
+                                </datalist>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

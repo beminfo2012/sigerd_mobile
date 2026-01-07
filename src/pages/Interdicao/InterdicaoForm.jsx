@@ -9,6 +9,7 @@ import VoiceInput from '../../components/VoiceInput'
 import { supabase } from '../../services/supabase'
 import { UserContext } from '../../App'
 import bairrosData from '../../../Bairros.json'
+import logradourosData from '../../../Logradouros.json'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
@@ -309,7 +310,20 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         </div>
                         <div className="col-span-2">
                             <label className={labelClasses}>Endereço Completo</label>
-                            <textarea rows="2" value={formData.endereco} onChange={e => handleChange('endereco', e.target.value)} className={inputClasses} required />
+                            <input
+                                type="text"
+                                list="logradouros-interdicao-list"
+                                value={formData.endereco}
+                                onChange={e => handleChange('endereco', e.target.value)}
+                                className={inputClasses}
+                                required
+                                placeholder="Rua, número, ponto de referência..."
+                            />
+                            <datalist id="logradouros-interdicao-list">
+                                {logradourosData.map(l => l.nome).sort().map(nome => (
+                                    <option key={nome} value={nome} />
+                                ))}
+                            </datalist>
                         </div>
                     </div>
 
