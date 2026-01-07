@@ -206,18 +206,22 @@ const syncSingleItem = async (type, item, db) => {
 
         const { error } = await supabase.from(table).insert([payload])
 
-        if (!error) {
-            const tx = db.transaction(type, 'readwrite')
-            const store = tx.objectStore(type)
-            const record = await store.get(item.id)
-            if (record) {
-                record.synced = true
-                await store.put(record)
-            }
-            await tx.done
-            return true
+        if (error) {
+            console.error(`Supabase Insert Error (${table}):`, error)
+            // Temporary alert to see the error in production/user device
+            alert(`Erro na sincronização (${table}): ${error.message} - ${error.details || ''}`)
+            return false
         }
-        return false
+
+        const tx = db.transaction(type, 'readwrite')
+        const store = tx.objectStore(type)
+        const record = await store.get(item.id)
+        if (record) {
+            record.synced = true
+            await store.put(record)
+        }
+        await tx.done
+        return true
     } catch (e) {
         console.error(`Sync error for ${type}:`, e)
         return false
