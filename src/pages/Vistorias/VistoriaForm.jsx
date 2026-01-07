@@ -11,8 +11,21 @@ import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { checkRiskArea } from '../../services/riskAreas'
 import { refineReportText } from '../../services/ai'
-import bairrosData from '../../../Bairros.json'
-import logradourosData from '../../../Logradouros.json'
+import bairrosDataRaw from '../../../Bairros.json'
+import logradourosDataRaw from '../../../nomesderuas.json'
+
+// Normalize logradouros data
+const logradourosData = logradourosDataRaw
+    .filter(item => item["Logradouro (Rua, Av. e etc)"])
+    .map(item => ({
+        nome: item["Logradouro (Rua, Av. e etc)"].trim(),
+        bairro: item["Bairro"] ? item["Bairro"].trim() : ""
+    }));
+
+// Get unique neighborhoods from the new file
+const uniqueBairrosFromStreets = [...new Set(logradourosData.map(l => l.bairro).filter(Boolean))].sort();
+const bairrosData = uniqueBairrosFromStreets.map(b => ({ nome: b }));
+
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -570,13 +583,27 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     list="logradouros-list"
                                     className={`${inputClasses} pl-12`}
                                     value={formData.endereco}
-                                    onChange={e => setFormData({ ...formData, endereco: e.target.value })}
+                                    onChange={e => {
+                                        const streetName = e.target.value;
+                                        const found = logradourosData.find(l => l.nome.toLowerCase() === streetName.toLowerCase());
+
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            endereco: streetName,
+                                            // Auto-fill bairro if street is found
+                                            bairro: found ? found.bairro : prev.bairro
+                                        }));
+                                    }}
                                     placeholder="Comece a digitar o nome da rua..."
                                 />
                                 <datalist id="logradouros-list">
-                                    {logradourosData.map(l => l.nome).sort().map(nome => (
-                                        <option key={nome} value={nome} />
-                                    ))}
+                                    {logradourosData
+                                        .filter(l => !formData.bairro || l.bairro === formData.bairro)
+                                        .map(l => l.nome)
+                                        .sort()
+                                        .map(nome => (
+                                            <option key={nome} value={nome} />
+                                        ))}
                                 </datalist>
                             </div>
                         </div>
