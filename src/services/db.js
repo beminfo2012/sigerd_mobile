@@ -2,13 +2,19 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 export const initDB = async () => {
     return openDB(DB_NAME, DB_VERSION, {
         upgrade(db, oldVersion) {
             // ... existing stores code ...
             if (!db.objectStoreNames.contains('installations')) {
+                const store = db.createObjectStore('installations', { keyPath: 'id' })
+                store.createIndex('installation_number', 'installation_number', { unique: false })
+                store.createIndex('uc_core', 'uc_core', { unique: false })
+            } else if (oldVersion < 4) {
+                // Version 4 update: Add uc_core index and force re-import by clearing or recreating
+                db.deleteObjectStore('installations')
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
                 store.createIndex('uc_core', 'uc_core', { unique: false })
@@ -348,12 +354,14 @@ export const importInstallations = async (data) => {
 
         const doc = {
             ...item,
-            id: item.id || (item.Instalação + '-' + Math.random().toString(36).substr(2, 9)),
-            installation_number: item.Instalação || item.installation_number,
+            id: item.id || (item["Instalação"] || Math.random().toString(36).substr(2, 9)),
+            installation_number: item["Instalação"] || item.installation_number,
             full_uc: fullUC,
             uc_core: ucCore,
-            name: item.name || item.NOME || '', // Support multiple JSON naming conventions
-            address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || ''
+            name: item.name || item.NOME || item.NOME_BAIRRO || '',
+            address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || '',
+            lat: item.LATITUDE ? parseFloat(item.LATITUDE) : (item.lat || item.pee_lat || item.client_lat),
+            lng: item.LONGITUDE ? parseFloat(item.LONGITUDE) : (item.lng || item.pee_lng || item.client_lng)
         }
         store.put(doc)
     }

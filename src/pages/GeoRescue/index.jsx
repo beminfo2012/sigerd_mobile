@@ -113,9 +113,9 @@ const GeoRescue = () => {
         setSearchResults([])
         setSearchQuery('')
 
-        // Use PEE coordinates if available, otherwise client coordinates
-        const lat = installation.pee_lat || installation.client_lat
-        const lng = installation.pee_lng || installation.client_lng
+        // Use standardized keys or fallback
+        const lat = installation.lat || installation.pee_lat || installation.client_lat
+        const lng = installation.lng || installation.pee_lng || installation.client_lng
 
         if (lat && lng) {
             setPosition([lat, lng])
@@ -124,8 +124,8 @@ const GeoRescue = () => {
 
     const openGoogleMaps = () => {
         if (selectedInstallation) {
-            const lat = selectedInstallation.pee_lat || selectedInstallation.client_lat
-            const lng = selectedInstallation.pee_lng || selectedInstallation.client_lng
+            const lat = selectedInstallation.lat || selectedInstallation.pee_lat || selectedInstallation.client_lat
+            const lng = selectedInstallation.lng || selectedInstallation.pee_lng || selectedInstallation.client_lng
             window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank')
         }
     }
@@ -218,7 +218,7 @@ const GeoRescue = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <MapUpdater center={selectedInstallation ? [selectedInstallation.pee_lat || selectedInstallation.client_lat, selectedInstallation.pee_lng || selectedInstallation.client_lng] : (hasPosition ? position : null)} />
+                <MapUpdater center={selectedInstallation ? [selectedInstallation.lat || selectedInstallation.pee_lat || selectedInstallation.client_lat, selectedInstallation.lng || selectedInstallation.pee_lng || selectedInstallation.client_lng] : (hasPosition ? position : null)} />
 
                 {/* User Location Marker */}
                 <Marker position={position}>
@@ -228,8 +228,8 @@ const GeoRescue = () => {
                 {/* Selected Installation Marker */}
                 {selectedInstallation && (
                     <Marker position={[
-                        selectedInstallation.pee_lat || selectedInstallation.client_lat,
-                        selectedInstallation.pee_lng || selectedInstallation.client_lng
+                        selectedInstallation.lat || selectedInstallation.pee_lat || selectedInstallation.client_lat,
+                        selectedInstallation.lng || selectedInstallation.pee_lng || selectedInstallation.client_lng
                     ]}>
                         <Popup>
                             <div className="font-bold">{selectedInstallation.installation_number}</div>
