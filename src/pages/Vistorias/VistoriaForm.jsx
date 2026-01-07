@@ -11,6 +11,7 @@ import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { checkRiskArea } from '../../services/riskAreas'
 import { refineReportText } from '../../services/ai'
+import bairrosData from '../../../Bairros.json'
 
 const RISK_DATA = {
     'Geológico / Geotécnico': [
@@ -523,7 +524,19 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClasses}>Bairro</label>
-                                <input type="text" className={inputClasses} value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} />
+                                <input
+                                    type="text"
+                                    list="bairros-list"
+                                    className={inputClasses}
+                                    value={formData.bairro}
+                                    onChange={e => setFormData({ ...formData, bairro: e.target.value })}
+                                    placeholder="Digite ou selecione..."
+                                />
+                                <datalist id="bairros-list">
+                                    {bairrosData.map(b => b.nome).sort().map(nome => (
+                                        <option key={nome} value={nome} />
+                                    ))}
+                                </datalist>
                             </div>
                             <div>
                                 <label className={labelClasses}>Coordenadas</label>
