@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 4
+const DB_VERSION = 5
 
 export const initDB = async () => {
     return openDB(DB_NAME, DB_VERSION, {
@@ -12,8 +12,8 @@ export const initDB = async () => {
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
                 store.createIndex('uc_core', 'uc_core', { unique: false })
-            } else if (oldVersion < 4) {
-                // Version 4 update: Add uc_core index and force re-import by clearing or recreating
+            } else if (oldVersion < 5) {
+                // Version 5 update: Force re-import of UC data (new Excel source)
                 db.deleteObjectStore('installations')
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
