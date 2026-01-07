@@ -591,9 +591,30 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </datalist>
                             </div>
                             <div>
-                                <label className={labelClasses}>Coordenadas</label>
+                                <label className={labelClasses}>Coordenadas (Lat, Lng)</label>
                                 <div className="flex gap-2">
-                                    <input type="text" className={`${inputClasses} bg-slate-100 text-gray-500`} value={formData.coordenadas} readOnly />
+                                    <input
+                                        type="text"
+                                        className={inputClasses}
+                                        value={formData.coordenadas}
+                                        placeholder="-20.000000, -40.000000"
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            const parts = val.split(',');
+                                            let updates = { coordenadas: val };
+
+                                            // Try to parse Lat/Lng automatically
+                                            if (parts.length >= 2) {
+                                                const lat = parseFloat(parts[0].trim());
+                                                const lng = parseFloat(parts[1].trim());
+                                                if (!isNaN(lat) && !isNaN(lng)) {
+                                                    updates.latitude = parts[0].trim();
+                                                    updates.longitude = parts[1].trim();
+                                                }
+                                            }
+                                            setFormData(prev => ({ ...prev, ...updates }));
+                                        }}
+                                    />
                                     <button type="button" onClick={getLocation} disabled={gettingLoc} className="p-3 bg-[#2a5299] text-white rounded-xl shadow-lg active:scale-95 transition-all">
                                         <Crosshair size={20} className={gettingLoc ? 'animate-spin' : ''} />
                                     </button>
