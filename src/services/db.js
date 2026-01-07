@@ -11,6 +11,7 @@ export const initDB = async () => {
             if (!db.objectStoreNames.contains('installations')) {
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
+                store.createIndex('uc_core', 'uc_core', { unique: false })
             }
 
             if (!db.objectStoreNames.contains('vistorias')) {
@@ -332,16 +333,29 @@ export const importInstallations = async (data) => {
 
     // Batch add
     for (const item of data) {
-        // Map fields if necessary specific to EDP report
-        // Assuming CSV columns match what we want or we map here
-        // We ensure 'installation_number' exists for indexing
-        if (item.installation_number || item.numero_instalacao || item.instalacao) {
-            const doc = {
-                ...item,
-                installation_number: item.installation_number || item.numero_instalacao || item.instalacao
+        const fullUC = item["Código Unidade Consumidora"] || ""
+        let ucCore = ""
+
+        if (fullUC) {
+            // Pattern: 0.002.217.642.054-14
+            // Parts: [0, 002, 217, 642, 054-14]
+            // Central core: 217.642
+            const parts = fullUC.split('.')
+            if (parts.length >= 4) {
+                ucCore = parts[2] + parts[3]
             }
-            store.put(doc)
         }
+
+        const doc = {
+            ...item,
+            id: item.id || (item.Instalação + '-' + Math.random().toString(36).substr(2, 9)),
+            installation_number: item.Instalação || item.installation_number,
+            full_uc: fullUC,
+            uc_core: ucCore,
+            name: item.name || item.NOME || '', // Support multiple JSON naming conventions
+            address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || ''
+        }
+        store.put(doc)
     }
 
     await tx.done
@@ -349,26 +363,41 @@ export const importInstallations = async (data) => {
 
 export const searchInstallations = async (query) => {
     const db = await initDB()
-    // For large datasets, getAll() and filtering in JS might be slow but 20k is manageable.
-    // Ideally use index for exact match.
-
     if (!query) return []
 
-    // Try exact index match first
+    const cleanQuery = query.replace(/\D/g, '') // Remove dots, dashes, etc.
+
+    // 1. If length is 6, search in uc_core index
+    if (cleanQuery.length === 6) {
+        const matches = await db.getAllFromIndex('installations', 'uc_core', cleanQuery)
+        if (matches && matches.length > 0) return matches
+    }
+
+    // 2. If length is large, try to extract core and search
+    if (cleanQuery.length >= 10) {
+        // Pattern: 000221764205414 (extracted digits from 0.002.217.642.054-14)
+        // Core digits: index 4 to 10 (217642)
+        const core = cleanQuery.substring(4, 10)
+        const matches = await db.getAllFromIndex('installations', 'uc_core', core)
+        if (matches && matches.length > 0) return matches
+    }
+
+    // 3. Exact index match for old installation number
     const exactMatch = await db.getFromIndex('installations', 'installation_number', query)
     if (exactMatch) return [exactMatch]
 
-    // Fallback search (names, addresses) - limitation of IndexedDB: 
-    // basic exact match is fast, string search needs cursor or GetAll
-    // We'll limit results
+    // 4. Fallback search (names, addresses)
     const all = await db.getAll('installations')
     const lowerQuery = query.toLowerCase()
 
     return all.filter(item => {
-        return Object.values(item).some(val =>
-            String(val).toLowerCase().includes(lowerQuery)
+        return (
+            (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
+            (item.address && item.address.toLowerCase().includes(lowerQuery)) ||
+            (item.full_uc && item.full_uc.includes(query)) ||
+            (item.uc_core && item.uc_core === cleanQuery)
         )
-    }).slice(0, 50) // Limit to 50 results
+    }).slice(0, 50)
 }
 
 export const getInstallationsCount = async () => {

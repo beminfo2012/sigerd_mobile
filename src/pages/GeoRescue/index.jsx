@@ -4,6 +4,8 @@ import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { Search, Loader2, Navigation, MapPin } from 'lucide-react'
 import { georescue } from '../../services/supabase'
+import { searchInstallations, getInstallationsCount, importInstallations } from '../../services/db'
+import ucData from '../../../unidadesconsumidoras.json'
 
 // Fix for default marker icon in React-Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -39,8 +41,8 @@ const GeoRescue = () => {
     const [totalInstallations, setTotalInstallations] = useState(0)
 
     useEffect(() => {
-        // Get total count
-        loadTotalCount()
+        // Init UC Data if needed
+        initUCData()
 
         // Attempt to get user location
         if (navigator.geolocation) {
@@ -51,24 +53,24 @@ const GeoRescue = () => {
                 },
                 (err) => {
                     console.log('Location access denied or error:', err)
-                    // Keep default but maybe alert user preferably
                 },
                 { enableHighAccuracy: true }
             )
         }
     }, [])
 
-    const loadTotalCount = async () => {
+    const initUCData = async () => {
         try {
-            const { count, error } = await georescue
-                .from('electrical_installations')
-                .select('*', { count: 'exact', head: true })
-
-            if (!error) {
-                setTotalInstallations(count || 0)
+            const count = await getInstallationsCount()
+            // If count is very different from JSON length or empty, re-import
+            if (count === 0 || Math.abs(count - ucData.length) > 100) {
+                console.log('Importing UC data...')
+                await importInstallations(ucData)
             }
-        } catch (err) {
-            console.error('Error loading count:', err)
+            const updatedCount = await getInstallationsCount()
+            setTotalInstallations(updatedCount)
+        } catch (e) {
+            console.error('Error init UC data:', e)
         }
     }
 
@@ -82,17 +84,21 @@ const GeoRescue = () => {
 
         setSearching(true)
         try {
-            const { data, error } = await georescue
-                .from('electrical_installations')
-                .select('*')
-                .or(`installation_number.ilike.%${query}%,name.ilike.%${query}%,address.ilike.%${query}%`)
-                .limit(50)
+            // Priority: search in local IndexedDB (which now contains UC data)
+            const results = await searchInstallations(query)
+            setSearchResults(results)
 
-            if (!error && data) {
-                setSearchResults(data)
-            } else {
-                console.error('Search error:', error)
-                setSearchResults([])
+            // If no local results, try remote
+            if (results.length === 0 && query.length > 5) {
+                const { data, error } = await georescue
+                    .from('electrical_installations')
+                    .select('*')
+                    .or(`installation_number.ilike.%${query}%,name.ilike.%${query}%,address.ilike.%${query}%`)
+                    .limit(50)
+
+                if (!error && data) {
+                    setSearchResults(data)
+                }
             }
         } catch (err) {
             console.error('Search failed:', err)
@@ -135,7 +141,7 @@ const GeoRescue = () => {
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            placeholder="Buscar instalação..."
+                            placeholder="Buscar UC ou Endereço..."
                             className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 placeholder:text-gray-400"
                             value={searchQuery}
                             onChange={(e) => handleSearch(e.target.value)}
@@ -149,7 +155,7 @@ const GeoRescue = () => {
                     <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
                         <MapPin size={14} />
                         <span className="font-bold">{totalInstallations.toLocaleString()}</span>
-                        <span>instalações cadastradas</span>
+                        <span>unidades cadastradas</span>
                     </div>
                 </div>
 
@@ -162,9 +168,10 @@ const GeoRescue = () => {
                                 onClick={() => selectInstallation(result)}
                                 className="p-4 border-b border-gray-100 hover:bg-slate-50 cursor-pointer transition-colors last:border-0"
                             >
-                                <div className="font-bold text-gray-800 text-sm">{result.installation_number}</div>
-                                <div className="text-xs text-gray-500 mt-0.5">{result.name}</div>
-                                <div className="text-xs text-gray-400 mt-0.5">{result.address}</div>
+                                <div className="font-bold text-gray-800 text-sm">{result.full_uc || result.installation_number}</div>
+                                <div className="text-xs text-slate-500 font-mono mt-0.5">UC Central: <span className="text-blue-600">{result.uc_core || '---'}</span></div>
+                                <div className="text-xs text-gray-500 mt-0.5">{result.name || result.NOME}</div>
+                                <div className="text-xs text-gray-400 mt-0.5">{result.address || result.LOGRADOURO}</div>
                             </div>
                         ))}
                     </div>
@@ -177,10 +184,10 @@ const GeoRescue = () => {
                     <div className="bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] p-5">
                         <div className="flex justify-between items-start mb-3">
                             <div className="flex-1">
-                                <div className="text-xs text-blue-600 font-bold mb-1">INSTALAÇÃO SELECIONADA</div>
-                                <div className="font-black text-gray-800 text-lg">{selectedInstallation.installation_number}</div>
-                                <div className="text-sm text-gray-600 mt-1">{selectedInstallation.name}</div>
-                                <div className="text-xs text-gray-400 mt-1">{selectedInstallation.address}</div>
+                                <div className="text-xs text-blue-600 font-bold mb-1">UNIDADE CONSUMIDORA (UC) SELECIONADA</div>
+                                <div className="font-black text-gray-800 text-lg">{selectedInstallation.full_uc || selectedInstallation.installation_number}</div>
+                                <div className="text-sm text-gray-600 mt-1">{selectedInstallation.name || selectedInstallation.NOME}</div>
+                                <div className="text-xs text-gray-400 mt-1">{selectedInstallation.address || selectedInstallation.LOGRADOURO || selectedInstallation.NOME_LOGRADOURO}</div>
                             </div>
                             <button
                                 onClick={() => setSelectedInstallation(null)}
