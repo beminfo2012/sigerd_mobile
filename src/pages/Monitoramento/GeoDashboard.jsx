@@ -6,32 +6,10 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { api } from '../../services/api'
 import { getAllVistoriasLocal } from '../../services/db'
+import HeatmapLayer from '../../components/HeatmapLayer'
 
 // Fix: Support Leaflet plugins that expect window.L
 window.L = L;
-
-// Custom component to handle the Heatmap layer directly via Leaflet
-const HeatmapLayer = ({ points, show }) => {
-    const map = useMap()
-
-    useEffect(() => {
-        if (!show || !points || !window.L || !window.L.heatLayer) return
-
-        const heatData = points.map(p => [p.lat, p.lng, p.intensity || 0.5])
-        const heatLayer = window.L.heatLayer(heatData, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 17,
-            gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red' }
-        }).addTo(map)
-
-        return () => {
-            map.removeLayer(heatLayer)
-        }
-    }, [map, points, show])
-
-    return null
-}
 
 const GeoDashboard = () => {
     const navigate = useNavigate()

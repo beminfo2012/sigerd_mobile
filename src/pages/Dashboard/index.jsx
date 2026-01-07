@@ -4,6 +4,7 @@ import { api } from '../../services/api'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import HeatmapLayer from '../../components/HeatmapLayer'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 
@@ -521,6 +522,7 @@ const Dashboard = () => {
                 <div className="h-72 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100 shadow-inner">
                     <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                        <HeatmapLayer points={data.locations} show={true} options={{ radius: 15, blur: 10, opacity: 0.6 }} />
                         {data.locations.map((loc, idx) => (
                             <CircleMarker
                                 key={idx}
