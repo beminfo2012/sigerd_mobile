@@ -203,13 +203,13 @@ export const generatePDF = async (rawData, type) => {
     let photosHtml = '';
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
-            <div style="padding: 0 35px 35px 35px; page-break-before: always;">
+            <div style="padding: 0 45px 35px 35px; page-break-before: always; margin-top: 30px;">
                 ${sectionTitle('6. Anexo Fotográfico')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 30px; justify-items: center;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 40px; justify-items: center;">
                     ${data.fotos.map((f, idx) => `
-                        <div style="width: 100%; max-width: 600px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; text-align: center; box-shadow: 0 2px 4px -1px rgba(0,0,0,0.05); page-break-inside: avoid;">
-                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 450px; border-radius: 4px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
-                            <div style="margin-top: 10px; font-size: 11px; color: #475569; font-weight: 700; text-transform: uppercase;">FOTO ${idx + 1}</div>
+                        <div style="width: 100%; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); page-break-inside: avoid; margin-bottom: 20px;">
+                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 6px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
+                            <div style="margin-top: 15px; font-size: 12px; color: #475569; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">FOTO ${idx + 1}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -220,37 +220,37 @@ export const generatePDF = async (rawData, type) => {
     const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
 
     const footerHtml = `
-        <div style="margin-top: 40px; padding: 40px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
-            <div style="display: flex; flex-direction: row; align-items: flex-end; justify-content: ${hasApoio ? 'space-between' : 'center'}; gap: 20px;">
+        <div style="margin-top: 50px; padding: 50px 45px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
+            <div style="display: flex; flex-direction: row; align-items: flex-end; justify-content: ${hasApoio ? 'space-between' : 'center'}; gap: 30px;">
                 <!-- Agent Signature Column -->
-                <div style="text-align: center; width: ${hasApoio ? '380px' : '450px'};">
-                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px; overflow: hidden;">
+                <div style="text-align: center; width: ${hasApoio ? '360px' : '480px'};">
+                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden;">
                         ${data.assinaturaAgente ? `
                             <img 
                                 src="${data.assinaturaAgente}" 
-                                style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 1px solid #e2e8f0;" 
+                                style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 2px solid #2a5299;" 
                             />
-                        ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 10px;"></div>'}
+                        ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 15px;"></div>'}
                     </div>
-                    <div style="padding-top: 10px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
-                        <p style="margin: 2px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">AGENTE DE DEFESA CIVIL</p>
+                    <div style="padding-top: 15px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">${data.agente}</p>
+                        <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">Agente de Defesa Civil</p>
                         <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
                     </div>
                 </div>
 
                 ${hasApoio ? `
                 <!-- Support Signature Column -->
-                <div style="text-align: center; width: 380px;">
-                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 5px; overflow: hidden;">
+                <div style="text-align: center; width: 360px;">
+                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden;">
                         <img 
                             src="${data.apoioTecnico.assinatura}" 
-                            style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 1px solid #e2e8f0;" 
+                            style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 2px solid #2a5299;" 
                         />
                     </div>
-                    <div style="padding-top: 10px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.apoioTecnico.nome}</p>
-                        <p style="margin: 2px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">APOIO TÉCNICO (OBRAS/ENG)</p>
+                    <div style="padding-top: 15px;">
+                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">${data.apoioTecnico.nome}</p>
+                        <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">APOIO TÉCNICO (OBRAS/ENG)</p>
                         <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">
                             CREA: ${data.apoioTecnico.crea} | Mat.: ${data.apoioTecnico.matricula}
                         </p>
@@ -258,13 +258,13 @@ export const generatePDF = async (rawData, type) => {
                 </div>
                 ` : ''}
             </div>
-            <p style="margin-top: 30px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
+            <p style="margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">
                 Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema SIGERD Mobile.
             </p>
         </div>
     `;
 
-    container.innerHTML = `<div style="max-width: 840px; margin: 0 auto; border: 1px solid #e2e8f0; min-height: 1100px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
+    container.innerHTML = `<div style="max-width: 840px; margin: 0 auto; background: white; min-height: 1120px; padding-bottom: 1px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
     document.body.appendChild(container);
 
     const waitForImages = () => {
