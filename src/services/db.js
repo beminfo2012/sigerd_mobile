@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 6
+const DB_VERSION = 7
 
 export const initDB = async () => {
     return openDB(DB_NAME, DB_VERSION, {
@@ -12,9 +12,11 @@ export const initDB = async () => {
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
                 store.createIndex('uc_core', 'uc_core', { unique: false })
-            } else if (oldVersion < 6) {
-                // Version 6 update: Force re-import of UC data (v2 file)
-                db.deleteObjectStore('installations')
+            } else if (oldVersion < 7) {
+                // Version 7 update: Re-import with improved key mapping and new search fields
+                if (db.objectStoreNames.contains('installations')) {
+                    db.deleteObjectStore('installations')
+                }
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
                 store.createIndex('uc_core', 'uc_core', { unique: false })
@@ -339,29 +341,33 @@ export const importInstallations = async (data) => {
 
     // Batch add
     for (const item of data) {
-        const fullUC = item["Código Unidade Consumidora"] || ""
+        // Fix: Case sensitivity for UC codes
+        const fullUC = item["Código Unidade Consumidora"] || item["CODIGO UNIDADE CONSUMIDORA"] || ""
         let ucCore = ""
 
         if (fullUC) {
-            // Pattern: 0.002.217.642.054-14
-            // Parts: [0, 002, 217, 642, 054-14]
-            // Central core: 217.642
             const parts = fullUC.split('.')
             if (parts.length >= 4) {
                 ucCore = parts[2] + parts[3]
             }
         }
 
+        // Fix: Clean number for searching
+        // Remove . and - from full UC to allow searching "0002..."
+        const cleanFullUC = fullUC.replace(/\D/g, '')
+
         const doc = {
             ...item,
             id: item.id || (item["Instalação"] || Math.random().toString(36).substr(2, 9)),
-            installation_number: item["Instalação"] || item.installation_number,
+            installation_number: item["Instalação"] ? String(item["Instalação"]) : String(item.installation_number || ''),
             full_uc: fullUC,
+            clean_full_uc: cleanFullUC, // New field for search
             uc_core: ucCore,
             name: item.name || item.NOME || item.NOME_BAIRRO || '',
             address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || '',
-            lat: item.LATITUDE ? parseFloat(item.LATITUDE) : (item.lat || item.pee_lat || item.client_lat),
-            lng: item.LONGITUDE ? parseFloat(item.LONGITUDE) : (item.lng || item.pee_lng || item.client_lng)
+            // Fix: Flexible Latitude/Longitude keys
+            lat: parseFloat(item.LATITUDE || item.Latitude || item.lat || item.pee_lat || item.client_lat || 0),
+            lng: parseFloat(item.LONGITUDE || item.Longitude || item.lng || item.pee_lng || item.client_lng || 0)
         }
         store.put(doc)
     }
@@ -394,7 +400,13 @@ export const searchInstallations = async (query) => {
     const exactMatch = await db.getFromIndex('installations', 'installation_number', query)
     if (exactMatch) return [exactMatch]
 
-    // 4. Fallback search (names, addresses)
+    // 4. Exact index match for installation_number but as string if query is numeric
+    if (/^\d+$/.test(query)) {
+        const numMatch = await db.getFromIndex('installations', 'installation_number', query)
+        if (numMatch) return [numMatch]
+    }
+
+    // 5. Fallback search (names, addresses, full UC)
     const all = await db.getAll('installations')
     const lowerQuery = query.toLowerCase()
 
@@ -403,6 +415,8 @@ export const searchInstallations = async (query) => {
             (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
             (item.address && item.address.toLowerCase().includes(lowerQuery)) ||
             (item.full_uc && item.full_uc.includes(query)) ||
+            (item.clean_full_uc && item.clean_full_uc.includes(cleanQuery)) || // Search by raw numbers
+            (item.installation_number && String(item.installation_number).includes(query)) ||
             (item.uc_core && item.uc_core === cleanQuery)
         )
     }).slice(0, 50)
