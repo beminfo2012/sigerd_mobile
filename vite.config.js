@@ -6,13 +6,19 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      workbox: {
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'Defesa Civil Municipal',
         short_name: 'DefesaCivil',
         description: 'Aplicativo de uso em campo para Defesa Civil',
         theme_color: '#2a5299',
+        version: '1.2.0',
         icons: [
           {
             src: 'pwa-192x192.png',
