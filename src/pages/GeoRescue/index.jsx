@@ -65,7 +65,8 @@ const GeoRescue = () => {
             if (count === 0 || count < 20000) {
                 console.log('Importing UC data from GitHub...')
                 // Load from GitHub Raw URL (bypasses Vercel file size limits)
-                const response = await fetch('https://raw.githubusercontent.com/beminfo2012/sigerd_mobile/main/public/unidadesconsumidoras.json')
+                // Using v2 file to bust cache
+                const response = await fetch('https://raw.githubusercontent.com/beminfo2012/sigerd_mobile/main/public/uc_db_v2.json')
                 const ucData = await response.json()
                 await importInstallations(ucData)
             }
@@ -206,8 +207,8 @@ const GeoRescue = () => {
                             onClick={openGoogleMaps}
                             disabled={!getCoords(selectedInstallation)}
                             className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg ${getCoords(selectedInstallation)
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
                                 }`}
                         >
                             {getCoords(selectedInstallation) ? (
