@@ -370,6 +370,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(p => p.id !== id) }))
     }
 
+    const updatePhotoCaption = (id, text) => {
+        setFormData(prev => ({
+            ...prev,
+            fotos: prev.fotos.map(p => p.id === id ? { ...p, legenda: text } : p)
+        }))
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
 
@@ -944,9 +951,18 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     <div className="grid grid-cols-3 gap-3">
                         <FileInput onFileSelect={handlePhotoSelect} label="+" />
                         {formData.fotos.map(foto => (
-                            <div key={foto.id} className="relative aspect-square rounded-xl overflow-hidden shadow-md group">
-                                <img src={foto.data || foto} className="w-full h-full object-cover" />
-                                <button type="button" onClick={() => removePhoto(foto.id)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-lg"><Trash2 size={12} /></button>
+                            <div key={foto.id} className="relative flex flex-col rounded-xl overflow-hidden shadow-md bg-white border border-gray-100">
+                                <div className="relative aspect-square w-full">
+                                    <img src={foto.data || foto} className="w-full h-full object-cover" />
+                                    <button type="button" onClick={() => removePhoto(foto.id)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-lg"><Trash2 size={12} /></button>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Legenda..."
+                                    className="w-full p-2 text-[10px] sm:text-xs border-t border-gray-100 outline-none focus:bg-blue-50/50 transition-colors"
+                                    value={foto.legenda || ''}
+                                    onChange={(e) => updatePhotoCaption(foto.id, e.target.value)}
+                                />
                             </div>
                         ))}
                     </div>
