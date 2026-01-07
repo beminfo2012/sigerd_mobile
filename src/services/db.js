@@ -208,8 +208,6 @@ const syncSingleItem = async (type, item, db) => {
 
         if (error) {
             console.error(`Supabase Insert Error (${table}):`, error)
-            // Temporary alert to see the error in production/user device
-            alert(`Erro na sincronização (${table}): ${error.message} - ${error.details || ''}`)
             return false
         }
 
