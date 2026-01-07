@@ -170,7 +170,8 @@ const syncSingleItem = async (type, item, db) => {
                 fotos: processedPhotos,
                 documentos: item.documentos,
                 assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
-                checklist_respostas: item.checklistRespostas || item.checklist_respostas
+                checklist_respostas: item.checklistRespostas || item.checklist_respostas,
+                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
         } else {
             payload = {
