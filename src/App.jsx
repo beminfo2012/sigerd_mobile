@@ -12,6 +12,7 @@ import Interdicao from './pages/Interdicao'
 import Menu from './pages/Menu'
 import Login from './pages/Login'
 import Alerts from './pages/Alerts'
+import GeoDashboard from './pages/Monitoramento/GeoDashboard'
 import { supabase } from './services/supabase'
 
 // Create context for user profile
@@ -109,6 +110,7 @@ function App() {
                             <Route path="/interdicao" element={<Interdicao />} />
                             <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
                             <Route path="/alerts" element={<Alerts />} />
+                            <Route path="/monitoramento" element={<GeoDashboard />} />
                         </Routes>
                     </main>
 

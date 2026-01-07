@@ -401,6 +401,13 @@ const Dashboard = () => {
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Ocorrências Atuais</p>
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            onClick={() => navigate('/monitoramento')}
+                            className="bg-orange-50 hover:bg-orange-100 text-orange-600 p-2 rounded-xl transition-colors flex items-center gap-2"
+                        >
+                            <Flame size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-tighter">MAPA DE CALOR</span>
+                        </button>
                         <div className="relative">
                             <button
                                 id="btn-report-mini"
