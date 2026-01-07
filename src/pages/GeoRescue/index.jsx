@@ -204,10 +204,23 @@ const GeoRescue = () => {
                         </div>
                         <button
                             onClick={openGoogleMaps}
-                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors shadow-lg"
+                            disabled={!getCoords(selectedInstallation)}
+                            className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg ${getCoords(selectedInstallation)
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                                }`}
                         >
-                            <Navigation size={20} />
-                            Rota Google Maps
+                            {getCoords(selectedInstallation) ? (
+                                <>
+                                    <Navigation size={20} />
+                                    Rota Google Maps
+                                </>
+                            ) : (
+                                <>
+                                    <Navigation size={20} className="opacity-50" />
+                                    Sem Localização
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
