@@ -110,25 +110,29 @@ const GeoRescue = () => {
         }
     }
 
+    const getCoords = (inst) => {
+        if (!inst) return null
+        const lat = parseFloat(inst.lat || inst.pee_lat || inst.client_lat)
+        const lng = parseFloat(inst.lng || inst.pee_lng || inst.client_lng)
+        if (!isNaN(lat) && !isNaN(lng)) return [lat, lng]
+        return null
+    }
+
     const selectInstallation = (installation) => {
         setSelectedInstallation(installation)
         setSearchResults([])
         setSearchQuery('')
 
-        // Use standardized keys or fallback
-        const lat = installation.lat || installation.pee_lat || installation.client_lat
-        const lng = installation.lng || installation.pee_lng || installation.client_lng
-
-        if (lat && lng) {
-            setPosition([lat, lng])
+        const coords = getCoords(installation)
+        if (coords) {
+            setPosition(coords)
         }
     }
 
     const openGoogleMaps = () => {
-        if (selectedInstallation) {
-            const lat = selectedInstallation.lat || selectedInstallation.pee_lat || selectedInstallation.client_lat
-            const lng = selectedInstallation.lng || selectedInstallation.pee_lng || selectedInstallation.client_lng
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank')
+        const coords = getCoords(selectedInstallation)
+        if (coords) {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords[0]},${coords[1]}`, '_blank')
         }
     }
 
@@ -220,7 +224,7 @@ const GeoRescue = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <MapUpdater center={selectedInstallation ? [selectedInstallation.lat || selectedInstallation.pee_lat || selectedInstallation.client_lat, selectedInstallation.lng || selectedInstallation.pee_lng || selectedInstallation.client_lng] : (hasPosition ? position : null)} />
+                <MapUpdater center={getCoords(selectedInstallation) || (hasPosition ? position : null)} />
 
                 {/* User Location Marker */}
                 <Marker position={position}>
@@ -228,11 +232,8 @@ const GeoRescue = () => {
                 </Marker>
 
                 {/* Selected Installation Marker */}
-                {selectedInstallation && (
-                    <Marker position={[
-                        selectedInstallation.lat || selectedInstallation.pee_lat || selectedInstallation.client_lat,
-                        selectedInstallation.lng || selectedInstallation.pee_lng || selectedInstallation.client_lng
-                    ]}>
+                {selectedInstallation && getCoords(selectedInstallation) && (
+                    <Marker position={getCoords(selectedInstallation)}>
                         <Popup>
                             <div className="font-bold">{selectedInstallation.installation_number}</div>
                             <div className="text-sm">{selectedInstallation.name}</div>
