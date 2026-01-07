@@ -80,8 +80,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [formData, setFormData] = useState({
         vistoriaId: '',
         processo: '',
-        agente: userProfile?.full_name || '',
-        matricula: userProfile?.matricula || '',
+        agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
+        matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
         solicitante: '',
         cpf: '',
         telefone: '',
@@ -150,6 +150,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             }))
         }
     }, [userProfile])
+
+    // Persist agent info to be used as fallback
+    useEffect(() => {
+        if (formData.agente) localStorage.setItem('lastAgentName', formData.agente)
+        if (formData.matricula) localStorage.setItem('lastAgentMatricula', formData.matricula)
+    }, [formData.agente, formData.matricula])
 
     useEffect(() => {
         if (initialData) {
