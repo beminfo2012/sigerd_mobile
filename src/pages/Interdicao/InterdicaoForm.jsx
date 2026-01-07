@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2, Sparkles } from 'lucide-react'
+import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2, Sparkles, Siren } from 'lucide-react'
+import { checkRiskArea } from '../../services/riskAreas'
 import { saveInterdicaoOffline } from '../../services/db'
 import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
@@ -57,6 +58,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
 
     const [saving, setSaving] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
+    const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [refining, setRefining] = useState(false)
 
     useEffect(() => {
@@ -87,6 +89,12 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 matricula: initialData.matricula || initialData.matricula || '',
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null
             })
+
+            // Check Risk Area on Load
+            if (initialData.latitude && initialData.longitude) {
+                const riskInfo = checkRiskArea(initialData.latitude, initialData.longitude);
+                setDetectedRiskArea(riskInfo);
+            }
         } else {
             getNextId()
         }
@@ -115,12 +123,21 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 const { latitude, longitude } = pos.coords
                 setFormData(prev => ({
                     ...prev,
-                    latitude,
-                    longitude,
+                    latitude: latitude,
+                    longitude: longitude,
                     coordenadas: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
                 }))
+
+                // Check Risk Area
+                const riskInfo = checkRiskArea(latitude, longitude);
+                setDetectedRiskArea(riskInfo);
+
+                if (riskInfo) {
+                    alert(`⚠️ ALERTA: Esta localidade está em uma Área de Risco Mapeada!\n\nLocal: ${riskInfo.name}\nFonte: ${riskInfo.source}`);
+                }
+
                 setGettingLoc(false)
-                alert("Coordenadas atualizadas com sucesso!")
+                if (!riskInfo) alert("Coordenadas atualizadas com sucesso!")
             },
             (err) => {
                 console.error("Erro GPS:", err)
@@ -266,6 +283,19 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     {initialData ? 'Editar Interdição' : 'Nova Interdição'}
                 </h1>
             </div>
+
+            {detectedRiskArea && (
+                <div className="bg-red-50 mx-5 mt-5 mb-0 p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-red-100 p-2 rounded-full">
+                        <Siren className="text-red-600 animate-pulse" size={24} />
+                    </div>
+                    <div>
+                        <h3 className="font-extrabold text-red-700 uppercase tracking-wide text-sm">Área de Risco Detectada</h3>
+                        <p className="text-red-600 font-bold leading-tight mt-1">{detectedRiskArea.name}</p>
+                        <p className="text-red-500 text-xs mt-1 font-medium">Fonte: {detectedRiskArea.source}</p>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-xl mx-auto">
 
