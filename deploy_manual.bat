@@ -16,7 +16,7 @@ echo.
 echo [3/4] Enviando para GitHub...
 git add .
 git commit -m "Manual deploy - GeoRescue UC updates" 2>nul
-git push origin master
+git push origin HEAD:main
 
 echo.
 echo [4/4] Aguardando deploy na Vercel...

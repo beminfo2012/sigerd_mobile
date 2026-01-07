@@ -13,8 +13,8 @@ set /p msg="Digite a mensagem do commit (ou Enter para 'Atualizacao automatica')
 if "%msg%"=="" set msg=Atualizacao automatica
 git commit -m "%msg%"
 
-echo [3/3] Enviando para o servidor...
-git push origin main
+echo [3/3] Sincronizando e enviando para o servidor...
+git push origin HEAD:main
 
 echo.
 echo ==========================================
