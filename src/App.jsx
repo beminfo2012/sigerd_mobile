@@ -20,12 +20,18 @@ export const UserContext = createContext(null)
 function App() {
     const [activeTab, setActiveTab] = useState('dashboard')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
-    const [userProfile, setUserProfile] = useState(null)
+    // Initialize userProfile from localStorage if available and authenticated
+    const [userProfile, setUserProfile] = useState(() => {
+        const isAuth = localStorage.getItem('auth') === 'true'
+        const saved = localStorage.getItem('userProfile')
+        return (isAuth && saved) ? JSON.parse(saved) : null
+    })
 
     useEffect(() => {
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
             setIsAuthenticated(true)
+            // Still try to refresh profile from server to get latest data
             loadUserProfile()
         }
     }, [])
@@ -42,10 +48,13 @@ function App() {
 
                 if (profile) {
                     setUserProfile(profile)
+                    // Persist for offline/reload persistence
+                    localStorage.setItem('userProfile', JSON.stringify(profile))
                 }
             }
         } catch (error) {
             console.error('Error loading profile:', error)
+            // If offline/error, we retain the initial state loaded from localStorage
         }
     }
 
@@ -62,7 +71,9 @@ function App() {
         }
         if (window.confirm("Tem certeza que deseja sair?")) {
             localStorage.removeItem('auth')
+            localStorage.removeItem('userProfile')
             setIsAuthenticated(false)
+            setUserProfile(null)
         }
     }
 

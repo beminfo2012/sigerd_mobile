@@ -140,6 +140,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [gettingLoc, setGettingLoc] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
 
+    // Update agent info when user profile loads (if fields are empty)
+    useEffect(() => {
+        if (userProfile && (!formData.agente || !formData.matricula)) {
+            setFormData(prev => ({
+                ...prev,
+                agente: prev.agente || userProfile.full_name || '',
+                matricula: prev.matricula || userProfile.matricula || ''
+            }))
+        }
+    }, [userProfile])
+
     useEffect(() => {
         if (initialData) {
             setFormData({
