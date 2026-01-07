@@ -5,7 +5,6 @@ import L from 'leaflet'
 import { Search, Loader2, Navigation, MapPin } from 'lucide-react'
 import { georescue } from '../../services/supabase'
 import { searchInstallations, getInstallationsCount, importInstallations } from '../../services/db'
-import ucData from '../../../unidadesconsumidoras.json'
 
 // Fix for default marker icon in React-Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -62,9 +61,11 @@ const GeoRescue = () => {
     const initUCData = async () => {
         try {
             const count = await getInstallationsCount()
-            // If count is very different from JSON length or empty, re-import
-            if (count === 0 || Math.abs(count - ucData.length) > 100) {
+            // If count is low or empty, re-import
+            if (count === 0 || count < 20000) {
                 console.log('Importing UC data...')
+                const response = await fetch('/unidadesconsumidoras.json')
+                const ucData = await response.json()
                 await importInstallations(ucData)
             }
             const updatedCount = await getInstallationsCount()
