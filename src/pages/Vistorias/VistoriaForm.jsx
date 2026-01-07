@@ -388,7 +388,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             {/* Header */}
             <div className="bg-white px-5 py-4 shadow-sm sticky top-0 z-10 border-b border-gray-100 flex items-center gap-3">
                 <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"><ArrowLeft size={24} /></button>
-                <h1 className="text-2xl font-black text-gray-800 tracking-tight">Nova Vistoria</h1>
+                <h1 className="text-2xl font-black text-gray-800 tracking-tight">
+                    {initialData ? (formData.processo || formData.vistoriaId) : 'Nova Vistoria'}
+                </h1>
             </div>
 
             {detectedRiskArea && (
@@ -821,10 +823,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     placeholder="Nome do Técnico"
                                     className={`${inputClasses} text-sm py-2`}
                                     value={formData.apoioTecnico.nome}
-                                    onChange={e => setFormData({
-                                        ...formData,
-                                        apoioTecnico: { ...formData.apoioTecnico, nome: e.target.value }
-                                    })}
+                                    onChange={e => setFormData(prev => ({
+                                        ...prev,
+                                        apoioTecnico: { ...prev.apoioTecnico, nome: e.target.value }
+                                    }))}
                                 />
                                 <div className="grid grid-cols-2 gap-2">
                                     <input
@@ -832,20 +834,20 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         placeholder="CREA/CAU"
                                         className={`${inputClasses} text-sm py-2`}
                                         value={formData.apoioTecnico.crea}
-                                        onChange={e => setFormData({
-                                            ...formData,
-                                            apoioTecnico: { ...formData.apoioTecnico, crea: e.target.value }
-                                        })}
+                                        onChange={e => setFormData(prev => ({
+                                            ...prev,
+                                            apoioTecnico: { ...prev.apoioTecnico, crea: e.target.value }
+                                        }))}
                                     />
                                     <input
                                         type="text"
                                         placeholder="Matrícula"
                                         className={`${inputClasses} text-sm py-2`}
                                         value={formData.apoioTecnico.matricula}
-                                        onChange={e => setFormData({
-                                            ...formData,
-                                            apoioTecnico: { ...formData.apoioTecnico, matricula: e.target.value }
-                                        })}
+                                        onChange={e => setFormData(prev => ({
+                                            ...prev,
+                                            apoioTecnico: { ...prev.apoioTecnico, matricula: e.target.value }
+                                        }))}
                                     />
                                 </div>
                             </div>
@@ -922,7 +924,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         } else {
                             setFormData(prev => ({
                                 ...prev,
-                                apoioTecnico: { ...formData.apoioTecnico, assinatura: dataUrl }
+                                apoioTecnico: { ...prev.apoioTecnico, assinatura: dataUrl }
                             }))
                         }
                         setShowSignaturePad(false)

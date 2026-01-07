@@ -200,7 +200,8 @@ const syncSingleItem = async (type, item, db) => {
                 relatorio_tecnico: item.relatorioTecnico,
                 recomendacoes: item.recomendacoes,
                 orgaos_acionados: item.orgaosAcionados,
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente
+                assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
+                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
         }
 

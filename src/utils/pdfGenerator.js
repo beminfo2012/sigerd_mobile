@@ -54,7 +54,8 @@ const normalizeData = (data, type) => {
             agente: data.agente || '---',
             matricula: data.matricula || '---',
             fotos: data.fotos || [],
-            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null
+            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
+            apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null
         };
     }
 };
@@ -220,8 +221,8 @@ export const generatePDF = async (rawData, type) => {
     const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
 
     const footerHtml = `
-        <div style="margin-top: 50px; padding: 50px 45px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid;">
-            <div style="display: flex; flex-direction: row; align-items: flex-end; justify-content: ${hasApoio ? 'space-between' : 'center'}; gap: 30px;">
+        <div style="margin-top: 50px; padding: 50px 45px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid; break-inside: avoid;">
+            <div style="display: flex; flex-direction: row; align-items: flex-end; justify-content: ${hasApoio ? 'space-between' : 'center'}; gap: 30px; page-break-inside: avoid; break-inside: avoid;">
                 <!-- Agent Signature Column -->
                 <div style="text-align: center; width: ${hasApoio ? '360px' : '480px'};">
                     <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden;">
