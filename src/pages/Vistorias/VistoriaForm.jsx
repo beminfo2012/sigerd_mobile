@@ -460,11 +460,23 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className={labelClasses}>Agente</label>
-                            <input type="text" className={inputClasses} value={formData.agente} disabled />
+                            <input
+                                type="text"
+                                className={inputClasses}
+                                value={formData.agente}
+                                onChange={e => setFormData({ ...formData, agente: e.target.value })}
+                                placeholder="Nome do Agente"
+                            />
                         </div>
                         <div>
                             <label className={labelClasses}>Matrícula</label>
-                            <input type="text" className={inputClasses} value={formData.matricula} disabled />
+                            <input
+                                type="text"
+                                className={inputClasses}
+                                value={formData.matricula}
+                                onChange={e => setFormData({ ...formData, matricula: e.target.value })}
+                                placeholder="Matrícula"
+                            />
                         </div>
                     </div>
                 </section>
