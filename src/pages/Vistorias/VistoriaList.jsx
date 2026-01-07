@@ -47,8 +47,21 @@ const VistoriaList = ({ onNew, onEdit }) => {
                 }
             })
 
-            // Sort merged by date
-            merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            // Sort merged by Vistoria ID (NN/YYYY) descending
+            merged.sort((a, b) => {
+                const idA = a.vistoria_id || '';
+                const idB = b.vistoria_id || '';
+
+                if (!idA || !idB || !idA.includes('/') || !idB.includes('/')) {
+                    return new Date(b.created_at) - new Date(a.created_at);
+                }
+
+                const [numA, yearA] = idA.split('/').map(Number);
+                const [numB, yearB] = idB.split('/').map(Number);
+
+                if (yearA !== yearB) return yearB - yearA;
+                return numB - numA;
+            })
 
             setVistorias(merged)
         } catch (error) {
@@ -136,8 +149,8 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                     {/* Badges de Risco */}
                                     {vistoria.nivelRisco && vistoria.nivelRisco !== 'Baixo' && (
                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 uppercase ${vistoria.nivelRisco === 'Iminente' ? 'bg-red-50 text-red-600 border-red-100' :
-                                                vistoria.nivelRisco === 'Alto' ? 'bg-orange-50 text-orange-600 border-orange-100' :
-                                                    'bg-yellow-50 text-yellow-600 border-yellow-100'
+                                            vistoria.nivelRisco === 'Alto' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                                'bg-yellow-50 text-yellow-600 border-yellow-100'
                                             }`}>
                                             {vistoria.nivelRisco}
                                         </span>

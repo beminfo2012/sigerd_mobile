@@ -45,7 +45,21 @@ const InterdicaoList = ({ onNew, onEdit }) => {
                 }
             })
 
-            merged.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            // Sort merged by Interdicao ID (NN/YYYY) descending
+            merged.sort((a, b) => {
+                const idA = a.interdicao_id || '';
+                const idB = b.interdicao_id || '';
+
+                if (!idA || !idB || !idA.includes('/') || !idB.includes('/')) {
+                    return new Date(b.created_at) - new Date(a.created_at);
+                }
+
+                const [numA, yearA] = idA.split('/').map(Number);
+                const [numB, yearB] = idB.split('/').map(Number);
+
+                if (yearA !== yearB) return yearB - yearA;
+                return numB - numA;
+            })
             setInterdicoes(merged)
         } catch (error) {
             console.error(error)
