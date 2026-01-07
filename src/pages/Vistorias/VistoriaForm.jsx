@@ -80,8 +80,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [formData, setFormData] = useState({
         vistoriaId: '',
         processo: '',
-        agente: '',
-        matricula: '',
+        agente: userProfile?.full_name || '',
+        matricula: userProfile?.matricula || '',
         solicitante: '',
         cpf: '',
         telefone: '',

@@ -49,7 +49,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         relatorioTecnico: '',
         recomendacoes: '',
         orgaosAcionados: '',
-        agente: userProfile?.nome || '',
+        agente: userProfile?.full_name || '',
         matricula: userProfile?.matricula || '',
         assinaturaAgente: null,
         apoioTecnico: { nome: '', crea: '', matricula: '', assinatura: null }
