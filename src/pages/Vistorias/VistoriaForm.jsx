@@ -98,7 +98,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         solicitante: '',
         cpf: '',
         telefone: '',
-        enderecoSolicitante: '',
         endereco: '',
         bairro: '',
         latitude: '',
@@ -177,7 +176,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 // Map snake_case from DB to camelCase for form state
                 vistoriaId: initialData.vistoria_id || initialData.vistoriaId,
                 dataHora: initialData.data_hora || initialData.dataHora,
-                enderecoSolicitante: initialData.endereco_solicitante || initialData.enderecoSolicitante,
                 categoriaRisco: initialData.categoria_risco || initialData.categoriaRisco,
                 subtiposRisco: initialData.subtipos_risco || initialData.subtiposRisco || [],
                 nivelRisco: initialData.nivel_risco || initialData.nivelRisco || 'Baixo',
@@ -510,10 +508,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             <label className={labelClasses}>Nome Completo</label>
                             <input type="text" className={inputClasses} value={formData.solicitante} onChange={e => setFormData({ ...formData, solicitante: e.target.value })} />
                         </div>
-                        <div>
-                            <label className={labelClasses}>Endereço Solicitante</label>
-                            <input type="text" className={inputClasses} value={formData.enderecoSolicitante} onChange={e => setFormData({ ...formData, enderecoSolicitante: e.target.value })} />
-                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClasses}>CPF</label>
@@ -566,15 +560,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <div>
                             <div className="flex justify-between items-center">
                                 <label className={labelClasses}>Endereço da Ocorrência</label>
-                                {formData.enderecoSolicitante && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, endereco: prev.enderecoSolicitante }))}
-                                        className="text-[10px] font-bold text-[#2a5299] hover:bg-blue-50 px-2 py-1 rounded transition-colors uppercase tracking-wide border border-transparent hover:border-blue-100"
-                                    >
-                                        Mesmo do Solicitante
-                                    </button>
-                                )}
                             </div>
                             <div className="relative">
                                 <MapPin size={20} className="absolute left-4 top-4 text-[#2a5299]" />

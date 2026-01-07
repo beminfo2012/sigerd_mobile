@@ -160,7 +160,6 @@ const syncSingleItem = async (type, item, db) => {
                 solicitante: item.solicitante,
                 cpf: item.cpf,
                 telefone: item.telefone,
-                endereco_solicitante: item.enderecoSolicitante,
                 endereco: item.endereco,
                 bairro: item.bairro,
                 latitude: parseFloat(item.latitude) || null,
