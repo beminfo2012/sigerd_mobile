@@ -143,6 +143,14 @@ const Dashboard = () => {
         return () => window.removeEventListener('sync-complete', handleSyncComplete)
     }, [])
 
+    // Cluster Detection for toggle
+    const clusters = {};
+    data.locations.forEach(loc => {
+        const gridKey = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`;
+        clusters[gridKey] = (clusters[gridKey] || 0) + 1;
+    });
+    const hasClusters = Object.values(clusters).some(count => count >= 2);
+
     const handleSync = async () => {
         if (syncCount === 0 || syncing) return
         setSyncing(true)
@@ -522,7 +530,7 @@ const Dashboard = () => {
                 <div className="h-72 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100 shadow-inner">
                     <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                        <HeatmapLayer points={data.locations} show={true} options={{ radius: 15, blur: 10, opacity: 0.6 }} />
+                        <HeatmapLayer points={data.locations} show={hasClusters} options={{ radius: 15, blur: 10, opacity: 0.6 }} />
                         {data.locations.map((loc, idx) => (
                             <CircleMarker
                                 key={idx}

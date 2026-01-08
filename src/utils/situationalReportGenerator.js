@@ -190,36 +190,37 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                 </div>
 
                 <!-- Strategic Clusters Section (Heat Information) -->
-                ${dashboardData.locations.length >= 3 ? `
-                    <div style="margin-top: 20px; background: #fff7ed; border: 1px solid #ffedd5; padding: 15px; border-radius: 8px;">
-                        <h3 style="font-size: 12px; font-weight: 900; color: #c2410c; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
-                            🔥 Zonas de Concentração (Heat Zones)
-                        </h3>
-                        <p style="font-size: 11px; color: #9a3412; margin-bottom: 10px;">
-                            Foram identificados agrupamentos de ocorrências que sugerem estresse geológico ou hidrológico elevado nestas áreas:
-                        </p>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                            ${(() => {
-                // Simple cluster detection by neighborhood or proximity
-                const clusters = {};
-                dashboardData.locations.forEach(loc => {
-                    // Using a 0.005 approx grid for simple clustering (roughly 500m)
-                    const gridKey = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`;
-                    clusters[gridKey] = (clusters[gridKey] || 0) + 1;
-                });
+                ${(() => {
+            // Simple cluster detection by neighborhood or proximity
+            const clusters = {};
+            dashboardData.locations.forEach(loc => {
+                // Using a 0.005 approx grid for simple clustering (roughly 500m)
+                const gridKey = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`;
+                clusters[gridKey] = (clusters[gridKey] || 0) + 1;
+            });
+            const clusterEntries = Object.entries(clusters).filter(([_, count]) => count >= 2);
 
-                return Object.entries(clusters)
-                    .filter(([_, count]) => count >= 2)
-                    .map(([coords, count]) => `
-                                        <div style="background: white; border: 1px solid #fed7aa; padding: 8px; border-radius: 6px; min-width: 120px;">
-                                            <div style="font-size: 10px; font-weight: 800; color: #ea580c;">Cluster @ ${coords}</div>
-                                            <div style="font-size: 12px; font-weight: 900; color: #1e293b;">${count} Ocorrências</div>
-                                        </div>
-                                    `).join('');
-            })()}
+            if (clusterEntries.length === 0) return '';
+
+            return `
+                        <div style="margin-top: 20px; background: #fff7ed; border: 1px solid #ffedd5; padding: 15px; border-radius: 8px;">
+                            <h3 style="font-size: 12px; font-weight: 900; color: #c2410c; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
+                                🔥 Zonas de Concentração (Heat Zones)
+                            </h3>
+                            <p style="font-size: 11px; color: #9a3412; margin-bottom: 10px;">
+                                Foram identificados agrupamentos de ocorrências que sugerem estresse geológico ou hidrológico elevado nestas áreas:
+                            </p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                ${clusterEntries.map(([coords, count]) => `
+                                    <div style="background: white; border: 1px solid #fed7aa; padding: 8px; border-radius: 6px; min-width: 120px;">
+                                        <div style="font-size: 10px; font-weight: 800; color: #ea580c;">Cluster @ ${coords}</div>
+                                        <div style="font-size: 12px; font-weight: 900; color: #1e293b;">${count} Ocorrências</div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
-                    </div>
-                ` : ''}
+                    `;
+        })()}
             </div>
 
             <!-- Forecast + Pluviometers Row -->
