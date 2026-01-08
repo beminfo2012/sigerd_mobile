@@ -144,12 +144,19 @@ const Dashboard = () => {
     }, [])
 
     // Cluster Detection for toggle
-    const clusters = {};
-    data.locations.forEach(loc => {
-        const gridKey = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`;
-        clusters[gridKey] = (clusters[gridKey] || 0) + 1;
-    });
-    const hasClusters = Object.values(clusters).some(count => count >= 2);
+    let hasClusters = false;
+    if (data && data.locations) {
+        const clusters = {};
+        data.locations.forEach(loc => {
+            const lat = parseFloat(loc.lat);
+            const lng = parseFloat(loc.lng);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const gridKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+                clusters[gridKey] = (clusters[gridKey] || 0) + 1;
+            }
+        });
+        hasClusters = Object.values(clusters).some(count => count >= 2);
+    }
 
     const handleSync = async () => {
         if (syncCount === 0 || syncing) return
