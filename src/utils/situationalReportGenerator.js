@@ -155,8 +155,10 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             <div style="page-break-inside: avoid;">
                 <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">5. Detalhamento Geográfico e Riscos</h2>
                 ${mapImage ? `
-                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                        <img src="${mapImage}" style="width: 100%; display: block;" />
+                    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                        <div style="width: 85%; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                            <img src="${mapImage}" style="width: 100%; max-height: 280px; object-fit: cover; display: block;" />
+                        </div>
                     </div>
                 ` : '<div style="background: #f1f5f9; padding: 20px; text-align: center; color: #64748b; border-radius: 8px; margin-bottom: 20px;">Imagem do mapa indisponível</div>'}
                 
