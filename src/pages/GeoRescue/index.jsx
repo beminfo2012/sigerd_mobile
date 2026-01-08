@@ -61,12 +61,12 @@ const GeoRescue = () => {
     const initUCData = async () => {
         try {
             const count = await getInstallationsCount()
-            // If count is low or empty, re-import
-            // Bumped to 27000 for the new larger dataset
-            if (count === 0 || count < 27000) {
-                console.log('Importing UC data (v3)...')
+            // If count is low or empty, or doesn't match the new dataset size, re-import
+            // New dataset (01.2026) has 21,727 records
+            if (count === 0 || count !== 21727) {
+                console.log('Importing updated UC data (v4 - 01.2026)...')
                 // Load from public folder locally
-                const response = await fetch('/uc_db_v3.json')
+                const response = await fetch('/uc_db_v4.json')
                 const ucData = await response.json()
                 await importInstallations(ucData)
             }
