@@ -9,6 +9,7 @@ import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalD
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 
 const Dashboard = () => {
+    console.log('[Dashboard] Component mounting...');
     const navigate = useNavigate()
     const [data, setData] = useState(null)
     const [weather, setWeather] = useState(null)
@@ -20,8 +21,10 @@ const Dashboard = () => {
     const [generatingReport, setGeneratingReport] = useState(false)
 
     useEffect(() => {
+        console.log('[Dashboard] useEffect running - starting data load...');
         const load = async () => {
             try {
+                console.log('[Dashboard] Fetching pending sync count...');
                 const pendingCount = await getPendingSyncCount().catch(() => 0)
                 setSyncCount(pendingCount)
 
@@ -252,13 +255,44 @@ const Dashboard = () => {
         return '⛈️'
     }
 
+    // Safety timeout - if loading for more than 10 seconds, something is wrong
+    useEffect(() => {
+        if (loading) {
+            const timeout = setTimeout(() => {
+                console.error('[Dashboard] STUCK IN LOADING STATE FOR 10+ SECONDS!');
+                alert('⚠️ Dashboard travado no carregamento!\n\nO dashboard não conseguiu carregar os dados.\n\nPossíveis causas:\n- Erro na API\n- Dados corrompidos\n- Problema de rede\n\nVeja o console (F12) para mais detalhes.');
+            }, 10000);
+            return () => clearTimeout(timeout);
+        }
+    }, [loading]);
+
+    console.log('[Dashboard] Render - loading:', loading, 'data:', !!data);
+
     if (loading) return (
-        <div className="p-8 flex flex-col items-center justify-center min-h-screen text-slate-400 gap-4">
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-gradient-to-br from-blue-50 to-blue-100">
             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             <span className="font-bold">Carregando SIGERD...</span>
+            <span className="text-sm text-gray-500">Se demorar muito, pressione F12 e veja o console</span>
         </div>
     )
-    if (!data) return <div className="p-8 text-center text-red-500">Erro ao carregar dados.</div>
+
+    if (!data) {
+        console.error('[Dashboard] NO DATA - returning error message');
+        return (
+            <div className="p-8 text-center">
+                <div className="text-red-500 font-bold text-xl mb-4">❌ Erro ao carregar dados do Dashboard</div>
+                <div className="text-gray-600 mb-4">O dashboard não conseguiu carregar os dados necessários.</div>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
+                >
+                    Recarregar Página
+                </button>
+            </div>
+        )
+    }
+
+    console.log('[Dashboard] Rendering main content with data:', data);
 
 
     return (
