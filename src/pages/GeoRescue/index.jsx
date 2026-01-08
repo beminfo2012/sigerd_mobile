@@ -62,11 +62,11 @@ const GeoRescue = () => {
         try {
             const count = await getInstallationsCount()
             // If count is low or empty, re-import
-            if (count === 0 || count < 20000) {
-                console.log('Importing UC data from GitHub...')
-                // Load from GitHub Raw URL (bypasses Vercel file size limits)
-                // Using v2 file to bust cache
-                const response = await fetch('https://raw.githubusercontent.com/beminfo2012/sigerd_mobile/main/public/uc_db_v2.json')
+            // Bumped to 27000 for the new larger dataset
+            if (count === 0 || count < 27000) {
+                console.log('Importing UC data (v3)...')
+                // Load from public folder locally
+                const response = await fetch('/uc_db_v3.json')
                 const ucData = await response.json()
                 await importInstallations(ucData)
             }
