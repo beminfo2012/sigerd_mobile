@@ -53,7 +53,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             <!-- Header -->
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #2a5299; padding-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <img src="/logo_defesa_civil.png" style="height: 60px; display: block;" />
+                    <img src="/logo_relatorio.png" style="height: 60px; display: block;" />
                     <div>
                         <h1 style="margin: 0; font-size: 24px; color: #2a5299; text-transform: uppercase; font-weight: 900;">Relatório Situacional</h1>
                         <p style="margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: bold;">Período: ${timeframeLabel}</p>
