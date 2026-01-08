@@ -14,13 +14,18 @@ const Vistorias = () => {
     const handleNew = () => {
         // Enforce Equipment Check Protocol
         const today = new Date().toDateString()
-        const hasCheck = localStorage.getItem(`equipment_check_${today}`)
+        const checkKey = `equipment_check_${today}`
+        const hasCheck = localStorage.getItem(checkKey)
+
+        console.log(`[Protocol Check] Key: ${checkKey}, Value: ${hasCheck}`)
 
         if (!hasCheck) {
+            console.warn('[Protocol Check] Failed - Blocking access')
             setShowBlockModal(true)
             return
         }
 
+        console.log('[Protocol Check] Passed')
         setSelectedVistoria(null)
         setView('form')
     }
