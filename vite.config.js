@@ -30,6 +30,22 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png'
           }
+        ],
+        shortcuts: [
+          {
+            name: 'Iniciar Vistoria',
+            short_name: 'Checklist',
+            description: 'Verificar equipamentos antes de sair',
+            url: '/checklist-saida',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Nova Vistoria',
+            short_name: 'Vistoria',
+            description: 'Criar nova vistoria',
+            url: '/vistorias',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+          }
         ]
       }
     })

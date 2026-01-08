@@ -13,6 +13,7 @@ import Menu from './pages/Menu'
 import Login from './pages/Login'
 import Alerts from './pages/Alerts'
 import GeoDashboard from './pages/Monitoramento/GeoDashboard'
+import ChecklistSaida from './pages/Checklist/ChecklistSaida'
 import { supabase } from './services/supabase'
 
 // Create context for user profile
@@ -177,6 +178,7 @@ function App() {
                                 <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
                                 <Route path="/alerts" element={<Alerts />} />
                                 <Route path="/monitoramento" element={<GeoDashboard />} />
+                                <Route path="/checklist-saida" element={<ChecklistSaida />} />
                             </Routes>
                         </main>
 
