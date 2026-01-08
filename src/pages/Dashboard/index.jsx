@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
@@ -236,6 +236,60 @@ const Dashboard = () => {
         }
         load()
     }, [])
+
+    const getPredictiveInsights = () => {
+        if (!data || !data.alerts || data.alerts.length === 0) return null;
+
+        // 1. Identify active risks from alerts (using regex to avoid encoding issues)
+        const activeRisks = [];
+        data.alerts.forEach(alert => {
+            const desc = (alert.descricao || alert.aviso_tipo || '').toLowerCase();
+
+            // Mapping alerts keywords to system categories
+            if (/chuva|alagamento|inunda|enxurrada/.test(desc)) {
+                activeRisks.push('Hidrológico');
+            }
+            if (/deslizamento|encosta|geol|geot/.test(desc)) {
+                activeRisks.push('Geológico / Geotécnico');
+            }
+            if (/vento|vendaval|granizo|tempestade|clim/.test(desc)) {
+                activeRisks.push('Climático / Meteorológico');
+            }
+            if (/estrutural|predial|desabamento/.test(desc)) {
+                activeRisks.push('Estrutural');
+            }
+        });
+
+        if (activeRisks.length === 0) return null;
+
+        // 2. Correlate with historical data (locations)
+        const neighborhoodRisk = {};
+        data.locations.forEach(loc => {
+            // Check for risk match (normalized)
+            const isMatch = activeRisks.some(r =>
+                (loc.risk || '').toLowerCase().includes(r.split(' ')[0].toLowerCase().replace(/[^a-z]/g, ''))
+            );
+
+            if (isMatch) {
+                const bairro = loc.bairro || 'Santa Maria de Jetibá';
+                neighborhoodRisk[bairro] = (neighborhoodRisk[bairro] || 0) + 1;
+            }
+        });
+
+        // 3. Sort and get top 3
+        const topBairros = Object.entries(neighborhoodRisk)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3)
+            .map(([name, count]) => ({ name, count }));
+
+        return {
+            risks: [...new Set(activeRisks)],
+            topBairros,
+            severity: data.alerts[0].severidade || 'Alerta'
+        };
+    };
+
+    const predictive = getPredictiveInsights();
 
     useEffect(() => {
         const handleSyncComplete = () => {
@@ -498,6 +552,46 @@ const Dashboard = () => {
                     <ChevronRight size={20} />
                 </div>
             </div>
+
+            {/* Predictive Intelligence Card */}
+            {predictive && (
+                <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-6 rounded-[32px] shadow-[0_10px_40px_rgba(79,70,229,0.2)] mb-6 text-white relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                        <Zap size={100} strokeWidth={2.5} />
+                    </div>
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                            <ShieldAlert size={20} />
+                        </div>
+                        <h3 className="font-black text-sm uppercase tracking-wider">Inteligência Preditiva</h3>
+                    </div>
+                    <div className="space-y-4 relative z-10">
+                        <p className="text-xs font-bold leading-relaxed text-indigo-50/90">
+                            Baseado no histórico de {data.stats.totalVistorias} vistorias e no alerta de <span className="text-white underline decoration-sky-400 decoration-2 underline-offset-2">{predictive.risks.join(' & ')}</span>:
+                        </p>
+                        <div className="space-y-2">
+                            {predictive.topBairros.length > 0 ? (
+                                predictive.topBairros.map((b, i) => (
+                                    <div key={i} className="flex items-center justify-between bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-indigo-400 flex items-center justify-center text-[10px] font-black">{i + 1}</div>
+                                            <span className="text-xs font-black">{b.name}</span>
+                                        </div>
+                                        <span className="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg uppercase">Impacto Provável</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 text-center">
+                                    <p className="text-xs font-bold">Monitoramento preventivo recomendado para todo o município.</p>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-[10px] font-bold text-indigo-200 mt-2 flex items-center gap-1">
+                            <Activity size={10} /> Recomendamos monitoramento preventivo nestas áreas.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6 relative">
                 <div className="flex justify-between items-center mb-6 px-1">

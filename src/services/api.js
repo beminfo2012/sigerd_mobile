@@ -125,14 +125,15 @@ export const api = {
             })).sort((a, b) => b.count - a.count);
 
             // Fetch INMET alerts
-            let inmetAlertsCount = 0;
+            let inmetAlerts = [];
             try {
                 const inmetResp = await fetch('/api/inmet');
                 if (inmetResp.ok) {
                     const alerts = await inmetResp.json();
-                    inmetAlertsCount = Array.isArray(alerts) ? alerts.length : 0;
+                    inmetAlerts = Array.isArray(alerts) ? alerts : [];
                 }
             } catch (e) { console.error('INMET fetch error:', e); }
+            const inmetAlertsCount = inmetAlerts.length;
 
             return {
                 stats: {
@@ -141,7 +142,8 @@ export const api = {
                     inmetAlertsCount
                 },
                 breakdown,
-                locations
+                locations,
+                alerts: inmetAlerts
             }
         } catch (error) {
             console.error('API Error:', error)
