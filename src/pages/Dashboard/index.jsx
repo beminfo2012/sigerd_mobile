@@ -553,42 +553,29 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Predictive Intelligence Card */}
+            {/* Predictive Intelligence Insight - Slim Version */}
             {predictive && (
-                <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-6 rounded-[32px] shadow-[0_10px_40px_rgba(79,70,229,0.2)] mb-6 text-white relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                        <Zap size={100} strokeWidth={2.5} />
-                    </div>
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
-                            <ShieldAlert size={20} />
+                <div
+                    className="bg-white p-4 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between border-l-4 border-l-indigo-500 active:scale-[0.98] transition-all cursor-default"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="bg-indigo-50 w-11 h-11 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
+                            <ShieldAlert size={22} strokeWidth={2.5} />
                         </div>
-                        <h3 className="font-black text-sm uppercase tracking-wider">Inteligência Preditiva</h3>
-                    </div>
-                    <div className="space-y-4 relative z-10">
-                        <p className="text-xs font-bold leading-relaxed text-indigo-50/90">
-                            Baseado no histórico de {data.stats.totalVistorias} vistorias e no alerta de <span className="text-white underline decoration-sky-400 decoration-2 underline-offset-2">{predictive.risks.join(' & ')}</span>:
-                        </p>
-                        <div className="space-y-2">
-                            {predictive.topBairros.length > 0 ? (
-                                predictive.topBairros.map((b, i) => (
-                                    <div key={i} className="flex items-center justify-between bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-6 h-6 rounded-full bg-indigo-400 flex items-center justify-center text-[10px] font-black">{i + 1}</div>
-                                            <span className="text-xs font-black">{b.name}</span>
-                                        </div>
-                                        <span className="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-lg uppercase">Impacto Provável</span>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 text-center">
-                                    <p className="text-xs font-bold">Monitoramento preventivo recomendado para todo o município.</p>
-                                </div>
-                            )}
+                        <div>
+                            <div className="text-[10px] font-black text-indigo-500 mb-0.5 uppercase tracking-widest flex items-center gap-1">
+                                <Zap size={10} fill="currentColor" /> Previsão de Impacto
+                            </div>
+                            <div className="text-sm font-black text-slate-800 leading-tight">
+                                {predictive.topBairros.length > 0
+                                    ? predictive.topBairros.map(b => b.name).join(', ')
+                                    : 'Alerta para todo o município'}
+                            </div>
+                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">Baseado no histórico de vistorias</div>
                         </div>
-                        <p className="text-[10px] font-bold text-indigo-200 mt-2 flex items-center gap-1">
-                            <Activity size={10} /> Recomendamos monitoramento preventivo nestas áreas.
-                        </p>
+                    </div>
+                    <div className="bg-slate-50 w-8 h-8 rounded-full flex items-center justify-center text-slate-200">
+                        <Activity size={14} />
                     </div>
                 </div>
             )}
