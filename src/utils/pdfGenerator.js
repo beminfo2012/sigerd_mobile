@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { LOGO_BASE64 } from './logoBase64';
 
 const normalizeData = (data, type) => {
     const isVistoria = type === 'vistoria';
@@ -27,14 +28,20 @@ const normalizeData = (data, type) => {
             encaminhamentos: data.encaminhamentos || [],
             agente: data.agente || '---',
             matricula: data.matricula || '---',
-            fotos: (data.fotos || []).map(f => {
-                if (typeof f === 'string') return { data: f, legenda: '' };
-                return {
-                    ...f,
-                    data: f.data || f.url || f,
-                    legenda: String(f.legenda || f.caption || f.titulo || '').trim()
-                };
-            }),
+            fotos: (() => {
+                let photos = data.fotos || [];
+                if (typeof photos === 'string') {
+                    try { photos = JSON.parse(photos); } catch (e) { photos = []; }
+                }
+                return (Array.isArray(photos) ? photos : []).map(f => {
+                    if (typeof f === 'string') return { data: f, legenda: '' };
+                    return {
+                        ...f,
+                        data: f.data || f.url || f,
+                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
+                    };
+                });
+            })(),
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
             apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null,
             checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
@@ -60,14 +67,20 @@ const normalizeData = (data, type) => {
             longitude: data.longitude || '---',
             agente: data.agente || '---',
             matricula: data.matricula || '---',
-            fotos: (data.fotos || []).map(f => {
-                if (typeof f === 'string') return { data: f, legenda: '' };
-                return {
-                    ...f,
-                    data: f.data || f.url || f,
-                    legenda: String(f.legenda || f.caption || f.titulo || '').trim()
-                };
-            }),
+            fotos: (() => {
+                let photos = data.fotos || [];
+                if (typeof photos === 'string') {
+                    try { photos = JSON.parse(photos); } catch (e) { photos = []; }
+                }
+                return (Array.isArray(photos) ? photos : []).map(f => {
+                    if (typeof f === 'string') return { data: f, legenda: '' };
+                    return {
+                        ...f,
+                        data: f.data || f.url || f,
+                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
+                    };
+                });
+            })(),
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
             apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null
         };
@@ -97,7 +110,7 @@ export const generatePDF = async (rawData, type) => {
     const headerHtml = `
         <div style="background-color: #f8fafc; border-bottom: 4px solid #2a5299; padding: 40px; text-align: center;">
             <div style="margin-bottom: 20px;">
-                <img src="/logo_nova.png" style="height: 120px; width: auto; display: block; margin: 0 auto;" />
+                <img src="${LOGO_BASE64}" style="height: 120px; width: auto; display: block; margin: 0 auto;" />
             </div>
             <h1 style="margin: 0; font-size: 26px; color: #1e3a8a; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; line-height: 1.2;">
                 Prefeitura Municipal de Santa Maria de Jetibá
