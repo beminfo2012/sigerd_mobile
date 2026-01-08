@@ -174,7 +174,11 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                             </tr>
                         </thead>
                         <tbody>
-                            ${dashboardData.locations.slice(0, 15).map((l, i) => `
+                            ${dashboardData.locations.slice(0, 15).map((l, i) => {
+        const parts = String(l.coordenadas || '').split(',');
+        const lat = parseFloat(parts[0]) || parseFloat(l.lat) || 0;
+        const lng = parseFloat(parts[1]) || parseFloat(l.lng) || 0;
+        return `
                                 <tr style="border-bottom: 1px solid #f1f5f9; background: ${i % 2 === 0 ? '#ffffff' : '#fcfcfc'};">
                                     <td style="padding: 6px; color: #64748b; font-weight: 600;">
                                         ${l.date ? new Date(l.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
@@ -182,10 +186,11 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                                     <td style="padding: 6px; font-weight: 700; color: #334155;">${l.risk}</td>
                                     <td style="padding: 6px; color: #64748b;">${l.details}</td>
                                     <td style="padding: 6px; text-align: right; font-family: monospace; color: #475569;">
-                                        ${(parseFloat(l.lat) || 0).toFixed(5)}, ${(parseFloat(l.lng) || 0).toFixed(5)}
+                                        ${lat.toFixed(5)}, ${lng.toFixed(5)}
                                     </td>
                                 </tr>
-                            `).join('')}
+                                `;
+    }).join('')}
                         </tbody>
                     </table>
                     ${dashboardData.locations.length > 15 ? `<div style="text-align: center; padding: 10px; font-size: 10px; color: #94a3b8; font-style: italic;">...e mais ${dashboardData.locations.length - 15} registros não listados.</div>` : ''}

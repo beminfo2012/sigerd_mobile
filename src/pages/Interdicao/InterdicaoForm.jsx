@@ -90,7 +90,12 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 agente: initialData.agente || initialData.agente || '',
                 matricula: initialData.matricula || initialData.matricula || '',
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
-                apoioTecnico: initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null }
+                apoioTecnico: initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null },
+                fotos: (initialData.fotos || []).map((f, i) =>
+                    typeof f === 'string'
+                        ? { id: `legacy-${i}`, data: f, legenda: '' }
+                        : { ...f, id: f.id || `photo-${i}`, legenda: f.legenda || '' }
+                )
             })
 
             // Check Risk Area on Load
@@ -242,29 +247,33 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
 
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
-        const { data, error } = await supabase
-            .from('interdicoes')
-            .select('interdicao_id')
-            .filter('interdicao_id', 'like', `%/${currentYear}`)
 
-        let nextNum = 1
-        if (data && data.length > 0) {
-            const ids = data.map(v => {
-                const parts = (v.interdicao_id || '').split('/')
-                return parseInt(parts[0])
-            }).filter(n => !isNaN(n)).sort((a, b) => a - b)
-
-            for (let i = 0; i < ids.length; i++) {
-                if (ids[i] === nextNum) {
-                    nextNum++
-                } else if (ids[i] > nextNum) {
-                    break
-                }
-            }
+        if (!navigator.onLine) {
+            setFormData(prev => ({ ...prev, interdicaoId: '' }))
+            return
         }
 
-        const formattedId = `${nextNum.toString().padStart(2, '0')}/${currentYear}`
-        setFormData(prev => ({ ...prev, interdicaoId: formattedId }))
+        try {
+            const { data } = await supabase
+                .from('interdicoes')
+                .select('interdicao_id')
+                .filter('interdicao_id', 'like', `%/${currentYear}`)
+
+            let maxNum = 0
+            if (data && data.length > 0) {
+                data.forEach(v => {
+                    const parts = (v.interdicao_id || '').split('/')
+                    const n = parseInt(parts[0])
+                    if (!isNaN(n)) maxNum = Math.max(maxNum, n)
+                })
+            }
+
+            const formattedId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`
+            setFormData(prev => ({ ...prev, interdicaoId: formattedId }))
+        } catch (e) {
+            console.error(e)
+            setFormData(prev => ({ ...prev, interdicaoId: '' }))
+        }
     }
 
     const handleSubmit = async (e) => {
@@ -324,8 +333,8 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     <div className="grid grid-cols-2 gap-5">
                         <div className="col-span-2">
                             <label className={labelClasses}>Nº Interdição</label>
-                            <div className="bg-blue-50/50 text-[#2a5299] font-black text-lg p-3.5 rounded-xl border border-blue-100/50 flex justify-between items-center shadow-inner">
-                                {formData.interdicaoId || 'Gerando...'}
+                            <div className={`text-lg font-black p-3.5 rounded-xl border flex justify-between items-center shadow-inner ${formData.interdicaoId ? 'bg-blue-50/50 text-[#2a5299] border-blue-100/50' : 'bg-orange-50/50 text-orange-600 border-orange-100/50 italic text-base'}`}>
+                                {formData.interdicaoId || 'Pendente (Gerado no Sincronismo)'}
                             </div>
                         </div>
                         <div className="col-span-2">

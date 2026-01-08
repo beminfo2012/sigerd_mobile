@@ -27,7 +27,14 @@ const normalizeData = (data, type) => {
             encaminhamentos: data.encaminhamentos || [],
             agente: data.agente || '---',
             matricula: data.matricula || '---',
-            fotos: data.fotos || [],
+            fotos: (data.fotos || []).map(f => {
+                if (typeof f === 'string') return { data: f, legenda: '' };
+                return {
+                    ...f,
+                    data: f.data || f.url || f,
+                    legenda: String(f.legenda || f.caption || f.titulo || '').trim()
+                };
+            }),
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
             apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null,
             checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
@@ -53,7 +60,14 @@ const normalizeData = (data, type) => {
             longitude: data.longitude || '---',
             agente: data.agente || '---',
             matricula: data.matricula || '---',
-            fotos: data.fotos || [],
+            fotos: (data.fotos || []).map(f => {
+                if (typeof f === 'string') return { data: f, legenda: '' };
+                return {
+                    ...f,
+                    data: f.data || f.url || f,
+                    legenda: String(f.legenda || f.caption || f.titulo || '').trim()
+                };
+            }),
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
             apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null
         };
@@ -210,7 +224,12 @@ export const generatePDF = async (rawData, type) => {
                     ${data.fotos.map((f, idx) => `
                         <div style="width: 100%; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); page-break-inside: avoid; margin-bottom: 20px;">
                             <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 6px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
-                            <div style="margin-top: 15px; font-size: 12px; color: #475569; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">FOTO ${idx + 1}</div>
+                            <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">FOTO ${idx + 1}</div>
+                            ${f.legenda ? `
+                                <div style="margin-top: 8px; padding: 12px; background-color: #f8fafc; border-left: 5px solid #2a5299; text-align: left; border-radius: 0 4px 4px 0;">
+                                    <div style="font-size: 13px; color: #1e293b; font-weight: 700; line-height: 1.5; word-wrap: break-word;">${f.legenda}</div>
+                                </div>
+                            ` : ''}
                         </div>
                     `).join('')}
                 </div>
@@ -265,7 +284,7 @@ export const generatePDF = async (rawData, type) => {
         </div>
     `;
 
-    container.innerHTML = `<div style="max-width: 840px; margin: 0 auto; background: white; min-height: 1120px; padding-bottom: 1px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
+    container.innerHTML = `<div id="pdf-render-area" style="max-width: 840px; margin: 0 auto; background: white; min-height: 1120px; padding-bottom: 50px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
     document.body.appendChild(container);
 
     const waitForImages = () => {
@@ -289,9 +308,13 @@ export const generatePDF = async (rawData, type) => {
             backgroundColor: '#ffffff',
             windowWidth: 840,
             onclone: (clonedDoc) => {
-                // Ensure the cloned container is visible
-                const clonedContainer = clonedDoc.querySelector('div');
-                if (clonedContainer) clonedContainer.style.top = '0';
+                const clonedContainer = clonedDoc.getElementById('pdf-render-area');
+                if (clonedContainer) {
+                    clonedContainer.style.position = 'relative';
+                    clonedContainer.style.top = '0';
+                    clonedContainer.style.left = '0';
+                    clonedContainer.style.zIndex = '9999';
+                }
             }
         });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);

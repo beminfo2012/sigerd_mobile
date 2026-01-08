@@ -152,8 +152,30 @@ const syncSingleItem = async (type, item, db) => {
         let payload = {}
 
         if (type === 'vistorias') {
+            let officialId = item.vistoriaId || item.vistoria_id
+
+            // If ID is missing (offline record), fetch next sequence from server
+            if (!officialId) {
+                const currentYear = new Date().getFullYear();
+                const { data: maxData } = await supabase
+                    .from('vistorias')
+                    .select('vistoria_id')
+                    .filter('vistoria_id', 'like', `%/${currentYear}`)
+                    .order('vistoria_id', { ascending: false })
+                    .limit(1);
+
+                let maxNum = 0;
+                if (maxData && maxData.length > 0) {
+                    const lastId = maxData[0].vistoria_id;
+                    const num = parseInt(lastId.split('/')[0]);
+                    if (!isNaN(num)) maxNum = num;
+                }
+                officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
+                console.log(`[Sync] Assigned new Vistoria ID: ${officialId}`);
+            }
+
             payload = {
-                vistoria_id: item.vistoriaId || item.vistoria_id || item.id,
+                vistoria_id: officialId,
                 processo: item.processo,
                 agente: item.agente,
                 matricula: item.matricula,
@@ -182,8 +204,29 @@ const syncSingleItem = async (type, item, db) => {
                 apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
         } else {
+            let officialId = item.interdicaoId || item.interdicao_id
+
+            if (!officialId) {
+                const currentYear = new Date().getFullYear();
+                const { data: maxData } = await supabase
+                    .from('interdicoes')
+                    .select('interdicao_id')
+                    .filter('interdicao_id', 'like', `%/${currentYear}`)
+                    .order('interdicao_id', { ascending: false })
+                    .limit(1);
+
+                let maxNum = 0;
+                if (maxData && maxData.length > 0) {
+                    const lastId = maxData[0].interdicao_id;
+                    const num = parseInt(lastId.split('/')[0]);
+                    if (!isNaN(num)) maxNum = num;
+                }
+                officialId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`;
+                console.log(`[Sync] Assigned new Interdicao ID: ${officialId}`);
+            }
+
             payload = {
-                interdicao_id: item.interdicaoId,
+                interdicao_id: officialId,
                 data_hora: item.dataHora,
                 municipio: item.municipio,
                 bairro: item.bairro,
@@ -225,6 +268,14 @@ const syncSingleItem = async (type, item, db) => {
         const record = await store.get(item.id)
         if (record) {
             record.synced = true
+            // Update the local record with the official ID assigned by the server
+            if (type === 'vistorias') {
+                record.vistoriaId = payload.vistoria_id;
+                record.vistoria_id = payload.vistoria_id;
+            } else {
+                record.interdicaoId = payload.interdicao_id;
+                record.interdicao_id = payload.interdicao_id;
+            }
             await store.put(record)
         }
         await tx.done

@@ -68,19 +68,27 @@ export const api = {
             }
 
             const vistoriasData = allVistorias;
-            const locations = vistoriasData.filter(v => v.coordenadas).map(v => {
-                const parts = v.coordenadas.split(',')
-                const subtypes = v.subtipos_risco || []
-                const category = v.categoria_risco || 'Outros'
+            const locations = vistoriasData
+                .filter(v => v.coordenadas && v.coordenadas.includes(','))
+                .map(v => {
+                    const parts = v.coordenadas.split(',')
+                    const lat = parseFloat(parts[0])
+                    const lng = parseFloat(parts[1])
 
-                return {
-                    lat: parseFloat(parts[0]),
-                    lng: parseFloat(parts[1]),
-                    risk: category,
-                    details: subtypes.length > 0 ? subtypes.join(', ') : category,
-                    date: v.created_at || v.data_hora || new Date().toISOString()
-                }
-            }) || []
+                    if (isNaN(lat) || isNaN(lng)) return null
+
+                    const subtypes = v.subtipos_risco || []
+                    const category = v.categoria_risco || 'Outros'
+
+                    return {
+                        lat,
+                        lng,
+                        risk: category,
+                        details: subtypes.length > 0 ? subtypes.join(', ') : category,
+                        date: v.created_at || v.data_hora || new Date().toISOString()
+                    }
+                })
+                .filter(loc => loc !== null) || []
 
             // Calculate breakdown by Category
             const totalReports = vistoriasData.length;

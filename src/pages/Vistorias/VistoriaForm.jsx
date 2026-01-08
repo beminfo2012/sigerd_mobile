@@ -186,7 +186,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 encaminhamentos: initialData.encaminhamentos || [],
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
                 apoioTecnico: initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null },
-                checklistRespostas: initialData.checklist_respostas || initialData.checklistRespostas || {}
+                checklistRespostas: initialData.checklist_respostas || initialData.checklistRespostas || {},
+                fotos: (initialData.fotos || []).map((f, i) =>
+                    typeof f === 'string'
+                        ? { id: `legacy-${i}`, data: f, legenda: '' }
+                        : { ...f, id: f.id || `photo-${i}`, legenda: f.legenda || '' }
+                )
             })
         } else {
             getNextId()
@@ -206,25 +211,28 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
+
+        if (!navigator.onLine) {
+            setFormData(prev => ({ ...prev, vistoriaId: '' }))
+            return
+        }
+
         let maxNum = 0
-
         try {
-            // 1. Check Supabase (if online)
-            if (navigator.onLine) {
-                const { data } = await supabase
-                    .from('vistorias')
-                    .select('vistoria_id')
-                    .filter('vistoria_id', 'like', `%/${currentYear}`)
-                    .order('vistoria_id', { ascending: false })
-                    .limit(1)
+            // 1. Check Supabase
+            const { data } = await supabase
+                .from('vistorias')
+                .select('vistoria_id')
+                .filter('vistoria_id', 'like', `%/${currentYear}`)
+                .order('vistoria_id', { ascending: false })
+                .limit(1)
 
-                if (data && data.length > 0) {
-                    const vid = data[0].vistoria_id || "";
-                    const parts = vid.split("/");
-                    if (parts.length > 0) {
-                        const num = parseInt(parts[0]);
-                        if (!isNaN(num)) maxNum = Math.max(maxNum, num);
-                    }
+            if (data && data.length > 0) {
+                const vid = data[0].vistoria_id || "";
+                const parts = vid.split("/");
+                if (parts.length > 1) { // Changed index to 1 for year check if needed, but 0 is the number
+                    const num = parseInt(parts[0]);
+                    if (!isNaN(num)) maxNum = Math.max(maxNum, num);
                 }
             }
 
@@ -232,7 +240,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             const cached = await getRemoteVistoriasCache()
             cached.forEach(v => {
                 const vid = v.vistoria_id || v.vistoriaId
-                if (vid && vid.endsWith(`/${currentYear}`)) {
+                if (vid && vid.includes(`/${currentYear}`)) {
                     const num = parseInt(vid.split('/')[0])
                     if (!isNaN(num)) maxNum = Math.max(maxNum, num)
                 }
@@ -242,7 +250,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             const local = await getAllVistoriasLocal()
             local.forEach(v => {
                 const vid = v.vistoria_id || v.vistoriaId
-                if (vid && vid.endsWith(`/${currentYear}`)) {
+                if (vid && vid.includes(`/${currentYear}`)) {
                     const num = parseInt(vid.split('/')[0])
                     if (!isNaN(num)) maxNum = Math.max(maxNum, num)
                 }
@@ -251,21 +259,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             const nextNum = maxNum + 1
             setFormData(prev => ({
                 ...prev,
-                vistoriaId: `${nextNum.toString().padStart(2, '0')}/${currentYear}`,
+                vistoriaId: `${nextNum.toString().padStart(3, '0')}/${currentYear}`,
                 agente: userProfile?.full_name || '',
                 matricula: userProfile?.matricula || ''
             }))
         } catch (e) {
             console.error('Error getting next ID:', e)
-            // Even on error, if we found any maxNum, use it + 1. 
-            // If it stayed 0, then fallback to 01
-            const nextNum = (maxNum || 0) + 1
-            setFormData(prev => ({
-                ...prev,
-                vistoriaId: `${nextNum.toString().padStart(2, '0')}/${currentYear}`,
-                agente: userProfile?.full_name || '',
-                matricula: userProfile?.matricula || ''
-            }))
+            setFormData(prev => ({ ...prev, vistoriaId: '' }))
         }
     }
 
@@ -337,14 +337,16 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         resolve({
                             id: Date.now() + Math.random(),
                             data: compressed,
-                            name: file.name
+                            name: file.name,
+                            legenda: ''
                         })
                     } catch (e) {
                         console.error("Compression error:", e)
                         resolve({
                             id: Date.now() + Math.random(),
                             data: reader.result,
-                            name: file.name
+                            name: file.name,
+                            legenda: ''
                         })
                     }
                 }
@@ -384,7 +386,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const updatePhotoCaption = (id, text) => {
         setFormData(prev => ({
             ...prev,
-            fotos: prev.fotos.map(p => p.id === id ? { ...p, legenda: text } : p)
+            fotos: prev.fotos.map(p => String(p.id) === String(id) ? { ...p, legenda: text } : p)
         }))
     }
 
@@ -449,7 +451,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className={labelClasses}>Nº Vistoria</label>
-                            <div className="bg-blue-50/50 text-[#2a5299] font-black text-lg p-3.5 rounded-xl border border-blue-100/50 shadow-inner">{formData.vistoriaId}</div>
+                            <div className={`text-lg font-black p-3.5 rounded-xl border flex justify-between items-center shadow-inner ${formData.vistoriaId ? 'bg-blue-50/50 text-[#2a5299] border-blue-100/50' : 'bg-orange-50/50 text-orange-600 border-orange-100/50 italic text-base'}`}>
+                                {formData.vistoriaId || 'Pendente (Gerado no Sincronismo)'}
+                            </div>
                         </div>
                         <div>
                             <label className={labelClasses}>Nº Processo</label>

@@ -72,33 +72,46 @@ const Dashboard = () => {
                         color: colorPalette[label] || defaultColors[idx % defaultColors.length]
                     })).sort((a, b) => b.count - a.count)
 
-                    finalData.locations = localVistorias.filter(v => v.coordenadas).map(v => {
-                        const parts = v.coordenadas.split(',')
-                        const cat = v.categoriaRisco || v.categoria_risco || 'Local'
-                        const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                        return {
-                            lat: parseFloat(parts[0]),
-                            lng: parseFloat(parts[1]),
-                            risk: cat,
-                            details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                            date: v.created_at || v.data_hora || new Date().toISOString()
-                        }
-                    })
+                    finalData.locations = localVistorias
+                        .filter(v => v.coordenadas && v.coordenadas.includes(','))
+                        .map(v => {
+                            const parts = v.coordenadas.split(',')
+                            const lat = parseFloat(parts[0])
+                            const lng = parseFloat(parts[1])
+
+                            if (isNaN(lat) || isNaN(lng)) return null
+
+                            const cat = v.categoriaRisco || v.categoria_risco || 'Local'
+                            const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                            return {
+                                lat,
+                                lng,
+                                risk: cat,
+                                details: subtypes.length > 0 ? subtypes.join(', ') : cat,
+                                date: v.created_at || v.data_hora || new Date().toISOString()
+                            }
+                        })
+                        .filter(loc => loc !== null)
                 } else {
                     const unsynced = localVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
 
                     unsynced.forEach(v => {
-                        if (v.coordenadas) {
+                        if (v.coordenadas && v.coordenadas.includes(',')) {
                             const parts = v.coordenadas.split(',')
-                            const cat = v.categoriaRisco || v.categoria_risco || 'Pendente'
-                            const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                            finalData.locations.push({
-                                lat: parseFloat(parts[0]),
-                                lng: parseFloat(parts[1]),
-                                risk: cat,
-                                details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                date: v.created_at || v.data_hora || new Date().toISOString()
-                            })
+                            const lat = parseFloat(parts[0])
+                            const lng = parseFloat(parts[1])
+
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                const cat = v.categoriaRisco || v.categoria_risco || 'Pendente'
+                                const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                                finalData.locations.push({
+                                    lat,
+                                    lng,
+                                    risk: cat,
+                                    details: subtypes.length > 0 ? subtypes.join(', ') : cat,
+                                    date: v.created_at || v.data_hora || new Date().toISOString()
+                                })
+                            }
                         }
 
                         const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
@@ -251,7 +264,7 @@ const Dashboard = () => {
     return (
         <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">
             {/* Weather Widget */}
-            {weather && (
+            {weather?.current && (
                 <div
                     onClick={() => setShowForecast(true)}
                     className="mb-8 bg-white/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all"
@@ -260,7 +273,7 @@ const Dashboard = () => {
                         <div className="text-5xl">{getWeatherIcon(weather.current.code)}</div>
                         <div>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-black text-slate-800 tabular-nums">{Math.round(weather.current.temp)}</span>
+                                <span className="text-4xl font-black text-slate-800 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
                                 <span className="text-xl font-bold text-slate-400">°C</span>
                             </div>
                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
@@ -269,15 +282,15 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-2 items-end">
                         <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
                             <CloudRain size={14} className="text-blue-500" />
-                            <span>Chuva: {weather.daily[0].rainProb}%</span>
+                            <span>Chuva: {weather.daily?.[0]?.rainProb || 0}%</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
                             <Timer size={14} className="text-slate-400" />
-                            <span>Umidade: {weather.current.humidity}%</span>
+                            <span>Umidade: {weather.current.humidity || 0}%</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
                             <Activity size={14} className="text-slate-400" />
-                            <span>Vento: {Math.round(weather.current.wind)} km/h</span>
+                            <span>Vento: {Math.round(weather.current.wind || 0)} km/h</span>
                         </div>
                     </div>
                 </div>
@@ -391,19 +404,19 @@ const Dashboard = () => {
                 </div>
 
                 <div className="space-y-6">
-                    {data.breakdown.map((item, idx) => (
+                    {data?.breakdown?.map((item, idx) => (
                         <div key={idx}>
                             <div className="flex justify-between items-baseline mb-2 px-1">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${item.color}`} />
-                                    <span className="text-xs font-bold text-slate-500">{item.label}</span>
+                                    <div className={`w-2 h-2 rounded-full ${item.color || 'bg-slate-300'}`} />
+                                    <span className="text-xs font-bold text-slate-500">{item.label || 'Outros'}</span>
                                 </div>
                                 <div className="text-xs font-black text-slate-800 tabular-nums">
-                                    {item.percentage}% <span className="text-slate-300 font-bold ml-1">{item.count}</span>
+                                    {item.percentage || 0}% <span className="text-slate-300 font-bold ml-1">{item.count || 0}</span>
                                 </div>
                             </div>
                             <div className="w-full bg-slate-50 rounded-full h-3 p-0.5 border border-slate-100 shadow-inner">
-                                <div className={`h-full rounded-full transition-all duration-1000 ${item.color}`} style={{ width: `${item.percentage}%` }} />
+                                <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-slate-300'}`} style={{ width: `${item.percentage || 0}%` }} />
                             </div>
                         </div>
                     ))}
@@ -538,26 +551,29 @@ const Dashboard = () => {
                     <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                         <HeatmapLayer points={data.locations} show={hasClusters} options={{ radius: 15, blur: 10, opacity: 0.6 }} />
-                        {data.locations.map((loc, idx) => (
-                            <CircleMarker
-                                key={idx}
-                                center={[loc.lat, loc.lng]}
-                                radius={8}
-                                pathOptions={{
-                                    color: loc.risk.includes('Alto') ? '#ef4444' : '#f97316',
-                                    fillColor: loc.risk.includes('Alto') ? '#ef4444' : '#f97316',
-                                    fillOpacity: 0.6,
-                                    stroke: false
-                                }}
-                            >
-                                <Popup>
-                                    <div className="text-center">
-                                        <div className="font-bold text-slate-800 mb-1">{loc.risk}</div>
-                                        <div className="text-sm text-slate-600">{loc.details}</div>
-                                    </div>
-                                </Popup>
-                            </CircleMarker>
-                        ))}
+                        {data?.locations?.map((loc, idx) => {
+                            const isHighRisk = String(loc.risk || '').includes('Alto');
+                            return (
+                                <CircleMarker
+                                    key={idx}
+                                    center={[loc.lat, loc.lng]}
+                                    radius={8}
+                                    pathOptions={{
+                                        color: isHighRisk ? '#ef4444' : '#f97316',
+                                        fillColor: isHighRisk ? '#ef4444' : '#f97316',
+                                        fillOpacity: 0.6,
+                                        stroke: false
+                                    }}
+                                >
+                                    <Popup>
+                                        <div className="text-center">
+                                            <div className="font-bold text-slate-800 mb-1">{loc.risk || 'Local'}</div>
+                                            <div className="text-sm text-slate-600">{loc.details || ''}</div>
+                                        </div>
+                                    </Popup>
+                                </CircleMarker>
+                            );
+                        })}
                     </MapContainer>
                 </div>
             </div>

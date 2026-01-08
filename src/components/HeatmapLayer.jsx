@@ -11,7 +11,22 @@ const HeatmapLayer = ({ points, show = true, options = {} }) => {
     const map = useMap()
 
     useEffect(() => {
-        if (!show || !points || points.length === 0 || !window.L || !window.L.heatLayer) return
+        // Dynamic loading of heatmap plugin if not present
+        if (!window.L || !window.L.heatLayer) {
+            if (!document.getElementById('leaflet-heat-script')) {
+                const script = document.createElement('script');
+                script.id = 'leaflet-heat-script';
+                script.src = 'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js';
+                script.onload = () => {
+                    console.log('[HeatmapLayer] Heatmap plugin loaded dynamically');
+                    // Re-trigger the points effect by updating some state if needed
+                };
+                document.head.appendChild(script);
+            }
+            return;
+        }
+
+        if (!show || !points || points.length === 0) return
 
         const heatData = points.map(p => [p.lat, p.lng, p.intensity || 0.5])
 
