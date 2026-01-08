@@ -87,17 +87,28 @@ const Dashboard = () => {
 
                     // Color palette for distinct categories
                     const colorPalette = {
+                        'Geológico / Geotécnico': 'bg-orange-500',
+                        'Risco Geológico': 'bg-orange-500',
+                        'Hidrológico': 'bg-blue-500',
+                        'Inundação/Alagamento': 'bg-blue-500',
+                        'Estrutural': 'bg-slate-400',
+                        'Estrutural/Predial': 'bg-slate-400',
+                        'Ambiental': 'bg-emerald-500',
+                        'Tecnológico': 'bg-amber-500',
+                        'Climático / Meteorológico': 'bg-sky-500',
+                        'Infraestrutura Urbana': 'bg-indigo-500',
+                        'Sanitário': 'bg-rose-500',
+                        'Outros': 'bg-slate-400',
+                        // Legacy/Simplified keys support
                         'Deslizamento': 'bg-orange-500',
                         'Alagamento': 'bg-blue-500',
-                        'Inundação': 'bg-cyan-500',
-                        'Enxurrada': 'bg-teal-500',
-                        'Vendaval': 'bg-gray-500',
-                        'Granizo': 'bg-indigo-500',
-                        'Incêndio': 'bg-red-500',
-                        'Estrutural': 'bg-purple-500',
-                        'Outros': 'bg-slate-400'
+                        'Inundação': 'bg-blue-500',
+                        'Enxurrada': 'bg-blue-400',
+                        'Vendaval': 'bg-sky-500',
+                        'Granizo': 'bg-sky-400',
+                        'Incêndio': 'bg-red-500'
                     };
-                    const defaultColors = ['bg-pink-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'];
+                    const defaultColors = ['bg-orange-500', 'bg-blue-500', 'bg-slate-400', 'bg-emerald-500'];
 
                     const totalOccurrences = total
                     finalData.stats.totalVistorias = total
@@ -155,7 +166,27 @@ const Dashboard = () => {
                         if (existing) {
                             existing.count++
                         } else {
-                            finalData.breakdown.push({ label: cat, count: 1, percentage: 0, color: 'bg-slate-300' })
+                            // Define colorPalette here too for the remote branch
+                            const colorPalette = {
+                                'Geológico / Geotécnico': 'bg-orange-500',
+                                'Risco Geológico': 'bg-orange-500',
+                                'Hidrológico': 'bg-blue-500',
+                                'Inundação/Alagamento': 'bg-blue-500',
+                                'Estrutural': 'bg-slate-400',
+                                'Estrutural/Predial': 'bg-slate-400',
+                                'Ambiental': 'bg-emerald-500',
+                                'Tecnológico': 'bg-amber-500',
+                                'Climático / Meteorológico': 'bg-sky-500',
+                                'Infraestrutura Urbana': 'bg-indigo-500',
+                                'Sanitário': 'bg-rose-500',
+                                'Outros': 'bg-slate-400'
+                            };
+                            finalData.breakdown.push({
+                                label: cat,
+                                count: 1,
+                                percentage: 0,
+                                color: colorPalette[cat] || 'bg-slate-300'
+                            })
                         }
                     })
 
@@ -168,10 +199,34 @@ const Dashboard = () => {
                     finalData.breakdown.sort((a, b) => b.count - a.count)
                 }
 
-                setWeather(weatherResult)
                 if (finalData.stats.totalVistorias === 0) {
                     finalData.breakdown = []
+                } else {
+                    // Final Color Enforcement - Overwrite any colors from API
+                    const masterPalette = {
+                        'Geológico / Geotécnico': 'bg-orange-500',
+                        'Risco Geológico': 'bg-orange-500',
+                        'Hidrológico': 'bg-blue-500',
+                        'Inundação': 'bg-blue-500',
+                        'Alagamento': 'bg-blue-500',
+                        'Inundação/Alagamento': 'bg-blue-500',
+                        'Estrutural': 'bg-slate-400',
+                        'Estrutural/Predial': 'bg-slate-400',
+                        'Ambiental': 'bg-emerald-500',
+                        'Tecnológico': 'bg-amber-500',
+                        'Climático / Meteorológico': 'bg-sky-500',
+                        'Infraestrutura Urbana': 'bg-indigo-500',
+                        'Sanitário': 'bg-rose-500',
+                        'Outros': 'bg-slate-400',
+                        'Deslizamento': 'bg-orange-500'
+                    };
+
+                    finalData.breakdown = finalData.breakdown.map(item => ({
+                        ...item,
+                        color: masterPalette[item.label] || item.color || 'bg-slate-300'
+                    }));
                 }
+                setWeather(weatherResult)
                 setData(finalData)
             } catch (error) {
                 console.error('Load Error:', error)
