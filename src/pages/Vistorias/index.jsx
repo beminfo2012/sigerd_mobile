@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle } from 'lucide-react'
 import VistoriaForm from './VistoriaForm'
 import VistoriaList from './VistoriaList'
 
@@ -6,7 +8,19 @@ const Vistorias = () => {
     const [view, setView] = useState('list') // 'list' | 'form'
     const [selectedVistoria, setSelectedVistoria] = useState(null)
 
+    const [showBlockModal, setShowBlockModal] = useState(false)
+    const navigate = useNavigate()
+
     const handleNew = () => {
+        // Enforce Equipment Check Protocol
+        const today = new Date().toDateString()
+        const hasCheck = localStorage.getItem(`equipment_check_${today}`)
+
+        if (!hasCheck) {
+            setShowBlockModal(true)
+            return
+        }
+
         setSelectedVistoria(null)
         setView('form')
     }
@@ -41,6 +55,33 @@ const Vistorias = () => {
             )}
             {view === 'form' && (
                 <VistoriaForm onBack={handleBack} initialData={selectedVistoria} />
+            )}
+
+            {/* Protocol Enforcement Modal */}
+            {showBlockModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-5 z-[60]" onClick={() => setShowBlockModal(false)}>
+                    <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertTriangle size={32} className="text-amber-600" strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-xl font-black text-center text-slate-800 mb-2">Prontidão Não Confirmada</h3>
+                        <p className="text-sm text-center text-slate-500 mb-6 leading-relaxed">
+                            Para garantir a segurança da operação, é obrigatório confirmar a verificação de equipamentos do dia antes de iniciar.
+                        </p>
+                        <button
+                            onClick={() => navigate('/checklist-saida')}
+                            className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-blue-700 active:scale-[0.98] transition-all"
+                        >
+                            Ir para Iniciar Vistoria
+                        </button>
+                        <button
+                            onClick={() => setShowBlockModal(false)}
+                            className="w-full mt-3 py-3 rounded-xl font-bold text-sm text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     )
