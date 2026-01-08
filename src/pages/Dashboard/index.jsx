@@ -42,12 +42,45 @@ const Dashboard = () => {
                     locations: []
                 }
 
-                const localVistorias = await getAllVistoriasLocal().catch(() => [])
+                const localVistorias = await getAllVistoriasLocal().catch(err => {
+                    console.error('[Dashboard] Error loading local vistorias:', err);
+                    return [];
+                });
+
+                // Filter out any corrupted vistorias that might crash the app
+                const validVistorias = localVistorias.filter(v => {
+                    try {
+                        // Basic validation - must have essential fields
+                        if (!v) return false;
+
+                        // If has coordinates, they must be valid
+                        if (v.coordenadas) {
+                            if (!v.coordenadas.includes(',')) {
+                                console.warn('[Dashboard] Skipping vistoria with invalid coordinates (no comma):', v.vistoriaId || v.id);
+                                return false;
+                            }
+                            const parts = v.coordenadas.split(',');
+                            const lat = parseFloat(parts[0]);
+                            const lng = parseFloat(parts[1]);
+                            if (isNaN(lat) || isNaN(lng)) {
+                                console.warn('[Dashboard] Skipping vistoria with NaN coordinates:', v.vistoriaId || v.id);
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    } catch (err) {
+                        console.error('[Dashboard] Error validating vistoria:', v, err);
+                        return false;
+                    }
+                });
+
+                console.log(`[Dashboard] Loaded ${localVistorias.length} local vistorias, ${validVistorias.length} valid`);
 
                 if (!dashResult) {
-                    const total = localVistorias.length
+                    const total = validVistorias.length
                     const counts = {}
-                    localVistorias.forEach(v => {
+                    validVistorias.forEach(v => {
                         const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
                         counts[cat] = (counts[cat] || 0) + 1
                     })
@@ -75,7 +108,7 @@ const Dashboard = () => {
                         color: colorPalette[label] || defaultColors[idx % defaultColors.length]
                     })).sort((a, b) => b.count - a.count)
 
-                    finalData.locations = localVistorias
+                    finalData.locations = validVistorias
                         .filter(v => v.coordenadas && v.coordenadas.includes(','))
                         .map(v => {
                             const parts = v.coordenadas.split(',')
@@ -96,7 +129,7 @@ const Dashboard = () => {
                         })
                         .filter(loc => loc !== null)
                 } else {
-                    const unsynced = localVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
+                    const unsynced = validVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
 
                     unsynced.forEach(v => {
                         if (v.coordenadas && v.coordenadas.includes(',')) {
