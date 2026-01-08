@@ -534,22 +534,22 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Start Inspection Button */}
+            {/* Start Inspection Button - Discreet Version */}
             <div
                 onClick={() => navigate('/checklist-saida')}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 p-5 rounded-[24px] shadow-[0_6px_30px_-4px_rgba(37,99,235,0.3)] mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:shadow-[0_8px_35px_-4px_rgba(37,99,235,0.4)] border border-blue-500/20"
+                className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
             >
                 <div className="flex items-center gap-4">
-                    <div className="bg-white/20 w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-inner backdrop-blur-sm">
+                    <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
                         <Truck size={24} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <div className="text-[10px] font-black text-blue-100 mb-0.5 uppercase tracking-widest">Prontidão</div>
-                        <div className="text-lg font-black text-white">Iniciar Vistoria</div>
-                        <div className="text-[10px] font-bold text-blue-200">Verificar equipamentos</div>
+                        <div className="text-[10px] font-black text-slate-400 mb-0.5 uppercase tracking-widest">Prontidão</div>
+                        <div className="text-xl font-black text-slate-800">Iniciar Vistoria</div>
+                        <div className="text-xs font-bold text-blue-600">Verificar equipamentos</div>
                     </div>
                 </div>
-                <div className="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
+                <div className="bg-slate-50 w-10 h-10 rounded-full flex items-center justify-center text-slate-300">
                     <ChevronRight size={20} />
                 </div>
             </div>
