@@ -23,7 +23,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
     };
 
     // Sort Pluviometers by 24h accumulation
-    const sortedPluvios = [...pluviometerData].sort((a, b) => (b.acc24hr || 0) - (a.acc24hr || 0));
+    const sortedPluvios = [...(pluviometerData || [])].sort((a, b) => (b.acc24hr || 0) - (a.acc24hr || 0));
     const topPluvios = sortedPluvios.slice(0, 5); // Top 5 for table
 
     // Calculate Average 24h Accumulation
@@ -155,8 +155,8 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             <div style="page-break-inside: avoid;">
                 <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">5. Detalhamento Geográfico e Riscos</h2>
                 ${mapImage ? `
-                    <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-                        <div style="width: 85%; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="display: inline-block; width: 90%; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                             <img src="${mapImage}" style="width: 100%; max-height: 280px; object-fit: cover; display: block;" />
                         </div>
                     </div>
@@ -182,7 +182,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                                     <td style="padding: 6px; font-weight: 700; color: #334155;">${l.risk}</td>
                                     <td style="padding: 6px; color: #64748b;">${l.details}</td>
                                     <td style="padding: 6px; text-align: right; font-family: monospace; color: #475569;">
-                                        ${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}
+                                        ${(parseFloat(l.lat) || 0).toFixed(5)}, ${(parseFloat(l.lng) || 0).toFixed(5)}
                                     </td>
                                 </tr>
                             `).join('')}
@@ -196,9 +196,12 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             // Simple cluster detection by neighborhood or proximity
             const clusters = {};
             dashboardData.locations.forEach(loc => {
-                // Using a 0.005 approx grid for simple clustering (roughly 500m)
-                const gridKey = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`;
-                clusters[gridKey] = (clusters[gridKey] || 0) + 1;
+                const lat = parseFloat(loc.lat);
+                const lng = parseFloat(loc.lng);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const gridKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+                    clusters[gridKey] = (clusters[gridKey] || 0) + 1;
+                }
             });
             const clusterEntries = Object.entries(clusters).filter(([_, count]) => count >= 2);
 
