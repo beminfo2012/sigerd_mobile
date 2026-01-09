@@ -323,17 +323,41 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     }
 
     const handlePhotoSelect = async (files) => {
+        // Attempt to get location if missing (Best Effort for High Fidelity)
+        let currentCoords = formData.latitude && formData.longitude ? {
+            lat: formData.latitude,
+            lng: formData.longitude
+        } : null;
+
+        if (!currentCoords && navigator.geolocation) {
+            try {
+                const pos = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000, enableHighAccuracy: true });
+                });
+                currentCoords = {
+                    lat: pos.coords.latitude.toFixed(6),
+                    lng: pos.coords.longitude.toFixed(6)
+                };
+
+                // Also update form state if we got it
+                setFormData(prev => ({
+                    ...prev,
+                    latitude: currentCoords.lat,
+                    longitude: currentCoords.lng,
+                    coordenadas: `${currentCoords.lat}, ${currentCoords.lng}`
+                }));
+            } catch (e) {
+                console.warn("Auto-GPS for photo failed:", e);
+                // Continue without coords
+            }
+        }
+
         const newPhotos = await Promise.all(files.map(file => {
             return new Promise((resolve) => {
                 const reader = new FileReader()
                 reader.onloadend = async () => {
                     try {
-                        const coords = formData.latitude && formData.longitude ? {
-                            lat: formData.latitude,
-                            lng: formData.longitude
-                        } : null;
-
-                        const compressed = await compressImage(reader.result, { coordinates: coords });
+                        const compressed = await compressImage(reader.result, { coordinates: currentCoords });
                         resolve({
                             id: Date.now() + Math.random(),
                             data: compressed,

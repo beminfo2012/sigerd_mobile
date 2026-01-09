@@ -37,31 +37,43 @@ export const compressImage = (base64Str, options = {}) => {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // Add Geostamp if coordinates or timestamp are provided
+            // Add Geostamp with High Fidelity Style
             if (coordinates || timestamp) {
-                const padding = width * 0.02;
-                const fontSize = Math.max(12, Math.round(width * 0.025));
-                ctx.font = `bold ${fontSize}px sans-serif`;
+                const padding = width * 0.03;
+                const fontSize = Math.max(14, Math.round(width * 0.035));
+                // Use monospace font/sans-serif combination for technical look
+                ctx.font = `600 ${fontSize}px "Roboto Mono", monospace, sans-serif`;
 
                 const lines = [];
                 if (coordinates) {
                     lines.push(`LAT: ${coordinates.lat} | LNG: ${coordinates.lng}`);
                 }
                 if (timestamp) {
-                    const now = new Date().toLocaleString('pt-BR');
+                    const now = new Date().toLocaleString('pt-BR', {
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    });
                     lines.push(`DATA: ${now}`);
                 }
 
-                // Draw background bar
-                const barHeight = (lines.length * fontSize * 1.2) + (padding * 2);
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                // Calculate bar dimensions
+                const lineHeight = fontSize * 1.4;
+                const totalTextHeight = lines.length * lineHeight;
+                const barHeight = totalTextHeight + (padding * 1.5);
+
+                // Draw dark technical background (High Contrast)
+                ctx.fillStyle = 'rgba(10, 10, 10, 0.85)'; // Almost black, high fidelity
                 ctx.fillRect(0, height - barHeight, width, barHeight);
 
-                // Draw text
-                ctx.fillStyle = 'white';
+                // Draw technical text
+                ctx.fillStyle = '#FFFFFF';
                 ctx.textAlign = 'left';
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 2;
+
                 lines.forEach((line, index) => {
-                    ctx.fillText(line, padding, height - barHeight + padding + (fontSize * (index + 0.8)));
+                    const yPos = height - barHeight + padding + (lineHeight * (index + 0.7));
+                    ctx.fillText(line.toUpperCase(), padding, yPos);
                 });
             }
 
