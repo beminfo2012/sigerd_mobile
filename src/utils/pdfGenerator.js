@@ -151,34 +151,33 @@ export const generatePDF = async (rawData, type) => {
     container.style.zIndex = '-9999';
 
     const headerHtml = `
-        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 30px 40px 20px 40px; font-family: 'Arial', sans-serif;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 45px 40px 25px 40px; font-family: 'Arial', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <!-- Left: Defesa Civil Logo -->
-                <div style="width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <img src="${logoDefesaCivilStr}" style="height: 70px; width: auto; object-fit: contain;" />
-                    <div style="margin-top: 5px; font-size: 13px; color: #000000; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">Defesa Civil</div>
+                <div style="width: 120px; display: flex; justify-content: flex-start;">
+                    <img src="${logoDefesaCivilStr}" style="height: 85px; width: auto; object-fit: contain;" />
                 </div>
 
                 <!-- Center: Titles -->
-                <div style="flex: 1; text-align: center; padding: 0 10px;">
-                    <h1 style="margin: 0; font-size: 19px; color: #000000; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; line-height: 1.1;">
+                <div style="flex: 1; text-align: center; padding: 0 15px;">
+                    <h1 style="margin: 0; font-size: 22px; color: #000000; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2;">
                         PREFEITURA MUNICIPAL DE<br/>SANTA MARIA DE JETIBÁ
                     </h1>
-                    <h2 style="margin: 5px 0 0 0; font-size: 13px; color: #000000; font-weight: 700; text-transform: uppercase;">
+                    <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #000000; font-weight: 700; text-transform: uppercase;">
                         COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL
                     </h2>
                 </div>
 
                 <!-- Right: SIGERD Logo -->
                 <div style="width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <img src="${logoSigerdStr}" style="height: 70px; width: auto; object-fit: contain;" />
-                    <div style="margin-top: 5px; font-size: 14px; color: #1e3a8a; font-weight: 900; letter-spacing: 0.8px;">SIGERD</div>
+                    <img src="${logoSigerdStr}" style="height: 85px; width: auto; object-fit: contain;" />
+                    <div style="margin-top: 5px; font-size: 16px; color: #1e3a8a; font-weight: 900; letter-spacing: 1px;">SIGERD</div>
                 </div>
             </div>
 
             <!-- Title Badge -->
             <div style="text-align: center;">
-                <div style="display: inline-block; background: #2a5299; color: white; padding: 6px 35px; border-radius: 4px; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <div style="display: inline-block; background: #2a5299; color: white; padding: 8px 40px; border-radius: 4px; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                     ${title}
                 </div>
             </div>
