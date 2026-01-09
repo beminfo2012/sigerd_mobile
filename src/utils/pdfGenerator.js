@@ -352,7 +352,7 @@ export const generatePDF = async (rawData, type) => {
                 ` : ''}
             </div>
             <p style="margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">
-                Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema SIGERD Mobile.
+                Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema de Gerenciamento de Riscos e Desastres da Defesa Civil de Santa Maria de Jetibá.
             </p>
         </div>
     `;
