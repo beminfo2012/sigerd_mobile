@@ -137,41 +137,60 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             </div>
 
             <!-- 4. Typology Analysis -->
-            <div style="margin-bottom: 30px;">
-                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">4. Distribuição por Tipologia</h2>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                    ${dashboardData.breakdown.map(b => `
-                        <div style="flex: 1 1 30%; background: #ffffff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px;">
-                            <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase;">${b.label}</div>
-                            <div style="display: flex; align-items: baseline; gap: 5px;">
-                                <div style="font-size: 18px; font-weight: 900; color: #1e293b;">${b.count}</div>
-                                <div style="font-size: 12px; color: #94a3b8;">(${b.percentage}%)</div>
+            <div style="margin-bottom: 30px; page-break-inside: avoid;">
+                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 18px;">4. Distribuição por Tipologia de Risco</h2>
+                <div style="display: flex; flex-direction: column; gap: 12px; background: #ffffff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
+                    ${dashboardData.breakdown.map(b => {
+        const hexMap = {
+            'Geológico / Geotécnico': '#f97316',
+            'Risco Geológico': '#f97316',
+            'Hidrológico': '#3b82f6',
+            'Inundação/Alagamento': '#3b82f6',
+            'Estrutural': '#94a3b8',
+            'Estrutural/Predial': '#94a3b8',
+            'Ambiental': '#10b981',
+            'Tecnológico': '#f59e0b',
+            'Climático / Meteorológico': '#0ea5e9',
+            'Infraestrutura Urbana': '#6366f1',
+            'Sanitário': '#f43f5e',
+            'Outros': '#94a3b8'
+        };
+        const barColor = hexMap[b.label] || '#94a3b8';
+        return `
+                        <div style="width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <span style="font-size: 11px; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">${b.label}</span>
+                                <span style="font-size: 12px; font-weight: 900; color: #1e293b;">${b.count} <span style="color: #94a3b8; font-weight: 600; font-size: 10px;">(${b.percentage}%)</span></span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden;">
+                                <div style="width: ${b.percentage}%; height: 100%; background: ${barColor}; border-radius: 4px;"></div>
                             </div>
                         </div>
-                    `).join('')}
+                    `;
+    }).join('')}
                 </div>
             </div>
 
             <!-- 5. Concentration Map & Locations -->
             <div style="page-break-inside: avoid;">
-                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">5. Detalhamento Geográfico e Riscos</h2>
+                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 18px;">5. Mapa de Concentração de Riscos</h2>
                 ${mapImage ? `
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="display: inline-block; width: 90%; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-                            <img src="${mapImage}" style="width: 100%; max-height: 280px; object-fit: cover; display: block;" />
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="display: inline-block; width: 100%; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #f8fafc; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                            <img src="${mapImage}" style="width: 100%; max-height: 320px; object-fit: contain; display: block;" />
                         </div>
                     </div>
-                ` : '<div style="background: #f1f5f9; padding: 20px; text-align: center; color: #64748b; border-radius: 8px; margin-bottom: 20px;">Imagem do mapa indisponível</div>'}
+                ` : '<div style="background: #f1f5f9; padding: 25px; text-align: center; color: #64748b; border-radius: 12px; margin-bottom: 25px; border: 1px dashed #cbd5e1;">Imagem do mapa indisponível ou em carregamento</div>'}
                 
-                <div>
-                    <h3 style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 10px;">Últimos Registros Mapeados:</h3>
-                    <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
+                <div style="margin-bottom: 30px;">
+                    <h3 style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Detalhamento das Ocorrências Mapeadas:</h3>
+                    <table style="width: 100%; font-size: 10px; border-collapse: collapse; border: 1px solid #f1f5f9;">
                         <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
                             <tr>
-                                <th style="padding: 6px; text-align: left; color: #475569;">Data/Hora</th>
-                                <th style="padding: 6px; text-align: left; color: #475569;">Tipologia</th>
-                                <th style="padding: 6px; text-align: left; color: #475569;">Subtipos / Detalhes</th>
-                                <th style="padding: 6px; text-align: right; color: #475569;">Coordenadas</th>
+                                <th style="padding: 10px 8px; text-align: left; color: #475569; text-transform: uppercase; font-size: 9px;">Data/Hora</th>
+                                <th style="padding: 10px 8px; text-align: left; color: #475569; text-transform: uppercase; font-size: 9px;">Tipologia</th>
+                                <th style="padding: 10px 8px; text-align: left; color: #475569; text-transform: uppercase; font-size: 9px;">Local / Detalhes</th>
+                                <th style="padding: 10px 8px; text-align: right; color: #475569; text-transform: uppercase; font-size: 9px;">Coordenadas</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -181,12 +200,12 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
         const lng = parseFloat(parts[1]) || parseFloat(l.lng) || 0;
         return `
                                 <tr style="border-bottom: 1px solid #f1f5f9; background: ${i % 2 === 0 ? '#ffffff' : '#fcfcfc'};">
-                                    <td style="padding: 6px; color: #64748b; font-weight: 600;">
+                                    <td style="padding: 8px; color: #64748b; font-weight: 700;">
                                         ${l.date ? new Date(l.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
                                     </td>
-                                    <td style="padding: 6px; font-weight: 700; color: #334155;">${l.risk}</td>
-                                    <td style="padding: 6px; color: #64748b;">${l.details}</td>
-                                    <td style="padding: 6px; text-align: right; font-family: monospace; color: #475569;">
+                                    <td style="padding: 8px; font-weight: 800; color: #334155;">${l.risk}</td>
+                                    <td style="padding: 8px; color: #64748b; font-weight: 500;">${l.details}</td>
+                                    <td style="padding: 8px; text-align: right; font-family: monospace; color: #475569; font-weight: 600;">
                                         ${lat.toFixed(5)}, ${lng.toFixed(5)}
                                     </td>
                                 </tr>
@@ -194,7 +213,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
     }).join('')}
                         </tbody>
                     </table>
-                    ${dashboardData.locations.length > 15 ? `<div style="text-align: center; padding: 10px; font-size: 10px; color: #94a3b8; font-style: italic;">...e mais ${dashboardData.locations.length - 15} registros não listados.</div>` : ''}
+                    ${dashboardData.locations.length > 15 ? `<div style="text-align: center; padding: 12px; font-size: 10px; color: #94a3b8; font-style: italic; font-weight: 500;">...e mais ${dashboardData.locations.length - 15} registros integrados ao mapa.</div>` : ''}
                 </div>
 
                 <!-- Strategic Clusters Section (Heat Information) -->
@@ -214,18 +233,18 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             if (clusterEntries.length === 0) return '';
 
             return `
-                        <div style="margin-top: 20px; background: #fff7ed; border: 1px solid #ffedd5; padding: 15px; border-radius: 8px;">
-                            <h3 style="font-size: 12px; font-weight: 900; color: #c2410c; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
-                                🔥 Zonas de Concentração (Heat Zones)
+                        <div style="margin-top: 25px; background: #fff7ed; border: 1px solid #ffedd5; padding: 20px; border-radius: 12px; page-break-inside: avoid;">
+                            <h3 style="font-size: 12px; font-weight: 900; color: #c2410c; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                🔥 ZONAS DE CONCENTRAÇÃO (IDENTIFICADAS)
                             </h3>
-                            <p style="font-size: 11px; color: #9a3412; margin-bottom: 10px;">
+                            <p style="font-size: 11px; color: #9a3412; margin-bottom: 12px; line-height: 1.5; font-weight: 500;">
                                 Foram identificados agrupamentos de ocorrências que sugerem estresse geológico ou hidrológico elevado nestas áreas:
                             </p>
-                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
                                 ${clusterEntries.map(([coords, count]) => `
-                                    <div style="background: white; border: 1px solid #fed7aa; padding: 8px; border-radius: 6px; min-width: 120px;">
-                                        <div style="font-size: 10px; font-weight: 800; color: #ea580c;">Cluster @ ${coords}</div>
-                                        <div style="font-size: 12px; font-weight: 900; color: #1e293b;">${count} Ocorrências</div>
+                                    <div style="background: white; border: 1px solid #fed7aa; padding: 10px; border-radius: 8px; min-width: 140px; box-shadow: 0 2px 4px rgba(234, 88, 12, 0.1);">
+                                        <div style="font-size: 10px; font-weight: 800; color: #ea580c; border-bottom: 1px dashed #fed7aa; padding-bottom: 4px; margin-bottom: 6px;">COORD: ${coords}</div>
+                                        <div style="font-size: 14px; font-weight: 900; color: #1e293b;">${count} <span style="font-size: 9px; color: #64748b; text-transform: uppercase;">Ocorrências</span></div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -234,40 +253,46 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
         })()}
             </div>
 
-            <!-- Forecast + Pluviometers Row -->
-            <div style="margin-bottom: 30px; display: flex; gap: 30px;">
+            <!-- Forecast + Signatures Row -->
+            <div style="margin-top: 40px; display: flex; gap: 40px; page-break-inside: avoid;">
                  <!-- Forecast -->
                  <div style="flex: 1;">
-                    <h3 style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">Previsão (3 Dias)</h3>
+                    <h3 style="font-size: 14px; font-weight: 800; color: #2a5299; margin-bottom: 12px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Previsão (72 Horas)</h3>
                     ${weatherData && weatherData.daily ? `
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
                             ${weatherData.daily.slice(1, 4).map(day => `
-                                <div style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 8px; border-radius: 6px;">
-                                    <div style="font-size: 11px; font-weight: bold; color: #64748b;">
-                                        ${new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' })}
+                                <div style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #f1f5f9;">
+                                    <div style="font-size: 11px; font-weight: 900; color: #334155;">
+                                        ${new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' }).toUpperCase()}
                                     </div>
-                                    <div style="font-size: 11px; font-weight: 800; color: #1e293b;">
-                                        ${Math.round(day.tempMax)}° <span style="color: #94a3b8; font-weight: normal;">/ ${Math.round(day.tempMin)}°</span>
+                                    <div style="font-size: 12px; font-weight: 900; color: #1e293b;">
+                                        ${Math.round(day.tempMax)}° <span style="color: #94a3b8; font-weight: 600;">/ ${Math.round(day.tempMin)}°</span>
                                     </div>
-                                    <div style="font-size: 10px; color: #3b82f6; font-weight: 600;">
-                                        ${day.rainProb}% Chuva
+                                    <div style="font-size: 11px; color: #2a5299; font-weight: 900; background: #eff6ff; padding: 2px 6px; border-radius: 4px;">
+                                        ${day.rainProb}% CHUVA
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
-                    ` : '<div style="font-size: 11px; color: #94a3b8;">Previsão indisponível</div>'}
+                    ` : '<div style="font-size: 11px; color: #94a3b8; padding: 20px; text-align: center; background: #f8fafc; border-radius: 8px;">Dados meteorológicos indisponíveis.</div>'}
                  </div>
 
-                 <!-- Signatures Area (New) -->
-                 <div style="flex: 1.5; display: flex; flex-direction: column; justify-content: flex-end;">
-                    <div style="display: flex; gap: 20px; margin-top: 10px;">
-                        <div style="flex: 1; border-top: 1px solid #94a3b8; padding-top: 5px; text-align: center;">
-                            <div style="font-size: 10px; font-weight: bold; color: #1e293b;">Responsável Operacional</div>
-                            <div style="font-size: 9px; color: #94a3b8;">Defesa Civil</div>
+                 <!-- Signatures Area (Professional High-Fidelity) -->
+                 <div style="flex: 1.5; display: flex; flex-direction: column;">
+                    <div style="display: flex; gap: 30px; margin-top: 15px;">
+                        <div style="flex: 1;">
+                            <div style="height: 90px; border-bottom: 2px solid #2a5299; width: 100%; margin-bottom: 12px;"></div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 11px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">RESPONSÁVEL OPERACIONAL</div>
+                                <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase;">Defesa Civil SMJ</div>
+                            </div>
                         </div>
-                        <div style="flex: 1; border-top: 1px solid #94a3b8; padding-top: 5px; text-align: center;">
-                            <div style="font-size: 10px; font-weight: bold; color: #1e293b;">Autoridade Competente</div>
-                            <div style="font-size: 9px; color: #94a3b8;">Visto</div>
+                        <div style="flex: 1;">
+                            <div style="height: 90px; border-bottom: 2px solid #2a5299; width: 100%; margin-bottom: 12px;"></div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 11px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">AUTORIDADE COMPETENTE</div>
+                                <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase;">Coordenação Municipal</div>
+                            </div>
                         </div>
                     </div>
                  </div>
