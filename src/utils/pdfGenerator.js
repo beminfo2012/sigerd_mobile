@@ -90,28 +90,46 @@ const normalizeData = (data, type) => {
 };
 
 export const generatePDF = async (rawData, type) => {
-    // Helper to convert imported asset URLs to Base64 for html2canvas stability
-    const urlToBase64 = async (url) => {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        } catch (e) {
-            console.warn('Failed to convert logo to Base64, using original URL:', e);
-            return url;
-        }
+    // Optimized helper to convert imported asset URLs to Base64 using Canvas
+    // This avoids fetch/CORS issues with local assets in some environments
+    const urlToBase64 = (url) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                } catch (e) {
+                    console.warn('Canvas conversion failed, falling back to URL:', e);
+                    resolve(url);
+                }
+            };
+            img.onerror = () => {
+                console.error('Failed to load image for PDF:', url);
+                resolve(url); // Fallback to original URL if loading fails
+            };
+            img.src = url;
+        });
     };
 
-    // Pre-load logos
-    const [logoDefesaCivilStr, logoSigerdStr] = await Promise.all([
-        urlToBase64(LOGO_DEFESA_CIVIL),
-        urlToBase64(LOGO_SIGERD)
-    ]);
+    // Pre-load logos sequentially to ensure availability
+    let logoDefesaCivilStr = LOGO_DEFESA_CIVIL;
+    let logoSigerdStr = LOGO_SIGERD;
+
+    try {
+        [logoDefesaCivilStr, logoSigerdStr] = await Promise.all([
+            urlToBase64(LOGO_DEFESA_CIVIL),
+            urlToBase64(LOGO_SIGERD)
+        ]);
+        console.log('Logos pre-loaded successfully for PDF');
+    } catch (e) {
+        console.error('Error pre-loading logos:', e);
+    }
 
     const data = normalizeData(rawData, type);
     const isVistoria = type === 'vistoria';
