@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter } from 'lucide-react'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getAllVistoriasLocal } from '../../services/db'
@@ -8,6 +8,13 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const [vistorias, setVistorias] = useState([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
+    const [isFilterOpen, setIsFilterOpen] = useState(false)
+    const [filters, setFilters] = useState({
+        bairro: '',
+        nivelRisco: '',
+        startDate: '',
+        endDate: ''
+    })
 
     useEffect(() => {
         fetchVistorias()
@@ -86,11 +93,35 @@ const VistoriaList = ({ onNew, onEdit }) => {
         }
     }
 
-    const filteredVistorias = vistorias.filter(v =>
-        v.endereco?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.solicitante?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.vistoria_id?.toString().includes(searchTerm)
-    )
+    const handleClearFilters = () => {
+        setFilters({
+            bairro: '',
+            nivelRisco: '',
+            startDate: '',
+            endDate: ''
+        })
+        setSearchTerm('')
+    }
+
+    const neighborhoods = [...new Set(vistorias.map(v => v.bairro).filter(Boolean))].sort()
+
+    const filteredVistorias = vistorias.filter(v => {
+        const matchesSearch = !searchTerm ||
+            v.endereco?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            v.solicitante?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            v.vistoria_id?.toString().includes(searchTerm);
+
+        const matchesBairro = !filters.bairro || v.bairro === filters.bairro;
+        const matchesRisco = !filters.nivelRisco || v.nivelRisco === filters.nivelRisco;
+
+        const vistoriaDate = new Date(v.created_at).toISOString().split('T')[0];
+        const matchesStartDate = !filters.startDate || vistoriaDate >= filters.startDate;
+        const matchesEndDate = !filters.endDate || vistoriaDate <= filters.endDate;
+
+        return matchesSearch && matchesBairro && matchesRisco && matchesStartDate && matchesEndDate;
+    })
+
+    const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
     return (
         <div className="bg-slate-50 min-h-screen pb-24">
@@ -106,17 +137,103 @@ const VistoriaList = ({ onNew, onEdit }) => {
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por endereço, nome ou ID..."
-                        className="w-full bg-slate-100 p-3 pl-10 rounded-xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-medium"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                {/* Search Bar & Filter Toggle */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Buscar endereço, nome ou ID..."
+                            className="w-full bg-slate-100 p-2.5 pl-9 rounded-xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-medium text-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <button
+                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                        className={`p-2.5 rounded-xl transition-all flex items-center gap-2 border ${isFilterOpen || activeFiltersCount > 0
+                            ? 'bg-blue-50 border-blue-200 text-[#2a5299]'
+                            : 'bg-white border-gray-200 text-gray-500'
+                            }`}
+                    >
+                        <Filter size={20} />
+                        {activeFiltersCount > 0 && (
+                            <span className="bg-[#2a5299] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                                {activeFiltersCount}
+                            </span>
+                        )}
+                    </button>
                 </div>
+
+                {/* Expanded Filters Panel */}
+                {isFilterOpen && (
+                    <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-gray-200 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex justify-between items-center mb-4">
+                            <span className="text-xs font-black text-gray-400 uppercase tracking-wider">Filtros Avançados</span>
+                            <button onClick={handleClearFilters} className="text-[#2a5299] text-xs font-bold hover:underline">
+                                Limpar Tudo
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                            {/* Bairro Filter */}
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1 block">Bairro / Localidade</label>
+                                <select
+                                    className="w-full bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-[#2a5299]/20"
+                                    value={filters.bairro}
+                                    onChange={(e) => setFilters(prev => ({ ...prev, bairro: e.target.value }))}
+                                >
+                                    <option value="">Todos os Bairros</option>
+                                    {neighborhoods.map(b => (
+                                        <option key={b} value={b}>{b}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Risk Level Filter */}
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1 block">Nível de Risco</label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {['Baixo', 'Médio', 'Alto', 'Iminente'].map(level => (
+                                        <button
+                                            key={level}
+                                            onClick={() => setFilters(prev => ({ ...prev, nivelRisco: prev.nivelRisco === level ? '' : level }))}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${filters.nivelRisco === level
+                                                ? 'bg-[#2a5299] text-white border-[#2a5299] shadow-md'
+                                                : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            {level}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Date Range Filter */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1 block">Desde</label>
+                                    <input
+                                        type="date"
+                                        className="w-full bg-white border border-gray-200 p-2 rounded-xl text-xs font-bold text-gray-700"
+                                        value={filters.startDate}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1 mb-1 block">Até</label>
+                                    <input
+                                        type="date"
+                                        className="w-full bg-white border border-gray-200 p-2 rounded-xl text-xs font-bold text-gray-700"
+                                        value={filters.endDate}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* List */}
