@@ -176,7 +176,7 @@ export const generatePDF = async (rawData, type) => {
 
             <!-- Title Badge -->
             <div style="text-align: center;">
-                <div style="display: inline-block; background: #2a5299; color: white; padding: 8px 40px; border-radius: 4px; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <div style="display: inline-flex; align-items: center; justify-content: center; background: #2a5299; color: white; padding: 0 40px; height: 40px; border-radius: 4px; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); line-height: 1;">
                     ${title}
                 </div>
             </div>
@@ -184,15 +184,15 @@ export const generatePDF = async (rawData, type) => {
     `;
 
     const sectionTitle = (title) => `
-        <div style="background: #f8fafc; border-left: 5px solid #2a5299; padding: 10px 15px; margin: 20px 0 10px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; border-radius: 0 6px 6px 0; page-break-inside: avoid; page-break-after: avoid;">
+        <div style="background: #f8fafc; border-left: 5px solid #2a5299; padding: 0 15px; margin: 30px 0 15px 0; height: 38px; display: flex; align-items: center; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; border-radius: 0 6px 6px 0; page-break-inside: avoid; page-break-after: avoid; line-height: 1;">
             ${title}
         </div>
     `;
 
     const renderField = (label, value) => `
-        <div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid;">
-            <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">${label}</div>
-            <div style="font-size: 12px; color: #1e293b; font-weight: 500; line-height: 1.3;">${value || 'Não informado'}</div>
+        <div style="padding: 10px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; margin-bottom: 5px;">
+            <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; line-height: 1;">${label}</div>
+            <div style="font-size: 12px; color: #1e293b; font-weight: 500; line-height: 1.4;">${value || 'Não informado'}</div>
         </div>
     `;
 
@@ -203,7 +203,7 @@ export const generatePDF = async (rawData, type) => {
             'Alto': '#f97316',
             'Iminente': '#ef4444'
         };
-        return `<span style="background: ${colors[nivel] || '#64748b'}; color: white; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; display: inline-block; line-height: 1.3; vertical-align: middle; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2);">${nivel.toUpperCase()}</span>`;
+        return `<span style="background: ${colors[nivel] || '#64748b'}; color: white; padding: 0 12px; height: 24px; border-radius: 4px; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; line-height: 1; vertical-align: middle; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase;">${nivel}</span>`;
     };
 
     let contentHtml = '';
