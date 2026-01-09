@@ -9,7 +9,7 @@ export default function ChecklistSaida() {
     const handleConfirm = () => {
         // Save confirmation timestamp
         const today = new Date().toDateString()
-        localStorage.setItem(`equipment_check_v2_${today}`, new Date().toISOString())
+        localStorage.setItem(`equipment_check_v3_${today}`, new Date().toISOString())
         setConfirmed(true)
 
         // Navigate to inspections after a brief moment

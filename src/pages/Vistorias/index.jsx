@@ -14,7 +14,7 @@ const Vistorias = () => {
     const handleNew = () => {
         // Enforce Equipment Check Protocol
         const today = new Date().toDateString()
-        const checkKey = `equipment_check_v2_${today}`
+        const checkKey = `equipment_check_v3_${today}`
         const hasCheck = localStorage.getItem(checkKey)
 
         console.log(`[Protocol Check] Key: ${checkKey}, Value: ${hasCheck}`)
