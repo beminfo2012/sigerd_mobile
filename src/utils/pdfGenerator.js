@@ -2,6 +2,8 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 
+// Deployment trigger: PDF Header Update v2
+
 const normalizeData = (data, type) => {
     const isVistoria = type === 'vistoria';
     if (isVistoria) {
@@ -88,6 +90,29 @@ const normalizeData = (data, type) => {
 };
 
 export const generatePDF = async (rawData, type) => {
+    // Helper to convert imported asset URLs to Base64 for html2canvas stability
+    const urlToBase64 = async (url) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            console.warn('Failed to convert logo to Base64, using original URL:', e);
+            return url;
+        }
+    };
+
+    // Pre-load logos
+    const [logoDefesaCivilStr, logoSigerdStr] = await Promise.all([
+        urlToBase64(LOGO_DEFESA_CIVIL),
+        urlToBase64(LOGO_SIGERD)
+    ]);
+
     const data = normalizeData(rawData, type);
     const isVistoria = type === 'vistoria';
     const title = isVistoria ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
@@ -112,7 +137,7 @@ export const generatePDF = async (rawData, type) => {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <!-- Left: Defesa Civil Logo -->
                 <div style="width: 120px; display: flex; justify-content: flex-start;">
-                    <img src="${LOGO_DEFESA_CIVIL}" style="height: 85px; width: auto; object-fit: contain;" />
+                    <img src="${logoDefesaCivilStr}" style="height: 85px; width: auto; object-fit: contain;" />
                 </div>
 
                 <!-- Center: Titles -->
@@ -127,7 +152,7 @@ export const generatePDF = async (rawData, type) => {
 
                 <!-- Right: SIGERD Logo -->
                 <div style="width: 120px; display: flex; justify-content: flex-end;">
-                    <img src="${LOGO_SIGERD}" style="height: 85px; width: auto; object-fit: contain;" />
+                    <img src="${logoSigerdStr}" style="height: 85px; width: auto; object-fit: contain;" />
                 </div>
             </div>
 
