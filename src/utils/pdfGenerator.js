@@ -154,7 +154,7 @@ export const generatePDF = async (rawData, type) => {
         <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 45px 40px 25px 40px; font-family: 'Arial', sans-serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <!-- Left: Defesa Civil Logo -->
-                <div style="width: 120px; display: flex; justify-content: flex-start;">
+                <div style="width: 120px; display: flex; justify-content: center; align-items: center;">
                     <img src="${logoDefesaCivilStr}" style="height: 85px; width: auto; object-fit: contain;" />
                 </div>
 
@@ -169,9 +169,8 @@ export const generatePDF = async (rawData, type) => {
                 </div>
 
                 <!-- Right: SIGERD Logo -->
-                <div style="width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="width: 120px; display: flex; justify-content: center; align-items: center;">
                     <img src="${logoSigerdStr}" style="height: 85px; width: auto; object-fit: contain;" />
-                    <div style="margin-top: 5px; font-size: 16px; color: #1e3a8a; font-weight: 900; letter-spacing: 1px;">SIGERD</div>
                 </div>
             </div>
 
