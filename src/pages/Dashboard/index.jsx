@@ -553,23 +553,22 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Start Inspection Button - Discreet Version */}
+            {/* Start Inspection Button - More Discreet Version */}
             <div
                 onClick={() => navigate('/checklist-saida')}
-                className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
+                className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
             >
-                <div className="flex items-center gap-4">
-                    <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
-                        <Truck size={24} strokeWidth={2.5} />
+                <div className="flex items-center gap-3">
+                    <div className="bg-slate-100 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600">
+                        <Truck size={18} strokeWidth={2.5} />
                     </div>
-                    <div>
-                        <div className="text-[10px] font-black text-slate-400 mb-0.5 uppercase tracking-widest">Prontidão</div>
-                        <div className="text-xl font-black text-slate-800">Iniciar Vistoria</div>
-                        <div className="text-xs font-bold text-blue-600">Verificar equipamentos</div>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-700 leading-tight">Iniciar Vistoria</span>
+                        <span className="text-[10px] text-slate-400 font-medium leading-tight">Confirmar Prontidão</span>
                     </div>
                 </div>
-                <div className="bg-slate-50 w-10 h-10 rounded-full flex items-center justify-center text-slate-300">
-                    <ChevronRight size={20} />
+                <div className="text-slate-300 pr-2">
+                    <ChevronRight size={16} />
                 </div>
             </div>
 
