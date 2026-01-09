@@ -307,10 +307,24 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
 
     container.innerHTML = htmlContent;
 
+    // Diagnostic logging for the logo
+    const logoImg = container.querySelector('img[src^="data:image"]');
+    if (logoImg) {
+        if (logoImg.complete) {
+            console.log("Logo image already loaded.");
+        } else {
+            console.log("Logo image loading...");
+            logoImg.onload = () => console.log("Logo image load complete.");
+            logoImg.onerror = (e) => console.error("Logo image load error:", e);
+        }
+    } else {
+        console.warn("Logo image not found in container!");
+    }
+
     // Generate PDF
     try {
         // Wait for potential images to load
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         const canvas = await html2canvas(container, {
             scale: 2,

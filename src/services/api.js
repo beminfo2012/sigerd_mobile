@@ -143,7 +143,8 @@ export const api = {
                 },
                 breakdown,
                 locations,
-                alerts: inmetAlerts
+                alerts: inmetAlerts,
+                vistorias: allVistorias
             }
         } catch (error) {
             console.error('API Error:', error)

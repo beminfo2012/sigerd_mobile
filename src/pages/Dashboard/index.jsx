@@ -19,6 +19,19 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true)
     const [showReportMenu, setShowReportMenu] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
+    const [viewMode, setViewMode] = useState('dashboard') // 'dashboard' or 'report'
+
+    const normalizeVistoria = (v) => {
+        if (!v) return null;
+        // Handle inconsistent date keys
+        const dateRaw = v.created_at || v.data_hora || v.dataHora || v.createdAt;
+        const normalizedDate = dateRaw ? new Date(dateRaw) : new Date();
+
+        // Handle inconsistent category keys
+        const normalizedCategory = v.categoria_risco || v.categoriaRisco || 'Outros';
+
+        return { ...v, normalizedDate, normalizedCategory };
+    };
 
     useEffect(() => {
         console.log('[Dashboard] useEffect running - starting data load...');
@@ -39,7 +52,8 @@ const Dashboard = () => {
                 let finalData = dashResult || {
                     stats: { totalVistorias: 0, activeOccurrences: 0, inmetAlertsCount: 0 },
                     breakdown: [],
-                    locations: []
+                    locations: [],
+                    vistorias: []
                 }
 
                 const localVistorias = await getAllVistoriasLocal().catch(err => {
@@ -81,14 +95,15 @@ const Dashboard = () => {
                     const total = validVistorias.length
                     const counts = {}
                     validVistorias.forEach(v => {
-                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
+                        const vn = normalizeVistoria(v)
+                        const cat = vn.normalizedCategory
                         counts[cat] = (counts[cat] || 0) + 1
                     })
 
-                    // Color palette for distinct categories
-                    const colorPalette = {
+                    const categoryColors = {
                         'Geológico / Geotécnico': 'bg-orange-500',
-                        'Risco Geológico': 'bg-orange-500',
+                        'HIDROLÓGICO': 'bg-blue-500',
+                        'GEOLÓGICO / GEOTÉCNICO': 'bg-orange-500',
                         'Hidrológico': 'bg-blue-500',
                         'Inundação/Alagamento': 'bg-blue-500',
                         'Estrutural': 'bg-slate-400',
@@ -99,14 +114,9 @@ const Dashboard = () => {
                         'Infraestrutura Urbana': 'bg-indigo-500',
                         'Sanitário': 'bg-rose-500',
                         'Outros': 'bg-slate-400',
-                        // Legacy/Simplified keys support
                         'Deslizamento': 'bg-orange-500',
                         'Alagamento': 'bg-blue-500',
-                        'Inundação': 'bg-blue-500',
-                        'Enxurrada': 'bg-blue-400',
-                        'Vendaval': 'bg-sky-500',
-                        'Granizo': 'bg-sky-400',
-                        'Incêndio': 'bg-red-500'
+                        'Inundação': 'bg-blue-500'
                     };
                     const defaultColors = ['bg-orange-500', 'bg-blue-500', 'bg-slate-400', 'bg-emerald-500'];
 
@@ -116,26 +126,28 @@ const Dashboard = () => {
                         label,
                         count: counts[label],
                         percentage: totalOccurrences > 0 ? Math.round((counts[label] / totalOccurrences) * 100) : 0,
-                        color: colorPalette[label] || defaultColors[idx % defaultColors.length]
+                        color: categoryColors[label] || categoryColors[label.toUpperCase()] || defaultColors[idx % defaultColors.length]
                     })).sort((a, b) => b.count - a.count)
 
                     finalData.locations = validVistorias
-                        .filter(v => v.coordenadas && v.coordenadas.includes(','))
                         .map(v => {
-                            const parts = v.coordenadas.split(',')
+                            const vn = normalizeVistoria(v)
+                            if (!vn.coordenadas || !vn.coordenadas.includes(',')) return null
+
+                            const parts = vn.coordenadas.split(',')
                             const lat = parseFloat(parts[0])
                             const lng = parseFloat(parts[1])
 
                             if (isNaN(lat) || isNaN(lng)) return null
 
-                            const cat = v.categoriaRisco || v.categoria_risco || 'Local'
-                            const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                            const cat = vn.normalizedCategory
+                            const subtypes = vn.subtiposRisco || vn.subtipos_risco || []
                             return {
                                 lat,
                                 lng,
                                 risk: cat,
                                 details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                date: v.created_at || v.data_hora || new Date().toISOString()
+                                date: vn.normalizedDate.toISOString()
                             }
                         })
                         .filter(loc => loc !== null)
@@ -143,33 +155,35 @@ const Dashboard = () => {
                     const unsynced = validVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
 
                     unsynced.forEach(v => {
-                        if (v.coordenadas && v.coordenadas.includes(',')) {
-                            const parts = v.coordenadas.split(',')
+                        const vn = normalizeVistoria(v)
+                        if (vn.coordenadas && vn.coordenadas.includes(',')) {
+                            const parts = vn.coordenadas.split(',')
                             const lat = parseFloat(parts[0])
                             const lng = parseFloat(parts[1])
 
                             if (!isNaN(lat) && !isNaN(lng)) {
-                                const cat = v.categoriaRisco || v.categoria_risco || 'Pendente'
-                                const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                                const cat = vn.normalizedCategory
+                                const subtypes = vn.subtiposRisco || vn.subtipos_risco || []
                                 finalData.locations.push({
                                     lat,
                                     lng,
                                     risk: cat,
                                     details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                    date: v.created_at || v.data_hora || new Date().toISOString()
+                                    date: vn.normalizedDate.toISOString()
                                 })
                             }
                         }
 
-                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
+                        const cat = vn.normalizedCategory
                         const existing = finalData.breakdown.find(b => b.label.toLowerCase() === cat.toLowerCase())
                         if (existing) {
                             existing.count++
                         } else {
-                            // Define colorPalette here too for the remote branch
-                            const colorPalette = {
+                            // Define categoryColors here too for the remote branch
+                            const categoryColors = {
                                 'Geológico / Geotécnico': 'bg-orange-500',
-                                'Risco Geológico': 'bg-orange-500',
+                                'HIDROLÓGICO': 'bg-blue-500',
+                                'GEOLÓGICO / GEOTÉCNICO': 'bg-orange-500',
                                 'Hidrológico': 'bg-blue-500',
                                 'Inundação/Alagamento': 'bg-blue-500',
                                 'Estrutural': 'bg-slate-400',
@@ -185,12 +199,15 @@ const Dashboard = () => {
                                 label: cat,
                                 count: 1,
                                 percentage: 0,
-                                color: colorPalette[cat] || 'bg-slate-300'
+                                color: categoryColors[cat] || categoryColors[cat.toUpperCase()] || 'bg-slate-300'
                             })
                         }
                     })
 
                     finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length
+
+                    // Add unsynced to the full vistorias list for consistent report filtering
+                    finalData.vistorias = [...(finalData.vistorias || []), ...unsynced]
 
                     const totalOccurrences = finalData.breakdown.reduce((acc, b) => acc + b.count, 0)
                     finalData.breakdown.forEach(b => {
@@ -221,10 +238,13 @@ const Dashboard = () => {
                         'Deslizamento': 'bg-orange-500'
                     };
 
-                    finalData.breakdown = finalData.breakdown.map(item => ({
-                        ...item,
-                        color: masterPalette[item.label] || item.color || 'bg-slate-300'
-                    }));
+                    finalData.breakdown = finalData.breakdown.map(item => {
+                        const label = item.label || 'Outros';
+                        return {
+                            ...item,
+                            color: masterPalette[label] || masterPalette[label.toUpperCase()] || item.color || 'bg-slate-300'
+                        };
+                    });
                 }
                 setWeather(weatherResult)
                 setData(finalData)
@@ -697,20 +717,29 @@ const Dashboard = () => {
                                                             return d >= threshold;
                                                         });
 
-                                                        // Recalculate breakdown for the selected timeframe
+                                                        // Recalculate breakdown from the FULL filtered vistorias list
+                                                        const filteredVistorias = (data.vistorias || []).filter(v => {
+                                                            const vn = normalizeVistoria(v);
+                                                            return vn.normalizedDate >= threshold;
+                                                        });
+
                                                         const counts = {};
-                                                        filteredData.locations.forEach(l => {
-                                                            const cat = l.risk || 'Outros';
+                                                        filteredVistorias.forEach(v => {
+                                                            const vn = normalizeVistoria(v);
+                                                            const cat = vn.normalizedCategory;
                                                             counts[cat] = (counts[cat] || 0) + 1;
                                                         });
 
-                                                        const total = filteredData.locations.length;
-                                                        filteredData.breakdown = Object.keys(counts).map((label) => ({
-                                                            label,
-                                                            count: counts[label],
-                                                            percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
-                                                            // color will be inherited or doesn't matter much for the PDF table/list
-                                                        })).sort((a, b) => b.count - a.count);
+                                                        const total = filteredVistorias.length;
+                                                        filteredData.breakdown = Object.keys(counts).map((label) => {
+                                                            const original = data.breakdown.find(b => b.label === label);
+                                                            return {
+                                                                label,
+                                                                count: counts[label],
+                                                                percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                                                                color: original ? original.color : 'bg-slate-400'
+                                                            };
+                                                        }).sort((a, b) => b.count - a.count);
 
                                                         // Update stats for report
                                                         filteredData.stats = {
