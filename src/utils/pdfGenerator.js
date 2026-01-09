@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { LOGO_BASE64 } from './logoBase64';
+import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 
 const normalizeData = (data, type) => {
     const isVistoria = type === 'vistoria';
@@ -108,18 +108,34 @@ export const generatePDF = async (rawData, type) => {
     container.style.zIndex = '-9999';
 
     const headerHtml = `
-        <div style="background-color: #f8fafc; border-bottom: 4px solid #2a5299; padding: 40px; text-align: center;">
-            <div style="margin-bottom: 20px;">
-                <img src="${LOGO_BASE64}" style="height: 120px; width: auto; display: block; margin: 0 auto;" />
+        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 20px 40px; font-family: 'Arial', sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <!-- Left: Defesa Civil Logo -->
+                <div style="width: 120px; display: flex; justify-content: flex-start;">
+                    <img src="${LOGO_DEFESA_CIVIL}" style="height: 85px; width: auto; object-fit: contain;" />
+                </div>
+
+                <!-- Center: Titles -->
+                <div style="flex: 1; text-align: center; padding: 0 15px;">
+                    <h1 style="margin: 0; font-size: 22px; color: #000000; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2;">
+                        PREFEITURA MUNICIPAL DE<br/>SANTA MARIA DE JETIBÁ
+                    </h1>
+                    <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #000000; font-weight: 700; text-transform: uppercase;">
+                        COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL
+                    </h2>
+                </div>
+
+                <!-- Right: SIGERD Logo -->
+                <div style="width: 120px; display: flex; justify-content: flex-end;">
+                    <img src="${LOGO_SIGERD}" style="height: 85px; width: auto; object-fit: contain;" />
+                </div>
             </div>
-            <h1 style="margin: 0; font-size: 26px; color: #1e3a8a; text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; line-height: 1.2;">
-                Prefeitura Municipal de Santa Maria de Jetibá
-            </h1>
-            <h2 style="margin: 5px 0 20px 0; font-size: 18px; color: #2a5299; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-                COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL
-            </h2>
-            <div style="display: inline-block; background: #2a5299; color: white; padding: 8px 30px; border-radius: 4px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                ${title}
+
+            <!-- Title Badge -->
+            <div style="text-align: center;">
+                <div style="display: inline-block; background: #2a5299; color: white; padding: 8px 40px; border-radius: 4px; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                    ${title}
+                </div>
             </div>
         </div>
     `;
