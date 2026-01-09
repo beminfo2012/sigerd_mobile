@@ -368,10 +368,43 @@ export const generatePDF = async (rawData, type) => {
         }));
     };
 
+    // Helper to prevent elements from being split between pages
+    const applySmartPageBreaks = () => {
+        const PAGE_HEIGHT = 1188; // Height of one A4 page in px at 840px width
+        const elements = container.querySelectorAll('[style*="page-break-inside: avoid"]');
+
+        elements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const relativeTop = rect.top - containerRect.top;
+            const relativeBottom = rect.bottom - containerRect.top;
+
+            const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
+            const pageOfBottom = Math.floor((relativeBottom - 1) / PAGE_HEIGHT);
+
+            // If element spans across two pages, insert a spacer before it
+            if (pageOfTop !== pageOfBottom) {
+                const spacer = document.createElement('div');
+                const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
+                spacer.style.height = `${spacerHeight}px`;
+                spacer.style.width = '100%';
+                spacer.setAttribute('data-pdf-spacer', 'true');
+                el.parentNode.insertBefore(spacer, el);
+                console.log('Smart Page Break: Inserted spacer of', spacerHeight, 'px before', el.textContent.substring(0, 20));
+            }
+        });
+    };
+
     try {
         await waitForImages();
-        // Increased delay for base64 rendering and added scroll to ensure fixed element visibility
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        // Delay for rendering stability
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Execute Smart Page Breaking logic
+        applySmartPageBreaks();
+
+        // Final pre-render delay
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         const canvas = await html2canvas(container, {
             scale: 2,
