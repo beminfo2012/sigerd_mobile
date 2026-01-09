@@ -151,7 +151,7 @@ export const generatePDF = async (rawData, type) => {
     container.style.zIndex = '-9999';
 
     const headerHtml = `
-        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 20px 40px; font-family: 'Arial', sans-serif;">
+        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 45px 40px 25px 40px; font-family: 'Arial', sans-serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <!-- Left: Defesa Civil Logo -->
                 <div style="width: 120px; display: flex; justify-content: flex-start;">
