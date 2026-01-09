@@ -169,8 +169,9 @@ export const generatePDF = async (rawData, type) => {
                 </div>
 
                 <!-- Right: SIGERD Logo -->
-                <div style="width: 120px; display: flex; justify-content: flex-end;">
+                <div style="width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                     <img src="${logoSigerdStr}" style="height: 85px; width: auto; object-fit: contain;" />
+                    <div style="margin-top: 5px; font-size: 16px; color: #1e3a8a; font-weight: 900; letter-spacing: 1px;">SIGERD</div>
                 </div>
             </div>
 
