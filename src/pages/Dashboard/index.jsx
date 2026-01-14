@@ -781,10 +781,11 @@ const Dashboard = () => {
                                     center={[loc.lat, loc.lng]}
                                     radius={8}
                                     pathOptions={{
-                                        color: isHighRisk ? '#ef4444' : '#f97316',
+                                        color: '#ffffff',
+                                        weight: 2,
                                         fillColor: isHighRisk ? '#ef4444' : '#f97316',
-                                        fillOpacity: 0.6,
-                                        stroke: false
+                                        fillOpacity: 1,
+                                        stroke: true
                                     }}
                                 >
                                     <Popup>
