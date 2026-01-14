@@ -7,8 +7,7 @@ import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, getAllInterdicoesLocal } from '../../services/db'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
-import { getShelterStats } from '../../services/shelterApi'
-import { getAllSheltersLocal, getAllOccupantsLocal, getAllDonationsLocal } from '../../services/shelterDb'
+
 
 // Comprehensive Category Mapping
 const CATEGORY_MAP = {
@@ -86,7 +85,7 @@ const Dashboard = () => {
     const [showReportMenu, setShowReportMenu] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
     const [timeframe, setTimeframe] = useState(0)
-    const [shelterStats, setShelterStats] = useState({ totalShelters: 0, totalOccupants: 0, totalDonations: 0 })
+
 
     const normalizeVistoria = (v) => {
         if (!v) return null;
@@ -222,15 +221,11 @@ const Dashboard = () => {
                 const pendingCount = await getPendingSyncCount().catch(() => 0)
                 setSyncCount(pendingCount)
 
-                const [dashResult, weatherResult, localV, localI, shelterStatsResult, localShelters, localOccupants, localDonations] = await Promise.all([
+                const [dashResult, weatherResult, localV, localI] = await Promise.all([
                     api.getDashboardData().catch(() => null),
                     fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null),
                     getAllVistoriasLocal().catch(() => []),
-                    getAllInterdicoesLocal().catch(() => []),
-                    getShelterStats().catch(() => ({ success: false })),
-                    getAllSheltersLocal().catch(() => []),
-                    getAllOccupantsLocal().catch(() => []),
-                    getAllDonationsLocal().catch(() => [])
+                    getAllInterdicoesLocal().catch(() => [])
                 ])
 
                 const vistoriasMap = new Map();
@@ -274,16 +269,11 @@ const Dashboard = () => {
                     breakdown: []
                 };
 
-                // Combine remote and local shelter stats
-                const combinedShelterStats = {
-                    totalShelters: (shelterStatsResult.success ? shelterStatsResult.data.totalShelters : 0) + localShelters.length,
-                    totalOccupants: (shelterStatsResult.success ? shelterStatsResult.data.totalOccupants : 0) + localOccupants.filter(o => o.status === 'active').length,
-                    totalDonations: (shelterStatsResult.success ? shelterStatsResult.data.totalDonations : 0) + localDonations.length
-                };
+
 
                 setWeather(weatherResult);
                 setData(finalData);
-                setShelterStats(combinedShelterStats);
+                setData(finalData);
             } catch (err) { console.error('Dashboard Error:', err) } finally { setLoading(false) }
         }
         load()
