@@ -1,897 +1,482 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck } from 'lucide-react'
+import { AlertTriangle, ChevronRight, CloudRain, CloudUpload, CheckCircle, Download, Printer, Truck, ClipboardList, Activity, Map as MapIcon, Users, Building, Package } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
-import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
+import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, getAllInterdicoesLocal } from '../../services/db'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
+import { getShelterStats } from '../../services/shelterApi'
+import { getAllSheltersLocal, getAllOccupantsLocal, getAllDonationsLocal } from '../../services/shelterDb'
+
+// Comprehensive Category Mapping
+const CATEGORY_MAP = {
+    // Geo/Geotech
+    'GEOLÓGICO / GEOTÉCNICO': 'Geológico / Geotécnico',
+    'GEOLÓGICO': 'Geológico / Geotécnico',
+    'RISCO GEOLÓGICO': 'Geológico / Geotécnico',
+    'DESLIZAMENTO': 'Geológico / Geotécnico',
+    'DESLIZAMENTO DE TERRA': 'Geológico / Geotécnico',
+    'MOVIMENTO DE MASSA': 'Geológico / Geotécnico',
+    'EROSÃO DO SOLO': 'Geológico / Geotécnico',
+    'TRINCA NO TERRENO': 'Geológico / Geotécnico',
+
+    // Hydrological
+    'HIDROLÓGICO': 'Hidrológico',
+    'ALAGAMENTO': 'Hidrológico',
+    'INUNDAÇÃO': 'Hidrológico',
+    'ENXURRADA': 'Hidrológico',
+    'TRANSBORDAMENTO': 'Hidrológico',
+    'INUNDAÇÃO/ALAGAMENTO': 'Hidrológico',
+
+    // Structural
+    'ESTRUTURAL': 'Estrutural',
+    'ESTRUTURAL/PREDIAL': 'Estrutural',
+    'RISCO DE DESABAMENTO': 'Estrutural',
+    'RACHADURAS': 'Estrutural',
+    'FISSURAS ESTRUTURAIS': 'Estrutural',
+    'TRINCAS': 'Estrutural',
+
+    // Environmental
+    'AMBIENTAL': 'Ambiental',
+    'QUEDA DE ÁRVORE': 'Ambiental',
+    'INCÊNDIO FLORESTAL': 'Ambiental',
+
+    // Technological
+    'TECNOLÓGICO': 'Tecnológico',
+    'RISCO ELÉTRICO': 'Tecnológico',
+    'VAZAMENTO DE GÁS': 'Tecnológico',
+    'INCÊNDIO': 'Tecnológico',
+
+    // Others
+    'CLIMÁTICO / METEOROLÓGICO': 'Climático / Meteorológico',
+    'CLIMATICO': 'Climático / Meteorológico',
+    'INFRAESTRUTURA URBANA': 'Infraestrutura Urbana',
+    'SANITÁRIO': 'Sanitário',
+    'OUTROS': 'Outros'
+};
+
+const CATEGORY_COLORS = {
+    'Geológico / Geotécnico': 'bg-orange-500',
+    'Hidrológico': 'bg-blue-500',
+    'Estrutural': 'bg-slate-400',
+    'Ambiental': 'bg-emerald-500',
+    'Tecnológico': 'bg-amber-500',
+    'Climático / Meteorológico': 'bg-sky-500',
+    'Infraestrutura Urbana': 'bg-indigo-500',
+    'Sanitário': 'bg-rose-500',
+    'Outros': 'bg-slate-400',
+    'Interdição': 'bg-red-600'
+};
+
+const standardizeCategory = (cat) => {
+    if (!cat) return 'Outros';
+    const upper = cat.trim().toUpperCase();
+    return CATEGORY_MAP[upper] || cat;
+};
 
 const Dashboard = () => {
-    console.log('[Dashboard] Component mounting...');
     const navigate = useNavigate()
     const [data, setData] = useState(null)
     const [weather, setWeather] = useState(null)
     const [syncCount, setSyncCount] = useState(0)
     const [syncing, setSyncing] = useState(false)
-    const [showForecast, setShowForecast] = useState(false)
     const [loading, setLoading] = useState(true)
     const [showReportMenu, setShowReportMenu] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
-    const [viewMode, setViewMode] = useState('dashboard') // 'dashboard' or 'report'
+    const [timeframe, setTimeframe] = useState(0)
+    const [shelterStats, setShelterStats] = useState({ totalShelters: 0, totalOccupants: 0, totalDonations: 0 })
 
     const normalizeVistoria = (v) => {
         if (!v) return null;
-        // Handle inconsistent date keys
-        const dateRaw = v.created_at || v.data_hora || v.dataHora || v.createdAt;
-        const normalizedDate = dateRaw ? new Date(dateRaw) : new Date();
+        const dateRaw = v.data_hora || v.dataHora || v.created_at || v.createdAt;
+        let dateObj;
+        if (typeof dateRaw === 'string') {
+            const cleanDate = dateRaw.replace(' ', 'T');
+            dateObj = new Date(cleanDate);
+        } else {
+            dateObj = new Date(dateRaw || Date.now());
+        }
 
-        // Handle inconsistent category keys
-        const normalizedCategory = v.categoria_risco || v.categoriaRisco || 'Outros';
+        const rawCat = v.categoria_risco || v.categoriaRisco || 'Outros';
+        const normalizedCategory = standardizeCategory(rawCat);
+        const bizId = v.vistoria_id || v.vistoriaId;
+        const id = bizId || (v.id ? `db-${v.id}` : `rnd-${Math.random()}`);
 
-        return { ...v, normalizedDate, normalizedCategory };
+        return { ...v, id, bizId, normalizedDate: dateObj, normalizedCategory };
     };
 
+    const normalizeInterdicao = (i) => {
+        if (!i) return null;
+        const dateRaw = i.data_hora || i.dataHora || i.created_at || i.createdAt;
+        let dateObj;
+        if (typeof dateRaw === 'string') {
+            const cleanDate = dateRaw.replace(' ', 'T');
+            dateObj = new Date(cleanDate);
+        } else {
+            dateObj = new Date(dateRaw || Date.now());
+        }
+        const bizId = i.interdicao_id || i.interdicaoId;
+        const id = bizId || (i.id ? `int-${i.id}` : `intrnd-${Math.random()}`);
+        return { ...i, id, bizId, normalizedDate: dateObj, type: 'Interdição' };
+    };
+
+    const getFilteredData = (rawConfig, hours) => {
+        if (!rawConfig) return null;
+
+        const now = new Date();
+        const threshold = hours > 0 ? new Date(now.getTime() - (hours * 60 * 60 * 1000)) : null;
+
+        const filteredVistorias = (rawConfig.vistorias || []).filter(v => {
+            if (!threshold) return true;
+            return v.normalizedDate.getTime() >= threshold.getTime();
+        });
+
+        const filteredInterdicoes = (rawConfig.interdicoes || []).filter(i => {
+            if (!threshold) return true;
+            return i.normalizedDate.getTime() >= threshold.getTime();
+        });
+
+        const counts = {};
+        let totalPop = 0;
+        const riskLevels = { 'Baixo': 0, 'Médio': 0, 'Alto': 0, 'Iminente': 0 };
+
+        filteredVistorias.forEach(v => {
+            const cat = v.normalizedCategory;
+            counts[cat] = (counts[cat] || 0) + 1;
+
+            // Social Impact Aggregation
+            const pop = parseInt(v.populacaoEstimada || v.populacao_estimada || 0);
+            if (!isNaN(pop)) totalPop += pop;
+
+            // Risk Level Distribution
+            const level = v.nivelRisco || v.nivel_risco || 'Baixo';
+            if (riskLevels.hasOwnProperty(level)) riskLevels[level]++;
+        });
+
+        const totalV = filteredVistorias.length;
+
+        const newBreakdown = Object.keys(counts).map(label => ({
+            label,
+            count: counts[label],
+            percentage: totalV > 0 ? (counts[label] / totalV * 100) : 0,
+            color: CATEGORY_COLORS[label] || 'bg-slate-400'
+        })).sort((a, b) => b.count - a.count);
+
+        const adjustedBreakdown = newBreakdown.map(item => ({
+            ...item,
+            percentage: Math.round(item.percentage)
+        }));
+
+        const vistoriaLocations = filteredVistorias.map(v => {
+            if (!v.coordenadas || !v.coordenadas.includes(',')) return null;
+            const [lat, lng] = v.coordenadas.split(',').map(parseFloat);
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return {
+                lat, lng,
+                risk: v.normalizedCategory,
+                details: v.subtiposRisco?.join(', ') || v.normalizedCategory,
+                date: v.normalizedDate.toISOString(),
+                type: 'vistoria',
+                level: v.nivelRisco || 'Baixo'
+            };
+        }).filter(Boolean);
+
+        const interdicaoLocations = filteredInterdicoes.map(i => {
+            if (!i.coordenadas || !i.coordenadas.includes(',')) return null;
+            const [lat, lng] = i.coordenadas.split(',').map(parseFloat);
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return {
+                lat, lng,
+                risk: 'Interdição',
+                details: i.recomendacoes || i.riscoTipo || 'Interdição de Imóvel',
+                date: i.normalizedDate.toISOString(),
+                type: 'interdicao',
+                level: 'Iminente'
+            };
+        }).filter(Boolean);
+
+        return {
+            ...rawConfig,
+            stats: {
+                ...rawConfig.stats,
+                totalVistorias: totalV,
+                totalInterdicoes: filteredInterdicoes.length,
+                totalPopulacao: totalPop,
+                riskLevels,
+                activeOccurrences: rawConfig.stats.activeOccurrences || 0
+            },
+            breakdown: adjustedBreakdown,
+            locations: [...vistoriaLocations, ...interdicaoLocations],
+            vistorias: filteredVistorias,
+            interdicoes: filteredInterdicoes
+        };
+    };
+
+    const displayData = useMemo(() => getFilteredData(data, timeframe), [data, timeframe]);
+
     useEffect(() => {
-        console.log('[Dashboard] useEffect running - starting data load...');
         const load = async () => {
             try {
-                console.log('[Dashboard] Fetching pending sync count...');
                 const pendingCount = await getPendingSyncCount().catch(() => 0)
                 setSyncCount(pendingCount)
 
-                const [dashResult, weatherResult] = await Promise.all([
-                    api.getDashboardData().catch(err => {
-                        console.warn('Supabase fetch failed, showing local data only:', err)
-                        return null
-                    }),
-                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null)
+                const [dashResult, weatherResult, localV, localI, shelterStatsResult, localShelters, localOccupants, localDonations] = await Promise.all([
+                    api.getDashboardData().catch(() => null),
+                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null),
+                    getAllVistoriasLocal().catch(() => []),
+                    getAllInterdicoesLocal().catch(() => []),
+                    getShelterStats().catch(() => ({ success: false })),
+                    getAllSheltersLocal().catch(() => []),
+                    getAllOccupantsLocal().catch(() => []),
+                    getAllDonationsLocal().catch(() => [])
                 ])
 
-                let finalData = dashResult || {
-                    stats: { totalVistorias: 0, activeOccurrences: 0, inmetAlertsCount: 0 },
-                    breakdown: [],
-                    locations: [],
-                    vistorias: []
-                }
+                const vistoriasMap = new Map();
+                const interdicoesMap = new Map();
 
-                const localVistorias = await getAllVistoriasLocal().catch(err => {
-                    console.error('[Dashboard] Error loading local vistorias:', err);
-                    return [];
-                });
-
-                // Filter out any corrupted vistorias that might crash the app
-                const validVistorias = localVistorias.filter(v => {
-                    try {
-                        // Basic validation - must have essential fields
-                        if (!v) return false;
-
-                        // If has coordinates, they must be valid
-                        if (v.coordenadas) {
-                            if (!v.coordenadas.includes(',')) {
-                                console.warn('[Dashboard] Skipping vistoria with invalid coordinates (no comma):', v.vistoriaId || v.id);
-                                return false;
-                            }
-                            const parts = v.coordenadas.split(',');
-                            const lat = parseFloat(parts[0]);
-                            const lng = parseFloat(parts[1]);
-                            if (isNaN(lat) || isNaN(lng)) {
-                                console.warn('[Dashboard] Skipping vistoria with NaN coordinates:', v.vistoriaId || v.id);
-                                return false;
-                            }
-                        }
-
-                        return true;
-                    } catch (err) {
-                        console.error('[Dashboard] Error validating vistoria:', v, err);
-                        return false;
-                    }
-                });
-
-                console.log(`[Dashboard] Loaded ${localVistorias.length} local vistorias, ${validVistorias.length} valid`);
-
-                if (!dashResult) {
-                    const total = validVistorias.length
-                    const counts = {}
-                    validVistorias.forEach(v => {
-                        const vn = normalizeVistoria(v)
-                        const cat = vn.normalizedCategory
-                        counts[cat] = (counts[cat] || 0) + 1
-                    })
-
-                    const categoryColors = {
-                        'Geológico / Geotécnico': 'bg-orange-500',
-                        'HIDROLÓGICO': 'bg-blue-500',
-                        'GEOLÓGICO / GEOTÉCNICO': 'bg-orange-500',
-                        'Hidrológico': 'bg-blue-500',
-                        'Inundação/Alagamento': 'bg-blue-500',
-                        'Estrutural': 'bg-slate-400',
-                        'Estrutural/Predial': 'bg-slate-400',
-                        'Ambiental': 'bg-emerald-500',
-                        'Tecnológico': 'bg-amber-500',
-                        'Climático / Meteorológico': 'bg-sky-500',
-                        'Infraestrutura Urbana': 'bg-indigo-500',
-                        'Sanitário': 'bg-rose-500',
-                        'Outros': 'bg-slate-400',
-                        'Deslizamento': 'bg-orange-500',
-                        'Alagamento': 'bg-blue-500',
-                        'Inundação': 'bg-blue-500'
-                    };
-                    const defaultColors = ['bg-orange-500', 'bg-blue-500', 'bg-slate-400', 'bg-emerald-500'];
-
-                    const totalOccurrences = total
-                    finalData.stats.totalVistorias = total
-                    finalData.breakdown = Object.keys(counts).map((label, idx) => ({
-                        label,
-                        count: counts[label],
-                        percentage: totalOccurrences > 0 ? Math.round((counts[label] / totalOccurrences) * 100) : 0,
-                        color: categoryColors[label] || categoryColors[label.toUpperCase()] || defaultColors[idx % defaultColors.length]
-                    })).sort((a, b) => b.count - a.count)
-
-                    finalData.locations = validVistorias
-                        .map(v => {
-                            const vn = normalizeVistoria(v)
-                            if (!vn.coordenadas || !vn.coordenadas.includes(',')) return null
-
-                            const parts = vn.coordenadas.split(',')
-                            const lat = parseFloat(parts[0])
-                            const lng = parseFloat(parts[1])
-
-                            if (isNaN(lat) || isNaN(lng)) return null
-
-                            const cat = vn.normalizedCategory
-                            const subtypes = vn.subtiposRisco || vn.subtipos_risco || []
-                            return {
-                                lat,
-                                lng,
-                                risk: cat,
-                                details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                date: vn.normalizedDate.toISOString()
-                            }
-                        })
-                        .filter(loc => loc !== null)
-                } else {
-                    const unsynced = validVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
-
-                    unsynced.forEach(v => {
-                        const vn = normalizeVistoria(v)
-                        if (vn.coordenadas && vn.coordenadas.includes(',')) {
-                            const parts = vn.coordenadas.split(',')
-                            const lat = parseFloat(parts[0])
-                            const lng = parseFloat(parts[1])
-
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                const cat = vn.normalizedCategory
-                                const subtypes = vn.subtiposRisco || vn.subtipos_risco || []
-                                finalData.locations.push({
-                                    lat,
-                                    lng,
-                                    risk: cat,
-                                    details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                    date: vn.normalizedDate.toISOString()
-                                })
-                            }
-                        }
-
-                        const cat = vn.normalizedCategory
-                        const existing = finalData.breakdown.find(b => b.label.toLowerCase() === cat.toLowerCase())
-                        if (existing) {
-                            existing.count++
-                        } else {
-                            // Define categoryColors here too for the remote branch
-                            const categoryColors = {
-                                'Geológico / Geotécnico': 'bg-orange-500',
-                                'HIDROLÓGICO': 'bg-blue-500',
-                                'GEOLÓGICO / GEOTÉCNICO': 'bg-orange-500',
-                                'Hidrológico': 'bg-blue-500',
-                                'Inundação/Alagamento': 'bg-blue-500',
-                                'Estrutural': 'bg-slate-400',
-                                'Estrutural/Predial': 'bg-slate-400',
-                                'Ambiental': 'bg-emerald-500',
-                                'Tecnológico': 'bg-amber-500',
-                                'Climático / Meteorológico': 'bg-sky-500',
-                                'Infraestrutura Urbana': 'bg-indigo-500',
-                                'Sanitário': 'bg-rose-500',
-                                'Outros': 'bg-slate-400'
-                            };
-                            finalData.breakdown.push({
-                                label: cat,
-                                count: 1,
-                                percentage: 0,
-                                color: categoryColors[cat] || categoryColors[cat.toUpperCase()] || 'bg-slate-300'
-                            })
-                        }
-                    })
-
-                    finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length
-
-                    // Add unsynced to the full vistorias list for consistent report filtering
-                    finalData.vistorias = [...(finalData.vistorias || []), ...unsynced]
-
-                    const totalOccurrences = finalData.breakdown.reduce((acc, b) => acc + b.count, 0)
-                    finalData.breakdown.forEach(b => {
-                        b.percentage = totalOccurrences > 0 ? Math.round((b.count / totalOccurrences) * 100) : 0
-                    })
-                    finalData.breakdown.sort((a, b) => b.count - a.count)
-                }
-
-                if (finalData.stats.totalVistorias === 0) {
-                    finalData.breakdown = []
-                } else {
-                    // Final Color Enforcement - Overwrite any colors from API
-                    const masterPalette = {
-                        'Geológico / Geotécnico': 'bg-orange-500',
-                        'Risco Geológico': 'bg-orange-500',
-                        'Hidrológico': 'bg-blue-500',
-                        'Inundação': 'bg-blue-500',
-                        'Alagamento': 'bg-blue-500',
-                        'Inundação/Alagamento': 'bg-blue-500',
-                        'Estrutural': 'bg-slate-400',
-                        'Estrutural/Predial': 'bg-slate-400',
-                        'Ambiental': 'bg-emerald-500',
-                        'Tecnológico': 'bg-amber-500',
-                        'Climático / Meteorológico': 'bg-sky-500',
-                        'Infraestrutura Urbana': 'bg-indigo-500',
-                        'Sanitário': 'bg-rose-500',
-                        'Outros': 'bg-slate-400',
-                        'Deslizamento': 'bg-orange-500'
-                    };
-
-                    finalData.breakdown = finalData.breakdown.map(item => {
-                        const label = item.label || 'Outros';
-                        return {
-                            ...item,
-                            color: masterPalette[label] || masterPalette[label.toUpperCase()] || item.color || 'bg-slate-300'
-                        };
+                if (dashResult?.vistorias) {
+                    dashResult.vistorias.forEach(v => {
+                        const vn = normalizeVistoria(v);
+                        if (vn) vistoriasMap.set(vn.id, vn);
                     });
                 }
-                setWeather(weatherResult)
-                setData(finalData)
-            } catch (error) {
-                console.error('Load Error:', error)
-            } finally {
-                setLoading(false)
-            }
+                localV.forEach(v => {
+                    const vn = normalizeVistoria(v);
+                    if (vn) vistoriasMap.set(vn.id, vn);
+                });
+
+                if (dashResult?.interdicoes) {
+                    dashResult.interdicoes.forEach(i => {
+                        const inorm = normalizeInterdicao(i);
+                        if (inorm) interdicoesMap.set(inorm.id, inorm);
+                    });
+                }
+                localI.forEach(i => {
+                    const inorm = normalizeInterdicao(i);
+                    if (inorm) interdicoesMap.set(inorm.id, inorm);
+                });
+
+                const allV = Array.from(vistoriasMap.values());
+                const allI = Array.from(interdicoesMap.values());
+
+                const finalData = {
+                    stats: {
+                        totalVistorias: allV.length,
+                        totalInterdicoes: allI.length,
+                        activeOccurrences: dashResult?.stats?.activeOccurrences || 0,
+                        inmetAlertsCount: dashResult?.stats?.inmetAlertsCount || 0
+                    },
+                    vistorias: allV,
+                    interdicoes: allI,
+                    locations: [],
+                    breakdown: []
+                };
+
+                // Combine remote and local shelter stats
+                const combinedShelterStats = {
+                    totalShelters: (shelterStatsResult.success ? shelterStatsResult.data.totalShelters : 0) + localShelters.length,
+                    totalOccupants: (shelterStatsResult.success ? shelterStatsResult.data.totalOccupants : 0) + localOccupants.filter(o => o.status === 'active').length,
+                    totalDonations: (shelterStatsResult.success ? shelterStatsResult.data.totalDonations : 0) + localDonations.length
+                };
+
+                setWeather(weatherResult);
+                setData(finalData);
+                setShelterStats(combinedShelterStats);
+            } catch (err) { console.error('Dashboard Error:', err) } finally { setLoading(false) }
         }
         load()
     }, [])
 
-    const getPredictiveInsights = () => {
-        if (!data || !data.alerts || data.alerts.length === 0) return null;
-
-        // 1. Identify active risks from alerts (using regex to avoid encoding issues)
-        const activeRisks = [];
-        data.alerts.forEach(alert => {
-            const desc = (alert.descricao || alert.aviso_tipo || '').toLowerCase();
-
-            // Mapping alerts keywords to system categories
-            if (/chuva|alagamento|inunda|enxurrada/.test(desc)) {
-                activeRisks.push('Hidrológico');
-            }
-            if (/deslizamento|encosta|geol|geot/.test(desc)) {
-                activeRisks.push('Geológico / Geotécnico');
-            }
-            if (/vento|vendaval|granizo|tempestade|clim/.test(desc)) {
-                activeRisks.push('Climático / Meteorológico');
-            }
-            if (/estrutural|predial|desabamento/.test(desc)) {
-                activeRisks.push('Estrutural');
-            }
-        });
-
-        if (activeRisks.length === 0) return null;
-
-        // 2. Correlate with historical data (locations)
-        const neighborhoodRisk = {};
-        data.locations.forEach(loc => {
-            // Check for risk match (normalized)
-            const isMatch = activeRisks.some(r =>
-                (loc.risk || '').toLowerCase().includes(r.split(' ')[0].toLowerCase().replace(/[^a-z]/g, ''))
-            );
-
-            if (isMatch) {
-                const bairro = loc.bairro || 'Santa Maria de Jetibá';
-                neighborhoodRisk[bairro] = (neighborhoodRisk[bairro] || 0) + 1;
-            }
-        });
-
-        // 3. Sort and get top 3
-        const topBairros = Object.entries(neighborhoodRisk)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 3)
-            .map(([name, count]) => ({ name, count }));
-
-        return {
-            risks: [...new Set(activeRisks)],
-            topBairros,
-            severity: data.alerts[0].severidade || 'Alerta'
-        };
-    };
-
-    const predictive = getPredictiveInsights();
-
-    useEffect(() => {
-        const handleSyncComplete = () => {
-            console.log('[Dashboard] Sync complete detected, reloading data...')
-            window.location.reload()
-        }
-
-        window.addEventListener('sync-complete', handleSyncComplete)
-        return () => window.removeEventListener('sync-complete', handleSyncComplete)
-    }, [])
-
-    // Cluster Detection for toggle
-    let hasClusters = false;
-    if (data && data.locations) {
-        const clusters = {};
-        data.locations.forEach(loc => {
-            const lat = parseFloat(loc.lat);
-            const lng = parseFloat(loc.lng);
-            if (!isNaN(lat) && !isNaN(lng)) {
-                const gridKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
-                clusters[gridKey] = (clusters[gridKey] || 0) + 1;
-            }
-        });
-        hasClusters = Object.values(clusters).some(count => count >= 2);
-    }
-
     const handleSync = async () => {
-        if (syncCount === 0 || syncing) return
+        if (syncing || syncCount === 0) return
         setSyncing(true)
-        try {
-            const result = await syncPendingData()
-            if (result.success) {
-                const [newData, newCount] = await Promise.all([
-                    api.getDashboardData(),
-                    getPendingSyncCount()
-                ])
-                setData(newData)
-                setSyncCount(newCount)
-                alert(`${result.count} vistorias sincronizadas com sucesso!`)
-            }
-        } catch (e) {
-            console.error('Sync failed:', e)
-            alert('Erro ao sincronizar dados.')
-        } finally {
-            setSyncing(false)
-        }
+        try { await syncPendingData(); window.location.reload() } catch (e) { alert('Erro na sincronização') } finally { setSyncing(false) }
     }
 
-    const handleClearCache = async () => {
-        if (!window.confirm('⚠️ AVISO: Isso irá apagar TODAS as vistorias do seu celular (mesmo as pendentes) e resetar a base de dados local. Use apenas se o gráfico estiver com erro. Continuar?')) return
-
-        try {
-            setLoading(true)
-            await resetDatabase()
-            alert('Banco de dados resetado com sucesso! Reiniciando...')
-            window.location.reload()
-        } catch (e) {
-            console.error('Reset failed:', e)
-            await clearLocalData().catch(() => { })
-            window.location.reload()
-        }
-    }
-
-    const handleExportKML = () => {
-        if (!data || !data.locations || data.locations.length === 0) {
-            alert('Não há dados de localização para exportar.')
-            return
-        }
-
-        let kml = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Vistorias Defesa Civil</name>
-    <description>Localização das vistorias registradas</description>
-    ${data.locations.map((loc, i) => `
-    <Placemark>
-      <name>Vistoria ${i + 1}</name>
-      <description>Risco: ${loc.risk}</description>
-      <Point>
-        <coordinates>${loc.lng},${loc.lat},0</coordinates>
-      </Point>
-    </Placemark>
-    `).join('')}
-  </Document>
-</kml>`
-
-        const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `vistorias_${new Date().toISOString().split('T')[0]}.kml`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-    }
-
-    const getWeatherIcon = (code) => {
-        if (code <= 1) return '☀️'
-        if (code <= 3) return '⛅'
-        if (code <= 48) return '🌫️'
-        if (code <= 67) return '🌧️'
-        if (code <= 77) return '❄️'
-        if (code <= 82) return '🌧️'
-        return '⛈️'
-    }
-
-    // Safety timeout - if loading for more than 10 seconds, something is wrong
-    useEffect(() => {
-        if (loading) {
-            const timeout = setTimeout(() => {
-                console.error('[Dashboard] STUCK IN LOADING STATE FOR 10+ SECONDS!');
-                alert('⚠️ Dashboard travado no carregamento!\n\nO dashboard não conseguiu carregar os dados.\n\nPossíveis causas:\n- Erro na API\n- Dados corrompidos\n- Problema de rede\n\nVeja o console (F12) para mais detalhes.');
-            }, 10000);
-            return () => clearTimeout(timeout);
-        }
-    }, [loading]);
-
-    console.log('[Dashboard] Render - loading:', loading, 'data:', !!data);
-
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-gradient-to-br from-blue-50 to-blue-100">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <span className="font-bold">Carregando SIGERD...</span>
-            <span className="text-sm text-gray-500">Se demorar muito, pressione F12 e veja o console</span>
-        </div>
-    )
-
-    if (!data) {
-        console.error('[Dashboard] NO DATA - returning error message');
-        return (
-            <div className="p-8 text-center">
-                <div className="text-red-500 font-bold text-xl mb-4">❌ Erro ao carregar dados do Dashboard</div>
-                <div className="text-gray-600 mb-4">O dashboard não conseguiu carregar os dados necessários.</div>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
-                >
-                    Recarregar Página
-                </button>
-            </div>
-        )
-    }
-
-    console.log('[Dashboard] Rendering main content with data:', data);
-
+    if (loading) return <div className="flex items-center justify-center min-h-screen font-bold">Carregando...</div>
+    if (!displayData) return null
 
     return (
         <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">
-            {/* Weather Widget */}
-            {weather?.current && (
-                <div
-                    onClick={() => setShowForecast(true)}
-                    className="mb-8 bg-white/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all"
-                >
-                    <div className="flex items-center gap-6">
-                        <div className="text-5xl">{getWeatherIcon(weather.current.code)}</div>
-                        <div>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-black text-slate-800 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
-                                <span className="text-xl font-bold text-slate-400">°C</span>
-                            </div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-2 items-end">
-                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
-                            <CloudRain size={14} className="text-blue-500" />
-                            <span>Chuva: {weather.daily?.[0]?.rainProb || 0}%</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
-                            <Timer size={14} className="text-slate-400" />
-                            <span>Umidade: {weather.current.humidity || 0}%</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
-                            <Activity size={14} className="text-slate-400" />
-                            <span>Vento: {Math.round(weather.current.wind || 0)} km/h</span>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-xl font-black text-gray-800 tracking-tight">Indicadores Operacionais</h1>
-                <div className="flex items-center gap-1 bg-slate-200/50 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500">
-                    <Calendar size={14} />
-                    <span>Hoje</span>
+                <div>
+                    <h1 className="text-xl font-black text-gray-800 tracking-tight">SIGERD Mobile</h1>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Painel de Gestão v3.1</p>
+                </div>
+                <select value={timeframe} onChange={e => setTimeframe(Number(e.target.value))} className="bg-white px-3 py-2 rounded-xl text-[10px] font-black text-blue-600 border border-slate-200 outline-none shadow-sm uppercase tracking-tighter">
+                    <option value={0}>Todo o Período</option>
+                    <option value={24}>Últimas 24h</option>
+                    <option value={48}>Últimas 48h</option>
+                    <option value={96}>Últimas 96h</option>
+                </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <div onClick={() => navigate('/vistorias')} className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100 relative cursor-pointer active:scale-95 transition-all">
+                    <div className="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600 mb-3"><ClipboardList size={20} /></div>
+                    <div className="text-3xl font-black text-slate-800 tabular-nums">{displayData.stats.totalVistorias}</div>
+                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Vistorias</div>
+                </div>
+                <div onClick={() => navigate('/interdicao')} className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100 relative cursor-pointer active:scale-95 transition-all">
+                    <div className="bg-red-50 w-10 h-10 rounded-xl flex items-center justify-center text-red-600 mb-3"><AlertTriangle size={20} /></div>
+                    <div className="text-3xl font-black text-slate-800 tabular-nums">{displayData.stats.totalInterdicoes}</div>
+                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Interdições</div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-5">
-                <div
-                    onClick={handleSync}
-                    className={`bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all ${syncCount > 0 ? 'cursor-pointer active:scale-95 hover:bg-orange-50/30' : ''}`}
-                >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${syncCount > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
-                        {syncing ? (
-                            <CloudUpload size={20} strokeWidth={2.5} className="animate-bounce" />
-                        ) : (
-                            syncCount > 0 ? <CloudUpload size={20} strokeWidth={2.5} /> : <CheckCircle size={20} strokeWidth={2.5} />
-                        )}
-                    </div>
-                    {syncCount > 0 ? (
-                        <div className={`absolute top-5 right-5 bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 ${syncing ? 'animate-pulse' : ''}`}>
-                            {syncing ? 'Sincronizando...' : 'Pendente'}
-                        </div>
-                    ) : (
-                        <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">OK</div>
-                    )}
-                    <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">
-                        {syncCount > 0 ? syncCount : '100%'}
-                    </div>
-                    <div className="text-xs font-bold text-slate-400 leading-tight">
-                        {syncing ? 'Enviando...' : (syncCount > 0 ? 'Clique para Sincronizar' : 'Sincronizado')}
-                    </div>
-                    {/* Reset Button - Always available if something exists locally */}
-                    {((syncCount > 0) || (data.stats.totalVistorias > 0) || (data.breakdown.length > 0)) && !syncing && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handleClearCache(); }}
-                            className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors flex items-center gap-1 active:opacity-50"
-                        >
-                            <Trash2 size={10} />
-                            Limpar Dados Locais
-                        </button>
-                    )}
-                </div>
-
-                <div
-                    onClick={() => navigate('/alerts')}
-                    className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative cursor-pointer active:scale-95 transition-all hover:bg-slate-50"
-                >
-                    <div className="bg-red-50 w-10 h-10 rounded-xl flex items-center justify-center text-red-600 mb-3">
-                        <AlertTriangle size={20} strokeWidth={2.5} />
-                    </div>
-                    {data.stats.inmetAlertsCount > 0 && (
-                        <div className="absolute top-5 right-5 bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-100 animate-pulse">
-                            {data.stats.inmetAlertsCount} Alertas
-                        </div>
-                    )}
-                    <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">{data.stats.activeOccurrences}</div>
-                    <div className="text-xs font-bold text-slate-400 leading-tight">Avisos</div>
-                </div>
-            </div>
-
-            <div
-                onClick={() => navigate('/pluviometros')}
-                className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
-            >
-                <div className="flex items-center gap-4">
-                    <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
-                        <CloudRain size={24} strokeWidth={2.5} />
-                    </div>
+            <div className="bg-gradient-to-br from-purple-600 to-purple-800 p-5 rounded-[32px] text-white mb-6 relative overflow-hidden shadow-lg" onClick={() => navigate('/abrigos')}>
+                <div className="relative z-10 flex justify-between items-center">
                     <div>
-                        <div className="text-[10px] font-black text-slate-400 mb-0.5 uppercase tracking-widest">Tempo Real</div>
-                        <div className="text-xl font-black text-slate-800">Pluviômetros</div>
-                        <div className="text-xs font-bold text-blue-600">Ver índices CEMADEN</div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Users size={14} className="text-purple-200" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-purple-200">Assistência Humanitária</span>
+                        </div>
+                        <h2 className="text-lg font-black leading-tight">Gestão de<br />Abrigos</h2>
+                        <p className="text-[10px] text-purple-200 mt-2 font-bold uppercase">Controle e Coordenação</p>
                     </div>
-                </div>
-                <div className="bg-slate-50 w-10 h-10 rounded-full flex items-center justify-center text-slate-300">
-                    <ChevronRight size={20} />
+                    <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md">
+                        <Building size={24} className="text-white" />
+                    </div>
                 </div>
             </div>
 
-            {/* Start Inspection Button - More Discreet Version */}
-            <div
-                onClick={() => navigate('/checklist-saida')}
-                className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
-            >
-                <div className="flex items-center gap-3">
-                    <div className="bg-slate-100 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600">
-                        <Truck size={18} strokeWidth={2.5} />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-700 leading-tight">Iniciar Vistoria</span>
-                        <span className="text-[10px] text-slate-400 font-medium leading-tight">Confirmar Prontidão</span>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-3xl border border-slate-100 flex items-center gap-3">
+                    <div className="bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600"><Users size={20} /></div>
+                    <div>
+                        <div className="text-xl font-black text-slate-800">{displayData.stats.totalPopulacao}</div>
+                        <div className="text-[8px] font-bold text-slate-400 uppercase">Impactados</div>
                     </div>
                 </div>
-                <div className="text-slate-300 pr-2">
-                    <ChevronRight size={16} />
+                <div className={`bg-white p-4 rounded-3xl border border-slate-100 flex items-center gap-3 transition-all ${syncCount > 0 ? 'bg-orange-50 border-orange-200' : ''}`} onClick={handleSync}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${syncCount > 0 ? 'text-orange-600' : 'text-green-600'}`}>{syncCount > 0 ? <CloudUpload size={20} /> : <CheckCircle size={20} />}</div>
+                    <div>
+                        <div className="text-xl font-black text-slate-800">{syncCount}</div>
+                        <div className="text-[8px] font-bold text-slate-400 uppercase">Pendentes</div>
+                    </div>
                 </div>
             </div>
 
-            {/* Predictive Intelligence Insight - Slim Version */}
-            {predictive && (
-                <div
-                    className="bg-white p-4 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between border-l-4 border-l-indigo-500 active:scale-[0.98] transition-all cursor-default"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="bg-indigo-50 w-11 h-11 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
-                            <ShieldAlert size={22} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <div className="text-[10px] font-black text-indigo-500 mb-0.5 uppercase tracking-widest flex items-center gap-1">
-                                <Zap size={10} fill="currentColor" /> Previsão de Impacto
-                            </div>
-                            <div className="text-sm font-black text-slate-800 leading-tight">
-                                {predictive.topBairros.length > 0
-                                    ? predictive.topBairros.map(b => b.name).join(', ')
-                                    : 'Alerta para todo o município'}
-                            </div>
-                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">Baseado no histórico de vistorias</div>
-                        </div>
+            {/* Shelter Statistics Grid */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+                <div onClick={() => navigate('/abrigos')} className="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer active:scale-95 transition-all">
+                    <div className="bg-purple-50 w-10 h-10 rounded-xl flex items-center justify-center text-purple-600 mb-2">
+                        <Building size={18} />
                     </div>
-                    <div className="bg-slate-50 w-8 h-8 rounded-full flex items-center justify-center text-slate-200">
-                        <Activity size={14} />
-                    </div>
+                    <div className="text-xl font-black text-slate-800">{shelterStats.totalShelters}</div>
+                    <div className="text-[8px] font-bold text-slate-400 uppercase">Abrigos</div>
                 </div>
-            )}
-
-            <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6 relative">
-                <div className="flex justify-between items-center mb-6 px-1">
-                    <h3 className="font-bold text-slate-800 text-sm">Vistorias por Tipologia</h3>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Tempo Real</span>
-                        <button
-                            onClick={() => {
-                                const csvContent = "data:text/csv;charset=utf-8,"
-                                    + "Tipologia;Quantidade;Porcentagem\n"
-                                    + data.breakdown.map(e => `${e.label};${e.count};${e.percentage}%`).join("\n");
-                                const encodedUri = encodeURI(csvContent);
-                                const link = document.createElement("a");
-                                link.setAttribute("href", encodedUri);
-                                link.setAttribute("download", `sigerd_stats_${new Date().toISOString().split('T')[0]}.csv`);
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                            }}
-                            className="p-1.5 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                            title="Exportar CSV"
-                        >
-                            <Download size={14} />
-                        </button>
+                <div className="bg-white p-4 rounded-3xl border border-slate-100">
+                    <div className="bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600 mb-2">
+                        <Users size={18} />
                     </div>
+                    <div className="text-xl font-black text-slate-800">{shelterStats.totalOccupants}</div>
+                    <div className="text-[8px] font-bold text-slate-400 uppercase">Abrigados</div>
                 </div>
+                <div className="bg-white p-4 rounded-3xl border border-slate-100">
+                    <div className="bg-amber-50 w-10 h-10 rounded-xl flex items-center justify-center text-amber-600 mb-2">
+                        <Package size={18} />
+                    </div>
+                    <div className="text-xl font-black text-slate-800">{shelterStats.totalDonations}</div>
+                    <div className="text-[8px] font-bold text-slate-400 uppercase">Doações</div>
+                </div>
+            </div>
 
-                <div className="space-y-6">
-                    {data?.breakdown?.map((item, idx) => (
+            <div className="bg-white p-7 rounded-[40px] shadow-sm border border-slate-200/60 mb-8 font-sans">
+                <div className="flex justify-between items-center mb-8">
+                    <h3 className="font-black text-slate-800 text-xs uppercase tracking-widest">Distribuição por Tipologia</h3>
+                    <div className="bg-slate-100 px-2 py-1 rounded-lg text-[9px] font-black text-slate-400">{displayData.stats.totalVistorias} REGISTROS</div>
+                </div>
+                <div className="space-y-7">
+                    {displayData.breakdown.length > 0 ? displayData.breakdown.map((item, idx) => (
                         <div key={idx}>
-                            <div className="flex justify-between items-baseline mb-2 px-1">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${item.color || 'bg-slate-300'}`} />
-                                    <span className="text-xs font-bold text-slate-500">{item.label || 'Outros'}</span>
-                                </div>
-                                <div className="text-xs font-black text-slate-800 tabular-nums">
-                                    {item.percentage || 0}% <span className="text-slate-300 font-bold ml-1">{item.count || 0}</span>
+                            <div className="flex justify-between items-baseline mb-2.5 px-0.5">
+                                <span className="text-[11px] font-black text-slate-500 uppercase tracking-tight">{item.label}</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-black text-slate-800">{item.count}</span>
+                                    <span className="text-[10px] font-bold text-slate-300">{item.percentage}%</span>
                                 </div>
                             </div>
-                            <div className="w-full bg-slate-50 rounded-full h-3 p-0.5 border border-slate-100 shadow-inner">
-                                <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-slate-300'}`} style={{ width: `${item.percentage || 0}%` }} />
+                            <div className="w-full bg-slate-50 rounded-full h-3 overflow-hidden border border-slate-100 shadow-inner">
+                                <div className={`h-full ${item.color || 'bg-blue-500'} transition-all duration-1000 ease-out rounded-full`} style={{ width: `${item.percentage}%` }} />
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="text-center py-10">
+                            <CloudRain size={32} className="mx-auto text-slate-200 mb-3" />
+                            <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sem vistorias no período</div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className="bg-white p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden mb-6">
-                <div className="flex justify-between items-center mb-4 px-1">
-                    <div>
-                        <h3 className="font-bold text-slate-800 text-sm">Mapa de Concentração</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Ocorrências Atuais</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => navigate('/monitoramento')}
-                            className="bg-orange-50 hover:bg-orange-100 text-orange-600 p-2 rounded-xl transition-colors flex items-center gap-2"
-                        >
-                            <Flame size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-tighter">MAPA DE CALOR</span>
-                        </button>
-                        <div className="relative">
-                            <button
-                                id="btn-report-mini"
-                                onClick={() => setShowReportMenu(!showReportMenu)}
-                                className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-xl transition-colors flex items-center gap-2"
-                            >
-                                <Printer size={16} />
-                                <span className="text-[10px] font-black uppercase tracking-tighter">RELATÓRIO</span>
-                            </button>
-
-                            {showReportMenu && (
-                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {[
-                                        { label: 'Últimas 24h', hours: 24 },
-                                        { label: 'Últimas 48h', hours: 48 },
-                                        { label: 'Últimas 96h', hours: 96 },
-                                        { label: 'Todo o Período', hours: 0 }
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.hours}
-                                            onClick={async () => {
-                                                setShowReportMenu(false);
-                                                setGeneratingReport(true);
-                                                try {
-                                                    // 1. Filter Data by timeframe
-                                                    const filteredData = { ...data };
-                                                    let timeframeLabel = opt.label;
-
-                                                    if (opt.hours > 0) {
-                                                        const threshold = new Date();
-                                                        threshold.setHours(threshold.getHours() - opt.hours);
-
-                                                        // Update locations
-                                                        filteredData.locations = data.locations.filter(l => {
-                                                            const d = new Date(l.date);
-                                                            return d >= threshold;
-                                                        });
-
-                                                        // Recalculate breakdown from the FULL filtered vistorias list
-                                                        const filteredVistorias = (data.vistorias || []).filter(v => {
-                                                            const vn = normalizeVistoria(v);
-                                                            return vn.normalizedDate >= threshold;
-                                                        });
-
-                                                        const counts = {};
-                                                        filteredVistorias.forEach(v => {
-                                                            const vn = normalizeVistoria(v);
-                                                            const cat = vn.normalizedCategory;
-                                                            counts[cat] = (counts[cat] || 0) + 1;
-                                                        });
-
-                                                        const total = filteredVistorias.length;
-                                                        filteredData.breakdown = Object.keys(counts).map((label) => {
-                                                            const original = data.breakdown.find(b => b.label === label);
-                                                            return {
-                                                                label,
-                                                                count: counts[label],
-                                                                percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
-                                                                color: original ? original.color : 'bg-slate-400'
-                                                            };
-                                                        }).sort((a, b) => b.count - a.count);
-
-                                                        // Update stats for report
-                                                        filteredData.stats = {
-                                                            ...data.stats,
-                                                            totalVistorias: total,
-                                                        };
-                                                    }
-
-                                                    // 2. Fetch fresh Pluviometer data
-                                                    let pluvioData = [];
-                                                    try {
-                                                        const res = await fetch('/api/pluviometros');
-                                                        if (res.ok) pluvioData = await res.json();
-                                                    } catch (e) {
-                                                        console.warn("Failed to fetch pluvio for report", e);
-                                                    }
-
-                                                    // 3. Capture Map Element
-                                                    const mapElement = document.querySelector('.leaflet-container');
-
-                                                    // 4. Generate PDF
-                                                    await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel);
-
-                                                } catch (e) {
-                                                    console.error(e);
-                                                    alert("Erro ao gerar relatório.");
-                                                } finally {
-                                                    setGeneratingReport(false);
-                                                }
-                                            }}
-                                            className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between"
-                                        >
-                                            {opt.label}
-                                            <ChevronRight size={14} className="text-slate-300" />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {generatingReport && (
-                                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
-                                    <div className="bg-white p-8 rounded-[32px] shadow-2xl text-center max-w-xs w-full animate-in zoom-in duration-300">
-                                        <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-                                        <h3 className="text-lg font-black text-slate-800 mb-2">Gerando Relatório</h3>
-                                        <p className="text-sm text-slate-500 font-medium">Compilando dados e capturando mapa...</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <button
-                            onClick={handleExportKML}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-xl transition-colors flex items-center gap-2"
-                        >
-                            <Download size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-tighter">KML</span>
-                        </button>
-                    </div>
+            <div className="bg-white p-5 rounded-[40px] shadow-sm border border-slate-100 mb-6">
+                <div className="flex justify-between items-center mb-5 px-2">
+                    <h3 className="font-black text-slate-800 text-xs uppercase tracking-widest">Monitoramento Estratégico</h3>
+                    <button onClick={() => setShowReportMenu(!showReportMenu)} className="bg-blue-600 text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-blue-200 active:scale-95 transition-all">RELATÓRIO PDF</button>
                 </div>
-                <div className="h-72 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100 shadow-inner">
-                    <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                {showReportMenu && (
+                    <div className="grid grid-cols-2 gap-2 mb-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                        {[0, 24, 48, 96].map(h => (
+                            <button key={h} onClick={async () => {
+                                setShowReportMenu(false);
+                                setGeneratingReport(true);
+
+                                // Sync dashboard timeframe before capture
+                                if (timeframe !== h) {
+                                    setTimeframe(h);
+                                    // Give time for React state update and Map re-render
+                                    await new Promise(r => setTimeout(r, 600));
+                                }
+
+                                const hLabel = h === 0 ? "Todo o Período" : `Últimas ${h}h`;
+                                const rData = getFilteredData(data, h);
+                                let pData = []; try { const r = await fetch('/api/pluviometros'); if (r.ok) pData = await r.json() } catch (e) { }
+
+                                // Target the specific map area by ID
+                                const mapArea = document.getElementById('map-capture-area');
+                                await generateSituationalReport(rData, weather, pData, mapArea, hLabel);
+
+                                setGeneratingReport(false);
+                            }} className="bg-slate-50 p-3 rounded-2xl text-[10px] font-black text-slate-600 border border-slate-100 hover:bg-white hover:border-blue-200 transition-all uppercase tracking-tighter">
+                                {h === 0 ? "Todo" : `${h} HORAS`}
+                            </button>
+                        ))}
+                    </div>
+                )}
+                <div id="map-capture-area" className="h-80 w-full rounded-[32px] overflow-hidden bg-slate-100 border border-slate-200 relative z-0 shadow-inner">
+                    <MapContainer center={[-20.0246, -40.7464]} zoom={12} style={{ height: '100%', width: '100%' }} zoomControl={false} preferCanvas={true}>
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                        <HeatmapLayer points={data.locations} show={hasClusters} options={{ radius: 15, blur: 10, opacity: 0.6 }} />
-                        {data?.locations?.map((loc, idx) => {
-                            const isHighRisk = String(loc.risk || '').includes('Alto');
-                            return (
-                                <CircleMarker
-                                    key={idx}
-                                    center={[loc.lat, loc.lng]}
-                                    radius={8}
-                                    pathOptions={{
-                                        color: isHighRisk ? '#ef4444' : '#f97316',
-                                        fillColor: isHighRisk ? '#ef4444' : '#f97316',
-                                        fillOpacity: 0.6,
-                                        stroke: false
-                                    }}
-                                >
-                                    <Popup>
-                                        <div className="text-center">
-                                            <div className="font-bold text-slate-800 mb-1">{loc.risk || 'Local'}</div>
-                                            <div className="text-sm text-slate-600">{loc.details || ''}</div>
-                                        </div>
-                                    </Popup>
-                                </CircleMarker>
-                            );
-                        })}
+                        <HeatmapLayer points={displayData.locations} options={{ radius: 20, blur: 15 }} />
+                        {displayData.locations.map((loc, idx) => (
+                            <CircleMarker
+                                key={idx}
+                                center={[loc.lat, loc.lng]}
+                                radius={7}
+                                pathOptions={{
+                                    color: loc.type === 'interdicao' ? '#dc2626' : (loc.level === 'Alto' || loc.level === 'Iminente' ? '#f97316' : '#3b82f6'),
+                                    weight: 2,
+                                    fillOpacity: 0.9,
+                                    fillColor: '#ffffff'
+                                }}
+                            />
+                        ))}
                     </MapContainer>
                 </div>
             </div>
 
-
-
-            {
-                showForecast && weather && (
-                    <div
-                        onClick={() => setShowForecast(false)}
-                        className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-                    >
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200"
-                        >
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-800">Previsão 7 Dias</h3>
-                                    <div className="text-xs font-bold text-slate-400">Santa Maria de Jetibá</div>
-                                </div>
-                                <button
-                                    onClick={() => setShowForecast(false)}
-                                    className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors"
-                                >
-                                    <ArrowLeft size={18} />
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                {weather.daily.map((day, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-2xl">{getWeatherIcon(day.code || day.weatherCode)}</div>
-                                            <div>
-                                                <div className="text-sm font-bold text-slate-800">
-                                                    {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}
-                                                </div>
-                                                <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                    <CloudRain size={10} className="text-blue-500" />
-                                                    {day.rainProb}% chance
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-right">
-                                                <div className="text-sm font-black text-slate-800">{Math.round(day.tempMax)}°</div>
-                                                <div className="text-[10px] font-bold text-slate-400">Max</div>
-                                            </div>
-                                            <div className="h-8 w-px bg-slate-100" />
-                                            <div className="text-right">
-                                                <div className="text-sm font-black text-slate-400">{Math.round(day.tempMin)}°</div>
-                                                <div className="text-[10px] font-bold text-slate-300">Min</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+            {generatingReport && (
+                <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[500] flex items-center justify-center p-8 animate-in fade-in duration-500">
+                    <div className="bg-white p-10 rounded-[48px] shadow-2xl text-center max-w-xs w-full border border-white/20">
+                        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                        <h3 className="text-xl font-black text-slate-800 mb-2">Processando Relatório</h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Consolidando indicadores técnicos...</p>
                     </div>
-                )
-            }
-
-            <div className="text-center py-8 opacity-20 hover:opacity-100 transition-opacity">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD Mobile v1.1.5</span>
-            </div>
-        </div >
+                </div>
+            )}
+        </div>
     )
 }
 

@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 7
+const DB_VERSION = 8
 
 export const initDB = async () => {
     return openDB(DB_NAME, DB_VERSION, {
@@ -38,6 +38,37 @@ export const initDB = async () => {
             }
             // Use autoIncrement to avoid key errors, but we will manage unique records in api.js
             db.createObjectStore('remote_vistorias_cache', { keyPath: 'vistoria_id' })
+
+            // Shelter Management Stores - Version 8
+            if (!db.objectStoreNames.contains('shelters')) {
+                const store = db.createObjectStore('shelters', { keyPath: 'id', autoIncrement: true })
+                store.createIndex('synced', 'synced', { unique: false })
+                store.createIndex('status', 'status', { unique: false })
+            }
+
+            if (!db.objectStoreNames.contains('shelter_occupants')) {
+                const store = db.createObjectStore('shelter_occupants', { keyPath: 'id', autoIncrement: true })
+                store.createIndex('synced', 'synced', { unique: false })
+                store.createIndex('shelter_id', 'shelter_id', { unique: false })
+            }
+
+            if (!db.objectStoreNames.contains('shelter_donations')) {
+                const store = db.createObjectStore('shelter_donations', { keyPath: 'id', autoIncrement: true })
+                store.createIndex('synced', 'synced', { unique: false })
+                store.createIndex('shelter_id', 'shelter_id', { unique: false })
+            }
+
+            if (!db.objectStoreNames.contains('shelter_inventory')) {
+                const store = db.createObjectStore('shelter_inventory', { keyPath: 'id', autoIncrement: true })
+                store.createIndex('synced', 'synced', { unique: false })
+                store.createIndex('shelter_id', 'shelter_id', { unique: false })
+            }
+
+            if (!db.objectStoreNames.contains('shelter_distributions')) {
+                const store = db.createObjectStore('shelter_distributions', { keyPath: 'id', autoIncrement: true })
+                store.createIndex('synced', 'synced', { unique: false })
+                store.createIndex('shelter_id', 'shelter_id', { unique: false })
+            }
         },
     })
 }

@@ -51,13 +51,13 @@ export const api = {
                         await saveRemoteVistoriasCache(fetchedBatch)
 
                         const mergedMap = new Map()
-                        // Use vistoria_id as primary key for merging
+                        // Use business ID (vistoria_id) as primary key for robust deduplication
                         allVistorias.forEach(v => {
-                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
+                            const key = v.vistoria_id || v.vistoriaId || v.id
                             if (key) mergedMap.set(key, v)
                         })
                         fetchedBatch.forEach(v => {
-                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
+                            const key = v.vistoria_id || v.vistoriaId || v.id
                             if (key) mergedMap.set(key, v)
                         })
                         allVistorias = Array.from(mergedMap.values())
