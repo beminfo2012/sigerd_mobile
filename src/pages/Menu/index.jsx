@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, Building, ChevronRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 
 const Menu = ({ userProfile, onLogout, setUserProfile }) => {
-    const navigate = useNavigate()
     const [syncCount, setSyncCount] = useState(0)
     const [syncing, setSyncing] = useState(false)
     const [showProfileModal, setShowProfileModal] = useState(false)
@@ -118,20 +116,6 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
 
             {/* Menu Sections */}
             <div className="space-y-4">
-                {/* Modules Section */}
-                <div onClick={() => navigate('/abrigos')} className="bg-white p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 flex items-center justify-between cursor-pointer active:scale-95 transition-all">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-purple-50 w-12 h-12 rounded-2xl flex items-center justify-center text-purple-600">
-                            <Building size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-base font-black text-slate-800">Gestão de Abrigos</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assistência Humanitária</p>
-                        </div>
-                    </div>
-                    <ChevronRight size={20} className="text-slate-300" />
-                </div>
-
                 <div className="bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden">
                     {/* Sync Option */}
                     <button

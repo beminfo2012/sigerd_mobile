@@ -51,13 +51,13 @@ export const api = {
                         await saveRemoteVistoriasCache(fetchedBatch)
 
                         const mergedMap = new Map()
-                        // Use business ID (vistoria_id) as primary key for robust deduplication
+                        // Use vistoria_id as primary key for merging
                         allVistorias.forEach(v => {
-                            const key = v.vistoria_id || v.vistoriaId || v.id
+                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
                             if (key) mergedMap.set(key, v)
                         })
                         fetchedBatch.forEach(v => {
-                            const key = v.vistoria_id || v.vistoriaId || v.id
+                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
                             if (key) mergedMap.set(key, v)
                         })
                         allVistorias = Array.from(mergedMap.values())
@@ -143,8 +143,7 @@ export const api = {
                 },
                 breakdown,
                 locations,
-                alerts: inmetAlerts,
-                vistorias: allVistorias
+                alerts: inmetAlerts
             }
         } catch (error) {
             console.error('API Error:', error)

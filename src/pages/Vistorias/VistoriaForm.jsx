@@ -488,7 +488,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     className={`${inputClasses} pl-[60px] uppercase font-mono`}
                                     placeholder="XXXXX"
                                     maxLength={8}
-                                    value={(formData.processo || '').replace(`${new Date().getFullYear()}-`, '')}
+                                    value={formData.processo.replace(`${new Date().getFullYear()}-`, '')}
                                     onChange={e => {
                                         const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
                                         setFormData({ ...formData, processo: `${new Date().getFullYear()}-${val}` })
@@ -566,7 +566,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         maxLength={10}
                                         placeholder="90000-0000"
                                         className={`${inputClasses} pl-12`}
-                                        value={(formData.telefone || '').replace(/^\(27\) /, '')}
+                                        value={formData.telefone.replace(/^\(27\) /, '')}
                                         onChange={e => {
                                             let v = e.target.value.replace(/\D/g, '');
                                             if (v.length > 9) v = v.slice(0, 9);

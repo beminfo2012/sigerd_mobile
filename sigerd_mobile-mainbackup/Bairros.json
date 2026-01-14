@@ -1,0 +1,158 @@
+[
+  {
+    "id": 1,
+    "nome": "Alto Caldeirão"
+  },
+  {
+    "id": 2,
+    "nome": "Alto Caramuru"
+  },
+  {
+    "id": 3,
+    "nome": "Alto Jetibá"
+  },
+  {
+    "id": 4,
+    "nome": "Alto Recreio"
+  },
+  {
+    "id": 5,
+    "nome": "Alto Rio Lamego"
+  },
+  {
+    "id": 6,
+    "nome": "Alto Rio Pantoja"
+  },
+  {
+    "id": 7,
+    "nome": "Alto Rio Possmouser"
+  },
+  {
+    "id": 8,
+    "nome": "Alto Santa Maria"
+  },
+  {
+    "id": 9,
+    "nome": "Alto São Sebastião"
+  },
+  {
+    "id": 10,
+    "nome": "Barra do Rio Claro"
+  },
+  {
+    "id": 11,
+    "nome": "Barracão do Rio Possmouser"
+  },
+  {
+    "id": 12,
+    "nome": "Belém"
+  },
+  {
+    "id": 13,
+    "nome": "Caramuru"
+  },
+  {
+    "id": 14,
+    "nome": "Córrego do Ouro"
+  },
+  {
+    "id": 15,
+    "nome": "Córrego Simão"
+  },
+  {
+    "id": 16,
+    "nome": "Garrafão"
+  },
+  {
+    "id": 17,
+    "nome": "Jequitibá"
+  },
+  {
+    "id": 18,
+    "nome": "Recreio"
+  },
+  {
+    "id": 19,
+    "nome": "Rio Aparecida"
+  },
+  {
+    "id": 20,
+    "nome": "Rio Bonito"
+  },
+  {
+    "id": 21,
+    "nome": "Rio Claro"
+  },
+  {
+    "id": 22,
+    "nome": "Rio Cristal"
+  },
+  {
+    "id": 23,
+    "nome": "Rio das Pedras"
+  },
+  {
+    "id": 24,
+    "nome": "Rio do Queijo"
+  },
+  {
+    "id": 25,
+    "nome": "Rio Lamego"
+  },
+  {
+    "id": 26,
+    "nome": "Rio Novo / Rio Nove"
+  },
+  {
+    "id": 27,
+    "nome": "Rio Plantoja"
+  },
+  {
+    "id": 28,
+    "nome": "Rio Possmouser"
+  },
+  {
+    "id": 29,
+    "nome": "Rio Sabino"
+  },
+  {
+    "id": 30,
+    "nome": "Rio Taquara/Taquarinha"
+  },
+  {
+    "id": 31,
+    "nome": "Rio Triunfo"
+  },
+  {
+    "id": 32,
+    "nome": "Rio Veado"
+  },
+  {
+    "id": 33,
+    "nome": "Santa Luzia"
+  },
+  {
+    "id": 34,
+    "nome": "Santa Maria de Jetibá"
+  },
+  {
+    "id": 35,
+    "nome": "São Bento"
+  },
+  {
+    "id": 36,
+    "nome": "São João de Garrafão"
+  },
+  {
+    "id": 37,
+    "nome": "São José do Rio Claro"
+  },
+  {
+    "id": 38,
+    "nome": "São Sebastião do Meio"
+  },
+  {
+    "id": 39,
+    "nome": "Serra do Gelo"
+  }
+]
