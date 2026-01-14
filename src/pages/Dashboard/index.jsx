@@ -326,19 +326,18 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-600 to-purple-800 p-5 rounded-[32px] text-white mb-6 relative overflow-hidden shadow-lg" onClick={() => navigate('/abrigos')}>
-                <div className="relative z-10 flex justify-between items-center">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Users size={14} className="text-purple-200" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-purple-200">Assistência Humanitária</span>
+            <div onClick={() => navigate('/abrigos')} className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100 relative cursor-pointer active:scale-95 transition-all mb-6">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center text-slate-600">
+                            <Building size={24} />
                         </div>
-                        <h2 className="text-lg font-black leading-tight">Gestão de<br />Abrigos</h2>
-                        <p className="text-[10px] text-purple-200 mt-2 font-bold uppercase">Controle e Coordenação</p>
+                        <div>
+                            <h3 className="text-base font-black text-slate-800">Gestão de Abrigos</h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assistência Humanitária</p>
+                        </div>
                     </div>
-                    <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md">
-                        <Building size={24} className="text-white" />
-                    </div>
+                    <ChevronRight size={20} className="text-slate-300" />
                 </div>
             </div>
 
@@ -362,21 +361,21 @@ const Dashboard = () => {
             {/* Shelter Statistics Grid */}
             <div className="grid grid-cols-3 gap-4 mb-6">
                 <div onClick={() => navigate('/abrigos')} className="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer active:scale-95 transition-all">
-                    <div className="bg-purple-50 w-10 h-10 rounded-xl flex items-center justify-center text-purple-600 mb-2">
+                    <div className="bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 mb-2">
                         <Building size={18} />
                     </div>
                     <div className="text-xl font-black text-slate-800">{shelterStats.totalShelters}</div>
                     <div className="text-[8px] font-bold text-slate-400 uppercase">Abrigos</div>
                 </div>
                 <div className="bg-white p-4 rounded-3xl border border-slate-100">
-                    <div className="bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600 mb-2">
+                    <div className="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600 mb-2">
                         <Users size={18} />
                     </div>
                     <div className="text-xl font-black text-slate-800">{shelterStats.totalOccupants}</div>
                     <div className="text-[8px] font-bold text-slate-400 uppercase">Abrigados</div>
                 </div>
                 <div className="bg-white p-4 rounded-3xl border border-slate-100">
-                    <div className="bg-amber-50 w-10 h-10 rounded-xl flex items-center justify-center text-amber-600 mb-2">
+                    <div className="bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 mb-2">
                         <Package size={18} />
                     </div>
                     <div className="text-xl font-black text-slate-800">{shelterStats.totalDonations}</div>
