@@ -326,18 +326,19 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div onClick={() => navigate('/abrigos')} className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100 relative cursor-pointer active:scale-95 transition-all mb-6">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-slate-50 w-12 h-12 rounded-xl flex items-center justify-center text-slate-600">
-                            <Building size={24} />
+            <div className="bg-slate-900 p-5 rounded-[32px] text-white mb-6 relative overflow-hidden shadow-lg" onClick={() => navigate('/vistorias/nova')}>
+                <div className="relative z-10 flex justify-between items-center">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Activity size={14} className="text-blue-400" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Prontidão Operacional</span>
                         </div>
-                        <div>
-                            <h3 className="text-base font-black text-slate-800">Gestão de Abrigos</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assistência Humanitária</p>
-                        </div>
+                        <h2 className="text-lg font-black leading-tight">Iniciar Nova<br />Vistoria Técnica</h2>
+                        <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase">Registro de Campo</p>
                     </div>
-                    <ChevronRight size={20} className="text-slate-300" />
+                    <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md">
+                        <Truck size={24} className="text-white" />
+                    </div>
                 </div>
             </div>
 
@@ -358,30 +359,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Shelter Statistics Grid */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-                <div onClick={() => navigate('/abrigos')} className="bg-white p-4 rounded-3xl border border-slate-100 cursor-pointer active:scale-95 transition-all">
-                    <div className="bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 mb-2">
-                        <Building size={18} />
-                    </div>
-                    <div className="text-xl font-black text-slate-800">{shelterStats.totalShelters}</div>
-                    <div className="text-[8px] font-bold text-slate-400 uppercase">Abrigos</div>
-                </div>
-                <div className="bg-white p-4 rounded-3xl border border-slate-100">
-                    <div className="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600 mb-2">
-                        <Users size={18} />
-                    </div>
-                    <div className="text-xl font-black text-slate-800">{shelterStats.totalOccupants}</div>
-                    <div className="text-[8px] font-bold text-slate-400 uppercase">Abrigados</div>
-                </div>
-                <div className="bg-white p-4 rounded-3xl border border-slate-100">
-                    <div className="bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 mb-2">
-                        <Package size={18} />
-                    </div>
-                    <div className="text-xl font-black text-slate-800">{shelterStats.totalDonations}</div>
-                    <div className="text-[8px] font-bold text-slate-400 uppercase">Doações</div>
-                </div>
-            </div>
+
 
             <div className="bg-white p-7 rounded-[40px] shadow-sm border border-slate-200/60 mb-8 font-sans">
                 <div className="flex justify-between items-center mb-8">
