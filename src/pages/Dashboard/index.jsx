@@ -120,11 +120,17 @@ const Dashboard = () => {
                     })).sort((a, b) => b.count - a.count)
 
                     finalData.locations = validVistorias
-                        .filter(v => v.coordenadas && v.coordenadas.includes(','))
+                        .filter(v => (v.coordenadas && v.coordenadas.includes(',')) || (v.latitude && v.longitude))
                         .map(v => {
-                            const parts = v.coordenadas.split(',')
-                            const lat = parseFloat(parts[0])
-                            const lng = parseFloat(parts[1])
+                            let lat, lng
+                            if (v.coordenadas && v.coordenadas.includes(',')) {
+                                const parts = v.coordenadas.split(',')
+                                lat = parseFloat(parts[0])
+                                lng = parseFloat(parts[1])
+                            } else {
+                                lat = parseFloat(v.latitude)
+                                lng = parseFloat(v.longitude)
+                            }
 
                             if (isNaN(lat) || isNaN(lng)) return null
 
@@ -143,22 +149,31 @@ const Dashboard = () => {
                     const unsynced = validVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
 
                     unsynced.forEach(v => {
+
+                        let lat, lng
+                        let hasCoords = false
+
                         if (v.coordenadas && v.coordenadas.includes(',')) {
                             const parts = v.coordenadas.split(',')
-                            const lat = parseFloat(parts[0])
-                            const lng = parseFloat(parts[1])
+                            lat = parseFloat(parts[0])
+                            lng = parseFloat(parts[1])
+                            hasCoords = true
+                        } else if (v.latitude && v.longitude) {
+                            lat = parseFloat(v.latitude)
+                            lng = parseFloat(v.longitude)
+                            hasCoords = true
+                        }
 
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                const cat = v.categoriaRisco || v.categoria_risco || 'Pendente'
-                                const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                                finalData.locations.push({
-                                    lat,
-                                    lng,
-                                    risk: cat,
-                                    details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                    date: v.created_at || v.data_hora || new Date().toISOString()
-                                })
-                            }
+                        if (hasCoords && !isNaN(lat) && !isNaN(lng)) {
+                            const cat = v.categoriaRisco || v.categoria_risco || 'Pendente'
+                            const subtypes = v.subtiposRisco || v.subtipos_risco || []
+                            finalData.locations.push({
+                                lat,
+                                lng,
+                                risk: cat,
+                                details: subtypes.length > 0 ? subtypes.join(', ') : cat,
+                                date: v.created_at || v.data_hora || new Date().toISOString()
+                            })
                         }
 
                         const cat = v.categoriaRisco || v.categoria_risco || 'Outros'

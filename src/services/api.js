@@ -69,11 +69,17 @@ export const api = {
 
             const vistoriasData = allVistorias;
             const locations = vistoriasData
-                .filter(v => v.coordenadas && v.coordenadas.includes(','))
+                .filter(v => (v.coordenadas && v.coordenadas.includes(',')) || (v.latitude && v.longitude))
                 .map(v => {
-                    const parts = v.coordenadas.split(',')
-                    const lat = parseFloat(parts[0])
-                    const lng = parseFloat(parts[1])
+                    let lat, lng;
+                    if (v.coordenadas && v.coordenadas.includes(',')) {
+                        const parts = v.coordenadas.split(',')
+                        lat = parseFloat(parts[0])
+                        lng = parseFloat(parts[1])
+                    } else if (v.latitude && v.longitude) {
+                        lat = parseFloat(v.latitude)
+                        lng = parseFloat(v.longitude)
+                    }
 
                     if (isNaN(lat) || isNaN(lng)) return null
 
