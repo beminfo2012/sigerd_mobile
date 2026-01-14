@@ -212,59 +212,65 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
 
-        if (!navigator.onLine) {
-            setFormData(prev => ({ ...prev, vistoriaId: '' }))
-            return
-        }
-
-        let maxNum = 0
+        // Ensure we at least attempt to generate based on local data if offline or API fails
         try {
-            // 1. Check Supabase
-            const { data } = await supabase
-                .from('vistorias')
-                .select('vistoria_id')
-                .filter('vistoria_id', 'like', `%/${currentYear}`)
-                .order('vistoria_id', { ascending: false })
-                .limit(1)
+            let maxNum = 0
 
-            if (data && data.length > 0) {
-                const vid = data[0].vistoria_id || "";
-                const parts = vid.split("/");
-                if (parts.length > 1) { // Changed index to 1 for year check if needed, but 0 is the number
+            // 1. Check Remote Cache and Local Data first (Fastest)
+            const [cached, local] = await Promise.all([
+                getRemoteVistoriasCache().catch(() => []),
+                getAllVistoriasLocal().catch(() => [])
+            ]);
+
+            [...cached, ...local].forEach(v => {
+                const vid = v.vistoria_id || v.vistoriaId
+                if (vid && vid.includes(`/${currentYear}`)) {
+                    const parts = vid.split('/');
                     const num = parseInt(parts[0]);
                     if (!isNaN(num)) maxNum = Math.max(maxNum, num);
                 }
+            })
+
+            // 2. If Online, try to get the absolute latest from server to avoid collision
+            if (navigator.onLine) {
+                try {
+                    const { data, error } = await supabase
+                        .from('vistorias')
+                        .select('vistoria_id')
+                        .ilike('vistoria_id', `%/${currentYear}`)
+                        .order('vistoria_id', { ascending: false })
+                        .limit(5); // Get top 5 to check nums
+
+                    if (data && data.length > 0) {
+                        data.forEach(row => {
+                            const vid = row.vistoria_id;
+                            if (vid) {
+                                const parts = vid.split("/");
+                                if (parts.length > 0) {
+                                    const num = parseInt(parts[0]);
+                                    if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                                }
+                            }
+                        });
+                    }
+                } catch (srvErr) {
+                    console.warn('Server ID fetch failed, using local max:', srvErr);
+                }
             }
 
-            // 2. Check Remote Cache (historical data)
-            const cached = await getRemoteVistoriasCache()
-            cached.forEach(v => {
-                const vid = v.vistoria_id || v.vistoriaId
-                if (vid && vid.includes(`/${currentYear}`)) {
-                    const num = parseInt(vid.split('/')[0])
-                    if (!isNaN(num)) maxNum = Math.max(maxNum, num)
-                }
-            })
-
-            // 3. Check Local Queue (unsynced vistorias)
-            const local = await getAllVistoriasLocal()
-            local.forEach(v => {
-                const vid = v.vistoria_id || v.vistoriaId
-                if (vid && vid.includes(`/${currentYear}`)) {
-                    const num = parseInt(vid.split('/')[0])
-                    if (!isNaN(num)) maxNum = Math.max(maxNum, num)
-                }
-            })
-
             const nextNum = maxNum + 1
+            const newId = `${nextNum.toString().padStart(3, '0')}/${currentYear}`
+
             setFormData(prev => ({
                 ...prev,
-                vistoriaId: `${nextNum.toString().padStart(3, '0')}/${currentYear}`,
-                agente: userProfile?.full_name || '',
-                matricula: userProfile?.matricula || ''
+                vistoriaId: newId,
+                agente: userProfile?.full_name || prev.agente || '',
+                matricula: userProfile?.matricula || prev.matricula || ''
             }))
+
         } catch (e) {
-            console.error('Error getting next ID:', e)
+            console.error('Error calculating next ID:', e)
+            // Fallback: Leave empty to indicate pending, or could generate a temp ID
             setFormData(prev => ({ ...prev, vistoriaId: '' }))
         }
     }
@@ -474,9 +480,14 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </h2>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className={labelClasses}>Nº Vistoria</label>
+                            <div className="flex justify-between items-center mb-1.5">
+                                <label className={labelClasses.replace('mb-1.5', 'mb-0')}>Nº Vistoria</label>
+                                <button type="button" onClick={getNextId} className="text-blue-500 p-1 hover:bg-blue-50 rounded" title="Forçar atualização">
+                                    <Sparkles size={12} />
+                                </button>
+                            </div>
                             <div className={`text-lg font-black p-3.5 rounded-xl border flex justify-between items-center shadow-inner ${formData.vistoriaId ? 'bg-blue-50/50 text-[#2a5299] border-blue-100/50' : 'bg-orange-50/50 text-orange-600 border-orange-100/50 italic text-base'}`}>
-                                {formData.vistoriaId || 'Pendente (Gerado no Sincronismo)'}
+                                {formData.vistoriaId || 'Pendente (Gerar)'}
                             </div>
                         </div>
                         <div>
