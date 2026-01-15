@@ -13,18 +13,18 @@ import Menu from './pages/Menu'
 import Login from './pages/Login'
 import Alerts from './pages/Alerts'
 import GeoDashboard from './pages/Monitoramento/GeoDashboard'
-import { ChecklistSaida } from './pages/Checklist/ChecklistSaida'
+import ChecklistSaida from './pages/Checklist/ChecklistSaida'
 import { supabase } from './services/supabase'
 
 // Shelter Module
-import { Dashboard as ShelterDashboard } from './pages/Abrigos/index'
-import { ShelterDetail } from './pages/Abrigos/ShelterDetail'
-import { ShelterForm } from './pages/Abrigos/ShelterForm'
-import { OccupantForm } from './pages/Abrigos/OccupantForm'
-import { DonationForm } from './pages/Abrigos/DonationForm'
-import { DistributionForm } from './pages/Abrigos/DistributionForm'
-import { Reports as ShelterReports } from './pages/Abrigos/Reports'
-import { Residents as ShelterResidents } from './pages/Abrigos/Residents'
+import ShelterDashboard from './pages/Abrigos/index'
+import ShelterDetail from './pages/Abrigos/ShelterDetail'
+import ShelterForm from './pages/Abrigos/ShelterForm'
+import OccupantForm from './pages/Abrigos/OccupantForm'
+import DonationForm from './pages/Abrigos/DonationForm'
+import DistributionForm from './pages/Abrigos/DistributionForm'
+import ShelterReports from './pages/Abrigos/Reports'
+import ShelterResidents from './pages/Abrigos/Residents'
 
 // Create context for user profile
 export const UserContext = createContext(null)
