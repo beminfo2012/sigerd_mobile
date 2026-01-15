@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Initialize Gemini
 // WARNING: In a production app, this key should be in an environment variable (import.meta.env.VITE_GOOGLE_API_KEY)
 // For this quick fix, we are using the provided key directly.
-const API_KEY = "AIzaSyCgLRiWYZVPAigJjkp3Hn8zB8ljJYc9zJk";
+const API_KEY = "AIzaSyAxTyNhjuow54hCB-g_RAtRXZ52zybKgpU";
 const genAI = new GoogleGenerativeAI(API_KEY);
 // Using gemini-2.5-flash as detected in available models list (2026)
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
