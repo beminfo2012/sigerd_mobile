@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import {
     Building2, Users, Gift, ChevronRight, Plus, Search,
-    CheckCircle2, CloudSync, RefreshCcw
+    CheckCircle2, Cloud, RefreshCcw
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
@@ -136,7 +136,7 @@ export function Dashboard() {
                                     {syncPercentage === 100 ? (
                                         <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                                     ) : (
-                                        <CloudSync className="w-5 h-5 text-amber-600" />
+                                        <Cloud className="w-5 h-5 text-amber-600" />
                                     )}
                                 </div>
                                 <div className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
