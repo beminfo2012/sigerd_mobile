@@ -875,7 +875,9 @@ const Dashboard = () => {
                 )
             }
 
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD Mobile v1.2.0</span>
+            <div className="flex flex-col items-center w-full mt-12 mb-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD MOBILE V1.2.0</span>
+            </div>
         </div >
     )
 }

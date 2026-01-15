@@ -232,8 +232,8 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                 </div>
             )}
 
-            <div className="mt-12 text-center">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[4px]">Versão 1.2.0 (PWA)</p>
+            <div className="mt-12 flex flex-col items-center w-full">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[4px]">SIGERD MOBILE V1.2.0</p>
                 <p className="text-[10px] font-bold text-slate-200 mt-1">Defesa Civil Municipal</p>
             </div>
         </div>
