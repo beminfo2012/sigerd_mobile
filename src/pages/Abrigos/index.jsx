@@ -1,258 +1,285 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Building, Users, Package, Plus, MapPin, AlertCircle, TrendingUp, Activity } from 'lucide-react'
-import { getShelters } from '../../services/shelterApi'
-import { getAllSheltersLocal, getAllOccupantsLocal, getAllDonationsLocal } from '../../services/shelterDb'
+import { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useNavigate } from 'react-router-dom';
+import {
+    Building2, Users, Gift, ChevronRight, Plus, Search,
+    CheckCircle2, CloudSync, RefreshCcw
+} from 'lucide-react';
+import { Card } from '../../components/Shelter/ui/Card';
+import { Badge } from '../../components/Shelter/ui/Badge';
+import { Button } from '../../components/Shelter/ui/Button';
+import { Input } from '../../components/Shelter/ui/Input';
+import { db } from '../../services/shelterDb';
+import { shelterSyncService } from '../../services/shelterSyncService';
 
-const Abrigos = () => {
-    const navigate = useNavigate()
-    const [shelters, setShelters] = useState([])
-    const [stats, setStats] = useState({
-        totalShelters: 0,
-        activeShelters: 0,
-        totalOccupants: 0,
-        totalDonations: 0,
-        totalCapacity: 0,
-        occupancyRate: 0
-    })
-    const [loading, setLoading] = useState(true)
+export function Dashboard() {
+    const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [syncPercentage, setSyncPercentage] = useState(100);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [statusFilter, setStatusFilter] = useState('all');
 
+    // Fetch data live from IndexedDB
+    const shelters = useLiveQuery(() => db.shelters.toArray(), []) || [];
+    const occupantsList = useLiveQuery(() => db.occupants.toArray(), []) || [];
+    const donationsList = useLiveQuery(() => db.donations.toArray(), []) || [];
+
+    // Sync Status Effect
     useEffect(() => {
-        loadData()
-    }, [])
+        const updateProgress = async () => {
+            const progress = await shelterSyncService.getSyncProgress();
+            setSyncPercentage(progress);
+        };
+        updateProgress();
+    }, [shelters, occupantsList, donationsList]);
 
-    const loadData = async () => {
-        try {
-            // Fetch from API and local storage
-            const [apiResult, localShelters, localOccupants, localDonations] = await Promise.all([
-                getShelters().catch(() => ({ success: false, data: [] })),
-                getAllSheltersLocal().catch(() => []),
-                getAllOccupantsLocal().catch(() => []),
-                getAllDonationsLocal().catch(() => [])
-            ])
+    const handleForceSync = async () => {
+        setIsSyncing(true);
+        await shelterSyncService.syncPending();
+        await shelterSyncService.pullData();
+        setTimeout(() => setIsSyncing(false), 1000);
+    };
 
-            // Combine remote and local data
-            const allShelters = [
-                ...(apiResult.success ? apiResult.data : []),
-                ...localShelters
-            ]
+    const stats = {
+        totalShelters: shelters.length,
+        activeShelters: shelters.filter(s => s.status === 'active').length,
+        totalCapacity: shelters.reduce((sum, s) => sum + parseInt(s.capacity || 0), 0),
+        totalOccupancy: shelters.reduce((sum, s) => sum + parseInt(s.current_occupancy || 0), 0),
+        totalDonations: donationsList.length,
+        totalOccupants: occupantsList.length,
+        occupancyRate: 0
+    };
 
-            // Calculate statistics
-            const activeShelters = allShelters.filter(s => s.status === 'active')
-            const totalOccupants = localOccupants.filter(o => o.status === 'active').length
-            const totalCapacity = allShelters.reduce((sum, s) => sum + (s.current_occupancy || 0), 0)
-            const occupancyRate = allShelters.length > 0
-                ? Math.round((totalCapacity / allShelters.reduce((sum, s) => sum + (s.capacity || 0), 0)) * 100)
-                : 0
+    stats.occupancyRate = stats.totalCapacity > 0 ? Math.round((stats.totalOccupancy / stats.totalCapacity) * 100) : 0;
 
-            setStats({
-                totalShelters: allShelters.length,
-                activeShelters: activeShelters.length,
-                totalOccupants,
-                totalDonations: localDonations.length,
-                totalCapacity,
-                occupancyRate
-            })
+    const statusLabels = {
+        active: 'ATIVO',
+        inactive: 'INATIVO',
+        full: 'LOTADO',
+    };
 
-            setShelters(allShelters)
-        } catch (error) {
-            console.error('Error loading shelter data:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const getOccupancyColor = (current, capacity) => {
-        const percentage = (current / capacity) * 100
-        if (percentage >= 90) return 'bg-red-500'
-        if (percentage >= 70) return 'bg-orange-500'
-        if (percentage >= 50) return 'bg-yellow-500'
-        return 'bg-green-500'
-    }
-
-    const getStatusBadge = (status) => {
-        const badges = {
-            active: { color: 'bg-green-50 text-green-600 border-green-200', label: 'Ativo' },
-            inactive: { color: 'bg-slate-50 text-slate-600 border-slate-200', label: 'Inativo' },
-            full: { color: 'bg-red-50 text-red-600 border-red-200', label: 'Lotado' }
-        }
-        return badges[status] || badges.active
-    }
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-sm font-bold text-slate-600">Carregando abrigos...</p>
-                </div>
-            </div>
-        )
-    }
+    const filteredShelters = shelters.filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (s.address && s.address.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (s.bairro && s.bairro.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
     return (
-        <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-xl font-black text-gray-800 tracking-tight">Gestão de Abrigos</h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assistência Humanitária</p>
-            </div>
-
-            {/* Statistics Grid */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100">
-                    <div className="bg-purple-50 w-10 h-10 rounded-xl flex items-center justify-center text-purple-600 mb-3">
-                        <Building size={20} />
-                    </div>
-                    <div className="text-3xl font-black text-slate-800 tabular-nums">{stats.totalShelters}</div>
-                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Abrigos Totais</div>
-                    <div className="text-[10px] font-bold text-purple-600 mt-1">{stats.activeShelters} ativos</div>
-                </div>
-
-                <div className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100">
-                    <div className="bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center text-emerald-600 mb-3">
-                        <Users size={20} />
-                    </div>
-                    <div className="text-3xl font-black text-slate-800 tabular-nums">{stats.totalOccupants}</div>
-                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Pessoas Abrigadas</div>
-                    <div className="text-[10px] font-bold text-emerald-600 mt-1">{stats.totalCapacity} ocupados</div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100">
-                    <div className="bg-amber-50 w-10 h-10 rounded-xl flex items-center justify-center text-amber-600 mb-3">
-                        <Package size={20} />
-                    </div>
-                    <div className="text-3xl font-black text-slate-800 tabular-nums">{stats.totalDonations}</div>
-                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Doações Recebidas</div>
-                </div>
-
-                <div className="bg-white p-5 rounded-[28px] shadow-sm border border-slate-100">
-                    <div className="bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600 mb-3">
-                        <TrendingUp size={20} />
-                    </div>
-                    <div className="text-3xl font-black text-slate-800 tabular-nums">{stats.occupancyRate}%</div>
-                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Taxa de Ocupação</div>
-                </div>
-            </div>
-
-            {/* Quick Action Button */}
-            <div
-                className="bg-gradient-to-br from-purple-600 to-purple-800 p-5 rounded-[32px] text-white mb-6 shadow-lg cursor-pointer active:scale-95 transition-all"
-                onClick={() => navigate('/abrigos/novo')}
-            >
-                <div className="flex justify-between items-center">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Activity size={14} className="text-purple-200" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-purple-200">Cadastro Rápido</span>
+        <div className="min-h-screen bg-slate-50 pb-12">
+            <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card variant="gradient" className="p-6 md:col-span-3">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex-1">
+                                <div className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-2">
+                                    GESTÃO DE ABRIGOS
+                                </div>
+                                <div className="text-4xl font-black text-white mb-1">
+                                    {stats.totalShelters}
+                                </div>
+                                <div className="text-sm text-white/90">
+                                    {stats.activeShelters} abrigos ativos
+                                </div>
+                            </div>
+                            <Button
+                                variant="secondary"
+                                onClick={() => navigate('/abrigos/novo')}
+                                className="flex items-center gap-2 whitespace-nowrap"
+                            >
+                                <Plus size={20} />
+                                Novo Abrigo
+                            </Button>
                         </div>
-                        <h2 className="text-lg font-black leading-tight">Cadastrar Novo<br />Abrigo</h2>
-                        <p className="text-[10px] text-purple-200 mt-2 font-bold uppercase">Registro de Estrutura</p>
-                    </div>
-                    <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md">
-                        <Plus size={24} className="text-white" />
-                    </div>
-                </div>
-            </div>
+                    </Card>
 
-            {/* Shelters List */}
-            <div className="mb-6">
-                <div className="flex justify-between items-center mb-4 px-1">
-                    <h3 className="font-black text-slate-800 text-xs uppercase tracking-widest">Abrigos Cadastrados</h3>
-                    <div className="bg-slate-100 px-2 py-1 rounded-lg text-[9px] font-black text-slate-400">
-                        {shelters.length} TOTAL
-                    </div>
+                    <Card variant="stat" className="p-5">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                <Users className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                                ABRIGADOS
+                            </div>
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 mb-1">
+                            {stats.totalOccupancy}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                            de {stats.totalCapacity} vagas ({stats.occupancyRate}%)
+                        </div>
+                    </Card>
+
+                    <Card variant="stat" className="p-5">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                                <Gift className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                                DOAÇÕES
+                            </div>
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 mb-1">
+                            {stats.totalDonations}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                            registradas
+                        </div>
+                    </Card>
+
+                    <Card variant="stat" className="p-5">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${syncPercentage === 100 ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+                                    {syncPercentage === 100 ? (
+                                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                    ) : (
+                                        <CloudSync className="w-5 h-5 text-amber-600" />
+                                    )}
+                                </div>
+                                <div className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                                    SINCRONIZADO
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleForceSync}
+                                disabled={isSyncing}
+                                className={`p-2 rounded-lg transition-all ${isSyncing ? 'animate-spin text-purple-400' : 'text-purple-600 hover:bg-purple-50'}`}
+                            >
+                                <RefreshCcw size={16} />
+                            </button>
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 mb-1">
+                            {syncPercentage}%
+                        </div>
+                        <div className="text-[10px] space-x-2">
+                            <span className={syncPercentage === 100 ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>
+                                {syncPercentage === 100 ? 'STATUS: OK' : 'PENDENTE'}
+                            </span>
+                        </div>
+                    </Card>
                 </div>
 
-                {shelters.length === 0 ? (
-                    <div className="bg-white p-10 rounded-[32px] border border-slate-100 text-center">
-                        <Building size={48} className="mx-auto text-slate-200 mb-4" />
-                        <h3 className="text-lg font-black text-slate-800 mb-2">Nenhum Abrigo Cadastrado</h3>
-                        <p className="text-sm text-slate-400 mb-6">Comece cadastrando o primeiro abrigo emergencial</p>
+                {/* Search and Filters */}
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <div className="flex-1 w-full relative">
+                        <Input
+                            icon={Search}
+                            placeholder="Buscar por nome, endereço ou bairro..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
                         <button
-                            onClick={() => navigate('/abrigos/novo')}
-                            className="bg-purple-600 text-white px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-purple-200 active:scale-95 transition-all"
+                            onClick={() => setStatusFilter('all')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === 'all' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'
+                                }`}
                         >
-                            Cadastrar Abrigo
+                            TODOS
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter('active')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:bg-slate-50'
+                                }`}
+                        >
+                            ATIVOS
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter('full')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === 'full' ? 'bg-amber-600 text-white' : 'text-slate-500 hover:bg-slate-50'
+                                }`}
+                        >
+                            LOTADOS
                         </button>
                     </div>
-                ) : (
-                    <div className="space-y-4">
-                        {shelters.map((shelter) => {
-                            const badge = getStatusBadge(shelter.status)
-                            const occupancyPercentage = shelter.capacity > 0
-                                ? Math.round((shelter.current_occupancy / shelter.capacity) * 100)
-                                : 0
+                </div>
 
-                            return (
-                                <div
+                {/* Shelters List */}
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-bold text-slate-800 font-sans">Abrigos Cadastrados</h2>
+                        <span className="text-sm font-semibold text-slate-400">
+                            {filteredShelters.length} de {shelters.length}
+                        </span>
+                    </div>
+
+                    {filteredShelters.length === 0 ? (
+                        <Card className="p-12">
+                            <div className="flex flex-col items-center justify-center text-center">
+                                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                                    <Search className="w-10 h-10 text-slate-400" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">
+                                    Nenhum resultado encontrado
+                                </h3>
+                                <p className="text-sm text-slate-500 mb-6 font-medium">
+                                    Tente ajustar sua busca ou filtros para encontrar o que procura.
+                                </p>
+                                <Button variant="secondary" onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}>
+                                    Limpar Filtros
+                                </Button>
+                            </div>
+                        </Card>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredShelters.map((shelter) => (
+                                <Card
                                     key={shelter.id}
-                                    className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm cursor-pointer active:scale-95 transition-all"
                                     onClick={() => navigate(`/abrigos/${shelter.id}`)}
+                                    className="p-4 hover:shadow-md transition-shadow cursor-pointer active:scale-[0.99]"
                                 >
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex-1">
-                                            <h4 className="text-base font-black text-slate-800 mb-1">{shelter.name}</h4>
-                                            <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-2">
-                                                <MapPin size={12} />
-                                                <span className="font-bold">{shelter.address}</span>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                                            <Building2 className="w-6 h-6 text-purple-600" />
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2 mb-1">
+                                                <h3 className="text-sm font-bold text-slate-800 truncate">
+                                                    {shelter.name}
+                                                </h3>
+                                                <Badge status={shelter.status || 'active'}>
+                                                    {statusLabels[shelter.status] || 'ATIVO'}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 font-medium truncate mb-2">
+                                                {shelter.address}{shelter.bairro ? ` - ${shelter.bairro}` : ''}
+                                            </p>
+
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between text-[10px] font-bold">
+                                                    <span className="text-slate-700 uppercase tracking-widest">
+                                                        OCUPAÇÃO: {shelter.current_occupancy || 0}/{shelter.capacity}
+                                                    </span>
+                                                    <span className="text-slate-400">
+                                                        {Math.round(((shelter.current_occupancy || 0) / shelter.capacity) * 100)}%
+                                                    </span>
+                                                </div>
+                                                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-500"
+                                                        style={{
+                                                            width: `${Math.min(((shelter.current_occupancy || 0) / shelter.capacity) * 100, 100)}%`
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className={`px-3 py-1 rounded-full border ${badge.color} text-[9px] font-black uppercase`}>
-                                            {badge.label}
-                                        </div>
-                                    </div>
 
-                                    {/* Occupancy Bar */}
-                                    <div className="mb-3">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-[9px] font-black text-slate-500 uppercase">Ocupação</span>
-                                            <span className="text-[10px] font-black text-slate-600">
-                                                {shelter.current_occupancy || 0} / {shelter.capacity} ({occupancyPercentage}%)
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                                            <div
-                                                className={`h-full ${getOccupancyColor(shelter.current_occupancy || 0, shelter.capacity)} transition-all duration-500`}
-                                                style={{ width: `${Math.min(occupancyPercentage, 100)}%` }}
-                                            />
-                                        </div>
+                                        <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
                                     </div>
-
-                                    {/* Footer Info */}
-                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                                        <div className="text-[9px] font-bold text-slate-400">
-                                            {shelter.responsible_name && (
-                                                <span>Resp.: {shelter.responsible_name}</span>
-                                            )}
-                                        </div>
-                                        <div className="text-[9px] font-black text-purple-600 uppercase">
-                                            Ver Detalhes →
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                )}
-            </div>
-
-            {/* Alert if no shelters */}
-            {shelters.length > 0 && stats.activeShelters === 0 && (
-                <div className="bg-orange-50 border border-orange-200 p-4 rounded-2xl flex items-start gap-3">
-                    <AlertCircle size={20} className="text-orange-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                        <h4 className="text-sm font-black text-orange-800 mb-1">Atenção</h4>
-                        <p className="text-[11px] font-bold text-orange-600">
-                            Nenhum abrigo está ativo no momento. Ative abrigos para receber pessoas em situação de emergência.
-                        </p>
-                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </div>
-    )
+    );
 }
 
-export default Abrigos
+export default Dashboard;

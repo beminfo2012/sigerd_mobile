@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
@@ -568,18 +568,18 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Start Inspection Button - More Discreet Version */}
+            {/* Shelter Management Shortcut */}
             <div
-                onClick={() => navigate('/checklist-saida')}
+                onClick={() => navigate('/abrigos')}
                 className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
             >
                 <div className="flex items-center gap-3">
-                    <div className="bg-slate-100 w-10 h-10 rounded-xl flex items-center justify-center text-blue-600">
-                        <Truck size={18} strokeWidth={2.5} />
+                    <div className="bg-purple-100 w-10 h-10 rounded-xl flex items-center justify-center text-purple-600">
+                        <Home size={18} strokeWidth={2.5} />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-700 leading-tight">Iniciar Vistoria</span>
-                        <span className="text-[10px] text-slate-400 font-medium leading-tight">Confirmar Prontidão</span>
+                        <span className="text-sm font-black text-slate-800 leading-tight">Gestão de Abrigos</span>
+                        <span className="text-[10px] text-purple-500 font-bold uppercase tracking-tight">Ocupação e Logística</span>
                     </div>
                 </div>
                 <div className="text-slate-300 pr-2">

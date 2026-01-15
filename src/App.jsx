@@ -13,8 +13,18 @@ import Menu from './pages/Menu'
 import Login from './pages/Login'
 import Alerts from './pages/Alerts'
 import GeoDashboard from './pages/Monitoramento/GeoDashboard'
-import ChecklistSaida from './pages/Checklist/ChecklistSaida'
+import { ChecklistSaida } from './pages/Checklist/ChecklistSaida'
 import { supabase } from './services/supabase'
+
+// Shelter Module
+import { Dashboard as ShelterDashboard } from './pages/Abrigos/index'
+import { ShelterDetail } from './pages/Abrigos/ShelterDetail'
+import { ShelterForm } from './pages/Abrigos/ShelterForm'
+import { OccupantForm } from './pages/Abrigos/OccupantForm'
+import { DonationForm } from './pages/Abrigos/DonationForm'
+import { DistributionForm } from './pages/Abrigos/DistributionForm'
+import { Reports as ShelterReports } from './pages/Abrigos/Reports'
+import { Residents as ShelterResidents } from './pages/Abrigos/Residents'
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -179,6 +189,16 @@ function App() {
                                 <Route path="/alerts" element={<Alerts />} />
                                 <Route path="/monitoramento" element={<GeoDashboard />} />
                                 <Route path="/checklist-saida" element={<ChecklistSaida />} />
+
+                                {/* Shelter Module Routes */}
+                                <Route path="/abrigos" element={<ShelterDashboard />} />
+                                <Route path="/abrigos/novo" element={<ShelterForm />} />
+                                <Route path="/abrigos/:id" element={<ShelterDetail />} />
+                                <Route path="/abrigos/:shelterId/abrigados/novo" element={<OccupantForm />} />
+                                <Route path="/abrigos/:shelterId/doacoes/novo" element={<DonationForm />} />
+                                <Route path="/abrigos/:shelterId/distribuicoes/novo" element={<DistributionForm />} />
+                                <Route path="/abrigos/relatorios" element={<ShelterReports />} />
+                                <Route path="/abrigos/residentes" element={<ShelterResidents />} />
                             </Routes>
                         </main>
 

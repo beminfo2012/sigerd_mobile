@@ -1,0 +1,273 @@
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { User, CreditCard, Calendar, Users as UsersIcon, Heart, FileText, ArrowLeft } from 'lucide-react';
+import { Card } from '../../components/Shelter/ui/Card';
+import { Input } from '../../components/Shelter/ui/Input';
+import { Button } from '../../components/Shelter/ui/Button';
+import { db, addOccupant } from '../../services/shelterDb';
+
+export function OccupantForm() {
+    const { shelterId } = useParams();
+    const navigate = useNavigate();
+
+    // Use numeric ID for IndexedDB query if necessary
+    const idStr = shelterId;
+    const shelter = useLiveQuery(() => db.shelters.get(parseInt(idStr)), [idStr]);
+
+    const [formData, setFormData] = useState({
+        full_name: '',
+        cpf: '',
+        age: '',
+        gender: 'nao_informado',
+        family_group: '',
+        is_family_head: false,
+        special_needs: '',
+        observations: '',
+    });
+
+    const [showFamilySuggestions, setShowFamilySuggestions] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData({
+            ...formData,
+            [name]: type === 'checkbox' ? checked : value,
+        });
+    };
+
+    // Fetch existing families in this shelter
+    const existingOccupants = useLiveQuery(() => db.occupants.where('shelter_id').equals(idStr).toArray(), [idStr]) || [];
+    const familyGroups = [...new Set(existingOccupants.map(o => o.family_group).filter(Boolean))];
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        try {
+            await addOccupant({
+                ...formData,
+                shelter_id: idStr
+            });
+
+            // Update shelter current_occupancy
+            if (shelter) {
+                await db.shelters.update(shelter.id, {
+                    current_occupancy: (shelter.current_occupancy || 0) + 1
+                });
+            }
+
+            alert('Abrigado cadastrado com sucesso!');
+            navigate(`/abrigos/${shelterId}`);
+        } catch (error) {
+            console.error('Error saving occupant:', error);
+            alert('Erro ao cadastrar abrigado. Tente novamente.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (shelter === undefined) return null; // Loading
+
+    if (!shelter) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Abrigo não encontrado</h2>
+                    <Button onClick={() => navigate('/abrigos')}>Voltar ao Dashboard</Button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-slate-50 pb-6">
+            <div className="max-w-3xl mx-auto px-4 py-6">
+                {/* Header */}
+                <div className="mb-6">
+                    <button
+                        onClick={() => navigate(`/abrigos/${shelterId}`)}
+                        className="flex items-center gap-2 text-purple-600 font-semibold mb-4 hover:text-purple-700 transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                        Voltar
+                    </button>
+                    <h1 className="text-2xl font-black text-slate-800">Cadastrar Abrigado</h1>
+                    <p className="text-sm text-slate-500 mt-1">
+                        Abrigo: {shelter.name}
+                    </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Personal Information */}
+                    <Card className="p-6">
+                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <User size={20} className="text-purple-600" />
+                            Informações Pessoais
+                        </h2>
+
+                        <div className="space-y-4">
+                            <Input
+                                label="Nome Completo"
+                                name="full_name"
+                                value={formData.full_name}
+                                onChange={handleChange}
+                                required
+                                icon={User}
+                                placeholder="Ex: João da Silva"
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input
+                                    label="CPF"
+                                    name="cpf"
+                                    value={formData.cpf}
+                                    onChange={handleChange}
+                                    icon={CreditCard}
+                                    placeholder="000.000.000-00"
+                                />
+
+                                <Input
+                                    label="Idade"
+                                    name="age"
+                                    type="number"
+                                    value={formData.age}
+                                    onChange={handleChange}
+                                    icon={Calendar}
+                                    placeholder="Ex: 35"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-slate-700">
+                                    Gênero
+                                </label>
+                                <select
+                                    name="gender"
+                                    value={formData.gender}
+                                    onChange={handleChange}
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold"
+                                >
+                                    <option value="nao_informado">Não informado</option>
+                                    <option value="masculino">Masculino</option>
+                                    <option value="feminino">Feminino</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Family and Special Needs */}
+                    <Card className="p-6">
+                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <UsersIcon size={20} className="text-purple-600" />
+                            Grupo Familiar e Necessidades
+                        </h2>
+
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <Input
+                                    label="Grupo Familiar"
+                                    name="family_group"
+                                    value={formData.family_group}
+                                    onChange={handleChange}
+                                    onFocus={() => setShowFamilySuggestions(true)}
+                                    icon={UsersIcon}
+                                    placeholder="Ex: Família Silva"
+                                    autoComplete="off"
+                                />
+
+                                {showFamilySuggestions && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                                        <div className="p-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
+                                            Grupos Existentes
+                                        </div>
+                                        {familyGroups.map((group) => (
+                                            <button
+                                                key={group}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData({ ...formData, family_group: group });
+                                                    setShowFamilySuggestions(false);
+                                                }}
+                                                className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+                                            >
+                                                {group}
+                                            </button>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newId = `FAM-${Math.floor(Math.random() * 900) + 100}`;
+                                                setFormData({ ...formData, family_group: newId, is_family_head: true });
+                                                setShowFamilySuggestions(false);
+                                            }}
+                                            className="w-full text-left px-4 py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 transition-colors sticky bottom-0 bg-white border-t border-slate-100"
+                                        >
+                                            + Gerar novo código de família
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <label className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl cursor-pointer hover:bg-purple-100 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    name="is_family_head"
+                                    checked={formData.is_family_head}
+                                    onChange={handleChange}
+                                    className="w-5 h-5 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                                />
+                                <div className="flex-1">
+                                    <div className="text-sm font-bold text-purple-800">
+                                        Responsável Familiar
+                                    </div>
+                                    <div className="text-[10px] text-purple-600 uppercase font-black">
+                                        REPRESENTANTE DO GRUPO
+                                    </div>
+                                </div>
+                            </label>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                    <Heart size={16} className="text-slate-400" />
+                                    Necessidades Especiais
+                                </label>
+                                <textarea
+                                    name="special_needs"
+                                    value={formData.special_needs}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all resize-none"
+                                    placeholder="Ex: Hipertensão, mobilidade reduzida, medicação contínua..."
+                                />
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => navigate(`/abrigos/${shelterId}`)}
+                            className="flex-1"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="flex-1"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Salvando...' : 'Cadastrar Abrigado'}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+export default OccupantForm;
