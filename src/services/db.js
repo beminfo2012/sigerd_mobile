@@ -381,48 +381,64 @@ export const resetDatabase = async () => {
 }
 
 // GeoRescue Logic
-export const importInstallations = async (data) => {
+export const importInstallations = async (data, onProgress) => {
     const db = await initDB()
-    const tx = db.transaction('installations', 'readwrite')
-    const store = tx.objectStore('installations')
 
-    // Clear existing to avoid duplicates on re-import
-    await store.clear()
-
-    // Batch add
-    for (const item of data) {
-        // Fix: Case sensitivity for UC codes
-        const fullUC = item["Código Unidade Consumidora"] || item["CODIGO UNIDADE CONSUMIDORA"] || ""
-        let ucCore = ""
-
-        if (fullUC) {
-            const parts = fullUC.split('.')
-            if (parts.length >= 4) {
-                ucCore = parts[2] + parts[3]
-            }
-        }
-
-        // Fix: Clean number for searching
-        // Remove . and - from full UC to allow searching "0002..."
-        const cleanFullUC = fullUC.replace(/\D/g, '')
-
-        const doc = {
-            ...item,
-            id: item.id || (item["Instalação"] || Math.random().toString(36).substr(2, 9)),
-            installation_number: item["Instalação"] ? String(item["Instalação"]) : String(item.installation_number || ''),
-            full_uc: fullUC,
-            clean_full_uc: cleanFullUC, // New field for search
-            uc_core: ucCore,
-            name: item.name || item.NOME || item.NOME_BAIRRO || '',
-            address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || '',
-            // Fix: Flexible Latitude/Longitude keys
-            lat: parseFloat(item.LATITUDE || item.Latitude || item.lat || item.pee_lat || item.client_lat || 0),
-            lng: parseFloat(item.LONGITUDE || item.Longitude || item.lng || item.pee_lng || item.client_lng || 0)
-        }
-        store.put(doc)
+    // 1. Clear existing store first (single transaction)
+    {
+        const tx = db.transaction('installations', 'readwrite')
+        await tx.objectStore('installations').clear()
+        await tx.done
     }
 
-    await tx.done
+    // 2. Process in chunks to avoid blocking the main thread and crashing IDB
+    const CHUNK_SIZE = 1000
+    const total = data.length
+    let processed = 0
+
+    for (let i = 0; i < total; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE)
+        const tx = db.transaction('installations', 'readwrite')
+        const store = tx.objectStore('installations')
+
+        for (const item of chunk) {
+            // Fix: Case sensitivity for UC codes
+            const fullUC = item["Código Unidade Consumidora"] || item["CODIGO UNIDADE CONSUMIDORA"] || ""
+            let ucCore = ""
+
+            if (fullUC) {
+                const parts = fullUC.split('.')
+                if (parts.length >= 4) {
+                    ucCore = parts[2] + parts[3]
+                }
+            }
+
+            // Fix: Clean number for searching
+            // Remove . and - from full UC to allow searching "0002..."
+            const cleanFullUC = fullUC.replace(/\D/g, '')
+
+            const doc = {
+                ...item,
+                id: item.id || (item["Instalação"] || Math.random().toString(36).substr(2, 9)),
+                installation_number: item["Instalação"] ? String(item["Instalação"]) : String(item.installation_number || ''),
+                full_uc: fullUC,
+                clean_full_uc: cleanFullUC, // New field for search
+                uc_core: ucCore,
+                name: item.name || item.NOME || item.NOME_BAIRRO || '',
+                address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || '',
+                // Fix: Flexible Latitude/Longitude keys
+                lat: parseFloat(item.LATITUDE || item.Latitude || item.lat || item.pee_lat || item.client_lat || 0),
+                lng: parseFloat(item.LONGITUDE || item.Longitude || item.lng || item.pee_lng || item.client_lng || 0)
+            }
+            store.put(doc)
+        }
+        await tx.done
+        processed += chunk.length
+        if (onProgress) onProgress(processed, total)
+
+        // Small yield to UI
+        await new Promise(r => setTimeout(r, 10))
+    }
 }
 
 export const searchInstallations = async (query) => {
