@@ -97,6 +97,22 @@ const GeoRescue = () => {
         }
     }
 
+    // Check on startup
+    useEffect(() => {
+        const checkAndImport = async () => {
+            const dbVersion = localStorage.getItem('geo_db_version')
+            const count = await getInstallationsCount()
+
+            // Re-import if version mismatch OR low count (partial/empty DB)
+            // Expected count is ~21,727. If we have less than 21,000, something is wrong.
+            if (dbVersion !== 'v4' || count < 21000) {
+                console.log('[GeoRescue] Auto-start import. Version:', dbVersion, 'Count:', count);
+                await startImport()
+            }
+        }
+        checkAndImport()
+    }, [])
+
     const handleSearch = async (query) => {
         setSearchQuery(query)
 
