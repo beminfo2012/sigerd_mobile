@@ -875,9 +875,7 @@ const Dashboard = () => {
                 )
             }
 
-            <div className="text-center py-8 opacity-20 hover:opacity-100 transition-opacity">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD Mobile v1.1.5</span>
-            </div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD Mobile v1.2.0</span>
         </div >
     )
 }

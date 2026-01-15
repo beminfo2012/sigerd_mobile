@@ -68,8 +68,10 @@ const GeoRescue = () => {
             setIsImporting(true)
             setImportProgress(0)
 
+
             console.log('Importing updated UC data (v4 - 01.2026)...')
-            const response = await fetch('/uc_db_v4.json')
+            // Cache busting to ensure we get new file
+            const response = await fetch('/uc_db_v4.json?t=' + new Date().getTime())
             if (!response.ok) throw new Error('Failed to fetch DB file')
 
             const ucData = await response.json()
@@ -81,7 +83,11 @@ const GeoRescue = () => {
 
             const updatedCount = await getInstallationsCount()
             setTotalInstallations(updatedCount)
-            alert('Banco de dados GeoRescue atualizado com sucesso!')
+
+            // Mark as updated
+            localStorage.setItem('geo_db_version', 'v4')
+
+            alert(`Banco de dados atualizado com sucesso!\n${updatedCount} unidades carregadas.`)
 
         } catch (e) {
             console.error('Import failed:', e)
@@ -90,18 +96,6 @@ const GeoRescue = () => {
             setIsImporting(false)
         }
     }
-
-    // Check on startup
-    useEffect(() => {
-        const checkAndImport = async () => {
-            const count = await getInstallationsCount()
-            // New dataset (01.2026) has 21,727 records
-            if (count === 0 || count !== 21727) {
-                await startImport()
-            }
-        }
-        checkAndImport()
-    }, [])
 
     const handleSearch = async (query) => {
         setSearchQuery(query)
@@ -201,10 +195,18 @@ const GeoRescue = () => {
                     </div>
 
                     {/* Total Count Badge */}
-                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                        <MapPin size={14} />
-                        <span className="font-bold">{totalInstallations.toLocaleString()}</span>
-                        <span>unidades cadastradas</span>
+                    <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <MapPin size={14} />
+                            <span className="font-bold">{totalInstallations.toLocaleString()}</span>
+                            <span>unidades</span>
+                        </div>
+                        <button
+                            onClick={startImport}
+                            className="text-[10px] font-bold text-blue-600 uppercase tracking-wider hover:bg-blue-50 px-2 py-1 rounded"
+                        >
+                            Atualizar Base
+                        </button>
                     </div>
                 </div>
 
