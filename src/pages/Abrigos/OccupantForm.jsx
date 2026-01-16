@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, CreditCard, Calendar, Users as UsersIcon, Heart, FileText, ArrowLeft } from 'lucide-react';
+import { User, CreditCard, Calendar, Users as UsersIcon, Heart, FileText, ArrowLeft, Camera, Loader2 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
 import { addOccupant, getShelterById, getOccupants, updateShelter } from '../../services/shelterDb';
+import { scanDocument } from '../../services/ocrService';
 
 export function OccupantForm() {
     const { shelterId } = useParams();
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
 
     // Use numeric ID for IndexedDB query if necessary
     const idStr = shelterId;
@@ -38,6 +40,7 @@ export function OccupantForm() {
 
     const [showFamilySuggestions, setShowFamilySuggestions] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -49,6 +52,36 @@ export function OccupantForm() {
 
     // Derived state from existing occupants
     const familyGroups = [...new Set(existingOccupants.map(o => o.family_group).filter(Boolean))];
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsScanning(true);
+        try {
+            const result = await scanDocument(file);
+
+            setFormData(prev => ({
+                ...prev,
+                full_name: result.full_name || prev.full_name,
+                cpf: result.cpf || prev.cpf,
+                age: result.age || prev.age,
+                gender: result.gender || prev.gender
+            }));
+
+            alert('Documento lido com sucesso! Verifique os dados preenchidos.');
+        } catch (error) {
+            console.error('Scan Error:', error);
+            alert('Não foi possível ler os dados do documento. Tente uma foto mais clara ou preencha manualmente.');
+        } finally {
+            setIsScanning(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleScanClick = () => {
+        fileInputRef.current?.click();
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -107,6 +140,39 @@ export function OccupantForm() {
                         Abrigo: {shelter.name}
                     </p>
                 </div>
+
+                {/* Scan Button - Prominent */}
+                <Card className="p-4 mb-6 bg-blue-50 border-blue-100">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="font-bold text-[#2a5299] mb-1">Agilizar Cadastro</h3>
+                            <p className="text-xs text-blue-600">
+                                Tire uma foto do documento (RG ou CNH) para preencher automaticamente.
+                            </p>
+                        </div>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                        />
+                        <Button
+                            type="button"
+                            onClick={handleScanClick}
+                            disabled={isScanning}
+                            className="bg-[#2a5299] text-white hover:bg-blue-800"
+                        >
+                            {isScanning ? (
+                                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            ) : (
+                                <Camera className="w-5 h-5 mr-2" />
+                            )}
+                            {isScanning ? 'Lendo...' : 'Escanear Documento'}
+                        </Button>
+                    </div>
+                </Card>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Personal Information */}
