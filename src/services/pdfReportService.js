@@ -1,201 +1,208 @@
 import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import { LOGO_BASE64 } from '../utils/logoBase64';
 
-/**
- * Converte uma imagem de uma URL para uma string Base64.
- */
-function shelterImageUrlToBase64(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            const dataURL = canvas.toDataURL('image/png');
-            resolve(dataURL);
-        };
-        img.onerror = () => {
-            console.warn(`Imagem não encontrada ou erro de CORS: ${url}`);
-            resolve(null);
-        };
-        img.src = url;
-    });
-}
+export const generateShelterReport = async (shelters, donations, occupants) => {
+    // 1. Prepare Data
 
-// Função utilitária para quebrar texto e adicionar páginas
-function shelterAddWrappedText(doc, text, x, currentY, maxWidth, lh) {
-    const lines = doc.splitTextToSize(String(text || ''), maxWidth);
-    for (let i = 0; i < lines.length; i++) {
-        if (currentY > 780) { // Margem inferior
-            doc.addPage();
-            currentY = 40;
-        }
-        doc.text(lines[i], x, currentY);
-        currentY += lh;
-    }
-    return currentY;
-}
+    // Stats Calculation
+    const totalShelters = shelters.length;
+    // Use the sum of current_occupancy from shelter records as the trusted source for "active" count
+    const totalOccupants = shelters.reduce((acc, curr) => acc + (parseInt(curr.current_occupancy) || 0), 0);
+    const totalCapacity = shelters.reduce((acc, curr) => acc + (parseInt(curr.capacity) || 0), 0);
+    const occupancyRate = totalCapacity > 0 ? ((totalOccupants / totalCapacity) * 100).toFixed(1) : '0';
 
-// Função para adicionar título de seção
-function shelterAddSectionTitle(doc, title, y) {
-    doc.setFillColor(230, 239, 255); // Azul claro
-    doc.rect(35, y - 12, doc.internal.pageSize.getWidth() - 70, 20, 'F');
-    doc.setFontSize(14);
-    doc.setTextColor(30, 60, 114); // Azul escuro
-    doc.text(title, 40, y);
-    doc.setTextColor(51, 51, 51); // Reseta cor
-    return y + 25;
-}
+    const shelterList = shelters || [];
+    const donationList = donations || [];
 
-/**
- * Função Principal de Geração do Relatório
- */
-export async function generateShelterReport(shelters = [], donations = [], occupants = []) {
+    // 2. Create Temporary Container for Report HTML
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '840px'; // A4 width scaling
+    container.style.zIndex = '-1';
+    document.body.appendChild(container);
+
+    // Helpers
+    const formatDate = () => new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'medium' });
+
+    // 3. Build HTML Structure
+    const htmlContent = `
+        <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background: white; padding: 40px;">
+            
+            <!-- Header -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #2a5299; padding-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="${LOGO_BASE64}" style="height: 60px; display: block;" />
+                    <div>
+                        <h1 style="margin: 0; font-size: 24px; color: #2a5299; text-transform: uppercase; font-weight: 900;">Relatório de Abrigos</h1>
+                        <p style="margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: bold;">Gestão de Assistência Humanitária</p>
+                        <p style="margin: 2px 0 0; font-size: 12px; color: #94a3b8;">Defesa Civil de Santa Maria de Jetibá - ES</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; font-weight: bold; color: #94a3b8; text-transform: uppercase;">Emissão</div>
+                    <div style="font-size: 14px; font-weight: 600;">${formatDate()}</div>
+                </div>
+            </div>
+
+            <!-- 1. General Panorama -->
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">1. Panorama Geral</h2>
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 900; color: #1e293b;">${totalShelters}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">Abrigos Ativos</div>
+                    </div>
+                    <div style="flex: 1; background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #dbeafe; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 900; color: #2563eb;">${totalOccupants}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: #1e40af; text-transform: uppercase;">Pessoas Abrigadas</div>
+                    </div>
+                    <div style="flex: 1; background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #ffedd5; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 900; color: #ea580c;">${occupancyRate}%</div>
+                        <div style="font-size: 12px; font-weight: bold; color: #c2410c; text-transform: uppercase;">Taxa de Ocupação</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Active Shelters List -->
+            <div style="margin-bottom: 30px;">
+                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">2. Lista de Abrigos Ativos</h2>
+                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                    <thead style="background: #f1f5f9; text-transform: uppercase;">
+                        <tr>
+                            <th style="padding: 10px 8px; text-align: left; color: #475569;">Nome do Abrigo</th>
+                            <th style="padding: 10px 8px; text-align: left; color: #475569;">Endereço</th>
+                            <th style="padding: 10px 8px; text-align: center; color: #475569;">Capacidade</th>
+                            <th style="padding: 10px 8px; text-align: center; color: #475569;">Ocupação</th>
+                            <th style="padding: 10px 8px; text-align: center; color: #475569;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${shelterList.length > 0 ? shelterList.map((s, i) => {
+        const occ = parseInt(s.current_occupancy) || 0;
+        const isFull = occ >= s.capacity;
+        const statusColor = isFull ? '#dc2626' : '#16a34a';
+        const statusLabel = isFull ? 'LOTADO' : 'DISPONÍVEL';
+
+        return `
+                                <tr style="border-bottom: 1px solid #e2e8f0; background: ${i % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                                    <td style="padding: 10px 8px; font-weight: 700; color: #334155;">${s.name}</td>
+                                    <td style="padding: 10px 8px; color: #64748b;">${s.address || '-'}</td>
+                                    <td style="padding: 10px 8px; text-align: center; font-weight: 600;">${s.capacity}</td>
+                                    <td style="padding: 10px 8px; text-align: center; font-weight: 700; color: #1e293b;">${occ}</td>
+                                    <td style="padding: 10px 8px; text-align: center;">
+                                        <span style="background: ${statusColor}15; color: ${statusColor}; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800;">
+                                            ${statusLabel}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+    }).join('') : '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #94a3b8; font-style: italic;">Nenhum abrigo cadastrado.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 2.1 Donation Summary -->
+            <div style="page-break-inside: avoid;">
+                 <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">3. Resumo de Doações Recentes</h2>
+                 ${donationList.length > 0 ? `
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${donationList.slice(0, 5).map(d => `
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; color: #2563eb; font-weight: bold; font-size: 14px;">📦</div>
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #334155;">${d.item}</div>
+                                        <div style="font-size: 11px; color: #64748b;">Doador: ${d.donor}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; font-weight: 800; color: #1e293b;">${d.quantity} <span style="font-size: 10px; font-weight: 600; color: #94a3b8; text-transform: uppercase;">unid.</span></div>
+                                    <div style="font-size: 10px; color: #94a3b8;">${d.donation_date ? new Date(d.donation_date).toLocaleDateString() : '-'}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        ${donationList.length > 5 ? `<div style="text-align: center; font-size: 11px; color: #64748b; padding: 5px; font-weight: 600;">+ ${donationList.length - 5} outras doações registradas</div>` : ''}
+                    </div>
+                 ` : '<div style="background: #f8fafc; padding: 20px; border-radius: 8px; text-align: center; color: #94a3b8; font-style: italic; border: 1px dashed #cbd5e1;">Nenhuma doação recente registrada.</div>'}
+            </div>
+
+            <!-- Signatures Section -->
+            <div style="margin-top: 50px; display: flex; gap: 40px; page-break-inside: avoid;">
+                <div style="flex: 1;">
+                    <div style="height: 1px; background: #cbd5e1; width: 100%; margin-bottom: 12px;"></div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 11px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">Responsável Técnico</div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: 600;">Defesa Civil SMJ</div>
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <div style="height: 1px; background: #cbd5e1; width: 100%; margin-bottom: 12px;"></div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 11px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">Coordenação Municipal</div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: 600;">Proteção e Defesa Civil</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Warning -->
+            <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 9px; color: #cbd5e1; font-style: italic;">
+                * Relatório gerado automaticamente pelo Sistema SIGERD Mobile.
+            </div>
+
+        </div>
+    `;
+
+    container.innerHTML = htmlContent;
+
+    // 4. Render to Canvas & PDF
     try {
-        console.log("Iniciando geração do relatório de abrigos...");
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Preparar PDF
-        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-        const marginLeft = 40;
-        let y = 40;
-        const lineHeight = 14;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const usableWidth = pageWidth - marginLeft * 2;
-
-        // --- Cabeçalho ---
-        doc.setFontSize(18);
-        doc.setTextColor(30, 60, 114);
-        doc.text('Relatório de Gestão de Abrigos', pageWidth / 2, 50, { align: 'center' });
-
-        y = 80;
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        const nowStr = new Date().toLocaleString('pt-BR');
-        doc.text(`Gerado em: ${nowStr}`, pageWidth / 2, y, { align: 'center' });
-        doc.setTextColor(51, 51, 51); // Reset
-        y += 30;
-
-        // --- 1. Resumo Estatístico ---
-        y = shelterAddSectionTitle(doc, '1. Resumo Situacional', y);
-        doc.setFontSize(11);
-
-        const totalShelters = shelters.length;
-        const activeShelters = shelters.filter(s => s.status === 'active').length;
-        const fullShelters = shelters.filter(s => s.status === 'full').length;
-
-        let totalCapacity = 0;
-        let totalOccupants = 0;
-
-        shelters.forEach(s => {
-            totalCapacity += parseInt(s.capacity || 0);
-            totalOccupants += parseInt(s.current_occupancy || 0);
+        const canvas = await html2canvas(container, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
         });
 
-        const occupancyRate = totalCapacity > 0 ? Math.round((totalOccupants / totalCapacity) * 100) : 0;
-        const totalDonations = donations.length;
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Grid de Estatísticas
-        y = shelterAddWrappedText(doc, `• Total de Abrigos Cadastrados: ${totalShelters}`, marginLeft, y, usableWidth, lineHeight);
-        y = shelterAddWrappedText(doc, `• Abrigos Ativos: ${activeShelters}`, marginLeft, y, usableWidth, lineHeight);
-        y = shelterAddWrappedText(doc, `• Abrigos Lotados: ${fullShelters}`, marginLeft, y, usableWidth, lineHeight);
-        y += 10;
-        y = shelterAddWrappedText(doc, `• Capacidade Total do Município: ${totalCapacity} vagas`, marginLeft, y, usableWidth, lineHeight);
-        y = shelterAddWrappedText(doc, `• Total de Pessoas Abrigadas: ${totalOccupants}`, marginLeft, y, usableWidth, lineHeight);
-        y = shelterAddWrappedText(doc, `• Taxa de Ocupação Global: ${occupancyRate}%`, marginLeft, y, usableWidth, lineHeight);
-        y += 10;
-        y = shelterAddWrappedText(doc, `• Registros de Doações: ${totalDonations}`, marginLeft, y, usableWidth, lineHeight);
+        let heightLeft = imgHeight;
+        let position = 0;
 
-        y += 20;
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
 
-        // --- 2. Detalhamento dos Abrigos ---
-        y = shelterAddSectionTitle(doc, '2. Situação por Abrigo', y);
-
-        if (shelters.length === 0) {
-            y = shelterAddWrappedText(doc, "Nenhum abrigo cadastrado até o momento.", marginLeft, y, usableWidth, lineHeight);
-        } else {
-            shelters.forEach((shelter, index) => {
-                // Verifica quebra de página
-                if (y > 700) {
-                    doc.addPage();
-                    y = 40;
-                }
-
-                const occCurrent = parseInt(shelter.current_occupancy || 0);
-                const cap = parseInt(shelter.capacity || 0);
-                const perc = cap > 0 ? Math.round((occCurrent / cap) * 100) : 0;
-
-                let statusLabel = (shelter.status || 'unknown').toUpperCase();
-
-                // Título do Abrigo
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text(`${index + 1}. ${shelter.name} [${statusLabel}]`, marginLeft, y);
-                y += 15;
-
-                // Detalhes
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'normal');
-
-                const details = [
-                    `Localização: ${shelter.address || 'Não informado'}`,
-                    `Responsável: ${shelter.responsible || 'Não informado'} - Contato: ${shelter.phone || '-'}`,
-                    `Ocupação: ${occCurrent} pessoas de ${cap} vagas (${perc}%)`
-                ];
-
-                details.forEach(line => {
-                    y = shelterAddWrappedText(doc, line, marginLeft + 10, y, usableWidth - 10, lineHeight);
-                });
-
-                y += 10; // Espaço entre abrigos
-            });
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
         }
 
-        y += 20;
+        const blob = pdf.output('blob');
+        const blobURL = URL.createObjectURL(blob);
+        const fileName = `Relatorio_Abrigos_${new Date().toISOString().split('T')[0]}.pdf`;
 
-        // --- 3. Doações Recentes ---
-        y = shelterAddSectionTitle(doc, '3. Doações Recentes', y);
-
-        if (donations.length === 0) {
-            y = shelterAddWrappedText(doc, "Nenhuma doação registrada recentemente.", marginLeft, y, usableWidth, lineHeight);
-        } else {
-            const recent = donations.slice(0, 10);
-
-            recent.forEach(d => {
-                const dateStr = d.date ? new Date(d.date).toLocaleDateString('pt-BR') : '-';
-                const txt = `• [${dateStr}] ${d.item} (${d.quantity} ${d.unit || 'un'}) - Doador: ${d.donor || 'Anônimo'}`;
-                y = shelterAddWrappedText(doc, txt, marginLeft, y, usableWidth, lineHeight);
-            });
-
-            if (donations.length > 10) {
-                doc.setFont(undefined, 'italic');
-                y += 5;
-                doc.text(`... e mais ${donations.length - 10} doações registradas.`, marginLeft + 15, y);
-                doc.setFont(undefined, 'normal');
-                y += 14;
-            }
+        const viewer = window.open(blobURL, '_blank');
+        if (!viewer || viewer.closed || typeof viewer.closed === 'undefined') {
+            pdf.save(fileName);
         }
-
-        // --- Rodapé ---
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(9);
-            doc.setTextColor(150);
-            doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginLeft, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
-            doc.text(`SIGERD MOBILE - Gestão de Riscos e Desastres`, marginLeft, doc.internal.pageSize.getHeight() - 20);
-        }
-
-        // 4. Salvar PDF
-        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        doc.save(`Relatorio_Abrigos_${ts}.pdf`);
-
-        return true;
 
     } catch (error) {
-        console.error("Erro ao gerar relatório:", error);
-        alert("Erro ao gerar relatório: " + error.message);
-        return false;
+        console.error("Error generating PDF report:", error);
+        alert("Erro ao gerar relatório gráfico. Verifique o console.");
+    } finally {
+        if (document.body.contains(container)) {
+            document.body.removeChild(container);
+        }
     }
-}
+};
