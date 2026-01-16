@@ -416,13 +416,26 @@ export function ShelterDetail() {
                                             ENDEREÇO
                                         </div>
                                         <p className="text-sm text-slate-700 leading-relaxed text-wrap break-words">
-                                            {shelter.address}{shelter.bairro ? `, ${shelter.bairro}` : ''}
+                                            {shelter.address ? (shelter.bairro ? `${shelter.address}, ${shelter.bairro}` : shelter.address) : (shelter.bairro || 'Endereço não informado')}
                                         </p>
-                                        {shelter.coordenadas && (
-                                            <p className="text-xs text-slate-400 mt-1">
-                                                GPS: {shelter.coordenadas}
+                                        {(shelter.lat || shelter.coordenadas) && (
+                                            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                                <MapPin size={12} />
+                                                GPS: {shelter.lat ? `${shelter.lat}, ${shelter.lng}` : shelter.coordenadas}
                                             </p>
                                         )}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <Building2 className="w-5 h-5 text-[#2a5299] flex-shrink-0" />
+                                    <div>
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                            CAPACIDADE
+                                        </div>
+                                        <p className="text-sm text-slate-700 font-bold">
+                                            {shelter.capacity} Pessoas
+                                        </p>
                                     </div>
                                 </div>
 
@@ -433,12 +446,12 @@ export function ShelterDetail() {
                                             RESPONSÁVEL
                                         </div>
                                         <p className="text-sm text-slate-700 font-bold">
-                                            {shelter.responsible_name || 'Não informado'}
+                                            {shelter.responsible_name || shelter.contact_name || 'Não informado'}
                                         </p>
-                                        {shelter.responsible_phone && (
+                                        {(shelter.responsible_phone || shelter.contact_phone) && (
                                             <div className="flex items-center gap-1 text-slate-500 mt-1">
                                                 <Phone size={12} />
-                                                <span className="text-xs">{shelter.responsible_phone}</span>
+                                                <span className="text-xs">{shelter.responsible_phone || shelter.contact_phone}</span>
                                             </div>
                                         )}
                                     </div>
