@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
-import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon, ArrowLeft } from 'lucide-react'
+import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
 
 // Components
@@ -25,9 +25,6 @@ import DonationForm from './pages/Abrigos/DonationForm'
 import DistributionForm from './pages/Abrigos/DistributionForm'
 import ShelterReports from './pages/Abrigos/Reports'
 import ShelterResidents from './pages/Abrigos/Residents'
-import ShelterBottomNav from './components/Shelter/ui/BottomNav'
-
-import { useLocation } from 'react-router-dom'
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -88,111 +85,9 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-function AppContent({ userProfile, handleLogout, activeTab, setActiveTab, setUserProfile }) {
-    const location = useLocation();
-
-    // Total resilience: check router, window, hash, and a manual console flag
-    const currentPath = (location.pathname + location.hash + window.location.pathname + window.location.hash).toLowerCase();
-    const isShelterRoute = currentPath.includes('abrigo') || (typeof window !== 'undefined' && window.FORCE_SHELTER_MODE);
-
-    if (isShelterRoute) console.log('[SHELTER MODE ACTIVE]');
-
-    // Debug globally accessible
-    if (typeof window !== 'undefined') window._lastPath = location.pathname;
-
-    return (
-        <div className="app-container">
-            <div style={{ background: '#7c3aed', color: 'white', fontSize: '10px', textAlign: 'center', padding: '2px', position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 9999 }}>
-                DIAGNOSTICO V4 ATIVO - ROTA: {location.pathname}
-            </div>
-            <SyncBackground />
-            {/* Mobile Header */}
-            <header className="mobile-header">
-                <div className="header-logo-area">
-                    {isShelterRoute ? (
-                        <>
-                            <Link to="/" className="mr-3 text-white flex items-center justify-center p-1 rounded-full hover:bg-white/10 transition-all">
-                                <ArrowLeft size={24} />
-                            </Link>
-                            <h1>GESTÃO DE <span>Abrigos</span></h1>
-                            <span style={{ fontSize: '7px', opacity: 0.3, marginLeft: '5px', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px' }}>VER_3.0</span>
-                        </>
-                    ) : (
-                        <>
-                            <img src="/logo_defesa_civil.png?v=2" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
-                            <h1>SIGERD <span>Mobile</span></h1>
-                        </>
-                    )}
-                </div>
-                <div className="header-user" onClick={handleLogout}>
-                    <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
-                        {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content Area */}
-            <main className="main-content">
-                <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/georescue" element={<GeoRescue />} />
-                    <Route path="/vistorias" element={<Vistorias />} />
-                    <Route path="/pluviometros" element={<Pluviometros onBack={() => setActiveTab('dashboard')} />} />
-                    <Route path="/interdicao" element={<Interdicao />} />
-                    <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
-                    <Route path="/alerts" element={<Alerts />} />
-                    <Route path="/monitoramento" element={<GeoDashboard />} />
-                    <Route path="/checklist-saida" element={<ChecklistSaida />} />
-
-                    {/* Shelter Module Routes */}
-                    <Route path="/abrigos" element={<ShelterDashboard />} />
-                    <Route path="/abrigos/novo" element={<ShelterForm />} />
-                    <Route path="/abrigos/:id" element={<ShelterDetail />} />
-                    <Route path="/abrigos/:shelterId/abrigados/novo" element={<OccupantForm />} />
-                    <Route path="/abrigos/:shelterId/doacoes/novo" element={<DonationForm />} />
-                    <Route path="/abrigos/:shelterId/distribuicoes/novo" element={<DistributionForm />} />
-                    <Route path="/abrigos/relatorios" element={<ShelterReports />} />
-                    <Route path="/abrigos/residentes" element={<ShelterResidents />} />
-                </Routes>
-            </main>
-
-            {/* Conditional Bottom Navigation */}
-            {isShelterRoute ? (
-                <ShelterBottomNav />
-            ) : (
-                <nav className="bottom-nav">
-                    <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                        <Home size={24} />
-                        <span>Início</span>
-                    </Link>
-                    <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
-                        <Map size={24} />
-                        <span>GeoRescue</span>
-                    </Link>
-                    {/* FAB Action Button */}
-                    <div className="nav-item fab-container">
-                        <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
-                            <FileText size={24} />
-                        </Link>
-                    </div>
-                    <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
-                        <AlertOctagon size={24} />
-                        <span>Interdição</span>
-                    </Link>
-                    <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
-                        <MenuIcon size={24} />
-                        <span>Menu</span>
-                    </Link>
-                </nav>
-            )}
-        </div>
-    );
-}
-
 function App() {
     const [activeTab, setActiveTab] = useState('dashboard')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
-    // Initialize userProfile from localStorage if available and authenticated
     const [userProfile, setUserProfile] = useState(() => {
         try {
             const isAuth = localStorage.getItem('auth') === 'true'
@@ -208,7 +103,6 @@ function App() {
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
             setIsAuthenticated(true)
-            // Still try to refresh profile from server to get latest data
             loadUserProfile()
         }
     }, [])
@@ -225,13 +119,11 @@ function App() {
 
                 if (profile) {
                     setUserProfile(profile)
-                    // Persist for offline/reload persistence
                     localStorage.setItem('userProfile', JSON.stringify(profile))
                 }
             }
         } catch (error) {
             console.error('Error loading profile:', error)
-            // If offline/error, we retain the initial state loaded from localStorage
         }
     }
 
@@ -266,18 +158,76 @@ function App() {
         <ErrorBoundary>
             <UserContext.Provider value={userProfile}>
                 <Router>
-                    <AppContent
-                        userProfile={userProfile}
-                        handleLogout={handleLogout}
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab}
-                        setUserProfile={setUserProfile}
-                    />
+                    <div className="app-container">
+                        <SyncBackground />
+                        {/* Mobile Header */}
+                        <header className="mobile-header">
+                            <div className="header-logo-area">
+                                <img src="/logo_defesa_civil.png?v=2" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
+                                <h1>SIGERD <span>Mobile</span></h1>
+                            </div>
+                            <div className="header-user" onClick={handleLogout}>
+                                <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
+                                    {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
+                                </div>
+                            </div>
+                        </header>
+
+                        {/* Main Content Area */}
+                        <main className="main-content">
+                            <Routes>
+                                <Route path="/" element={<Dashboard />} />
+                                <Route path="/georescue" element={<GeoRescue />} />
+                                <Route path="/vistorias" element={<Vistorias />} />
+                                <Route path="/pluviometros" element={<Pluviometros onBack={() => setActiveTab('dashboard')} />} />
+                                <Route path="/interdicao" element={<Interdicao />} />
+                                <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
+                                <Route path="/alerts" element={<Alerts />} />
+                                <Route path="/monitoramento" element={<GeoDashboard />} />
+                                <Route path="/checklist-saida" element={<ChecklistSaida />} />
+
+                                {/* Shelter Module Routes */}
+                                <Route path="/abrigos" element={<ShelterDashboard />} />
+                                <Route path="/abrigos/novo" element={<ShelterForm />} />
+                                <Route path="/abrigos/:id" element={<ShelterDetail />} />
+                                <Route path="/abrigos/:shelterId/abrigados/novo" element={<OccupantForm />} />
+                                <Route path="/abrigos/:shelterId/doacoes/novo" element={<DonationForm />} />
+                                <Route path="/abrigos/:shelterId/distribuicoes/novo" element={<DistributionForm />} />
+                                <Route path="/abrigos/relatorios" element={<ShelterReports />} />
+                                <Route path="/abrigos/residentes" element={<ShelterResidents />} />
+                            </Routes>
+                        </main>
+
+                        {/* Bottom Navigation */}
+                        <nav className="bottom-nav">
+                            <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                                <Home size={24} />
+                                <span>Início</span>
+                            </Link>
+                            <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
+                                <Map size={24} />
+                                <span>GeoRescue</span>
+                            </Link>
+                            {/* FAB Action Button */}
+                            <div className="nav-item fab-container">
+                                <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
+                                    <FileText size={24} />
+                                </Link>
+                            </div>
+                            <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
+                                <AlertOctagon size={24} />
+                                <span>Interdição</span>
+                            </Link>
+                            <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
+                                <MenuIcon size={24} />
+                                <span>Menu</span>
+                            </Link>
+                        </nav>
+                    </div>
                 </Router>
             </UserContext.Provider>
         </ErrorBoundary>
     )
 }
-
 
 export default App

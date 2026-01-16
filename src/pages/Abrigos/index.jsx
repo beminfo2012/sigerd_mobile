@@ -95,18 +95,20 @@ export function Dashboard() {
         <div className="min-h-screen bg-slate-50 pb-12">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card variant="gradient" className="p-6 md:col-span-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Card variant="gradient" className="p-4 md:col-span-3">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="flex-1">
-                                <div className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-2">
+                                <div className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-1">
                                     GESTÃO DE ABRIGOS
                                 </div>
-                                <div className="text-4xl font-black text-white mb-1">
-                                    {stats.totalShelters}
-                                </div>
-                                <div className="text-sm text-white/90">
-                                    {stats.activeShelters} abrigos ativos
+                                <div className="flex items-baseline gap-2">
+                                    <div className="text-3xl font-black text-white">
+                                        {stats.totalShelters}
+                                    </div>
+                                    <div className="text-xs text-white/90">
+                                        {stats.activeShelters} abrigos ativos
+                                    </div>
                                 </div>
                             </div>
                             <Button
@@ -118,14 +120,14 @@ export function Dashboard() {
                                 Novo Abrigo
                             </Button>
                         </div>
-                        <div className="mt-4 flex justify-end">
+                        <div className="mt-3 flex justify-between items-center">
                             <Button
                                 variant="outline"
                                 onClick={() => generateShelterReport(shelters, donationsList, occupantsList)}
-                                className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                                className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 py-1.5 h-8 text-xs"
                             >
-                                <FileText size={18} />
-                                Gerar Relatório PDF
+                                <FileText size={14} />
+                                Relatório PDF
                             </Button>
                         </div>
                     </Card>
