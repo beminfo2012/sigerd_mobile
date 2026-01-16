@@ -90,7 +90,10 @@ class ErrorBoundary extends React.Component {
 
 function AppContent({ userProfile, handleLogout, activeTab, setActiveTab }) {
     const location = useLocation();
-    const isShelterRoute = location.pathname.startsWith('/abrigos');
+    // Case-insensitive check and support for variations
+    const isShelterRoute = location.pathname.toLowerCase().startsWith('/abrigos');
+
+    console.log('[Routing Debug] Path:', location.pathname, 'isShelterRoute:', isShelterRoute);
 
     return (
         <div className="app-container">
