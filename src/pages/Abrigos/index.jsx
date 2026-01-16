@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Building2, Users, Gift, ChevronRight, Plus, Search,
-    CheckCircle2, Cloud, RefreshCcw, Trash2
+    CheckCircle2, Cloud, RefreshCcw, Trash2, FileText
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
@@ -10,6 +10,7 @@ import { Button } from '../../components/Shelter/ui/Button';
 import { Input } from '../../components/Shelter/ui/Input';
 import { getShelters, getOccupants, getDonations, deleteShelter } from '../../services/shelterDb';
 import { shelterSyncService } from '../../services/shelterSyncService';
+import { generateShelterReport } from '../../services/pdfReportService';
 
 export function Dashboard() {
     const navigate = useNavigate();
@@ -110,6 +111,16 @@ export function Dashboard() {
                             >
                                 <Plus size={20} />
                                 Novo Abrigo
+                            </Button>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <Button
+                                variant="outline"
+                                onClick={() => generateShelterReport(shelters, donationsList, occupantsList)}
+                                className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                                <FileText size={18} />
+                                Gerar Relatório PDF
                             </Button>
                         </div>
                     </Card>
