@@ -1,82 +1,110 @@
-import Tesseract from 'tesseract.js';
+import { GoogleGenerativeAI } from "@google/generativeAI";
+
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+
+// Initialize Gemini (using Flash for speed/efficiency with images)
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 /**
- * OCR Service to extract data from documents (RG/CNH)
+ * Converts a File object to a GoogleGenerativeAI Part object (Base64)
  */
+async function fileToGenerativePart(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64Data = reader.result.split(',')[1];
+            resolve({
+                inlineData: {
+                    data: base64Data,
+                    mimeType: file.type
+                }
+            });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
+/**
+ * Smart OCR Service using Gemini Flash
+ * Much more accurate than Tesseract for structured documents
+ */
 export const scanDocument = async (imageFile) => {
     try {
-        const result = await Tesseract.recognize(
-            imageFile,
-            'por', // Portuguese
-            { logger: m => console.log(m) }
-        );
+        if (!API_KEY) {
+            throw new Error("Chave de API do Google não configurada (VITE_GOOGLE_API_KEY).");
+        }
 
-        const text = result.data.text;
-        console.log("OCR Extracted Text:", text);
+        const imagePart = await fileToGenerativePart(imageFile);
 
-        return parseDocumentText(text);
+        const prompt = `
+        Analise esta imagem de um documento brasileiro (RG ou CNH).
+        Extraia os seguintes dados e retorne APENAS um objeto JSON válido, sem markdown, sem code blocks:
+        {
+            "full_name": "Nome completo exato",
+            "cpf": "000.000.000-00",
+            "birth_date": "DD/MM/YYYY",
+            "gender": "masculino" ou "feminino" (se não constar, coloque null)
+        }
+        Se algum campo não estiver visível ou legível, retorne null neles.
+        Para gênero, tente inferir pelo nome se não explícito, ou retorne null.
+        `;
+
+        const result = await model.generateContent([prompt, imagePart]);
+        const response = await result.response;
+        const text = response.text();
+
+        console.log("Gemini Raw Response:", text);
+
+        // Sanitize and parse JSON
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const data = JSON.parse(jsonStr);
+
+        return processExtractedData(data);
+
     } catch (error) {
-        console.error("OCR Error:", error);
-        throw new Error("Falha ao processar imagem do documento.");
+        console.error("Gemini OCR Error:", error);
+        throw new Error("Falha ao processar o documento com IA. Tente uma foto mais nítida.");
     }
 };
 
-const parseDocumentText = (text) => {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    const data = {
-        full_name: '',
-        cpf: '',
+const processExtractedData = (data) => {
+    const result = {
+        full_name: data.full_name || '',
+        cpf: data.cpf || '',
         age: '',
-        gender: ''
+        gender: data.gender || 'nao_informado'
     };
 
-    // 1. CPF (Strict Regex)
-    const cpfMatch = text.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/);
-    if (cpfMatch) {
-        data.cpf = cpfMatch[0].replace(/[^\d]/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
+    // Calculate Age from birth_date
+    if (data.birth_date) {
+        const parts = data.birth_date.split(/[\/\-\.]/);
+        if (parts.length === 3) {
+            // Assume DD/MM/YYYY
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
 
-    // 2. Date of Birth -> Age
-    const dateMatch = text.match(/(\d{2})[./-](\d{2})[./-](\d{4})/);
-    if (dateMatch) {
-        const [_, day, month, year] = dateMatch;
-        const birthDate = new Date(`${year}-${month}-${day}`);
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        if (age > 0 && age < 120) {
-            data.age = age.toString();
-        }
-    }
+            const birth = new Date(year, month, day);
+            const today = new Date();
 
-    // 3. Gender (Heuristic)
-    if (text.match(/Feminino|FEMININO|Mulher/i)) data.gender = 'feminino';
-    else if (text.match(/Masculino|MASCULINO|Homem/i)) data.gender = 'masculino';
-
-    // 4. Name (Heuristic - HARDEST PART)
-    // Strategy: Look for lines that are all uppercase (common in IDs) and exclude known labels
-    const blacklist = ['REPUBLICA', 'FEDERATIVA', 'BRASIL', 'NOME', 'CPF', 'DATA', 'DOC', 'VALIDADE', 'SSP', 'DETRAN', 'CARTEIRA', 'HABILITACAO', 'IDENTIDADE', 'MINISTERIO'];
-
-    for (const line of lines) {
-        const upperLine = line.toUpperCase();
-        // Assume name is long, mostly letters, and not a blacklist word
-        if (upperLine.length > 5 && /^[A-Z\s]+$/.test(upperLine)) {
-            const words = upperLine.split(/\s+/);
-            const isBlacklisted = words.some(w => blacklist.some(b => w.includes(b)));
-
-            if (!isBlacklisted && words.length >= 2) {
-                // If we haven't found a name yet, take this candidate
-                // Refinement: usually name comes before CPF or birth date in simple parsing flow but random ordering happens
-                if (!data.full_name) {
-                    data.full_name = line; // Use original casing if available, or just upper
-                }
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
             }
+            if (age > 0 && age < 120) result.age = age.toString();
         }
     }
 
-    return data;
+    // Normalize Gender
+    if (result.gender) {
+        const g = result.gender.toLowerCase();
+        if (g.includes('masc')) result.gender = 'masculino';
+        else if (g.includes('fem')) result.gender = 'feminino';
+        else result.gender = 'nao_informado';
+    }
+
+    return result;
 };
