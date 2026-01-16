@@ -88,7 +88,7 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-function AppContent({ userProfile, handleLogout, activeTab, setActiveTab }) {
+function AppContent({ userProfile, handleLogout, activeTab, setActiveTab, setUserProfile }) {
     const location = useLocation();
     // Case-insensitive check and support for variations
     const isShelterRoute = location.pathname.toLowerCase().startsWith('/abrigos');
@@ -262,6 +262,7 @@ function App() {
                         handleLogout={handleLogout}
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
+                        setUserProfile={setUserProfile}
                     />
                 </Router>
             </UserContext.Provider>
