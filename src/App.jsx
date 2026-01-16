@@ -90,10 +90,15 @@ class ErrorBoundary extends React.Component {
 
 function AppContent({ userProfile, handleLogout, activeTab, setActiveTab, setUserProfile }) {
     const location = useLocation();
-    // Case-insensitive check and support for variations
-    const isShelterRoute = location.pathname.toLowerCase().startsWith('/abrigos');
 
-    console.log('[Routing Debug] Path:', location.pathname, 'isShelterRoute:', isShelterRoute);
+    // Total resilience: check router, window, hash, and a manual console flag
+    const currentPath = (location.pathname + location.hash + window.location.pathname + window.location.hash).toLowerCase();
+    const isShelterRoute = currentPath.includes('abrigo') || (typeof window !== 'undefined' && window.FORCE_SHELTER_MODE);
+
+    if (isShelterRoute) console.log('[SHELTER MODE ACTIVE]');
+
+    // Debug globally accessible
+    if (typeof window !== 'undefined') window._lastPath = location.pathname;
 
     return (
         <div className="app-container">
@@ -107,6 +112,7 @@ function AppContent({ userProfile, handleLogout, activeTab, setActiveTab, setUse
                                 <ArrowLeft size={24} />
                             </Link>
                             <h1>GESTÃO DE <span>Abrigos</span></h1>
+                            <span style={{ fontSize: '7px', opacity: 0.3, marginLeft: '5px', background: 'rgba(0,0,0,0.2)', padding: '2px 4px', borderRadius: '4px' }}>VER_3.0</span>
                         </>
                     ) : (
                         <>
