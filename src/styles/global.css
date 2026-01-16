@@ -177,3 +177,63 @@ h2 {
   font-size: 1.2rem;
   margin-bottom: 1rem;
 }
+
+/* Shelter Specific Bottom Navigation */
+.shelter-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--bottom-nav-height);
+  background: var(--white);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.shelter-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 700;
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  letter-spacing: 0.05em;
+}
+
+.shelter-nav-item.active {
+  color: var(--primary-color);
+}
+
+.shelter-nav-item svg {
+  margin-bottom: 4px;
+}
+
+.shelter-nav-item .active-dot {
+  position: absolute;
+  bottom: 8px;
+  width: 4px;
+  height: 4px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(42, 82, 153, 0.4);
+}
+
+.shelter-nav-item span {
+  transition: transform 0.2s ease;
+}
+
+.shelter-nav-item.active span {
+  transform: translateY(-2px);
+}
