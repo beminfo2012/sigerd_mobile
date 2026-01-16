@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
-import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
+import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon, ArrowLeft } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
 
 // Components
@@ -98,8 +98,19 @@ function AppContent({ userProfile, handleLogout, activeTab, setActiveTab }) {
             {/* Mobile Header */}
             <header className="mobile-header">
                 <div className="header-logo-area">
-                    <img src="/logo_defesa_civil.png?v=2" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
-                    <h1>SIGERD <span>Mobile</span></h1>
+                    {isShelterRoute ? (
+                        <>
+                            <Link to="/" className="mr-3 text-white flex items-center justify-center p-1 rounded-full hover:bg-white/10 transition-all">
+                                <ArrowLeft size={24} />
+                            </Link>
+                            <h1>GESTÃO DE <span>Abrigos</span></h1>
+                        </>
+                    ) : (
+                        <>
+                            <img src="/logo_defesa_civil.png?v=2" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
+                            <h1>SIGERD <span>Mobile</span></h1>
+                        </>
+                    )}
                 </div>
                 <div className="header-user" onClick={handleLogout}>
                     <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">

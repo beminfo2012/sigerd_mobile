@@ -16,7 +16,7 @@ const ShelterBottomNav = () => {
         {
             label: 'ABRIGOS',
             icon: Building2,
-            path: '/abrigos', // For now pointing to index, maybe specific list later
+            path: '/abrigos', // Simplified to index for now, but label matches
             active: path === '/abrigos/lista'
         },
         {
@@ -27,7 +27,7 @@ const ShelterBottomNav = () => {
         },
         {
             label: 'RELATÓRIOS',
-            icon: FileText,
+            icon: Gift,
             path: '/abrigos/relatorios',
             active: path === '/abrigos/relatorios'
         },
