@@ -60,7 +60,7 @@ const NovoAbrigo = () => {
                                     required
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-purple-500/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
                                     placeholder="Ex: Ginásio Municipal"
                                 />
                             </div>
@@ -77,7 +77,7 @@ const NovoAbrigo = () => {
                                     required
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-purple-500/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
                                     placeholder="Rua, número, complemento"
                                 />
                             </div>
@@ -91,7 +91,7 @@ const NovoAbrigo = () => {
                                 type="text"
                                 value={formData.bairro}
                                 onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-                                className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-purple-500/20 font-bold text-slate-800"
+                                className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
                                 placeholder="Nome do bairro"
                             />
                         </div>
@@ -106,7 +106,7 @@ const NovoAbrigo = () => {
                                 min="1"
                                 value={formData.capacity}
                                 onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                                className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-purple-500/20 font-bold text-slate-800"
+                                className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
                                 placeholder="Número de pessoas"
                             />
                         </div>
@@ -128,7 +128,7 @@ const NovoAbrigo = () => {
                                     type="text"
                                     value={formData.responsible_name}
                                     onChange={(e) => setFormData({ ...formData, responsible_name: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-purple-500/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
                                     placeholder="Nome completo"
                                 />
                             </div>
@@ -144,7 +144,7 @@ const NovoAbrigo = () => {
                                     type="tel"
                                     value={formData.responsible_phone}
                                     onChange={(e) => setFormData({ ...formData, responsible_phone: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-purple-500/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
                                     placeholder="(00) 00000-0000"
                                 />
                             </div>
@@ -160,7 +160,7 @@ const NovoAbrigo = () => {
                         value={formData.observations}
                         onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
                         rows={4}
-                        className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-purple-500/20 font-bold text-slate-800 resize-none"
+                        className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 resize-none"
                         placeholder="Informações adicionais sobre o abrigo..."
                     />
                 </div>
@@ -169,7 +169,7 @@ const NovoAbrigo = () => {
                 <button
                     type="submit"
                     disabled={saving}
-                    className="w-full bg-purple-600 text-white p-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-purple-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#2a5299] text-white p-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Save size={20} />
                     {saving ? 'Salvando...' : 'Cadastrar Abrigo'}

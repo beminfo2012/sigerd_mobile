@@ -88,7 +88,7 @@ export function Reports() {
                             </div>
                             <button
                                 onClick={() => exportToCSV(donations, 'relatorio_doacoes', 'donations')}
-                                className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors print:hidden"
+                                className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors print:hidden"
                                 title="Exportar CSV"
                             >
                                 <Download size={18} />
@@ -120,11 +120,11 @@ export function Reports() {
                                         </div>
                                         <div className="flex items-center gap-4 pt-3 border-t border-slate-50">
                                             <div className="text-xs text-slate-600 flex items-center gap-1">
-                                                <MapPin size={12} className="text-purple-600" />
+                                                <MapPin size={12} className="text-[#2a5299]" />
                                                 {getShelterName(donation.shelter_id)}
                                             </div>
                                             <div className="text-xs text-slate-600 flex items-center gap-1">
-                                                <User size={12} className="text-purple-600" />
+                                                <User size={12} className="text-[#2a5299]" />
                                                 {donation.donor_name || 'Doador Anônimo'}
                                             </div>
                                         </div>
@@ -145,7 +145,7 @@ export function Reports() {
                             </div>
                             <button
                                 onClick={() => exportToCSV(distributions, 'relatorio_distribuicoes', 'distributions')}
-                                className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors print:hidden"
+                                className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors print:hidden"
                                 title="Exportar CSV"
                             >
                                 <Download size={18} />
@@ -174,11 +174,11 @@ export function Reports() {
                                         </div>
                                         <div className="flex items-center gap-4 pt-3 border-t border-slate-50">
                                             <div className="text-xs text-slate-600 flex items-center gap-1">
-                                                <MapPin size={12} className="text-purple-600" />
+                                                <MapPin size={12} className="text-[#2a5299]" />
                                                 {getShelterName(dist.shelter_id)}
                                             </div>
                                             <div className="text-xs text-slate-600 flex items-center gap-1">
-                                                <User size={12} className="text-purple-600" />
+                                                <User size={12} className="text-[#2a5299]" />
                                                 {dist.recipient_name || 'Destinatário não informado'} {dist.family_group ? `(${dist.family_group})` : ''}
                                             </div>
                                         </div>

@@ -78,7 +78,7 @@ export function ShelterDetail() {
                 <div className="flex flex-col gap-4">
                     <button
                         onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-purple-600 font-semibold w-fit hover:text-purple-700 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold w-fit hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Dashboard
@@ -227,14 +227,14 @@ export function ShelterDetail() {
                                     <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
                                         <button
                                             onClick={() => setViewMode('individual')}
-                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'individual' ? 'bg-white shadow-sm text-purple-600' : 'text-slate-500'
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'individual' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500'
                                                 }`}
                                         >
                                             INDIVIDUAL
                                         </button>
                                         <button
                                             onClick={() => setViewMode('family')}
-                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'family' ? 'bg-white shadow-sm text-purple-600' : 'text-slate-500'
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'family' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500'
                                                 }`}
                                         >
                                             POR FAMÍLIA
@@ -289,8 +289,8 @@ export function ShelterDetail() {
                                                     className="w-full flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors"
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                                                            <Users size={20} className="text-purple-600" />
+                                                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                                            <Users size={20} className="text-[#2a5299]" />
                                                         </div>
                                                         <div className="text-left">
                                                             <div className="text-sm font-bold text-slate-800">{groupName}</div>
@@ -383,7 +383,7 @@ export function ShelterDetail() {
 
                             <div className="space-y-4">
                                 <div className="flex gap-3">
-                                    <MapPin className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                                    <MapPin className="w-5 h-5 text-[#2a5299] flex-shrink-0" />
                                     <div>
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                                             ENDEREÇO
@@ -400,7 +400,7 @@ export function ShelterDetail() {
                                 </div>
 
                                 <div className="flex gap-3">
-                                    <User className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                                    <User className="w-5 h-5 text-[#2a5299] flex-shrink-0" />
                                     <div>
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                                             RESPONSÁVEL
@@ -453,7 +453,7 @@ export function ShelterDetail() {
                                         </div>
                                     ))}
                                     {donations.length > 3 && (
-                                        <button className="w-full text-center text-xs font-bold text-purple-600 py-2">
+                                        <button className="w-full text-center text-xs font-bold text-[#2a5299] py-2">
                                             Ver todas as doações
                                         </button>
                                     )}

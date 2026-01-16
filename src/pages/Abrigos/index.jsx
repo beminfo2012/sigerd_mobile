@@ -146,7 +146,7 @@ export function Dashboard() {
                             <button
                                 onClick={handleForceSync}
                                 disabled={isSyncing}
-                                className={`p-2 rounded-lg transition-all ${isSyncing ? 'animate-spin text-purple-400' : 'text-purple-600 hover:bg-purple-50'}`}
+                                className={`p-2 rounded-lg transition-all ${isSyncing ? 'animate-spin text-blue-400' : 'text-[#2a5299] hover:bg-blue-50'}`}
                             >
                                 <RefreshCcw size={16} />
                             </button>
@@ -176,7 +176,7 @@ export function Dashboard() {
                     <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
                         <button
                             onClick={() => setStatusFilter('all')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === 'all' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === 'all' ? 'bg-[#2a5299] text-white' : 'text-slate-500 hover:bg-slate-50'
                                 }`}
                         >
                             TODOS
@@ -233,8 +233,8 @@ export function Dashboard() {
                                     className="p-4 hover:shadow-md transition-shadow cursor-pointer active:scale-[0.99]"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                                            <Building2 className="w-6 h-6 text-purple-600" />
+                                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                            <Building2 className="w-6 h-6 text-[#2a5299]" />
                                         </div>
 
                                         <div className="flex-1 min-w-0">

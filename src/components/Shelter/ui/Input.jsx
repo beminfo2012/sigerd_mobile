@@ -14,7 +14,7 @@ export function Input({ label, required, error, icon: Icon, ...props }) {
                     </div>
                 )}
                 <input
-                    className={`w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${Icon ? 'pl-12' : ''} ${error ? 'border-red-500' : ''}`}
+                    className={`w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all ${Icon ? 'pl-12' : ''} ${error ? 'border-red-500' : ''}`}
                     {...props}
                 />
             </div>

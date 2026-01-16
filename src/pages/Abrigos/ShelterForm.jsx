@@ -55,7 +55,7 @@ export function ShelterForm() {
                 <div className="mb-6">
                     <button
                         onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-purple-600 font-semibold mb-4 hover:text-purple-700 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar
@@ -68,7 +68,7 @@ export function ShelterForm() {
                     {/* Basic Information */}
                     <Card className="p-6">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Building2 size={20} className="text-purple-600" />
+                            <Building2 size={20} className="text-[#2a5299]" />
                             Informações Básicas
                         </h2>
 
@@ -127,7 +127,7 @@ export function ShelterForm() {
                     {/* Responsible Person */}
                     <Card className="p-6">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <User size={20} className="text-purple-600" />
+                            <User size={20} className="text-[#2a5299]" />
                             Responsável
                         </h2>
 
@@ -156,7 +156,7 @@ export function ShelterForm() {
                     {/* Additional Information */}
                     <Card className="p-6">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <FileText size={20} className="text-purple-600" />
+                            <FileText size={20} className="text-[#2a5299]" />
                             Informações Adicionais
                         </h2>
 
@@ -169,7 +169,7 @@ export function ShelterForm() {
                                 value={formData.observations}
                                 onChange={handleChange}
                                 rows={4}
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all resize-none"
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                 placeholder="Informações adicionais sobre o abrigo..."
                             />
                         </div>

@@ -85,7 +85,7 @@ export function Residents() {
                                                     )}
                                                 </div>
 
-                                                <div className="text-[10px] text-purple-600 font-bold flex items-center gap-1 uppercase tracking-wider">
+                                                <div className="text-[10px] text-[#2a5299] font-bold flex items-center gap-1 uppercase tracking-wider">
                                                     <MapPin size={10} />
                                                     {shelter ? shelter.name : 'Abrigo não identificado'}
                                                 </div>

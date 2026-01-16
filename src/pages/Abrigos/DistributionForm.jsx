@@ -97,7 +97,7 @@ export function DistributionForm() {
                 <div className="mb-6">
                     <button
                         onClick={() => navigate(`/abrigos/${shelterId}`)}
-                        className="flex items-center gap-2 text-purple-600 font-semibold mb-4 hover:text-purple-700 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar
@@ -112,7 +112,7 @@ export function DistributionForm() {
                     {/* Item Selection */}
                     <Card className="p-6">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Package size={20} className="text-purple-600" />
+                            <Package size={20} className="text-[#2a5299]" />
                             Selecionar Item do Estoque
                         </h2>
 
@@ -126,7 +126,7 @@ export function DistributionForm() {
                                     value={formData.inventory_id}
                                     onChange={handleChange}
                                     required
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
                                     <option value="">Selecione um item</option>
                                     {inventoryItems.map((item) => (
@@ -177,7 +177,7 @@ export function DistributionForm() {
                     {/* Recipient Information */}
                     <Card className="p-6">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <User size={20} className="text-purple-600" />
+                            <Gift size={20} className="text-[#2a5299]" />
                             Informações do Destinatário
                         </h2>
 
@@ -209,7 +209,7 @@ export function DistributionForm() {
                                     value={formData.observations}
                                     onChange={handleChange}
                                     rows={3}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all resize-none"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Informações adicionais sobre a distribuição..."
                                 />
                             </div>

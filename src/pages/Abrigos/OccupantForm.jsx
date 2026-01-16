@@ -88,7 +88,7 @@ export function OccupantForm() {
                 <div className="mb-6">
                     <button
                         onClick={() => navigate(`/abrigos/${shelterId}`)}
-                        className="flex items-center gap-2 text-purple-600 font-semibold mb-4 hover:text-purple-700 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar
@@ -103,7 +103,7 @@ export function OccupantForm() {
                     {/* Personal Information */}
                     <Card className="p-6">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <User size={20} className="text-purple-600" />
+                            <User size={20} className="text-[#2a5299]" />
                             Informações Pessoais
                         </h2>
 
@@ -147,7 +147,7 @@ export function OccupantForm() {
                                     name="gender"
                                     value={formData.gender}
                                     onChange={handleChange}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-semibold"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
                                     <option value="nao_informado">Não informado</option>
                                     <option value="masculino">Masculino</option>
@@ -161,7 +161,7 @@ export function OccupantForm() {
                     {/* Family and Special Needs */}
                     <Card className="p-6">
                         <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <UsersIcon size={20} className="text-purple-600" />
+                            <UsersIcon size={20} className="text-[#2a5299]" />
                             Grupo Familiar e Necessidades
                         </h2>
 
@@ -203,7 +203,7 @@ export function OccupantForm() {
                                                 setFormData({ ...formData, family_group: newId, is_family_head: true });
                                                 setShowFamilySuggestions(false);
                                             }}
-                                            className="w-full text-left px-4 py-3 text-xs font-bold text-purple-600 hover:bg-purple-50 transition-colors sticky bottom-0 bg-white border-t border-slate-100"
+                                            className="w-full text-left px-4 py-3 text-xs font-bold text-[#2a5299] hover:bg-blue-50 transition-colors sticky bottom-0 bg-white border-t border-slate-100"
                                         >
                                             + Gerar novo código de família
                                         </button>
@@ -211,19 +211,20 @@ export function OccupantForm() {
                                 )}
                             </div>
 
-                            <label className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl cursor-pointer hover:bg-purple-100 transition-colors">
-                                <input
-                                    type="checkbox"
-                                    name="is_family_head"
-                                    checked={formData.is_family_head}
-                                    onChange={handleChange}
-                                    className="w-5 h-5 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                                />
-                                <div className="flex-1">
-                                    <div className="text-sm font-bold text-purple-800">
+                            <label className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors">
+                                <div className="flex items-center justify-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.is_family_head}
+                                        onChange={(e) => setFormData({ ...formData, is_family_head: e.target.checked })}
+                                        className="w-5 h-5 rounded border-blue-300 text-[#2a5299] focus:ring-[#2a5299]"
+                                    />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-blue-800">
                                         Responsável Familiar
                                     </div>
-                                    <div className="text-[10px] text-purple-600 uppercase font-black">
+                                    <div className="text-[10px] text-[#2a5299] uppercase font-black">
                                         REPRESENTANTE DO GRUPO
                                     </div>
                                 </div>
@@ -239,7 +240,7 @@ export function OccupantForm() {
                                     value={formData.special_needs}
                                     onChange={handleChange}
                                     rows={3}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all resize-none"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Ex: Hipertensão, mobilidade reduzida, medicação contínua..."
                                 />
                             </div>

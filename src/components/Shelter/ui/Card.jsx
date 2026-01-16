@@ -1,7 +1,7 @@
 export function Card({ children, className = '', onClick, variant = 'default' }) {
     const variants = {
         default: 'bg-white border border-slate-100 rounded-2xl shadow-sm',
-        gradient: 'bg-gradient-to-br from-purple-600 to-purple-800 rounded-[32px] shadow-lg shadow-purple-200',
+        gradient: 'bg-gradient-to-br from-[#1e3c72] to-[#2a5299] rounded-[32px] shadow-lg shadow-blue-100',
         stat: 'bg-white border border-slate-100 rounded-[28px] shadow-sm',
     };
 
