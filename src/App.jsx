@@ -102,6 +102,9 @@ function AppContent({ userProfile, handleLogout, activeTab, setActiveTab, setUse
 
     return (
         <div className="app-container">
+            <div style={{ background: '#7c3aed', color: 'white', fontSize: '10px', textAlign: 'center', padding: '2px', position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 9999 }}>
+                DIAGNOSTICO V4 ATIVO - ROTA: {location.pathname}
+            </div>
             <SyncBackground />
             {/* Mobile Header */}
             <header className="mobile-header">
