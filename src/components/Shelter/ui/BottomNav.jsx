@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, FileText, User } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, Gift, User } from 'lucide-react';
 
 const ShelterBottomNav = () => {
     const location = useLocation();
