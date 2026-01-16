@@ -2,9 +2,17 @@ import { GoogleGenerativeAI } from "@google/generativeAI";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
-// Initialize Gemini (using Flash for speed/efficiency with images)
+// Initialize Gemini (using Pro for better OCR/Reasoning, despite being slower)
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-pro",
+    safetySettings: [
+        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+    ]
+});
 
 /**
  * Converts a File object to a GoogleGenerativeAI Part object (Base64)
@@ -27,7 +35,7 @@ async function fileToGenerativePart(file) {
 }
 
 /**
- * Smart OCR Service using Gemini Flash
+ * Smart OCR Service using Gemini Pro
  * Much more accurate than Tesseract for structured documents
  */
 export const scanDocument = async (imageFile) => {
@@ -39,16 +47,25 @@ export const scanDocument = async (imageFile) => {
         const imagePart = await fileToGenerativePart(imageFile);
 
         const prompt = `
-        Analise esta imagem de um documento brasileiro (RG ou CNH).
-        Extraia os seguintes dados e retorne APENAS um objeto JSON válido, sem markdown, sem code blocks:
+        ATENÇÃO: Você é um extrator de dados documental estrito. 
+        Sua tarefa é ler APENAS o que está escrito visualmente na imagem.
+        NÃO invente dados. NÃO gere dados fictícios. NÃO preencha informações ausentes.
+        
+        Analise a imagem deste documento (RG ou CNH).
+        Extraia SOMENTE os textos que estiverem claramente legíveis para os campos abaixo e retorne um JSON:
+
         {
-            "full_name": "Nome completo exato",
-            "cpf": "000.000.000-00",
-            "birth_date": "DD/MM/YYYY",
-            "gender": "masculino" ou "feminino" (se não constar, coloque null)
+            "full_name": "Nome Completo (exatamente como consta)",
+            "cpf": "CPF (apenas números ou formatado)",
+            "birth_date": "Data de Nascimento (DD/MM/YYYY)",
+            "gender": "Gênero (apenas se explícito 'Masculino'/'Feminino', caso contrário null)"
         }
-        Se algum campo não estiver visível ou legível, retorne null neles.
-        Para gênero, tente inferir pelo nome se não explícito, ou retorne null.
+
+        REGRAS CRÍTICAS:
+        1. Se o campo estiver borrado, cortado ou ilegível, retorne null.
+        2. Se o documento não for um RG ou CNH, retorne null em todos os campos.
+        3. NÃO tente adivinhar o CPF se faltar dígitos.
+        4. Retorne APENAS o JSON.
         `;
 
         const result = await model.generateContent([prompt, imagePart]);
