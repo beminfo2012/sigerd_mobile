@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin, Users, Phone, User, ArrowLeft,
     Plus, Gift, TrendingUp, Heart, LogOut,
-    Crown, ChevronDown, ChevronUp, Package
+    Crown, ChevronDown, ChevronUp, Package, Building2
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
