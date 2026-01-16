@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import {
     MapPin, Users, Phone, User, ArrowLeft,
     Plus, Gift, TrendingUp, Heart, LogOut,
@@ -9,7 +8,7 @@ import {
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
 import { Button } from '../../components/Shelter/ui/Button';
-import { db, exitOccupant } from '../../services/shelterDb';
+import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter } from '../../services/shelterDb';
 
 export function ShelterDetail() {
     const { id } = useParams();
@@ -17,12 +16,40 @@ export function ShelterDetail() {
     const [viewMode, setViewMode] = useState('individual'); // individual or family
     const [expandedFamilies, setExpandedFamilies] = useState({});
 
-    // Fetch live data from IndexedDB
-    const idNum = parseInt(id);
-    const shelter = useLiveQuery(() => db.shelters.get(idNum), [idNum]);
-    const occupants = useLiveQuery(() => db.occupants.where({ shelter_id: id, status: 'active' }).toArray(), [id]) || [];
-    const donations = useLiveQuery(() => db.donations.where('shelter_id').equals(id).toArray(), [id]) || [];
-    const inventory = useLiveQuery(() => db.inventory.where('shelter_id').equals(id).toArray(), [id]) || [];
+    const [shelter, setShelter] = useState(undefined);
+    const [occupants, setOccupants] = useState([]);
+    const [donations, setDonations] = useState([]);
+    const [inventory, setInventory] = useState([]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (!id) return;
+            // Handle both string and int IDs seamlessly by passing raw ID to service
+            const s = await getShelterById(id);
+            const o = await getOccupants(id);
+            const d = await getDonations(id);
+            const i = await getInventory(id);
+
+            setShelter(s || null); // null indicates "not found", undefined "loading"
+            setOccupants(o || []);
+            setDonations(d || []);
+            setInventory(i || []);
+        };
+        loadData();
+    }, [id]);
+
+    const handleDelete = async () => {
+        if (window.confirm('Tem certeza que deseja excluir este abrigo? Esta ação não pode ser desfeita e removerá o abrigo da listagem.')) {
+            try {
+                await deleteShelter(id);
+                alert('Abrigo excluído com sucesso.');
+                navigate('/abrigos');
+            } catch (error) {
+                console.error('Erro ao excluir:', error);
+                alert('Erro ao excluir abrigo.');
+            }
+        }
+    };
 
     const handleExit = async (occupantId) => {
         if (confirm('Tem certeza que deseja registrar a saída deste abrigado?')) {

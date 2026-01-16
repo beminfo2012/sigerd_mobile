@@ -1,13 +1,26 @@
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useState, useEffect } from 'react';
 import { Gift, Package, TrendingUp, Calendar, MapPin, User, Download, Printer } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Button } from '../../components/Shelter/ui/Button';
-import { db } from '../../services/shelterDb';
+import { getDonations, getDistributions, getShelters } from '../../services/shelterDb';
 
 export function Reports() {
-    const donations = useLiveQuery(() => db.donations.reverse().toArray(), []) || [];
-    const distributions = useLiveQuery(() => db.distributions.reverse().toArray(), []) || [];
-    const shelters = useLiveQuery(() => db.shelters.toArray(), []) || [];
+    const [donations, setDonations] = useState([]);
+    const [distributions, setDistributions] = useState([]);
+    const [shelters, setShelters] = useState([]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            const d = await getDonations();
+            const dist = await getDistributions();
+            const s = await getShelters();
+            // Reverse for chronological order (newest first)
+            setDonations(d ? d.reverse() : []);
+            setDistributions(dist ? dist.reverse() : []);
+            setShelters(s || []);
+        };
+        loadData();
+    }, []);
 
     const getShelterName = (id) => {
         const s = shelters.find(s => s.id === parseInt(id));

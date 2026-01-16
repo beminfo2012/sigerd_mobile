@@ -2,18 +2,18 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 7
+const DB_VERSION = 8
 
 export const initDB = async () => {
     return openDB(DB_NAME, DB_VERSION, {
-        upgrade(db, oldVersion) {
+        async upgrade(db, oldVersion, newVersion, transaction) {
             // ... existing stores code ...
             if (!db.objectStoreNames.contains('installations')) {
                 const store = db.createObjectStore('installations', { keyPath: 'id' })
                 store.createIndex('installation_number', 'installation_number', { unique: false })
                 store.createIndex('uc_core', 'uc_core', { unique: false })
             } else if (oldVersion < 7) {
-                // Version 7 update: Re-import with improved key mapping and new search fields
+                // Version 7 update
                 if (db.objectStoreNames.contains('installations')) {
                     db.deleteObjectStore('installations')
                 }
@@ -25,6 +25,23 @@ export const initDB = async () => {
             if (!db.objectStoreNames.contains('vistorias')) {
                 const store = db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true })
                 store.createIndex('synced', 'synced', { unique: false })
+            } else {
+                // SAFTEY BACKUP: Version 8 Backup
+                // If upgrading to v8, backup existing vistorias if not already done
+                if (oldVersion < 8 && db.objectStoreNames.contains('vistorias')) {
+                    console.log('Creating safety backup of vistorias table...');
+                    if (!db.objectStoreNames.contains('vistorias_backup_v7')) {
+                        const backupStore = db.createObjectStore('vistorias_backup_v7', { keyPath: 'id', autoIncrement: true });
+                        const vistoriasStore = transaction.objectStore('vistorias');
+                        // Iterate and copy
+                        let cursor = await vistoriasStore.openCursor();
+                        while (cursor) {
+                            await backupStore.put(cursor.value);
+                            cursor = await cursor.continue();
+                        }
+                        console.log('Safety backup completed successfully.');
+                    }
+                }
             }
 
             if (!db.objectStoreNames.contains('interdicoes')) {
@@ -32,12 +49,57 @@ export const initDB = async () => {
                 store.createIndex('synced', 'synced', { unique: false })
             }
 
-            // Store for Remote Vistorias Cache - Version 3 improvement: Use vistoria_id or id
+            // Store for Remote Vistorias Cache
             if (db.objectStoreNames.contains('remote_vistorias_cache')) {
-                db.deleteObjectStore('remote_vistorias_cache')
+                if (oldVersion < 7) {
+                    db.deleteObjectStore('remote_vistorias_cache')
+                    db.createObjectStore('remote_vistorias_cache', { keyPath: 'vistoria_id' })
+                }
+            } else {
+                db.createObjectStore('remote_vistorias_cache', { keyPath: 'vistoria_id' })
             }
-            // Use autoIncrement to avoid key errors, but we will manage unique records in api.js
-            db.createObjectStore('remote_vistorias_cache', { keyPath: 'vistoria_id' })
+
+            // VERSION 8: SHELTER MODULE INTEGRATION
+            // Create new stores for Unified Shelter Management
+            if (!db.objectStoreNames.contains('shelters')) {
+                const shelterStore = db.createObjectStore('shelters', { keyPath: 'id', autoIncrement: true });
+                shelterStore.createIndex('shelter_id', 'shelter_id', { unique: true }); // ABR-123
+                shelterStore.createIndex('synced', 'synced', { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains('occupants')) {
+                const occupantStore = db.createObjectStore('occupants', { keyPath: 'id', autoIncrement: true });
+                occupantStore.createIndex('occupant_id', 'occupant_id', { unique: true });
+                occupantStore.createIndex('shelter_id', 'shelter_id', { unique: false });
+                occupantStore.createIndex('synced', 'synced', { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains('donations')) {
+                const donationStore = db.createObjectStore('donations', { keyPath: 'id', autoIncrement: true });
+                donationStore.createIndex('donation_id', 'donation_id', { unique: true });
+                donationStore.createIndex('shelter_id', 'shelter_id', { unique: false });
+                donationStore.createIndex('synced', 'synced', { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains('inventory')) {
+                const inventoryStore = db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: true });
+                inventoryStore.createIndex('inventory_id', 'inventory_id', { unique: true });
+                inventoryStore.createIndex('shelter_id', 'shelter_id', { unique: false });
+                inventoryStore.createIndex('synced', 'synced', { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains('distributions')) {
+                const distStore = db.createObjectStore('distributions', { keyPath: 'id', autoIncrement: true });
+                distStore.createIndex('distribution_id', 'distribution_id', { unique: true });
+                distStore.createIndex('shelter_id', 'shelter_id', { unique: false });
+                distStore.createIndex('synced', 'synced', { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains('families')) {
+                const familyStore = db.createObjectStore('families', { keyPath: 'id', autoIncrement: true });
+                familyStore.createIndex('shelter_id', 'shelter_id', { unique: false });
+                familyStore.createIndex('synced', 'synced', { unique: false });
+            }
         },
     })
 }

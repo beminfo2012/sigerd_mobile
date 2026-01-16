@@ -1,17 +1,30 @@
-import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Search, MapPin, Heart, ChevronRight } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
-import { db } from '../../services/shelterDb';
+import { getOccupants, getShelters } from '../../services/shelterDb';
 
 export function Residents() {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
 
-    const residents = useLiveQuery(() => db.occupants.where('status').equals('active').toArray(), []) || [];
-    const shelters = useLiveQuery(() => db.shelters.toArray(), []) || [];
+    const [residents, setResidents] = useState([]);
+    const [shelters, setShelters] = useState([]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            const allOccupants = await getOccupants();
+            const allShelters = await getShelters();
+
+            // Filter active occupants locally since we fetched all
+            const activeResidents = allOccupants ? allOccupants.filter(r => r.status === 'active') : [];
+
+            setResidents(activeResidents);
+            setShelters(allShelters || []);
+        };
+        loadData();
+    }, []);
 
     const getShelterInfo = (shelterId) => {
         return shelters.find(s => s.id === parseInt(shelterId));

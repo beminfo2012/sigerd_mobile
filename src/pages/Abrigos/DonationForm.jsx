@@ -1,18 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Gift, User, Phone, Package, Hash, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
-import { db, addDonation } from '../../services/shelterDb';
+import { addDonation, getShelterById } from '../../services/shelterDb';
 
 export function DonationForm() {
     const { shelterId } = useParams();
     const navigate = useNavigate();
 
     const idStr = shelterId;
-    const shelter = useLiveQuery(() => db.shelters.get(parseInt(idStr)), [idStr]);
+    const [shelter, setShelter] = useState(undefined);
+
+    useEffect(() => {
+        const load = async () => {
+            if (!idStr) return;
+            const s = await getShelterById(idStr);
+            setShelter(s);
+        };
+        load();
+    }, [idStr]);
 
     const [formData, setFormData] = useState({
         donor_name: '',

@@ -1,19 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Package, TrendingUp, User, Users as UsersIcon, Hash, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
-import { db, addDistribution } from '../../services/shelterDb';
+import { addDistribution, getShelterById, getInventory } from '../../services/shelterDb';
 
 export function DistributionForm() {
     const { shelterId } = useParams();
     const navigate = useNavigate();
 
     const idStr = shelterId;
-    const shelter = useLiveQuery(() => db.shelters.get(parseInt(idStr)), [idStr]);
-    const inventoryItems = useLiveQuery(() => db.inventory.where('shelter_id').equals(idStr).toArray(), [idStr]) || [];
+    const [shelter, setShelter] = useState(undefined);
+    const [inventoryItems, setInventoryItems] = useState([]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (!idStr) return;
+            const s = await getShelterById(idStr);
+            const i = await getInventory(idStr);
+            setShelter(s);
+            setInventoryItems(i || []);
+        };
+        loadData();
+    }, [idStr]);
 
     const [formData, setFormData] = useState({
         inventory_id: '',

@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { User, CreditCard, Calendar, Users as UsersIcon, Heart, FileText, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
-import { db, addOccupant } from '../../services/shelterDb';
+import { addOccupant, getShelterById, getOccupants, updateShelter } from '../../services/shelterDb';
 
 export function OccupantForm() {
     const { shelterId } = useParams();
@@ -13,7 +12,18 @@ export function OccupantForm() {
 
     // Use numeric ID for IndexedDB query if necessary
     const idStr = shelterId;
-    const shelter = useLiveQuery(() => db.shelters.get(parseInt(idStr)), [idStr]);
+    const [shelter, setShelter] = useState(undefined);
+    const [existingOccupants, setExistingOccupants] = useState([]);
+
+    useEffect(() => {
+        const load = async () => {
+            const s = await getShelterById(idStr);
+            const occ = await getOccupants(idStr);
+            setShelter(s);
+            setExistingOccupants(occ || []);
+        };
+        load();
+    }, [idStr]);
 
     const [formData, setFormData] = useState({
         full_name: '',
@@ -37,8 +47,7 @@ export function OccupantForm() {
         });
     };
 
-    // Fetch existing families in this shelter
-    const existingOccupants = useLiveQuery(() => db.occupants.where('shelter_id').equals(idStr).toArray(), [idStr]) || [];
+    // Derived state from existing occupants
     const familyGroups = [...new Set(existingOccupants.map(o => o.family_group).filter(Boolean))];
 
     const handleSubmit = async (e) => {
@@ -53,7 +62,7 @@ export function OccupantForm() {
 
             // Update shelter current_occupancy
             if (shelter) {
-                await db.shelters.update(shelter.id, {
+                await updateShelter(shelter.id, {
                     current_occupancy: (shelter.current_occupancy || 0) + 1
                 });
             }

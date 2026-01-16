@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import {
     Building2, Users, Gift, ChevronRight, Plus, Search,
-    CheckCircle2, Cloud, RefreshCcw
+    CheckCircle2, Cloud, RefreshCcw, Trash2
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
 import { Button } from '../../components/Shelter/ui/Button';
 import { Input } from '../../components/Shelter/ui/Input';
-import { db } from '../../services/shelterDb';
+import { getShelters, getOccupants, getDonations, deleteShelter } from '../../services/shelterDb';
 import { shelterSyncService } from '../../services/shelterSyncService';
 
 export function Dashboard() {
@@ -19,10 +18,21 @@ export function Dashboard() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
 
-    // Fetch data live from IndexedDB
-    const shelters = useLiveQuery(() => db.shelters.toArray(), []) || [];
-    const occupantsList = useLiveQuery(() => db.occupants.toArray(), []) || [];
-    const donationsList = useLiveQuery(() => db.donations.toArray(), []) || [];
+    const [shelters, setShelters] = useState([]);
+    const [occupantsList, setOccupantsList] = useState([]);
+    const [donationsList, setDonationsList] = useState([]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            const s = await getShelters();
+            const o = await getOccupants();
+            const d = await getDonations();
+            setShelters(s || []);
+            setOccupantsList(o || []);
+            setDonationsList(d || []);
+        };
+        loadData();
+    }, []);
 
     // Sync Status Effect
     useEffect(() => {
@@ -65,6 +75,15 @@ export function Dashboard() {
         const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
+
+    const handleDeleteShelter = async (e, id) => {
+        e.stopPropagation();
+        if (window.confirm('Tem certeza que deseja excluir este abrigo?')) {
+            await deleteShelter(id);
+            const s = await getShelters();
+            setShelters(s || []);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
@@ -270,7 +289,16 @@ export function Dashboard() {
                                             </div>
                                         </div>
 
-                                        <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
+                                        <div className="flex flex-col items-center gap-2">
+                                            <button
+                                                onClick={(e) => handleDeleteShelter(e, shelter.id)}
+                                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                                title="Excluir Abrigo"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                            <ChevronRight className="w-5 h-5 text-slate-300 flex-shrink-0" />
+                                        </div>
                                     </div>
                                 </Card>
                             ))}
@@ -278,7 +306,7 @@ export function Dashboard() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

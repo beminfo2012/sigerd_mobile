@@ -571,19 +571,20 @@ const Dashboard = () => {
             {/* Shelter Management Shortcut */}
             <div
                 onClick={() => navigate('/abrigos')}
-                className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
+                className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
             >
-                <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 w-10 h-10 rounded-xl flex items-center justify-center text-purple-600">
-                        <Home size={18} strokeWidth={2.5} />
+                <div className="flex items-center gap-4">
+                    <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
+                        <Home size={24} strokeWidth={2.5} />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-black text-slate-800 leading-tight">Gestão de Abrigos</span>
-                        <span className="text-[10px] text-purple-500 font-bold uppercase tracking-tight">Ocupação e Logística</span>
+                    <div>
+                        <div className="text-[10px] font-black text-slate-400 mb-0.5 uppercase tracking-widest">Ocupação e Logística</div>
+                        <div className="text-xl font-black text-slate-800">Gestão de Abrigos</div>
+                        <div className="text-xs font-bold text-blue-600">Verificar Lotação</div>
                     </div>
                 </div>
-                <div className="text-slate-300 pr-2">
-                    <ChevronRight size={16} />
+                <div className="bg-slate-50 w-10 h-10 rounded-full flex items-center justify-center text-slate-300">
+                    <ChevronRight size={20} />
                 </div>
             </div>
 
