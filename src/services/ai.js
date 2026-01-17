@@ -1,14 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// [VER: 1.33] FINAL FIX - Using verified Gemini 2.5 models available for this account
-const API_KEY = "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Fallback list using only verified models from diagnostic v1.32
+// Fallback list using stable Gemini 1.5 models
 const MODELS_TO_TRY = [
-    { name: "gemini-2.5-flash", version: "v1" },
-    { name: "gemini-2.5-pro", version: "v1" },
-    { name: "gemini-2.0-flash", version: "v1" }
+    { name: "gemini-1.5-flash" },
+    { name: "gemini-1.5-pro" }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
@@ -18,10 +16,7 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
     for (const modelConfig of MODELS_TO_TRY) {
         try {
-            const model = genAI.getGenerativeModel(
-                { model: modelConfig.name },
-                { apiVersion: modelConfig.version }
-            );
+            const model = genAI.getGenerativeModel({ model: modelConfig.name });
 
             const prompt = `
             Você é um Engenheiro Civil especialista em Defesa Civil e Gestão de Riscos.
@@ -48,10 +43,10 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
             const response = await result.response;
             return response.text().trim();
         } catch (error) {
-            console.warn(`Tentativa v1.33 com ${modelConfig.name} falhou:`, error.message);
+            console.warn(`Tentativa com ${modelConfig.name} falhou:`, error.message);
             lastError = error;
         }
     }
 
-    throw new Error(`[IA-v1.33] Erro final: ${lastError?.message || 'Falha na IA'}`);
+    throw new Error(`Erro ao refinar texto: ${lastError?.message || 'Todos os modelos falharam'}`);
 };
