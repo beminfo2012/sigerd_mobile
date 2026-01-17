@@ -574,6 +574,98 @@ const Dashboard = () => {
                         </div>
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Abrigos</span>
                     </div>
+
+                    {/* Relatórios */}
+                    <div className="flex flex-col items-center gap-2.5 flex-shrink-0 relative">
+                        <div
+                            onClick={() => setShowReportMenu(!showReportMenu)}
+                            className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)] cursor-pointer"
+                        >
+                            <FileText size={28} strokeWidth={2.2} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Relatórios</span>
+
+                        {/* Dropdown Menu */}
+                        {showReportMenu && (
+                            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                {[
+                                    { label: 'Últimas 24h', hours: 24 },
+                                    { label: 'Últimas 48h', hours: 48 },
+                                    { label: 'Últimas 96h', hours: 96 },
+                                    { label: 'Todo o Período', hours: 0 }
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.hours}
+                                        onClick={async () => {
+                                            setShowReportMenu(false);
+                                            setGeneratingReport(true);
+                                            try {
+                                                // 1. Filter Data by timeframe
+                                                const filteredData = { ...data };
+                                                let timeframeLabel = opt.label;
+
+                                                if (opt.hours > 0) {
+                                                    const threshold = new Date();
+                                                    threshold.setHours(threshold.getHours() - opt.hours);
+
+                                                    // Update locations
+                                                    filteredData.locations = data.locations.filter(l => {
+                                                        const d = new Date(l.date);
+                                                        return d >= threshold;
+                                                    });
+
+                                                    // Recalculate breakdown for the selected timeframe
+                                                    const counts = {};
+                                                    filteredData.locations.forEach(l => {
+                                                        const cat = l.risk || 'Outros';
+                                                        counts[cat] = (counts[cat] || 0) + 1;
+                                                    });
+
+                                                    const total = filteredData.locations.length;
+                                                    filteredData.breakdown = Object.keys(counts).map((label) => ({
+                                                        label,
+                                                        count: counts[label],
+                                                        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                                                    })).sort((a, b) => b.count - a.count);
+
+                                                    // Update stats for report
+                                                    filteredData.stats = {
+                                                        ...data.stats,
+                                                        totalVistorias: total,
+                                                    };
+                                                }
+
+                                                // 2. Fetch fresh Pluviometer data
+                                                let pluvioData = [];
+                                                try {
+                                                    const res = await fetch('/api/pluviometros');
+                                                    if (res.ok) pluvioData = await res.json();
+                                                } catch (e) {
+                                                    console.warn("Failed to fetch pluvio for report", e);
+                                                }
+
+                                                // 3. Capture Map Element
+                                                const mapElement = document.querySelector('.leaflet-container');
+
+                                                // 4. Generate PDF
+                                                await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel);
+
+                                            } catch (e) {
+                                                console.error(e);
+                                                alert("Erro ao gerar relatório.");
+                                            } finally {
+                                                setGeneratingReport(false);
+                                            }
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                    >
+                                        {opt.label}
+                                        <ChevronRight size={14} className="text-slate-300" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
