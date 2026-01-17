@@ -2,20 +2,17 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
-// Initialize Gemini 1.5 Pro for OCR with explicit v1 API
+// Initialize Gemini Pro for OCR (most compatible model)
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel(
-    {
-        model: "gemini-1.5-pro",
-        safetySettings: [
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-        ]
-    },
-    { apiVersion: "v1" }
-);
+const model = genAI.getGenerativeModel({
+    model: "gemini-pro",
+    safetySettings: [
+        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+    ]
+});
 
 /**
  * Converts a File object to a GoogleGenerativeAI Part object (Base64)

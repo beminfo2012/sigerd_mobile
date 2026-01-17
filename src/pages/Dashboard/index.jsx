@@ -549,42 +549,31 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div
-                onClick={() => navigate('/pluviometros')}
-                className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
-            >
-                <div className="flex items-center gap-4">
-                    <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
-                        <CloudRain size={24} strokeWidth={2.5} />
+            {/* Quick Access - Circular Icons */}
+            <div className="mb-6">
+                <h2 className="text-sm font-bold text-slate-600 mb-4 px-1">Acesso Rápido</h2>
+                <div className="flex gap-8 overflow-x-auto pb-2 px-1 scrollbar-hide">
+                    {/* Pluviômetros */}
+                    <div
+                        onClick={() => navigate('/pluviometros')}
+                        className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
+                    >
+                        <div className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
+                            <CloudRain size={28} strokeWidth={2.2} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Pluviômetros</span>
                     </div>
-                    <div>
-                        <div className="text-[10px] font-black text-slate-400 mb-0.5 uppercase tracking-widest">Tempo Real</div>
-                        <div className="text-xl font-black text-slate-800">Pluviômetros</div>
-                        <div className="text-xs font-bold text-blue-600">Ver índices CEMADEN</div>
-                    </div>
-                </div>
-                <div className="bg-slate-50 w-10 h-10 rounded-full flex items-center justify-center text-slate-300">
-                    <ChevronRight size={20} />
-                </div>
-            </div>
 
-            {/* Shelter Management Shortcut */}
-            <div
-                onClick={() => navigate('/abrigos')}
-                className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-slate-50"
-            >
-                <div className="flex items-center gap-4">
-                    <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
-                        <Home size={24} strokeWidth={2.5} />
+                    {/* Abrigos */}
+                    <div
+                        onClick={() => navigate('/abrigos')}
+                        className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
+                    >
+                        <div className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
+                            <Home size={28} strokeWidth={2.2} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Abrigos</span>
                     </div>
-                    <div>
-                        <div className="text-[10px] font-black text-slate-400 mb-0.5 uppercase tracking-widest">Ocupação e Logística</div>
-                        <div className="text-xl font-black text-slate-800">Gestão de Abrigos</div>
-                        <div className="text-xs font-bold text-blue-600">Verificar Lotação</div>
-                    </div>
-                </div>
-                <div className="bg-slate-50 w-10 h-10 rounded-full flex items-center justify-center text-slate-300">
-                    <ChevronRight size={20} />
                 </div>
             </div>
 

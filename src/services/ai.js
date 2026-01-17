@@ -3,10 +3,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Use stable Gemini 1.5 models with explicit v1 API
+// Use gemini-pro as it's the most widely available model
 const MODELS_TO_TRY = [
-    { name: "gemini-1.5-flash", apiVersion: "v1" },
-    { name: "gemini-1.5-pro", apiVersion: "v1" }
+    { name: "gemini-pro" }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
@@ -16,10 +15,7 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
     for (const modelConfig of MODELS_TO_TRY) {
         try {
-            const model = genAI.getGenerativeModel(
-                { model: modelConfig.name },
-                { apiVersion: modelConfig.apiVersion }
-            );
+            const model = genAI.getGenerativeModel({ model: modelConfig.name });
 
             const prompt = `
             Você é um Engenheiro Civil especialista em Defesa Civil e Gestão de Riscos.
