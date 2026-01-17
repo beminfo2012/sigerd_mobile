@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin, Users, Phone, User, ArrowLeft,
     Plus, Gift, TrendingUp, Heart, LogOut,
-    Crown, ChevronDown, ChevronUp, Package, Building2
+    Crown, ChevronDown, ChevronUp, Package, Building2,
+    Droplets, Bed, Shirt, Calculator
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
 import { Button } from '../../components/Shelter/ui/Button';
 import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter } from '../../services/shelterDb';
+import { calculateShelterNeeds } from '../../utils/needsCalculator';
 
 export function ShelterDetail() {
     const { id } = useParams();
@@ -97,6 +99,16 @@ export function ShelterDetail() {
         acc[group].push(occ);
         return acc;
     }, {});
+
+    const estimatedNeeds = calculateShelterNeeds(shelter.current_occupancy || occupants.length);
+
+    const iconMap = {
+        Package,
+        Droplets,
+        Heart,
+        Bed,
+        Shirt
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
@@ -499,6 +511,47 @@ export function ShelterDetail() {
                                     )}
                                 </div>
                             )}
+                        </Card>
+
+                        {/* Estimated Needs Card */}
+                        <Card className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-bold text-slate-800">Necessidades (7 dias)</h2>
+                                <Calculator className="w-5 h-5 text-slate-400" />
+                            </div>
+                            <div className="space-y-4">
+                                {estimatedNeeds.map((need, index) => {
+                                    const Icon = iconMap[need.icon] || Package;
+                                    return (
+                                        <div key={index} className="flex items-start gap-4 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
+                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                <Icon size={20} className="text-[#2a5299]" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="text-xs font-bold text-slate-800 uppercase tracking-tight">
+                                                        {need.category}
+                                                    </div>
+                                                    <div className="text-sm font-black text-[#2a5299]">
+                                                        {need.quantity} {need.unit}
+                                                    </div>
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 font-bold mb-1">
+                                                    {need.item}
+                                                </div>
+                                                <div className="text-[9px] text-slate-400 italic">
+                                                    {need.description}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="mt-6 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                                <p className="text-[10px] text-amber-700 font-bold text-center uppercase tracking-widest">
+                                    Cálculo baseado na ocupação atual
+                                </p>
+                            </div>
                         </Card>
                     </div>
                 </div>
