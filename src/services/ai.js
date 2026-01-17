@@ -1,9 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
+// [VER: 1.32] Forcing the known NEW key to bypass potential stale Vercel ENVs
+const HARDCODED_KEY = "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
+const API_KEY = HARDCODED_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// [VER: 1.31] Comprehensive multi-model fallback strategy
 const MODELS_TO_TRY = [
     { name: "gemini-1.5-flash", version: "v1" },
     { name: "gemini-1.5-pro", version: "v1" },
@@ -16,7 +17,6 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
     let lastError = null;
 
-    // Try each model until one works
     for (const modelConfig of MODELS_TO_TRY) {
         try {
             const model = genAI.getGenerativeModel(
@@ -47,16 +47,26 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
-            const refinedText = response.text().trim();
-
-            if (refinedText) return refinedText;
+            return response.text().trim();
         } catch (error) {
-            console.warn(`Tentativa com ${modelConfig.name} (${modelConfig.version}) falhou:`, error.message);
+            console.warn(`Tentativa v1.32 com ${modelConfig.name} (${modelConfig.version}) falhou.`);
             lastError = error;
-            // Continue to next model
         }
     }
 
-    // If all models fail, raise the final descriptive error
-    throw new Error(`[IA-v1.31] Falha em todos os modelos. Último erro (${MODELS_TO_TRY[MODELS_TO_TRY.length - 1].name}): ${lastError?.message || 'Erro desconhecido'}`);
+    // Diagnostic fetch to see what models ARE available for this key
+    let availableModels = "N/A";
+    try {
+        const diagResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
+        const diagData = await diagResp.json();
+        if (diagData.models) {
+            availableModels = diagData.models.map(m => m.name.replace('models/', '')).join(', ');
+        } else {
+            availableModels = "Erro na lista: " + (diagData.error?.message || JSON.stringify(diagData));
+        }
+    } catch (e) {
+        availableModels = "Erro fetch: " + e.message;
+    }
+
+    throw new Error(`[IA-v1.32] Falha total. Disponíveis: [${availableModels}]. Último Erro: ${lastError?.message}`);
 };
