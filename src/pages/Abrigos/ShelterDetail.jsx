@@ -4,7 +4,7 @@ import {
     MapPin, Users, Phone, User, ArrowLeft,
     Plus, Gift, TrendingUp, Heart, LogOut,
     Crown, ChevronDown, ChevronUp, Package, Building2,
-    Droplets, Bed, Shirt, Calculator
+    Droplets, Bed, Shirt, Calculator, Edit
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
@@ -130,6 +130,13 @@ export function ShelterDetail() {
                                 <Badge status={shelter.status || 'active'}>
                                     {statusLabels[shelter.status] || 'ATIVO'}
                                 </Badge>
+                                <button
+                                    onClick={() => navigate(`/abrigos/editar/${id}`)}
+                                    className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-xl transition-colors"
+                                    title="Editar Abrigo"
+                                >
+                                    <Edit size={20} />
+                                </button>
                             </div>
                             <div className="flex items-center gap-2 text-slate-500 text-sm">
                                 <MapPin size={16} />

@@ -4,12 +4,13 @@ import { Building2, MapPin, Users, Phone, User, FileText, ArrowLeft } from 'luci
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
-import { addShelter } from '../../services/shelterDb';
+import { addShelter, getShelterById, updateShelter } from '../../services/shelterDb';
 import VoiceInput from '../../components/VoiceInput';
 
 export function ShelterForm() {
     const navigate = useNavigate();
 
+    const { id } = useParams();
     const [formData, setFormData] = useState({
         name: '',
         address: '',
@@ -22,7 +23,36 @@ export function ShelterForm() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [lastFocusedField, setLastFocusedField] = useState(null);
+
+    useEffect(() => {
+        if (id) {
+            const loadShelter = async () => {
+                setIsLoading(true);
+                try {
+                    const shelter = await getShelterById(id);
+                    if (shelter) {
+                        setFormData({
+                            name: shelter.name || '',
+                            address: shelter.address || '',
+                            bairro: shelter.bairro || '',
+                            coordenadas: shelter.coordenadas || '',
+                            capacity: shelter.capacity || '',
+                            responsible_name: shelter.responsible_name || '',
+                            responsible_phone: shelter.responsible_phone || '',
+                            observations: shelter.observations || '',
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading shelter for edit:', error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            loadShelter();
+        }
+    }, [id]);
 
     const handleVoiceResult = (transcript) => {
         if (lastFocusedField) {
@@ -45,19 +75,35 @@ export function ShelterForm() {
         setIsSubmitting(true);
 
         try {
-            await addShelter({
-                ...formData,
-                current_occupancy: 0
-            });
-            alert('Abrigo cadastrado com sucesso!');
-            navigate('/abrigos');
+            if (id) {
+                await updateShelter(id, formData);
+                alert('Abrigo atualizado com sucesso!');
+            } else {
+                await addShelter({
+                    ...formData,
+                    current_occupancy: 0
+                });
+                alert('Abrigo cadastrado com sucesso!');
+            }
+            navigate(id ? `/abrigos/${id}` : '/abrigos');
         } catch (error) {
             console.error('Error saving shelter:', error);
-            alert('Erro ao salvar abrigo. Tente novamente.');
+            alert(`Erro ao salvar abrigo: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-[#2a5299] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Carregando dados...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 pb-6">
@@ -73,8 +119,12 @@ export function ShelterForm() {
                     </button>
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800">Cadastrar Novo Abrigo</h1>
-                            <p className="text-sm text-slate-500 mt-1">Preencha os dados do abrigo</p>
+                            <h1 className="text-2xl font-black text-slate-800">
+                                {id ? 'Editar Abrigo' : 'Cadastrar Novo Abrigo'}
+                            </h1>
+                            <p className="text-sm text-slate-500 mt-1">
+                                {id ? 'Atualize as informações do abrigo' : 'Preencha os dados do abrigo'}
+                            </p>
                         </div>
                         <VoiceInput onResult={handleVoiceResult} />
                     </div>
@@ -222,7 +272,7 @@ export function ShelterForm() {
                             className="flex-1"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Salvando...' : 'Cadastrar Abrigo'}
+                            {isSubmitting ? 'Salvando...' : (id ? 'Salvar Alterações' : 'Cadastrar Abrigo')}
                         </Button>
                     </div>
                 </form>

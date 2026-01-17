@@ -190,6 +190,7 @@ function App() {
                                 <Route path="/abrigos" element={<ShelterDashboard />} />
                                 <Route path="/abrigos/novo" element={<ShelterForm />} />
                                 <Route path="/abrigos/:id" element={<ShelterDetail />} />
+                                <Route path="/abrigos/editar/:id" element={<ShelterForm />} />
                                 <Route path="/abrigos/:shelterId/abrigados/novo" element={<OccupantForm />} />
                                 <Route path="/abrigos/:shelterId/doacoes/novo" element={<DonationForm />} />
                                 <Route path="/abrigos/:shelterId/distribuicoes/novo" element={<DistributionForm />} />
