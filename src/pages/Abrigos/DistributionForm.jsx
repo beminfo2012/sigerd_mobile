@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Package, TrendingUp, User, Users as UsersIcon, Hash, ArrowLeft } from 'lucide-react';
+import { Package, TrendingUp, User, Users as UsersIcon, Hash, ArrowLeft, Mic, MicOff } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
 import { addDistribution, getShelterById, getInventory } from '../../services/shelterDb';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 
 export function DistributionForm() {
     const { shelterId } = useParams();
@@ -36,6 +37,18 @@ export function DistributionForm() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [lastFocusedField, setLastFocusedField] = useState(null);
+
+    const { isListening, transcript, startListening, hasSupport } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript && lastFocusedField) {
+            setFormData(prev => ({
+                ...prev,
+                [lastFocusedField]: transcript
+            }));
+        }
+    }, [transcript, lastFocusedField]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -112,10 +125,27 @@ export function DistributionForm() {
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
-                    <h1 className="text-2xl font-black text-slate-800">Distribuir Itens</h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Abrigo: {shelter.name}
-                    </p>
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-800">Distribuir Itens</h1>
+                            <p className="text-sm text-slate-500 mt-1">
+                                Abrigo: {shelter.name}
+                            </p>
+                        </div>
+                        {hasSupport && (
+                            <button
+                                type="button"
+                                onClick={startListening}
+                                className={`p-4 rounded-2xl flex items-center gap-2 transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-50 text-[#2a5299] hover:bg-blue-100'}`}
+                                title="Preencher campo selecionado por voz"
+                            >
+                                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                    {isListening ? 'Ouvindo...' : 'Voz'}
+                                </span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -176,6 +206,7 @@ export function DistributionForm() {
                                 step="0.01"
                                 value={formData.quantity}
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
                                 icon={Hash}
                                 placeholder={`Ex: 5 ${formData.unit || ''}`}
@@ -197,6 +228,7 @@ export function DistributionForm() {
                                 name="recipient_name"
                                 value={formData.recipient_name}
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={User}
                                 placeholder="Ex: João da Silva"
                             />
@@ -206,6 +238,7 @@ export function DistributionForm() {
                                 name="family_group"
                                 value={formData.family_group}
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={UsersIcon}
                                 placeholder="Ex: FAM-001"
                             />
@@ -218,6 +251,7 @@ export function DistributionForm() {
                                     name="observations"
                                     value={formData.observations}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     rows={3}
                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Informações adicionais sobre a distribuição..."

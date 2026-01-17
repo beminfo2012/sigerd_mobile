@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Gift, User, Phone, Package, Hash, ArrowLeft } from 'lucide-react';
+import { Gift, User, Phone, Package, Hash, ArrowLeft, Mic, MicOff } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
 import { addDonation, getShelterById } from '../../services/shelterDb';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 
 export function DonationForm() {
     const { shelterId } = useParams();
@@ -33,6 +34,18 @@ export function DonationForm() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [lastFocusedField, setLastFocusedField] = useState(null);
+
+    const { isListening, transcript, startListening, hasSupport } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript && lastFocusedField) {
+            setFormData(prev => ({
+                ...prev,
+                [lastFocusedField]: transcript
+            }));
+        }
+    }, [transcript, lastFocusedField]);
 
     const handleChange = (e) => {
         setFormData({
@@ -86,10 +99,27 @@ export function DonationForm() {
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
-                    <h1 className="text-2xl font-black text-slate-800">Registrar Doação</h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Abrigo: {shelter.name}
-                    </p>
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-800">Registrar Doação</h1>
+                            <p className="text-sm text-slate-500 mt-1">
+                                Abrigo: {shelter.name}
+                            </p>
+                        </div>
+                        {hasSupport && (
+                            <button
+                                type="button"
+                                onClick={startListening}
+                                className={`p-4 rounded-2xl flex items-center gap-2 transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-50 text-[#2a5299] hover:bg-blue-100'}`}
+                                title="Preencher campo selecionado por voz"
+                            >
+                                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                    {isListening ? 'Ouvindo...' : 'Voz'}
+                                </span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -106,6 +136,7 @@ export function DonationForm() {
                                 name="donor_name"
                                 value={formData.donor_name}
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={User}
                                 placeholder="Ex: Supermercado Bom Preço"
                             />
@@ -116,6 +147,7 @@ export function DonationForm() {
                                 type="tel"
                                 value={formData.donor_phone}
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={Phone}
                                 placeholder="(27) 99999-1234"
                             />
@@ -138,6 +170,7 @@ export function DonationForm() {
                                     name="donation_type"
                                     value={formData.donation_type}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     required
                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
@@ -154,6 +187,7 @@ export function DonationForm() {
                                 name="item_description"
                                 value={formData.item_description}
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
                                 icon={Package}
                                 placeholder="Ex: Cestas básicas, roupas infantis, kits de higiene..."
@@ -167,6 +201,7 @@ export function DonationForm() {
                                     step="0.01"
                                     value={formData.quantity}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     required
                                     icon={Hash}
                                     placeholder="Ex: 50"
@@ -180,6 +215,7 @@ export function DonationForm() {
                                         name="unit"
                                         value={formData.unit}
                                         onChange={handleChange}
+                                        onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                         required
                                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
@@ -201,6 +237,7 @@ export function DonationForm() {
                                     name="observations"
                                     value={formData.observations}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     rows={3}
                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Informações adicionais sobre a doação..."

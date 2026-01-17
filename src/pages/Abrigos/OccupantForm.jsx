@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, CreditCard, Calendar, Users as UsersIcon, Heart, FileText, ArrowLeft, Camera, Loader2 } from 'lucide-react';
+import { User, CreditCard, Calendar, Users as UsersIcon, Heart, FileText, ArrowLeft, Camera, Loader2, Mic, MicOff } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
 import { addOccupant, getShelterById, getOccupants, updateShelter } from '../../services/shelterDb';
 import { scanDocument } from '../../services/ocrService';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 
 export function OccupantForm() {
     const { shelterId } = useParams();
@@ -41,6 +42,18 @@ export function OccupantForm() {
     const [showFamilySuggestions, setShowFamilySuggestions] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
+    const [lastFocusedField, setLastFocusedField] = useState(null);
+
+    const { isListening, transcript, startListening, hasSupport } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript && lastFocusedField) {
+            setFormData(prev => ({
+                ...prev,
+                [lastFocusedField]: transcript
+            }));
+        }
+    }, [transcript, lastFocusedField]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -135,10 +148,27 @@ export function OccupantForm() {
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
-                    <h1 className="text-2xl font-black text-slate-800">Cadastrar Abrigado</h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Abrigo: {shelter.name}
-                    </p>
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-800">Cadastrar Abrigado</h1>
+                            <p className="text-sm text-slate-500 mt-1">
+                                Abrigo: {shelter.name}
+                            </p>
+                        </div>
+                        {hasSupport && (
+                            <button
+                                type="button"
+                                onClick={startListening}
+                                className={`p-4 rounded-2xl flex items-center gap-2 transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-50 text-[#2a5299] hover:bg-blue-100'}`}
+                                title="Preencher campo selecionado por voz"
+                            >
+                                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                    {isListening ? 'Ouvindo...' : 'Voz'}
+                                </span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Scan Button - Prominent */}
@@ -188,6 +218,7 @@ export function OccupantForm() {
                                 name="full_name"
                                 value={formData.full_name}
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
                                 icon={User}
                                 placeholder="Ex: João da Silva"
@@ -199,6 +230,7 @@ export function OccupantForm() {
                                     name="cpf"
                                     value={formData.cpf}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     icon={CreditCard}
                                     placeholder="000.000.000-00"
                                 />
@@ -209,6 +241,7 @@ export function OccupantForm() {
                                     type="number"
                                     value={formData.age}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     icon={Calendar}
                                     placeholder="Ex: 35"
                                 />
@@ -222,6 +255,7 @@ export function OccupantForm() {
                                     name="gender"
                                     value={formData.gender}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
                                     <option value="nao_informado">Não informado</option>
@@ -247,6 +281,7 @@ export function OccupantForm() {
                                     name="family_group"
                                     value={formData.family_group}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     onFocus={() => setShowFamilySuggestions(true)}
                                     icon={UsersIcon}
                                     placeholder="Ex: Família Silva"
@@ -314,6 +349,7 @@ export function OccupantForm() {
                                     name="special_needs"
                                     value={formData.special_needs}
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     rows={3}
                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Ex: Hipertensão, mobilidade reduzida, medicação contínua..."

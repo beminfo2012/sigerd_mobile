@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, MapPin, Users, Phone, User, FileText, ArrowLeft } from 'lucide-react';
+import { Building2, MapPin, Users, Phone, User, FileText, ArrowLeft, Mic, MicOff } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
 import { addShelter } from '../../services/shelterDb';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 
 export function ShelterForm() {
     const navigate = useNavigate();
@@ -21,6 +22,18 @@ export function ShelterForm() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [lastFocusedField, setLastFocusedField] = useState(null);
+
+    const { isListening, transcript, startListening, hasSupport } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript && lastFocusedField) {
+            setFormData(prev => ({
+                ...prev,
+                [lastFocusedField]: transcript
+            }));
+        }
+    }, [transcript, lastFocusedField]);
 
     const handleChange = (e) => {
         setFormData({
@@ -60,8 +73,25 @@ export function ShelterForm() {
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
-                    <h1 className="text-2xl font-black text-slate-800">Cadastrar Novo Abrigo</h1>
-                    <p className="text-sm text-slate-500 mt-1">Preencha os dados do abrigo</p>
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-800">Cadastrar Novo Abrigo</h1>
+                            <p className="text-sm text-slate-500 mt-1">Preencha os dados do abrigo</p>
+                        </div>
+                        {hasSupport && (
+                            <button
+                                type="button"
+                                onClick={startListening}
+                                className={`p-4 rounded-2xl flex items-center gap-2 transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-50 text-[#2a5299] hover:bg-blue-100'}`}
+                                title="Preencher campo selecionado por voz"
+                            >
+                                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                    {isListening ? 'Ouvindo...' : 'Voz'}
+                                </span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -77,7 +107,9 @@ export function ShelterForm() {
                                 label="Nome do Abrigo"
                                 name="name"
                                 value={formData.name}
+                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
                                 icon={Building2}
                                 placeholder="Ex: Ginásio Municipal João Silva"
@@ -87,7 +119,9 @@ export function ShelterForm() {
                                 label="Endereço Completo"
                                 name="address"
                                 value={formData.address}
+                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
                                 icon={MapPin}
                                 placeholder="Ex: Rua das Flores, 123"
@@ -98,7 +132,9 @@ export function ShelterForm() {
                                     label="Bairro"
                                     name="bairro"
                                     value={formData.bairro}
+                                    onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     placeholder="Ex: Centro"
                                 />
 
@@ -106,7 +142,9 @@ export function ShelterForm() {
                                     label="Coordenadas (Lat, Long)"
                                     name="coordenadas"
                                     value={formData.coordenadas}
+                                    onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                     onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     placeholder="Ex: -19.9245, -40.6789"
                                 />
                             </div>
@@ -116,7 +154,9 @@ export function ShelterForm() {
                                 name="capacity"
                                 type="number"
                                 value={formData.capacity}
+                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
                                 icon={Users}
                                 placeholder="Ex: 60"
@@ -136,7 +176,9 @@ export function ShelterForm() {
                                 label="Nome do Responsável"
                                 name="responsible_name"
                                 value={formData.responsible_name}
+                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={User}
                                 placeholder="Ex: Maria Santos"
                             />
@@ -146,7 +188,9 @@ export function ShelterForm() {
                                 name="responsible_phone"
                                 type="tel"
                                 value={formData.responsible_phone}
+                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={Phone}
                                 placeholder="Ex: (27) 99999-1234"
                             />
@@ -167,7 +211,9 @@ export function ShelterForm() {
                             <textarea
                                 name="observations"
                                 value={formData.observations}
+                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
                                 onChange={handleChange}
+                                onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 rows={4}
                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                 placeholder="Informações adicionais sobre o abrigo..."
