@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // We use an environment variable for security. 
 // Locally: add to .env
 // Production: add VITE_GOOGLE_API_KEY to Vercel environment variables
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
 const genAI = new GoogleGenerativeAI(API_KEY);
 // Using gemini-1.5-flash (stable version)
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
