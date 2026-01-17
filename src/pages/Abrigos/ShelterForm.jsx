@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Building2, MapPin, Users, Phone, User, FileText, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
