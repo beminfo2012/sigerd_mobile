@@ -93,7 +93,7 @@ export function ShelterForm() {
                                 label="Nome do Abrigo"
                                 name="name"
                                 value={formData.name}
-                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
+                                onFocus={(e) => setLastFocusedField(e.target.name)}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
@@ -105,7 +105,7 @@ export function ShelterForm() {
                                 label="Endereço Completo"
                                 name="address"
                                 value={formData.address}
-                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
+                                onFocus={(e) => setLastFocusedField(e.target.name)}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
@@ -118,7 +118,7 @@ export function ShelterForm() {
                                     label="Bairro"
                                     name="bairro"
                                     value={formData.bairro}
-                                    onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                    onFocus={(e) => setLastFocusedField(e.target.name)}
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     placeholder="Ex: Centro"
@@ -128,7 +128,7 @@ export function ShelterForm() {
                                     label="Coordenadas (Lat, Long)"
                                     name="coordenadas"
                                     value={formData.coordenadas}
-                                    onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                    onFocus={(e) => setLastFocusedField(e.target.name)}
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     placeholder="Ex: -19.9245, -40.6789"
@@ -140,7 +140,7 @@ export function ShelterForm() {
                                 name="capacity"
                                 type="number"
                                 value={formData.capacity}
-                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
+                                onFocus={(e) => setLastFocusedField(e.target.name)}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
@@ -162,7 +162,7 @@ export function ShelterForm() {
                                 label="Nome do Responsável"
                                 name="responsible_name"
                                 value={formData.responsible_name}
-                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
+                                onFocus={(e) => setLastFocusedField(e.target.name)}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={User}
@@ -174,7 +174,7 @@ export function ShelterForm() {
                                 name="responsible_phone"
                                 type="tel"
                                 value={formData.responsible_phone}
-                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
+                                onFocus={(e) => setLastFocusedField(e.target.name)}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={Phone}
@@ -197,7 +197,7 @@ export function ShelterForm() {
                             <textarea
                                 name="observations"
                                 value={formData.observations}
-                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
+                                onFocus={(e) => setLastFocusedField(e.target.name)}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 rows={4}

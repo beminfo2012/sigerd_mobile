@@ -60,3 +60,42 @@ export async function performOCR(imageFile) {
         throw new Error("Não foi possível processar a imagem com IA. Verifique sua conexão e tente novamente.");
     }
 }
+/**
+ * Scans a document and returns structured data
+ */
+export async function scanDocument(file) {
+    try {
+        const imagePart = await fileToGenerativePart(file);
+
+        const prompt = `
+            Extraia os seguintes dados deste documento de identificação (RG/CPF/CNH/Documento do Abrigo):
+            - Nome Completo
+            - CPF (somente números)
+            - Idade (se disponível, ou calcule a partir da data de nascimento)
+            - Gênero (masculino/feminino/outro)
+
+            Responda APENAS em formato JSON puro, sem markdown:
+            {
+                "full_name": "NOME",
+                "cpf": "00000000000",
+                "age": "00",
+                "gender": "masculino/feminino/outro"
+            }
+        `;
+
+        const result = await model.generateContent([prompt, imagePart]);
+        const response = await result.response;
+        const text = response.text().trim();
+
+        // Cleanup potential markdown backticks if Gemini includes them
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Erro no scanDocument:", error);
+        throw error;
+    }
+}

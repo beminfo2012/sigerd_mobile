@@ -9,7 +9,7 @@ import {
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
 import { Button } from '../../components/Shelter/ui/Button';
-import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter } from '../../services/shelterDb';
+import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter, exitOccupant } from '../../services/shelterDb';
 import { calculateShelterNeeds } from '../../utils/needsCalculator';
 
 export function ShelterDetail() {
