@@ -12,7 +12,7 @@ const model = genAI.getGenerativeModel({
         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
     ]
-});
+}, { apiVersion: "v1" });
 
 /**
  * Converts a File object to a GoogleGenerativeAI Part object (Base64)

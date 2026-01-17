@@ -6,8 +6,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Production: add VITE_GOOGLE_API_KEY to Vercel environment variables
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
 const genAI = new GoogleGenerativeAI(API_KEY);
-// Using gemini-1.5-flash (Ensure the name is exactly as required by Google)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+// Using gemini-1.5-flash with stable v1 API version to avoid v1beta 404s
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
