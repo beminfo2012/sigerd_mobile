@@ -85,7 +85,7 @@ const Login = ({ onLogin }) => {
                     fontSize: '28px',
                     marginBottom: '5px',
                     fontWeight: '600'
-                }}>SIGERD</h2>
+                }}>SIGERD <span style={{ fontSize: '10px', opacity: 0.4 }}>BUILD-SYNC-CHECK-1</span></h2>
 
                 {/* Subtitle */}
                 <p style={{
