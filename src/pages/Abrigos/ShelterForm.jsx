@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Building2, MapPin, Users, Phone, User, FileText, ArrowLeft, Mic, MicOff } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Building2, MapPin, Users, Phone, User, FileText, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
 import { addShelter } from '../../services/shelterDb';
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import VoiceInput from '../../components/VoiceInput';
 
 export function ShelterForm() {
     const navigate = useNavigate();
@@ -24,16 +24,14 @@ export function ShelterForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lastFocusedField, setLastFocusedField] = useState(null);
 
-    const { isListening, transcript, startListening, hasSupport } = useSpeechRecognition();
-
-    useEffect(() => {
-        if (transcript && lastFocusedField) {
+    const handleVoiceResult = (transcript) => {
+        if (lastFocusedField) {
             setFormData(prev => ({
                 ...prev,
                 [lastFocusedField]: transcript
             }));
         }
-    }, [transcript, lastFocusedField]);
+    };
 
     const handleChange = (e) => {
         setFormData({
@@ -78,19 +76,7 @@ export function ShelterForm() {
                             <h1 className="text-2xl font-black text-slate-800">Cadastrar Novo Abrigo</h1>
                             <p className="text-sm text-slate-500 mt-1">Preencha os dados do abrigo</p>
                         </div>
-                        {hasSupport && (
-                            <button
-                                type="button"
-                                onClick={startListening}
-                                className={`p-4 rounded-2xl flex items-center gap-2 transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-50 text-[#2a5299] hover:bg-blue-100'}`}
-                                title="Preencher campo selecionado por voz"
-                            >
-                                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
-                                <span className="text-xs font-bold uppercase tracking-wider">
-                                    {isListening ? 'Ouvindo...' : 'Voz'}
-                                </span>
-                            </button>
-                        )}
+                        <VoiceInput onResult={handleVoiceResult} />
                     </div>
                 </div>
 
@@ -107,7 +93,7 @@ export function ShelterForm() {
                                 label="Nome do Abrigo"
                                 name="name"
                                 value={formData.name}
-                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
@@ -119,7 +105,7 @@ export function ShelterForm() {
                                 label="Endereço Completo"
                                 name="address"
                                 value={formData.address}
-                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
@@ -154,7 +140,7 @@ export function ShelterForm() {
                                 name="capacity"
                                 type="number"
                                 value={formData.capacity}
-                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
@@ -176,7 +162,7 @@ export function ShelterForm() {
                                 label="Nome do Responsável"
                                 name="responsible_name"
                                 value={formData.responsible_name}
-                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={User}
@@ -188,7 +174,7 @@ export function ShelterForm() {
                                 name="responsible_phone"
                                 type="tel"
                                 value={formData.responsible_phone}
-                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 icon={Phone}
@@ -211,7 +197,7 @@ export function ShelterForm() {
                             <textarea
                                 name="observations"
                                 value={formData.observations}
-                                onFocus={() => setLastFocusedField(e => 'name' || e)} // Fallback approach if event doesn't work directly
+                                onFocus={() => setLastFocusedField('OBSERVATIONS_HACK')}
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 rows={4}

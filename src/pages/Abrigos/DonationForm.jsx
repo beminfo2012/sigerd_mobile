@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Gift, User, Phone, Package, Hash, ArrowLeft, Mic, MicOff } from 'lucide-react';
+import { Gift, User, Phone, Package, Hash, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
 import { addDonation, getShelterById } from '../../services/shelterDb';
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import VoiceInput from '../../components/VoiceInput';
 
 export function DonationForm() {
     const { shelterId } = useParams();
@@ -36,16 +36,14 @@ export function DonationForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lastFocusedField, setLastFocusedField] = useState(null);
 
-    const { isListening, transcript, startListening, hasSupport } = useSpeechRecognition();
-
-    useEffect(() => {
-        if (transcript && lastFocusedField) {
+    const handleVoiceResult = (transcript) => {
+        if (lastFocusedField) {
             setFormData(prev => ({
                 ...prev,
                 [lastFocusedField]: transcript
             }));
         }
-    }, [transcript, lastFocusedField]);
+    };
 
     const handleChange = (e) => {
         setFormData({
@@ -106,19 +104,7 @@ export function DonationForm() {
                                 Abrigo: {shelter.name}
                             </p>
                         </div>
-                        {hasSupport && (
-                            <button
-                                type="button"
-                                onClick={startListening}
-                                className={`p-4 rounded-2xl flex items-center gap-2 transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-50 text-[#2a5299] hover:bg-blue-100'}`}
-                                title="Preencher campo selecionado por voz"
-                            >
-                                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
-                                <span className="text-xs font-bold uppercase tracking-wider">
-                                    {isListening ? 'Ouvindo...' : 'Voz'}
-                                </span>
-                            </button>
-                        )}
+                        <VoiceInput onResult={handleVoiceResult} />
                     </div>
                 </div>
 
