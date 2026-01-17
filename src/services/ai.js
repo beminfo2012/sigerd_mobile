@@ -38,7 +38,8 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text().trim();
-        // [VER: 1.26] Expose model and detailed error for user feedback
-        throw new Error(`[IA-v1.26] Erro com gemini-1.5-flash: ${error.message || error.toString()}`);
+    } catch (error) {
+        // [VER: 1.27] Expose model and detailed error for user feedback
+        throw new Error(`[IA-v1.27] Erro com gemini-1.5-flash: ${error.message || error.toString()}`);
     }
 };
