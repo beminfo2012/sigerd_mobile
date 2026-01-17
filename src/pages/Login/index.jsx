@@ -85,7 +85,7 @@ const Login = ({ onLogin }) => {
                     fontSize: '28px',
                     marginBottom: '5px',
                     fontWeight: '600'
-                }}>SIGERD <span style={{ fontSize: '10px', opacity: 0.6 }}>V1.17.1-AI-FIX</span></h2>
+                }}>SIGERD</h2>
 
                 {/* Subtitle */}
                 <p style={{
