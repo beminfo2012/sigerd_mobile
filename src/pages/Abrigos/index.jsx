@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Building2, Users, Gift, ChevronRight, Plus, Search,
-    CheckCircle2, Cloud, RefreshCcw, Trash2, FileText
+    CheckCircle2, Cloud, RefreshCcw, Trash2, FileText, ArrowLeft
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Badge } from '../../components/Shelter/ui/Badge';
@@ -99,6 +99,14 @@ export function Dashboard() {
                     <Card variant="gradient" className="p-4 md:col-span-3">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="flex-1">
+                                {/* Back Button */}
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="flex items-center gap-2 text-white/90 hover:text-white font-semibold mb-3 transition-colors"
+                                >
+                                    <ArrowLeft size={20} />
+                                    Voltar
+                                </button>
                                 <div className="text-[10px] font-bold text-white/80 uppercase tracking-widest mb-1">
                                     GESTÃO DE ABRIGOS
                                 </div>
