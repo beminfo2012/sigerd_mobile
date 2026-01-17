@@ -6,8 +6,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Production: add VITE_GOOGLE_API_KEY to Vercel environment variables
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
 const genAI = new GoogleGenerativeAI(API_KEY);
-// Using gemini-pro for maximum compatibility/stability
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+// [VER: 1.26] Using gemini-1.5-flash which is the current standard. 
+// If it fails with 404, the API Key might be limited to gemini-pro.
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
@@ -37,9 +38,7 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text().trim();
-    } catch (error) {
-        console.error("Erro detalhado do Gemini:", error);
-        // Expose the real error message for debugging
-        throw new Error(`Erro na IA: ${error.message || error.toString()}`);
+        // [VER: 1.26] Expose model and detailed error for user feedback
+        throw new Error(`[IA-v1.26] Erro com gemini-1.5-flash: ${error.message || error.toString()}`);
     }
 };
