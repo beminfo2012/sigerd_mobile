@@ -1,15 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// [VER: 1.32] Forcing the known NEW key to bypass potential stale Vercel ENVs
-const HARDCODED_KEY = "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
-const API_KEY = HARDCODED_KEY;
+// [VER: 1.33] FINAL FIX - Using verified Gemini 2.5 models available for this account
+const API_KEY = "AIzaSyAGUmakglCOdr4Wsl9VN_nnyqFzqKma1uY";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
+// Fallback list using only verified models from diagnostic v1.32
 const MODELS_TO_TRY = [
-    { name: "gemini-1.5-flash", version: "v1" },
-    { name: "gemini-1.5-pro", version: "v1" },
-    { name: "gemini-1.0-pro", version: "v1" },
-    { name: "gemini-1.5-flash", version: "v1beta" }
+    { name: "gemini-2.5-flash", version: "v1" },
+    { name: "gemini-2.5-pro", version: "v1" },
+    { name: "gemini-2.0-flash", version: "v1" }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
@@ -49,24 +48,10 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
             const response = await result.response;
             return response.text().trim();
         } catch (error) {
-            console.warn(`Tentativa v1.32 com ${modelConfig.name} (${modelConfig.version}) falhou.`);
+            console.warn(`Tentativa v1.33 com ${modelConfig.name} falhou:`, error.message);
             lastError = error;
         }
     }
 
-    // Diagnostic fetch to see what models ARE available for this key
-    let availableModels = "N/A";
-    try {
-        const diagResp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
-        const diagData = await diagResp.json();
-        if (diagData.models) {
-            availableModels = diagData.models.map(m => m.name.replace('models/', '')).join(', ');
-        } else {
-            availableModels = "Erro na lista: " + (diagData.error?.message || JSON.stringify(diagData));
-        }
-    } catch (e) {
-        availableModels = "Erro fetch: " + e.message;
-    }
-
-    throw new Error(`[IA-v1.32] Falha total. Disponíveis: [${availableModels}]. Último Erro: ${lastError?.message}`);
+    throw new Error(`[IA-v1.33] Erro final: ${lastError?.message || 'Falha na IA'}`);
 };
