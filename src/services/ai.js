@@ -3,10 +3,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Fallback list using stable Gemini 1.5 models
+// Use stable Gemini 1.5 models with explicit v1 API
 const MODELS_TO_TRY = [
-    { name: "gemini-1.5-flash" },
-    { name: "gemini-1.5-pro" }
+    { name: "gemini-1.5-flash", apiVersion: "v1" },
+    { name: "gemini-1.5-pro", apiVersion: "v1" }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
@@ -16,7 +16,10 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
     for (const modelConfig of MODELS_TO_TRY) {
         try {
-            const model = genAI.getGenerativeModel({ model: modelConfig.name });
+            const model = genAI.getGenerativeModel(
+                { model: modelConfig.name },
+                { apiVersion: modelConfig.apiVersion }
+            );
 
             const prompt = `
             Você é um Engenheiro Civil especialista em Defesa Civil e Gestão de Riscos.
