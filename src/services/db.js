@@ -212,7 +212,15 @@ const syncSingleItem = async (storeName, item, db) => {
             }))
         }
 
-        const table = storeName
+        const tableMap = {
+            'shelters': 'shelters',
+            'occupants': 'shelter_occupants',
+            'donations': 'shelter_donations',
+            'inventory': 'shelter_inventory',
+            'distributions': 'shelter_distributions'
+        };
+
+        const table = tableMap[storeName] || storeName
         let payload = {}
 
         if (storeName === 'vistorias') {
