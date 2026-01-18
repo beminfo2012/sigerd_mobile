@@ -190,7 +190,7 @@ function App() {
                                 <Route path="/monitoramento" element={<GeoDashboard />} />
                                 <Route path="/checklist-saida" element={<ChecklistSaida />} />
 
-                                {/* Shelter Module Routes */}
+                                {/* Humanitarian Assistance Module Routes */}
                                 <Route path="/abrigos" element={<ShelterMenu />} />
                                 <Route path="/abrigos/lista" element={<ShelterList />} />
                                 <Route path="/abrigos/estoque" element={<StockHub />} />

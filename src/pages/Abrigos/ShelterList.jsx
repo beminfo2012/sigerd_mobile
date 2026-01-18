@@ -54,13 +54,16 @@ export default function ShelterList() {
 
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                    <button
-                        onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                        Voltar ao Menu
-                    </button>
+                    <div>
+                        <button
+                            onClick={() => navigate('/abrigos')}
+                            className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors mb-2"
+                        >
+                            <ArrowLeft size={20} />
+                            Voltar ao Menu
+                        </button>
+                        <h1 className="text-2xl font-black text-slate-800">Gestão de Abrigos</h1>
+                    </div>
                     <Button
                         onClick={() => navigate('/abrigos/novo')}
                         className="flex items-center gap-2"
@@ -86,8 +89,8 @@ export default function ShelterList() {
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase ${statusFilter === status
-                                        ? 'bg-[#2a5299] text-white'
-                                        : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'
+                                    ? 'bg-[#2a5299] text-white'
+                                    : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'
                                     }`}
                             >
                                 {status === 'all' ? 'Todos' : statusLabels[status]}

@@ -572,7 +572,7 @@ const Dashboard = () => {
                         <div className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
                             <Home size={28} strokeWidth={2.2} />
                         </div>
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Abrigos</span>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Assist. Humanitária</span>
                     </div>
 
                     {/* Relatórios */}

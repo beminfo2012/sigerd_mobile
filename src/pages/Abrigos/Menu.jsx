@@ -58,7 +58,7 @@ export default function ShelterMenu() {
                         Voltar ao Início
                     </button>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800">Módulo de Abrigos</h1>
+                        <h1 className="text-3xl font-black text-slate-800">Assistência Humanitária</h1>
                         <p className="text-slate-500 mt-2">
                             Selecione uma opção abaixo para gerenciar doações, estoque e abrigos.
                         </p>
