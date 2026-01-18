@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Package, ArrowRight, ArrowLeft, Building2, CheckCircle2 } from 'lucide-react';
+import { Truck, Package, ArrowRight, ArrowLeft, Building2, CheckCircle2, User, FileText } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
-import { getInventory, getShelters, transferStock } from '../../services/shelterDb';
+import { getInventory, getShelters, transferStock, addDistribution } from '../../services/shelterDb';
 
 export default function LogisticsHub() {
     const navigate = useNavigate();
@@ -13,9 +13,13 @@ export default function LogisticsHub() {
     const [shelters, setShelters] = useState([]);
 
     const [selectedItem, setSelectedItem] = useState(null);
+    const [destinationType, setDestinationType] = useState('SHELTER'); // 'SHELTER' or 'PERSON'
+
     const [transferData, setTransferData] = useState({
         shelter_id: '',
         quantity: '',
+        recipient_name: '',
+        recipient_doc: ''
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,23 +36,45 @@ export default function LogisticsHub() {
 
     const handleNextStep = () => {
         if (step === 1 && selectedItem) setStep(2);
-        else if (step === 2 && transferData.shelter_id && transferData.quantity) setStep(3);
+        else if (step === 2) {
+            const validShelter = destinationType === 'SHELTER' && transferData.shelter_id;
+            const validPerson = destinationType === 'PERSON' && transferData.recipient_name;
+
+            if ((validShelter || validPerson) && transferData.quantity) {
+                setStep(3);
+            }
+        }
     };
 
     const handleTransfer = async () => {
         setIsSubmitting(true);
         try {
-            await transferStock(
-                selectedItem.id || selectedItem.item_id, // Ensure ID usage
-                'CENTRAL',
-                transferData.shelter_id,
-                transferData.quantity
-            );
-            alert('Transferência realizada com sucesso!');
+            if (destinationType === 'SHELTER') {
+                await transferStock(
+                    selectedItem.id || selectedItem.item_id,
+                    'CENTRAL',
+                    transferData.shelter_id,
+                    transferData.quantity
+                );
+            } else {
+                // Direct distribution to person from CENTRAL stock
+                await addDistribution({
+                    shelter_id: 'CENTRAL', // Deduct from central
+                    inventory_id: selectedItem.id || selectedItem.item_id,
+                    item_name: selectedItem.item_name,
+                    quantity: transferData.quantity,
+                    unit: selectedItem.unit,
+                    recipient_name: transferData.recipient_name,
+                    document: transferData.recipient_doc,
+                    type: 'direct_aid'
+                });
+            }
+
+            alert('Operação realizada com sucesso!');
             navigate('/abrigos');
         } catch (error) {
             console.error(error);
-            alert('Erro na transferência: ' + error.message);
+            alert('Erro na operação: ' + error.message);
             setIsSubmitting(false);
         }
     };
@@ -69,7 +95,7 @@ export default function LogisticsHub() {
                     <div>
                         <h1 className="text-2xl font-black text-slate-800">Logística e Distribuição</h1>
                         <p className="text-sm text-slate-500 mt-1">
-                            Envio de materiais do Estoque Municipal para os Abrigos.
+                            Envio de materiais do Estoque Municipal para Abrigos ou Famílias.
                         </p>
                     </div>
                 </div>
@@ -153,19 +179,58 @@ export default function LogisticsHub() {
                         </Card>
 
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">Abrigo de Destino</label>
-                                <select
-                                    className="w-full p-4 rounded-xl border border-slate-200 bg-white font-semibold text-slate-700 focus:ring-2 focus:ring-[#2a5299]/20 outline-none"
-                                    value={transferData.shelter_id}
-                                    onChange={(e) => setTransferData({ ...transferData, shelter_id: e.target.value })}
+                            {/* Destination Type Toggle */}
+                            <div className="bg-slate-100 p-1 rounded-xl flex">
+                                <button
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${destinationType === 'SHELTER' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500 hover:text-slate-700'
+                                        }`}
+                                    onClick={() => setDestinationType('SHELTER')}
                                 >
-                                    <option value="">Selecione um abrigo...</option>
-                                    {shelters.map(s => (
-                                        <option key={s.id} value={s.id}>{s.name} ({s.status === 'active' ? 'Ativo' : 'Inativo'})</option>
-                                    ))}
-                                </select>
+                                    <Building2 size={16} />
+                                    Enviar para Abrigo
+                                </button>
+                                <button
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${destinationType === 'PERSON' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500 hover:text-slate-700'
+                                        }`}
+                                    onClick={() => setDestinationType('PERSON')}
+                                >
+                                    <User size={16} />
+                                    Pessoa/Família
+                                </button>
                             </div>
+
+                            {destinationType === 'SHELTER' ? (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <label className="block text-sm font-semibold text-slate-700">Abrigo de Destino</label>
+                                    <select
+                                        className="w-full p-4 rounded-xl border border-slate-200 bg-white font-semibold text-slate-700 focus:ring-2 focus:ring-[#2a5299]/20 outline-none"
+                                        value={transferData.shelter_id}
+                                        onChange={(e) => setTransferData({ ...transferData, shelter_id: e.target.value })}
+                                    >
+                                        <option value="">Selecione um abrigo...</option>
+                                        {shelters.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name} ({s.status === 'active' ? 'Ativo' : 'Inativo'})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <Input
+                                        label="Nome do Beneficiário"
+                                        placeholder="Ex: João Silva"
+                                        icon={User}
+                                        value={transferData.recipient_name}
+                                        onChange={(e) => setTransferData({ ...transferData, recipient_name: e.target.value })}
+                                    />
+                                    <Input
+                                        label="CPF ou Documento (Opcional)"
+                                        placeholder="000.000.000-00"
+                                        icon={FileText}
+                                        value={transferData.recipient_doc}
+                                        onChange={(e) => setTransferData({ ...transferData, recipient_doc: e.target.value })}
+                                    />
+                                </div>
+                            )}
 
                             <Input
                                 label={`Quantidade a Enviar (máx: ${selectedItem.quantity})`}
@@ -181,10 +246,15 @@ export default function LogisticsHub() {
                             <Button variant="secondary" onClick={() => setStep(1)} className="flex-1">Voltar</Button>
                             <Button
                                 className="flex-1"
-                                disabled={!transferData.shelter_id || !transferData.quantity || parseFloat(transferData.quantity) > parseFloat(selectedItem.quantity)}
+                                disabled={
+                                    !transferData.quantity ||
+                                    parseFloat(transferData.quantity) > parseFloat(selectedItem.quantity) ||
+                                    (destinationType === 'SHELTER' && !transferData.shelter_id) ||
+                                    (destinationType === 'PERSON' && !transferData.recipient_name)
+                                }
                                 onClick={handleNextStep}
                             >
-                                Revisar Transferência
+                                Revisar Envio
                             </Button>
                         </div>
                     </div>
@@ -199,7 +269,7 @@ export default function LogisticsHub() {
                             </div>
                             <div>
                                 <h2 className="text-xl font-black text-slate-800">Confirmar Envio?</h2>
-                                <p className="text-slate-500 text-sm mt-1">Confira os dados da transferência abaixo.</p>
+                                <p className="text-slate-500 text-sm mt-1">Confira os dados da distribuição abaixo.</p>
                             </div>
 
                             <div className="bg-slate-50 rounded-xl p-4 text-left space-y-3 text-sm">
@@ -214,7 +284,10 @@ export default function LogisticsHub() {
                                 <div className="flex justify-between">
                                     <span className="text-slate-500">Destino:</span>
                                     <span className="font-bold text-slate-800">
-                                        {shelters.find(s => String(s.id) === String(transferData.shelter_id))?.name}
+                                        {destinationType === 'SHELTER'
+                                            ? shelters.find(s => String(s.id) === String(transferData.shelter_id))?.name
+                                            : `${transferData.recipient_name} (Família)`
+                                        }
                                     </span>
                                 </div>
                                 <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
