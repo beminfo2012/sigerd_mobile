@@ -311,6 +311,7 @@ export const transferStock = async (itemId, fromShelterId, toShelterId, quantity
     await distStore.add(transferRecord);
 
     await tx.done;
+    triggerSync();
     return true;
 };
 
