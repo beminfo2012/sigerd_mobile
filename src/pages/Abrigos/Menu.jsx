@@ -9,7 +9,7 @@ export default function ShelterMenu() {
     const navigate = useNavigate();
     const userProfile = useContext(UserContext);
     const userRole = userProfile?.role || '';
-    console.log('--- SIGERD DEBUG ---');
+    console.log('--- SIGERD DEBUG (RE-DEPLOY FORCE) ---');
     console.log('User Role:', userRole);
     const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'agente', 'tecnico'];
 
