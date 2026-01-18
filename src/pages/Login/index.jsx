@@ -196,6 +196,46 @@ const Login = ({ onLogin }) => {
                     color: '#999'
                 }}>
                     <p>© 2024 Defesa Civil de Santa Maria de Jetibá</p>
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+                        <span style={{
+                            background: 'rgba(255,255,255,0.1)',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            color: '#1e3c72',
+                            fontWeight: 'bold',
+                            border: '1px solid #eee'
+                        }}>
+                            v1.2.1-DEPLOY-SYNC
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                localStorage.clear();
+                                sessionStorage.clear();
+                                if ('serviceWorker' in navigator) {
+                                    navigator.serviceWorker.getRegistrations().then(registrations => {
+                                        for (let registration of registrations) {
+                                            registration.unregister();
+                                        }
+                                    });
+                                }
+                                window.location.reload(true);
+                            }}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid #ddd',
+                                color: '#666',
+                                padding: '4px 10px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <i className="fas fa-sync-alt" style={{ marginRight: '5px' }}></i>
+                            Forçar Atualização de Cache
+                        </button>
+                    </div>
                 </div>
             </div>
 

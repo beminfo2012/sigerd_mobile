@@ -74,23 +74,23 @@ export default function ShelterMenu() {
                             Voltar ao Início
                         </button>
                     )}
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-800">Assistência Humanitária</h1>
-                        <p className="text-slate-500 mt-2">
-                            Selecione uma opção abaixo para gerenciar doações, estoque e abrigos.
-                        </p>
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-800">Assistência Humanitária</h1>
+                            <p className="text-slate-500 mt-2">
+                                Selecione uma opção abaixo para gerenciar doações, estoque e abrigos.
+                            </p>
+                        </div>
+                        <span className="text-[8px] font-bold text-slate-300 bg-white border border-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter mt-2 shadow-sm">v1.2.1-deploy-sync</span>
                     </div>
                 </div>
 
                 {/* Tactical Dashboard Section */}
                 {AGENT_ROLES.includes(userRole) && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex items-center justify-between px-1">
-                            <div className="flex items-center gap-2">
-                                <BarChart3 size={18} className="text-[#2a5299]" />
-                                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest">Painel de Indicadores (Agente)</h2>
-                            </div>
-                            <span className="text-[8px] font-bold text-slate-300 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">v1.2.1-charts</span>
+                        <div className="flex items-center gap-2 px-1">
+                            <BarChart3 size={18} className="text-[#2a5299]" />
+                            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest">Painel de Indicadores (Agente)</h2>
                         </div>
                         <HumanitarianDashboard />
                     </div>
