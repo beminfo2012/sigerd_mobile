@@ -58,19 +58,22 @@ export default function StockHub() {
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4">
                     <button
                         onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
                     </button>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estoque Municipal</span>
+
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estoque Municipal</span>
+                        </div>
                         <button
                             onClick={handleClearStock}
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Limpar Estoque"
                         >
                             <Trash2 size={20} />

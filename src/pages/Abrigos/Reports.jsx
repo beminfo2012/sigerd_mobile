@@ -88,28 +88,39 @@ export function Reports() {
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-black text-slate-800 mb-1">Relatórios e Registros</h1>
-                        <p className="text-sm text-slate-500">Histórico de doações e movimentações de estoque</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="secondary"
-                            onClick={handleClearReports}
-                            className="flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 print:hidden"
-                        >
-                            <Trash2 size={18} />
-                            Limpar Histórico
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            onClick={() => window.print()}
-                            className="flex items-center gap-2 print:hidden"
-                        >
-                            <Printer size={18} />
-                            Imprimir PDF
-                        </Button>
+                {/* Header */}
+                <div className="flex flex-col gap-4">
+                    <button
+                        onClick={() => navigate('/abrigos')}
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
+                    >
+                        <ArrowLeft size={20} />
+                        Voltar ao Menu
+                    </button>
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-800 mb-1">Relatórios e Registros</h1>
+                            <p className="text-sm text-slate-500">Histórico de doações e movimentações de estoque</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="secondary"
+                                onClick={handleClearReports}
+                                className="flex-1 md:flex-none flex items-center justify-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 print:hidden"
+                            >
+                                <Trash2 size={18} />
+                                <span className="whitespace-nowrap">Limpar Histórico</span>
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={() => window.print()}
+                                className="flex-1 md:flex-none flex items-center justify-center gap-2 print:hidden"
+                            >
+                                <Printer size={18} />
+                                <span className="whitespace-nowrap">Imprimir PDF</span>
+                            </Button>
+                        </div>
                     </div>
                 </div>
 

@@ -109,10 +109,10 @@ export function ShelterForm() {
         <div className="min-h-screen bg-slate-50 pb-6">
             <div className="max-w-3xl mx-auto px-4 py-6">
                 {/* Header */}
-                <div className="mb-6">
+                <div className="flex flex-col gap-4 mb-6">
                     <button
-                        onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
+                        onClick={() => navigate(id ? `/abrigos/${id}` : '/abrigos')}
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar

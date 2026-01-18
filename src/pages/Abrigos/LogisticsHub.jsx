@@ -112,10 +112,10 @@ export default function LogisticsHub() {
             <div className="max-w-3xl mx-auto px-4 py-6">
 
                 {/* Header */}
-                <div className="mb-6">
+                <div className="flex flex-col gap-4 mb-6">
                     <button
                         onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
@@ -174,8 +174,8 @@ export default function LogisticsHub() {
                                             key={item.id || item.item_id}
                                             onClick={() => toggleItemSelection(item)}
                                             className={`p-4 bg-white rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${isSelected
-                                                    ? 'border-[#2a5299] shadow-md bg-blue-50/50'
-                                                    : 'border-transparent hover:border-slate-200 shadow-sm'
+                                                ? 'border-[#2a5299] shadow-md bg-blue-50/50'
+                                                : 'border-transparent hover:border-slate-200 shadow-sm'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-4">

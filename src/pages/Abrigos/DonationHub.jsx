@@ -74,10 +74,10 @@ export default function DonationHub() {
             <div className="max-w-3xl mx-auto px-4 py-6">
 
                 {/* Header */}
-                <div className="mb-6">
+                <div className="flex flex-col gap-4 mb-6">
                     <button
                         onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
@@ -112,8 +112,8 @@ export default function DonationHub() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, destination_type: 'CENTRAL', shelter_id: '' })}
                                         className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.destination_type === 'CENTRAL'
-                                                ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
-                                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                            ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
+                                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                                             }`}
                                     >
                                         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
@@ -126,8 +126,8 @@ export default function DonationHub() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, destination_type: 'SHELTER' })}
                                         className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.destination_type === 'SHELTER'
-                                                ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
-                                                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                            ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
+                                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                                             }`}
                                     >
                                         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">

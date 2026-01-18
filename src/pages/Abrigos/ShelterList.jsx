@@ -53,24 +53,25 @@ export default function ShelterList() {
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <button
-                            onClick={() => navigate('/abrigos')}
-                            className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors mb-2"
-                        >
-                            <ArrowLeft size={20} />
-                            Voltar ao Menu
-                        </button>
-                        <h1 className="text-2xl font-black text-slate-800">Gestão de Abrigos</h1>
-                    </div>
-                    <Button
-                        onClick={() => navigate('/abrigos/novo')}
-                        className="flex items-center gap-2"
+                <div className="flex flex-col gap-4">
+                    <button
+                        onClick={() => navigate('/abrigos')}
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
-                        <Plus size={18} />
-                        Novo Abrigo
-                    </Button>
+                        <ArrowLeft size={20} />
+                        Voltar ao Menu
+                    </button>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h1 className="text-2xl font-black text-slate-800">Gestão de Abrigos</h1>
+                        <Button
+                            onClick={() => navigate('/abrigos/novo')}
+                            className="flex items-center justify-center gap-2 w-full sm:w-auto"
+                        >
+                            <Plus size={18} />
+                            Novo Abrigo
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
