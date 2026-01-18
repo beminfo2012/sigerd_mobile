@@ -1,4 +1,4 @@
-import { initDB } from './db';
+import { initDB, triggerSync } from './db';
 
 /**
  * Shelter Service Layer (IDB Version)
@@ -40,7 +40,9 @@ export const addShelter = async (shelterData) => {
         updated_at: new Date().toISOString(),
         synced: false // Pending Sync
     };
-    return db.add('shelters', newShelter);
+    const id = await db.add('shelters', newShelter);
+    triggerSync();
+    return id;
 };
 
 export const updateShelter = async (id, changes) => {
@@ -52,6 +54,7 @@ export const updateShelter = async (id, changes) => {
     if (shelter) {
         const updated = { ...shelter, ...changes, updated_at: new Date().toISOString(), synced: false };
         await store.put(updated);
+        triggerSync();
     }
     await tx.done;
 };
@@ -65,6 +68,7 @@ export const deleteShelter = async (id) => {
     if (shelter) {
         const updated = { ...shelter, status: 'deleted', updated_at: new Date().toISOString(), synced: false };
         await store.put(updated);
+        triggerSync();
     }
     await tx.done;
 };
@@ -95,7 +99,9 @@ export const addOccupant = async (occupantData) => {
     // Ideally user calls this explicitly, but let's replicate Dexie logic if possible
     // Dexie version didn't auto-update stats on Add, only on Exit found in 'exitOccupant'
 
-    return db.add('occupants', newOccupant);
+    const id = await db.add('occupants', newOccupant);
+    triggerSync();
+    return id;
 };
 
 export const exitOccupant = async (occupantId, shelterId) => {
@@ -138,6 +144,7 @@ export const exitOccupant = async (occupantId, shelterId) => {
         }
     }
     await tx.done;
+    triggerSync();
 };
 
 // --- INVENTORY & DONATIONS ---
@@ -214,6 +221,7 @@ export const addDonation = async (donationData) => {
     }
 
     await tx.done;
+    triggerSync();
     return newDonation;
 };
 
@@ -358,6 +366,7 @@ export const addDistribution = async (distribution) => {
     await distStore.add(newDist);
 
     await tx.done;
+    triggerSync();
     return newDist;
 };
 

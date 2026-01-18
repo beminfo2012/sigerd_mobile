@@ -145,42 +145,44 @@ export const getPendingSyncCount = async () => {
     const db = await initDB()
 
     // Using getAll and filter to catch undefined, false or 0 values reliably
-    const vistorias = await db.getAll('vistorias').catch(() => [])
-    const interdicoes = await db.getAll('interdicoes').catch(() => [])
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions'];
+    let total = 0;
 
-    const p1 = vistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0).length
-    const p2 = interdicoes.filter(i => i.synced === false || i.synced === undefined || i.synced === 0).length
+    for (const storeName of stores) {
+        try {
+            const items = await db.getAll(storeName).catch(() => []);
+            total += items.filter(v => v.synced === false || v.synced === undefined || v.synced === 0).length;
+        } catch (e) {
+            console.warn(`Sync count failed for ${storeName}:`, e);
+        }
+    }
 
-    return p1 + p2
+    return total;
 }
 
 export const syncPendingData = async () => {
     const db = await initDB()
-
-    // Sync Vistorias - Robust filter to include undefined or legacy flags
-    const allVistorias = await db.getAll('vistorias')
-    const pendingVistorias = allVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
-
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions'];
     let syncedCount = 0
 
-    for (const item of pendingVistorias) {
-        const success = await syncSingleItem('vistorias', item, db)
-        if (success) syncedCount++
-    }
+    for (const storeName of stores) {
+        try {
+            const allItems = await db.getAll(storeName)
+            const pendingItems = allItems.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
 
-    // Sync Interdições
-    const allInterdicoes = await db.getAll('interdicoes')
-    const pendingInterdicoes = allInterdicoes.filter(i => i.synced === false || i.synced === undefined || i.synced === 0)
-
-    for (const item of pendingInterdicoes) {
-        const success = await syncSingleItem('interdicoes', item, db)
-        if (success) syncedCount++
+            for (const item of pendingItems) {
+                const success = await syncSingleItem(storeName, item, db)
+                if (success) syncedCount++
+            }
+        } catch (e) {
+            console.error(`Sync loop failed for ${storeName}:`, e);
+        }
     }
 
     return { success: true, count: syncedCount }
 }
 
-const syncSingleItem = async (type, item, db) => {
+const syncSingleItem = async (storeName, item, db) => {
     try {
         let processedPhotos = []
         // Upload Photos
@@ -189,8 +191,8 @@ const syncSingleItem = async (type, item, db) => {
                 if (foto.data && foto.data.startsWith('data:image')) {
                     const blob = base64ToBlob(foto.data)
                     if (blob) {
-                        const folder = type === 'vistorias' ? 'vistorias' : 'interdicoes'
-                        const id = type === 'vistorias'
+                        const folder = storeName === 'vistorias' ? 'vistorias' : 'interdicoes'
+                        const id = storeName === 'vistorias'
                             ? (item.vistoriaId || item.vistoria_id || item.id)
                             : (item.interdicaoId || item.interdicao_id || item.id)
                         const fileName = `${id}/${foto.id}.jpg`
@@ -210,10 +212,10 @@ const syncSingleItem = async (type, item, db) => {
             }))
         }
 
-        const table = type === 'vistorias' ? 'vistorias' : 'interdicoes'
+        const table = storeName
         let payload = {}
 
-        if (type === 'vistorias') {
+        if (storeName === 'vistorias') {
             let officialId = item.vistoriaId || item.vistoria_id
 
             // If ID is missing (offline record), fetch next sequence from server
@@ -265,7 +267,7 @@ const syncSingleItem = async (type, item, db) => {
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas,
                 apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
-        } else {
+        } else if (storeName === 'interdicoes') {
             let officialId = item.interdicaoId || item.interdicao_id
 
             if (!officialId) {
@@ -316,6 +318,11 @@ const syncSingleItem = async (type, item, db) => {
                 assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
                 apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
+        } else {
+            // Generic payload for shelter module tables (they already match Supabase schema)
+            payload = { ...item };
+            delete payload.id; // Remove local IDBK key
+            delete payload.synced; // Remove sync flag
         }
 
         const { error } = await supabase.from(table).insert([payload])
@@ -325,16 +332,16 @@ const syncSingleItem = async (type, item, db) => {
             return false
         }
 
-        const tx = db.transaction(type, 'readwrite')
-        const store = tx.objectStore(type)
+        const tx = db.transaction(storeName, 'readwrite')
+        const store = tx.objectStore(storeName)
         const record = await store.get(item.id)
         if (record) {
             record.synced = true
-            // Update the local record with the official ID assigned by the server
-            if (type === 'vistorias') {
+            // Update the local record with the official ID assigned by the server if applicable
+            if (storeName === 'vistorias') {
                 record.vistoriaId = payload.vistoria_id;
                 record.vistoria_id = payload.vistoria_id;
-            } else {
+            } else if (storeName === 'interdicoes') {
                 record.interdicaoId = payload.interdicao_id;
                 record.interdicao_id = payload.interdicao_id;
             }
@@ -343,9 +350,17 @@ const syncSingleItem = async (type, item, db) => {
         await tx.done
         return true
     } catch (e) {
-        console.error(`Sync error for ${type}:`, e)
+        console.error(`Sync error for ${storeName}:`, e)
         return false
     }
+}
+
+// Global sync trigger for immediate use
+export const triggerSync = async () => {
+    if (navigator.onLine) {
+        return syncPendingData();
+    }
+    return { success: false, reason: 'offline' };
 }
 
 export const getPendingVistorias = async () => {
