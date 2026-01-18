@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Search, ArrowLeft, RefreshCcw, Filter, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Package, Search, ArrowLeft, RefreshCcw, Filter, TrendingUp, AlertTriangle, Trash2 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
-import { getInventory } from '../../services/shelterDb';
+import { getInventory, clearInventory } from '../../services/shelterDb';
 
 export default function StockHub() {
     const navigate = useNavigate();
@@ -26,6 +26,19 @@ export default function StockHub() {
             console.error("Error loading central stock:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleClearStock = async () => {
+        if (window.confirm('TEM CERTEZA? Isso apagará TODOS os itens do Estoque Municipal. Essa ação não pode ser desfeita.')) {
+            try {
+                await clearInventory('CENTRAL');
+                await loadStock();
+                alert('Estoque limpo com sucesso.');
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao limpar estoque.');
+            }
         }
     };
 
@@ -55,6 +68,13 @@ export default function StockHub() {
                     </button>
                     <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estoque Municipal</span>
+                        <button
+                            onClick={handleClearStock}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
+                            title="Limpar Estoque"
+                        >
+                            <Trash2 size={20} />
+                        </button>
                     </div>
                 </div>
 
@@ -104,8 +124,8 @@ export default function StockHub() {
                                 key={cat}
                                 onClick={() => setCategoryFilter(cat)}
                                 className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${categoryFilter === cat
-                                        ? 'bg-[#2a5299] text-white border-[#2a5299]'
-                                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                    ? 'bg-[#2a5299] text-white border-[#2a5299]'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
                                     }`}
                             >
                                 {cat === 'all' ? 'TODAS CATEGORIAS' : cat.toUpperCase()}
@@ -139,8 +159,8 @@ export default function StockHub() {
                             <Card key={item.id || item.item_id} className="p-4 flex items-center justify-between group hover:shadow-md transition-all">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${(parseFloat(item.quantity) || 0) < (item.min_quantity || 5)
-                                            ? 'bg-red-50 text-red-500'
-                                            : 'bg-blue-50 text-[#2a5299]'
+                                        ? 'bg-red-50 text-red-500'
+                                        : 'bg-blue-50 text-[#2a5299]'
                                         }`}>
                                         <Package size={24} />
                                     </div>

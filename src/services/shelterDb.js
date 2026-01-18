@@ -361,6 +361,35 @@ export const addDistribution = async (distribution) => {
     return newDist;
 };
 
-// --- COMPATIBILITY EXPORT ---
-// Map the old Dexie 'db' usage to null or crash to force refactor?
-// Better to export explicit functions.
+// --- DATA CLEARANCE (Admin features) ---
+
+export const clearInventory = async (shelterId) => {
+    const db = await initDB();
+    const tx = db.transaction('inventory', 'readwrite');
+    const store = tx.objectStore('inventory');
+
+    // We can't deleteByIndex directly in simple IDB wrapper without iterating
+    // But since this is a rare admin action, iterating is fine
+    const allItems = await store.getAll();
+    const itemsToDelete = shelterId
+        ? allItems.filter(i => String(i.shelter_id) === String(shelterId))
+        : allItems;
+
+    for (const item of itemsToDelete) {
+        await store.delete(item.id); // Assuming 'id' is keyPath
+    }
+
+    await tx.done;
+    return true;
+};
+
+export const clearReports = async () => {
+    const db = await initDB();
+    const tx = db.transaction(['distributions', 'donations'], 'readwrite');
+
+    await tx.objectStore('distributions').clear();
+    await tx.objectStore('donations').clear();
+
+    await tx.done;
+    return true;
+};

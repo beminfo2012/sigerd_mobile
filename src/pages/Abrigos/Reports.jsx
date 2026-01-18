@@ -1,24 +1,38 @@
 import { useState, useEffect } from 'react';
-import { Gift, Package, TrendingUp, Calendar, MapPin, User, Download, Printer } from 'lucide-react';
+import { Gift, Package, TrendingUp, Calendar, MapPin, User, Download, Printer, Trash2 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Button } from '../../components/Shelter/ui/Button';
-import { getDonations, getDistributions, getShelters } from '../../services/shelterDb';
+import { getDonations, getDistributions, getShelters, clearReports } from '../../services/shelterDb';
 
 export function Reports() {
     const [donations, setDonations] = useState([]);
     const [distributions, setDistributions] = useState([]);
     const [shelters, setShelters] = useState([]);
 
+    const loadData = async () => {
+        const d = await getDonations();
+        const dist = await getDistributions();
+        const s = await getShelters();
+        // Reverse for chronological order (newest first)
+        setDonations(d ? d.reverse() : []);
+        setDistributions(dist ? dist.reverse() : []);
+        setShelters(s || []);
+    };
+
+    const handleClearReports = async () => {
+        if (window.confirm('Deseja apagar TODO o histórico de doações e distribuições? Esta ação não pode ser desfeita.')) {
+            try {
+                await clearReports();
+                await loadData();
+                alert('Histórico limpo com sucesso.');
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao limpar histórico.');
+            }
+        }
+    };
+
     useEffect(() => {
-        const loadData = async () => {
-            const d = await getDonations();
-            const dist = await getDistributions();
-            const s = await getShelters();
-            // Reverse for chronological order (newest first)
-            setDonations(d ? d.reverse() : []);
-            setDistributions(dist ? dist.reverse() : []);
-            setShelters(s || []);
-        };
         loadData();
     }, []);
 
@@ -79,14 +93,24 @@ export function Reports() {
                         <h1 className="text-2xl font-black text-slate-800 mb-1">Relatórios e Registros</h1>
                         <p className="text-sm text-slate-500">Histórico de doações e movimentações de estoque</p>
                     </div>
-                    <Button
-                        variant="secondary"
-                        onClick={() => window.print()}
-                        className="flex items-center gap-2 print:hidden"
-                    >
-                        <Printer size={18} />
-                        Imprimir PDF
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="secondary"
+                            onClick={handleClearReports}
+                            className="flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 print:hidden"
+                        >
+                            <Trash2 size={18} />
+                            Limpar Histórico
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 print:hidden"
+                        >
+                            <Printer size={18} />
+                            Imprimir PDF
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
