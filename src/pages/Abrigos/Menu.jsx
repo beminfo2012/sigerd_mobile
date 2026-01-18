@@ -1,8 +1,9 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Package, Truck, Gift, FileText, ArrowLeft, ChevronRight } from 'lucide-react';
+import { Building2, Package, Truck, Gift, FileText, ArrowLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { UserContext } from '../../App';
+import { HumanitarianDashboard } from '../../components/Shelter/HumanitarianDashboard';
 
 export default function ShelterMenu() {
     const navigate = useNavigate();
@@ -77,6 +78,17 @@ export default function ShelterMenu() {
                         </p>
                     </div>
                 </div>
+
+                {/* Tactical Dashboard Section */}
+                {(userRole === 'Agente de Defesa Civil' || userRole === 'admin') && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="flex items-center gap-2 px-1">
+                            <BarChart3 size={18} className="text-[#2a5299]" />
+                            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest">Painel de Indicadores (Agente)</h2>
+                        </div>
+                        <HumanitarianDashboard />
+                    </div>
+                )}
 
                 {/* Dashboard Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
