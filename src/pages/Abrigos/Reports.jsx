@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Gift, Package, TrendingUp, Calendar, MapPin, User, Download, Printer, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Gift, Package, TrendingUp, Calendar, MapPin, User, Download, Printer, Trash2, ArrowLeft } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Button } from '../../components/Shelter/ui/Button';
 import { getDonations, getDistributions, getShelters, clearReports } from '../../services/shelterDb';
 
 export function Reports() {
+    const navigate = useNavigate();
     const [donations, setDonations] = useState([]);
     const [distributions, setDistributions] = useState([]);
     const [shelters, setShelters] = useState([]);
