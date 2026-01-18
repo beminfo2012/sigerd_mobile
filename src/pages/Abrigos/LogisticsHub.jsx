@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Package, ArrowRight, ArrowLeft, Building2, CheckCircle2, User, FileText } from 'lucide-react';
+import { Truck, Package, ArrowRight, ArrowLeft, Building2, CheckCircle2, User, FileText, Trash2 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
 import { Input } from '../../components/Shelter/ui/Input';
 import { Button } from '../../components/Shelter/ui/Button';
@@ -8,21 +8,23 @@ import { getInventory, getShelters, transferStock, addDistribution } from '../..
 
 export default function LogisticsHub() {
     const navigate = useNavigate();
-    const [step, setStep] = useState(1); // 1: Select Item, 2: Select Dest & Qty, 3: Confirm
+    const [step, setStep] = useState(1); // 1: Select Items, 2: Quantities & Dest, 3: Confirm
     const [centralStock, setCentralStock] = useState([]);
     const [shelters, setShelters] = useState([]);
 
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [destinationType, setDestinationType] = useState('SHELTER'); // 'SHELTER' or 'PERSON'
+    // Multi-item selection state: Array of { item: Object, quantity: String }
+    const [selectedItems, setSelectedItems] = useState([]);
+
+    const [destinationType, setDestinationType] = useState('SHELTER');
 
     const [transferData, setTransferData] = useState({
         shelter_id: '',
-        quantity: '',
         recipient_name: '',
         recipient_doc: ''
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const loadData = async () => {
@@ -34,14 +36,35 @@ export default function LogisticsHub() {
         loadData();
     }, []);
 
+    // Toggle item selection
+    const toggleItemSelection = (item) => {
+        if (selectedItems.find(i => (i.id || i.item_id) === (item.id || item.item_id))) {
+            setSelectedItems(selectedItems.filter(i => (i.id || i.item_id) !== (item.id || item.item_id)));
+        } else {
+            setSelectedItems([...selectedItems, { ...item, transferQuantity: '' }]);
+        }
+    };
+
+    const updateItemQuantity = (id, validQty) => {
+        setSelectedItems(selectedItems.map(item => {
+            if ((item.id || item.item_id) === id) {
+                return { ...item, transferQuantity: validQty };
+            }
+            return item;
+        }));
+    };
+
     const handleNextStep = () => {
-        if (step === 1 && selectedItem) setStep(2);
+        if (step === 1 && selectedItems.length > 0) setStep(2);
         else if (step === 2) {
             const validShelter = destinationType === 'SHELTER' && transferData.shelter_id;
             const validPerson = destinationType === 'PERSON' && transferData.recipient_name;
+            const allQuantitiesValid = selectedItems.every(i => i.transferQuantity && parseFloat(i.transferQuantity) > 0 && parseFloat(i.transferQuantity) <= parseFloat(i.quantity));
 
-            if ((validShelter || validPerson) && transferData.quantity) {
+            if ((validShelter || validPerson) && allQuantitiesValid) {
                 setStep(3);
+            } else {
+                alert('Verifique se todos os itens possuem quantidades válidas e se o destino foi preenchido.');
             }
         }
     };
@@ -49,35 +72,40 @@ export default function LogisticsHub() {
     const handleTransfer = async () => {
         setIsSubmitting(true);
         try {
-            if (destinationType === 'SHELTER') {
-                await transferStock(
-                    selectedItem.id || selectedItem.item_id,
-                    'CENTRAL',
-                    transferData.shelter_id,
-                    transferData.quantity
-                );
-            } else {
-                // Direct distribution to person from CENTRAL stock
-                await addDistribution({
-                    shelter_id: 'CENTRAL', // Deduct from central
-                    inventory_id: selectedItem.id || selectedItem.item_id,
-                    item_name: selectedItem.item_name,
-                    quantity: transferData.quantity,
-                    unit: selectedItem.unit,
-                    recipient_name: transferData.recipient_name,
-                    document: transferData.recipient_doc,
-                    type: 'direct_aid'
-                });
+            for (const item of selectedItems) {
+                if (destinationType === 'SHELTER') {
+                    await transferStock(
+                        item.id || item.item_id,
+                        'CENTRAL',
+                        transferData.shelter_id,
+                        item.transferQuantity
+                    );
+                } else {
+                    await addDistribution({
+                        shelter_id: 'CENTRAL',
+                        inventory_id: item.id || item.item_id,
+                        item_name: item.item_name,
+                        quantity: item.transferQuantity,
+                        unit: item.unit,
+                        recipient_name: transferData.recipient_name,
+                        document: transferData.recipient_doc,
+                        type: 'direct_aid'
+                    });
+                }
             }
 
-            alert('Operação realizada com sucesso!');
+            alert('Distribuição realizada com sucesso!');
             navigate('/abrigos');
         } catch (error) {
             console.error(error);
-            alert('Erro na operação: ' + error.message);
+            alert('Erro parcial ou total na operação: ' + error.message);
             setIsSubmitting(false);
         }
     };
+
+    const filteredStock = centralStock.filter(item =>
+        item.item_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
@@ -110,76 +138,77 @@ export default function LogisticsHub() {
                             </div>
                             <span className={`text-[10px] font-bold uppercase tracking-wider ${step >= s ? 'text-[#2a5299]' : 'text-slate-300'
                                 }`}>
-                                {s === 1 ? 'Item' : s === 2 ? 'Destino' : 'Confirmar'}
+                                {s === 1 ? 'Seleção' : s === 2 ? 'Qtd & Destino' : 'Confirmar'}
                             </span>
                         </div>
                     ))}
-                    {/* Line */}
                     <div className="absolute left-0 right-0 top-6 h-0.5 bg-slate-200 -z-0 max-w-3xl mx-auto px-8 hidden md:block" />
                 </div>
 
-                {/* Step 1: Select Item */}
+                {/* Step 1: Select Items */}
                 {step === 1 && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                         <Input
-                            placeholder="Buscar item no estoque..."
+                            placeholder="Buscar itens no estoque..."
                             className="bg-white shadow-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
+
+                        {/* Selected Count Badge */}
+                        {selectedItems.length > 0 && (
+                            <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <span className="text-sm font-bold text-[#2a5299]">{selectedItems.length} itens selecionados</span>
+                                <button className="text-xs font-bold text-red-500" onClick={() => setSelectedItems([])}>Limpar Seleção</button>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 gap-3">
                             {centralStock.length === 0 ? (
                                 <p className="text-center text-slate-400 py-8">Nenhum item no estoque municipal.</p>
                             ) : (
-                                centralStock.map(item => (
-                                    <div
-                                        key={item.id || item.item_id}
-                                        onClick={() => setSelectedItem(item)}
-                                        className={`p-4 bg-white rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${selectedItem?.id === item.id
-                                                ? 'border-[#2a5299] shadow-md bg-blue-50'
-                                                : 'border-transparent hover:border-slate-200 shadow-sm'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
-                                                <Package size={20} />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-slate-800">{item.item_name}</h3>
-                                                <p className="text-xs text-slate-500">Disponível: {item.quantity} {item.unit}</p>
+                                filteredStock.map(item => {
+                                    const isSelected = selectedItems.find(i => (i.id || i.item_id) === (item.id || item.item_id));
+                                    return (
+                                        <div
+                                            key={item.id || item.item_id}
+                                            onClick={() => toggleItemSelection(item)}
+                                            className={`p-4 bg-white rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${isSelected
+                                                    ? 'border-[#2a5299] shadow-md bg-blue-50/50'
+                                                    : 'border-transparent hover:border-slate-200 shadow-sm'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-[#2a5299] text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {isSelected ? <CheckCircle2 size={20} /> : <Package size={20} />}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-slate-800">{item.item_name}</h3>
+                                                    <p className="text-xs text-slate-500">Disponível: {item.quantity} {item.unit}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                        {selectedItem?.id === item.id && <CheckCircle2 className="text-[#2a5299]" />}
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                         <Button
                             className="w-full mt-4"
-                            disabled={!selectedItem}
+                            disabled={selectedItems.length === 0}
                             onClick={handleNextStep}
                         >
-                            Próximo: Definir Destino
+                            Próximo: Definir Quantidades
                         </Button>
                     </div>
                 )}
 
-                {/* Step 2: Destination & Quantity */}
+                {/* Step 2: Quantities & Destination */}
                 {step === 2 && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <Card className="p-4 bg-blue-50 border-blue-100 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-[#2a5299] shadow-sm">
-                                <Package size={20} />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-slate-800">{selectedItem.item_name}</h3>
-                                <p className="text-xs text-slate-600">
-                                    Estoque atual: <span className="font-bold text-[#2a5299]">{selectedItem.quantity} {selectedItem.unit}</span>
-                                </p>
-                            </div>
-                            <button onClick={() => setStep(1)} className="ml-auto text-xs font-bold text-[#2a5299] underline">Trocar</button>
-                        </Card>
 
+                        {/* Destination Selection */}
                         <div className="space-y-4">
-                            {/* Destination Type Toggle */}
+                            <h3 className="font-bold text-slate-800">1. Definir Destino</h3>
                             <div className="bg-slate-100 p-1 rounded-xl flex">
                                 <button
                                     className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${destinationType === 'SHELTER' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500 hover:text-slate-700'
@@ -231,24 +260,52 @@ export default function LogisticsHub() {
                                     />
                                 </div>
                             )}
-
-                            <Input
-                                label={`Quantidade a Enviar (máx: ${selectedItem.quantity})`}
-                                type="number"
-                                value={transferData.quantity}
-                                onChange={(e) => setTransferData({ ...transferData, quantity: e.target.value })}
-                                placeholder="0.00"
-                                max={parseFloat(selectedItem.quantity)}
-                            />
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="border-t border-slate-200 pt-6 space-y-4">
+                            <h3 className="font-bold text-slate-800 flex justify-between items-center">
+                                2. Definir Quantidades
+                                <span className="text-xs font-normal text-slate-500">{selectedItems.length} itens</span>
+                            </h3>
+
+                            {selectedItems.map((item, idx) => (
+                                <div key={idx} className="bg-white border rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center gap-4">
+                                    <div className="flex items-center gap-3 flex-1">
+                                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-[#2a5299] shrink-0">
+                                            <Package size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 text-sm">{item.item_name}</h4>
+                                            <p className="text-xs text-slate-500">Estoque: {item.quantity} {item.unit}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 w-full md:w-auto">
+                                        <Input
+                                            type="number"
+                                            placeholder="0"
+                                            className="w-full md:w-32 text-center font-bold"
+                                            value={item.transferQuantity}
+                                            onChange={(e) => updateItemQuantity(item.id || item.item_id, e.target.value)}
+                                            max={parseFloat(item.quantity)}
+                                        />
+                                        <span className="text-xs font-bold text-slate-400 w-12">{item.unit}</span>
+                                        <button
+                                            onClick={() => toggleItemSelection(item)}
+                                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
                             <Button variant="secondary" onClick={() => setStep(1)} className="flex-1">Voltar</Button>
                             <Button
                                 className="flex-1"
                                 disabled={
-                                    !transferData.quantity ||
-                                    parseFloat(transferData.quantity) > parseFloat(selectedItem.quantity) ||
+                                    !selectedItems.every(i => i.transferQuantity && parseFloat(i.transferQuantity) > 0) ||
                                     (destinationType === 'SHELTER' && !transferData.shelter_id) ||
                                     (destinationType === 'PERSON' && !transferData.recipient_name)
                                 }
@@ -268,33 +325,30 @@ export default function LogisticsHub() {
                                 <Truck size={32} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-black text-slate-800">Confirmar Envio?</h2>
-                                <p className="text-slate-500 text-sm mt-1">Confira os dados da distribuição abaixo.</p>
+                                <h2 className="text-xl font-black text-slate-800">Confirmar Distribuição?</h2>
+                                <p className="text-slate-500 text-sm mt-1">Você está prestes a enviar {selectedItems.length} itens.</p>
                             </div>
 
                             <div className="bg-slate-50 rounded-xl p-4 text-left space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-slate-500">Item:</span>
-                                    <span className="font-bold text-slate-800">{selectedItem.item_name}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-slate-500">Origem:</span>
-                                    <span className="font-bold text-slate-800">Estoque Municipal (Central)</span>
-                                </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between border-b border-slate-200 pb-2">
                                     <span className="text-slate-500">Destino:</span>
                                     <span className="font-bold text-slate-800">
                                         {destinationType === 'SHELTER'
                                             ? shelters.find(s => String(s.id) === String(transferData.shelter_id))?.name
-                                            : `${transferData.recipient_name} (Família)`
+                                            : `${transferData.recipient_name} (Pessoa/Família)`
                                         }
                                     </span>
                                 </div>
-                                <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
-                                    <span className="text-slate-500">Quantidade:</span>
-                                    <span className="text-lg font-black text-[#2a5299]">
-                                        {transferData.quantity} {selectedItem.unit}
-                                    </span>
+
+                                <div className="space-y-2 pt-2">
+                                    {selectedItems.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-600">{item.item_name}</span>
+                                            <span className="font-bold text-[#2a5299]">
+                                                {item.transferQuantity} {item.unit}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </Card>
