@@ -9,6 +9,9 @@ export default function ShelterMenu() {
     const navigate = useNavigate();
     const userProfile = useContext(UserContext);
     const userRole = userProfile?.role || '';
+    console.log('--- SIGERD DEBUG ---');
+    console.log('User Role:', userRole);
+    const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'agente', 'tecnico'];
 
     const menuItems = [
         {
@@ -80,11 +83,14 @@ export default function ShelterMenu() {
                 </div>
 
                 {/* Tactical Dashboard Section */}
-                {(userRole === 'Agente de Defesa Civil' || userRole === 'admin') && (
+                {AGENT_ROLES.includes(userRole) && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex items-center gap-2 px-1">
-                            <BarChart3 size={18} className="text-[#2a5299]" />
-                            <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest">Painel de Indicadores (Agente)</h2>
+                        <div className="flex items-center justify-between px-1">
+                            <div className="flex items-center gap-2">
+                                <BarChart3 size={18} className="text-[#2a5299]" />
+                                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest">Painel de Indicadores (Agente)</h2>
+                            </div>
+                            <span className="text-[8px] font-bold text-slate-300 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">v1.2.1-charts</span>
                         </div>
                         <HumanitarianDashboard />
                     </div>
