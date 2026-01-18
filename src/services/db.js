@@ -4,8 +4,12 @@ import { supabase } from './supabase'
 const DB_NAME = 'defesa-civil-db'
 const DB_VERSION = 8
 
+let dbPromise = null;
+
 export const initDB = async () => {
-    return openDB(DB_NAME, DB_VERSION, {
+    if (dbPromise) return dbPromise;
+
+    dbPromise = openDB(DB_NAME, DB_VERSION, {
         async upgrade(db, oldVersion, newVersion, transaction) {
             // ... existing stores code ...
             if (!db.objectStoreNames.contains('installations')) {
@@ -29,17 +33,9 @@ export const initDB = async () => {
                 // SAFTEY BACKUP: Version 8 Backup
                 // If upgrading to v8, backup existing vistorias if not already done
                 if (oldVersion < 8 && db.objectStoreNames.contains('vistorias')) {
-                    console.log('Creating safety backup of vistorias table...');
                     if (!db.objectStoreNames.contains('vistorias_backup_v7')) {
-                        const backupStore = db.createObjectStore('vistorias_backup_v7', { keyPath: 'id', autoIncrement: true });
-                        const vistoriasStore = transaction.objectStore('vistorias');
-                        // Iterate and copy
-                        let cursor = await vistoriasStore.openCursor();
-                        while (cursor) {
-                            await backupStore.put(cursor.value);
-                            cursor = await cursor.continue();
-                        }
-                        console.log('Safety backup completed successfully.');
+                        db.createObjectStore('vistorias_backup_v7', { keyPath: 'id', autoIncrement: true });
+                        // Skipping data migration inside upgrade to avoid hangs
                     }
                 }
             }
@@ -101,7 +97,11 @@ export const initDB = async () => {
                 familyStore.createIndex('synced', 'synced', { unique: false });
             }
         },
-    })
+    }).catch(err => {
+        dbPromise = null; // Reset on failure
+        throw err;
+    });
+    return dbPromise;
 }
 
 // Helper to convert base64 to blob
@@ -191,10 +191,19 @@ const syncSingleItem = async (storeName, item, db) => {
                 if (foto.data && foto.data.startsWith('data:image')) {
                     const blob = base64ToBlob(foto.data)
                     if (blob) {
-                        const folder = storeName === 'vistorias' ? 'vistorias' : 'interdicoes'
+                        // Correct folder mapping for different types
+                        const folderMap = {
+                            'vistorias': 'vistorias',
+                            'interdicoes': 'interdicoes',
+                            'shelters': 'shelters',
+                            'occupants': 'occupants',
+                            'donations': 'donations'
+                        };
+                        const folder = folderMap[storeName] || 'general'
+
                         const id = storeName === 'vistorias'
                             ? (item.vistoriaId || item.vistoria_id || item.id)
-                            : (item.interdicaoId || item.interdicao_id || item.id)
+                            : (item.interdicaoId || item.interdicao_id || item.id || item.occupant_id || item.donation_id)
                         const fileName = `${id}/${foto.id}.jpg`
                         const { error: uploadError } = await supabase.storage
                             .from(folder)
@@ -259,7 +268,8 @@ const syncSingleItem = async (storeName, item, db) => {
                 latitude: parseFloat(item.latitude) || null,
                 longitude: parseFloat(item.longitude) || null,
                 coordenadas: item.coordenadas,
-                data_hora: item.dataHora,
+                data_hora: item.dataHora || item.data_hora,
+                tipo_info: item.tipo_info || item.tipoInfo || item.categoriaRisco || 'Vistoria Geral',
                 categoria_risco: item.categoriaRisco,
                 subtipos_risco: item.subtiposRisco,
                 nivel_risco: item.nivelRisco,
@@ -299,7 +309,8 @@ const syncSingleItem = async (storeName, item, db) => {
 
             payload = {
                 interdicao_id: officialId,
-                data_hora: item.dataHora,
+                data_hora: item.dataHora || item.data_hora,
+                tipo_info: item.tipo_info || item.tipoInfo || item.riscoTipo || 'Interdição',
                 municipio: item.municipio,
                 bairro: item.bairro,
                 endereco: item.endereco,
@@ -363,12 +374,21 @@ const syncSingleItem = async (storeName, item, db) => {
     }
 }
 
-// Global sync trigger for immediate use
+// Global sync trigger for immediate use (with Debounce to prevent overload)
+let syncTimeout = null;
 export const triggerSync = async () => {
-    if (navigator.onLine) {
-        return syncPendingData();
-    }
-    return { success: false, reason: 'offline' };
+    if (syncTimeout) clearTimeout(syncTimeout);
+
+    return new Promise((resolve) => {
+        syncTimeout = setTimeout(async () => {
+            if (navigator.onLine) {
+                const result = await syncPendingData();
+                resolve(result);
+            } else {
+                resolve({ success: false, reason: 'offline' });
+            }
+        }, 2000); // 2 second debounce
+    });
 }
 
 export const getPendingVistorias = async () => {
