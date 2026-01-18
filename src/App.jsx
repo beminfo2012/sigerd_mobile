@@ -138,7 +138,6 @@ function App() {
         } catch (error) {
             console.error('Error loading profile:', error)
         } finally {
-            console.log('Profile loaded:', profile?.role || 'null');
             setIsLoading(false)
         }
     }
@@ -203,7 +202,6 @@ function App() {
 
                         {/* Main Content Area */}
                         <main className="main-content">
-                            {console.log('Rendering Routes, Role:', userProfile?.role)}
                             <Routes>
                                 {/* Agent-Only Routes */}
                                 <Route path="/" element={
