@@ -9,8 +9,6 @@ export default function ShelterMenu() {
     const navigate = useNavigate();
     const userProfile = useContext(UserContext);
     const userRole = userProfile?.role || '';
-    console.log('--- SIGERD DEBUG (RE-DEPLOY FORCE) ---');
-    console.log('User Role:', userRole);
     const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'agente', 'tecnico'];
 
     const menuItems = [
@@ -74,14 +72,11 @@ export default function ShelterMenu() {
                             Voltar ao Início
                         </button>
                     )}
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-800">Assistência Humanitária</h1>
-                            <p className="text-slate-500 mt-2">
-                                Selecione uma opção abaixo para gerenciar doações, estoque e abrigos.
-                            </p>
-                        </div>
-                        <span className="text-[8px] font-bold text-slate-300 bg-white border border-slate-100 px-1.5 py-0.5 rounded uppercase tracking-tighter mt-2 shadow-sm">v1.2.1-deploy-sync</span>
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-800">Assistência Humanitária</h1>
+                        <p className="text-slate-500 mt-2">
+                            Selecione uma opção abaixo para gerenciar doações, estoque e abrigos.
+                        </p>
                     </div>
                 </div>
 
