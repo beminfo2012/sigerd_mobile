@@ -14,6 +14,7 @@ import Login from './pages/Login'
 import Alerts from './pages/Alerts'
 import GeoDashboard from './pages/Monitoramento/GeoDashboard'
 import ChecklistSaida from './pages/Checklist/ChecklistSaida'
+import ProtectedRoute from './components/ProtectedRoute'
 import { supabase } from './services/supabase'
 
 // Shelter Module
@@ -92,6 +93,7 @@ class ErrorBoundary extends React.Component {
 function App() {
     const [activeTab, setActiveTab] = useState('dashboard')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
     const [userProfile, setUserProfile] = useState(() => {
         try {
             const isAuth = localStorage.getItem('auth') === 'true'
@@ -108,8 +110,15 @@ function App() {
         if (auth === 'true') {
             setIsAuthenticated(true)
             loadUserProfile()
+        } else {
+            setIsLoading(false)
         }
     }, [])
+
+    // Roles grouping for cleaner route protection (Standardized to handle potential case variations)
+    const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'agente', 'tecnico'];
+    const HUMANITARIAN_ROLES = [...AGENT_ROLES, 'Assistente Social', 'Voluntário', 'social', 'voluntario'];
+    const HUMANITARIAN_FULL_ROLES = [...AGENT_ROLES, 'Assistente Social', 'social'];
 
     const loadUserProfile = async () => {
         try {
@@ -128,10 +137,14 @@ function App() {
             }
         } catch (error) {
             console.error('Error loading profile:', error)
+        } finally {
+            console.log('Profile loaded:', profile?.role || 'null');
+            setIsLoading(false)
         }
     }
 
     const handleLogin = async () => {
+        setIsLoading(true)
         localStorage.setItem('auth', 'true')
         setIsAuthenticated(true)
         await loadUserProfile()
@@ -148,6 +161,17 @@ function App() {
             setIsAuthenticated(false)
             setUserProfile(null)
         }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Carregando SIGERD...</p>
+                </div>
+            </div>
+        )
     }
 
     if (!isAuthenticated) {
@@ -179,60 +203,150 @@ function App() {
 
                         {/* Main Content Area */}
                         <main className="main-content">
+                            {console.log('Rendering Routes, Role:', userProfile?.role)}
                             <Routes>
-                                <Route path="/" element={<Dashboard />} />
-                                <Route path="/georescue" element={<GeoRescue />} />
-                                <Route path="/vistorias" element={<Vistorias />} />
-                                <Route path="/pluviometros" element={<Pluviometros onBack={() => setActiveTab('dashboard')} />} />
-                                <Route path="/interdicao" element={<Interdicao />} />
+                                {/* Agent-Only Routes */}
+                                <Route path="/" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Dashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/georescue" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <GeoRescue />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/vistorias" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Vistorias />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/pluviometros" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Pluviometros onBack={() => setActiveTab('dashboard')} />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/interdicao" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Interdicao />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/alerts" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Alerts />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/monitoramento" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <GeoDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/checklist-saida" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <ChecklistSaida />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Shared / Basic Access Routes */}
                                 <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
-                                <Route path="/alerts" element={<Alerts />} />
-                                <Route path="/monitoramento" element={<GeoDashboard />} />
-                                <Route path="/checklist-saida" element={<ChecklistSaida />} />
 
                                 {/* Humanitarian Assistance Module Routes */}
-                                <Route path="/abrigos" element={<ShelterMenu />} />
-                                <Route path="/abrigos/lista" element={<ShelterList />} />
-                                <Route path="/abrigos/estoque" element={<StockHub />} />
-                                <Route path="/abrigos/doacoes-central" element={<DonationHub />} />
-                                <Route path="/abrigos/logistica" element={<LogisticsHub />} />
+                                <Route path="/abrigos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <ShelterMenu />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/lista" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/estoque" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <StockHub />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/doacoes-central" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <DonationHub />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/logistica" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <LogisticsHub />
+                                    </ProtectedRoute>
+                                } />
 
-                                <Route path="/abrigos/novo" element={<ShelterForm />} />
-                                <Route path="/abrigos/:id" element={<ShelterDetail />} />
-                                <Route path="/abrigos/editar/:id" element={<ShelterForm />} />
-                                <Route path="/abrigos/:shelterId/abrigados/novo" element={<OccupantForm />} />
-                                <Route path="/abrigos/:shelterId/doacoes/novo" element={<DonationForm />} />
-                                <Route path="/abrigos/:shelterId/distribuicoes/novo" element={<DistributionForm />} />
-                                <Route path="/abrigos/relatorios" element={<ShelterReports />} />
-                                <Route path="/abrigos/residentes" element={<ShelterResidents />} />
+                                <Route path="/abrigos/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterDetail />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:shelterId/abrigados/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <OccupantForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:shelterId/doacoes/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <DonationForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <DistributionForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/relatorios" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterReports />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/residentes" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterResidents />
+                                    </ProtectedRoute>
+                                } />
                             </Routes>
                         </main>
 
-                        {/* Bottom Navigation */}
-                        <nav className="bottom-nav">
-                            <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                                <Home size={24} />
-                                <span>Início</span>
-                            </Link>
-                            <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
-                                <Map size={24} />
-                                <span>GeoRescue</span>
-                            </Link>
-                            {/* FAB Action Button */}
-                            <div className="nav-item fab-container">
-                                <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
-                                    <FileText size={24} />
+                        {/* Bottom Navigation - Only for Agents */}
+                        {AGENT_ROLES.includes(userProfile?.role) && (
+                            <nav className="bottom-nav">
+                                <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                                    <Home size={24} />
+                                    <span>Início</span>
                                 </Link>
-                            </div>
-                            <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
-                                <AlertOctagon size={24} />
-                                <span>Interdição</span>
-                            </Link>
-                            <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
-                                <MenuIcon size={24} />
-                                <span>Menu</span>
-                            </Link>
-                        </nav>
+                                <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
+                                    <Map size={24} />
+                                    <span>GeoRescue</span>
+                                </Link>
+                                {/* FAB Action Button */}
+                                <div className="nav-item fab-container">
+                                    <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
+                                        <FileText size={24} />
+                                    </Link>
+                                </div>
+                                <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
+                                    <AlertOctagon size={24} />
+                                    <span>Interdição</span>
+                                </Link>
+                                <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
+                                    <MenuIcon size={24} />
+                                    <span>Menu</span>
+                                </Link>
+                            </nav>
+                        )}
                     </div>
                 </Router>
             </UserContext.Provider>

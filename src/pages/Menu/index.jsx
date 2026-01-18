@@ -96,11 +96,16 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                 </div>
                 <div className="flex-1">
                     <h2 className="text-xl font-black text-slate-800 leading-tight">
-                        {userProfile?.full_name || 'Agente'}
+                        {userProfile?.full_name || 'Usuário'}
                     </h2>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                        {userProfile?.matricula ? `Matrícula: ${userProfile.matricula}` : 'Defesa Civil'}
+                        {userProfile?.role || 'Acesso Restrito'}
                     </p>
+                    {userProfile?.matricula && (
+                        <p className="text-[10px] font-bold text-slate-300 mt-0.5">
+                            Matrícula: {userProfile.matricula}
+                        </p>
+                    )}
                 </div>
                 <button
                     onClick={() => {
@@ -158,19 +163,21 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                         </div>
                     </button>
 
-                    {/* Critical Reset */}
-                    <button
-                        onClick={handleResetDB}
-                        className="w-full p-5 flex items-center hover:bg-red-50 transition-colors text-left"
-                    >
-                        <div className="p-3 bg-red-50 text-red-500 rounded-2xl mr-4">
-                            <ShieldAlert size={22} />
-                        </div>
-                        <div>
-                            <span className="block font-bold text-red-600 text-sm">Resetar Aplicativo</span>
-                            <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight">Uso emergencial apenas</span>
-                        </div>
-                    </button>
+                    {/* Critical Reset - Only for Agents */}
+                    {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
+                        <button
+                            onClick={handleResetDB}
+                            className="w-full p-5 flex items-center hover:bg-red-50 transition-colors text-left"
+                        >
+                            <div className="p-3 bg-red-50 text-red-500 rounded-2xl mr-4">
+                                <ShieldAlert size={22} />
+                            </div>
+                            <div>
+                                <span className="block font-bold text-red-600 text-sm">Resetar Aplicativo</span>
+                                <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight">Uso emergencial apenas</span>
+                            </div>
+                        </button>
+                    )}
                 </div>
 
                 {/* Logout Card */}

@@ -1,10 +1,12 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Building2, Package, Truck, Gift, FileText, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card';
+import { UserContext } from '../../App';
+import { useContext } from 'react';
 
 export default function ShelterMenu() {
     const navigate = useNavigate();
+    const userProfile = useContext(UserContext);
+    const userRole = userProfile?.role || '';
 
     const menuItems = [
         {
@@ -12,37 +14,45 @@ export default function ShelterMenu() {
             description: 'Gerencie ocupantes, capacidade e operações de cada abrigo.',
             icon: Building2,
             path: '/abrigos/lista',
-            color: 'bg-blue-50 text-[#2a5299]'
+            color: 'bg-blue-50 text-[#2a5299]',
+            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social']
         },
         {
             title: 'Estoque Municipal',
             description: 'Visualize e gerencie o estoque centralizado da prefeitura.',
             icon: Package,
             path: '/abrigos/estoque',
-            color: 'bg-emerald-50 text-emerald-600'
+            color: 'bg-emerald-50 text-emerald-600',
+            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social', 'Voluntário']
         },
         {
             title: 'Receber Doações',
             description: 'Registre a entrada de doações para o estoque ou abrigos.',
             icon: Gift,
             path: '/abrigos/doacoes-central',
-            color: 'bg-amber-50 text-amber-600'
+            color: 'bg-amber-50 text-amber-600',
+            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social', 'Voluntário']
         },
         {
             title: 'Logística & Distribuição',
             description: 'Transfira itens do estoque municipal para os abrigos.',
             icon: Truck,
             path: '/abrigos/logistica',
-            color: 'bg-purple-50 text-purple-600'
+            color: 'bg-purple-50 text-purple-600',
+            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social', 'Voluntário']
         },
         {
             title: 'Relatórios Gerais',
             description: 'Consolidado de ocupação, doações e movimentações.',
             icon: FileText,
             path: '/abrigos/relatorios',
-            color: 'bg-slate-50 text-slate-600'
+            color: 'bg-slate-50 text-slate-600',
+            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social']
         }
     ];
+
+    const filteredItems = menuItems.filter(item => item.allowedRoles.includes(userRole));
+    const isAgent = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userRole);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
@@ -50,13 +60,15 @@ export default function ShelterMenu() {
 
                 {/* Header */}
                 <div className="flex flex-col gap-4">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="self-start flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                        Voltar ao Início
-                    </button>
+                    {isAgent && (
+                        <button
+                            onClick={() => navigate('/')}
+                            className="self-start flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors"
+                        >
+                            <ArrowLeft size={20} />
+                            Voltar ao Início
+                        </button>
+                    )}
                     <div>
                         <h1 className="text-3xl font-black text-slate-800">Assistência Humanitária</h1>
                         <p className="text-slate-500 mt-2">
@@ -67,7 +79,7 @@ export default function ShelterMenu() {
 
                 {/* Dashboard Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {menuItems.map((item, index) => (
+                    {filteredItems.map((item, index) => (
                         <Card
                             key={index}
                             onClick={() => navigate(item.path)}
