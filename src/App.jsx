@@ -17,7 +17,8 @@ import ChecklistSaida from './pages/Checklist/ChecklistSaida'
 import { supabase } from './services/supabase'
 
 // Shelter Module
-import ShelterDashboard from './pages/Abrigos/index'
+import ShelterMenu from './pages/Abrigos/Menu'
+import ShelterList from './pages/Abrigos/ShelterList'
 import ShelterDetail from './pages/Abrigos/ShelterDetail'
 import ShelterForm from './pages/Abrigos/ShelterForm'
 import OccupantForm from './pages/Abrigos/OccupantForm'
@@ -25,6 +26,9 @@ import DonationForm from './pages/Abrigos/DonationForm'
 import DistributionForm from './pages/Abrigos/DistributionForm'
 import ShelterReports from './pages/Abrigos/Reports'
 import ShelterResidents from './pages/Abrigos/Residents'
+import StockHub from './pages/Abrigos/StockHub'
+import DonationHub from './pages/Abrigos/DonationHub'
+import LogisticsHub from './pages/Abrigos/LogisticsHub'
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -187,7 +191,12 @@ function App() {
                                 <Route path="/checklist-saida" element={<ChecklistSaida />} />
 
                                 {/* Shelter Module Routes */}
-                                <Route path="/abrigos" element={<ShelterDashboard />} />
+                                <Route path="/abrigos" element={<ShelterMenu />} />
+                                <Route path="/abrigos/lista" element={<ShelterList />} />
+                                <Route path="/abrigos/estoque" element={<StockHub />} />
+                                <Route path="/abrigos/doacoes-central" element={<DonationHub />} />
+                                <Route path="/abrigos/logistica" element={<LogisticsHub />} />
+
                                 <Route path="/abrigos/novo" element={<ShelterForm />} />
                                 <Route path="/abrigos/:id" element={<ShelterDetail />} />
                                 <Route path="/abrigos/editar/:id" element={<ShelterForm />} />

@@ -142,10 +142,17 @@ export const exitOccupant = async (occupantId, shelterId) => {
 
 // --- INVENTORY & DONATIONS ---
 
+// --- INVENTORY & DONATIONS ---
+
 export const getDonations = async (shelterId) => {
     const db = await initDB();
-    if (shelterId) {
+    if (shelterId && shelterId !== 'CENTRAL') {
         return db.getAllFromIndex('donations', 'shelter_id', String(shelterId));
+    }
+    // For CENTRAL or global view
+    if (shelterId === 'CENTRAL') {
+        const all = await db.getAll('donations');
+        return all.filter(d => d.shelter_id === 'CENTRAL');
     }
     return db.getAll('donations');
 };
@@ -155,19 +162,148 @@ export const addDonation = async (donationData) => {
     const newDonation = {
         ...donationData,
         donation_id: generateId('DOA'),
+        // If no shelter selected, it goes to CENTRAL
+        shelter_id: donationData.shelter_id || 'CENTRAL',
         donation_date: new Date().toISOString(),
         created_at: new Date().toISOString(),
         synced: false
     };
-    return db.add('donations', newDonation);
+
+    const tx = db.transaction(['donations', 'inventory'], 'readwrite');
+    const donStore = tx.objectStore('donations');
+    const invStore = tx.objectStore('inventory');
+
+    await donStore.add(newDonation);
+
+    // Update Inventory
+    const shelterIdStr = newDonation.shelter_id;
+    let existingItem;
+
+    if (shelterIdStr) {
+        // Safe to get all and filter? For MVP yes.
+        const allInv = await invStore.getAll();
+        existingItem = allInv.find(i =>
+            String(i.shelter_id) === String(shelterIdStr) &&
+            i.item_name.toLowerCase() === newDonation.item_description.toLowerCase()
+        );
+    }
+
+    if (existingItem) {
+        // Update quantity
+        const updatedItem = {
+            ...existingItem,
+            quantity: parseFloat(existingItem.quantity) + parseFloat(newDonation.quantity),
+            updated_at: new Date().toISOString(),
+            synced: false
+        };
+        await invStore.put(updatedItem);
+    } else {
+        // Create new inventory item
+        const newItem = {
+            item_id: generateId('INV'),
+            shelter_id: shelterIdStr,
+            item_name: newDonation.item_description,
+            category: newDonation.donation_type, // Map donation type to category
+            quantity: parseFloat(newDonation.quantity),
+            unit: newDonation.unit,
+            min_quantity: 5, // Default
+            updated_at: new Date().toISOString(),
+            synced: false
+        };
+        await invStore.add(newItem);
+    }
+
+    await tx.done;
+    return newDonation;
 };
 
 export const getInventory = async (shelterId) => {
     const db = await initDB();
-    if (shelterId) {
+    if (shelterId && shelterId !== 'CENTRAL') {
         return db.getAllFromIndex('inventory', 'shelter_id', String(shelterId));
     }
+    if (shelterId === 'CENTRAL') {
+        // Filter manually for now
+        const all = await db.getAll('inventory');
+        return all.filter(i => i.shelter_id === 'CENTRAL');
+    }
     return db.getAll('inventory');
+};
+
+export const getGlobalInventory = async () => {
+    const db = await initDB();
+    return db.getAll('inventory');
+};
+
+export const transferStock = async (itemId, fromShelterId, toShelterId, quantity) => {
+    const db = await initDB();
+    const tx = db.transaction(['inventory', 'distributions'], 'readwrite');
+    const invStore = tx.objectStore('inventory');
+    const distStore = tx.objectStore('distributions');
+
+    // 1. Get Source Item
+    const sourceItem = await invStore.get(parseInt(itemId));
+    if (!sourceItem) throw new Error('Item de origem não encontrado.');
+
+    if (parseFloat(sourceItem.quantity) < parseFloat(quantity)) {
+        throw new Error('Estoque insuficiente na origem.');
+    }
+
+    // 2. Decrement Source
+    const updatedSource = {
+        ...sourceItem,
+        quantity: parseFloat(sourceItem.quantity) - parseFloat(quantity),
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+    await invStore.put(updatedSource);
+
+    // 3. Increment/Create Destination
+    const allInv = await invStore.getAll();
+    let destItem = allInv.find(i =>
+        String(i.shelter_id) === String(toShelterId) &&
+        i.item_name.toLowerCase() === sourceItem.item_name.toLowerCase()
+    );
+
+    if (destItem) {
+        const updatedDest = {
+            ...destItem,
+            quantity: parseFloat(destItem.quantity) + parseFloat(quantity),
+            updated_at: new Date().toISOString(),
+            synced: false
+        };
+        await invStore.put(updatedDest);
+    } else {
+        const newItem = {
+            ...sourceItem,
+            id: undefined, // Clear ID to auto-generate
+            item_id: generateId('INV'),
+            shelter_id: toShelterId,
+            quantity: parseFloat(quantity),
+            updated_at: new Date().toISOString(),
+            synced: false
+        };
+        await invStore.add(newItem);
+    }
+
+    // 4. Record Transfer (as Distribution from Source)
+    const transferRecord = {
+        distribution_id: generateId('TRF'),
+        shelter_id: fromShelterId, // "Distributed from"
+        destination_shelter_id: toShelterId, // "To"
+        item_name: sourceItem.item_name,
+        quantity: quantity,
+        unit: sourceItem.unit,
+        recipient_name: `TRANSFERÊNCIA -> ${toShelterId}`,
+        distribution_date: new Date().toISOString(),
+        type: 'transfer',
+        created_at: new Date().toISOString(),
+        synced: false
+    };
+    await distStore.add(transferRecord);
+
+    await tx.done;
+    return true;
 };
 
 export const getDistributions = async (shelterId) => {
@@ -178,7 +314,6 @@ export const getDistributions = async (shelterId) => {
     return db.getAll('distributions');
 };
 
-
 export const addDistribution = async (distribution) => {
     const db = await initDB();
     const tx = db.transaction(['inventory', 'distributions'], 'readwrite');
@@ -187,16 +322,12 @@ export const addDistribution = async (distribution) => {
 
     // 1. Find Inventory Item
     let item;
-    // Attempt by ID explicitly
     if (distribution.inventory_id) {
         item = await invStore.get(distribution.inventory_id);
     }
 
-    // If not found (maybe passed item_name for global lookup?)
-    // Dexie version had a fallback search by name used for synced records
     if (!item && distribution.item_name) {
-        const allItems = await invStore.getAll(); // Expensive but safe for small inventory
-        // Filter manually for now as multiple indexes are tricky in raw IDB without cursor
+        const allItems = await invStore.getAll();
         item = allItems.find(i => i.item_name === distribution.item_name);
         if (item) distribution.inventory_id = item.id;
     }
