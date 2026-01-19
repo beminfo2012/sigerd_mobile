@@ -31,8 +31,4 @@ verify_logo.py
 write_logo.py
 *.xlsx
 *.docx
-*.png
-*.jpg
-*.jpeg
-*.webp
 *.bat
