@@ -190,21 +190,6 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                         </button>
                     )}
 
-                    {/* User Management - Admin Only */}
-                    {(userProfile?.role === 'Admin' || userProfile?.email === 'bruno_pagel@hotmail.com') && (
-                        <button
-                            onClick={() => window.location.href = '/users'}
-                            className="w-full p-5 flex items-center hover:bg-purple-50 transition-colors text-left"
-                        >
-                            <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl mr-4">
-                                <Users size={22} />
-                            </div>
-                            <div>
-                                <span className="block font-bold text-purple-600 text-sm">Gerenciar Usuários</span>
-                                <span className="text-[10px] font-bold text-purple-300 uppercase tracking-tight">Administração do sistema</span>
-                            </div>
-                        </button>
-                    )}
                 </div>
 
                 {/* Logout Card */}

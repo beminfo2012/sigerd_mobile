@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from '../services/supabase'
 
 /**
  * Check if the current logged-in user is an administrator

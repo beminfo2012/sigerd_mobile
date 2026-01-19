@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext } from 'react'
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
 
@@ -111,6 +111,7 @@ function App() {
 
 
     useEffect(() => {
+        // App initialized
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
             setIsAuthenticated(true)
@@ -129,16 +130,29 @@ function App() {
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
-                const { data: profile } = await supabase
+                const { data: profile, error } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
                     .single()
 
                 if (profile) {
-                    setUserProfile(profile)
-                    localStorage.setItem('userProfile', JSON.stringify(profile))
+                    // Standardize role to avoid case-sensitivity issues
+                    const standardizedProfile = {
+                        ...profile,
+                        role: profile.role || 'Agente de Defesa Civil'
+                    };
+                    setUserProfile(standardizedProfile)
+                    localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
+                } else {
+                    console.warn('Profile not found for user:', user.id, error);
+                    // Force a basic role if profile is missing but auth exists
+                    const fallbackProfile = { id: user.id, full_name: user.email, role: 'Agente de Defesa Civil', email: user.email };
+                    setUserProfile(fallbackProfile);
                 }
+            } else {
+                console.warn('No active auth session found');
+                setIsAuthenticated(false);
             }
         } catch (error) {
             console.error('Error loading profile:', error)
@@ -321,12 +335,9 @@ function App() {
                                     </ProtectedRoute>
                                 } />
 
-                                {/* User Management Module - Admin Only */}
-                                <Route path="/users" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin']}>
-                                        <UserManagement />
-                                    </ProtectedRoute>
-                                } />
+                                {/* Catch-all routes to prevent blank screens */}
+                                <Route path="/login" element={<Navigate to="/" replace />} />
+                                <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                         </main>
 

@@ -39,7 +39,8 @@ const Dashboard = () => {
                 let finalData = dashResult || {
                     stats: { totalVistorias: 0, activeOccurrences: 0, inmetAlertsCount: 0 },
                     breakdown: [],
-                    locations: []
+                    locations: [],
+                    alerts: []
                 }
 
                 const localVistorias = await getAllVistoriasLocal().catch(err => {
@@ -768,7 +769,7 @@ const Dashboard = () => {
                 <div className="h-72 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100 shadow-inner">
                     <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                        <HeatmapLayer points={data.locations} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                        <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
                         {data?.locations?.map((loc, idx) => {
                             const isHighRisk = String(loc.risk || '').includes('Alto');
                             return (
