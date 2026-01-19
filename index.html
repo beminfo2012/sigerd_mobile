@@ -24,9 +24,9 @@
     // Pre-emptively set L so plugins don't crash
     if (!window.L) window.L = {};
 
-    // NUCLEAR CACHE RESET v1.95
+    // NUCLEAR CACHE RESET v2.00
     (async function () {
-      const TARGET_VERSION = 'v1.95';
+      const TARGET_VERSION = 'v2.00';
       if (localStorage.getItem('app_version') !== TARGET_VERSION) {
         console.log("Nuclear Reset Triggered: Version Mismatch");
         if ('serviceWorker' in navigator) {
