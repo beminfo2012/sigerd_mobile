@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { supabase } from '../../services/supabase'
-import logoLogin from '../../images/logo_login.png'
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('')
@@ -68,7 +67,7 @@ const Login = ({ onLogin }) => {
                     alignItems: 'center'
                 }}>
                     <img
-                        src={logoLogin}
+                        src="/assets/logo_login.png"
                         alt="Logo Defesa Civil"
                         style={{
                             maxWidth: '180px',
