@@ -3,10 +3,6 @@
         {
             "source": "/api/(.*)",
             "destination": "/api/$1"
-        },
-        {
-            "source": "/((?!.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|json|woff|woff2|ttf|eot|webp|mp4|webm)).*)",
-            "destination": "/index.html"
         }
     ]
 }
