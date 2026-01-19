@@ -43,3 +43,5 @@ workbox-*.js
 *.tmp
 *.temp
 .cache/
+
+.vercel
