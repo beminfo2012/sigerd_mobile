@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext } from 'react'
-import logoHeader from './assets/logo_header.png'
+import logoHeader from './app-images/logo_header.png'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
