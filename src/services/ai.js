@@ -1,4 +1,4 @@
-// SIGERD AI Service - High Availability Build v1.40
+// SIGERD AI Service - High Availability Build v1.50
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
