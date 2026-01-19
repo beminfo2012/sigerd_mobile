@@ -8,8 +8,12 @@ import { HumanitarianDashboard } from '../../components/Shelter/HumanitarianDash
 export default function ShelterMenu() {
     const navigate = useNavigate();
     const userProfile = useContext(UserContext);
-    const userRole = userProfile?.role || '';
-    const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'agente', 'tecnico'];
+    const userRole = (userProfile?.role || '').toLowerCase();
+    const userEmail = (userProfile?.email || '').toLowerCase();
+
+    // Master bypass for admin email
+    const isAdminEmail = userEmail === 'bruno_pagel@hotmail.com';
+    const AGENT_ROLES = ['agente de defesa civil', 'técnico em edificações', 'admin', 'agente', 'tecnico'];
 
     const menuItems = [
         {
@@ -18,7 +22,7 @@ export default function ShelterMenu() {
             icon: Building2,
             path: '/abrigos/lista',
             color: 'bg-blue-50 text-[#2a5299]',
-            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social']
         },
         {
             title: 'Estoque Municipal',
@@ -26,7 +30,7 @@ export default function ShelterMenu() {
             icon: Package,
             path: '/abrigos/estoque',
             color: 'bg-emerald-50 text-emerald-600',
-            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social', 'Voluntário']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário']
         },
         {
             title: 'Receber Doações',
@@ -34,7 +38,7 @@ export default function ShelterMenu() {
             icon: Gift,
             path: '/abrigos/doacoes-central',
             color: 'bg-amber-50 text-amber-600',
-            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social', 'Voluntário']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário']
         },
         {
             title: 'Logística & Distribuição',
@@ -42,7 +46,7 @@ export default function ShelterMenu() {
             icon: Truck,
             path: '/abrigos/logistica',
             color: 'bg-purple-50 text-purple-600',
-            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social', 'Voluntário']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário']
         },
         {
             title: 'Relatórios Gerais',
@@ -50,12 +54,14 @@ export default function ShelterMenu() {
             icon: FileText,
             path: '/abrigos/relatorios',
             color: 'bg-slate-50 text-slate-600',
-            allowedRoles: ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'Assistente Social']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social']
         }
     ];
 
-    const filteredItems = menuItems.filter(item => item.allowedRoles.includes(userRole));
-    const isAgent = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userRole);
+    const filteredItems = menuItems.filter(item =>
+        isAdminEmail || item.allowedRoles.includes(userRole)
+    );
+    const isAgent = isAdminEmail || AGENT_ROLES.includes(userRole);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
@@ -81,7 +87,7 @@ export default function ShelterMenu() {
                 </div>
 
                 {/* Tactical Dashboard Section */}
-                {AGENT_ROLES.includes(userRole) && (
+                {isAgent && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="flex items-center gap-2 px-1">
                             <BarChart3 size={18} className="text-[#2a5299]" />
