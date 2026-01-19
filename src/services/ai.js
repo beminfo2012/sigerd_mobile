@@ -1,29 +1,28 @@
-// SIGERD AI Service - Stable Build v1.36
+// SIGERD AI Service - High Availability Build v1.40
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
-// The GoogleGenerativeAI constructor from @google/generative-ai defaults to v1beta.
-// To use v1, we can try to pass it if the version supports it, or use the stable model nomenclature.
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// SIGERD AI Service - Optimized for Stability
-console.log("SIGERD AI: v1.36 initialized");
-const MODELS_TO_TRY = [
-    { name: "gemini-1.5-flash" },
-    { name: "gemini-pro" }
+// Define rotation of model configurations to bypass potential 404s
+const ATTEMPTS = [
+    { model: "gemini-1.5-flash", version: 'v1' },
+    { model: "gemini-1.5-flash", version: 'v1beta' },
+    { model: "gemini-pro", version: 'v1' }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
 
-    let lastError = null;
+    let errors = [];
 
-    for (const modelConfig of MODELS_TO_TRY) {
+    for (const config of ATTEMPTS) {
         try {
-            // Explicitly requesting v1 API version to avoid v1beta 404
+            console.log(`SIGERD AI: Autenticando com ${config.model} (${config.version})...`);
+
             const model = genAI.getGenerativeModel(
-                { model: modelConfig.name },
-                { apiVersion: 'v1' }
+                { model: config.model },
+                { apiVersion: config.version }
             );
 
             const prompt = `
@@ -49,12 +48,17 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
-            return response.text().trim();
+            const refined = response.text().trim();
+
+            if (refined) {
+                console.log(`SIGERD AI: Sucesso com ${config.model}`);
+                return refined;
+            }
         } catch (error) {
-            console.warn(`Tentativa com ${modelConfig.name} falhou:`, error.message);
-            lastError = error;
+            console.warn(`SIGERD AI: Falha em ${config.model} (${config.version}):`, error.message);
+            errors.push(`${config.model}/${config.version}: ${error.message}`);
         }
     }
 
-    throw new Error(`Erro ao refinar texto: ${lastError?.message || 'Todos os modelos falharam'}`);
+    throw new Error(`A IA não pôde processar o texto após várias tentativas.\nDetalhes:\n${errors.join('\n')}`);
 };

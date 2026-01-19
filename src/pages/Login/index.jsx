@@ -67,7 +67,7 @@ const Login = ({ onLogin }) => {
                     alignItems: 'center'
                 }}>
                     <img
-                        src="/logo_defesa_civil.png?v=3"
+                        src="/logo_novo.png?v=4"
                         alt="Logo Defesa Civil"
                         style={{
                             maxWidth: '180px',
@@ -200,39 +200,6 @@ const Login = ({ onLogin }) => {
                     gap: '10px'
                 }}>
                     <p>© 2024 Defesa Civil de Santa Maria de Jetibá</p>
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (window.confirm("Isso irá limpar o cache e forçar o download da versão mais recente da IA. Continuar?")) {
-                                if ('serviceWorker' in navigator) {
-                                    navigator.serviceWorker.getRegistrations().then(registrations => {
-                                        for (let registration of registrations) {
-                                            registration.unregister();
-                                        }
-                                        caches.keys().then(names => {
-                                            for (let name of names) caches.delete(name);
-                                            window.location.reload(true);
-                                        });
-                                    });
-                                } else {
-                                    window.location.reload(true);
-                                }
-                            }
-                        }}
-                        style={{
-                            background: '#f8f9fa',
-                            border: '1px solid #ddd',
-                            padding: '4px 10px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '10px',
-                            color: '#666'
-                        }}
-                    >
-                        <i className="fas fa-sync-alt" style={{ marginRight: '5px' }}></i>
-                        Limpar Cache e Sincronizar IA
-                    </button>
                 </div>
             </div>
 
