@@ -1,3 +1,4 @@
+// SIGERD AI Service - Build v1.33.1 (Force Redeploy)
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
