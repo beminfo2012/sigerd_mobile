@@ -3,9 +3,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Use gemini-pro as it's the most widely available model
+// Use gemini-1.5-flash for speed and reliability (stabilizes 404 errors)
 const MODELS_TO_TRY = [
-    { name: "gemini-pro" }
+    { name: "gemini-1.5-flash" }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
