@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SIGERD Mobile v1.33</title>
+  <title>SIGERD Mobile</title>
   <script>
     window.onerror = function (msg, url, line, col, error) {
       const errorMsg = "🛑 ERRO CRÍTICO: " + msg + "\nLinha: " + line + "\nArquivo: " + (url || '---');
@@ -24,9 +24,9 @@
     // Pre-emptively set L so plugins don't crash
     if (!window.L) window.L = {};
 
-    // NUCLEAR CACHE RESET v1.34-AUTO
+    // NUCLEAR CACHE RESET v1.35
     (async function () {
-      const TARGET_VERSION = 'v1.34-AUTO';
+      const TARGET_VERSION = 'v1.35';
       if (localStorage.getItem('app_version') !== TARGET_VERSION) {
         console.log("Nuclear Reset Triggered: Version Mismatch");
         if ('serviceWorker' in navigator) {
@@ -46,9 +46,6 @@
 
 <body>
   <div id="root"></div>
-  <div
-    style="position: fixed; bottom: 5px; right: 5px; font-size: 8px; color: rgba(255,255,255,0.3); z-index: 9999; pointer-events: none;">
-    v1.34-AUTO</div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

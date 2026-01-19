@@ -1,13 +1,14 @@
-// SIGERD AI Service - Build v1.33.2 (PWA Update Fix)
+// SIGERD AI Service - Stable Build
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// SIGERD AI Service v1.33 - Using gemini-1.5-flash
-console.log("SIGERD AI: v1.33-flash initialized");
+// SIGERD AI Service - Using gemini-1.5-flash with v1 stable
+console.log("SIGERD AI: initialized");
 const MODELS_TO_TRY = [
-    { name: "gemini-1.5-flash" }
+    { name: "gemini-1.5-flash" },
+    { name: "gemini-1.5-flash-latest" }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {

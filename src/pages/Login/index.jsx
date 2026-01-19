@@ -204,7 +204,7 @@ const Login = ({ onLogin }) => {
                     <button
                         type="button"
                         onClick={() => {
-                            if (window.confirm("Isso irá limpar o cache e forçar o download da versão mais recente da IA (v1.33). Continuar?")) {
+                            if (window.confirm("Isso irá limpar o cache e forçar o download da versão mais recente da IA. Continuar?")) {
                                 if ('serviceWorker' in navigator) {
                                     navigator.serviceWorker.getRegistrations().then(registrations => {
                                         for (let registration of registrations) {
@@ -231,7 +231,7 @@ const Login = ({ onLogin }) => {
                         }}
                     >
                         <i className="fas fa-sync-alt" style={{ marginRight: '5px' }}></i>
-                        Limpar Cache e Sincronizar IA (v1.33)
+                        Limpar Cache e Sincronizar IA
                     </button>
                 </div>
             </div>
