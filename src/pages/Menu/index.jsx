@@ -167,7 +167,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                     {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
                         <button
                             onClick={handleResetDB}
-                            className="w-full p-5 flex items-center hover:bg-red-50 transition-colors text-left"
+                            className="w-full p-5 flex items-center hover:bg-red-50 transition-colors text-left border-b border-slate-50"
                         >
                             <div className="p-3 bg-red-50 text-red-500 rounded-2xl mr-4">
                                 <ShieldAlert size={22} />
@@ -175,6 +175,22 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                             <div>
                                 <span className="block font-bold text-red-600 text-sm">Resetar Aplicativo</span>
                                 <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight">Uso emergencial apenas</span>
+                            </div>
+                        </button>
+                    )}
+
+                    {/* User Management - Admin Only */}
+                    {(userProfile?.role === 'Admin' || userProfile?.email === 'bruno_pagel@hotmail.com') && (
+                        <button
+                            onClick={() => window.location.href = '/users'}
+                            className="w-full p-5 flex items-center hover:bg-purple-50 transition-colors text-left"
+                        >
+                            <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl mr-4">
+                                <Users size={22} />
+                            </div>
+                            <div>
+                                <span className="block font-bold text-purple-600 text-sm">Gerenciar Usuários</span>
+                                <span className="text-[10px] font-bold text-purple-300 uppercase tracking-tight">Administração do sistema</span>
                             </div>
                         </button>
                     )}

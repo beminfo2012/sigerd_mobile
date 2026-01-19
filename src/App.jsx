@@ -31,6 +31,9 @@ import StockHub from './pages/Abrigos/StockHub'
 import DonationHub from './pages/Abrigos/DonationHub'
 import LogisticsHub from './pages/Abrigos/LogisticsHub'
 
+// User Management Module
+import UserManagement from './pages/UserManagement'
+
 // Create context for user profile
 export const UserContext = createContext(null)
 
@@ -315,6 +318,13 @@ function App() {
                                 <Route path="/abrigos/residentes" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterResidents />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* User Management Module - Admin Only */}
+                                <Route path="/users" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin']}>
+                                        <UserManagement />
                                     </ProtectedRoute>
                                 } />
                             </Routes>
