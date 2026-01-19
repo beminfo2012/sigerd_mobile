@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../../services/supabase'
+import logoLogin from '../../assets/logo_login.png'
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('')
@@ -67,7 +68,7 @@ const Login = ({ onLogin }) => {
                     alignItems: 'center'
                 }}>
                     <img
-                        src="/logo_login_fixed.png"
+                        src={logoLogin}
                         alt="Logo Defesa Civil"
                         style={{
                             maxWidth: '180px',
@@ -193,11 +194,7 @@ const Login = ({ onLogin }) => {
                 <div style={{
                     marginTop: '30px',
                     fontSize: '12px',
-                    color: '#999',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '10px'
+                    color: '#999'
                 }}>
                     <p>© 2024 Defesa Civil de Santa Maria de Jetibá</p>
                 </div>
