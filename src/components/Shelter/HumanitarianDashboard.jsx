@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { Package, Users, Activity } from 'lucide-react';
 import { getGlobalInventory, getShelters } from '../../../services/shelterDb.js';
-import { Card } from '../ui/Card';
+import { Card } from '../ui/Card.jsx';
 
 const COLORS = ['#2a5299', '#ffc107', '#28a745', '#dc3545', '#6f42c1'];
 
