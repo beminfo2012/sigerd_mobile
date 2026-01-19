@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Search, MapPin, Heart, ChevronRight } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Input } from '../../components/Shelter/ui/Input';
-import { getOccupants, getShelters } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { getOccupants, getShelters } from '../../services/shelterDb.js';
 
 export function Residents() {
     const navigate = useNavigate();

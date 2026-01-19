@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gift, User, Phone, Package, Hash, ArrowLeft, Building2 } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Input } from '../../components/Shelter/ui/Input';
-import { Button } from '../../components/Shelter/ui/Button';
-import { addDonation, getShelters } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { addDonation, getShelters } from '../../services/shelterDb.js';
 import VoiceInput from '../../components/VoiceInput';
 
 export default function DonationHub() {

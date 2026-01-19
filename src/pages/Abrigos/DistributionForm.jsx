@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Package, TrendingUp, User, Users as UsersIcon, Hash, ArrowLeft } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Input } from '../../components/Shelter/ui/Input';
-import { Button } from '../../components/Shelter/ui/Button';
-import { addDistribution, getShelterById, getInventory } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { addDistribution, getShelterById, getInventory } from '../../services/shelterDb.js';
 import VoiceInput from '../../components/VoiceInput';
 
 export function DistributionForm() {

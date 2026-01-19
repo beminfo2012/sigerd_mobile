@@ -6,10 +6,10 @@ import {
     Crown, ChevronDown, ChevronUp, Package, Building2,
     Droplets, Bed, Shirt, Calculator, Edit
 } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Badge } from '../../components/Shelter/ui/Badge';
-import { Button } from '../../components/Shelter/ui/Button';
-import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter, exitOccupant } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Badge } from '../../components/Shelter/ui/Badge.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter, exitOccupant } from '../../services/shelterDb.js';
 import { calculateShelterNeeds } from '../../utils/needsCalculator';
 
 export function ShelterDetail() {

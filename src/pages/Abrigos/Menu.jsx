@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Package, Truck, Gift, FileText, ArrowLeft, ChevronRight, BarChart3 } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { UserContext } from '../../App';
-import { HumanitarianDashboard } from '../../components/Shelter/HumanitarianDashboard';
+import { HumanitarianDashboard } from '../../components/Shelter/HumanitarianDashboard.jsx';
 
 export default function ShelterMenu() {
     const navigate = useNavigate();

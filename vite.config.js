@@ -50,4 +50,7 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json']
+  }
 })

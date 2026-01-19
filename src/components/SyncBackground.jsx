@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { syncPendingData, getPendingSyncCount } from '../services/db'
+import { syncPendingData, getPendingSyncCount } from '../services/db.js'
 
 const SyncBackground = () => {
     useEffect(() => {

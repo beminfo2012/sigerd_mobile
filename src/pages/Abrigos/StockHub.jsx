@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Search, ArrowLeft, RefreshCcw, Filter, TrendingUp, AlertTriangle, Trash2 } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Input } from '../../components/Shelter/ui/Input';
-import { Button } from '../../components/Shelter/ui/Button';
-import { getInventory, clearInventory } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { getInventory, clearInventory } from '../../services/shelterDb.js';
 
 export default function StockHub() {
     const navigate = useNavigate();

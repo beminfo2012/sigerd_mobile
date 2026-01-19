@@ -4,11 +4,11 @@ import {
     Building2, Users, Gift, ChevronRight, Plus, Search,
     CheckCircle2, Cloud, RefreshCcw, Trash2, FileText, ArrowLeft
 } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Badge } from '../../components/Shelter/ui/Badge';
-import { Button } from '../../components/Shelter/ui/Button';
-import { Input } from '../../components/Shelter/ui/Input';
-import { getShelters, getOccupants, getDonations, deleteShelter } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Badge } from '../../components/Shelter/ui/Badge.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { getShelters, getOccupants, getDonations, deleteShelter } from '../../services/shelterDb.js';
 import { shelterSyncService } from '../../services/shelterSyncService';
 import { generateShelterReport } from '../../services/pdfReportService';
 import { seedSheltersIfNeeded } from '../../utils/seedShelters';

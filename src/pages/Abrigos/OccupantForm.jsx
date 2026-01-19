@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, CreditCard, Calendar, Users as UsersIcon, Heart, FileText, ArrowLeft, Camera, Loader2 } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Input } from '../../components/Shelter/ui/Input';
-import { Button } from '../../components/Shelter/ui/Button';
-import { addOccupant, getShelterById, getOccupants, updateShelter } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { addOccupant, getShelterById, getOccupants, updateShelter } from '../../services/shelterDb.js';
 import { scanDocument } from '../../services/ocrService';
 import VoiceInput from '../../components/VoiceInput';
 

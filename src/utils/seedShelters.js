@@ -1,4 +1,4 @@
-import { getShelters, addShelter } from '../services/shelterDb';
+import { getShelters, addShelter } from '../services/shelterDb.js';
 import sheltersData from '../data/shelters_seed.json';
 
 export const seedSheltersIfNeeded = async () => {

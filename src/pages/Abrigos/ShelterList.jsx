@@ -4,11 +4,11 @@ import {
     Building2, Users, ChevronRight, Plus, Search,
     Trash2, ArrowLeft
 } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Badge } from '../../components/Shelter/ui/Badge';
-import { Button } from '../../components/Shelter/ui/Button';
-import { Input } from '../../components/Shelter/ui/Input';
-import { getShelters, deleteShelter } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Badge } from '../../components/Shelter/ui/Badge.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { getShelters, deleteShelter } from '../../services/shelterDb.js';
 import { seedSheltersIfNeeded } from '../../utils/seedShelters';
 
 export default function ShelterList() {

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Building2, MapPin, Users, Phone, User, FileText, ArrowLeft } from 'lucide-react';
-import { Card } from '../../components/Shelter/ui/Card';
-import { Input } from '../../components/Shelter/ui/Input';
-import { Button } from '../../components/Shelter/ui/Button';
-import { addShelter, getShelterById, updateShelter } from '../../services/shelterDb';
+import { Card } from '../../components/Shelter/ui/Card.jsx';
+import { Input } from '../../components/Shelter/ui/Input.jsx';
+import { Button } from '../../components/Shelter/ui/Button.jsx';
+import { addShelter, getShelterById, updateShelter } from '../../services/shelterDb.js';
 import VoiceInput from '../../components/VoiceInput';
 
 export function ShelterForm() {
