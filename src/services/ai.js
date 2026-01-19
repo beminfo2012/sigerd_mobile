@@ -3,7 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Use gemini-1.5-flash for speed and reliability (stabilizes 404 errors)
+// SIGERD AI Service v1.33 - Using gemini-1.5-flash
+console.log("SIGERD AI: v1.33-flash initialized");
 const MODELS_TO_TRY = [
     { name: "gemini-1.5-flash" }
 ];
