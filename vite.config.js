@@ -10,7 +10,8 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
-        clientsClaim: true
+        clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
