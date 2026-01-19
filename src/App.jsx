@@ -192,7 +192,7 @@ function App() {
                         {/* Mobile Header */}
                         <header className="mobile-header">
                             <div className="header-logo-area">
-                                <img src="/assets/logo_header.png" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
+                                <img src="/logo_header.png" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
                                 <h1>SIGERD <span>Mobile</span></h1>
                             </div>
                             <div className="header-user" onClick={handleLogout}>
