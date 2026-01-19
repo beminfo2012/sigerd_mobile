@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../../services/supabase'
-import logoLogin from '../../app-images/logo_login.png'
+import logoLogin from '../../images/logo_login.png'
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('')
