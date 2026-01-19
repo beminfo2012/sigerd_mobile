@@ -106,6 +106,10 @@ function App() {
     })
 
     useEffect(() => {
+        console.log("%c SIGERD DEBUG: v1.34.2-AUTO ACTIVE ", "background: red; color: white; font-size: 20px; font-weight: bold;");
+    }, []);
+
+    useEffect(() => {
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
             setIsAuthenticated(true)
