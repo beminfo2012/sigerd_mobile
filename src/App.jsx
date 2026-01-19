@@ -121,7 +121,7 @@ function App() {
     }, [])
 
     // Roles grouping for cleaner route protection (Standardized to handle potential case variations)
-    const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'admin', 'agente', 'tecnico'];
+    const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'Admin', 'admin', 'agente', 'tecnico'];
     const HUMANITARIAN_ROLES = [...AGENT_ROLES, 'Assistente Social', 'Voluntário', 'social', 'voluntario'];
     const HUMANITARIAN_FULL_ROLES = [...AGENT_ROLES, 'Assistente Social', 'social'];
 
@@ -330,8 +330,8 @@ function App() {
                             </Routes>
                         </main>
 
-                        {/* Bottom Navigation - Only for Agents */}
-                        {AGENT_ROLES.includes(userProfile?.role) && (
+                        {/* Bottom Navigation - Only for Agents and Admin Fallback */}
+                        {(AGENT_ROLES.includes(userProfile?.role) || userProfile?.email === 'bruno_pagel@hotmail.com') && (
                             <nav className="bottom-nav">
                                 <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
                                     <Home size={24} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 
@@ -89,6 +89,17 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
 
     return (
         <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">
+            {/* Header Back Button */}
+            <div className="flex items-center gap-3 mb-6">
+                <button
+                    onClick={() => window.location.href = '/'}
+                    className="p-3 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-100 hover:text-blue-600 transition-colors"
+                >
+                    <ArrowLeft size={20} />
+                </button>
+                <h1 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Menu do Sistema</h1>
+            </div>
+
             {/* User Header Card */}
             <div className="bg-white rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex items-center mb-8">
                 <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-xl font-black text-blue-600 mr-5 border-2 border-blue-100">

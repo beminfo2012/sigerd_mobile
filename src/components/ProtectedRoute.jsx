@@ -18,13 +18,21 @@ const ProtectedRoute = ({ children, user, allowedRoles, fallbackPath }) => {
     }
 
     const userRole = user.role || '';
-    const isAuthorized = allowedRoles.includes(userRole);
+    const userEmail = user.email || '';
+
+    // Authorization check: Allow if role matches OR if it's the specific admin email
+    const isAuthorized = allowedRoles.includes(userRole) || userEmail === 'bruno_pagel@hotmail.com';
 
     if (!isAuthorized) {
         // If not authorized, redirect to the assigned fallback or a default safe zone
         const defaultFallback = (userRole === 'Assistente Social' || userRole === 'Voluntário')
             ? '/abrigos'
             : '/';
+
+        // Prevent infinite redirect loop if already at fallback path
+        if (location.pathname === (fallbackPath || defaultFallback)) {
+            return children; // Allow as a last resort to prevent white screen
+        }
 
         return <Navigate to={fallbackPath || defaultFallback} replace />;
     }
