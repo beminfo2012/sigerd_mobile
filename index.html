@@ -23,6 +23,24 @@
     };
     // Pre-emptively set L so plugins don't crash
     if (!window.L) window.L = {};
+
+    // NUCLEAR CACHE RESET v1.34-AUTO
+    (async function () {
+      const TARGET_VERSION = 'v1.34-AUTO';
+      if (localStorage.getItem('app_version') !== TARGET_VERSION) {
+        console.log("Nuclear Reset Triggered: Version Mismatch");
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (let r of regs) await r.unregister();
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          for (let k of keys) await caches.delete(k);
+        }
+        localStorage.setItem('app_version', TARGET_VERSION);
+        window.location.reload(true);
+      }
+    })();
   </script>
 </head>
 
