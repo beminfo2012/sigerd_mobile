@@ -1,14 +1,16 @@
-// SIGERD AI Service - Stable Build
+// SIGERD AI Service - Stable Build v1.36
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+// The GoogleGenerativeAI constructor from @google/generative-ai defaults to v1beta.
+// To use v1, we can try to pass it if the version supports it, or use the stable model nomenclature.
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// SIGERD AI Service - Using gemini-1.5-flash with v1 stable
-console.log("SIGERD AI: initialized");
+// SIGERD AI Service - Optimized for Stability
+console.log("SIGERD AI: v1.36 initialized");
 const MODELS_TO_TRY = [
     { name: "gemini-1.5-flash" },
-    { name: "gemini-1.5-flash-latest" }
+    { name: "gemini-pro" }
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
@@ -18,7 +20,11 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
     for (const modelConfig of MODELS_TO_TRY) {
         try {
-            const model = genAI.getGenerativeModel({ model: modelConfig.name });
+            // Explicitly requesting v1 API version to avoid v1beta 404
+            const model = genAI.getGenerativeModel(
+                { model: modelConfig.name },
+                { apiVersion: 'v1' }
+            );
 
             const prompt = `
             Você é um Engenheiro Civil especialista em Defesa Civil e Gestão de Riscos.

@@ -67,7 +67,7 @@ const Login = ({ onLogin }) => {
                     alignItems: 'center'
                 }}>
                     <img
-                        src="/logo_novo.png?v=1"
+                        src="/logo_defesa_civil.png?v=3"
                         alt="Logo Defesa Civil"
                         style={{
                             maxWidth: '180px',
