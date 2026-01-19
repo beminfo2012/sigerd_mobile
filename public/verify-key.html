@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIAGNÓSTICO DE CHAVE IA</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 500px;
+            w-full;
+            border: 1px solid #334155;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        #log {
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            background: black;
+            padding: 10px;
+            border-radius: 6px;
+            width: 100%;
+            min-height: 100px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .success {
+            color: #4ade80;
+        }
+
+        .error {
+            color: #f87171;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>Teste de Chave Gemini</h1>
+        <p>Cole a chave abaixo para testar se ela está ativa e permitida pelo Google.</p>
+        <input type="password" id="apiKey" placeholder="Cole a chave AIzaSy..." value="">
+        <button onclick="testKey()">TESTAR AGORA</button>
+        <div id="log">Aguardando teste...</div>
+    </div>
+
+    <script>
+        function log(msg, type = '') {
+            const div = document.getElementById('log');
+            if (div.innerText === 'Aguardando teste...') div.innerText = '';
+            const span = document.createElement('span');
+            span.className = type;
+            span.innerText = `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+            div.appendChild(span);
+        }
+
+        async function testKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (!key) return alert("Cole a chave primeiro!");
+
+            log(`Iniciando teste da chave: ${key.substring(0, 6)}...${key.substring(key.length - 4)}`);
+
+            try {
+                // Test URL for Gemini 1.5 Flash
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+                const body = {
+                    contents: [{
+                        parts: [{ text: "Respond with 'VALID'" }]
+                    }]
+                };
+
+                log("Enviando requisição para Google...");
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log("CONECTADO COM SUCESSO!", "success");
+                    log(`Resposta do Google: ${JSON.stringify(data.candidates[0].content.parts[0].text)}`, "success");
+                } else {
+                    log(`ERRO DO GOOGLE: ${data.error.status} - ${data.error.message}`, "error");
+                    if (data.error.message.includes("API key not found") || data.error.message.includes("API key expired")) {
+                        log("A CHAVE É INVÁLIDA OU EXPIROU.", "error");
+                    }
+                }
+            } catch (e) {
+                log(`ERRO DE CONEXÃO: ${e.message}`, "error");
+            }
+        }
+    </script>
+</body>
+
+</html>
