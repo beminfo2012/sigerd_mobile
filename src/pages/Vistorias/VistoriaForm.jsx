@@ -403,7 +403,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             }
         } catch (e) {
             console.error("AI Refine error:", e);
-            alert(`Erro ao refinar com IA: ${e.message}`);
+            alert(`Erro ao refinar com IA: ${e.message}\n\n[DICA: Se o erro mencionar 'gemini-pro', o seu app ainda está desatualizado no cache. Se for outro erro, verifique se a VITE_GOOGLE_API_KEY foi adicionada no painel da Vercel]`);
         } finally {
             setRefining(false);
         }
