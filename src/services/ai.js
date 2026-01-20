@@ -6,9 +6,10 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 // Define rotation of model configurations to bypass potential 404s
 const ATTEMPTS = [
-    { model: "gemini-1.5-flash", version: 'v1' },
-    { model: "gemini-1.5-flash", version: 'v1beta' },
-    { model: "gemini-pro", version: 'v1' }
+    { model: "gemini-1.5-flash-001", version: 'v1beta' }, // Explicit version often resolves 404s
+    { model: "gemini-pro", version: 'v1beta' },           // Stable 1.0 Pro model
+    { model: "gemini-1.5-flash", version: 'v1beta' },     // Generic Flash (fallback)
+    { model: "gemini-1.5-pro", version: 'v1beta' }        // Pro 1.5 (last resort)
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
