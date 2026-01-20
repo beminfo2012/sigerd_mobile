@@ -561,7 +561,7 @@ const Dashboard = () => {
             {/* Quick Access - Circular Icons */}
             <div className="mb-6">
                 <h2 className="text-sm font-bold text-slate-600 mb-4 px-1">Acesso Rápido</h2>
-                <div className="flex gap-8 justify-center overflow-x-auto pb-2 px-1 scrollbar-hide">
+                <div className="grid grid-cols-4 gap-2 px-1 justify-items-center">
                     {/* Pluviômetros */}
                     <div
                         onClick={() => navigate('/pluviometros')}
