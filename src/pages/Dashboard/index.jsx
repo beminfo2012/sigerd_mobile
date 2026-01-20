@@ -9,6 +9,7 @@ import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalD
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService } from '../../services/cemaden'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
+import legacyRisks from '../../data/legacy_risks.json' // spreadsheet data
 
 const Dashboard = () => {
     console.log('[Dashboard] Component mounting...');
@@ -245,6 +246,37 @@ const Dashboard = () => {
                         ...item,
                         color: masterPalette[item.label] || item.color || 'bg-slate-300'
                     }));
+
+                    // INTEGRATION: Add spreadsheet data to breakdown if not already present
+                    // To keep it clean, we'll aggregate legacy risks by type and add them
+                    const legacyCounts = {};
+                    legacyRisks.forEach(l => {
+                        const cat = l.risco || 'Outros';
+                        legacyCounts[cat] = (legacyCounts[cat] || 0) + 1;
+                    });
+
+                    Object.keys(legacyCounts).forEach(cat => {
+                        const existing = finalData.breakdown.find(b => b.label === cat);
+                        if (existing) {
+                            existing.count += legacyCounts[cat];
+                        } else {
+                            finalData.breakdown.push({
+                                label: cat,
+                                count: legacyCounts[cat],
+                                percentage: 0, // will re-calc below
+                                color: masterPalette[cat] || 'bg-slate-300'
+                            });
+                        }
+                    });
+
+                    finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + legacyRisks.length;
+
+                    // Recalculate percentages for combined data
+                    const totalCombined = finalData.breakdown.reduce((acc, b) => acc + b.count, 0);
+                    finalData.breakdown.forEach(b => {
+                        b.percentage = totalCombined > 0 ? Math.round((b.count / totalCombined) * 100) : 0;
+                    });
+                    finalData.breakdown.sort((a, b) => b.count - a.count);
                 }
                 setWeather(weatherResult)
                 setData(finalData)
