@@ -49,18 +49,36 @@ const RiskDashboard = () => {
         setLoading(true)
         try {
             const data = await getAllVistoriasLocal()
-            // Normalize data
-            const normalized = data.map(v => ({
+
+            // 1. Normalize Local Data (Has GPS)
+            const normalizedLocal = data.map(v => ({
                 ...v,
                 lat: v.coordenadas ? parseFloat(v.coordenadas.split(',')[0]) : (v.latitude ? parseFloat(v.latitude) : null),
                 lng: v.coordenadas ? parseFloat(v.coordenadas.split(',')[1]) : (v.longitude ? parseFloat(v.longitude) : null),
                 bairro: v.bairro || 'Não Informado',
                 risco: v.categoriaRisco || v.categoria_risco || 'Não Classificado',
                 nivel: v.grauRisco || v.grau_risco || 'Não Avaliado',
-                data: v.created_at || v.data_hora
+                data: v.created_at || v.data_hora,
+                source: 'App'
             })).filter(v => v.lat && v.lng && !isNaN(v.lat))
 
-            setVistorias(normalized)
+            // 2. Normalize Legacy Data (From CSV)
+            const normalizedLegacy = legacyRisks.map((l, idx) => ({
+                id: `leg_${l.id}_${idx}`,
+                risco: l.risco,
+                bairro: l.bairro,
+                nivel: l.severidade,
+                data: new Date().toISOString(),
+                source: 'Planilha',
+                lat: null,
+                lng: null
+            }));
+
+            // 3. Merge Both
+            const combined = [...normalizedLocal, ...normalizedLegacy];
+
+            console.log(`Loaded ${normalizedLocal.length} local and ${normalizedLegacy.length} legacy records.`);
+            setVistorias(combined)
         } catch (error) {
             console.error('Erro ao carregar vistorias:', error)
         } finally {
