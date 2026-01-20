@@ -13,6 +13,7 @@ import Menu from './pages/Menu'
 import Login from './pages/Login'
 import Alerts from './pages/Alerts'
 import GeoDashboard from './pages/Monitoramento/GeoDashboard'
+import RiskDashboard from './pages/Monitoramento/RiskDashboard'
 import ChecklistSaida from './pages/Checklist/ChecklistSaida'
 import ProtectedRoute from './components/ProtectedRoute'
 import { supabase } from './services/supabase'
@@ -256,6 +257,11 @@ function App() {
                                 <Route path="/monitoramento" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <GeoDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/monitoramento/riscos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <RiskDashboard />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/checklist-saida" element={

@@ -7,6 +7,8 @@ import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
+import { cemadenService } from '../../services/cemaden'
+import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 
 const Dashboard = () => {
     console.log('[Dashboard] Component mounting...');
@@ -19,6 +21,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true)
     const [showReportMenu, setShowReportMenu] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
+    const [cemadenAlerts, setCemadenAlerts] = useState([])
 
     useEffect(() => {
         console.log('[Dashboard] useEffect running - starting data load...');
@@ -28,12 +31,13 @@ const Dashboard = () => {
                 const pendingCount = await getPendingSyncCount().catch(() => 0)
                 setSyncCount(pendingCount)
 
-                const [dashResult, weatherResult] = await Promise.all([
+                const [dashResult, weatherResult, cemadenResult] = await Promise.all([
                     api.getDashboardData().catch(err => {
                         console.warn('Supabase fetch failed, showing local data only:', err)
                         return null
                     }),
-                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null)
+                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null),
+                    cemadenService.getActiveAlerts().catch(() => [])
                 ])
 
                 let finalData = dashResult || {
@@ -244,6 +248,7 @@ const Dashboard = () => {
                 }
                 setWeather(weatherResult)
                 setData(finalData)
+                setCemadenAlerts(cemadenResult || [])
             } catch (error) {
                 console.error('Load Error:', error)
             } finally {
@@ -488,6 +493,9 @@ const Dashboard = () => {
                 </div>
             )}
 
+            {/* Cemaden Alert Banner - Shows only when active */}
+            <CemadenAlertBanner alerts={cemadenAlerts} />
+
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-xl font-black text-gray-800 tracking-tight">Indicadores Operacionais</h1>
                 <div className="flex items-center gap-1 bg-slate-200/50 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500">
@@ -666,6 +674,17 @@ const Dashboard = () => {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Áreas de Risco */}
+                    <div
+                        onClick={() => navigate('/monitoramento/riscos')}
+                        className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
+                    >
+                        <div className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
+                            <ShieldAlert size={28} strokeWidth={2.2} />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Áreas de Risco</span>
                     </div>
                 </div>
             </div>

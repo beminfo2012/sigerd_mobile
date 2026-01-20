@@ -818,7 +818,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${refining ? 'bg-slate-100 text-slate-400 animate-pulse' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md active:scale-95'}`}
                                     >
                                         <Sparkles size={12} className={refining ? 'animate-spin' : ''} />
-                                        {refining ? 'Refinando...' : 'Refinar com IA'}
+                                        {refining ? 'Refinando...' : 'Refinar com IA ⚡'}
                                     </button>
                                     <VoiceInput onResult={(text) => setFormData(prev => ({ ...prev, observacoes: (prev.observacoes ? prev.observacoes + ' ' : '') + text }))} />
                                 </div>
