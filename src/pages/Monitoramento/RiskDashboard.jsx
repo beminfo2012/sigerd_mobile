@@ -5,7 +5,6 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import 'leaflet/dist/leaflet.css'
 import { getAllVistoriasLocal } from '../../services/db'
-import legacyRisks from '../../data/legacy_risks.json'
 
 const RiskDashboard = () => {
     const navigate = useNavigate()
