@@ -16,7 +16,7 @@ const Dashboard = () => {
     const navigate = useNavigate()
     const [data, setData] = useState(null)
     const [weather, setWeather] = useState(null)
-    const [syncCount, setSyncCount] = useState(0)
+    const [syncDetail, setSyncDetail] = useState({ total: 0 })
     const [syncing, setSyncing] = useState(false)
     const [showForecast, setShowForecast] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -29,8 +29,8 @@ const Dashboard = () => {
         const load = async () => {
             try {
                 console.log('[Dashboard] Fetching pending sync count...');
-                const pendingCount = await getPendingSyncCount().catch(() => 0)
-                setSyncCount(pendingCount)
+                const pendingDetail = await getPendingSyncCount().catch(() => ({ total: 0 }))
+                setSyncDetail(pendingDetail)
 
                 const [dashResult, weatherResult, cemadenResult] = await Promise.all([
                     api.getDashboardData().catch(err => {
@@ -339,18 +339,19 @@ const Dashboard = () => {
     }
 
     const handleSync = async () => {
-        if (syncCount === 0 || syncing) return
+        // Sync all data types (including humanitarian), but UI only shows vistorias/interdicoes
+        if (syncDetail.total === 0 || syncing) return
         setSyncing(true)
         try {
             const result = await syncPendingData()
             if (result.success) {
-                const [newData, newCount] = await Promise.all([
+                const [newData, newDetail] = await Promise.all([
                     api.getDashboardData(),
                     getPendingSyncCount()
                 ])
                 setData(newData)
-                setSyncCount(newCount)
-                alert(`${result.count} vistorias sincronizadas com sucesso!`)
+                setSyncDetail(newDetail)
+                alert(`${result.count} registros sincronizados com sucesso!`)
             }
         } catch (e) {
             console.error('Sync failed:', e)
@@ -508,16 +509,16 @@ const Dashboard = () => {
             <div className="grid grid-cols-2 gap-4 mb-5">
                 <div
                     onClick={handleSync}
-                    className={`bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all ${syncCount > 0 ? 'cursor-pointer active:scale-95 hover:bg-orange-50/30' : ''}`}
+                    className={`bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'cursor-pointer active:scale-95 hover:bg-orange-50/30' : ''}`}
                 >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${syncCount > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
                         {syncing ? (
                             <CloudUpload size={20} strokeWidth={2.5} className="animate-bounce" />
                         ) : (
-                            syncCount > 0 ? <CloudUpload size={20} strokeWidth={2.5} /> : <CheckCircle size={20} strokeWidth={2.5} />
+                            (syncDetail.vistorias + syncDetail.interdicoes) > 0 ? <CloudUpload size={20} strokeWidth={2.5} /> : <CheckCircle size={20} strokeWidth={2.5} />
                         )}
                     </div>
-                    {syncCount > 0 ? (
+                    {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (
                         <div className={`absolute top-5 right-5 bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 ${syncing ? 'animate-pulse' : ''}`}>
                             {syncing ? 'Sincronizando...' : 'Pendente'}
                         </div>
@@ -525,13 +526,21 @@ const Dashboard = () => {
                         <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">OK</div>
                     )}
                     <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">
-                        {syncCount > 0 ? syncCount : '100%'}
+                        {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
                     </div>
                     <div className="text-xs font-bold text-slate-400 leading-tight">
-                        {syncing ? 'Enviando...' : (syncCount > 0 ? 'Clique para Sincronizar' : 'Sincronizado')}
+                        {syncing ? 'Enviando...' : (
+                            (syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (
+                                <span>
+                                    {syncDetail.vistorias > 0 && `${syncDetail.vistorias} Vistoria${syncDetail.vistorias > 1 ? 's' : ''}`}
+                                    {syncDetail.vistorias > 0 && syncDetail.interdicoes > 0 && ', '}
+                                    {syncDetail.interdicoes > 0 && `${syncDetail.interdicoes} Interdição${syncDetail.interdicoes > 1 ? 'ões' : ''}`}
+                                </span>
+                            ) : 'Sincronizado'
+                        )}
                     </div>
                     {/* Reset Button - Always available if something exists locally */}
-                    {((syncCount > 0) || (data.stats.totalVistorias > 0) || (data.breakdown.length > 0)) && !syncing && (
+                    {((syncDetail.total > 0) || (data.stats.totalVistorias > 0) || (data.breakdown.length > 0)) && !syncing && (
                         <button
                             onClick={(e) => { e.stopPropagation(); handleClearCache(); }}
                             className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors flex items-center gap-1 active:opacity-50"

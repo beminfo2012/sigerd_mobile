@@ -108,16 +108,28 @@ export const shelterSyncService = {
                         if (uniqueId) {
                             // Check if exists locally
                             let localId = undefined;
+                            let localIsUnsynced = false;
+
                             if (store.indexNames.contains(uniqueIdField)) {
                                 const localRecord = await store.index(uniqueIdField).get(uniqueId);
-                                if (localRecord) localId = localRecord.id;
+                                if (localRecord) {
+                                    localId = localRecord.id;
+                                    // CRITICAL FIX: If local record is unsynced, DO NOT overwrite with server data
+                                    if (localRecord.synced === false) {
+                                        localIsUnsynced = true;
+                                        // console.log(`[Sync] Skipping update for ${table} ${uniqueId} - Local changes pending`);
+                                    }
+                                }
                             }
 
-                            await store.put({
-                                ...item,
-                                id: localId, // Keep local ID if exists (update), or undefined (add new)
-                                synced: true
-                            });
+                            if (!localIsUnsynced) {
+                                await store.put({
+                                    ...item,
+                                    supabase_id: item.id, // Store Supabase UUID separately
+                                    id: localId, // Keep local ID if exists (update), or undefined (add new)
+                                    synced: true
+                                });
+                            }
                         }
                     }
                     await tx.done;

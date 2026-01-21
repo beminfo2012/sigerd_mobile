@@ -4,7 +4,7 @@ import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } f
 import { supabase } from '../../services/supabase'
 
 const Menu = ({ userProfile, onLogout, setUserProfile }) => {
-    const [syncCount, setSyncCount] = useState(0)
+    const [syncDetail, setSyncDetail] = useState({ total: 0 })
     const [syncing, setSyncing] = useState(false)
     const [showProfileModal, setShowProfileModal] = useState(false)
     const [editName, setEditName] = useState(userProfile?.full_name || '')
@@ -16,12 +16,12 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
     }, [])
 
     const loadPendingCount = async () => {
-        const count = await getPendingSyncCount()
-        setSyncCount(count)
+        const detail = await getPendingSyncCount()
+        setSyncDetail(detail)
     }
 
     const handleManualSync = async () => {
-        if (syncCount === 0 || syncing) return
+        if (syncDetail.total === 0 || syncing) return
         if (!navigator.onLine) {
             alert('Você precisa estar online para sincronizar dados.')
             return
@@ -140,18 +140,18 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                         className="w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left border-b border-slate-50"
                     >
                         <div className="flex items-center">
-                            <div className={`p-3 rounded-2xl mr-4 ${syncCount > 0 ? 'bg-orange-50 text-orange-500' : 'bg-green-50 text-green-500'}`}>
+                            <div className={`p-3 rounded-2xl mr-4 ${syncDetail.total > 0 ? 'bg-orange-50 text-orange-500' : 'bg-green-50 text-green-500'}`}>
                                 <Database size={22} className={syncing ? 'animate-spin' : ''} />
                             </div>
                             <div>
                                 <span className="block font-bold text-slate-800 text-sm">Sincronizar Dados</span>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                    {syncCount > 0 ? `${syncCount} registros pendentes` : 'Tudo atualizado'}
+                                    {syncDetail.total > 0 ? `${syncDetail.total} registros pendentes` : 'Tudo atualizado'}
                                 </span>
                             </div>
                         </div>
-                        {syncCount > 0 && <RefreshCcw size={18} className="text-slate-300" />}
-                        {syncCount === 0 && <CheckCircle size={18} className="text-green-500" />}
+                        {syncDetail.total > 0 && <RefreshCcw size={18} className="text-slate-300" />}
+                        {syncDetail.total === 0 && <CheckCircle size={18} className="text-green-500" />}
                     </button>
 
                     {/* Settings Option (Clear Cache Only) */}

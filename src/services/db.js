@@ -145,20 +145,30 @@ export const saveVistoriaOffline = async (data) => {
 export const getPendingSyncCount = async () => {
     const db = await initDB()
 
-    // Using getAll and filter to catch undefined, false or 0 values reliably
     const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions'];
-    let total = 0;
+    let detail = {
+        total: 0,
+        vistorias: 0,
+        interdicoes: 0,
+        shelters: 0,
+        occupants: 0,
+        donations: 0,
+        inventory: 0,
+        distributions: 0
+    };
 
     for (const storeName of stores) {
         try {
             const items = await db.getAll(storeName).catch(() => []);
-            total += items.filter(v => v.synced === false || v.synced === undefined || v.synced === 0).length;
+            const pending = items.filter(v => v.synced === false || v.synced === undefined || v.synced === 0).length;
+            detail[storeName] = pending;
+            detail.total += pending;
         } catch (e) {
             console.warn(`Sync count failed for ${storeName}:`, e);
         }
     }
 
-    return total;
+    return detail;
 }
 
 export const syncPendingData = async () => {
@@ -343,13 +353,34 @@ const syncSingleItem = async (storeName, item, db) => {
             payload = { ...item };
             delete payload.id; // Remove local IDBK key
             delete payload.synced; // Remove sync flag
+            delete payload.supabase_id; // Clean up mapping field if any
+
+            // ID MAPPING: Fix foreign keys for humanitarian module
+            // We must map local integer shelter_id/inventory_id to Supabase UUIDs
+            if (payload.shelter_id && !isNaN(parseInt(payload.shelter_id))) {
+                const shelter = await db.get('shelters', parseInt(payload.shelter_id));
+                if (shelter && shelter.supabase_id) {
+                    payload.shelter_id = shelter.supabase_id;
+                }
+            }
+            if (payload.inventory_id && !isNaN(parseInt(payload.inventory_id))) {
+                const inv = await db.get('inventory', parseInt(payload.inventory_id));
+                if (inv && inv.supabase_id) {
+                    payload.inventory_id = inv.supabase_id;
+                }
+            }
         }
 
-        const { error } = await supabase.from(table).upsert([payload], {
+        const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {
             onConflict: storeName === 'vistorias' ? 'vistoria_id' :
                 storeName === 'interdicoes' ? 'interdicao_id' :
-                    undefined
-        })
+                    storeName === 'shelters' ? 'shelter_id' :
+                        storeName === 'occupants' ? 'occupant_id' :
+                            storeName === 'donations' ? 'donation_id' :
+                                storeName === 'inventory' ? 'inventory_id' :
+                                    storeName === 'distributions' ? 'distribution_id' :
+                                        undefined
+        }).select()
 
         if (error) {
             console.error(`Supabase Insert Error (${table}):`, error)
@@ -361,13 +392,21 @@ const syncSingleItem = async (storeName, item, db) => {
         const record = await store.get(item.id)
         if (record) {
             record.synced = true
+
+            // Capture official Supabase UUID for relations
+            if (syncedItems && syncedItems[0]) {
+                record.supabase_id = syncedItems[0].id;
+            }
+
             // Update the local record with the official ID assigned by the server if applicable
             if (storeName === 'vistorias') {
-                record.vistoriaId = payload.vistoria_id;
-                record.vistoria_id = payload.vistoria_id;
+                const officialId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
+                record.vistoriaId = officialId;
+                record.vistoria_id = officialId;
             } else if (storeName === 'interdicoes') {
-                record.interdicaoId = payload.interdicao_id;
-                record.interdicao_id = payload.interdicao_id;
+                const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
+                record.interdicaoId = officialId;
+                record.interdicao_id = officialId;
             }
             await store.put(record)
         }
