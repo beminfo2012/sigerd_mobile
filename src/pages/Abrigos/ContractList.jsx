@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { ArrowLeft, Plus, FileText, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { getContracts, triggerSync } from '../../services/db';
+import { shelterSyncService } from '../../services/shelterSyncService';
 
 const ContractList = () => {
     const navigate = useNavigate();
@@ -17,7 +18,12 @@ const ContractList = () => {
 
     const handleManualSync = async () => {
         setSyncing(true);
-        await triggerSync();
+        try {
+            await triggerSync(); // Push local changes
+            await shelterSyncService.pullData(); // Pull remote changes
+        } catch (e) {
+            console.error("Sync failed:", e);
+        }
         await loadContracts();
         setTimeout(() => setSyncing(false), 1000);
     };
