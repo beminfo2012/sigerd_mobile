@@ -158,12 +158,46 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                 </div>
             </div>
 
+            <!-- 5. Detailed Occurrences -->
+            <div style="page-break-inside: avoid; margin-bottom: 30px;">
+                <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 18px;">5. Detalhamento das Ocorrências Mapeadas</h2>
+                
+                <table style="width: 100%; font-size: 10px; border-collapse: collapse; border: 1px solid #f1f5f9;">
+                    <thead style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                        <tr>
+                            <th style="padding: 10px 8px; text-align: left; color: #475569; text-transform: uppercase; font-size: 9px;">Data/Hora</th>
+                            <th style="padding: 10px 8px; text-align: left; color: #475569; text-transform: uppercase; font-size: 9px;">Tipologia</th>
+                            <th style="padding: 10px 8px; text-align: left; color: #475569; text-transform: uppercase; font-size: 9px;">Local / Detalhes</th>
+                            <th style="padding: 10px 8px; text-align: right; color: #475569; text-transform: uppercase; font-size: 9px;">Coordenadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${dashboardData.locations.slice(0, 20).map((l, i) => {
+        const parts = String(l.coordenadas || '').split(',');
+        const lat = parseFloat(parts[0]) || parseFloat(l.lat) || 0;
+        const lng = parseFloat(parts[1]) || parseFloat(l.lng) || 0;
+        return `
+                            <tr style="border-bottom: 1px solid #f1f5f9; background: ${i % 2 === 0 ? '#ffffff' : '#fcfcfc'};">
+                                <td style="padding: 8px; color: #64748b; font-weight: 700;">
+                                    ${l.date ? new Date(l.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                </td>
+                                <td style="padding: 8px; font-weight: 800; color: #334155;">${l.risk}</td>
+                                <td style="padding: 8px; color: #64748b; font-weight: 500;">${l.details}</td>
+                                <td style="padding: 8px; text-align: right; font-family: monospace; color: #475569; font-weight: 600;">
+                                    ${lat.toFixed(5)}, ${lng.toFixed(5)}
+                                </td>
+                            </tr>
+                            `;
+    }).join('')}
+                    </tbody>
+                </table>
+                ${dashboardData.locations.length > 20 ? `<div style="text-align: center; padding: 12px; font-size: 10px; color: #94a3b8; font-style: italic; font-weight: 500;">...exibindo os 20 registros mais significativos do período.</div>` : ''}
+            </div>
 
-
-            <!-- 5. Humanitarian Assistance (New Integration) -->
+            <!-- 6. Humanitarian Assistance (New Integration) -->
             ${humanitarianData ? `
                 <div style="margin-top: 35px; page-break-inside: avoid;">
-                    <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 20px;">5. Assistência Humanitária</h2>
+                    <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 20px;">6. Assistência Humanitária</h2>
                     
                     <!-- KPIs Section -->
                     <div style="display: flex; gap: 20px; margin-bottom: 25px;">
