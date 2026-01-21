@@ -645,6 +645,15 @@ const Dashboard = () => {
                                                     };
                                                 }
 
+                                                // 2. Fetch fresh Pluviometer data
+                                                let pluvioData = [];
+                                                try {
+                                                    const res = await fetch('/api/pluviometros');
+                                                    if (res.ok) pluvioData = await res.json();
+                                                } catch (e) {
+                                                    console.warn("Failed to fetch pluvio for report", e);
+                                                }
+
                                                 // 3. Fetch Humanitarian Data (New)
                                                 let humanitarianData = {
                                                     shelters: [],
