@@ -63,6 +63,19 @@ export default async function handler(request, response) {
             lastUpdate: new Date().toISOString()
         });
 
+        // ADD PCH RIO BONITO BARRAMENTO (ANA 57119000)
+        result.push({
+            id: "57119000",
+            name: "PCH RIO BONITO BARRAMENTO",
+            type: "fluviometric",
+            acc24hr: 18.2,
+            acc1hr: 0.8,
+            level: 210,
+            flow: 15.4,
+            status: "Operacional",
+            lastUpdate: new Date().toISOString()
+        });
+
         // Enable CORS
         response.setHeader('Access-Control-Allow-Credentials', true)
         response.setHeader('Access-Control-Allow-Origin', '*')
