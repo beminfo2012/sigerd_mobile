@@ -17,13 +17,11 @@ dbPromise = openDB(DB_NAME, DB_VERSION, {
             contractStore.createIndex('synced', 'synced', { unique: false });
         }
     },
-}).catch(err => {
-    // ...
-    dbPromise = null; // Reset on failure
-    throw err;
+
 });
 return dbPromise;
 }
+
 
 // Helper to convert base64 to blob
 const base64ToBlob = (base64) => {
