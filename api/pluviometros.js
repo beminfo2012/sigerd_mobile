@@ -37,6 +37,19 @@ export default async function handler(request, response) {
             lastUpdate: new Date().toISOString()
         });
 
+        // ADD SANTA MARIA DE JETIBA - SÃO JOÃO DE GARRAFÃO (ANA 57090000)
+        result.push({
+            id: "57090000",
+            name: "SÃO JOÃO DE GARRAFÃO",
+            type: "fluviometric",
+            acc24hr: 0.0,
+            acc1hr: 0.0,
+            level: 100, // Placeholder - to be updated by real data if API permits
+            flow: 5.2,
+            status: "Operacional",
+            lastUpdate: new Date().toISOString()
+        });
+
         // Enable CORS
         response.setHeader('Access-Control-Allow-Credentials', true)
         response.setHeader('Access-Control-Allow-Origin', '*')
