@@ -161,9 +161,15 @@ export function DonationForm() {
                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
                                     <option value="alimento">Alimento</option>
+                                    <option value="cesta_basica">Cestas Básicas</option>
                                     <option value="roupa">Roupa</option>
-                                    <option value="higiene">Higiene</option>
+                                    <option value="manta">Mantas</option>
+                                    <option value="colchao">Colchões</option>
+                                    <option value="limpeza">Kit Limpeza</option>
+                                    <option value="higiene">Higiene (Geral)</option>
+                                    <option value="higiene_kit">Kit de Higiene</option>
                                     <option value="medicamento">Medicamento</option>
+                                    <option value="filtro_agua">Filtro de Água (Purificação)</option>
                                     <option value="outro">Outro</option>
                                 </select>
                             </div>
