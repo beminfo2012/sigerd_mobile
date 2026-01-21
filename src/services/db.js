@@ -126,9 +126,10 @@ export const saveVistoriaOffline = async (data) => {
     const db = await initDB()
 
     // 1. Save to IndexedDB first (keep base64 for offline usage)
-    const localId = await db.add('vistorias', {
+    // Use .put instead of .add to support updates if id exists
+    const localId = await db.put('vistorias', {
         ...data,
-        createdAt: new Date().toISOString(),
+        createdAt: data.createdAt || new Date().toISOString(),
         synced: false
     })
 
@@ -344,7 +345,11 @@ const syncSingleItem = async (storeName, item, db) => {
             delete payload.synced; // Remove sync flag
         }
 
-        const { error } = await supabase.from(table).insert([payload])
+        const { error } = await supabase.from(table).upsert([payload], {
+            onConflict: storeName === 'vistorias' ? 'vistoria_id' :
+                storeName === 'interdicoes' ? 'interdicao_id' :
+                    undefined
+        })
 
         if (error) {
             console.error(`Supabase Insert Error (${table}):`, error)
@@ -440,9 +445,10 @@ export const getAllInterdicoesLocal = async () => {
 
 export const saveInterdicaoOffline = async (data) => {
     const db = await initDB()
-    const localId = await db.add('interdicoes', {
+    // Use .put instead of .add
+    const localId = await db.put('interdicoes', {
         ...data,
-        createdAt: new Date().toISOString(),
+        createdAt: data.createdAt || new Date().toISOString(),
         synced: false
     })
 
