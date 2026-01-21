@@ -597,7 +597,7 @@ export const getContracts = async () => {
             { contract_id: 'CTR-SEED-003', contract_number: '2025-9J0PF', object_description: 'Cestas de Limpeza', start_date: '2025-06-02', end_date: '2026-06-01', total_value: 31122.00, status: 'active', synced: true },
             { contract_id: 'CTR-SEED-004', contract_number: '2025-VW0H6', object_description: 'Colchões', start_date: '2025-06-02', end_date: '2026-06-05', total_value: 41660.00, status: 'active', synced: true },
             { contract_id: 'CTR-SEED-005', contract_number: '2025-LXCTX', object_description: 'Mantas', start_date: '2025-06-10', end_date: '2026-06-09', total_value: 12975.00, status: 'active', synced: true },
-            { contract_id: 'CTR-SEED-006', contract_number: '2025-LXSOQ', object_description: 'Higiene e Limpeza', start_date: '2025-08-15', end_date: '2026-08-15', 1138.00, 'active': true, status: 'active', synced: true },
+            { contract_id: 'CTR-SEED-006', contract_number: '2025-LXSOQ', object_description: 'Higiene e Limpeza', start_date: '2025-08-15', end_date: '2026-08-15', total_value: 1138.00, status: 'active', synced: true },
             { contract_id: 'CTR-SEED-007', contract_number: '2025-L1F26', object_description: 'Marmitas', start_date: '2025-09-25', end_date: '2026-09-24', total_value: 2756.80, status: 'active', synced: true }
         ];
 
