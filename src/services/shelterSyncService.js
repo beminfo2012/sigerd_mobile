@@ -88,6 +88,7 @@ export const shelterSyncService = {
                 if (error) throw error;
 
                 if (data && data.length > 0) {
+                    console.log(`[Sync] Pulled ${data.length} records for ${table}`);
                     const tx = db.transaction(table, 'readwrite');
                     const store = tx.objectStore(table);
 

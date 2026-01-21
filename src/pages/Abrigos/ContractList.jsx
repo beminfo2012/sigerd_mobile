@@ -82,10 +82,11 @@ const ContractList = () => {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     </div>
                 ) : contracts.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-200">
-                        <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                        <h3 className="text-lg font-medium text-slate-700">Nenhum contrato registrado</h3>
-                        <p className="text-slate-500 mt-1">Clique em "Novo Contrato" para adicionar.</p>
+                    <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+                        <FileText className="w-12 h-12 text-slate-300 mb-3" />
+                        <h3 className="text-lg font-medium text-slate-900">Nenhum contrato registrado</h3>
+                        <p className="text-slate-500 text-sm mb-4">Clique em "Novo Contrato" para adicionar.</p>
+                        <p className="text-xs text-slate-300 mt-2">Versão local: {contracts.length} registros</p>
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
