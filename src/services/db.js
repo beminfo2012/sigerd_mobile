@@ -631,6 +631,33 @@ export const addContract = async (contractData) => {
     return id;
 }
 
+export const getContract = async (id) => {
+    const db = await initDB();
+    // Support numeric ID (manual) or string ID (seeded/uuid)
+    return db.getAll('emergency_contracts').then(all =>
+        all.find(c => c.id == id || c.contract_id === id)
+    );
+}
+
+export const updateContract = async (id, updates) => {
+    const db = await initDB();
+    const tx = db.transaction('emergency_contracts', 'readwrite');
+    const store = tx.objectStore('emergency_contracts');
+
+    // Find record by multiple possible IDs
+    const all = await store.getAll();
+    const record = all.find(c => c.id == id || c.contract_id === id);
+
+    if (record) {
+        const updatedRecord = { ...record, ...updates, synced: false, updated_at: new Date().toISOString() };
+        await store.put(updatedRecord);
+        await tx.done;
+        triggerSync();
+        return true;
+    }
+    return false;
+}
+
 export const deleteContract = async (id) => {
     const db = await initDB();
     // Support both ID types

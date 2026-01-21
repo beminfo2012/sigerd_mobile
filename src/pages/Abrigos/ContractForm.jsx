@@ -1,20 +1,56 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+```javascript
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useFormMask } from '../../hooks/useFormMask';
 import { Button } from '../../components/ui/Button';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
-import { addContract } from '../../services/db';
-import { toast } from 'react-hot-toast';
+import { Card } from '../../components/ui/Card';
+import { ArrowLeft, Save } from 'lucide-react';
+import { addContract, getContract, updateContract } from '../../services/db';
+import toast from 'react-hot-toast';
 
 const ContractForm = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         contract_number: '',
         object_description: '',
         start_date: '',
         end_date: '',
-        total_value: ''
+        total_value: '',
+        status: 'active'
     });
+
+    useEffect(() => {
+        if (id) {
+            loadData();
+        }
+    }, [id]);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const data = await getContract(id);
+            if (data) {
+                setFormData({
+                    contract_number: data.contract_number,
+                    object_description: data.object_description,
+                    start_date: data.start_date,
+                    end_date: data.end_date,
+                    total_value: data.total_value, // Keep as raw number or string? Inputs usually string.
+                    status: data.status
+                });
+            } else {
+                toast.error('Contrato não encontrado');
+                navigate('/abrigos/contratos');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Erro ao carregar dados');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -42,11 +78,18 @@ const ContractForm = () => {
         }
 
         try {
-            await addContract({
+            const payload = {
                 ...formData,
                 total_value: parseFloat(formData.total_value)
-            });
-            toast.success('Contrato salvo com sucesso!');
+            };
+
+            if (id) {
+                await updateContract(id, payload);
+                toast.success('Contrato atualizado!');
+            } else {
+                await addContract(payload);
+                toast.success('Contrato salvo!');
+            }
             navigate('/abrigos/contratos');
         } catch (error) {
             console.error('Error saving contract:', error);
@@ -63,7 +106,9 @@ const ContractForm = () => {
                     <Button variant="ghost" size="icon" onClick={() => navigate('/abrigos/contratos')} className="hover:bg-slate-100 rounded-full">
                         <ArrowLeft className="w-6 h-6 text-slate-700" />
                     </Button>
-                    <h1 className="text-xl font-bold text-slate-800">Novo Contrato</h1>
+                    <h1 className="text-xl font-bold text-slate-800">
+                        {id ? 'Editar Contrato' : 'Novo Contrato'}
+                    </h1>
                 </div>
             </header>
 

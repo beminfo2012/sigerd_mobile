@@ -352,6 +352,11 @@ function App() {
                                         <ContractForm />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/abrigos/contratos/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ContractForm />
+                                    </ProtectedRoute>
+                                } />
 
                                 {/* Catch-all routes to prevent blank screens */}
                                 <Route path="/login" element={<Navigate to="/" replace />} />

@@ -99,16 +99,24 @@ const ContractList = () => {
                         {contracts.map(contract => (
                             <Card key={contract.id} className="hover:shadow-md transition-shadow duration-200 border-l-4 border-l-blue-500">
                                 <div className="p-4">
-                                    <div className="flex justify-between items-start mb-3">
+                                    <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-sm">
-                                                {contract.contract_number}
-                                            </span>
-                                            <h3 className="text-lg font-bold text-slate-800 mt-1">{contract.object_description}</h3>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">
+                                                    {contract.contract_number}
+                                                </span>
+                                                {getStatusBadge(contract)}
+                                            </div>
+                                            <h3 className="text-lg font-bold text-slate-900">{contract.object_description}</h3>
                                         </div>
-                                        <div className={`p-1 rounded-full ${getStatusColor(contract.end_date)}`}>
-                                            <CheckCircle className="w-5 h-5" />
-                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                                            onClick={() => navigate(`/abrigos/contratos/editar/${contract.contract_id || contract.id}`)}
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </Button>
                                     </div>
 
                                     <div className="space-y-2 text-sm text-slate-600">
