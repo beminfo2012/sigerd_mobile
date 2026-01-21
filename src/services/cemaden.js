@@ -7,11 +7,11 @@
 const MUNICIPIO_IBGE = '3204559';
 const API_BASE = 'https://sws.cemaden.gov.br/PED/rest';
 
-// Mapping station codes to human-readable names used in SIGERD
-const STATION_NAMES = {
-    '320455902A': 'Vila de Jetibá',
-    '320455901A': 'Alto Rio Possmoser',
-    '320455903A': 'São Luis'
+// Metadata for stations including human-readable names and coordinates
+const STATION_METADATA = {
+    '320455902A': { name: 'Vila de Jetibá', lat: -19.974, lon: -40.697 },
+    '320455901A': { name: 'Alto Rio Possmoser', lat: -19.912, lon: -40.735 },
+    '320455903A': { name: 'São Luis', lat: -20.015, lon: -40.758 }
 };
 
 export const cemadenService = {
@@ -34,14 +34,19 @@ export const cemadenService = {
             const data = await response.json();
 
             // Normalize data for SIGERD UI
-            return data.map(station => ({
-                id: station.codestacao,
-                name: STATION_NAMES[station.codestacao] || station.nomeestacao || 'Estação Cemaden',
-                rain: `${station.acum24h || 0}mm`,
-                rainRaw: station.acum24h || 0,
-                level: this.calculateLevel(station.acum24h || 0),
-                updated: station.datahora || new Date().toISOString()
-            }));
+            return data.map(station => {
+                const metadata = STATION_METADATA[station.codestacao] || {};
+                return {
+                    id: station.codestacao,
+                    name: metadata.name || station.nomeestacao || 'Estação Cemaden',
+                    lat: metadata.lat || null,
+                    lon: metadata.lon || null,
+                    rain: `${station.acum24h || 0}mm`,
+                    rainRaw: station.acum24h || 0,
+                    level: this.calculateLevel(station.acum24h || 0),
+                    updated: station.datahora || new Date().toISOString()
+                };
+            });
 
         } catch (error) {
             console.warn('[Cemaden] Error fetching rainfall:', error);
