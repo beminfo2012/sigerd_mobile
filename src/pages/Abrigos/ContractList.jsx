@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { ArrowLeft, Plus, FileText, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, AlertCircle, CheckCircle, RefreshCw, Pencil } from 'lucide-react';
 import { getContracts, triggerSync } from '../../services/db';
 import { shelterSyncService } from '../../services/shelterSyncService';
 
@@ -48,6 +48,33 @@ const ContractList = () => {
         if (end < now) return 'text-red-500 bg-red-50'; // Expired
         if (end < threeMonths) return 'text-amber-500 bg-amber-50'; // Expiring soon
         return 'text-green-500 bg-green-50'; // Active
+    };
+
+    const getStatusBadge = (contract) => {
+        const end = new Date(contract.end_date);
+        const now = new Date();
+        const threeMonths = new Date();
+        threeMonths.setMonth(now.getMonth() + 3);
+
+        if (end < now) {
+            return (
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-full border border-red-100 uppercase">
+                    <AlertCircle size={10} /> Expirado
+                </span>
+            );
+        }
+        if (end < threeMonths) {
+            return (
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-full border border-amber-100 uppercase">
+                    <AlertCircle size={10} /> Vencendo
+                </span>
+            );
+        }
+        return (
+            <span className="flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded-full border border-green-100 uppercase">
+                <CheckCircle size={10} /> Ativo
+            </span>
+        );
     };
 
     const formatCurrency = (val) => {
