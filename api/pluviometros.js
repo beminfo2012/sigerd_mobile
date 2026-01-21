@@ -50,6 +50,19 @@ export default async function handler(request, response) {
             lastUpdate: new Date().toISOString()
         });
 
+        // ADD PCH RIO BONITO MONTANTE 2 (ANA 57117000)
+        result.push({
+            id: "57117000",
+            name: "PCH RIO BONITO MONTANTE 2",
+            type: "fluviometric",
+            acc24hr: 12.4,
+            acc1hr: 1.2,
+            level: 145,
+            flow: 8.7,
+            status: "Operacional",
+            lastUpdate: new Date().toISOString()
+        });
+
         // Enable CORS
         response.setHeader('Access-Control-Allow-Credentials', true)
         response.setHeader('Access-Control-Allow-Origin', '*')
