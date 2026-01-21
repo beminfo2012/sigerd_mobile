@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { initDB } from './db';
 
-const TABLES = ['shelters', 'occupants', 'families', 'donations', 'inventory', 'distributions'];
+const TABLES = ['shelters', 'occupants', 'families', 'donations', 'inventory', 'distributions', 'emergency_contracts'];
 
 export const shelterSyncService = {
     /**

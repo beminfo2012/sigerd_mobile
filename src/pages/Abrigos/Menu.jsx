@@ -147,8 +147,18 @@ export default function ShelterMenu() {
             path: '/abrigos/relatorios',
             color: 'bg-slate-50 text-slate-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social']
+        },
+
+        {
+            title: 'Contratos de Emergência',
+            description: 'Contratos vigentes e suprimentos emergenciais.',
+            icon: FileText,
+            path: '/abrigos/contratos',
+            color: 'bg-amber-50 text-amber-700',
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social']
         }
     ];
+
 
     const filteredItems = menuItems.filter(item =>
         isAdminEmail || item.allowedRoles.includes(userRole)

@@ -31,6 +31,8 @@ import ShelterResidents from './pages/Abrigos/Residents'
 import StockHub from './pages/Abrigos/StockHub'
 import DonationHub from './pages/Abrigos/DonationHub'
 import LogisticsHub from './pages/Abrigos/LogisticsHub'
+import ContractList from './pages/Abrigos/ContractList'
+import ContractForm from './pages/Abrigos/ContractForm'
 
 // User Management Module
 import UserManagement from './pages/UserManagement'
@@ -338,6 +340,16 @@ function App() {
                                 <Route path="/abrigos/residentes" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterResidents />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/contratos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ContractList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/contratos/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ContractForm />
                                     </ProtectedRoute>
                                 } />
 
