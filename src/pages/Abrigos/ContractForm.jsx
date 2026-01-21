@@ -35,7 +35,7 @@ const ContractForm = () => {
                     object_description: data.object_description,
                     start_date: data.start_date,
                     end_date: data.end_date,
-                    total_value: data.total_value, // Keep as raw number or string? Inputs usually string.
+                    total_value: data.total_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
                     status: data.status
                 });
             } else {
@@ -76,9 +76,12 @@ const ContractForm = () => {
         }
 
         try {
+            // Convert "18.250,00" -> 18250.00
+            const cleanValue = parseFloat(formData.total_value.replace(/\./g, '').replace(',', '.'));
+
             const payload = {
                 ...formData,
-                total_value: parseFloat(formData.total_value)
+                total_value: cleanValue
             };
 
             if (id) {
@@ -166,16 +169,25 @@ const ContractForm = () => {
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Valor Total (R$) *</label>
-                        <input
-                            type="number"
-                            name="total_value"
-                            value={formData.total_value}
-                            onChange={handleChange}
-                            placeholder="0.00"
-                            step="0.01"
-                            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                            required
-                        />
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">R$</span>
+                            <input
+                                type="text"
+                                name="total_value"
+                                value={formData.total_value}
+                                onChange={(e) => {
+                                    const raw = e.target.value.replace(/\D/g, '');
+                                    const val = (Number(raw) / 100).toLocaleString('pt-BR', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                                    setFormData(prev => ({ ...prev, total_value: val }));
+                                }}
+                                placeholder="0,00"
+                                className="w-full pl-12 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-slate-800"
+                                required
+                            />
+                        </div>
                     </div>
 
                     <div className="pt-4 flex justify-end">

@@ -604,6 +604,18 @@ export const getContracts = async () => {
         !active.some(existing => existing.contract_number === seed.contract_number)
     );
 
+    // Data Fix: If Filtros (2025-1V6400) exists but has the wrong value (18.25), update it
+    const filtros = active.find(c => c.contract_number === '2025-1V6400');
+    if (filtros && (filtros.total_value === 18.25 || filtros.total_value < 100)) {
+        const tx = db.transaction('emergency_contracts', 'readwrite');
+        const updated = { ...filtros, total_value: 18250.00, synced: false };
+        await tx.store.put(updated);
+        await tx.done;
+        // Update local list for immediate return
+        const idx = active.findIndex(c => c.contract_number === '2025-1V6400');
+        active[idx] = updated;
+    }
+
     if (missingItems.length > 0) {
         const tx = db.transaction('emergency_contracts', 'readwrite');
         for (const item of missingItems) {
