@@ -22,7 +22,8 @@ export const shelterSyncService = {
                 table === 'occupants' ? 'occupant_id' :
                     table === 'donations' ? 'donation_id' :
                         table === 'inventory' ? 'inventory_id' :
-                            table === 'distributions' ? 'distribution_id' : 'id';
+                            table === 'distributions' ? 'distribution_id' :
+                                table === 'emergency_contracts' ? 'contract_id' : 'id';
 
             const { error } = await supabase
                 .from(table)
@@ -101,7 +102,8 @@ export const shelterSyncService = {
                             table === 'occupants' ? 'occupant_id' :
                                 table === 'donations' ? 'donation_id' :
                                     table === 'inventory' ? 'inventory_id' :
-                                        table === 'distributions' ? 'distribution_id' : 'id'; // families might rely on default id?
+                                        table === 'distributions' ? 'distribution_id' :
+                                            table === 'emergency_contracts' ? 'contract_id' : 'id';
 
                         const uniqueId = item[uniqueIdField];
 
