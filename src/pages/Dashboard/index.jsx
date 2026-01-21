@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home, Share2 } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
@@ -604,91 +604,179 @@ const Dashboard = () => {
                                     { label: 'Últimas 96h', hours: 96 },
                                     { label: 'Todo o Período', hours: 0 }
                                 ].map((opt) => (
-                                    <button
-                                        key={opt.hours}
-                                        onClick={async () => {
-                                            setShowReportMenu(false);
-                                            setGeneratingReport(true);
-                                            try {
-                                                // 1. Filter Data by timeframe
-                                                const filteredData = { ...data };
-                                                let timeframeLabel = opt.label;
+                                    <div key={opt.hours} className="border-b border-slate-50 last:border-0">
+                                        <div className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">{opt.label}</div>
+                                        <div className="flex px-2 pb-2 gap-1">
+                                            <button
+                                                onClick={async () => {
+                                                    setShowReportMenu(false);
+                                                    setGeneratingReport(true);
+                                                    try {
+                                                        // 1. Filter Data by timeframe
+                                                        const filteredData = { ...data };
+                                                        let timeframeLabel = opt.label;
 
-                                                if (opt.hours > 0) {
-                                                    const threshold = new Date();
-                                                    threshold.setHours(threshold.getHours() - opt.hours);
+                                                        if (opt.hours > 0) {
+                                                            const threshold = new Date();
+                                                            threshold.setHours(threshold.getHours() - opt.hours);
 
-                                                    // Update locations
-                                                    filteredData.locations = data.locations.filter(l => {
-                                                        const d = new Date(l.date);
-                                                        return d >= threshold;
-                                                    });
+                                                            // Update locations
+                                                            filteredData.locations = data.locations.filter(l => {
+                                                                const d = new Date(l.date);
+                                                                return d >= threshold;
+                                                            });
 
-                                                    // Recalculate breakdown for the selected timeframe
-                                                    const counts = {};
-                                                    filteredData.locations.forEach(l => {
-                                                        const cat = l.risk || 'Outros';
-                                                        counts[cat] = (counts[cat] || 0) + 1;
-                                                    });
+                                                            // Recalculate breakdown for the selected timeframe
+                                                            const counts = {};
+                                                            filteredData.locations.forEach(l => {
+                                                                const cat = l.risk || 'Outros';
+                                                                counts[cat] = (counts[cat] || 0) + 1;
+                                                            });
 
-                                                    const total = filteredData.locations.length;
-                                                    filteredData.breakdown = Object.keys(counts).map((label) => ({
-                                                        label,
-                                                        count: counts[label],
-                                                        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
-                                                    })).sort((a, b) => b.count - a.count);
+                                                            const total = filteredData.locations.length;
+                                                            filteredData.breakdown = Object.keys(counts).map((label) => ({
+                                                                label,
+                                                                count: counts[label],
+                                                                percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                                                            })).sort((a, b) => b.count - a.count);
 
-                                                    // Update stats for report
-                                                    filteredData.stats = {
-                                                        ...data.stats,
-                                                        totalVistorias: total,
-                                                    };
-                                                }
+                                                            // Update stats for report
+                                                            filteredData.stats = {
+                                                                ...data.stats,
+                                                                totalVistorias: total,
+                                                            };
+                                                        }
 
-                                                // 2. Fetch fresh Pluviometer data
-                                                let pluvioData = [];
-                                                try {
-                                                    const res = await fetch('/api/pluviometros');
-                                                    if (res.ok) pluvioData = await res.json();
-                                                } catch (e) {
-                                                    console.warn("Failed to fetch pluvio for report", e);
-                                                }
+                                                        // 2. Fetch fresh Pluviometer data
+                                                        let pluvioData = [];
+                                                        try {
+                                                            const res = await fetch('/api/pluviometros');
+                                                            if (res.ok) pluvioData = await res.json();
+                                                        } catch (e) {
+                                                            console.warn("Failed to fetch pluvio for report", e);
+                                                        }
 
-                                                // 3. Fetch Humanitarian Data (New)
-                                                let humanitarianData = {
-                                                    shelters: [],
-                                                    occupants: [],
-                                                    inventory: []
-                                                };
-                                                try {
-                                                    const [shelters, occupants, inventory] = await Promise.all([
-                                                        getShelters().catch(() => []),
-                                                        getOccupants().catch(() => []),
-                                                        getGlobalInventory().catch(() => [])
-                                                    ]);
-                                                    humanitarianData = { shelters, occupants, inventory };
-                                                } catch (e) {
-                                                    console.warn("Failed to fetch humanitarian data for report", e);
-                                                }
+                                                        // 3. Fetch Humanitarian Data (New)
+                                                        let humanitarianData = {
+                                                            shelters: [],
+                                                            occupants: [],
+                                                            inventory: []
+                                                        };
+                                                        try {
+                                                            const [shelters, occupants, inventory] = await Promise.all([
+                                                                getShelters().catch(() => []),
+                                                                getOccupants().catch(() => []),
+                                                                getGlobalInventory().catch(() => [])
+                                                            ]);
+                                                            humanitarianData = { shelters, occupants, inventory };
+                                                        } catch (e) {
+                                                            console.warn("Failed to fetch humanitarian data for report", e);
+                                                        }
 
-                                                // 4. Capture Map Element
-                                                const mapElement = document.querySelector('.leaflet-container');
+                                                        // 4. Capture Map Element
+                                                        const mapElement = document.querySelector('.leaflet-container');
 
-                                                // 5. Generate PDF
-                                                await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel, humanitarianData);
+                                                        // 5. Generate PDF
+                                                        await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel, humanitarianData, false);
 
-                                            } catch (e) {
-                                                console.error(e);
-                                                alert("Erro ao gerar relatório.");
-                                            } finally {
-                                                setGeneratingReport(false);
-                                            }
-                                        }}
-                                        className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between"
-                                    >
-                                        {opt.label}
-                                        <ChevronRight size={14} className="text-slate-300" />
-                                    </button>
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                        alert("Erro ao gerar relatório.");
+                                                    } finally {
+                                                        setGeneratingReport(false);
+                                                    }
+                                                }}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-blue-50 text-blue-600 py-2 rounded-xl transition-all active:scale-95"
+                                            >
+                                                <FileText size={14} />
+                                                <span className="text-[10px] font-bold uppercase">Abrir</span>
+                                            </button>
+                                            <button
+                                                onClick={async () => {
+                                                    setShowReportMenu(false);
+                                                    setGeneratingReport(true);
+                                                    try {
+                                                        // 1. Filter Data by timeframe
+                                                        const filteredData = { ...data };
+                                                        let timeframeLabel = opt.label;
+
+                                                        if (opt.hours > 0) {
+                                                            const threshold = new Date();
+                                                            threshold.setHours(threshold.getHours() - opt.hours);
+
+                                                            // Update locations
+                                                            filteredData.locations = data.locations.filter(l => {
+                                                                const d = new Date(l.date);
+                                                                return d >= threshold;
+                                                            });
+
+                                                            // Recalculate breakdown for the selected timeframe
+                                                            const counts = {};
+                                                            filteredData.locations.forEach(l => {
+                                                                const cat = l.risk || 'Outros';
+                                                                counts[cat] = (counts[cat] || 0) + 1;
+                                                            });
+
+                                                            const total = filteredData.locations.length;
+                                                            filteredData.breakdown = Object.keys(counts).map((label) => ({
+                                                                label,
+                                                                count: counts[label],
+                                                                percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+                                                            })).sort((a, b) => b.count - a.count);
+
+                                                            // Update stats for report
+                                                            filteredData.stats = {
+                                                                ...data.stats,
+                                                                totalVistorias: total,
+                                                            };
+                                                        }
+
+                                                        // 2. Fetch fresh Pluviometer data
+                                                        let pluvioData = [];
+                                                        try {
+                                                            const res = await fetch('/api/pluviometros');
+                                                            if (res.ok) pluvioData = await res.json();
+                                                        } catch (e) {
+                                                            console.warn("Failed to fetch pluvio for report", e);
+                                                        }
+
+                                                        // 3. Fetch Humanitarian Data (New)
+                                                        let humanitarianData = {
+                                                            shelters: [],
+                                                            occupants: [],
+                                                            inventory: []
+                                                        };
+                                                        try {
+                                                            const [shelters, occupants, inventory] = await Promise.all([
+                                                                getShelters().catch(() => []),
+                                                                getOccupants().catch(() => []),
+                                                                getGlobalInventory().catch(() => [])
+                                                            ]);
+                                                            humanitarianData = { shelters, occupants, inventory };
+                                                        } catch (e) {
+                                                            console.warn("Failed to fetch humanitarian data for report", e);
+                                                        }
+
+                                                        // 4. Capture Map Element
+                                                        const mapElement = document.querySelector('.leaflet-container');
+
+                                                        // 5. Generate PDF
+                                                        await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel, humanitarianData, true);
+
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                        alert("Erro ao compartilhar.");
+                                                    } finally {
+                                                        setGeneratingReport(false);
+                                                    }
+                                                }}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-orange-50 text-orange-600 py-2 rounded-xl transition-all active:scale-95"
+                                            >
+                                                <Share2 size={14} />
+                                                <span className="text-[10px] font-bold uppercase">Enviar</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         )}

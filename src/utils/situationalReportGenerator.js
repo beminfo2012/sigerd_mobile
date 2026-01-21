@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { LOGO_BASE64 } from './logoBase64';
 
-export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período', humanitarianData = null) => {
+export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período', humanitarianData = null, shouldShare = false) => {
     // Create a temporary container for the PDF content
     const container = document.createElement('div');
     container.style.position = 'absolute';
@@ -389,15 +389,37 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
         }
 
         // OPEN PDF IN NATIVE READER / NEW TAB
-        // For mobile devices, we use a Blob URL which most browsers can then pass to the native PDF viewer.
         const blob = pdf.output('blob');
-        const blobURL = URL.createObjectURL(blob);
         const fileName = `Relatorio_Situacional_${new Date().toISOString().split('T')[0]}.pdf`;
 
-        // 1. Force the browser to open it in a new tab (which triggers the PDF viewer)
+        // 1. ATTEMPT NATIVE SHARE (Web Share API)
+        if (shouldShare && navigator.canShare) {
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            if (navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Relatório Situacional - Defesa Civil',
+                        text: `Relatório da Defesa Civil de SMJ - ${timeframeLabel}`
+                    });
+                    return; // Success, exit
+                } catch (shareErr) {
+                    if (shareErr.name !== 'AbortError') {
+                        console.error("Share failed:", shareErr);
+                    } else {
+                        return; // User cancelled, don't fallback to opening
+                    }
+                }
+            }
+        }
+
+        // 2. FALLBACK: OPEN PDF IN NATIVE READER / NEW TAB
+        const blobURL = URL.createObjectURL(blob);
+
+        // Force the browser to open it in a new tab (which triggers the PDF viewer)
         const viewer = window.open(blobURL, '_blank');
 
-        // 2. If blocked or on some Android browsers, also trigger a direct download as fallback
+        // If blocked or on some Android browsers, also trigger a direct download as fallback
         if (!viewer || viewer.closed || typeof viewer.closed === 'undefined') {
             pdf.save(fileName);
         }
