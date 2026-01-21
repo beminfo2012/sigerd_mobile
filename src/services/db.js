@@ -4,22 +4,27 @@ import { supabase } from './supabase'
 const DB_NAME = 'defesa-civil-db'
 const DB_VERSION = 9
 
-// ... (initDB function start)
 
-dbPromise = openDB(DB_NAME, DB_VERSION, {
-    async upgrade(db, oldVersion, newVersion, transaction) {
-        // ... (previous stores)
+let dbPromise = null;
 
-        // VERSION 9: EMERGENCY CONTRACTS
-        if (!db.objectStoreNames.contains('emergency_contracts')) {
-            const contractStore = db.createObjectStore('emergency_contracts', { keyPath: 'id', autoIncrement: true });
-            contractStore.createIndex('contract_id', 'contract_id', { unique: true });
-            contractStore.createIndex('synced', 'synced', { unique: false });
-        }
-    },
+export const initDB = async () => {
+    if (dbPromise) return dbPromise;
 
-});
-return dbPromise;
+    dbPromise = openDB(DB_NAME, DB_VERSION, {
+
+        async upgrade(db, oldVersion, newVersion, transaction) {
+            // ... (previous stores)
+
+            // VERSION 9: EMERGENCY CONTRACTS
+            if (!db.objectStoreNames.contains('emergency_contracts')) {
+                const contractStore = db.createObjectStore('emergency_contracts', { keyPath: 'id', autoIncrement: true });
+                contractStore.createIndex('contract_id', 'contract_id', { unique: true });
+                contractStore.createIndex('synced', 'synced', { unique: false });
+            }
+        },
+
+    });
+    return dbPromise;
 }
 
 
