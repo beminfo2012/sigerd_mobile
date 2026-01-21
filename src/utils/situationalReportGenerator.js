@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { LOGO_BASE64 } from './logoBase64';
 
-export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período') => {
+export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período', humanitarianData = null) => {
     // Create a temporary container for the PDF content
     const container = document.createElement('div');
     container.style.position = 'absolute';
@@ -252,6 +252,55 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                     `;
         })()}
             </div>
+
+            <!-- 6. Humanitarian Assistance (New Integration) -->
+            ${humanitarianData ? `
+                <div style="margin-top: 35px; page-break-inside: avoid;">
+                    <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 20px;">6. Assistência Humanitária</h2>
+                    
+                    <!-- KPIs Section -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 25px;">
+                        <div style="flex: 1; background: #eff6ff; padding: 15px; border-radius: 12px; border: 1px solid #dbeafe; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 900; color: #1e40af;">${humanitarianData.shelters?.length || 0}</div>
+                            <div style="font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px;">Abrigos Ativos</div>
+                        </div>
+                        <div style="flex: 1; background: #f0f9ff; padding: 15px; border-radius: 12px; border: 1px solid #e0f2fe; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 900; color: #0369a1;">${humanitarianData.occupants?.filter(o => o.status !== 'exited').length || 0}</div>
+                            <div style="font-size: 10px; font-weight: 800; color: #0ea5e9; text-transform: uppercase; letter-spacing: 0.5px;">Pessoas Abrigadas</div>
+                        </div>
+                        <div style="flex: 1; background: #fdf2f8; padding: 15px; border-radius: 12px; border: 1px solid #fce7f3; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 900; color: #9d174d;">${humanitarianData.inventory?.length || 0}</div>
+                            <div style="font-size: 10px; font-weight: 800; color: #db2777; text-transform: uppercase; letter-spacing: 0.5px;">Itens em Estoque</div>
+                        </div>
+                    </div>
+
+                    <!-- Top Resources Table -->
+                    <div style="background: #ffffff; border: 1px solid #f1f5f9; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+                        <h3 style="font-size: 12px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Recursos Estratégicos Disponíveis:</h3>
+                        <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f8fafc; text-align: left; color: #64748b;">
+                                    <th style="padding: 8px; border-bottom: 2px solid #e2e8f0; border-top-left-radius: 6px;">Item</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #e2e8f0;">Categoria</th>
+                                    <th style="padding: 8px; border-bottom: 2px solid #e2e8f0; text-align: right; border-top-right-radius: 6px;">Quantidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${humanitarianData.inventory && humanitarianData.inventory.length > 0 ?
+                humanitarianData.inventory.sort((a, b) => b.quantity - a.quantity).slice(0, 5).map(i => `
+                                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                                            <td style="padding: 10px 8px; font-weight: 700; color: #334155;">${i.item_name}</td>
+                                            <td style="padding: 10px 8px; color: #64748b; font-weight: 600;">${i.category || 'Geral'}</td>
+                                            <td style="padding: 10px 8px; text-align: right; font-weight: 900; color: #1e293b;">${i.quantity} <span style="font-size: 9px; color: #94a3b8; font-weight: 600;">${i.unit || 'un'}</span></td>
+                                        </tr>
+                                    `).join('') :
+                '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #94a3b8; font-style: italic;">Nenhum item registrado no inventário central</td></tr>'
+            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : ''}
 
             <!-- Forecast + Signatures Row -->
             <div style="margin-top: 40px; display: flex; gap: 40px; page-break-inside: avoid;">

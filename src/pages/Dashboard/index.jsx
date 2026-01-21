@@ -8,6 +8,7 @@ import HeatmapLayer from '../../components/HeatmapLayer'
 import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService } from '../../services/cemaden'
+import { getShelters, getOccupants, getGlobalInventory } from '../../services/shelterDb'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 
 const Dashboard = () => {
@@ -644,20 +645,28 @@ const Dashboard = () => {
                                                     };
                                                 }
 
-                                                // 2. Fetch fresh Pluviometer data
-                                                let pluvioData = [];
+                                                // 3. Fetch Humanitarian Data (New)
+                                                let humanitarianData = {
+                                                    shelters: [],
+                                                    occupants: [],
+                                                    inventory: []
+                                                };
                                                 try {
-                                                    const res = await fetch('/api/pluviometros');
-                                                    if (res.ok) pluvioData = await res.json();
+                                                    const [shelters, occupants, inventory] = await Promise.all([
+                                                        getShelters().catch(() => []),
+                                                        getOccupants().catch(() => []),
+                                                        getGlobalInventory().catch(() => [])
+                                                    ]);
+                                                    humanitarianData = { shelters, occupants, inventory };
                                                 } catch (e) {
-                                                    console.warn("Failed to fetch pluvio for report", e);
+                                                    console.warn("Failed to fetch humanitarian data for report", e);
                                                 }
 
-                                                // 3. Capture Map Element
+                                                // 4. Capture Map Element
                                                 const mapElement = document.querySelector('.leaflet-container');
 
-                                                // 4. Generate PDF
-                                                await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel);
+                                                // 5. Generate PDF
+                                                await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel, humanitarianData);
 
                                             } catch (e) {
                                                 console.error(e);
