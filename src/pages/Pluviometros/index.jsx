@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity } from 'lucide-react'
 import html2canvas from 'html2canvas'
 
 const Pluviometros = () => {
@@ -169,6 +169,30 @@ const Pluviometros = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {station.type === 'fluviometric' && (
+                                        <div className="mt-4 pt-4 border-t border-slate-50 grid grid-cols-2 gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+                                                    <Waves size={16} />
+                                                </div>
+                                                <div>
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase leading-none">Nível</div>
+                                                    <div className="text-lg font-black text-slate-700 leading-tight">{station.level} <span className="text-[10px] font-medium text-slate-400">cm</span></div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-2 bg-indigo-50 text-indigo-500 rounded-lg">
+                                                    <Activity size={16} />
+                                                </div>
+                                                <div>
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase leading-none">Vazão</div>
+                                                    <div className="text-lg font-black text-slate-700 leading-tight">{station.flow} <span className="text-[10px] font-medium text-slate-400">m³/s</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="mt-3 pt-3 border-t border-gray-50 text-[10px] text-center text-gray-400 uppercase font-bold tracking-widest">
                                         Toque para ver detalhes
                                     </div>
@@ -238,6 +262,31 @@ const Pluviometros = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {selectedStation.type === 'fluviometric' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center">
+                                        <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-blue-500 uppercase tracking-wider mb-2">
+                                            <Waves size={14} />
+                                            Nível
+                                        </div>
+                                        <div className="text-3xl font-black text-slate-700">
+                                            {selectedStation.level}
+                                            <span className="text-sm font-bold text-slate-400 ml-1">cm</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center">
+                                        <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">
+                                            <Activity size={14} />
+                                            Vazão
+                                        </div>
+                                        <div className="text-3xl font-black text-slate-700">
+                                            {selectedStation.flow}
+                                            <span className="text-sm font-bold text-slate-400 ml-1">m³/s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
                                 <h4 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
