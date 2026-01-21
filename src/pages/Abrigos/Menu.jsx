@@ -350,7 +350,7 @@ export default function ShelterMenu() {
                 <div className="text-center pt-8 border-t border-slate-100 mt-8">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full">
                         <Info size={12} className="text-slate-400" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SIGERD Mobile v1.39.0</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SIGERD Mobile v1.40.0</span>
                     </div>
                 </div>
 

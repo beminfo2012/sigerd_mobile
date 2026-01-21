@@ -2,17 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { ArrowLeft, Plus, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import { getContracts } from '../../services/db';
+import { ArrowLeft, Plus, FileText, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { getContracts, triggerSync } from '../../services/db';
 
 const ContractList = () => {
     const navigate = useNavigate();
     const [contracts, setContracts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [syncing, setSyncing] = useState(false);
 
     useEffect(() => {
         loadContracts();
     }, []);
+
+    const handleManualSync = async () => {
+        setSyncing(true);
+        await triggerSync();
+        await loadContracts();
+        setTimeout(() => setSyncing(false), 1000);
+    };
 
     const loadContracts = async () => {
         try {
@@ -49,13 +57,23 @@ const ContractList = () => {
                     </Button>
                     <h1 className="text-xl font-bold text-slate-800">Contratos de Emergência</h1>
                 </div>
-                <Button
-                    onClick={() => navigate('/abrigos/contratos/novo')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-full px-4"
-                >
-                    <Plus className="w-5 h-5 mr-1" />
-                    <span className="hidden md:inline">Novo Contrato</span>
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleManualSync}
+                        className={`rounded-full hover:bg-slate-100 ${syncing ? 'animate-spin text-blue-600' : 'text-slate-600'}`}
+                    >
+                        <RefreshCw className="w-5 h-5" />
+                    </Button>
+                    <Button
+                        onClick={() => navigate('/abrigos/contratos/novo')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-full px-4"
+                    >
+                        <Plus className="w-5 h-5 mr-1" />
+                        <span className="hidden md:inline">Novo Contrato</span>
+                    </Button>
+                </div>
             </header>
 
             <main className="max-w-7xl mx-auto px-4 py-6">
