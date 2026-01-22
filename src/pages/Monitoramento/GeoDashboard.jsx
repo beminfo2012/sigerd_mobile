@@ -97,38 +97,38 @@ const GeoDashboard = () => {
             {/* Header / Controls */}
             <div className="absolute top-3 left-3 right-3 z-[1000] pointer-events-none">
                 <div className="flex flex-col gap-2.5">
-                    <div className="flex justify-between items-center bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl pointer-events-auto border border-white">
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600">
+                    <div className="flex justify-between items-center bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-xl pointer-events-auto border border-white">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-600 flex-shrink-0">
                                 <ArrowLeft size={20} />
                             </button>
-                            <div>
-                                <h1 className="text-sm font-black text-slate-800 uppercase tracking-tight">Monitoramento Estratégico</h1>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Mapa de Calor em Tempo Real</div>
+                            <div className="min-w-0 truncate">
+                                <h1 className="text-[11px] sm:text-sm font-black text-slate-800 uppercase tracking-tight truncate">Monitoramento Estratégico</h1>
+                                <div className="hidden sm:block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Mapa de Calor em Tempo Real</div>
                             </div>
                         </div>
-                        <div className="flex bg-slate-100 p-1 rounded-xl">
+                        <div className="flex bg-slate-100 p-0.5 sm:p-1 rounded-xl flex-shrink-0 ml-2">
                             <button
                                 onClick={() => setShowWaze(!showWaze)}
-                                className={`p-2 rounded-lg transition-all flex items-center gap-2 ${showWaze ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-400'}`}
+                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 ${showWaze ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-400'}`}
                             >
                                 <Car size={16} />
-                                <span className="text-[10px] font-black uppercase">Waze</span>
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase">Waze</span>
                             </button>
                             <div className="w-[1px] bg-slate-200 mx-1 my-1" />
                             <button
                                 onClick={() => setViewMode('heat')}
-                                className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'heat' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}
+                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 ${viewMode === 'heat' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}
                             >
                                 <Flame size={16} />
-                                <span className="text-[10px] font-black uppercase">Calor</span>
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase">Calor</span>
                             </button>
                             <button
                                 onClick={() => setViewMode('points')}
-                                className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'points' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 ${viewMode === 'points' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}
                             >
                                 <MapIcon size={16} />
-                                <span className="text-[10px] font-black uppercase">Pontos</span>
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase">Pontos</span>
                             </button>
                         </div>
                     </div>
