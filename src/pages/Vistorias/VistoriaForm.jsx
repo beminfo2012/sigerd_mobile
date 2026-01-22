@@ -275,8 +275,21 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         }
     }
 
-    const getLocation = () => {
+    const getLocation = async () => {
         if (!navigator.geolocation) return alert("GPS não suportado.")
+
+        // Check permission first (if supported)
+        if (navigator.permissions) {
+            try {
+                const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+                if (permissionStatus.state === 'denied') {
+                    return alert("🚫 Permissão de GPS negada.\n\nVá em Configurações do navegador e permita o acesso à localização para este site.");
+                }
+            } catch (e) {
+                console.warn("Permissions API not fully supported, proceeding with geolocation request:", e);
+            }
+        }
+
         setGettingLoc(true)
         navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -312,7 +325,27 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
                 setGettingLoc(false)
             },
-            () => { setGettingLoc(false); alert("Erro ao obter GPS."); },
+            (error) => {
+                setGettingLoc(false);
+                let errorMsg = "Erro ao obter GPS.";
+
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg = "🚫 Permissão de GPS negada.\n\nVá em Configurações do navegador e permita o acesso à localização para este site.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg = "📡 Posição GPS indisponível.\n\nVerifique se o GPS do dispositivo está ativado e se você está em área aberta.";
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg = "⏱️ Tempo esgotado ao buscar GPS.\n\nTente novamente em área aberta ou aguarde mais tempo para o sinal estabilizar.";
+                        break;
+                    default:
+                        errorMsg = `❌ Erro desconhecido ao obter GPS.\n\nCódigo: ${error.code}\nMensagem: ${error.message}`;
+                }
+
+                alert(errorMsg);
+                console.error("Geolocation error:", error);
+            },
             { enableHighAccuracy: true, timeout: 10000 }
         )
     }
