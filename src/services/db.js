@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 9
+const DB_VERSION = 10
 
 
 let dbPromise = null;
@@ -11,18 +11,49 @@ export const initDB = async () => {
     if (dbPromise) return dbPromise;
 
     dbPromise = openDB(DB_NAME, DB_VERSION, {
-
         async upgrade(db, oldVersion, newVersion, transaction) {
-            // ... (previous stores)
+            // Core Stores
+            if (!db.objectStoreNames.contains('vistorias')) {
+                db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('interdicoes')) {
+                db.createObjectStore('interdicoes', { keyPath: 'id', autoIncrement: true });
+            }
 
-            // VERSION 9: EMERGENCY CONTRACTS
+            // GeoRescue / Cache
+            if (!db.objectStoreNames.contains('installations')) {
+                const installationStore = db.createObjectStore('installations', { keyPath: 'id' });
+                installationStore.createIndex('installation_number', 'installation_number', { unique: true });
+                installationStore.createIndex('uc_core', 'uc_core', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('remote_vistorias_cache')) {
+                db.createObjectStore('remote_vistorias_cache', { keyPath: 'id' });
+            }
+
+            // Humanitarian / Shelter Module
+            if (!db.objectStoreNames.contains('shelters')) {
+                db.createObjectStore('shelters', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('occupants')) {
+                db.createObjectStore('occupants', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('donations')) {
+                db.createObjectStore('donations', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('inventory')) {
+                db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: true });
+            }
+            if (!db.objectStoreNames.contains('distributions')) {
+                db.createObjectStore('distributions', { keyPath: 'id', autoIncrement: true });
+            }
+
+            // Emergency Contracts
             if (!db.objectStoreNames.contains('emergency_contracts')) {
                 const contractStore = db.createObjectStore('emergency_contracts', { keyPath: 'id', autoIncrement: true });
                 contractStore.createIndex('contract_id', 'contract_id', { unique: true });
                 contractStore.createIndex('synced', 'synced', { unique: false });
             }
         },
-
     });
     return dbPromise;
 }
@@ -49,15 +80,9 @@ const base64ToBlob = (base64) => {
 export const saveVistoriaOffline = async (data) => {
     const db = await initDB()
 
-    // Fix: Remove empty vistoriaId to avoid unique index conflicts in IndexedDB
-    const cleanData = { ...data };
-    if (!cleanData.vistoriaId || cleanData.vistoriaId === '') {
-        delete cleanData.vistoriaId;
-    }
-
     const localId = await db.put('vistorias', {
-        ...cleanData,
-        createdAt: cleanData.createdAt || new Date().toISOString(),
+        ...data,
+        createdAt: data.createdAt || data.created_at || new Date().toISOString(),
         synced: false
     })
 
