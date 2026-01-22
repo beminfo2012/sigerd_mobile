@@ -32,6 +32,15 @@ const Dashboard = () => {
                 const pendingDetail = await getPendingSyncCount().catch(() => ({ total: 0 }))
                 setSyncDetail(pendingDetail)
 
+                // [SYNC FIX] Always load local vistorias first to ensure visibility
+                const localVistorias = await getAllVistoriasLocal().catch(err => {
+                    console.error('[Dashboard] Error loading local vistorias:', err);
+                    return [];
+                });
+
+                const unsynced = localVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0);
+                console.log(`[Dashboard] ${unsynced.length} unsynced vistorias found locally`);
+
                 const [dashResult, weatherResult, cemadenResult] = await Promise.all([
                     api.getDashboardData().catch(err => {
                         console.warn('Supabase fetch failed, showing local data only:', err)
@@ -247,6 +256,59 @@ const Dashboard = () => {
                         color: masterPalette[item.label] || item.color || 'bg-slate-300'
                     }));
                 }
+                // MERGE LOGIC: Merge local unsynced vistorias into finalData
+                if (unsynced.length > 0) {
+                    console.log(`[Dashboard] Merging ${unsynced.length} unsynced vistorias into dashboard...`);
+
+                    // Add to stats
+                    finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length;
+
+                    // Add to breakdown
+                    unsynced.forEach(v => {
+                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros';
+                        const existing = finalData.breakdown.find(b => b.label === cat);
+                        if (existing) {
+                            existing.count++;
+                        } else {
+                            finalData.breakdown.push({
+                                label: cat,
+                                count: 1,
+                                percentage: 0,
+                                color: 'bg-slate-400'
+                            });
+                        }
+
+                        // Add to map locations
+                        let lat, lng;
+                        if (v.coordenadas && v.coordenadas.includes(',')) {
+                            const [lt, lg] = v.coordenadas.split(',');
+                            lat = parseFloat(lt);
+                            lng = parseFloat(lg);
+                        } else {
+                            lat = parseFloat(v.latitude);
+                            lng = parseFloat(v.longitude);
+                        }
+
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            finalData.locations.push({
+                                lat,
+                                lng,
+                                risk: cat,
+                                details: (v.subtiposRisco || []).join(', ') || cat,
+                                date: v.created_at || v.data_hora || new Date().toISOString(),
+                                is_local: true // Visual flag for local-only
+                            });
+                        }
+                    });
+
+                    // Recalculate percentages
+                    const totalOccurrences = finalData.breakdown.reduce((acc, b) => acc + b.count, 0);
+                    finalData.breakdown.forEach(b => {
+                        b.percentage = totalOccurrences > 0 ? Math.round((b.count / totalOccurrences) * 100) : 0;
+                    });
+                    finalData.breakdown.sort((a, b) => b.count - a.count);
+                }
+
                 setWeather(weatherResult)
                 setData(finalData)
                 setCemadenAlerts(cemadenResult || [])

@@ -133,6 +133,13 @@ function App() {
     const HUMANITARIAN_FULL_ROLES = [...AGENT_ROLES, 'Assistente Social', 'social'];
 
     const loadUserProfile = async () => {
+        // [OFFLINE FIX] If navigator is offline, skip the server check and use local cache
+        if (!navigator.onLine) {
+            console.log('[App] Offline mode detected, skipping remote profile check');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
@@ -150,18 +157,21 @@ function App() {
                     };
                     setUserProfile(standardizedProfile)
                     localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
-                } else {
-                    console.warn('Profile not found for user:', user.id, error);
-                    // Force a basic role if profile is missing but auth exists
+                } else if (!error) {
+                    // Fallback profile
                     const fallbackProfile = { id: user.id, full_name: user.email, role: 'Agente de Defesa Civil', email: user.email };
                     setUserProfile(fallbackProfile);
                 }
             } else {
                 console.warn('No active auth session found');
-                setIsAuthenticated(false);
+                // Only deslog if we are explicitly online and server says no session
+                if (navigator.onLine) {
+                    setIsAuthenticated(false);
+                }
             }
         } catch (error) {
             console.error('Error loading profile:', error)
+            // [OFFLINE FIX] Do NOT logout on network error
         } finally {
             setIsLoading(false)
         }
@@ -216,7 +226,7 @@ function App() {
                         <header className="mobile-header">
                             <div className="header-logo-area">
                                 <img src="/logo_header.png" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
-                                <h1>SIGERD <span>Mobile</span> <span className="text-[10px] opacity-30 font-light ml-1">v1.44.5-STABLE</span></h1>
+                                <h1>SIGERD <span>Mobile</span> <span className="text-[10px] opacity-30 font-light ml-1">v1.44.6-STABLE</span></h1>
                             </div>
                             <div className="header-user" onClick={handleLogout}>
                                 <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">

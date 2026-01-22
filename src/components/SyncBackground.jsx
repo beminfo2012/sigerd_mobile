@@ -59,8 +59,8 @@ const SyncBackground = () => {
 
         const realtimeChannel = setupRealtime();
 
-        // 4. Periodic check (every 5 minutes) as fallback
-        const interval = setInterval(performSync, 5 * 60 * 1000)
+        // 4. Periodic check (every 1 minute) as fallback
+        const interval = setInterval(performSync, 1 * 60 * 1000)
 
         return () => {
             window.removeEventListener('online', handleOnline)
