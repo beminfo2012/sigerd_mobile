@@ -6,69 +6,38 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/sige
 export const api = {
     async getDashboardData() {
         try {
-            // 1. Load from local cache first (Persistence/Offline)
-            let cachedVistorias = await getRemoteVistoriasCache()
-
-            // 2. Try to fetch only NEW vistorias from Supabase (Incremental Update)
-            let allVistorias = [...cachedVistorias]
+            // 1. Fetch all vistorias from Supabase
+            let vistoriasData = [];
 
             if (navigator.onLine) {
-                try {
-                    let lastCreatedAt = '1970-01-01T00:00:00Z'
-                    if (cachedVistorias.length > 0) {
-                        lastCreatedAt = cachedVistorias.reduce((max, v) =>
-                            (v.created_at || '1970') > max ? (v.created_at || '1970') : max, lastCreatedAt)
-                    }
+                const { data, error } = await supabase
+                    .from('vistorias')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-                    // Fetch records created AFTER our last cached record
-                    let currentOffset = 0
-                    let fetchedBatch = []
-
-                    do {
-                        const { data: batch, error: fetchError } = await supabase
-                            .from('vistorias')
-                            .select('*')
-                            .gt('created_at', lastCreatedAt)
-                            .order('created_at', { ascending: true })
-                            .range(currentOffset, currentOffset + 999);
-
-                        if (fetchError) {
-                            console.error('Supabase fetch error:', fetchError)
-                            break
-                        }
-
-                        if (batch && batch.length > 0) {
-                            fetchedBatch = [...fetchedBatch, ...batch]
-                            currentOffset += batch.length
-                            if (batch.length < 1000) break
-                        } else {
-                            break
-                        }
-                    } while (true)
-
-                    if (fetchedBatch.length > 0) {
-                        await saveRemoteVistoriasCache(fetchedBatch)
-
-                        const mergedMap = new Map()
-                        // Use multiple keys for merging to be robust
-                        allVistorias.forEach(v => {
-                            const key = v.vistoria_id || v.vistoriaId || v.id || (v.coordenadas + v.created_at)
-                            if (key) mergedMap.set(key, v)
-                        })
-                        fetchedBatch.forEach(v => {
-                            const key = v.vistoria_id || v.vistoriaId || v.id || (v.coordenadas + v.created_at)
-                            if (key) mergedMap.set(key, v)
-                        })
-                        allVistorias = Array.from(mergedMap.values())
-                    }
-                } catch (e) {
-                    console.warn('Incremental fetch failed:', e)
+                if (!error && data) {
+                    vistoriasData = data;
+                    // Optional: Update cache if needed, but prioritize fresh data
+                    await saveRemoteVistoriasCache(data).catch(() => { });
+                } else {
+                    console.error('Supabase fetch error, using cache:', error);
+                    vistoriasData = await getRemoteVistoriasCache();
                 }
+            } else {
+                vistoriasData = await getRemoteVistoriasCache();
             }
 
-            // Normalization for charts and maps
-            const vistoriasData = allVistorias;
-            const locations = vistoriasData
+            // Also include local (pending) sync vistorias to avoid "missing" data
+            const localVistorias = await getAllVistoriasLocal().catch(() => []);
+            const pendingVistorias = localVistorias.filter(v => !v.synced);
+
+            // Merge local pending with remote
+            const mergedMap = new Map();
+            vistoriasData.forEach(v => mergedMap.set(v.vistoria_id || v.id, v));
+            pendingVistorias.forEach(v => mergedMap.set(v.vistoriaId || v.id, v));
+            const allData = Array.from(mergedMap.values());
+
+            const locations = allData
                 .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude))
                 .map(v => {
                     let lat, lng;
@@ -97,19 +66,33 @@ export const api = {
                 .filter(loc => loc !== null) || []
 
             // Calculate breakdown by Category
-            const totalReports = vistoriasData.length;
+            const totalReports = allData.length;
             const counts = {};
 
-            vistoriasData.forEach(v => {
-                const cat = v.categoria_risco || 'Outros';
+            allData.forEach(v => {
+                const cat = v.categoria_risco || v.categoriaRisco || 'Outros';
                 counts[cat] = (counts[cat] || 0) + 1;
             });
+
+            const colorPalette = {
+                'Deslizamento': 'bg-orange-500',
+                'Alagamento': 'bg-blue-500',
+                'Inundação': 'bg-cyan-500',
+                'Enxurrada': 'bg-teal-500',
+                'Vendaval': 'bg-gray-500',
+                'Granizo': 'bg-indigo-500',
+                'Incêndio': 'bg-red-500',
+                'Estrutural': 'bg-purple-500',
+                'Outros': 'bg-slate-400'
+            };
+
+            const defaultColors = ['bg-pink-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'];
 
             const breakdown = Object.keys(counts).map((label, idx) => ({
                 label,
                 count: counts[label],
                 percentage: totalReports > 0 ? Math.round((counts[label] / totalReports) * 100) : 0,
-                color: 'bg-blue-500' // Simple fallback color
+                color: colorPalette[label] || defaultColors[idx % defaultColors.length]
             })).sort((a, b) => b.count - a.count);
 
             // Fetch INMET alerts

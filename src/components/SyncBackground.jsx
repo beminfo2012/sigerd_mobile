@@ -37,8 +37,7 @@ const SyncBackground = () => {
 
         window.addEventListener('online', handleOnline)
 
-        // 3. (REMOVED) Set up Realtime Subscriptions - Disabling as requested for stability
-        /*
+        // 3. Set up Realtime Subscriptions
         const setupRealtime = () => {
             if (!navigator.onLine) return null;
 
@@ -59,18 +58,15 @@ const SyncBackground = () => {
         }
 
         const realtimeChannel = setupRealtime();
-        */
 
         // 4. Periodic check (every 5 minutes) as fallback
         const interval = setInterval(performSync, 5 * 60 * 1000)
 
         return () => {
             window.removeEventListener('online', handleOnline)
-            /*
             if (realtimeChannel) {
                 supabase.removeChannel(realtimeChannel);
             }
-            */
             clearInterval(interval)
         }
     }, [])

@@ -30,7 +30,7 @@ const GeoDashboard = () => {
                     getAllVistoriasLocal()
                 ])
 
-                const normalizedLocal = local.filter(v => v.coordenadas && typeof v.coordenadas === 'string' && v.coordenadas.includes(',')).map(v => {
+                const normalizedLocal = local.filter(v => !v.synced && v.coordenadas && typeof v.coordenadas === 'string' && v.coordenadas.includes(',')).map(v => {
                     try {
                         const [lat, lng] = v.coordenadas.split(',').map(n => parseFloat(n.trim()))
                         if (isNaN(lat) || isNaN(lng)) return null
@@ -46,8 +46,15 @@ const GeoDashboard = () => {
                     }
                 }).filter(Boolean)
 
-                // Combine and deduplicate if necessary (simplified here)
-                setVistorias([...remote, ...normalizedLocal])
+                // Deduplicate: If a local point has same date/coords as remote, remote wins
+                const mergedMap = new Map()
+                remote.forEach(r => mergedMap.set(`${r.lat},${r.lng}`, r))
+                normalizedLocal.forEach(l => {
+                    const key = `${l.lat},${l.lng}`
+                    if (!mergedMap.has(key)) mergedMap.set(key, l)
+                })
+
+                setVistorias(Array.from(mergedMap.values()))
             } catch (error) {
                 console.error('Error loading geo data:', error)
             } finally {
