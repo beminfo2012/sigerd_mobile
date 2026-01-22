@@ -192,10 +192,12 @@ const Login = ({ onLogin }) => {
                 {/* Footer */}
                 <div style={{
                     marginTop: '30px',
-                    fontSize: '12px',
-                    color: '#999'
+                    fontSize: '10px',
+                    color: '#999',
+                    textAlign: 'center'
                 }}>
-                    <p>© 2024 Defesa Civil de Santa Maria de Jetibá</p>
+                    <p>© 2024-2026 Defesa Civil de Santa Maria de Jetibá</p>
+                    <p style={{ fontWeight: 'bold', marginTop: '5px', color: '#2a5299' }}>SIGERD MOBILE v1.43.0-LIVE</p>
                 </div>
             </div>
 
