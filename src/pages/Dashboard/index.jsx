@@ -57,11 +57,6 @@ const Dashboard = () => {
                     alerts: []
                 }
 
-                const localVistorias = await getAllVistoriasLocal().catch(err => {
-                    console.error('[Dashboard] Error loading local vistorias:', err);
-                    return [];
-                });
-
                 // Filter out any corrupted vistorias that might crash the app
                 const validVistorias = localVistorias.filter(v => {
                     try {
