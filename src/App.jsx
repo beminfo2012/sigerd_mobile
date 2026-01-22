@@ -2,6 +2,7 @@ import React, { useState, useEffect, createContext } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
+import { notificationService } from './services/notificationService'
 
 // Components
 import Dashboard from './pages/Dashboard'
@@ -119,6 +120,8 @@ function App() {
         if (auth === 'true') {
             setIsAuthenticated(true)
             loadUserProfile()
+            // Request notification permission if not already granted
+            notificationService.requestPermission();
         } else {
             setIsLoading(false)
         }
