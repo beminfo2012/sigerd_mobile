@@ -78,17 +78,29 @@ const VistoriaList = ({ onNew, onEdit }) => {
         }
     }
 
-    const handleDelete = async (id, e) => {
+    const handleDelete = async (vistoria, e) => {
         e.stopPropagation()
+        const id = vistoria.id
+        const supabaseId = vistoria.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null)
+
         if (window.confirm('Tem certeza que deseja excluir esta vistoria?')) {
-            const { error } = await supabase.from('vistorias').delete().eq('id', id)
+            let error = null
+
+            // 1. If it has a Supabase ID, try to delete from cloud
+            if (supabaseId) {
+                const { error: remoteError } = await supabase.from('vistorias').delete().eq('id', supabaseId)
+                error = remoteError
+            }
+
+            // 2. If no remote error (success or wasn't in cloud), delete locally
             if (!error) {
                 await deleteVistoriaLocal(id)
                 setVistorias(prev => prev.filter(v => v.id !== id))
                 // Dispatch event to notify forms to recalculate next ID
                 window.dispatchEvent(new CustomEvent('vistoria-deleted'))
             } else {
-                alert('Erro ao excluir.')
+                console.error('Delete error:', error)
+                alert('Erro ao excluir do servidor. Verifique sua conexão.')
             }
         }
     }
@@ -304,7 +316,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                     <Share size={18} />
                                 </button>
                                 <button
-                                    onClick={(e) => handleDelete(vistoria.id, e)}
+                                    onClick={(e) => handleDelete(vistoria, e)}
                                     className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                 >
                                     <Trash2 size={18} />
