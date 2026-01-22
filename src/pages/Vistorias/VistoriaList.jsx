@@ -18,6 +18,14 @@ const VistoriaList = ({ onNew, onEdit }) => {
 
     useEffect(() => {
         fetchVistorias()
+
+        // [SYNC FIX] Refresh list when background sync completes
+        const handleSyncComplete = (e) => {
+            console.log('[VistoriaList] Sync complete event received, refreshing list...', e.detail);
+            fetchVistorias();
+        }
+        window.addEventListener('sync-complete', handleSyncComplete);
+        return () => window.removeEventListener('sync-complete', handleSyncComplete);
     }, [])
 
     const fetchVistorias = async () => {
@@ -32,24 +40,27 @@ const VistoriaList = ({ onNew, onEdit }) => {
             // 2. Fetch from Local
             const localData = await getAllVistoriasLocal().catch(() => [])
 
-            // 3. Merge and De-duplicate
+            // 3. Merge and De-duplicate [FIXED]
             const merged = [...(cloudData || [])]
 
-            // Add local items that aren't in cloud yet (unsynced)
             localData.forEach(localItem => {
+                const vid = localItem.vistoriaId || localItem.vistoria_id;
+
+                // [FIX] More robust matching: Check UUIDs AND Vistoria IDs
                 const alreadyInCloud = merged.some(c =>
-                    (c.vistoria_id === localItem.vistoriaId && c.vistoria_id) ||
-                    (c.id === localItem.id)
+                    (vid && c.vistoria_id === vid) ||
+                    (localItem.id && c.id === localItem.id) ||
+                    (localItem.supabase_id && c.id === localItem.supabase_id)
                 )
 
                 if (!alreadyInCloud) {
                     merged.push({
                         ...localItem,
-                        id: localItem.id, // Keep local ID
-                        vistoria_id: localItem.vistoriaId,
-                        created_at: localItem.createdAt || new Date().toISOString(),
+                        id: localItem.id,
+                        vistoria_id: vid,
+                        created_at: localItem.createdAt || localItem.created_at || new Date().toISOString(),
                         isLocal: true,
-                        synced: localItem.synced
+                        synced: localItem.synced === true || localItem.synced === 1
                     })
                 }
             })
