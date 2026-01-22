@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 10
+const DB_VERSION = 11
 
 
 let dbPromise = null;
@@ -12,12 +12,29 @@ export const initDB = async () => {
 
     dbPromise = openDB(DB_NAME, DB_VERSION, {
         async upgrade(db, oldVersion, newVersion, transaction) {
+            // Helper to ensure index exists safely during manual upgrades or version bumps
+            const ensureSyncedIndex = (storeName) => {
+                if (db.objectStoreNames.contains(storeName)) {
+                    const store = transaction.objectStore(storeName);
+                    if (!store.indexNames.contains('synced')) {
+                        store.createIndex('synced', 'synced', { unique: false });
+                    }
+                }
+            };
+
             // Core Stores
             if (!db.objectStoreNames.contains('vistorias')) {
-                db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true });
+                const store = db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('synced', 'synced', { unique: false });
+            } else {
+                ensureSyncedIndex('vistorias');
             }
+
             if (!db.objectStoreNames.contains('interdicoes')) {
-                db.createObjectStore('interdicoes', { keyPath: 'id', autoIncrement: true });
+                const store = db.createObjectStore('interdicoes', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('synced', 'synced', { unique: false });
+            } else {
+                ensureSyncedIndex('interdicoes');
             }
 
             // GeoRescue / Cache
@@ -31,27 +48,23 @@ export const initDB = async () => {
             }
 
             // Humanitarian / Shelter Module
-            if (!db.objectStoreNames.contains('shelters')) {
-                db.createObjectStore('shelters', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('occupants')) {
-                db.createObjectStore('occupants', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('donations')) {
-                db.createObjectStore('donations', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('inventory')) {
-                db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('distributions')) {
-                db.createObjectStore('distributions', { keyPath: 'id', autoIncrement: true });
-            }
+            const shelterStores = ['shelters', 'occupants', 'donations', 'inventory', 'distributions'];
+            shelterStores.forEach(name => {
+                if (!db.objectStoreNames.contains(name)) {
+                    const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
+                    store.createIndex('synced', 'synced', { unique: false });
+                } else {
+                    ensureSyncedIndex(name);
+                }
+            });
 
             // Emergency Contracts
             if (!db.objectStoreNames.contains('emergency_contracts')) {
                 const contractStore = db.createObjectStore('emergency_contracts', { keyPath: 'id', autoIncrement: true });
                 contractStore.createIndex('contract_id', 'contract_id', { unique: true });
                 contractStore.createIndex('synced', 'synced', { unique: false });
+            } else {
+                ensureSyncedIndex('emergency_contracts');
             }
         },
     });
@@ -151,6 +164,7 @@ const syncSingleItem = async (storeName, item, db) => {
         let processedPhotos = []
         // Upload Photos
         if (item.fotos && item.fotos.length > 0) {
+            console.log(`[Sync] Uploading ${item.fotos.length} photos for ${storeName}/${item.id}...`);
             processedPhotos = await Promise.all(item.fotos.map(async (foto) => {
                 if (foto.data && foto.data.startsWith('data:image')) {
                     const blob = base64ToBlob(foto.data)
@@ -198,29 +212,41 @@ const syncSingleItem = async (storeName, item, db) => {
 
         if (storeName === 'vistorias') {
             let officialId = item.vistoriaId || item.vistoria_id
+            const currentYear = new Date().getFullYear();
 
             // If ID is missing (offline record), fetch next sequence from server
-            if (!officialId) {
-                const currentYear = new Date().getFullYear();
-                const { data: maxData } = await supabase
-                    .from('vistorias')
-                    .select('vistoria_id')
-                    .filter('vistoria_id', 'like', `%/${currentYear}`)
-                    .order('vistoria_id', { ascending: false })
-                    .limit(1);
+            const { data: maxData, error: maxError } = await supabase
+                .from('vistorias')
+                .select('vistoria_id')
+                .filter('vistoria_id', 'like', `%/${currentYear}`)
+                .order('vistoria_id', { ascending: false })
+                .limit(1);
 
-                let maxNum = 0;
-                if (maxData && maxData.length > 0) {
-                    const lastId = maxData[0].vistoria_id;
-                    const num = parseInt(lastId.split('/')[0]);
-                    if (!isNaN(num)) maxNum = num;
-                }
-                officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
-                console.log(`[Sync] Assigned new Vistoria ID: ${officialId}`);
+            if (maxError) {
+                console.error(`[Sync] Error fetching max sequence for vistorias:`, maxError);
             }
 
+            let maxNum = 0;
+            if (maxData && maxData.length > 0) {
+                const lastId = maxData[0].vistoria_id;
+                const num = parseInt(lastId.split('/')[0]);
+                if (!isNaN(num)) maxNum = num;
+            } else {
+                // Safety check local data too if remote didn't find anything or failed
+                const localItems = await db.getAll('vistorias');
+                localItems.forEach(vi => {
+                    const vid = vi.vistoriaId || vi.vistoria_id;
+                    if (vid && vid.includes(`/${currentYear}`)) {
+                        const n = parseInt(vid.split('/')[0]);
+                        if (!isNaN(n)) maxNum = Math.max(maxNum, n);
+                    }
+                });
+            }
+            officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
+            console.log(`[Sync] Assigned final Vistoria ID: ${officialId}`);
+
             payload = {
-                vistoria_id: officialId || item.id,
+                vistoria_id: officialId,
                 processo: item.processo || '',
                 agente: item.agente || '',
                 matricula: item.matricula || '',
@@ -250,127 +276,129 @@ const syncSingleItem = async (storeName, item, db) => {
                 apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null,
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
-        } else if (storeName === 'interdicoes') {
-            let officialId = item.interdicaoId || item.interdicao_id
+        }
+    } else if (storeName === 'interdicoes') {
+        let officialId = item.interdicaoId || item.interdicao_id
 
-            if (!officialId) {
-                const currentYear = new Date().getFullYear();
-                const { data: maxData } = await supabase
-                    .from('interdicoes')
-                    .select('interdicao_id')
-                    .filter('interdicao_id', 'like', `%/${currentYear}`)
-                    .order('interdicao_id', { ascending: false })
-                    .limit(1);
+        if (!officialId) {
+            const currentYear = new Date().getFullYear();
+            const { data: maxData } = await supabase
+                .from('interdicoes')
+                .select('interdicao_id')
+                .filter('interdicao_id', 'like', `%/${currentYear}`)
+                .order('interdicao_id', { ascending: false })
+                .limit(1);
 
-                let maxNum = 0;
-                if (maxData && maxData.length > 0) {
-                    const lastId = maxData[0].interdicao_id;
-                    const num = parseInt(lastId.split('/')[0]);
-                    if (!isNaN(num)) maxNum = num;
-                }
-                officialId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`;
-                console.log(`[Sync] Assigned new Interdicao ID: ${officialId}`);
+            let maxNum = 0;
+            if (maxData && maxData.length > 0) {
+                const lastId = maxData[0].interdicao_id;
+                const num = parseInt(lastId.split('/')[0]);
+                if (!isNaN(num)) maxNum = num;
             }
-
-            payload = {
-                interdicao_id: officialId,
-                data_hora: item.dataHora || item.data_hora,
-                tipo_info: item.tipo_info || item.tipoInfo || item.riscoTipo || 'Interdição',
-                municipio: item.municipio,
-                bairro: item.bairro,
-                endereco: item.endereco,
-                tipo_alvo: item.tipoAlvo,
-                tipo_alvo_especificar: item.tipoAlvoEspecificar,
-                latitude: item.latitude,
-                longitude: item.longitude,
-                coordenadas: item.coordenadas,
-                responsavel_nome: item.responsavelNome,
-                responsavel_cpf: item.responsavelCpf,
-                responsavel_telefone: item.responsavelTelefone,
-                responsavel_email: item.responsavelEmail,
-                risco_tipo: item.riscoTipo,
-                risco_grau: item.riscoGrau,
-                situacao_observada: item.situacaoObservada,
-                medida_tipo: item.medidaTipo,
-                medida_prazo: item.medidaPrazo,
-                medida_prazo_data: item.medidaPrazoData,
-                evacuacao_necessaria: item.evacuacaoNecessaria,
-                fotos: processedPhotos,
-                relatorio_tecnico: item.relatorioTecnico,
-                recomendacoes: item.recomendacoes,
-                orgaos_acionados: item.orgaosAcionados,
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
-                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
-            }
-        } else {
-            // Generic payload for shelter module tables (they already match Supabase schema)
-            payload = { ...item };
-            delete payload.id; // Remove local IDBK key
-            delete payload.synced; // Remove sync flag
-            delete payload.supabase_id; // Clean up mapping field if any
-
-            // ID MAPPING: Fix foreign keys for humanitarian module
-            // We must map local integer shelter_id/inventory_id to Supabase UUIDs
-            if (payload.shelter_id && !isNaN(parseInt(payload.shelter_id))) {
-                const shelter = await db.get('shelters', parseInt(payload.shelter_id));
-                if (shelter && shelter.supabase_id) {
-                    payload.shelter_id = shelter.supabase_id;
-                }
-            }
-            if (payload.inventory_id && !isNaN(parseInt(payload.inventory_id))) {
-                const inv = await db.get('inventory', parseInt(payload.inventory_id));
-                if (inv && inv.supabase_id) {
-                    payload.inventory_id = inv.supabase_id;
-                }
-            }
+            officialId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`;
+            console.log(`[Sync] Assigned new Interdicao ID: ${officialId}`);
         }
 
-        const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {
-            onConflict: storeName === 'vistorias' ? 'vistoria_id' :
-                storeName === 'interdicoes' ? 'interdicao_id' :
-                    storeName === 'shelters' ? 'shelter_id' :
-                        storeName === 'occupants' ? 'occupant_id' :
-                            storeName === 'donations' ? 'donation_id' :
-                                storeName === 'inventory' ? 'inventory_id' :
-                                    storeName === 'distributions' ? 'distribution_id' :
-                                        undefined
-        }).select()
-
-        if (error) {
-            console.error(`Supabase Insert Error (${table}):`, error)
-            return false
+        payload = {
+            interdicao_id: officialId,
+            data_hora: item.dataHora || item.data_hora,
+            tipo_info: item.tipo_info || item.tipoInfo || item.riscoTipo || 'Interdição',
+            municipio: item.municipio,
+            bairro: item.bairro,
+            endereco: item.endereco,
+            tipo_alvo: item.tipoAlvo,
+            tipo_alvo_especificar: item.tipoAlvoEspecificar,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            coordenadas: item.coordenadas,
+            responsavel_nome: item.responsavelNome,
+            responsavel_cpf: item.responsavelCpf,
+            responsavel_telefone: item.responsavelTelefone,
+            responsavel_email: item.responsavelEmail,
+            risco_tipo: item.riscoTipo,
+            risco_grau: item.riscoGrau,
+            situacao_observada: item.situacaoObservada,
+            medida_tipo: item.medidaTipo,
+            medida_prazo: item.medidaPrazo,
+            medida_prazo_data: item.medidaPrazoData,
+            evacuacao_necessaria: item.evacuacaoNecessaria,
+            fotos: processedPhotos,
+            relatorio_tecnico: item.relatorioTecnico,
+            recomendacoes: item.recomendacoes,
+            orgaos_acionados: item.orgaosAcionados,
+            assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
+            apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
         }
+    } else {
+        // Generic payload for shelter module tables (they already match Supabase schema)
+        payload = { ...item };
+        delete payload.id; // Remove local IDBK key
+        delete payload.synced; // Remove sync flag
+        delete payload.supabase_id; // Clean up mapping field if any
 
-        const tx = db.transaction(storeName, 'readwrite')
-        const store = tx.objectStore(storeName)
-        const record = await store.get(item.id)
-        if (record) {
-            record.synced = true
-
-            // Capture official Supabase UUID for relations
-            if (syncedItems && syncedItems[0]) {
-                record.supabase_id = syncedItems[0].id;
+        // ID MAPPING: Fix foreign keys for humanitarian module
+        // We must map local integer shelter_id/inventory_id to Supabase UUIDs
+        if (payload.shelter_id && !isNaN(parseInt(payload.shelter_id))) {
+            const shelter = await db.get('shelters', parseInt(payload.shelter_id));
+            if (shelter && shelter.supabase_id) {
+                payload.shelter_id = shelter.supabase_id;
             }
-
-            // Update the local record with the official ID assigned by the server if applicable
-            if (storeName === 'vistorias') {
-                const officialId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
-                record.vistoriaId = officialId;
-                record.vistoria_id = officialId;
-            } else if (storeName === 'interdicoes') {
-                const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
-                record.interdicaoId = officialId;
-                record.interdicao_id = officialId;
-            }
-            await store.put(record)
         }
-        await tx.done
-        console.log(`[Sync] Successfully synced ${storeName} item: ${officialId || item.id}`);
-        return true
-    } catch (e) {
-        console.error(`[Sync] Critical failure for ${storeName}:`, e)
+        if (payload.inventory_id && !isNaN(parseInt(payload.inventory_id))) {
+            const inv = await db.get('inventory', parseInt(payload.inventory_id));
+            if (inv && inv.supabase_id) {
+                payload.inventory_id = inv.supabase_id;
+            }
+        }
+    }
+
+    console.log(`[Sync] Upserting to Supabase table '${table}'...`, payload);
+    const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {
+        onConflict: storeName === 'vistorias' ? 'vistoria_id' :
+            storeName === 'interdicoes' ? 'interdicao_id' :
+                storeName === 'shelters' ? 'shelter_id' :
+                    storeName === 'occupants' ? 'occupant_id' :
+                        storeName === 'donations' ? 'donation_id' :
+                            storeName === 'inventory' ? 'inventory_id' :
+                                storeName === 'distributions' ? 'distribution_id' :
+                                    undefined
+    }).select()
+
+    if (error) {
+        console.error(`[Sync] Supabase Upsert Error (${table}):`, error)
         return false
     }
+
+    const tx = db.transaction(storeName, 'readwrite')
+    const store = tx.objectStore(storeName)
+    const record = await store.get(item.id)
+    if (record) {
+        record.synced = true
+
+        // Capture official Supabase UUID for relations
+        if (syncedItems && syncedItems[0]) {
+            record.supabase_id = syncedItems[0].id;
+        }
+
+        // Update the local record with the official ID assigned by the server if applicable
+        if (storeName === 'vistorias') {
+            const officialId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
+            record.vistoriaId = officialId;
+            record.vistoria_id = officialId;
+        } else if (storeName === 'interdicoes') {
+            const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
+            record.interdicaoId = officialId;
+            record.interdicao_id = officialId;
+        }
+        await store.put(record)
+    }
+    await tx.done
+    console.log(`[Sync] Successfully synced ${storeName} item: ${officialId || item.id}`);
+    return true
+} catch (e) {
+    console.error(`[Sync] Critical failure for ${storeName}:`, e)
+    return false
+}
 }
 
 // Global sync trigger for immediate use (with Debounce to prevent overload)
