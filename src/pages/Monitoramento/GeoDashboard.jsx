@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
-import { ArrowLeft, Filter, Flame, Map as MapIcon, Layers, Calendar, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Filter, Flame, Map as MapIcon, Layers, Calendar, AlertTriangle, Car, ExternalLink } from 'lucide-react'
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, Polyline, Marker } from 'react-leaflet'
+import { wazeService } from '../../services/wazeService'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { api } from '../../services/api'
@@ -18,6 +19,8 @@ const GeoDashboard = () => {
     const [viewMode, setViewMode] = useState('heat') // 'heat' or 'points'
     const [filterCategory, setFilterCategory] = useState('all')
     const [filterTime, setFilterTime] = useState('all') // '24h', '48h', 'all'
+    const [showWaze, setShowWaze] = useState(false)
+    const [wazeData, setWazeData] = useState({ alerts: [], jams: [] })
 
     useEffect(() => {
         const loadData = async () => {
@@ -52,6 +55,15 @@ const GeoDashboard = () => {
             }
         }
         loadData()
+
+        const loadWaze = async () => {
+            const data = await wazeService.getIncidents();
+            setWazeData(data);
+        };
+        loadWaze();
+        const wazeInterval = setInterval(loadWaze, 5 * 60 * 1000); // Update every 5 min
+
+        return () => clearInterval(wazeInterval);
     }, [])
 
     const filteredPoints = useMemo(() => {
@@ -96,6 +108,14 @@ const GeoDashboard = () => {
                             </div>
                         </div>
                         <div className="flex bg-slate-100 p-1 rounded-xl">
+                            <button
+                                onClick={() => setShowWaze(!showWaze)}
+                                className={`p-2 rounded-lg transition-all flex items-center gap-2 ${showWaze ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-400'}`}
+                            >
+                                <Car size={16} />
+                                <span className="text-[10px] font-black uppercase">Waze</span>
+                            </button>
+                            <div className="w-[1px] bg-slate-200 mx-1 my-1" />
                             <button
                                 onClick={() => setViewMode('heat')}
                                 className={`p-2 rounded-lg transition-all flex items-center gap-2 ${viewMode === 'heat' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}
@@ -158,10 +178,23 @@ const GeoDashboard = () => {
                         </div>
                         <div>
                             <div className="text-xl font-black text-white leading-none">{filteredPoints.length}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Mapeadas</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Registros</div>
                         </div>
                     </div>
-                    {filteredPoints.length > 5 && (
+
+                    {showWaze && wazeData.alerts.length > 0 && (
+                        <div className="flex items-center gap-3 border-l border-white/10 pl-4 h-full">
+                            <div className="bg-orange-500/20 w-11 h-11 rounded-2xl flex items-center justify-center text-orange-400">
+                                <Car size={22} />
+                            </div>
+                            <div>
+                                <div className="text-xl font-black text-white leading-none">{wazeData.alerts.length}</div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Acidentes/Hazard</div>
+                            </div>
+                        </div>
+                    )}
+
+                    {!showWaze && filteredPoints.length > 5 && (
                         <div className="bg-red-500/10 px-3 py-1.5 rounded-2xl border border-red-500/20 flex items-center gap-2">
                             <Flame size={18} className="text-red-500 animate-pulse" />
                             <div className="text-left">
@@ -215,6 +248,60 @@ const GeoDashboard = () => {
                             </Popup>
                         </CircleMarker>
                     ))}
+
+                    {/* Waze Layers */}
+                    {showWaze && (
+                        <>
+                            {wazeData.jams.map(jam => (
+                                <Polyline
+                                    key={jam.id}
+                                    positions={jam.path}
+                                    pathOptions={{
+                                        color: jam.level >= 4 ? '#ef4444' : '#f59e0b',
+                                        weight: 6,
+                                        opacity: 0.6,
+                                        lineCap: 'round'
+                                    }}
+                                />
+                            ))}
+
+                            {wazeData.alerts.map(alert => (
+                                <Marker
+                                    key={alert.id}
+                                    position={[alert.lat, alert.lng]}
+                                    icon={L.divIcon({
+                                        className: 'waze-icon',
+                                        html: `
+                                            <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow-lg ${alert.type === 'ACCIDENT' ? 'bg-red-500' : 'bg-orange-500'}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                            </div>
+                                        `
+                                    })}
+                                >
+                                    <Popup>
+                                        <div className="p-1">
+                                            <div className="text-xs font-black text-slate-900 uppercase tracking-widest mb-1">
+                                                Waze: {alert.type === 'ACCIDENT' ? 'Acidente' : 'Perigo na Via'}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 font-bold mb-2">{alert.description}</div>
+                                            <div className="flex items-center justify-between text-[9px] font-black text-slate-400 bg-slate-50 p-1.5 rounded-md uppercase">
+                                                <span>Confiança: {alert.rating}/5</span>
+                                                <a
+                                                    href={`https://www.waze.com/ul?ll=${alert.lat},${alert.lng}&navigate=yes`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-500 flex items-center gap-1 hover:underline"
+                                                >
+                                                    <ExternalLink size={10} />
+                                                    Abrir Waze
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </Popup>
+                                </Marker>
+                            ))}
+                        </>
+                    )}
                 </MapContainer>
             </div>
 
