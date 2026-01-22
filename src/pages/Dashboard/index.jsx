@@ -251,16 +251,25 @@ const Dashboard = () => {
                         color: masterPalette[item.label] || item.color || 'bg-slate-300'
                     }));
                 }
-                // MERGE LOGIC: Merge local unsynced vistorias into finalData
-                if (unsynced.length > 0) {
-                    console.log(`[Dashboard] Merging ${unsynced.length} unsynced vistorias into dashboard...`);
+                // MERGE LOGIC [FIX]: Show ALL local vistorias not yet present in remote data
+                // This prevents records from "disappearing" while syncing or before remote refreshes
+                if (localVistorias.length > 0) {
+                    console.log(`[Dashboard] Merging local vistorias into dashboard...`);
 
-                    // Add to stats
-                    finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length;
+                    localVistorias.forEach(v => {
+                        const vid = v.vistoriaId || v.vistoria_id;
+                        if (!vid) return;
 
-                    // Add to breakdown
-                    unsynced.forEach(v => {
+                        // Check if already in the remote data by vistoria_id
+                        const alreadyInRemote = finalData.locations.some(loc => loc.id === vid || loc.vistoria_id === vid);
+                        if (alreadyInRemote) return;
+
                         const cat = v.categoriaRisco || v.categoria_risco || 'Outros';
+
+                        // Add to stats
+                        finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + 1;
+
+                        // Add to breakdown
                         const existing = finalData.breakdown.find(b => b.label === cat);
                         if (existing) {
                             existing.count++;
@@ -286,12 +295,15 @@ const Dashboard = () => {
 
                         if (!isNaN(lat) && !isNaN(lng)) {
                             finalData.locations.push({
+                                vistoria_id: vid,
+                                id: vid,
                                 lat,
                                 lng,
                                 risk: cat,
                                 details: (v.subtiposRisco || []).join(', ') || cat,
                                 date: v.created_at || v.data_hora || new Date().toISOString(),
-                                is_local: true // Visual flag for local-only
+                                is_local: true,
+                                synced: v.synced
                             });
                         }
                     });

@@ -214,36 +214,47 @@ const syncSingleItem = async (storeName, item, db) => {
             let officialId = item.vistoriaId || item.vistoria_id
             const currentYear = new Date().getFullYear();
 
-            // If ID is missing (offline record), fetch next sequence from server
-            const { data: maxData, error: maxError } = await supabase
+            // [FIX] Robust Numeric Max ID Fetching
+            // Fetch multiple records to find the TRUE numeric maximum, avoiding string sorting issues
+            const { data: recentData, error: maxError } = await supabase
                 .from('vistorias')
                 .select('vistoria_id')
                 .filter('vistoria_id', 'like', `%/${currentYear}`)
-                .order('vistoria_id', { ascending: false })
-                .limit(1);
+                .order('created_at', { ascending: false })
+                .limit(50);
 
             if (maxError) {
                 console.error(`[Sync] Error fetching max sequence for vistorias:`, maxError);
             }
 
             let maxNum = 0;
-            if (maxData && maxData.length > 0) {
-                const lastId = maxData[0].vistoria_id;
-                const num = parseInt(lastId.split('/')[0]);
-                if (!isNaN(num)) maxNum = num;
-            } else {
-                // Safety check local data too if remote didn't find anything or failed
-                const localItems = await db.getAll('vistorias');
-                localItems.forEach(vi => {
-                    const vid = vi.vistoriaId || vi.vistoria_id;
-                    if (vid && vid.includes(`/${currentYear}`)) {
-                        const n = parseInt(vid.split('/')[0]);
-                        if (!isNaN(n)) maxNum = Math.max(maxNum, n);
+            // Scan remote recent records
+            if (recentData && recentData.length > 0) {
+                recentData.forEach(r => {
+                    if (r.vistoria_id && r.vistoria_id.includes('/')) {
+                        const num = parseInt(r.vistoria_id.split('/')[0]);
+                        if (!isNaN(num)) maxNum = Math.max(maxNum, num);
                     }
                 });
             }
-            officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
-            console.log(`[Sync] Assigned final Vistoria ID: ${officialId}`);
+
+            // [FIX] Safety check local data too (including unsynced and already synced)
+            const localItems = await db.getAll('vistorias');
+            localItems.forEach(vi => {
+                const vid = vi.vistoriaId || vi.vistoria_id;
+                if (vid && vid.includes(`/${currentYear}`)) {
+                    const n = parseInt(vid.split('/')[0]);
+                    if (!isNaN(n)) maxNum = Math.max(maxNum, n);
+                }
+            });
+
+            // If we are assigning a NEW ID (was null), use max+1
+            if (!officialId) {
+                officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
+                console.log(`[Sync] Assigned NEW Vistoria ID: ${officialId} (Max found was ${maxNum})`);
+            } else {
+                console.log(`[Sync] Keeping existing Vistoria ID: ${officialId}`);
+            }
 
             payload = {
                 vistoria_id: officialId,
