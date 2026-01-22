@@ -25,7 +25,6 @@ export const api = {
                     let fetchedBatch = []
 
                     do {
-                        // Use select('*') to be safe with column names
                         const { data: batch, error: fetchError } = await supabase
                             .from('vistorias')
                             .select('*')
@@ -51,13 +50,13 @@ export const api = {
                         await saveRemoteVistoriasCache(fetchedBatch)
 
                         const mergedMap = new Map()
-                        // Use vistoria_id as primary key for merging
+                        // Use multiple keys for merging to be robust
                         allVistorias.forEach(v => {
-                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
+                            const key = v.vistoria_id || v.vistoriaId || v.id || (v.coordenadas + v.created_at)
                             if (key) mergedMap.set(key, v)
                         })
                         fetchedBatch.forEach(v => {
-                            const key = v.vistoria_id || v.id || (v.coordenadas + v.created_at)
+                            const key = v.vistoria_id || v.vistoriaId || v.id || (v.coordenadas + v.created_at)
                             if (key) mergedMap.set(key, v)
                         })
                         allVistorias = Array.from(mergedMap.values())
@@ -67,13 +66,14 @@ export const api = {
                 }
             }
 
+            // Normalization for charts and maps
             const vistoriasData = allVistorias;
             const locations = vistoriasData
-                .filter(v => (v.coordenadas && v.coordenadas.includes(',')) || (v.latitude && v.longitude))
+                .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude))
                 .map(v => {
                     let lat, lng;
-                    if (v.coordenadas && v.coordenadas.includes(',')) {
-                        const parts = v.coordenadas.split(',')
+                    if (v.coordenadas && String(v.coordenadas).includes(',')) {
+                        const parts = String(v.coordenadas).split(',')
                         lat = parseFloat(parts[0])
                         lng = parseFloat(parts[1])
                     } else if (v.latitude && v.longitude) {
@@ -105,29 +105,11 @@ export const api = {
                 counts[cat] = (counts[cat] || 0) + 1;
             });
 
-            // We use total reports for percentage since we are back to 1:1 category mapping
-            const totalOccurrences = totalReports;
-
-            // Color palette for distinct categories
-            const colorPalette = {
-                'Deslizamento': 'bg-orange-500',
-                'Alagamento': 'bg-blue-500',
-                'Inundação': 'bg-cyan-500',
-                'Enxurrada': 'bg-teal-500',
-                'Vendaval': 'bg-gray-500',
-                'Granizo': 'bg-indigo-500',
-                'Incêndio': 'bg-red-500',
-                'Estrutural': 'bg-purple-500',
-                'Outros': 'bg-slate-400'
-            };
-
-            const defaultColors = ['bg-pink-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'];
-
             const breakdown = Object.keys(counts).map((label, idx) => ({
                 label,
                 count: counts[label],
-                percentage: totalOccurrences > 0 ? Math.round((counts[label] / totalOccurrences) * 100) : 0,
-                color: colorPalette[label] || defaultColors[idx % defaultColors.length]
+                percentage: totalReports > 0 ? Math.round((counts[label] / totalReports) * 100) : 0,
+                color: 'bg-blue-500' // Simple fallback color
             })).sort((a, b) => b.count - a.count);
 
             // Fetch INMET alerts
@@ -139,13 +121,12 @@ export const api = {
                     inmetAlerts = Array.isArray(alerts) ? alerts : [];
                 }
             } catch (e) { console.error('INMET fetch error:', e); }
-            const inmetAlertsCount = inmetAlerts.length;
 
             return {
                 stats: {
                     totalVistorias: totalReports,
-                    activeOccurrences: inmetAlertsCount,
-                    inmetAlertsCount
+                    activeOccurrences: inmetAlerts.length,
+                    inmetAlertsCount: inmetAlerts.length
                 },
                 breakdown,
                 locations,

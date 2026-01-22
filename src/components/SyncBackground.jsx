@@ -37,7 +37,8 @@ const SyncBackground = () => {
 
         window.addEventListener('online', handleOnline)
 
-        // 3. Set up Realtime Subscriptions
+        // 3. (REMOVED) Set up Realtime Subscriptions - Disabling as requested for stability
+        /*
         const setupRealtime = () => {
             if (!navigator.onLine) return null;
 
@@ -47,7 +48,6 @@ const SyncBackground = () => {
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vistorias' }, payload => {
                     console.log('[SyncBackground] New Vistoria detected:', payload);
                     notificationService.notifyNewRecord('vistoria', payload.new);
-                    // Optionally trigger a silent refetch to keep local DB fresh
                 })
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'emergency_contracts' }, payload => {
                     console.log('[SyncBackground] New Contract detected:', payload);
@@ -59,15 +59,18 @@ const SyncBackground = () => {
         }
 
         const realtimeChannel = setupRealtime();
+        */
 
         // 4. Periodic check (every 5 minutes) as fallback
         const interval = setInterval(performSync, 5 * 60 * 1000)
 
         return () => {
             window.removeEventListener('online', handleOnline)
+            /*
             if (realtimeChannel) {
                 supabase.removeChannel(realtimeChannel);
             }
+            */
             clearInterval(interval)
         }
     }, [])

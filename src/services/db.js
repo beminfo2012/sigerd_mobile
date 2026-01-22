@@ -49,11 +49,15 @@ const base64ToBlob = (base64) => {
 export const saveVistoriaOffline = async (data) => {
     const db = await initDB()
 
-    // 1. Save to IndexedDB first (keep base64 for offline usage)
-    // Use .put instead of .add to support updates if id exists
+    // Fix: Remove empty vistoriaId to avoid unique index conflicts in IndexedDB
+    const cleanData = { ...data };
+    if (!cleanData.vistoriaId || cleanData.vistoriaId === '') {
+        delete cleanData.vistoriaId;
+    }
+
     const localId = await db.put('vistorias', {
-        ...data,
-        createdAt: data.createdAt || new Date().toISOString(),
+        ...cleanData,
+        createdAt: cleanData.createdAt || new Date().toISOString(),
         synced: false
     })
 
@@ -192,33 +196,34 @@ const syncSingleItem = async (storeName, item, db) => {
 
             payload = {
                 vistoria_id: officialId,
-                processo: item.processo,
-                agente: item.agente,
-                matricula: item.matricula,
-                solicitante: item.solicitante,
-                cpf: item.cpf,
-                telefone: item.telefone,
-                endereco: item.endereco,
-                bairro: item.bairro,
+                processo: item.processo || '',
+                agente: item.agente || '',
+                matricula: item.matricula || '',
+                solicitante: item.solicitante || '',
+                cpf: item.cpf || '',
+                telefone: item.telefone || '',
+                endereco: item.endereco || '',
+                bairro: item.bairro || '',
                 latitude: parseFloat(item.latitude) || null,
                 longitude: parseFloat(item.longitude) || null,
-                coordenadas: item.coordenadas,
-                data_hora: item.dataHora || item.data_hora,
+                coordenadas: item.coordenadas || '',
+                data_hora: item.dataHora || item.data_hora || new Date().toISOString(),
                 tipo_info: item.tipo_info || item.tipoInfo || item.categoriaRisco || 'Vistoria Geral',
-                categoria_risco: item.categoriaRisco,
-                subtipos_risco: item.subtiposRisco,
-                nivel_risco: item.nivelRisco,
-                situacao_observada: item.situacaoObservada,
-                populacao_estimada: item.populacaoEstimada,
-                grupos_vulneraveis: item.gruposVulneraveis,
-                observacoes: item.observacoes,
-                medidas_tomadas: item.medidasTomadas,
-                encaminhamentos: item.encaminhamentos,
+                categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
+                subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (item.subtipos_risco || []),
+                nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
+                situacao_observada: item.situacaoObservada || item.situacao_observada || 'Estabilizado',
+                populacao_estimada: item.populacaoEstimada || item.populacao_estimada || '',
+                grupos_vulneraveis: Array.isArray(item.gruposVulneraveis) ? item.gruposVulneraveis : (item.grupos_vulneraveis || []),
+                observacoes: item.observacoes || '',
+                medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (item.medidas_tomadas || []),
+                encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (item.encaminhamentos || []),
                 fotos: processedPhotos,
-                documentos: item.documentos,
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
-                checklist_respostas: item.checklistRespostas || item.checklist_respostas,
-                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
+                documentos: Array.isArray(item.documentos) ? item.documentos : (item.documentos || []),
+                assinatura_agente: item.assinaturaAgente || item.assinatura_agente || null,
+                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
+                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null,
+                created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
         } else if (storeName === 'interdicoes') {
             let officialId = item.interdicaoId || item.interdicao_id
@@ -335,9 +340,10 @@ const syncSingleItem = async (storeName, item, db) => {
             await store.put(record)
         }
         await tx.done
+        console.log(`[Sync] Successfully synced ${storeName} item: ${officialId || item.id}`);
         return true
     } catch (e) {
-        console.error(`Sync error for ${storeName}:`, e)
+        console.error(`[Sync] Critical failure for ${storeName}:`, e)
         return false
     }
 }

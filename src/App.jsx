@@ -120,8 +120,7 @@ function App() {
         if (auth === 'true') {
             setIsAuthenticated(true)
             loadUserProfile()
-            // Request notification permission if not already granted
-            notificationService.requestPermission();
+            // Notification permission request removed for stability
         } else {
             setIsLoading(false)
         }
