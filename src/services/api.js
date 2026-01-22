@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { getRemoteVistoriasCache, saveRemoteVistoriasCache } from './db'
+import { getRemoteVistoriasCache, saveRemoteVistoriasCache, getAllVistoriasLocal } from './db'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost/sigerd/api'
 

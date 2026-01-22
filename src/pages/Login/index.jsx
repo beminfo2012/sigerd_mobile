@@ -197,7 +197,7 @@ const Login = ({ onLogin }) => {
                     textAlign: 'center'
                 }}>
                     <p>© 2024-2026 Defesa Civil de Santa Maria de Jetibá</p>
-                    <p style={{ fontWeight: 'bold', marginTop: '5px', color: '#dc2626' }}>SIGERD MOBILE v1.44.0-ROLLBACK</p>
+                    <p style={{ fontWeight: 'bold', marginTop: '5px', color: '#2a5299' }}>SIGERD MOBILE v1.44.2-STABLE</p>
                 </div>
             </div>
 
