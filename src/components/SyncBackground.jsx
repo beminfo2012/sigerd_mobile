@@ -10,7 +10,7 @@ const SyncBackground = () => {
 
             try {
                 const pendingCount = await getPendingSyncCount()
-                if (pendingCount > 0) {
+                if (pendingCount.total > 0) {
                     console.log(`[SyncBackground] Starting auto-sync for ${pendingCount} items...`)
                     const result = await syncPendingData()
                     if (result.success && result.count > 0) {

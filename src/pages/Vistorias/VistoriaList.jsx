@@ -45,6 +45,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
 
             localData.forEach(localItem => {
                 const vid = localItem.vistoriaId || localItem.vistoria_id;
+                const isSynced = localItem.synced === true || localItem.synced === 1;
 
                 // [FIX] More robust matching: Check UUIDs AND Vistoria IDs
                 const alreadyInCloud = merged.some(c =>
@@ -53,14 +54,20 @@ const VistoriaList = ({ onNew, onEdit }) => {
                     (localItem.supabase_id && c.id === localItem.supabase_id)
                 )
 
-                if (!alreadyInCloud) {
+                // [DEFINITIVE FIX] Ghost Record Suppression
+                // Only add local item if:
+                // 1. It's NOT in cloud and it's NOT synced (it's new offline data)
+                // 2. OR it's NOT in cloud and we are offline (we trust local cache)
+                const shouldAdd = !alreadyInCloud && (!isSynced || !navigator.onLine);
+
+                if (shouldAdd) {
                     merged.push({
                         ...localItem,
                         id: localItem.id,
                         vistoria_id: vid,
                         created_at: localItem.createdAt || localItem.created_at || new Date().toISOString(),
                         isLocal: true,
-                        synced: localItem.synced === true || localItem.synced === 1
+                        synced: isSynced
                     })
                 }
             })
