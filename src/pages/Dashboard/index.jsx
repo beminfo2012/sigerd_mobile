@@ -11,6 +11,67 @@ import { cemadenService } from '../../services/cemaden'
 import { getShelters, getOccupants, getGlobalInventory } from '../../services/shelterDb'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 
+// Helper functions for Lightning Load
+const processBreakdown = (records) => {
+    const counts = {};
+    records.forEach(v => {
+        const cat = v.categoria_risco || v.categoriaRisco || 'Outros';
+        counts[cat] = (counts[cat] || 0) + 1;
+    });
+
+    const colorPalette = {
+        'Deslizamento': 'bg-orange-500',
+        'Alagamento': 'bg-blue-500',
+        'Inundação': 'bg-cyan-500',
+        'Enxurrada': 'bg-teal-500',
+        'Vendaval': 'bg-gray-500',
+        'Granizo': 'bg-indigo-500',
+        'Incêndio': 'bg-red-500',
+        'Estrutural': 'bg-purple-500',
+        'Outros': 'bg-slate-400'
+    };
+
+    const defaultColors = ['bg-pink-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'];
+    const total = records.length;
+
+    return Object.keys(counts).map((label, idx) => ({
+        label,
+        count: counts[label],
+        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+        color: colorPalette[label] || defaultColors[idx % defaultColors.length]
+    })).sort((a, b) => b.count - a.count);
+};
+
+const processLocations = (records) => {
+    return records
+        .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude))
+        .map(v => {
+            let lat, lng;
+            if (v.coordenadas && String(v.coordenadas).includes(',')) {
+                const parts = String(v.coordenadas).split(',')
+                lat = parseFloat(parts[0])
+                lng = parseFloat(parts[1])
+            } else if (v.latitude && v.longitude) {
+                lat = parseFloat(v.latitude)
+                lng = parseFloat(v.longitude)
+            }
+
+            if (isNaN(lat) || isNaN(lng)) return null
+
+            const subtypes = v.subtipos_risco || v.subtiposRisco || []
+            const category = v.categoria_risco || v.categoriaRisco || 'Outros'
+
+            return {
+                lat,
+                lng,
+                risk: category,
+                details: subtypes.length > 0 ? subtypes.join(', ') : category,
+                date: v.created_at || v.data_hora || new Date().toISOString()
+            }
+        })
+        .filter(loc => loc !== null) || [];
+};
+
 const Dashboard = () => {
     console.log('[Dashboard] Component mounting...');
     const navigate = useNavigate()
@@ -28,302 +89,57 @@ const Dashboard = () => {
         console.log('[Dashboard] useEffect running - starting data load...');
         const load = async () => {
             try {
-                console.log('[Dashboard] Fetching pending sync count...');
-                const pendingDetail = await getPendingSyncCount().catch(() => ({ total: 0 }))
-                setSyncDetail(pendingDetail)
+                // [LIGHTNING LOAD - STEP 1] Load Local/Cached data immediately to show UI
+                console.log('[Dashboard] Lightning Load: Fetching local/cached data...');
+                const [pendingDetail, localVistorias, cachedVistorias] = await Promise.all([
+                    getPendingSyncCount().catch(() => ({ total: 0 })),
+                    getAllVistoriasLocal().catch(() => []),
+                    getRemoteVistoriasCache().catch(() => [])
+                ]);
 
-                // [SYNC FIX] Always load local vistorias first to ensure visibility
-                const localVistorias = await getAllVistoriasLocal().catch(err => {
-                    console.error('[Dashboard] Error loading local vistorias:', err);
-                    return [];
-                });
+                setSyncDetail(pendingDetail);
 
-                const unsynced = localVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0);
-                console.log(`[Dashboard] ${unsynced.length} unsynced vistorias found locally`);
+                // Initial processing with what we have
+                const initialAll = [...cachedVistorias, ...localVistorias];
+                const initialStats = {
+                    totalVistorias: initialAll.length,
+                    activeOccurrences: 0,
+                    inmetAlertsCount: 0
+                };
 
-                // [PERFORMANCE] Load dashboard data first, defer weather/cemaden to background
-                const dashResult = await api.getDashboardData().catch(err => {
-                    console.warn('Supabase fetch failed, showing local data only:', err)
-                    return null
-                })
+                // Process initial breakdown and locations...
+                const initialBreakdown = processBreakdown(initialAll);
+                const initialLocations = processLocations(initialAll);
 
-                let finalData = dashResult || {
-                    stats: { totalVistorias: 0, activeOccurrences: 0, inmetAlertsCount: 0 },
-                    breakdown: [],
-                    locations: [],
+                setData({
+                    stats: initialStats,
+                    breakdown: initialBreakdown,
+                    locations: initialLocations,
                     alerts: []
-                }
-
-                // Filter out any corrupted vistorias that might crash the app
-                const validVistorias = localVistorias.filter(v => {
-                    try {
-                        // Basic validation - must have essential fields
-                        if (!v) return false;
-
-                        // If has coordinates, they must be valid
-                        if (v.coordenadas) {
-                            if (!v.coordenadas.includes(',')) {
-                                console.warn('[Dashboard] Skipping vistoria with invalid coordinates (no comma):', v.vistoriaId || v.id);
-                                return false;
-                            }
-                            const parts = v.coordenadas.split(',');
-                            const lat = parseFloat(parts[0]);
-                            const lng = parseFloat(parts[1]);
-                            if (isNaN(lat) || isNaN(lng)) {
-                                console.warn('[Dashboard] Skipping vistoria with NaN coordinates:', v.vistoriaId || v.id);
-                                return false;
-                            }
-                        }
-
-                        return true;
-                    } catch (err) {
-                        console.error('[Dashboard] Error validating vistoria:', v, err);
-                        return false;
-                    }
                 });
 
-                console.log(`[Dashboard] Loaded ${localVistorias.length} local vistorias, ${validVistorias.length} valid`);
+                // [LIGHTNING LOAD - STEP 2] Release loading screen NOW
+                setLoading(false);
+                console.log('[Dashboard] Lightning Load: Local data displayed. Fetching server updates...');
 
-                if (!dashResult) {
-                    const total = validVistorias.length
-                    const counts = {}
-                    validVistorias.forEach(v => {
-                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
-                        counts[cat] = (counts[cat] || 0) + 1
-                    })
+                // [LIGHTNING LOAD - STEP 3] Fetch fresh data in background
+                api.getDashboardData().then(dashResult => {
+                    if (dashResult) {
+                        console.log('[Dashboard] Lightning Load: Server data received. Updating UI...');
+                        setData(dashResult);
+                    }
+                }).catch(err => console.warn('[Dashboard] Background refresh failed:', err));
 
-                    // Color palette for distinct categories
-                    const colorPalette = {
-                        'Geológico / Geotécnico': 'bg-orange-500',
-                        'Risco Geológico': 'bg-orange-500',
-                        'Hidrológico': 'bg-blue-500',
-                        'Inundação/Alagamento': 'bg-blue-500',
-                        'Estrutural': 'bg-slate-400',
-                        'Estrutural/Predial': 'bg-slate-400',
-                        'Ambiental': 'bg-emerald-500',
-                        'Tecnológico': 'bg-amber-500',
-                        'Climático / Meteorológico': 'bg-sky-500',
-                        'Infraestrutura Urbana': 'bg-indigo-500',
-                        'Sanitário': 'bg-rose-500',
-                        'Outros': 'bg-slate-400',
-                        // Legacy/Simplified keys support
-                        'Deslizamento': 'bg-orange-500',
-                        'Alagamento': 'bg-blue-500',
-                        'Inundação': 'bg-blue-500',
-                        'Enxurrada': 'bg-blue-400',
-                        'Vendaval': 'bg-sky-500',
-                        'Granizo': 'bg-sky-400',
-                        'Incêndio': 'bg-red-500'
-                    };
-                    const defaultColors = ['bg-orange-500', 'bg-blue-500', 'bg-slate-400', 'bg-emerald-500'];
-
-                    const totalOccurrences = total
-                    finalData.stats.totalVistorias = total
-                    finalData.breakdown = Object.keys(counts).map((label, idx) => ({
-                        label,
-                        count: counts[label],
-                        percentage: totalOccurrences > 0 ? Math.round((counts[label] / totalOccurrences) * 100) : 0,
-                        color: colorPalette[label] || defaultColors[idx % defaultColors.length]
-                    })).sort((a, b) => b.count - a.count)
-
-                    finalData.locations = validVistorias
-                        .filter(v => (v.coordenadas && v.coordenadas.includes(',')) || (v.latitude && v.longitude))
-                        .map(v => {
-                            let lat, lng
-                            if (v.coordenadas && v.coordenadas.includes(',')) {
-                                const parts = v.coordenadas.split(',')
-                                lat = parseFloat(parts[0])
-                                lng = parseFloat(parts[1])
-                            } else {
-                                lat = parseFloat(v.latitude)
-                                lng = parseFloat(v.longitude)
-                            }
-
-                            if (isNaN(lat) || isNaN(lng)) return null
-
-                            const cat = v.categoriaRisco || v.categoria_risco || 'Local'
-                            const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                            return {
-                                lat,
-                                lng,
-                                risk: cat,
-                                details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                date: v.created_at || v.data_hora || new Date().toISOString()
-                            }
-                        })
-                        .filter(loc => loc !== null)
-                } else {
-                    const unsynced = validVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
-
-                    unsynced.forEach(v => {
-
-                        let lat, lng
-                        let hasCoords = false
-
-                        if (v.coordenadas && v.coordenadas.includes(',')) {
-                            const parts = v.coordenadas.split(',')
-                            lat = parseFloat(parts[0])
-                            lng = parseFloat(parts[1])
-                            hasCoords = true
-                        } else if (v.latitude && v.longitude) {
-                            lat = parseFloat(v.latitude)
-                            lng = parseFloat(v.longitude)
-                            hasCoords = true
-                        }
-
-                        if (hasCoords && !isNaN(lat) && !isNaN(lng)) {
-                            const cat = v.categoriaRisco || v.categoria_risco || 'Pendente'
-                            const subtypes = v.subtiposRisco || v.subtipos_risco || []
-                            finalData.locations.push({
-                                lat,
-                                lng,
-                                risk: cat,
-                                details: subtypes.length > 0 ? subtypes.join(', ') : cat,
-                                date: v.created_at || v.data_hora || new Date().toISOString()
-                            })
-                        }
-
-                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros'
-                        const existing = finalData.breakdown.find(b => b.label.toLowerCase() === cat.toLowerCase())
-                        if (existing) {
-                            existing.count++
-                        } else {
-                            // Define colorPalette here too for the remote branch
-                            const colorPalette = {
-                                'Geológico / Geotécnico': 'bg-orange-500',
-                                'Risco Geológico': 'bg-orange-500',
-                                'Hidrológico': 'bg-blue-500',
-                                'Inundação/Alagamento': 'bg-blue-500',
-                                'Estrutural': 'bg-slate-400',
-                                'Estrutural/Predial': 'bg-slate-400',
-                                'Ambiental': 'bg-emerald-500',
-                                'Tecnológico': 'bg-amber-500',
-                                'Climático / Meteorológico': 'bg-sky-500',
-                                'Infraestrutura Urbana': 'bg-indigo-500',
-                                'Sanitário': 'bg-rose-500',
-                                'Outros': 'bg-slate-400'
-                            };
-                            finalData.breakdown.push({
-                                label: cat,
-                                count: 1,
-                                percentage: 0,
-                                color: colorPalette[cat] || 'bg-slate-300'
-                            })
-                        }
-                    })
-
-                    finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + unsynced.length
-
-                    const totalOccurrences = finalData.breakdown.reduce((acc, b) => acc + b.count, 0)
-                    finalData.breakdown.forEach(b => {
-                        b.percentage = totalOccurrences > 0 ? Math.round((b.count / totalOccurrences) * 100) : 0
-                    })
-                    finalData.breakdown.sort((a, b) => b.count - a.count)
-                }
-
-                if (finalData.stats.totalVistorias === 0) {
-                    finalData.breakdown = []
-                } else {
-                    // Final Color Enforcement - Overwrite any colors from API
-                    const masterPalette = {
-                        'Geológico / Geotécnico': 'bg-orange-500',
-                        'Risco Geológico': 'bg-orange-500',
-                        'Hidrológico': 'bg-blue-500',
-                        'Inundação': 'bg-blue-500',
-                        'Alagamento': 'bg-blue-500',
-                        'Inundação/Alagamento': 'bg-blue-500',
-                        'Estrutural': 'bg-slate-400',
-                        'Estrutural/Predial': 'bg-slate-400',
-                        'Ambiental': 'bg-emerald-500',
-                        'Tecnológico': 'bg-amber-500',
-                        'Climático / Meteorológico': 'bg-sky-500',
-                        'Infraestrutura Urbana': 'bg-indigo-500',
-                        'Sanitário': 'bg-rose-500',
-                        'Outros': 'bg-slate-400',
-                        'Deslizamento': 'bg-orange-500'
-                    };
-
-                    finalData.breakdown = finalData.breakdown.map(item => ({
-                        ...item,
-                        color: masterPalette[item.label] || item.color || 'bg-slate-300'
-                    }));
-                }
-                // MERGE LOGIC [FIX]: Show ALL local vistorias not yet present in remote data
-                // This prevents records from "disappearing" while syncing or before remote refreshes
-                if (localVistorias.length > 0) {
-                    console.log(`[Dashboard] Merging local vistorias into dashboard...`);
-
-                    localVistorias.forEach(v => {
-                        const vid = v.vistoriaId || v.vistoria_id;
-                        if (!vid) return;
-
-                        // Check if already in the remote data by vistoria_id
-                        const alreadyInRemote = finalData.locations.some(loc => loc.id === vid || loc.vistoria_id === vid);
-                        if (alreadyInRemote) return;
-
-                        const cat = v.categoriaRisco || v.categoria_risco || 'Outros';
-
-                        // Add to stats
-                        finalData.stats.totalVistorias = (finalData.stats.totalVistorias || 0) + 1;
-
-                        // Add to breakdown
-                        const existing = finalData.breakdown.find(b => b.label === cat);
-                        if (existing) {
-                            existing.count++;
-                        } else {
-                            finalData.breakdown.push({
-                                label: cat,
-                                count: 1,
-                                percentage: 0,
-                                color: 'bg-slate-400'
-                            });
-                        }
-
-                        // Add to map locations
-                        let lat, lng;
-                        if (v.coordenadas && v.coordenadas.includes(',')) {
-                            const [lt, lg] = v.coordenadas.split(',');
-                            lat = parseFloat(lt);
-                            lng = parseFloat(lg);
-                        } else {
-                            lat = parseFloat(v.latitude);
-                            lng = parseFloat(v.longitude);
-                        }
-
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            finalData.locations.push({
-                                vistoria_id: vid,
-                                id: vid,
-                                lat,
-                                lng,
-                                risk: cat,
-                                details: (v.subtiposRisco || []).join(', ') || cat,
-                                date: v.created_at || v.data_hora || new Date().toISOString(),
-                                is_local: true,
-                                synced: v.synced
-                            });
-                        }
-                    });
-
-                    // Recalculate percentages
-                    const totalOccurrences = finalData.breakdown.reduce((acc, b) => acc + b.count, 0);
-                    finalData.breakdown.forEach(b => {
-                        b.percentage = totalOccurrences > 0 ? Math.round((b.count / totalOccurrences) * 100) : 0;
-                    });
-                    finalData.breakdown.sort((a, b) => b.count - a.count);
-                }
-
-                setData(finalData)
-                setLoading(false)
-
-                // [PERFORMANCE] Load secondary data in background after UI is visible
+                // [LIGHTNING LOAD - STEP 4] Secondary data also in background
                 Promise.all([
                     fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null),
                     cemadenService.getActiveAlerts().catch(() => [])
                 ]).then(([weatherRes, cemadenRes]) => {
                     if (weatherRes) setWeather(weatherRes)
                     if (cemadenRes) setCemadenAlerts(cemadenRes || [])
-                })
+                });
+
+                return; // Stop here, background promises handle the rest
             } catch (error) {
                 console.error('Load Error:', error)
                 setLoading(false)
