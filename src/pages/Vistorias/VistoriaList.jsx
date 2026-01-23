@@ -155,20 +155,26 @@ const VistoriaList = ({ onNew, onEdit }) => {
             return
         }
 
-        // Generate PDF
+        // Generate PDF first
         await generatePDF(whatsappModal.vistoria, 'vistoria')
 
-        // Open WhatsApp
+        // Prepare WhatsApp link
         const fullNumber = `5527${phone}`
         const vistoriaId = whatsappModal.vistoria.vistoria_id || 'N/A'
         const message = encodeURIComponent(
-            `Olá! Segue o relatório de vistoria ${vistoriaId}. O arquivo PDF foi baixado - basta anexar e enviar.`
+            `Olá! Segue o relatório de vistoria ${vistoriaId}.`
         )
-        window.open(`https://wa.me/${fullNumber}?text=${message}`, '_blank')
+        const whatsappLink = `https://wa.me/${fullNumber}?text=${message}`
 
-        // Close modal
-        setWhatsappModal({ open: false, vistoria: null })
-        setWhatsappPhone('')
+        // Copy link to clipboard
+        try {
+            await navigator.clipboard.writeText(whatsappLink)
+        } catch (e) {
+            console.warn('Clipboard API failed:', e)
+        }
+
+        // Update modal to show instructions
+        setWhatsappModal(prev => ({ ...prev, showInstructions: true, whatsappLink }))
     }
 
     const neighborhoods = [...new Set(vistorias.map(v => v.bairro).filter(Boolean))].sort()
@@ -393,52 +399,116 @@ const VistoriaList = ({ onNew, onEdit }) => {
             {/* WhatsApp Share Modal */}
             {whatsappModal.open && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setWhatsappModal({ open: false, vistoria: null })}>
-                    <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="bg-green-100 p-2 rounded-full">
-                                <MessageCircle className="text-green-600" size={24} />
-                            </div>
-                            <h2 className="text-xl font-black text-gray-800">Compartilhar via WhatsApp</h2>
-                        </div>
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                        {!whatsappModal.showInstructions ? (
+                            <>
+                                {/* Step 1: Phone Input */}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="bg-green-100 p-2 rounded-full">
+                                        <MessageCircle className="text-green-600" size={24} />
+                                    </div>
+                                    <h2 className="text-xl font-black text-gray-800">Compartilhar via WhatsApp</h2>
+                                </div>
 
-                        <p className="text-sm text-gray-600 mb-4">
-                            Digite o número de telefone para compartilhar o relatório da vistoria <span className="font-bold text-[#2a5299]">#{whatsappModal.vistoria?.vistoria_id}</span>
-                        </p>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Digite o número de telefone para compartilhar o relatório da vistoria <span className="font-bold text-[#2a5299]">#{whatsappModal.vistoria?.vistoria_id}</span>
+                                </p>
 
-                        <div className="mb-6">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Número de Telefone</label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-3 text-gray-500 font-bold">(27)</span>
-                                <input
-                                    type="tel"
-                                    inputMode="numeric"
-                                    placeholder="99999-9999"
-                                    className="w-full bg-slate-50 p-3 pl-12 rounded-xl border-2 border-gray-200 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all font-mono text-lg"
-                                    value={whatsappPhone}
-                                    onChange={(e) => setWhatsappPhone(formatPhoneNumber(e.target.value))}
-                                    onKeyDown={(e) => e.key === 'Enter' && sendToWhatsApp()}
-                                    autoFocus
-                                />
-                            </div>
-                            <p className="text-xs text-gray-400 mt-2">Digite apenas os 9 dígitos do número</p>
-                        </div>
+                                <div className="mb-6">
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Número de Telefone</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-3 text-gray-500 font-bold">(27)</span>
+                                        <input
+                                            type="tel"
+                                            inputMode="numeric"
+                                            placeholder="99999-9999"
+                                            className="w-full bg-slate-50 p-3 pl-12 rounded-xl border-2 border-gray-200 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all font-mono text-lg"
+                                            value={whatsappPhone}
+                                            onChange={(e) => setWhatsappPhone(formatPhoneNumber(e.target.value))}
+                                            onKeyDown={(e) => e.key === 'Enter' && sendToWhatsApp()}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-2">Digite apenas os 9 dígitos do número</p>
+                                </div>
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setWhatsappModal({ open: false, vistoria: null })}
-                                className="flex-1 p-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={sendToWhatsApp}
-                                disabled={whatsappPhone.replace(/\D/g, '').length !== 9}
-                                className="flex-1 p-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                <MessageCircle size={18} />
-                                Enviar
-                            </button>
-                        </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setWhatsappModal({ open: false, vistoria: null })}
+                                        className="flex-1 p-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={sendToWhatsApp}
+                                        disabled={whatsappPhone.replace(/\D/g, '').length !== 9}
+                                        className="flex-1 p-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        <MessageCircle size={18} />
+                                        Gerar PDF
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Step 2: Instructions */}
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="bg-green-100 p-2 rounded-full">
+                                        <MessageCircle className="text-green-600" size={24} />
+                                    </div>
+                                    <h2 className="text-xl font-black text-gray-800">PDF Gerado!</h2>
+                                </div>
+
+                                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-4">
+                                    <p className="text-sm font-bold text-green-800 mb-2">✅ PDF baixado com sucesso!</p>
+                                    <p className="text-xs text-green-700">O arquivo está na pasta de Downloads do seu dispositivo.</p>
+                                </div>
+
+                                <div className="space-y-3 mb-6">
+                                    <h3 className="text-sm font-black text-gray-700 uppercase tracking-wide">Próximos Passos:</h3>
+
+                                    <div className="flex gap-3 items-start">
+                                        <div className="bg-[#2a5299] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-800">Abra o WhatsApp</p>
+                                            <p className="text-xs text-gray-600">Clique no botão abaixo para abrir a conversa</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 items-start">
+                                        <div className="bg-[#2a5299] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-800">Anexe o PDF</p>
+                                            <p className="text-xs text-gray-600">Clique no ícone de clipe 📎 e selecione o PDF baixado</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 items-start">
+                                        <div className="bg-[#2a5299] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-800">Envie a mensagem</p>
+                                            <p className="text-xs text-gray-600">Pronto! A mensagem já está escrita para você</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setWhatsappModal({ open: false, vistoria: null })}
+                                        className="flex-1 p-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                                    >
+                                        Fechar
+                                    </button>
+                                    <button
+                                        onClick={() => window.open(whatsappModal.whatsappLink, '_blank')}
+                                        className="flex-1 p-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <MessageCircle size={18} />
+                                        Abrir WhatsApp
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
