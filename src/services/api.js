@@ -75,18 +75,28 @@ export const api = {
             });
 
             const colorPalette = {
+                'Geológico / Geotécnico': 'bg-orange-500',
+                'Risco Geológico': 'bg-orange-500',
+                'Hidrológico': 'bg-blue-500',
+                'Inundação': 'bg-blue-500',
+                'Alagamento': 'bg-blue-400',
+                'Inundação/Alagamento': 'bg-blue-500',
+                'Enxurrada': 'bg-blue-600',
+                'Estrutural': 'bg-slate-400',
+                'Estrutural/Predial': 'bg-slate-400',
+                'Ambiental': 'bg-emerald-500',
+                'Tecnológico': 'bg-amber-500',
+                'Climático / Meteorológico': 'bg-sky-500',
+                'Infraestrutura Urbana': 'bg-indigo-500',
+                'Sanitário': 'bg-rose-500',
                 'Deslizamento': 'bg-orange-500',
-                'Alagamento': 'bg-blue-500',
-                'Inundação': 'bg-cyan-500',
-                'Enxurrada': 'bg-teal-500',
-                'Vendaval': 'bg-gray-500',
-                'Granizo': 'bg-indigo-500',
+                'Vendaval': 'bg-sky-600',
+                'Granizo': 'bg-indigo-400',
                 'Incêndio': 'bg-red-500',
-                'Estrutural': 'bg-purple-500',
                 'Outros': 'bg-slate-400'
             };
 
-            const defaultColors = ['bg-pink-500', 'bg-rose-500', 'bg-fuchsia-500', 'bg-violet-500'];
+            const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
 
             const breakdown = Object.keys(counts).map((label, idx) => ({
                 label,
