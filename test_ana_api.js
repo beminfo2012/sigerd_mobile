@@ -1,39 +1,47 @@
 
-import https from 'https';
+import fetch from 'node-fetch';
 
-const stationCode = "57118080"; // PCH RIO BONITO MONTANTE 1
-const startDate = "2026-01-20"; // Recent date
-const endDate = "2026-01-23";
+const stationCode = "57118080";
+const endDate = new Date();
+const startDate = new Date();
+startDate.setDate(endDate.getDate() - 3);
 
-const url = `https://www.ana.gov.br/hidrowebservice/rest/estacoestelemetricas/gethidroinfoanaserietelemetricaAdotada?codEstacao=${stationCode}&dataInicio=${startDate}&dataFim=${endDate}`;
+const fmt = d => d.toISOString().split('T')[0];
+const url = `https://www.ana.gov.br/hidrowebservice/rest/estacoestelemetricas/gethidroinfoanaserietelemetricaAdotada?codEstacao=${stationCode}&dataInicio=${fmt(startDate)}&dataFim=${fmt(endDate)}`;
 
-console.log(`TESTING URL: ${url}`);
-
-https.get(url, (res) => {
-    console.log(`STATUS: ${res.statusCode}`);
-    let data = '';
-
-    res.on('data', (chunk) => {
-        data += chunk;
-    });
-
-    res.on('end', () => {
-        try {
-            // Check if it's XML (common for older govt APIs) or JSON
-            if (data.trim().startsWith('<')) {
-                console.log("RESPONSE IS XML (Truncated):");
-                console.log(data.substring(0, 500));
-            } else {
-                const json = JSON.parse(data);
-                console.log("RESPONSE IS JSON:");
-                console.log(JSON.stringify(json, null, 2).substring(0, 800));
+async function debugAna() {
+    console.log(`DEBUGGING ANA API: ${url}`);
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
             }
-        } catch (e) {
-            console.log("RAW RESPONSE (Non-JSON):");
-            console.log(data.substring(0, 500));
-        }
-    });
+        });
 
-}).on('error', (err) => {
-    console.error(`ERROR: ${err.message}`);
-});
+        console.log(`STATUS: ${response.status} ${response.statusText}`);
+        const text = await response.text();
+
+        console.log("--- RAW RESPONSE START ---");
+        console.log(text.substring(0, 1000));
+        console.log("--- RAW RESPONSE END ---");
+
+        if (response.ok) {
+            const json = JSON.parse(text);
+            console.log("\nPARSED JSON STRUCTURE:");
+            console.log(Object.keys(json));
+            if (json.items) {
+                console.log(`Items count: ${json.items.length}`);
+                if (json.items.length > 0) {
+                    console.log("First item sample:", JSON.stringify(json.items[0], null, 2));
+                }
+            } else {
+                console.log("No 'items' array found in JSON.");
+            }
+        }
+    } catch (e) {
+        console.error("DIAGNOSTIC ERROR:", e.message);
+    }
+}
+
+debugAna();

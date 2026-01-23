@@ -33,59 +33,67 @@ export default async function handler(request, response) {
         // Fetch ANA Data in Parallel
         const anaPromises = ANA_STATIONS.map(async (station) => {
             try {
-                // Fetch last 3 days to ensure we find at least one recent reading
-                const endDate = new Date();
-                const startDate = new Date();
-                startDate.setDate(endDate.getDate() - 3);
+                let items = [];
 
-                const fmt = d => d.toISOString().split('T')[0];
-                const anaUrl = `https://www.ana.gov.br/hidrowebservice/rest/estacoestelemetricas/gethidroinfoanaserietelemetricaAdotada?codEstacao=${station.id}&dataInicio=${fmt(startDate)}&dataFim=${fmt(endDate)}`;
+                // TRY 1: Modern REST API (JSON)
+                try {
+                    const endDate = new Date();
+                    const startDate = new Date();
+                    startDate.setDate(endDate.getDate() - 2);
+                    const fmt = d => d.toISOString().split('T')[0];
+                    const restUrl = `https://www.ana.gov.br/hidrowebservice/rest/estacoestelemetricas/gethidroinfoanaserietelemetricaAdotada?codEstacao=${station.id}&dataInicio=${fmt(startDate)}&dataFim=${fmt(endDate)}`;
 
-                const resAna = await fetch(anaUrl);
-                if (!resAna.ok) throw new Error(`HTTP ${resAna.status}`);
+                    const resRest = await fetch(restUrl);
+                    if (resRest.ok) {
+                        const jsonRest = await resRest.json();
+                        items = jsonRest?.items || [];
+                    }
+                } catch (e) {
+                    console.warn(`REST fail for ${station.id}, trying SOAP...`);
+                }
 
-                const jsonAna = await resAna.json();
+                // TRY 2: Legacy SOAP/ASMx (XML) - Often more stable
+                if (items.length === 0) {
+                    const soapUrl = `http://telemetriaws.ana.gov.br/HidroWebWS/EstacoesTelemetricas.asmx/DadosHidrometeorologicos?codEstacao=${station.id}`;
+                    const resSoap = await fetch(soapUrl);
+                    if (resSoap.ok) {
+                        const xml = await resSoap.text();
+                        // Minimal XML parsing via regex
+                        const matches = [...xml.matchAll(/<DadosHidrometereologicos>([\s\S]*?)<\/DadosHidrometereologicos>/g)];
+                        items = matches.map(m => {
+                            const content = m[1];
+                            const get = tag => (content.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`)) || [])[1] || "";
+                            return {
+                                DataHora: get("DataHora"),
+                                Nivel: get("Nivel"),
+                                Vazao: get("Vazao")
+                            };
+                        }).filter(i => i.DataHora);
+                    }
+                }
 
-                // Find latest reading (Sort by DataHora Descending)
-                // API structure: { items: [ { DataHora: "...", Nivel: "...", Vazao: "..." } ] }
-                // Note: Sometimes items is null or empty
-                const items = jsonAna?.items || [];
                 const latest = items.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora))[0];
 
-                if (!latest) {
-                    return {
-                        id: station.id,
-                        name: station.name,
-                        type: "fluviometric",
-                        isRealTime: false,
-                        status: "Sem dados recentes (Offline)",
-                        level: 0,
-                        flow: 0,
-                        lastUpdate: null
-                    };
-                }
+                if (!latest) throw new Error("Sem dados");
 
                 return {
                     id: station.id,
                     name: station.name,
                     type: "fluviometric",
                     isRealTime: true,
-                    // Parse values handling different decimal formats just in case
-                    level: parseFloat(latest.Nivel || 0), // cm
-                    flow: parseFloat(latest.Vazao || 0),  // m3/s
+                    level: parseFloat(latest.Nivel || 0),
+                    flow: parseFloat(latest.Vazao || 0),
                     status: "Online",
                     lastUpdate: latest.DataHora
                 };
 
             } catch (err) {
-                console.error(`Failed to fetch ANA station ${station.id}:`, err);
-                // Return offline state on error
                 return {
                     id: station.id,
                     name: station.name,
                     type: "fluviometric",
                     isRealTime: false,
-                    status: "Erro de Conexão",
+                    status: "Offline (ANA)",
                     level: 0,
                     flow: 0,
                     lastUpdate: null
@@ -94,8 +102,6 @@ export default async function handler(request, response) {
         });
 
         const anaResults = await Promise.all(anaPromises);
-
-        // Merge CEMADEN + ANA
         const finalResult = [...result, ...anaResults];
 
         // Enable CORS
