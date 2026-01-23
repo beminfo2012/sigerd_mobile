@@ -1,71 +1,85 @@
-// SIGERD AI Service - High Availability Build v1.50
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// SIGERD AI Service - Direct REST Implementation v2.0 (No SDK)
+// Bypasses library issues by calling Google API directly via fetch
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-// Define rotation of model configurations to bypass potential 404s or version mismatches
-const ATTEMPTS = [
-    { model: "gemini-1.5-flash-001" },                  // Pinned Flash (Often required for v1beta)
-    { model: "gemini-1.5-flash-002" },                  // Newer Flash
-    { model: "gemini-1.5-pro-001" },                    // Pinned Pro
-    { model: "gemini-1.0-pro" },                        // Legacy Stable 1.0 (Most widely available)
-    { model: "gemini-pro" }                             // Alias Fallback
-];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
+    if (!API_KEY) return "ERROR: Chave de API não encontrada. Verifique VITE_GOOGLE_API_KEY.";
 
-    // [SAFETY] Race against a strict timeout
-    const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout: A IA demorou muito para responder (25s).')), 25000)
-    );
+    const prompt = `
+    Atue como Engenheiro Civil Sênior de Defesa Civil.
+    Reescreva o texto abaixo em linguagem técnica formal para laudo oficial.
+    
+    ENTRADA: "${text}"
+    CONTEXTO: ${category} | ${context}
+    
+    REGRAS:
+    1. Mantenha os fatos, melhore o vocabulário.
+    2. Voz passiva e impessoal.
+    3. Responda APENAS o texto reescrito.
+    `;
 
-    const callAI = async () => {
-        let errors = []; // [FIX] Declare the array so we can collect errors
-        for (const config of ATTEMPTS) {
-            try {
-                // Check connectivity first
-                if (!navigator.onLine) throw new Error('Sem conexão com a internet');
+    // Priority list of models to try via RAW HTTP
+    const MODELS = [
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-1.0-pro',
+        'gemini-pro'
+    ];
 
-                console.log(`SIGERD AI: Tentando modelo ${config.model}...`);
-                // Let SDK decide the best version if not specified
-                const modelOpts = { model: config.model };
-                if (config.version) modelOpts.apiVersion = config.version;
+    let errors = [];
 
-                const model = genAI.getGenerativeModel(modelOpts);
-
-                const prompt = `
-                Atue como Engenheiro Civil Sênior de Defesa Civil.
-                Reescreva o texto abaixo em linguagem técnica formal para laudo oficial.
-                
-                ENTRADA: "${text}"
-                CONTEXTO: ${category} | ${context}
-                
-                REGRAS:
-                1. Mantenha os fatos, melhore o vocabulário.
-                2. Voz passiva e impessoal.
-                3. Responda APENAS o texto reescrito.
-                `;
-
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                const refined = response.text().trim();
-
-                if (refined) return refined;
-            } catch (error) {
-                console.warn(`SIGERD AI: Falha leve em ${config.model}:`, error.message);
-                errors.push(`${config.model}: ${error.message}`);
-            }
+    // [SAFETY] 20s Timeout Wrapper
+    const fetchWithTimeout = async (url, options, timeout = 20000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        try {
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return response;
+        } catch (error) {
+            clearTimeout(id);
+            throw error;
         }
-        throw new Error(`Falha em todos os modelos. Detalhes: ${errors.join(' | ')}`);
     };
 
-    try {
-        return await Promise.race([callAI(), timeoutPromise]);
-    } catch (finalError) {
-        console.error('SIGERD AI Error:', finalError);
-        // [DEBUG] Return error string to show in UI
-        return `ERROR: ${finalError.message}`;
+    for (const model of MODELS) {
+        try {
+            console.log(`[SIGERD AI] Tentando conexão direta com ${model}...`);
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+
+            const response = await fetchWithTimeout(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(`HTTP ${response.status}: ${errData.error?.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // Extract text safe path
+            const refined = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (refined) {
+                return refined.trim();
+            } else {
+                throw new Error("Resposta da IA vazia/inválida.");
+            }
+
+        } catch (error) {
+            console.warn(`[SIGERD AI] Falha em ${model}:`, error.message);
+            errors.push(`${model}: ${error.message}`);
+        }
     }
+
+    // Return explicit error for the UI to display
+    return `ERROR: Falha em todos os modelos.\n\nDetalhes:\n${errors.join('\n')}`;
 };
