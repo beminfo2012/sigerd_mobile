@@ -462,7 +462,14 @@ export const deleteVistoriaLocal = async (id) => {
         const cacheTx = db.transaction('remote_vistorias_cache', 'readwrite')
         const cacheStore = cacheTx.objectStore('remote_vistorias_cache')
         const cacheItems = await cacheStore.getAll()
-        const cacheTarget = cacheItems.find(v => (v.vistoria_id || v.vistoriaId) === vistoriaId)
+
+        // Match by any possible ID field (robust matching)
+        const cacheTarget = cacheItems.find(v =>
+            (v.vistoria_id || v.vistoriaId) === vistoriaId ||
+            v.id === localId ||
+            v.id === id ||
+            v.supabase_id === id
+        )
 
         if (cacheTarget) {
             await cacheStore.delete(cacheTarget.id)
@@ -672,6 +679,10 @@ export const saveRemoteVistoriasCache = async (data) => {
     const db = await initDB()
     const tx = db.transaction('remote_vistorias_cache', 'readwrite')
     const store = tx.objectStore('remote_vistorias_cache')
+
+    // [DEFINITIVE FIX] Clear old cache completely to remove ghost records (deleted items)
+    await store.clear()
+
     for (const item of data) {
         await store.put(item)
     }

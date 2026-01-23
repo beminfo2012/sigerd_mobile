@@ -222,14 +222,16 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             ]);
 
             const allRecords = [...cached, ...local];
-            console.log(`[ID Sequence] Checking ${allRecords.length} records in cache/local...`);
+            console.log(`[ID Sequence] Scanned ${allRecords.length} records in local/cache.`);
 
             allRecords.forEach(v => {
                 const vid = v.vistoria_id || v.vistoriaId
                 if (vid && vid.includes(`/${currentYear}`)) {
                     const parts = vid.split('/');
                     const num = parseInt(parts[0]);
-                    if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                    if (!isNaN(num)) {
+                        if (num > maxNum) maxNum = num;
+                    }
                 }
             })
 
@@ -240,8 +242,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         .from('vistorias')
                         .select('vistoria_id')
                         .ilike('vistoria_id', `%/${currentYear}`)
-                        // No order here to avoid string sorting issues, we'll find max in JS
-                        .limit(100);
+                        .limit(500); // Higher limit to ensure we see all recent ones
 
                     if (data && data.length > 0) {
                         data.forEach(row => {
@@ -249,7 +250,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             if (vid) {
                                 const parts = vid.split("/");
                                 const num = parseInt(parts[0]);
-                                if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                                if (!isNaN(num)) {
+                                    if (num > maxNum) maxNum = num;
+                                }
                             }
                         });
                     }
@@ -261,7 +264,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             const nextNum = maxNum + 1
             const newId = `${nextNum.toString().padStart(3, '0')}/${currentYear}`
 
-            console.log(`[ID Sequence] Max found: ${maxNum}. Next suggested: ${newId}`);
+            console.log(`[ID Sequence] MAX: ${maxNum} -> NEXT: ${newId}`);
 
             setFormData(prev => ({
                 ...prev,
