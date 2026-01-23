@@ -56,20 +56,20 @@ const VistoriaList = ({ onNew, onEdit }) => {
                     (localItem.supabase_id && c.id === localItem.supabase_id)
                 )
 
-                // [DEFINITIVE FIX] Ghost Record Suppression
-                // Only add local item if:
-                // 1. It's NOT in cloud and it's NOT synced (it's new offline data)
-                // 2. OR it's NOT in cloud and we are offline (we trust local cache)
-                const shouldAdd = !alreadyInCloud && (!isSynced || !navigator.onLine);
-
-                if (shouldAdd) {
+                // [DEFINITIVE FIX] Ghost Record Suppression v2
+                // ALWAYS show local item if it's not in the cloud yet.
+                // This covers:
+                // 1. Offline & Unsynced (synced=false) -> Shows as Pending
+                // 2. Online & Just Synced (synced=true) but not returned by API yet -> Shows as Synced
+                // 3. Online & Cloud has it -> alreadyInCloud=true -> Local ignored, Cloud version shown
+                if (!alreadyInCloud) {
                     merged.push({
                         ...localItem,
                         id: localItem.id,
                         vistoria_id: vid,
                         created_at: localItem.createdAt || localItem.created_at || new Date().toISOString(),
                         isLocal: true,
-                        synced: isSynced
+                        synced: localItem.synced
                     })
                 }
             })
