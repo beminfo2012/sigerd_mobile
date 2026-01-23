@@ -157,7 +157,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
         const endereco = emailModal.vistoria.endereco || 'Endereço não informado'
 
         const subject = encodeURIComponent(`Relatório de Vistoria Técnica ${vistoriaId}`)
-        const body = encodeURIComponent(
+        const body = (
             `Prezado(a),\n\n` +
             `Segue em anexo o Relatório de Vistoria Técnica ${vistoriaId}.\n\n` +
             `Solicitante: ${solicitante}\n` +
@@ -452,3 +452,4 @@ const VistoriaList = ({ onNew, onEdit }) => {
 }
 
 export default VistoriaList
+
