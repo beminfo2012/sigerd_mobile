@@ -343,9 +343,9 @@ const Alerts = () => {
             console.warn('Clipboard copy failed:', err)
         }
 
-        // 4. Open WhatsApp
-        const waLink = `https://wa.me/?text=${encodeURIComponent(waText)}`
-        window.open(waLink, '_blank')
+        // 4. Open official WhatsApp Channel
+        const waChannelLink = `https://whatsapp.com/channel/0029Vb7CuCcCcW4lh0Lhj115`
+        window.open(waChannelLink, '_blank')
     }
 
     const instructionsList = instructions
@@ -498,9 +498,9 @@ const Alerts = () => {
                                 Como publicar no canal:
                             </p>
                             <ol className="text-[11px] text-blue-700 space-y-1 font-medium">
-                                <li>1. A imagem será baixada automaticamente</li>
-                                <li>2. O texto será copiado para sua área de transferência</li>
-                                <li>3. No WhatsApp, selecione o Canal, cole o texto e anexe a imagem</li>
+                                <li>1. A imagem será baixada e o texto copiado ✅</li>
+                                <li>2. O Canal Oficial abrirá automaticamente 📲</li>
+                                <li>3. Basta colar o texto e anexar a imagem da galeria 🖼️</li>
                             </ol>
                         </div>
                     </div>
