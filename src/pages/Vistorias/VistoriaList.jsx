@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown } from 'lucide-react'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, MessageCircle } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getAllVistoriasLocal } from '../../services/db'
@@ -15,6 +15,8 @@ const VistoriaList = ({ onNew, onEdit }) => {
         startDate: '',
         endDate: ''
     })
+    const [whatsappModal, setWhatsappModal] = useState({ open: false, vistoria: null })
+    const [whatsappPhone, setWhatsappPhone] = useState('')
 
     useEffect(() => {
         fetchVistorias()
@@ -131,6 +133,42 @@ const VistoriaList = ({ onNew, onEdit }) => {
             endDate: ''
         })
         setSearchTerm('')
+    }
+
+    const handleWhatsAppShare = (vistoria, e) => {
+        e.stopPropagation()
+        setWhatsappModal({ open: true, vistoria })
+        setWhatsappPhone('')
+    }
+
+    const formatPhoneNumber = (value) => {
+        let v = value.replace(/\D/g, '')
+        if (v.length > 9) v = v.slice(0, 9)
+        v = v.replace(/^(\d{5})(\d)/, '$1-$2')
+        return v
+    }
+
+    const sendToWhatsApp = async () => {
+        const phone = whatsappPhone.replace(/\D/g, '')
+        if (phone.length !== 9) {
+            alert('Digite um número válido com 9 dígitos')
+            return
+        }
+
+        // Generate PDF
+        await generatePDF(whatsappModal.vistoria, 'vistoria')
+
+        // Open WhatsApp
+        const fullNumber = `5527${phone}`
+        const vistoriaId = whatsappModal.vistoria.vistoria_id || 'N/A'
+        const message = encodeURIComponent(
+            `Olá! Segue o relatório de vistoria ${vistoriaId}. O arquivo PDF foi baixado - basta anexar e enviar.`
+        )
+        window.open(`https://wa.me/${fullNumber}?text=${message}`, '_blank')
+
+        // Close modal
+        setWhatsappModal({ open: false, vistoria: null })
+        setWhatsappPhone('')
     }
 
     const neighborhoods = [...new Set(vistorias.map(v => v.bairro).filter(Boolean))].sort()
@@ -327,6 +365,13 @@ const VistoriaList = ({ onNew, onEdit }) => {
 
                             <div className="flex justify-end gap-2 border-t border-gray-50 pt-3">
                                 <button
+                                    onClick={(e) => handleWhatsAppShare(vistoria, e)}
+                                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                    title="Compartilhar via WhatsApp"
+                                >
+                                    <MessageCircle size={18} />
+                                </button>
+                                <button
                                     onClick={(e) => { e.stopPropagation(); generatePDF(vistoria, 'vistoria') }}
                                     className="p-2 text-gray-400 hover:text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors"
                                     title="Exportar PDF"
@@ -344,6 +389,59 @@ const VistoriaList = ({ onNew, onEdit }) => {
                     ))
                 )}
             </div>
+
+            {/* WhatsApp Share Modal */}
+            {whatsappModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setWhatsappModal({ open: false, vistoria: null })}>
+                    <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="bg-green-100 p-2 rounded-full">
+                                <MessageCircle className="text-green-600" size={24} />
+                            </div>
+                            <h2 className="text-xl font-black text-gray-800">Compartilhar via WhatsApp</h2>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-4">
+                            Digite o número de telefone para compartilhar o relatório da vistoria <span className="font-bold text-[#2a5299]">#{whatsappModal.vistoria?.vistoria_id}</span>
+                        </p>
+
+                        <div className="mb-6">
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Número de Telefone</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-3 text-gray-500 font-bold">(27)</span>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    placeholder="99999-9999"
+                                    className="w-full bg-slate-50 p-3 pl-12 rounded-xl border-2 border-gray-200 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all font-mono text-lg"
+                                    value={whatsappPhone}
+                                    onChange={(e) => setWhatsappPhone(formatPhoneNumber(e.target.value))}
+                                    onKeyDown={(e) => e.key === 'Enter' && sendToWhatsApp()}
+                                    autoFocus
+                                />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2">Digite apenas os 9 dígitos do número</p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setWhatsappModal({ open: false, vistoria: null })}
+                                className="flex-1 p-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={sendToWhatsApp}
+                                disabled={whatsappPhone.replace(/\D/g, '').length !== 9}
+                                className="flex-1 p-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                <MessageCircle size={18} />
+                                Enviar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
