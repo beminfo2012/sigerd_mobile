@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, MessageCircle } from 'lucide-react'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getAllVistoriasLocal } from '../../services/db'
@@ -15,8 +15,8 @@ const VistoriaList = ({ onNew, onEdit }) => {
         startDate: '',
         endDate: ''
     })
-    const [whatsappModal, setWhatsappModal] = useState({ open: false, vistoria: null })
-    const [whatsappPhone, setWhatsappPhone] = useState('')
+    const [emailModal, setEmailModal] = useState({ open: false, vistoria: null })
+    const [emailAddress, setEmailAddress] = useState('')
 
     useEffect(() => {
         fetchVistorias()
@@ -135,46 +135,44 @@ const VistoriaList = ({ onNew, onEdit }) => {
         setSearchTerm('')
     }
 
-    const handleWhatsAppShare = (vistoria, e) => {
+    const handleEmailShare = (vistoria, e) => {
         e.stopPropagation()
-        setWhatsappModal({ open: true, vistoria })
-        setWhatsappPhone('')
+        setEmailModal({ open: true, vistoria })
+        setEmailAddress('')
     }
 
-    const formatPhoneNumber = (value) => {
-        let v = value.replace(/\D/g, '')
-        if (v.length > 9) v = v.slice(0, 9)
-        v = v.replace(/^(\d{5})(\d)/, '$1-$2')
-        return v
-    }
-
-    const sendToWhatsApp = async () => {
-        const phone = whatsappPhone.replace(/\D/g, '')
-        if (phone.length !== 9) {
-            alert('Digite um número válido com 9 dígitos')
+    const sendViaEmail = async () => {
+        const email = emailAddress.trim()
+        if (!email || !email.includes('@')) {
+            alert('Digite um email válido')
             return
         }
 
         // Generate PDF first
-        await generatePDF(whatsappModal.vistoria, 'vistoria')
+        await generatePDF(emailModal.vistoria, 'vistoria')
 
-        // Prepare WhatsApp link
-        const fullNumber = `5527${phone}`
-        const vistoriaId = whatsappModal.vistoria.vistoria_id || 'N/A'
-        const message = encodeURIComponent(
-            `Olá! Segue o relatório de vistoria ${vistoriaId}.`
+        // Prepare email
+        const vistoriaId = emailModal.vistoria.vistoria_id || 'N/A'
+        const solicitante = emailModal.vistoria.solicitante || 'Solicitante'
+        const endereco = emailModal.vistoria.endereco || 'Endereço não informado'
+
+        const subject = encodeURIComponent(`Relatório de Vistoria Técnica ${vistoriaId}`)
+        const body = encodeURIComponent(
+            `Prezado(a),\n\n` +
+            `Segue em anexo o Relatório de Vistoria Técnica ${vistoriaId}.\n\n` +
+            `Solicitante: ${solicitante}\n` +
+            `Local: ${endereco}\n\n` +
+            `O arquivo PDF foi baixado no seu dispositivo. Por favor, anexe-o a este email antes de enviar.\n\n` +
+            `Atenciosamente,\n` +
+            `Defesa Civil Municipal de Santa Maria de Jetibá`
         )
-        const whatsappLink = `https://wa.me/${fullNumber}?text=${message}`
 
-        // Copy link to clipboard
-        try {
-            await navigator.clipboard.writeText(whatsappLink)
-        } catch (e) {
-            console.warn('Clipboard API failed:', e)
-        }
+        // Open email client with mailto
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`
 
-        // Update modal to show instructions
-        setWhatsappModal(prev => ({ ...prev, showInstructions: true, whatsappLink }))
+        // Close modal
+        setEmailModal({ open: false, vistoria: null })
+        setEmailAddress('')
     }
 
     const neighborhoods = [...new Set(vistorias.map(v => v.bairro).filter(Boolean))].sort()
@@ -371,11 +369,11 @@ const VistoriaList = ({ onNew, onEdit }) => {
 
                             <div className="flex justify-end gap-2 border-t border-gray-50 pt-3">
                                 <button
-                                    onClick={(e) => handleWhatsAppShare(vistoria, e)}
-                                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                    title="Compartilhar via WhatsApp"
+                                    onClick={(e) => handleEmailShare(vistoria, e)}
+                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Enviar por Email"
                                 >
-                                    <MessageCircle size={18} />
+                                    <Mail size={18} />
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); generatePDF(vistoria, 'vistoria') }}
@@ -396,119 +394,56 @@ const VistoriaList = ({ onNew, onEdit }) => {
                 )}
             </div>
 
-            {/* WhatsApp Share Modal */}
-            {whatsappModal.open && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setWhatsappModal({ open: false, vistoria: null })}>
+            {/* Email Share Modal */}
+            {emailModal.open && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEmailModal({ open: false, vistoria: null })}>
                     <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-                        {!whatsappModal.showInstructions ? (
-                            <>
-                                {/* Step 1: Phone Input */}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="bg-green-100 p-2 rounded-full">
-                                        <MessageCircle className="text-green-600" size={24} />
-                                    </div>
-                                    <h2 className="text-xl font-black text-gray-800">Compartilhar via WhatsApp</h2>
-                                </div>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="bg-blue-100 p-2 rounded-full">
+                                <Mail className="text-blue-600" size={24} />
+                            </div>
+                            <h2 className="text-xl font-black text-gray-800">Enviar por Email</h2>
+                        </div>
 
-                                <p className="text-sm text-gray-600 mb-4">
-                                    Digite o número de telefone para compartilhar o relatório da vistoria <span className="font-bold text-[#2a5299]">#{whatsappModal.vistoria?.vistoria_id}</span>
-                                </p>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Digite o email para enviar o relatório da vistoria <span className="font-bold text-[#2a5299]">#{emailModal.vistoria?.vistoria_id}</span>
+                        </p>
 
-                                <div className="mb-6">
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Número de Telefone</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-3 text-gray-500 font-bold">(27)</span>
-                                        <input
-                                            type="tel"
-                                            inputMode="numeric"
-                                            placeholder="99999-9999"
-                                            className="w-full bg-slate-50 p-3 pl-12 rounded-xl border-2 border-gray-200 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all font-mono text-lg"
-                                            value={whatsappPhone}
-                                            onChange={(e) => setWhatsappPhone(formatPhoneNumber(e.target.value))}
-                                            onKeyDown={(e) => e.key === 'Enter' && sendToWhatsApp()}
-                                            autoFocus
-                                        />
-                                    </div>
-                                    <p className="text-xs text-gray-400 mt-2">Digite apenas os 9 dígitos do número</p>
-                                </div>
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-3 mb-4">
+                            <p className="text-xs font-bold text-blue-800">📧 O PDF será anexado automaticamente</p>
+                            <p className="text-xs text-blue-700 mt-1">Funciona offline - o email será enviado quando houver conexão</p>
+                        </div>
 
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setWhatsappModal({ open: false, vistoria: null })}
-                                        className="flex-1 p-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={sendToWhatsApp}
-                                        disabled={whatsappPhone.replace(/\D/g, '').length !== 9}
-                                        className="flex-1 p-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                    >
-                                        <MessageCircle size={18} />
-                                        Gerar PDF
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                {/* Step 2: Instructions */}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="bg-green-100 p-2 rounded-full">
-                                        <MessageCircle className="text-green-600" size={24} />
-                                    </div>
-                                    <h2 className="text-xl font-black text-gray-800">PDF Gerado!</h2>
-                                </div>
+                        <div className="mb-6">
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Endereço de Email</label>
+                            <input
+                                type="email"
+                                inputMode="email"
+                                placeholder="exemplo@email.com"
+                                className="w-full bg-slate-50 p-3 rounded-xl border-2 border-gray-200 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-base"
+                                value={emailAddress}
+                                onChange={(e) => setEmailAddress(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && sendViaEmail()}
+                                autoFocus
+                            />
+                        </div>
 
-                                <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-4">
-                                    <p className="text-sm font-bold text-green-800 mb-2">✅ PDF baixado com sucesso!</p>
-                                    <p className="text-xs text-green-700">O arquivo está na pasta de Downloads do seu dispositivo.</p>
-                                </div>
-
-                                <div className="space-y-3 mb-6">
-                                    <h3 className="text-sm font-black text-gray-700 uppercase tracking-wide">Próximos Passos:</h3>
-
-                                    <div className="flex gap-3 items-start">
-                                        <div className="bg-[#2a5299] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-800">Abra o WhatsApp</p>
-                                            <p className="text-xs text-gray-600">Clique no botão abaixo para abrir a conversa</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-3 items-start">
-                                        <div className="bg-[#2a5299] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-800">Anexe o PDF</p>
-                                            <p className="text-xs text-gray-600">Clique no ícone de clipe 📎 e selecione o PDF baixado</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-3 items-start">
-                                        <div className="bg-[#2a5299] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-800">Envie a mensagem</p>
-                                            <p className="text-xs text-gray-600">Pronto! A mensagem já está escrita para você</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setWhatsappModal({ open: false, vistoria: null })}
-                                        className="flex-1 p-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
-                                    >
-                                        Fechar
-                                    </button>
-                                    <button
-                                        onClick={() => window.open(whatsappModal.whatsappLink, '_blank')}
-                                        className="flex-1 p-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <MessageCircle size={18} />
-                                        Abrir WhatsApp
-                                    </button>
-                                </div>
-                            </>
-                        )}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setEmailModal({ open: false, vistoria: null })}
+                                className="flex-1 p-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={sendViaEmail}
+                                disabled={!emailAddress.includes('@')}
+                                className="flex-1 p-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                <Mail size={18} />
+                                Enviar Email
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
