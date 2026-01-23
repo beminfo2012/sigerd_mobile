@@ -23,57 +23,63 @@ export default async function handler(request, response) {
         }));
 
         // ADD PCH RIO BONITO MONTANTE 1 (ANA 57118080)
-        // Note: ANA API requires authentication or has high CORS. 
-        // We add it here with indicators for Level and Flow as requested.
+        // ⚠️ STATIC DATA: Waiting for ANA API integration
         result.push({
             id: "57118080",
             name: "PCH RIO BONITO MONTANTE 1",
             type: "fluviometric",
-            acc24hr: 24.8, // Example data from user image
+            isRealTime: false,  // Flag indicating this is reference data
+            acc24hr: 24.8,      // Reference value (not live)
             acc1hr: 2.5,
-            level: 181,    // cm
-            flow: 11.9,    // m3/s
-            status: "Operacional",
-            lastUpdate: new Date().toISOString()
+            level: 181,         // cm
+            flow: 11.9,         // m3/s
+            status: "Dados de Referência",
+            lastUpdate: "2026-01-15T12:00:00.000Z"  // Fixed date to show data is not live
         });
 
         // ADD SANTA MARIA DE JETIBA - SÃO JOÃO DE GARRAFÃO (ANA 57090000)
+        // ⚠️ STATIC DATA: Waiting for ANA API integration
         result.push({
             id: "57090000",
             name: "SÃO JOÃO DE GARRAFÃO",
             type: "fluviometric",
+            isRealTime: false,
             acc24hr: 0.0,
             acc1hr: 0.0,
-            level: 100, // Placeholder - to be updated by real data if API permits
+            level: 100,
             flow: 5.2,
-            status: "Operacional",
-            lastUpdate: new Date().toISOString()
+            status: "Dados de Referência",
+            lastUpdate: "2026-01-15T12:00:00.000Z"
         });
 
         // ADD PCH RIO BONITO MONTANTE 2 (ANA 57117000)
+        // ⚠️ STATIC DATA: Waiting for ANA API integration
         result.push({
             id: "57117000",
             name: "PCH RIO BONITO MONTANTE 2",
             type: "fluviometric",
+            isRealTime: false,
             acc24hr: 12.4,
             acc1hr: 1.2,
             level: 145,
             flow: 8.7,
-            status: "Operacional",
-            lastUpdate: new Date().toISOString()
+            status: "Dados de Referência",
+            lastUpdate: "2026-01-15T12:00:00.000Z"
         });
 
         // ADD PCH RIO BONITO BARRAMENTO (ANA 57119000)
+        // ⚠️ STATIC DATA: Waiting for ANA API integration
         result.push({
             id: "57119000",
             name: "PCH RIO BONITO BARRAMENTO",
             type: "fluviometric",
+            isRealTime: false,
             acc24hr: 18.2,
             acc1hr: 0.8,
             level: 210,
             flow: 15.4,
-            status: "Operacional",
-            lastUpdate: new Date().toISOString()
+            status: "Dados de Referência",
+            lastUpdate: "2026-01-15T12:00:00.000Z"
         });
 
         // Enable CORS
