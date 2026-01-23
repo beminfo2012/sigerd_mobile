@@ -41,14 +41,11 @@ const Dashboard = () => {
                 const unsynced = localVistorias.filter(v => v.synced === false || v.synced === undefined || v.synced === 0);
                 console.log(`[Dashboard] ${unsynced.length} unsynced vistorias found locally`);
 
-                const [dashResult, weatherResult, cemadenResult] = await Promise.all([
-                    api.getDashboardData().catch(err => {
-                        console.warn('Supabase fetch failed, showing local data only:', err)
-                        return null
-                    }),
-                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null),
-                    cemadenService.getActiveAlerts().catch(() => [])
-                ])
+                // [PERFORMANCE] Load dashboard data first, defer weather/cemaden to background
+                const dashResult = await api.getDashboardData().catch(err => {
+                    console.warn('Supabase fetch failed, showing local data only:', err)
+                    return null
+                })
 
                 let finalData = dashResult || {
                     stats: { totalVistorias: 0, activeOccurrences: 0, inmetAlertsCount: 0 },
@@ -316,12 +313,19 @@ const Dashboard = () => {
                     finalData.breakdown.sort((a, b) => b.count - a.count);
                 }
 
-                setWeather(weatherResult)
                 setData(finalData)
-                setCemadenAlerts(cemadenResult || [])
+                setLoading(false)
+
+                // [PERFORMANCE] Load secondary data in background after UI is visible
+                Promise.all([
+                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null),
+                    cemadenService.getActiveAlerts().catch(() => [])
+                ]).then(([weatherRes, cemadenRes]) => {
+                    if (weatherRes) setWeather(weatherRes)
+                    if (cemadenRes) setCemadenAlerts(cemadenRes || [])
+                })
             } catch (error) {
                 console.error('Load Error:', error)
-            } finally {
                 setLoading(false)
             }
         }
