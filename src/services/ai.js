@@ -21,6 +21,7 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
     );
 
     const callAI = async () => {
+        let errors = []; // [FIX] Declare the array so we can collect errors
         for (const config of ATTEMPTS) {
             try {
                 // Check connectivity first
@@ -53,10 +54,10 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
                 if (refined) return refined;
             } catch (error) {
                 console.warn(`SIGERD AI: Falha leve em ${config.model}:`, error.message);
-                errors.push(error.message);
+                errors.push(`${config.model}: ${error.message}`);
             }
         }
-        throw new Error('Falha em todos os modelos de IA.');
+        throw new Error(`Falha em todos os modelos. Detalhes: ${errors.join(' | ')}`);
     };
 
     try {
