@@ -1,42 +1,43 @@
-import React, { useState, useEffect, createContext } from 'react'
+import React, { useState, useEffect, createContext, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
 import { notificationService } from './services/notificationService'
 
-// Components
+// Core Components (Always loaded)
 import Dashboard from './pages/Dashboard'
-import GeoRescue from './pages/GeoRescue'
-import Vistorias from './pages/Vistorias'
-import Pluviometros from './pages/Pluviometros'
-import Interdicao from './pages/Interdicao'
-import Menu from './pages/Menu'
 import Login from './pages/Login'
-import Alerts from './pages/Alerts'
-import GeoDashboard from './pages/Monitoramento/GeoDashboard'
-import RiskDashboard from './pages/Monitoramento/RiskDashboard'
-import ChecklistSaida from './pages/Checklist/ChecklistSaida'
+import Menu from './pages/Menu'
 import ProtectedRoute from './components/ProtectedRoute'
-import { supabase } from './services/supabase'
 
-// Shelter Module
-import ShelterMenu from './pages/Abrigos/Menu'
-import ShelterList from './pages/Abrigos/ShelterList'
-import ShelterDetail from './pages/Abrigos/ShelterDetail'
-import ShelterForm from './pages/Abrigos/ShelterForm'
-import OccupantForm from './pages/Abrigos/OccupantForm'
-import DonationForm from './pages/Abrigos/DonationForm'
-import DistributionForm from './pages/Abrigos/DistributionForm'
-import ShelterReports from './pages/Abrigos/Reports'
-import ShelterResidents from './pages/Abrigos/Residents'
-import StockHub from './pages/Abrigos/StockHub'
-import DonationHub from './pages/Abrigos/DonationHub'
-import LogisticsHub from './pages/Abrigos/LogisticsHub'
-import ContractList from './pages/Abrigos/ContractList'
-import ContractForm from './pages/Abrigos/ContractForm'
+// Lazy loaded components
+const GeoRescue = lazy(() => import('./pages/GeoRescue'))
+const Vistorias = lazy(() => import('./pages/Vistorias'))
+const Pluviometros = lazy(() => import('./pages/Pluviometros'))
+const Interdicao = lazy(() => import('./pages/Interdicao'))
+const Alerts = lazy(() => import('./pages/Alerts'))
+const GeoDashboard = lazy(() => import('./pages/Monitoramento/GeoDashboard'))
+const RiskDashboard = lazy(() => import('./pages/Monitoramento/RiskDashboard'))
+const ChecklistSaida = lazy(() => import('./pages/Checklist/ChecklistSaida'))
 
-// User Management Module
-import UserManagement from './pages/UserManagement'
+// Shelter Module (Lazy)
+const ShelterMenu = lazy(() => import('./pages/Abrigos/Menu'))
+const ShelterList = lazy(() => import('./pages/Abrigos/ShelterList'))
+const ShelterDetail = lazy(() => import('./pages/Abrigos/ShelterDetail'))
+const ShelterForm = lazy(() => import('./pages/Abrigos/ShelterForm'))
+const OccupantForm = lazy(() => import('./pages/Abrigos/OccupantForm'))
+const DonationForm = lazy(() => import('./pages/Abrigos/DonationForm'))
+const DistributionForm = lazy(() => import('./pages/Abrigos/DistributionForm'))
+const ShelterReports = lazy(() => import('./pages/Abrigos/Reports'))
+const ShelterResidents = lazy(() => import('./pages/Abrigos/Residents'))
+const StockHub = lazy(() => import('./pages/Abrigos/StockHub'))
+const DonationHub = lazy(() => import('./pages/Abrigos/DonationHub'))
+const LogisticsHub = lazy(() => import('./pages/Abrigos/LogisticsHub'))
+const ContractList = lazy(() => import('./pages/Abrigos/ContractList'))
+const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
+
+// User Management (Lazy)
+const UserManagement = lazy(() => import('./pages/UserManagement'))
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -237,144 +238,149 @@ function App() {
 
                         {/* Main Content Area */}
                         <main className="main-content">
-                            <Routes>
-                                {/* Agent-Only Routes */}
-                                <Route path="/" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <Dashboard />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/georescue" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <GeoRescue />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/vistorias" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <Vistorias />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/pluviometros" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <Pluviometros onBack={() => setActiveTab('dashboard')} />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/interdicao" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <Interdicao />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/alerts" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <Alerts />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/monitoramento" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <GeoDashboard />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/monitoramento/riscos" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <RiskDashboard />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/checklist-saida" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <ChecklistSaida />
-                                    </ProtectedRoute>
-                                } />
+                            <Suspense fallback={
+                                <div className="flex flex-col items-center justify-center p-20 gap-3">
+                                    <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Abrindo módulo...</p>
+                                </div>
+                            }>
+                                <Routes>
+                                    {/* Agent-Only Routes */}
+                                    <Route path="/" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <Dashboard />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/georescue" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <GeoRescue />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/vistorias" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <Vistorias />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/pluviometros" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <Pluviometros onBack={() => setActiveTab('dashboard')} />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/interdicao" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <Interdicao />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/alerts" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <Alerts />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/monitoramento" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <GeoDashboard />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/monitoramento/riscos" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <RiskDashboard />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/checklist-saida" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                            <ChecklistSaida />
+                                        </ProtectedRoute>
+                                    } />
 
-                                {/* Shared / Basic Access Routes */}
-                                <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
+                                    {/* Shared / Basic Access Routes */}
+                                    <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
 
-                                {/* Humanitarian Assistance Module Routes */}
-                                <Route path="/abrigos" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                        <ShelterMenu />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/lista" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ShelterList />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/estoque" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                        <StockHub />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/doacoes-central" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                        <DonationHub />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/logistica" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                        <LogisticsHub />
-                                    </ProtectedRoute>
-                                } />
+                                    {/* Humanitarian Assistance Module Routes */}
+                                    <Route path="/abrigos" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                            <ShelterMenu />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/lista" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ShelterList />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/estoque" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                            <StockHub />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/doacoes-central" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                            <DonationHub />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/logistica" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                            <LogisticsHub />
+                                        </ProtectedRoute>
+                                    } />
 
-                                <Route path="/abrigos/novo" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ShelterForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/:id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ShelterDetail />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/editar/:id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ShelterForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/:shelterId/abrigados/novo" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <OccupantForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/:shelterId/doacoes/novo" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                        <DonationForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                        <DistributionForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/relatorios" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ShelterReports />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/residentes" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ShelterResidents />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/contratos" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ContractList />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/contratos/novo" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ContractForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/abrigos/contratos/editar/:id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                        <ContractForm />
-                                    </ProtectedRoute>
-                                } />
+                                    <Route path="/abrigos/novo" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ShelterForm />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/:id" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ShelterDetail />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/editar/:id" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ShelterForm />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/:shelterId/abrigados/novo" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <OccupantForm />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/:shelterId/doacoes/novo" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                            <DonationForm />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                            <DistributionForm />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/relatorios" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ShelterReports />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/residentes" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ShelterResidents />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/contratos" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ContractList />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/contratos/novo" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ContractForm />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/abrigos/contratos/editar/:id" element={
+                                        <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                            <ContractForm />
+                                        </ProtectedRoute>
+                                    } />
 
-                                {/* Catch-all routes to prevent blank screens */}
-                                <Route path="/login" element={<Navigate to="/" replace />} />
-                                <Route path="*" element={<Navigate to="/" replace />} />
-                            </Routes>
+                                    <Route path="*" element={<Navigate to="/" replace />} />
+                                </Routes>
+                            </Suspense>
                         </main>
 
                         {/* Bottom Navigation - Only for Agents and Admin Fallback */}

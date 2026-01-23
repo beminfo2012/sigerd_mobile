@@ -125,8 +125,14 @@ export const getPendingSyncCount = async () => {
 
     for (const storeName of stores) {
         try {
-            const items = await db.getAll(storeName).catch(() => []);
-            const pending = items.filter(v => v.synced === false || v.synced === undefined || v.synced === 0).length;
+            // [PERFORMANCE FIX] Use count from index instead of getAll().length
+            // This is significantly faster for large databases
+            const pending = await db.countFromIndex(storeName, 'synced', 0).catch(async () => {
+                // Fallback for older versions or undefined synced (where 0 is used for false)
+                const items = await db.getAll(storeName).catch(() => []);
+                return items.filter(v => v.synced === false || v.synced === undefined || v.synced === 0).length;
+            });
+
             detail[storeName] = pending;
             detail.total += pending;
         } catch (e) {
