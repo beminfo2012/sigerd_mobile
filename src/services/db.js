@@ -443,12 +443,32 @@ export const deleteVistoriaLocal = async (id) => {
     const db = await initDB()
     // Find internal id if external id is provided
     let localId = id
-    if (typeof id === 'string') {
-        const all = await db.getAll('vistorias')
-        const found = all.find(v => v.id === id || v.vistoria_id === id || v.supabase_id === id)
-        if (found) localId = found.id
+    let vistoriaId = null
+
+    // Get all records to find the specific one to delete from cache too
+    const all = await db.getAll('vistorias')
+    const found = all.find(v => v.id === id || v.vistoria_id === id || v.supabase_id === id)
+
+    if (found) {
+        localId = found.id
+        vistoriaId = found.vistoria_id || found.vistoriaId
     }
+
+    // 1. Delete from primary store
     await db.delete('vistorias', localId)
+
+    // 2. [FIX] Also delete from Remote Cache to prevent ID sequence "jumping"
+    if (vistoriaId) {
+        const cacheTx = db.transaction('remote_vistorias_cache', 'readwrite')
+        const cacheStore = cacheTx.objectStore('remote_vistorias_cache')
+        const cacheItems = await cacheStore.getAll()
+        const cacheTarget = cacheItems.find(v => (v.vistoria_id || v.vistoriaId) === vistoriaId)
+
+        if (cacheTarget) {
+            await cacheStore.delete(cacheTarget.id)
+        }
+        await cacheTx.done
+    }
 }
 
 export const deleteInterdicaoLocal = async (id) => {

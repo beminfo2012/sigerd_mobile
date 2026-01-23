@@ -212,17 +212,19 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
 
-        // Ensure we at least attempt to generate based on local data if offline or API fails
         try {
             let maxNum = 0
 
-            // 1. Check Remote Cache and Local Data first (Fastest)
+            // 1. Fetch from Local and Cache
             const [cached, local] = await Promise.all([
                 getRemoteVistoriasCache().catch(() => []),
                 getAllVistoriasLocal().catch(() => [])
             ]);
 
-            [...cached, ...local].forEach(v => {
+            const allRecords = [...cached, ...local];
+            console.log(`[ID Sequence] Checking ${allRecords.length} records in cache/local...`);
+
+            allRecords.forEach(v => {
                 const vid = v.vistoria_id || v.vistoriaId
                 if (vid && vid.includes(`/${currentYear}`)) {
                     const parts = vid.split('/');
@@ -231,35 +233,35 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 }
             })
 
-            // 2. If Online, try to get the absolute latest from server to avoid collision
+            // 2. Fetch from Supabase (if online)
             if (navigator.onLine) {
                 try {
                     const { data, error } = await supabase
                         .from('vistorias')
                         .select('vistoria_id')
                         .ilike('vistoria_id', `%/${currentYear}`)
-                        .order('vistoria_id', { ascending: false })
-                        .limit(5); // Get top 5 to check nums
+                        // No order here to avoid string sorting issues, we'll find max in JS
+                        .limit(100);
 
                     if (data && data.length > 0) {
                         data.forEach(row => {
                             const vid = row.vistoria_id;
                             if (vid) {
                                 const parts = vid.split("/");
-                                if (parts.length > 0) {
-                                    const num = parseInt(parts[0]);
-                                    if (!isNaN(num)) maxNum = Math.max(maxNum, num);
-                                }
+                                const num = parseInt(parts[0]);
+                                if (!isNaN(num)) maxNum = Math.max(maxNum, num);
                             }
                         });
                     }
                 } catch (srvErr) {
-                    console.warn('Server ID fetch failed, using local max:', srvErr);
+                    console.warn('Server ID fetch failed:', srvErr);
                 }
             }
 
             const nextNum = maxNum + 1
             const newId = `${nextNum.toString().padStart(3, '0')}/${currentYear}`
+
+            console.log(`[ID Sequence] Max found: ${maxNum}. Next suggested: ${newId}`);
 
             setFormData(prev => ({
                 ...prev,
@@ -270,7 +272,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
         } catch (e) {
             console.error('Error calculating next ID:', e)
-            // Fallback: Leave empty to indicate pending, or could generate a temp ID
             setFormData(prev => ({ ...prev, vistoriaId: '' }))
         }
     }
