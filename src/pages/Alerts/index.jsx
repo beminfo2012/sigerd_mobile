@@ -193,11 +193,10 @@ const Alerts = () => {
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
     const [risks, setRisks] = useState('')
-    const [instructions, setInstructions] = useState(`- Desligue aparelhos elétricos, quadro geral de energia.
-- Observe alteração nas encostas.
-- Permaneça em local abrigado.
-- Em caso de situação de inundação, ou similar, proteja seus pertences da água envoltos em sacos plásticos.
-- Obtenha mais informações junto à Defesa Civil (telefone 199) e ao Corpo de Bombeiros (telefone 193).`)
+    const [instructions, setInstructions] = useState(`• Evite enfrentar o mau tempo.
+• Observe alteração nas encostas.
+• Evite usar aparelhos eletrônicos ligados à tomada.
+• Obtenha mais informações junto à Defesa Civil (telefone 199) e ao Corpo de Bombeiros (telefone 193).`)
 
     const artRef = useRef(null) // Referência apenas para visualização
     const exportRef = useRef(null) // Referência oculta para exportação fiel
@@ -320,14 +319,14 @@ const Alerts = () => {
         const waInstructions = instructionsList.map(i => `• ${i}`).join('\n')
 
         const waText =
-            `🚨 *ALERTA DE DEFESA CIVIL* 🚨\n\n` +
+            `🚨 *ALERTA DA DEFESA CIVIL* 🚨\n\n` +
             `${alertEmoji} *AVISO DE:* ${alertType.toUpperCase()}\n` +
             `${severityEmoji} *SEVERIDADE:* ${severity.toUpperCase()}\n\n` +
             `📅 *Início:* ${startDate}\n` +
             `🏁 *Fim:* ${endDate}\n\n` +
             `⚡ *Riscos Potenciais:*\n${waRisks}\n\n` +
             `📝 *Instruções:*\n${waInstructions}\n\n` +
-            `📞 *Emergência:* 199 ou 193\n` +
+            `📞 *Emergência:* 27 99771-2022\n` +
             `🏘️ Defesa Civil - Santa Maria de Jetibá`
 
         // 2. Download the image first
