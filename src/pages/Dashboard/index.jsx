@@ -5,7 +5,7 @@ import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain,
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
-import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, clearLocalData, resetDatabase } from '../../services/db'
+import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, getRemoteVistoriasCache, clearLocalData, resetDatabase } from '../../services/db'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService } from '../../services/cemaden'
 import { getShelters, getOccupants, getGlobalInventory } from '../../services/shelterDb'
