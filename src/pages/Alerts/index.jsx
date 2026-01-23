@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw, Upload } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Upload, MessageCircle, Copy, Check } from 'lucide-react'
 import { toJpeg } from 'html-to-image'
 
 // Componente isolado da Arte para garantir consistência entre Preview e Exportação
@@ -185,6 +185,7 @@ const Alerts = () => {
     const [selectedAlert, setSelectedAlert] = useState(null)
     const [format, setFormat] = useState('stories') // 'stories' or 'feed'
     const [mapImage, setMapImage] = useState(null)
+    const [isCopying, setIsCopying] = useState(false)
 
     // Form fields
     const [alertType, setAlertType] = useState('')
@@ -307,6 +308,45 @@ const Alerts = () => {
             console.error('Erro ao gerar imagem:', error)
             alert('Erro ao gerar imagem: ' + error.message)
         }
+    }
+
+    const shareToWhatsApp = async () => {
+        // 1. Generate formatted text
+        const severityEmoji = severity.includes('Grande') ? '🔴' : (severity.includes('Potencial') ? '🟡' : '🟠')
+        const alertEmoji = alertType.toLowerCase().includes('chuva') || alertType.toLowerCase().includes('tempestade') ? '⛈️' : '⚠️'
+
+        // Clean text formatting for WhatsApp
+        const waRisks = risks.split('\n').filter(r => r.trim()).join('\n')
+        const waInstructions = instructionsList.map(i => `• ${i}`).join('\n')
+
+        const waText =
+            `🚨 *ALERTA DE DEFESA CIVIL* 🚨\n\n` +
+            `${alertEmoji} *AVISO DE:* ${alertType.toUpperCase()}\n` +
+            `${severityEmoji} *SEVERIDADE:* ${severity.toUpperCase()}\n\n` +
+            `📅 *Início:* ${startDate}\n` +
+            `🏁 *Fim:* ${endDate}\n\n` +
+            `⚡ *Riscos Potenciais:*\n${waRisks}\n\n` +
+            `📝 *Instruções:*\n${waInstructions}\n\n` +
+            `📞 *Emergência:* 199 ou 193\n` +
+            `🏘️ Defesa Civil - Santa Maria de Jetibá`
+
+        // 2. Download the image first
+        await downloadImage()
+
+        // 3. Copy text to clipboard
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(waText)
+                setIsCopying(true)
+                setTimeout(() => setIsCopying(false), 3000)
+            }
+        } catch (err) {
+            console.warn('Clipboard copy failed:', err)
+        }
+
+        // 4. Open WhatsApp
+        const waLink = `https://wa.me/?text=${encodeURIComponent(waText)}`
+        window.open(waLink, '_blank')
     }
 
     const instructionsList = instructions
@@ -443,9 +483,27 @@ const Alerts = () => {
                         </div>
 
                         <button onClick={downloadImage}
-                            className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 mt-2 hover:bg-blue-700">
-                            <Upload size={20} /> Baixar Imagem
+                            className="w-full bg-slate-800 text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 mt-2 hover:bg-slate-900 transition-all active:scale-95 shadow-lg">
+                            <Upload size={20} /> Baixar Apenas Imagem
                         </button>
+
+                        <button onClick={shareToWhatsApp}
+                            className="w-full bg-[#25D366] text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 mt-3 hover:bg-[#20ba59] transition-all active:scale-95 shadow-lg border-b-4 border-green-700">
+                            <MessageCircle size={22} fill="white" />
+                            {isCopying ? 'Pronto! Texto Copiado!' : 'Postar no Canal WhatsApp'}
+                        </button>
+
+                        <div className="bg-blue-50 p-4 rounded-2xl mt-4 border border-blue-100">
+                            <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                                Como publicar no canal:
+                            </p>
+                            <ol className="text-[11px] text-blue-700 space-y-1 font-medium">
+                                <li>1. A imagem será baixada automaticamente</li>
+                                <li>2. O texto será copiado para sua área de transferência</li>
+                                <li>3. No WhatsApp, selecione o Canal, cole o texto e anexe a imagem</li>
+                            </ol>
+                        </div>
                     </div>
                 </div>
 
