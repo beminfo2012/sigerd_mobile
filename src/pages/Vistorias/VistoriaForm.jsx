@@ -439,20 +439,20 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 `Cidadão: ${formData.solicitante}, Local: ${formData.endereco}`
             );
 
-            if (refinedText) {
+            if (refinedText && !refinedText.startsWith('ERROR:')) {
                 // SUCCESS: Open Comparison Modal instead of auto-applying
                 setComparisonContent({
                     original: formData.observacoes,
                     refined: refinedText
                 });
             } else {
-                // SILENT FAIL (Handled by AI Service returning null)
-                // Just show a subtle toast/alert, don't break flow
-                alert("⚠️ A IA não pôde responder no momento. Tente novamente mais tarde.\n(Seu texto original está seguro)");
+                // FAILURE: Show specific error for debugging
+                const errorMsg = refinedText ? refinedText.replace('ERROR:', '') : 'Resposta vazia.';
+                alert(`⚠️ DIAGNÓSTICO DE ERRO:\n\n${errorMsg}\n\n(Tire um print desta tela)`);
             }
         } catch (e) {
-            console.error("Critical Safety Catch:", e); // Should rarely hit due to ai.js wrapping
-            alert("Erro de conexão com o assistente inteligente.");
+            console.error("Critical Safety Catch:", e);
+            alert(`CRITICAL: ${e.message}`);
         } finally {
             setRefining(false);
         }

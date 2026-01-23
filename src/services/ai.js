@@ -63,7 +63,7 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
         return await Promise.race([callAI(), timeoutPromise]);
     } catch (finalError) {
         console.error('SIGERD AI Error:', finalError);
-        // Return null instead of throwing to prevent app crash
-        return null;
+        // [DEBUG] Return error string to show in UI
+        return `ERROR: ${finalError.message}`;
     }
 };
