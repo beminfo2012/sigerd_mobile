@@ -1,5 +1,5 @@
-// SIGERD AI Service - Direct REST Implementation v2.0 (No SDK)
-// Bypasses library issues by calling Google API directly via fetch
+// SIGERD AI Service - Multi-Version Strategy v3.0
+// Tries different API versions (v1/v1beta) to find a working endpoint
 
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
@@ -20,18 +20,21 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
     3. Responda APENAS o texto reescrito.
     `;
 
-    // Priority list of models to try via RAW HTTP
-    const MODELS = [
-        'gemini-1.5-flash',
-        'gemini-1.5-flash-latest',
-        'gemini-1.0-pro',
-        'gemini-pro'
+    // Priority list: Model + API Version
+    // Keys created in Google AI Studio often support v1beta better for new models
+    // But old/restricted keys might only work on v1 stable with legacy models
+    const CANDIDATES = [
+        { model: 'gemini-1.5-flash', version: 'v1beta' },
+        { model: 'gemini-1.5-flash-latest', version: 'v1beta' },
+        { model: 'gemini-pro', version: 'v1' },           // STABLE V1 (Critical Fallback)
+        { model: 'gemini-1.0-pro', version: 'v1beta' },
+        { model: 'gemini-pro', version: 'v1beta' }
     ];
 
     let errors = [];
 
-    // [SAFETY] 20s Timeout Wrapper
-    const fetchWithTimeout = async (url, options, timeout = 20000) => {
+    // [SAFETY] 25s Timeout Wrapper
+    const fetchWithTimeout = async (url, options, timeout = 25000) => {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
         try {
@@ -44,11 +47,11 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
         }
     };
 
-    for (const model of MODELS) {
+    for (const cand of CANDIDATES) {
         try {
-            console.log(`[SIGERD AI] Tentando conexão direta com ${model}...`);
+            console.log(`[SIGERD AI] Tentando ${cand.model} via ${cand.version}...`);
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+            const url = `https://generativelanguage.googleapis.com/${cand.version}/models/${cand.model}:generateContent?key=${API_KEY}`;
 
             const response = await fetchWithTimeout(url, {
                 method: 'POST',
@@ -60,26 +63,25 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
-                throw new Error(`HTTP ${response.status}: ${errData.error?.message || response.statusText}`);
+                const msg = errData.error?.message || response.statusText;
+                console.warn(`[SIGERD AI] Falha ${response.status} em ${cand.model}:`, msg);
+                throw new Error(`${cand.model} (${cand.version}): HTTP ${response.status} - ${msg}`);
             }
 
             const data = await response.json();
-
-            // Extract text safe path
             const refined = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
             if (refined) {
                 return refined.trim();
             } else {
-                throw new Error("Resposta da IA vazia/inválida.");
+                throw new Error("Resposta vazia.");
             }
 
         } catch (error) {
-            console.warn(`[SIGERD AI] Falha em ${model}:`, error.message);
-            errors.push(`${model}: ${error.message}`);
+            errors.push(error.message);
         }
     }
 
     // Return explicit error for the UI to display
-    return `ERROR: Falha em todos os modelos.\n\nDetalhes:\n${errors.join('\n')}`;
+    return `ERROR: Falha em todas as tentativas.\n\n${errors.join('\n')}`;
 };
