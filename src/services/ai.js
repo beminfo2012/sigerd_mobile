@@ -6,10 +6,11 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 // Define rotation of model configurations to bypass potential 404s or version mismatches
 const ATTEMPTS = [
-    { model: "gemini-1.5-flash" },                      // Standard Flash (SDK Default Version)
-    { model: "gemini-1.5-flash-latest" },               // Latest Alias
-    { model: "gemini-pro" },                            // Stable 1.0 Pro
-    { model: "gemini-1.5-pro" }                         // Pro Fallback
+    { model: "gemini-1.5-flash-001" },                  // Pinned Flash (Often required for v1beta)
+    { model: "gemini-1.5-flash-002" },                  // Newer Flash
+    { model: "gemini-1.5-pro-001" },                    // Pinned Pro
+    { model: "gemini-1.0-pro" },                        // Legacy Stable 1.0 (Most widely available)
+    { model: "gemini-pro" }                             // Alias Fallback
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
