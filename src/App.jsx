@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Menu from './pages/Menu'
 import ProtectedRoute from './components/ProtectedRoute'
+import { supabase } from './services/supabase'
 
 // Lazy loaded components
 const GeoRescue = lazy(() => import('./pages/GeoRescue'))
