@@ -4,11 +4,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Define rotation of model configurations to bypass potential 404s
+// Define rotation of model configurations to bypass potential 404s or version mismatches
 const ATTEMPTS = [
-    { model: "gemini-1.5-flash", version: 'v1beta' },     // Latest Flash (Best Speed/Cost)
-    { model: "gemini-1.5-pro", version: 'v1beta' },       // Latest Pro (Best Quality)
-    { model: "gemini-pro", version: 'v1beta' }            // Legacy Fallback
+    { model: "gemini-1.5-flash" },                      // Standard Flash (SDK Default Version)
+    { model: "gemini-1.5-flash-latest" },               // Latest Alias
+    { model: "gemini-pro" },                            // Stable 1.0 Pro
+    { model: "gemini-1.5-pro" }                         // Pro Fallback
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
@@ -16,7 +17,7 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
     // [SAFETY] Race against a strict timeout
     const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout: A IA demorou muito para responder (15s).')), 15000)
+        setTimeout(() => reject(new Error('Timeout: A IA demorou muito para responder (25s).')), 25000)
     );
 
     const callAI = async () => {
@@ -26,7 +27,11 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
                 if (!navigator.onLine) throw new Error('Sem conexão com a internet');
 
                 console.log(`SIGERD AI: Tentando modelo ${config.model}...`);
-                const model = genAI.getGenerativeModel({ model: config.model }, { apiVersion: config.version });
+                // Let SDK decide the best version if not specified
+                const modelOpts = { model: config.model };
+                if (config.version) modelOpts.apiVersion = config.version;
+
+                const model = genAI.getGenerativeModel(modelOpts);
 
                 const prompt = `
                 Atue como Engenheiro Civil Sênior de Defesa Civil.
