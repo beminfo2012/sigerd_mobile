@@ -6,60 +6,59 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 // Define rotation of model configurations to bypass potential 404s
 const ATTEMPTS = [
-    { model: "gemini-1.5-flash-001", version: 'v1beta' }, // Explicit version often resolves 404s
-    { model: "gemini-pro", version: 'v1beta' },           // Stable 1.0 Pro model
-    { model: "gemini-1.5-flash", version: 'v1beta' },     // Generic Flash (fallback)
-    { model: "gemini-1.5-pro", version: 'v1beta' }        // Pro 1.5 (last resort)
+    { model: "gemini-1.5-flash", version: 'v1beta' },     // Latest Flash (Best Speed/Cost)
+    { model: "gemini-1.5-pro", version: 'v1beta' },       // Latest Pro (Best Quality)
+    { model: "gemini-pro", version: 'v1beta' }            // Legacy Fallback
 ];
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
 
-    let errors = [];
+    // [SAFETY] Race against a strict timeout
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout: A IA demorou muito para responder (15s).')), 15000)
+    );
 
-    for (const config of ATTEMPTS) {
-        try {
-            console.log(`SIGERD AI: Autenticando com ${config.model} (${config.version})...`);
+    const callAI = async () => {
+        for (const config of ATTEMPTS) {
+            try {
+                // Check connectivity first
+                if (!navigator.onLine) throw new Error('Sem conexão com a internet');
 
-            const model = genAI.getGenerativeModel(
-                { model: config.model },
-                { apiVersion: config.version }
-            );
+                console.log(`SIGERD AI: Tentando modelo ${config.model}...`);
+                const model = genAI.getGenerativeModel({ model: config.model }, { apiVersion: config.version });
 
-            const prompt = `
-            Você é um Engenheiro Civil especialista em Defesa Civil e Gestão de Riscos.
-            Sua tarefa é refinar e reescrever o seguinte relato de campo, transformando-o em um texto técnico, formal e preciso para um Relatório Oficial.
+                const prompt = `
+                Atue como Engenheiro Civil Sênior de Defesa Civil.
+                Reescreva o texto abaixo em linguagem técnica formal para laudo oficial.
+                
+                ENTRADA: "${text}"
+                CONTEXTO: ${category} | ${context}
+                
+                REGRAS:
+                1. Mantenha os fatos, melhore o vocabulário.
+                2. Voz passiva e impessoal.
+                3. Responda APENAS o texto reescrito.
+                `;
 
-            CONTEXTO:
-            Categoria do Risco: ${category}
-            ${context ? `Dados do Local/Solicitante: ${context}` : ''}
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const refined = response.text().trim();
 
-            TEXTO ORIGINAL (Informal):
-            "${text}"
-
-            DIRETRIZES:
-            1. Use terminologia técnica adequada (ex: 'colapso' em vez de 'caiu', 'patologias' em vez de 'problemas').
-            2. Seja objetivo e impessoal (use voz passiva: 'Observou-se...', 'Constatou-se...').
-            3. Mantenha as informações factuais, mas melhore a clareza e coesão.
-            4. Se o texto original for muito curto, expanda com termos técnicos prováveis para aquele contexto.
-            5. O resultado deve ser APENAS o parágrafo reescrito, sem introduções ou explicações.
-
-            TEXTO REFINADO:
-            `;
-
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const refined = response.text().trim();
-
-            if (refined) {
-                console.log(`SIGERD AI: Sucesso com ${config.model}`);
-                return refined;
+                if (refined) return refined;
+            } catch (error) {
+                console.warn(`SIGERD AI: Falha leve em ${config.model}:`, error.message);
+                errors.push(error.message);
             }
-        } catch (error) {
-            console.warn(`SIGERD AI: Falha em ${config.model} (${config.version}):`, error.message);
-            errors.push(`${config.model}/${config.version}: ${error.message}`);
         }
-    }
+        throw new Error('Falha em todos os modelos de IA.');
+    };
 
-    throw new Error(`A IA não pôde processar o texto após várias tentativas.\nDetalhes:\n${errors.join('\n')}`);
+    try {
+        return await Promise.race([callAI(), timeoutPromise]);
+    } catch (finalError) {
+        console.error('SIGERD AI Error:', finalError);
+        // Return null instead of throwing to prevent app crash
+        return null;
+    }
 };
