@@ -866,8 +866,24 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <div>
                             <div className="flex justify-between items-center mb-1.5">
                                 <label className={labelClasses} style={{ marginBottom: 0 }}>Observações Técnicas</label>
-                                {/* Feature disabled by user request */}
-                                {/* <div className="flex gap-2">...Refinar com IA...</div> */}
+                                <div className="flex gap-2">
+                                    <VoiceInput
+                                        onResult={(text) => setFormData(prev => ({ ...prev, observacoes: prev.observacoes + (prev.observacoes ? ' ' : '') + text }))}
+                                        disabled={refining}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAIRefine}
+                                        disabled={refining}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${refining
+                                            ? 'bg-slate-100 text-slate-400 animate-pulse'
+                                            : 'bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-100 hover:scale-105 active:scale-95'
+                                            }`}
+                                    >
+                                        <Sparkles size={12} className={refining ? 'animate-spin' : ''} />
+                                        {refining ? 'Refinando...' : 'Refinar com IA'}
+                                    </button>
+                                </div>
                             </div>
                             <textarea
                                 rows="4"
