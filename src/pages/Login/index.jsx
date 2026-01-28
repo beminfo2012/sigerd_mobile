@@ -75,7 +75,10 @@ const Login = ({ onLogin }) => {
                 }
             })
 
-            if (verifyError) throw verifyError
+            if (verifyError) {
+                const errorData = await verifyError.response?.json().catch(() => ({}));
+                throw new Error(errorData.error || verifyError.message);
+            }
 
             if (verifyResult.verified && verifyResult.loginUrl) {
                 // Use the magic link to log in
@@ -150,7 +153,10 @@ const Login = ({ onLogin }) => {
                 }
             })
 
-            if (verifyError) throw verifyError
+            if (verifyError) {
+                const errorData = await verifyError.response?.json().catch(() => ({}));
+                throw new Error(errorData.error || verifyError.message);
+            }
 
             if (verifyResult.verified) {
                 localStorage.setItem('biometric_email', session.user.email)
