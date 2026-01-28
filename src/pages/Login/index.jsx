@@ -31,7 +31,11 @@ const Login = ({ onLogin }) => {
         try {
             // 1. Get authentication options from Edge Function
             const { data: options, error: optError } = await supabase.functions.invoke('webauthn', {
-                body: { action: 'generate-authentication-options', email: savedEmail }
+                body: {
+                    action: 'generate-authentication-options',
+                    email: savedEmail,
+                    origin: window.location.origin
+                }
             })
 
             if (optError) throw optError
@@ -106,7 +110,10 @@ const Login = ({ onLogin }) => {
             if (!session) return
 
             const { data: options, error: optError } = await supabase.functions.invoke('webauthn', {
-                body: { action: 'generate-registration-options' }
+                body: {
+                    action: 'generate-registration-options',
+                    origin: window.location.origin
+                }
             })
 
             if (optError) throw optError
