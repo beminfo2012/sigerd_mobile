@@ -1004,10 +1004,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     <button
                                         type="button"
                                         onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
-                                        className="text-[10px] font-black text-blue-600 uppercase tracking-wider bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1"
+                                        className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
                                     >
                                         <CheckCircle size={12} />
-                                        Usar minha assinatura
+                                        Usar Assinatura Salva
                                     </button>
                                 )}
                             </div>
