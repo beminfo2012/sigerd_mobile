@@ -223,7 +223,7 @@ export const generatePDF = async (rawData, type) => {
                 ${sectionTitle('2. Localização e Solicitante')}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                     <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
-                    ${renderField('CPF', data.cpf)}
+                    ${renderField('CPF/CNPJ', data.cpf)}
                     ${renderField('Telefone', data.telefone)}
                     <div style="grid-column: span 2;">${renderField('Endereço do Solicitante', data.enderecoSolicitante)}</div>
                     <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>

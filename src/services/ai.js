@@ -1,11 +1,27 @@
 // SIGERD AI Service - Multi-Version Strategy v3.0
 // Tries different API versions (v1/v1beta) to find a working endpoint
 
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+const RAW_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+const API_KEY = RAW_API_KEY ? RAW_API_KEY.trim() : null;
+
+// Diagnostic function to see what the key can actually see
+const listAvailableModels = async () => {
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            return data.models?.map(m => m.name.replace('models/', '')) || [];
+        }
+    } catch (e) {
+        return [];
+    }
+    return [];
+};
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
-    if (!API_KEY) return "ERROR: Chave de API não encontrada. Verifique VITE_GOOGLE_API_KEY.";
+    if (!API_KEY) return "ERROR: Chave de API não encontrada (VITE_GOOGLE_API_KEY).";
 
     const prompt = `
     Atue como Engenheiro Civil Sênior de Defesa Civil.
@@ -21,20 +37,17 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
     `;
 
     // Priority list: Model + API Version
-    // Keys created in Google AI Studio often support v1beta better for new models
-    // But old/restricted keys might only work on v1 stable with legacy models
+    // Gemini 1.5 Flash is now stable on v1
     const CANDIDATES = [
+        { model: 'gemini-1.5-flash', version: 'v1' },
         { model: 'gemini-1.5-flash', version: 'v1beta' },
-        { model: 'gemini-1.5-flash-latest', version: 'v1beta' },
-        { model: 'gemini-pro', version: 'v1' },           // STABLE V1 (Critical Fallback)
-        { model: 'gemini-1.0-pro', version: 'v1beta' },
-        { model: 'gemini-pro', version: 'v1beta' }
+        { model: 'gemini-1.5-pro', version: 'v1' },
+        { model: 'gemini-pro', version: 'v1' }
     ];
 
     let errors = [];
 
-    // [SAFETY] 25s Timeout Wrapper
-    const fetchWithTimeout = async (url, options, timeout = 25000) => {
+    const fetchWithTimeout = async (url, options, timeout = 20000) => {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
         try {
@@ -49,8 +62,6 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
 
     for (const cand of CANDIDATES) {
         try {
-            console.log(`[SIGERD AI] Tentando ${cand.model} via ${cand.version}...`);
-
             const url = `https://generativelanguage.googleapis.com/${cand.version}/models/${cand.model}:generateContent?key=${API_KEY}`;
 
             const response = await fetchWithTimeout(url, {
@@ -61,27 +72,26 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
                 })
             });
 
-            if (!response.ok) {
+            if (response.ok) {
+                const data = await response.json();
+                const refined = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (refined) return refined.trim();
+            } else {
                 const errData = await response.json().catch(() => ({}));
                 const msg = errData.error?.message || response.statusText;
-                console.warn(`[SIGERD AI] Falha ${response.status} em ${cand.model}:`, msg);
-                throw new Error(`${cand.model} (${cand.version}): HTTP ${response.status} - ${msg}`);
-            }
-
-            const data = await response.json();
-            const refined = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (refined) {
-                return refined.trim();
-            } else {
-                throw new Error("Resposta vazia.");
+                errors.push(`${cand.model} (${cand.version}): ${response.status} - ${msg}`);
             }
 
         } catch (error) {
-            errors.push(error.message);
+            errors.push(`${cand.model}: ${error.message}`);
         }
     }
 
-    // Return explicit error for the UI to display
-    return `ERROR: Falha em todas as tentativas.\n\n${errors.join('\n')}`;
+    // Try discovery as last resort
+    const discovered = await listAvailableModels();
+    const discoveryMsg = discovered.length > 0
+        ? `\n\nModelos visíveis pela sua chave: ${discovered.slice(0, 5).join(', ')}`
+        : "\n\nSua chave não parece ter acesso a nenhum modelo Gemini (Verifique se a API de Linguagem Generativa está ativa no Cloud Console).";
+
+    return `ERROR: Falha técnica na IA.${discoveryMsg}\n\nDetalhes:\n${errors.join('\n')}`;
 };

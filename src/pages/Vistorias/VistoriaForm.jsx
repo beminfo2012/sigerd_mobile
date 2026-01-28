@@ -143,6 +143,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         checklistRespostas: {} // { "pergunta": true/false }
     })
 
+    const [docType, setDocType] = useState('CPF')
+
     const [showSignaturePad, setShowSignaturePad] = useState(false)
     const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' ou 'apoio'
 
@@ -605,20 +607,52 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className={labelClasses}>CPF</label>
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <label className={labelClasses.replace('mb-1.5', 'mb-0')}>{docType}</label>
+                                    <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setDocType('CPF')
+                                                setFormData(prev => ({ ...prev, cpf: '' }))
+                                            }}
+                                            className={`text-[9px] px-2 py-1 rounded-md font-bold transition-all ${docType === 'CPF' ? 'bg-white text-[#2a5299] shadow-sm' : 'text-gray-400'}`}
+                                        >
+                                            CPF
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setDocType('CNPJ')
+                                                setFormData(prev => ({ ...prev, cpf: '' }))
+                                            }}
+                                            className={`text-[9px] px-2 py-1 rounded-md font-bold transition-all ${docType === 'CNPJ' ? 'bg-white text-[#2a5299] shadow-sm' : 'text-gray-400'}`}
+                                        >
+                                            CNPJ
+                                        </button>
+                                    </div>
+                                </div>
                                 <input
                                     type="tel"
                                     inputMode="numeric"
-                                    maxLength={14}
-                                    placeholder="000.000.000-00"
+                                    maxLength={docType === 'CPF' ? 14 : 18}
+                                    placeholder={docType === 'CPF' ? "000.000.000-00" : "00.000.000/0000-00"}
                                     className={inputClasses}
                                     value={formData.cpf}
                                     onChange={e => {
                                         let v = e.target.value.replace(/\D/g, '');
-                                        if (v.length > 11) v = v.slice(0, 11);
-                                        v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                                        v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                                        v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                        if (docType === 'CPF') {
+                                            if (v.length > 11) v = v.slice(0, 11);
+                                            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                        } else {
+                                            if (v.length > 14) v = v.slice(0, 14);
+                                            v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                                            v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                                            v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                                            v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                                        }
                                         setFormData({ ...formData, cpf: v });
                                     }}
                                 />
