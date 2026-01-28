@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { supabase } from '../../services/supabase'
 import { Fingerprint } from 'lucide-react'
 
