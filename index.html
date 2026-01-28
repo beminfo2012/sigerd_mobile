@@ -37,45 +37,6 @@
         }
         localStorage.setItem('app_version', TARGET_VERSION);
         window.location.reload(true);
-< !doctype html >
-          <html lang="pt-BR">
-
-            <head>
-              <meta charset="UTF-8" />
-              <link rel="icon" type="image/png" href="/favicon.png" />
-              <link rel="apple-touch-icon" href="/pwa-icon.png">
-                <link rel="manifest" href="/manifest.json">
-                  <meta name="theme-color" content="#2a5299">
-                    <meta name="apple-mobile-web-app-capable" content="yes">
-                      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                        <title>SIGERD Mobile v1.37</title>
-                        <script>
-                          window.onerror = function (msg, url, line, col, error) {
-      const errorMsg = "🛑 ERRO CRÍTICO: " + msg + "\nLinha: " + line + "\nArquivo: " + (url || '---');
-                          console.error(errorMsg, error);
-                          if (!window._errorAlerted) {
-                            window._errorAlerted = true;
-                          alert(errorMsg + "\n\nPor favor, envie um print desta tela para o suporte.");
-      }
-    };
-                          if (!window.L) window.L = { };
-
-                          // NUCLEAR CACHE RESET v1.37.0
-                          (async function () {
-      const TARGET_VERSION = 'v1.37.0';
-                          if (localStorage.getItem('app_version') !== TARGET_VERSION) {
-                            console.log("Nuclear Reset Triggered: Version Mismatch");
-                          if ('serviceWorker' in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-                          for (let r of regs) await r.unregister();
-        }
-                          if ('caches' in window) {
-          const keys = await caches.keys();
-                          for (let k of keys) await caches.delete(k);
-        }
-                          localStorage.setItem('app_version', TARGET_VERSION);
-                          window.location.reload(true);
       }
     })();
   </script>

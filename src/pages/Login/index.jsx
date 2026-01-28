@@ -241,7 +241,7 @@ const Login = ({ onLogin }) => {
                 {/* Logo Section */}
                 <div style={{
                     marginTop: '20px',
-                    marginBottom: '20px',
+                    marginBottom: '10px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center'
@@ -250,29 +250,31 @@ const Login = ({ onLogin }) => {
                         src="/logo_sigerd_new.png"
                         alt="Logo SIGERD"
                         style={{
-                            width: '120px',
-                            height: '120px',
+                            width: '180px',
+                            height: '180px',
                             objectFit: 'contain'
                         }}
                     />
                 </div>
 
                 {/* Title Section */}
-                <h1 style={{
-                    color: 'white',
-                    fontSize: '42px',
-                    fontWeight: '800',
-                    margin: '0',
-                    letterSpacing: '1px'
-                }}>SIGERD</h1>
+                <div style={{ marginBottom: '20px' }}>
+                    <h1 style={{
+                        color: 'white',
+                        fontSize: '42px',
+                        fontWeight: '800',
+                        margin: '0',
+                        letterSpacing: '1px'
+                    }}>SIGERD</h1>
 
-                <p style={{
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '14px',
-                    margin: '0 0 40px 0',
-                    maxWidth: '280px',
-                    lineHeight: '1.4'
-                }}>Sistema Integrado de Gerenciamento de Riscos e Desastres</p>
+                    <p style={{
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        fontSize: '14px',
+                        margin: '5px auto 0',
+                        maxWidth: '280px',
+                        lineHeight: '1.4'
+                    }}>Sistema Integrado de Gerenciamento de Riscos e Desastres</p>
+                </div>
 
                 {/* Biometric Button */}
                 <button
