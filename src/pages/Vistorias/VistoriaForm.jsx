@@ -998,7 +998,19 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                         {/* Agente Signature */}
                         <div>
-                            <label className={labelClasses}>Assinatura do Agente</label>
+                            <div className="flex justify-between items-center mb-1.5">
+                                <label className={labelClasses} style={{ marginBottom: 0 }}>Assinatura do Agente</label>
+                                {userProfile?.signature && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
+                                        className="text-[10px] font-black text-blue-600 uppercase tracking-wider bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1"
+                                    >
+                                        <CheckCircle size={12} />
+                                        Usar minha assinatura
+                                    </button>
+                                )}
+                            </div>
                             <div
                                 onClick={() => {
                                     setActiveSignatureType('agente')

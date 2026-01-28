@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } from '../../services/db'
 import { supabase } from '../../services/supabase'
+import SignaturePadComp from '../../components/SignaturePad'
 
 const Menu = ({ userProfile, onLogout, setUserProfile }) => {
     const [syncDetail, setSyncDetail] = useState({ total: 0 })
@@ -9,6 +9,8 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
     const [showProfileModal, setShowProfileModal] = useState(false)
     const [editName, setEditName] = useState(userProfile?.full_name || '')
     const [editMatricula, setEditMatricula] = useState(userProfile?.matricula || '')
+    const [editSignature, setEditSignature] = useState(userProfile?.signature || null)
+    const [showSignaturePad, setShowSignaturePad] = useState(false)
     const [savingProfile, setSavingProfile] = useState(false)
 
     useEffect(() => {
@@ -54,12 +56,13 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                     .update({
                         full_name: editName,
                         matricula: editMatricula,
+                        signature: editSignature,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', user.id)
 
                 if (!error) {
-                    setUserProfile({ ...userProfile, full_name: editName, matricula: editMatricula })
+                    setUserProfile({ ...userProfile, full_name: editName, matricula: editMatricula, signature: editSignature })
                     setShowProfileModal(false)
                     alert('Perfil atualizado!')
                 } else {
@@ -122,7 +125,8 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                     onClick={() => {
                         setEditName(userProfile?.full_name || '')
                         setEditMatricula(userProfile?.matricula || '')
-                        setShowProfileModal(true)
+                        setEditSignature(userProfile?.signature || null)
+                        setShowSignaturePad(true)
                     }}
                     className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
@@ -237,6 +241,34 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                                     className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800"
                                 />
                             </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Sua Assinatura Digital</label>
+                                <div
+                                    onClick={() => setShowSignaturePad(true)}
+                                    className="w-full bg-slate-50 h-32 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer overflow-hidden group hover:border-blue-500 transition-colors"
+                                >
+                                    {editSignature ? (
+                                        <img src={editSignature} className="h-full w-auto object-contain" />
+                                    ) : (
+                                        <div className="text-center">
+                                            <Edit size={20} className="mx-auto text-slate-300 group-hover:text-blue-500 mb-1" />
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">Tocar para cadastrar</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {editSignature && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setEditSignature(null)
+                                        }}
+                                        className="text-[9px] font-bold text-red-500 uppercase mt-2 px-1"
+                                    >
+                                        Limpar Assinatura
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <button
@@ -249,6 +281,18 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Signature Pad Modal */}
+            {showSignaturePad && (
+                <SignaturePadComp
+                    title="Cadastrar Assinatura Digital"
+                    onCancel={() => setShowSignaturePad(false)}
+                    onSave={(dataUrl) => {
+                        setEditSignature(dataUrl)
+                        setShowSignaturePad(false)
+                    }}
+                />
             )}
 
             <div className="mt-12 flex flex-col items-center w-full">
