@@ -63,7 +63,9 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                     .eq('id', user.id)
 
                 if (!error) {
-                    setUserProfile({ ...userProfile, full_name: editName, matricula: editMatricula, signature: editSignature })
+                    const updatedProfile = { ...userProfile, full_name: editName, matricula: editMatricula, signature: editSignature }
+                    setUserProfile(updatedProfile)
+                    localStorage.setItem('userProfile', JSON.stringify(updatedProfile))
                     setShowProfileModal(false)
                     alert('Perfil atualizado!')
                 } else {
@@ -127,7 +129,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                         setEditName(userProfile?.full_name || '')
                         setEditMatricula(userProfile?.matricula || '')
                         setEditSignature(userProfile?.signature || null)
-                        setShowSignaturePad(true)
+                        setShowProfileModal(true)
                     }}
                     className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
