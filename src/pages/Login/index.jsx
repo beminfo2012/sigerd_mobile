@@ -8,6 +8,17 @@ const Login = ({ onLogin }) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
+    // Helper to decode base64/base64url to Uint8Array
+    const base64ToUint8Array = (base64) => {
+        const binaryString = window.atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+    }
+
     const handleBiometricLogin = async () => {
         setError('')
         const savedEmail = localStorage.getItem('biometric_email')
@@ -28,9 +39,9 @@ const Login = ({ onLogin }) => {
             // 2. Convert options for navigator.credentials.get
             options.allowCredentials = options.allowCredentials.map(c => ({
                 ...c,
-                id: Uint8Array.from(atob(c.id), c => c.charCodeAt(0))
+                id: base64ToUint8Array(c.id)
             }))
-            options.challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0))
+            options.challenge = base64ToUint8Array(options.challenge)
 
             // 3. Get credential from browser
             const credential = await navigator.credentials.get({ publicKey: options })
@@ -101,12 +112,12 @@ const Login = ({ onLogin }) => {
             if (optError) throw optError
 
             // Convert options
-            options.user.id = Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0))
-            options.challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0))
+            options.user.id = base64ToUint8Array(options.user.id)
+            options.challenge = base64ToUint8Array(options.challenge)
             if (options.excludeCredentials) {
                 options.excludeCredentials = options.excludeCredentials.map(c => ({
                     ...c,
-                    id: Uint8Array.from(atob(c.id), c => c.charCodeAt(0))
+                    id: base64ToUint8Array(c.id)
                 }))
             }
 
