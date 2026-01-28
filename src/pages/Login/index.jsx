@@ -76,8 +76,14 @@ const Login = ({ onLogin }) => {
             })
 
             if (verifyError) {
-                const errorData = await verifyError.response?.json().catch(() => ({}));
-                throw new Error(errorData.error || verifyError.message);
+                let errorMessage = verifyError.message;
+                try {
+                    const errorData = await verifyError.response?.json();
+                    if (errorData?.error) errorMessage = errorData.error;
+                } catch (e) {
+                    console.error('Error parsing error response:', e);
+                }
+                throw new Error(errorMessage);
             }
 
             if (verifyResult.verified && verifyResult.loginUrl) {
@@ -154,8 +160,14 @@ const Login = ({ onLogin }) => {
             })
 
             if (verifyError) {
-                const errorData = await verifyError.response?.json().catch(() => ({}));
-                throw new Error(errorData.error || verifyError.message);
+                let errorMessage = verifyError.message;
+                try {
+                    const errorData = await verifyError.response?.json();
+                    if (errorData?.error) errorMessage = errorData.error;
+                } catch (e) {
+                    console.error('Error parsing error response:', e);
+                }
+                throw new Error(errorMessage);
             }
 
             if (verifyResult.verified) {
