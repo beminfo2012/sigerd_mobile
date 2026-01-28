@@ -235,7 +235,7 @@ const Login = ({ onLogin }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '10px'
+                gap: '8px'
             }}>
 
                 {/* Logo Section */}
@@ -258,7 +258,7 @@ const Login = ({ onLogin }) => {
                 </div>
 
                 {/* Title Section */}
-                <div style={{ marginBottom: '20px' }}>
+                <div style={{ marginBottom: '10px' }}>
                     <h1 style={{
                         color: 'white',
                         fontSize: '42px',
@@ -286,7 +286,7 @@ const Login = ({ onLogin }) => {
                         background: 'white',
                         color: '#0f3470',
                         border: 'none',
-                        padding: '18px',
+                        padding: '14px',
                         borderRadius: '50px',
                         cursor: loading ? 'not-allowed' : 'pointer',
                         fontSize: '18px',
@@ -308,7 +308,7 @@ const Login = ({ onLogin }) => {
                     display: 'flex',
                     alignItems: 'center',
                     width: '100%',
-                    margin: '30px 0',
+                    margin: '15px 0',
                     gap: '15px'
                 }}>
                     <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
@@ -319,7 +319,7 @@ const Login = ({ onLogin }) => {
                 </div>
 
                 {/* Login Form */}
-                <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
                     {/* Email Input */}
                     <div style={{ position: 'relative' }}>
@@ -400,7 +400,7 @@ const Login = ({ onLogin }) => {
                             background: '#ff5722',
                             color: 'white',
                             border: 'none',
-                            padding: '18px',
+                            padding: '14px',
                             borderRadius: '12px',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             fontSize: '18px',
@@ -417,13 +417,14 @@ const Login = ({ onLogin }) => {
                 {/* Footer */}
                 <div style={{
                     marginTop: 'auto',
-                    paddingTop: '40px',
+                    paddingTop: '20px',
                     fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.4)',
+                    color: 'rgba(255, 255, 255, 0.6)',
                     textAlign: 'center',
                     lineHeight: '1.6'
                 }}>
-                    <p>© 2024-2026 Santa Maria de Jetibá - v1.45.0</p>
+                    <p style={{ fontWeight: '800', fontSize: '12px', color: 'white', marginBottom: '4px' }}>Defesa Civil de Santa Maria de Jetibá</p>
+                    <p>© 2024-2026 SIGERD Mobile - v1.46.16</p>
                 </div>
             </div>
 
