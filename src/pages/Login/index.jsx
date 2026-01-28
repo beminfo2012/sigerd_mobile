@@ -19,6 +19,15 @@ const Login = ({ onLogin }) => {
         return bytes;
     }
 
+    // Helper to encode Uint8Array to base64url
+    const uint8ArrayToBase64Url = (uint8Array) => {
+        const binaryString = String.fromCharCode(...uint8Array);
+        return window.btoa(binaryString)
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
+    }
+
     const handleBiometricLogin = async () => {
         setError('')
         const savedEmail = localStorage.getItem('biometric_email')
@@ -55,13 +64,13 @@ const Login = ({ onLogin }) => {
             // 4. Verify with Edge Function
             const authResponse = {
                 id: credential.id,
-                rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
                 type: credential.type,
                 response: {
-                    authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
-                    clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
-                    signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
-                    userHandle: credential.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle))) : null,
+                    authenticatorData: uint8ArrayToBase64Url(new Uint8Array(credential.response.authenticatorData)),
+                    clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
+                    signature: uint8ArrayToBase64Url(new Uint8Array(credential.response.signature)),
+                    userHandle: credential.response.userHandle ? uint8ArrayToBase64Url(new Uint8Array(credential.response.userHandle)) : null,
                 },
                 clientExtensionResults: credential.getClientExtensionResults(),
             }
@@ -141,11 +150,11 @@ const Login = ({ onLogin }) => {
 
             const registrationResponse = {
                 id: credential.id,
-                rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
                 type: credential.type,
                 response: {
-                    attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))),
-                    clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
+                    attestationObject: uint8ArrayToBase64Url(new Uint8Array(credential.response.attestationObject)),
+                    clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
                     transports: credential.response.getTransports ? credential.response.getTransports() : [],
                 },
                 clientExtensionResults: credential.getClientExtensionResults(),
