@@ -240,8 +240,8 @@ const Login = ({ onLogin }) => {
 
                 {/* Logo Section */}
                 <div style={{
-                    marginTop: '-40px',
-                    marginBottom: '10px',
+                    marginTop: '20px',
+                    marginBottom: '20px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center'
