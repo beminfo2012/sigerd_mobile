@@ -96,19 +96,6 @@ const Login = ({ onLogin }) => {
             }
 
             if (verifyResult.verified && verifyResult.loginUrl) {
-                // Use the magic link to log in
-                const { error: loginError } = await supabase.auth.signInWithOtp({
-                    email: savedEmail,
-                    options: { emailRedirectTo: window.location.origin }
-                })
-
-                // Since we already verified biometrics, we can try to "force" the session if the edge function returned a way
-                // But for now, let's just use the magic link or a custom token if we had one.
-                // Actually, the simplest way is to have the Edge Function return a session or use a custom auth provider.
-                // For this MVP, let's assume the user clicks the link or we use the verified status to call onLogin.
-                // [IMPORTANT] In a real app, you'd want a more seamless session creation.
-
-                // For now, let's just call onLogin if verified, assuming the app handles session persistence
                 onLogin()
             } else {
                 setError('Falha na verificação biométrica')
@@ -201,9 +188,8 @@ const Login = ({ onLogin }) => {
         setLoading(true)
 
         try {
-            // Try to sign in with Supabase Auth
             const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email: username, // Can be email or username
+                email: username,
                 password: password
             })
 
@@ -213,14 +199,12 @@ const Login = ({ onLogin }) => {
                 return
             }
 
-            // After successful login, ask to register biometrics if not already done
             if (!localStorage.getItem('biometric_email')) {
                 if (window.confirm('Deseja ativar o login por biometria para este dispositivo?')) {
                     await handleRegisterBiometrics()
                 }
             }
 
-            // Success - call onLogin to update app state
             onLogin()
         } catch (err) {
             console.error('Login error:', err)
@@ -231,71 +215,118 @@ const Login = ({ onLogin }) => {
 
     return (
         <div style={{
-            background: 'linear-gradient(135deg, #1e3c72 0%, #2a5299 100%)',
+            background: 'linear-gradient(180deg, #0f3470 0%, #162d50 100%)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100vh',
-            padding: '20px'
+            width: '100vw',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            padding: '20px',
+            fontFamily: "'Inter', sans-serif",
+            overflow: 'hidden'
         }}>
             <div style={{
-                background: 'white',
-                padding: '40px',
-                borderRadius: '12px',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
                 width: '100%',
                 maxWidth: '400px',
-                textAlign: 'center'
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px'
             }}>
 
-                {/* Logo */}
+                {/* Logo Section */}
                 <div style={{
-                    marginBottom: '15px',
+                    marginTop: '-40px',
+                    marginBottom: '10px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center'
                 }}>
                     <img
-                        src="/logo_login.png"
-                        alt="Logo Defesa Civil"
+                        src="/logo_sigerd_new.png"
+                        alt="Logo SIGERD"
                         style={{
-                            maxWidth: '180px',
-                            height: 'auto',
-                            display: 'block',
-                            margin: '0 auto'
+                            width: '120px',
+                            height: '120px',
+                            objectFit: 'contain'
                         }}
-                        onError={(e) => e.target.style.display = 'none'}
                     />
                 </div>
 
-                {/* Title */}
-                <h2 style={{
-                    color: '#1e3c72',
-                    fontSize: '28px',
-                    marginBottom: '5px',
-                    fontWeight: '600'
-                }}>SIGERD</h2>
+                {/* Title Section */}
+                <h1 style={{
+                    color: 'white',
+                    fontSize: '42px',
+                    fontWeight: '800',
+                    margin: '0',
+                    letterSpacing: '1px'
+                }}>SIGERD</h1>
 
-                {/* Subtitle */}
                 <p style={{
-                    color: '#666',
-                    marginBottom: '30px',
-                    fontSize: '14px'
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: '14px',
+                    margin: '0 0 40px 0',
+                    maxWidth: '280px',
+                    lineHeight: '1.4'
                 }}>Sistema Integrado de Gerenciamento de Riscos e Desastres</p>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} style={{
+                {/* Biometric Button */}
+                <button
+                    type="button"
+                    onClick={handleBiometricLogin}
+                    disabled={loading}
+                    style={{
+                        width: '100%',
+                        background: 'white',
+                        color: '#0f3470',
+                        border: 'none',
+                        padding: '18px',
+                        borderRadius: '50px',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        fontSize: '18px',
+                        fontWeight: '700',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                        transition: 'transform 0.2s active'
+                    }}
+                >
+                    <Fingerprint size={24} strokeWidth={2.5} />
+                    Entrar com a Digital
+                </button>
+
+                {/* Divider */}
+                <div style={{
                     display: 'flex',
-                    flexDirection: 'column'
+                    alignItems: 'center',
+                    width: '100%',
+                    margin: '30px 0',
+                    gap: '15px'
                 }}>
-                    {/* Username Input */}
-                    <div style={{ position: 'relative', marginBottom: '20px' }}>
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        ou use sua conta
+                    </span>
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
+                </div>
+
+                {/* Login Form */}
+                <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
+                    {/* Email Input */}
+                    <div style={{ position: 'relative' }}>
                         <i className="fas fa-user" style={{
                             position: 'absolute',
-                            left: '15px',
+                            left: '20px',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            color: '#aaa'
+                            color: 'rgba(255, 255, 255, 0.6)'
                         }}></i>
                         <input
                             type="text"
@@ -305,26 +336,26 @@ const Login = ({ onLogin }) => {
                             required
                             style={{
                                 width: '100%',
-                                padding: '12px 12px 12px 45px',
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
+                                padding: '16px 16px 16px 55px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                borderRadius: '12px',
+                                color: 'white',
                                 fontSize: '16px',
-                                transition: 'border-color 0.3s',
-                                outline: 'none'
+                                outline: 'none',
+                                transition: 'all 0.3s'
                             }}
-                            onFocus={(e) => e.target.style.borderColor = '#2a5299'}
-                            onBlur={(e) => e.target.style.borderColor = '#ddd'}
                         />
                     </div>
 
                     {/* Password Input */}
-                    <div style={{ position: 'relative', marginBottom: '20px' }}>
+                    <div style={{ position: 'relative' }}>
                         <i className="fas fa-lock" style={{
                             position: 'absolute',
-                            left: '15px',
+                            left: '20px',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            color: '#aaa'
+                            color: 'rgba(255, 255, 255, 0.6)'
                         }}></i>
                         <input
                             type="password"
@@ -334,94 +365,70 @@ const Login = ({ onLogin }) => {
                             required
                             style={{
                                 width: '100%',
-                                padding: '12px 12px 12px 45px',
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
+                                padding: '16px 16px 16px 55px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                borderRadius: '12px',
+                                color: 'white',
                                 fontSize: '16px',
-                                transition: 'border-color 0.3s',
-                                outline: 'none'
+                                outline: 'none',
+                                transition: 'all 0.3s'
                             }}
-                            onFocus={(e) => e.target.style.borderColor = '#2a5299'}
-                            onBlur={(e) => e.target.style.borderColor = '#ddd'}
                         />
                     </div>
 
                     {/* Error Message */}
-                    <div style={{
-                        color: '#c82333',
-                        marginBottom: '15px',
-                        fontSize: '14px',
-                        height: '1em'
-                    }}>
-                        {error}
-                    </div>
+                    {error && (
+                        <div style={{
+                            color: '#ff4d4d',
+                            fontSize: '14px',
+                            textAlign: 'center',
+                            marginTop: '5px'
+                        }}>
+                            {error}
+                        </div>
+                    )}
 
                     {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={loading}
                         style={{
-                            background: loading ? '#6c8cc4' : '#2a5299',
+                            width: '100%',
+                            background: '#ff5722',
                             color: 'white',
                             border: 'none',
-                            padding: '14px',
-                            borderRadius: '8px',
+                            padding: '18px',
+                            borderRadius: '12px',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            transition: 'background-color 0.3s'
+                            fontSize: '18px',
+                            fontWeight: '700',
+                            marginTop: '10px',
+                            boxShadow: '0 4px 15px rgba(255, 87, 34, 0.3)',
+                            transition: 'all 0.3s'
                         }}
-                        onMouseEnter={(e) => !loading && (e.target.style.background = '#1e3c72')}
-                        onMouseLeave={(e) => !loading && (e.target.style.background = '#2a5299')}
                     >
-                        {loading ? 'Entrando...' : 'Entrar'}
+                        {loading ? 'Entrando...' : 'Entrar no App'}
                     </button>
-
-                    {/* Biometric Login Button */}
-                    {localStorage.getItem('biometric_email') && (
-                        <button
-                            type="button"
-                            onClick={handleBiometricLogin}
-                            disabled={loading}
-                            style={{
-                                marginTop: '15px',
-                                background: 'white',
-                                color: '#2a5299',
-                                border: '2px solid #2a5299',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                fontSize: '16px',
-                                fontWeight: '600',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '10px',
-                                transition: 'all 0.3s'
-                            }}
-                            onMouseEnter={(e) => !loading && (e.target.style.background = '#f0f4ff')}
-                            onMouseLeave={(e) => !loading && (e.target.style.background = 'white')}
-                        >
-                            <Fingerprint size={20} />
-                            Entrar com Biometria
-                        </button>
-                    )}
                 </form>
 
                 {/* Footer */}
                 <div style={{
-                    marginTop: '30px',
-                    fontSize: '10px',
-                    color: '#999',
-                    textAlign: 'center'
+                    marginTop: 'auto',
+                    paddingTop: '40px',
+                    fontSize: '11px',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    textAlign: 'center',
+                    lineHeight: '1.6'
                 }}>
-                    <p>© 2024-2026 Defesa Civil de Santa Maria de Jetibá</p>
-                    <p style={{ fontWeight: 'bold', marginTop: '5px', color: '#2a5299' }}>SIGERD MOBILE v1.45.0-STABLE</p>
+                    <p>© 2024-2026 Santa Maria de Jetibá - v1.45.0</p>
                 </div>
             </div>
 
             {/* FontAwesome CDN */}
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+            {/* Google Fonts */}
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
         </div>
     )
 }
