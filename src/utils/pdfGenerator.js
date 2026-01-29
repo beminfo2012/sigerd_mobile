@@ -5,7 +5,6 @@ import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 export const generatePDF = async (rawData, type) => {
     // 1. Data Normalization
     const data = type === 'vistoria' ? {
-        // Vistoria Fields
         id: rawData.vistoriaId || rawData.vistoria_id || '---',
         protocolo: rawData.processo || rawData.vistoriaId || '---',
         dataRegistro: formatDate(rawData.dataHora || rawData.created_at),
@@ -13,32 +12,21 @@ export const generatePDF = async (rawData, type) => {
         agente: rawData.agente || '---',
         matricula: rawData.matricula || '---',
         assinaturaAgente: rawData.assinaturaAgente,
-
         solicitante: rawData.solicitante || '---',
         endereco: rawData.endereco || '---',
         latitude: rawData.latitude || '---',
         longitude: rawData.longitude || '---',
-
-        // Diagnosis
         categoria: rawData.categoriaRisco || '---',
         nivel: rawData.nivelRisco || 'Baixo',
         subtipo: Array.isArray(rawData.subtiposRisco) ? rawData.subtiposRisco.join(', ') : (rawData.subtiposRisco || '---'),
         situacao: rawData.situacaoObservada || '---',
         populacao: rawData.populacaoEstimada || '---',
-
-        // Content
         descricao: rawData.observacoes || 'Não informado',
         medidas: rawData.medidasTomadas || [],
-
-        // Technical
         checklist: rawData.checklistRespostas || {},
-
-        // Photos
         fotos: (rawData.fotos || []).map(f => typeof f === 'string' ? { data: f } : f),
-
         apoio: rawData.apoioTecnico
     } : {
-        // Fallback for non-vistoria (keeping minimum viable)
         id: rawData.interdicaoId || '---',
         protocolo: rawData.interdicaoId || '---',
         dataRegistro: formatDate(rawData.dataHora),
@@ -48,373 +36,354 @@ export const generatePDF = async (rawData, type) => {
         medidas: [rawData.recomendacoes].filter(Boolean)
     };
 
-    // Helper: Level Color Mapping
-    const getLevelColor = (level) => {
-        const l = String(level).toLowerCase();
-        if (l.includes('alto') || l.includes('imininente') || l.includes('crítico')) return 'bg-orange-500 text-white shadow-orange-500/20';
-        if (l.includes('médio') || l.includes('medio')) return 'bg-yellow-500 text-white shadow-yellow-500/20';
-        return 'bg-green-600 text-white shadow-green-500/20';
-    };
-
-    // Helper: Format Date
     function formatDate(dateStr) {
         if (!dateStr) return '---';
-        try {
-            return new Date(dateStr).toLocaleString('pt-BR');
-        } catch (e) { return dateStr; }
+        try { return new Date(dateStr).toLocaleString('pt-BR'); } catch (e) { return dateStr; }
     }
 
-    // Helper: Base64 Converter
-    const urlToBase64 = (url) => {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
-            };
-            img.onerror = () => resolve(url);
-            img.src = url;
-        });
-    };
+    const urlToBase64 = (url) => new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(url);
+        img.src = url;
+    });
 
-    // Pre-load logos
     const logoDC = await urlToBase64(LOGO_DEFESA_CIVIL);
     const logoSig = await urlToBase64(LOGO_SIGERD);
 
-    // 2. Build HTML Content (User Provided Template)
+    // Group photos into pairs for side-by-side layout
+    const photoPairs = [];
+    if (data.fotos && data.fotos.length > 0) {
+        for (let i = 0; i < data.fotos.length; i += 2) {
+            photoPairs.push(data.fotos.slice(i, i + 2));
+        }
+    }
+
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
         <meta charset="utf-8"/>
-        <link href="https://fonts.googleapis.com" rel="preconnect"/>
-        <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Libre+Baskerville:ital@0;1&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
         <style>
-            .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-            /* Force white background for PDF */
-            body { background-color: white !important; -webkit-print-color-adjust: exact; }
-            .no-print { display: none !important; }
+            body { background-color: white !important; font-family: 'Inter', sans-serif; color: #1e293b; }
+            .section-title { color: #1e3a8a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.8rem; margin-bottom: 0.5rem; border-left: 4px solid #1e3a8a; padding-left: 0.75rem; }
+            .label { font-size: 0.6rem; text-transform: uppercase; color: #64748b; font-weight: 600; margin-bottom: 0.1rem; }
+            .value { font-size: 0.85rem; font-weight: 500; color: #0f172a; margin-bottom: 0.75rem; }
+            .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; }
+            .risk-badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: white; display: inline-block; }
+            .risk-alto { background-color: #f97316; box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3); }
+            .risk-medio { background-color: #eab308; box-shadow: 0 4px 6px -1px rgba(234, 179, 8, 0.3); }
+            .risk-baixo { background-color: #16a34a; box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.3); }
+            /* Critical class for smart slicing */
+            .pdf-block { break-inside: avoid; margin-bottom: 1.5rem; position: relative; }
         </style>
     </head>
-    <body class="bg-white font-display text-slate-800 antialiased">
-        <div id="pdf-wrapper" class="max-w-3xl mx-auto p-8 space-y-8 pb-20">
+    <body class="antialiased">
+        <div id="pdf-container" style="width: 800px; padding: 40px; margin: 0 auto; background: white;">
             
-            <!-- HEADER -->
-            <div class="flex flex-col items-center text-center space-y-4 py-4 border-b border-slate-200">
-                <div class="flex justify-between w-full items-center">
-                    <img alt="Defesa Civil Logo" class="h-16 w-auto object-contain" src="${logoDC}"/>
-                    <div class="flex-1 px-4">
-                        <h2 class="text-sm font-bold uppercase leading-tight text-slate-900">Prefeitura Municipal de<br/>Santa Maria de Jetibá</h2>
-                        <p class="text-[10px] uppercase text-slate-500 mt-1">Coordenadoria Municipal de Proteção e Defesa Civil</p>
+            <!-- HEADER (First Page Only usually, but we include it in content flow) -->
+            <div class="pdf-block" style="border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <img src="${logoDC}" style="height: 60px; width: auto; object-fit: contain;"/>
+                    <div style="text-align: center; flex: 1; padding: 0 20px;">
+                        <h1 style="color: #0f172a; font-weight: 800; font-size: 1.1rem; text-transform: uppercase; line-height: 1.2;">Prefeitura Municipal de<br/>Santa Maria de Jetibá</h1>
+                        <p style="color: #64748b; font-size: 0.7rem; text-transform: uppercase; margin-top: 4px; letter-spacing: 0.05em;">Coordenadoria Municipal de Proteção e Defesa Civil</p>
+                        <div style="margin-top: 10px; background: #1e3a8a; color: white; padding: 4px 12px; border-radius: 4px; display: inline-block;">
+                            <span style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">Relatório de Vistoria Técnica</span>
+                        </div>
                     </div>
-                    <img alt="SIGERD Logo" class="h-16 w-auto object-contain" src="${logoSig}"/>
-                </div>
-                <div class="w-full bg-primary py-2 rounded">
-                    <h3 class="text-white text-xs font-bold uppercase tracking-widest">Relatório de Vistoria Técnica</h3>
+                    <img src="${logoSig}" style="height: 60px; width: auto; object-fit: contain;"/>
                 </div>
             </div>
 
             <!-- 1. IDENTIFICAÇÃO -->
-            <section class="space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-1 h-6 bg-primary rounded-full"></div>
-                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">1. Identificação e Responsável</h4>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                        <p class="text-[10px] uppercase text-slate-500 mb-1">Data do Registro</p>
-                        <p class="text-sm font-medium">${data.dataRegistro}</p>
+            <div class="pdf-block">
+                <div class="section-title">1. Identificação e Responsável</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <div class="label">Data do Registro</div>
+                        <div class="value">${data.dataRegistro}</div>
                     </div>
-                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                        <p class="text-[10px] uppercase text-slate-500 mb-1">Protocolo/Processo</p>
-                        <p class="text-sm font-bold text-primary">${data.protocolo}</p>
+                    <div style="text-align: right;">
+                        <div class="label">Protocolo/Processo</div>
+                        <div class="value" style="color: #1e3a8a; font-weight: 700;">${data.protocolo}</div>
                     </div>
-                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                        <p class="text-[10px] uppercase text-slate-500 mb-1">Emissão do Laudo</p>
-                        <p class="text-sm font-medium">${data.emissao}</p>
+                    <div>
+                        <div class="label">Emissão do Laudo</div>
+                        <div class="value">${data.emissao}</div>
                     </div>
-                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                        <p class="text-[10px] uppercase text-slate-500 mb-1">Agente Responsável</p>
-                        <p class="text-sm font-medium">${data.agente}</p>
+                    <div style="text-align: right;">
+                        <div class="label">Agente Responsável</div>
+                        <div class="value">${data.agente}</div>
                     </div>
                 </div>
-            </section>
+            </div>
 
             <!-- 2. LOCALIZAÇÃO -->
-            <section class="space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-1 h-6 bg-primary rounded-full"></div>
-                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">2. Localização e Solicitante</h4>
-                </div>
-                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-3">
-                            <div>
-                                <p class="text-[10px] uppercase text-slate-500">Solicitante</p>
-                                <p class="text-sm font-medium">${data.solicitante}</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] uppercase text-slate-500">Endereço da Ocorrência</p>
-                                <p class="text-sm font-medium">${data.endereco}</p>
-                            </div>
-                            <div class="flex items-center gap-2 text-primary">
-                                <span class="material-symbols-rounded text-sm">location_on</span>
-                                <p class="text-xs font-mono">${data.latitude}, ${data.longitude}</p>
-                            </div>
-                        </div>
-                        <!-- Placeholder Map or First Photo -->
-                        <div class="relative h-32 rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200">
-                             <div class="text-center">
-                                <span class="material-symbols-rounded text-primary text-3xl mb-1">map</span>
-                                <p class="text-[10px] text-slate-400 font-mono">LAT: ${data.latitude}<br>LNG: ${data.longitude}</p>
-                             </div>
-                        </div>
+            <div class="pdf-block">
+                <div class="section-title">2. Localização e Solicitante</div>
+                <div class="box">
+                    <div class="label">Solicitante</div>
+                    <div class="value" style="font-size: 1rem; font-weight: 700;">${data.solicitante}</div>
+                    
+                    <div class="label" style="margin-top: 12px;">Endereço da Ocorrência</div>
+                    <div class="value">${data.endereco}</div>
+                    
+                    <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px; color: #1e3a8a; font-weight: 600; font-size: 0.75rem;">
+                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        ${data.latitude}, ${data.longitude}
                     </div>
                 </div>
-            </section>
+            </div>
 
             <!-- 3. DIAGNÓSTICO -->
-            <section class="space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-1 h-6 bg-primary rounded-full"></div>
-                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">3. Diagnóstico de Risco</h4>
+            <div class="pdf-block">
+                <div class="section-title">3. Diagnóstico de Risco</div>
+                <div class="box">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div>
+                            <div class="label">Categoria Principal</div>
+                            <div class="value" style="margin-bottom: 0;">${data.categoria}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="label">Nível de Risco</div>
+                            <div class="risk-badge risk-${String(data.nivel).toLowerCase().includes('alto') ? 'alto' : String(data.nivel).toLowerCase().includes('médio') ? 'medio' : 'baixo'}">
+                                ${String(data.nivel).toUpperCase()}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; margin: 12px 0;"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <div class="label">Subtipo</div>
+                            <div class="value">${data.subtipo}</div>
+                        </div>
+                        <div>
+                            <div class="label">Situação</div>
+                            <div class="value">${data.situacao}</div>
+                        </div>
+                    </div>
+                    <div class="label">População Exposta</div>
+                    <div class="value">${data.populacao}</div>
                 </div>
-                <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <p class="text-[10px] uppercase text-slate-500">Categoria Principal</p>
-                            <p class="text-sm font-semibold">${data.categoria}</p>
-                        </div>
-                        <div class="flex flex-col items-end">
-                            <p class="text-[10px] uppercase text-slate-500 mb-1">Nível de Risco</p>
-                            <span class="${getLevelColor(data.nivel)} px-3 py-1 rounded-full text-xs font-bold tracking-widest shadow-lg">${String(data.nivel).toUpperCase()}</span>
-                        </div>
-                    </div>
-                    <hr class="border-slate-100"/>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="text-[10px] uppercase text-slate-500">Subtipo</p>
-                            <p class="text-sm">${data.subtipo}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] uppercase text-slate-500">Situação</p>
-                            <p class="text-sm">${data.situacao}</p>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center gap-3">
-                        <span class="material-symbols-rounded text-slate-400">groups</span>
-                        <div>
-                            <p class="text-[10px] uppercase text-slate-500">População Exposta</p>
-                            <p class="text-sm font-medium">${data.populacao}</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </div>
 
             <!-- 4. PARECER -->
-            <section class="space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-1 h-6 bg-primary rounded-full"></div>
-                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">4. Parecer e Recomendações</h4>
-                </div>
-                <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-4">
-                    <div>
-                        <p class="text-[10px] uppercase text-slate-500 mb-2">Descrição Técnica</p>
-                        <p class="font-serif text-sm leading-relaxed text-slate-700 italic text-justify">
-                            "${data.descricao}"
-                        </p>
+            <div class="pdf-block">
+                <div class="section-title">4. Parecer e Recomendações</div>
+                <div class="box">
+                    <div class="label">Descrição Técnica</div>
+                    <div style="font-family: serif; font-size: 0.9rem; line-height: 1.6; color: #334155; text-align: justify; margin: 8px 0 16px 0; font-style: italic;">
+                        "${data.descricao}"
                     </div>
-                    <div class="grid gap-4 pt-4 border-t border-slate-100">
-                        <div>
-                            <p class="text-[10px] uppercase text-primary font-bold mb-2">Medidas Recomendadas</p>
-                            <ul class="text-sm space-y-1 list-disc list-inside text-slate-600">
-                                ${(data.medidas.length ? data.medidas : ['Nenhuma medida específica']).map(m => `<li>${m}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
+                    
+                    <div class="label" style="color: #1e3a8a; font-weight: 700; margin-top: 16px;">Medidas Recomendadas</div>
+                    <ul style="margin: 4px 0 0 0; padding-left: 20px; font-size: 0.85rem; color: #475569;">
+                        ${(data.medidas.length ? data.medidas : ['Nenhuma medida específica']).map(m => `<li style="margin-bottom: 4px;">${m}</li>`).join('')}
+                    </ul>
                 </div>
-            </section>
+            </div>
 
-             <!-- 5. CONSTATAÇÕES -->
+            <!-- 5. CONSTATAÇÕES -->
             ${Object.keys(data.checklist).some(k => data.checklist[k]) ? `
-            <section class="space-y-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-1 h-6 bg-primary rounded-full"></div>
-                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">5. Constatações Técnicas</h4>
-                </div>
-                <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm grid gap-2">
+            <div class="pdf-block">
+                <div class="section-title">5. Constatações Técnicas</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     ${Object.entries(data.checklist).filter(([_, v]) => v).map(([k, v]) => `
-                        <div class="flex items-center gap-4 bg-blue-50 p-2 rounded-xl">
-                            <div class="bg-primary text-white p-1 rounded-full flex items-center justify-center min-w-[24px]">
-                                <span class="material-symbols-rounded text-xs">check</span>
-                            </div>
-                            <p class="text-xs font-medium">${k}</p>
+                        <div style="background: #eff6ff; padding: 8px 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                            <div style="background: #1e3a8a; width: 6px; height: 6px; border-radius: 50%;"></div>
+                            <span style="font-size: 0.75rem; font-weight: 600; color: #1e3a8a;">${k}</span>
                         </div>
                     `).join('')}
                 </div>
-            </section>
+            </div>
             ` : ''}
 
-            <!-- 6. FOTOS -->
+            <!-- 6. FOTOS (Pairs) -->
             ${data.fotos.length > 0 ? `
-            <section class="space-y-4 break-before-page">
-                <div class="flex items-center gap-3">
-                    <div class="w-1 h-6 bg-primary rounded-full"></div>
-                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">6. Anexo Fotográfico</h4>
-                </div>
-                <div class="grid gap-6">
-                    ${data.fotos.map((foto, idx) => `
-                        <div class="group relative bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xl" style="page-break-inside: avoid;">
-                            <div class="aspect-[4/3] w-full bg-slate-200">
-                                <img src="${foto.data}" class="w-full h-full object-cover"/>
+            <div class="pdf-block">
+                <div class="section-title">6. Anexo Fotográfico</div>
+            </div>
+            ${photoPairs.map((pair, idx) => `
+                <div class="pdf-block" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    ${pair.map(foto => `
+                        <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                            <div style="height: 200px; width: 100%; overflow: hidden; background: #f1f5f9;">
+                                <img src="${foto.data}" style="width: 100%; height: 100%; object-fit: cover; display: block;"/>
                             </div>
-                            <div class="p-3 bg-white flex justify-between items-center">
-                                <span class="text-[10px] uppercase font-bold text-slate-400">Foto ${String(idx + 1).padStart(2, '0')}</span>
-                                ${foto.legenda ? `<span class="text-[9px] font-mono text-slate-500 truncate max-w-[200px]">${foto.legenda}</span>` : ''}
+                            <div style="padding: 10px;">
+                                ${foto.legenda ? `<div style="font-size: 0.65rem; color: #64748b; font-weight: 500; text-transform: uppercase;">${foto.legenda}</div>` : ''}
+                                <div style="font-size: 0.6rem; color: #cbd5e1; margin-top: 4px; font-family: monospace;">LAT: ${data.latitude} | LNG: ${data.longitude}</div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
-            </section>
+            `).join('')}
             ` : ''}
 
             <!-- SIGNATURES -->
-            <section class="py-12 flex flex-col items-center space-y-6 border-t border-slate-200 mt-12" style="page-break-inside: avoid;">
-                <div class="flex justify-center gap-12 w-full">
-                    <!-- Agente -->
-                    <div class="flex flex-col items-center">
-                        <div class="mb-4 h-20 flex items-end">
-                            ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" class="h-20 w-auto opacity-90"/>` : '<div class="h-px w-40 bg-slate-400"></div>'}
+            <div class="pdf-block" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <div style="display: flex; justify-content: center; gap: 40px;">
+                    <div style="text-align: center;">
+                        <div style="height: 60px; display: flex; align-items: end; justify-content: center; margin-bottom: 8px;">
+                             ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="height: 60px; opacity: 0.9;"/>` : '<div style="width: 150px; border-bottom: 1px solid #cbd5e1;"></div>'}
                         </div>
-                        <div class="w-48 h-px bg-slate-300 mb-2"></div>
-                        <h5 class="text-sm font-bold text-primary uppercase">${data.agente}</h5>
-                        <p class="text-[10px] uppercase font-medium text-slate-500">Agente de Defesa Civil</p>
-                        <p class="text-[9px] text-slate-400">Matrícula: ${data.matricula}</p>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">${data.agente}</div>
+                        <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase;">Agente de Defesa Civil</div>
+                        <div style="font-size: 0.6rem; color: #94a3b8;">Matrícula: ${data.matricula}</div>
                     </div>
-
-                    <!-- Apoio (if exists) -->
-                    ${data.apoio && data.apoio.assinatura ? `
-                    <div class="flex flex-col items-center">
-                        <div class="mb-4 h-20 flex items-end">
-                            <img src="${data.apoio.assinatura}" class="h-20 w-auto opacity-90"/>
-                        </div>
-                        <div class="w-48 h-px bg-slate-300 mb-2"></div>
-                        <h5 class="text-sm font-bold text-primary uppercase">${data.apoio.nome}</h5>
-                        <p class="text-[10px] uppercase font-medium text-slate-500">Apoio Técnico</p>
-                        <p class="text-[9px] text-slate-400">CREA: ${data.apoio.crea}</p>
-                    </div>
-                    ` : ''}
                 </div>
-
-                <div class="text-center px-8">
-                    <p class="text-[9px] uppercase tracking-tighter text-slate-400 leading-normal">
-                        Documento oficial gerado em ${data.emissao} pelo sistema de gerenciamento de riscos e desastres da defesa civil.
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="font-size: 0.6rem; color: #94a3b8; text-transform: uppercase;">
+                        Documento oficial gerado via SIGERD Mobile em ${data.emissao}
                     </p>
                 </div>
-            </section>
+            </div>
+
         </div>
     </body>
     </html>
     `;
 
-    // 3. Mount and Render
+    // Mount Container
     const container = document.createElement('div');
     container.style.position = 'absolute';
     container.style.left = '-9999px';
-    container.style.width = '840px'; // Keep fixed width for consistency
+    container.style.top = '0';
     container.innerHTML = htmlContent;
     document.body.appendChild(container);
 
-    // Inject Tailwind Script & Config - SEQ FIX
-    await new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src = "https://cdn.tailwindcss.com?plugins=forms,typography";
-        script.onload = () => {
-            // Configure Tailwind after load
-            // @ts-ignore
-            window.tailwind.config = {
-                darkMode: "class",
-                theme: {
-                    extend: {
-                        colors: {
-                            primary: "#1e3a8a",
-                            "background-light": "#f8fafc",
-                            "background-dark": "#0f172a",
-                        },
-                        fontFamily: {
-                            display: ["Inter", "sans-serif"],
-                            serif: ["Libre+Baskerville", "serif"],
-                        },
-                        borderRadius: {
-                            DEFAULT: "12px",
-                        },
-                    },
-                },
-            };
-            console.log("PDF Generator: Tailwind loaded and configured");
-            resolve();
-        };
-        script.onerror = () => {
-            console.error("PDF Generator: Failed to load Tailwind CDN");
-            resolve(); // Verify fallback or fail
-        };
-        container.appendChild(script);
-    });
-
-    // Extra wait for fonts and rendering (Reduced to avoid gesture timeout)
+    // Wait for fonts
+    await document.fonts.ready;
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     try {
-        const canvas = await html2canvas(container.querySelector('#pdf-wrapper') || container, {
-            scale: 2, // High resolution
+        const pdfContainer = container.querySelector('#pdf-container');
+
+        // Render Full Canvas
+        const canvas = await html2canvas(pdfContainer, {
+            scale: 2,
             useCORS: true,
             logging: false,
-            windowWidth: 840,
             backgroundColor: '#ffffff'
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
+
+        // Smart Slicing Logic
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const pxToMm = 25.4 / 96; // Approximate conversion depends on device, but we use ratios
+
+        // Calculate dimensions
+        const contentWidth = canvas.width;
+        const contentHeight = canvas.height;
+
+        const imgWidthMm = pageWidth; // Fit to A4 width
+        const scaleFactor = imgWidthMm / contentWidth; // Scale to fit width
+
+        const scaledContentHeight = contentHeight * scaleFactor;
+
+        // We need to find cut points in pixels (Y)
+        const blocks = pdfContainer.querySelectorAll('.pdf-block');
+        const breakPoints = [];
+        let currentHeight = 0;
+
+        // A4 Printable Height (approx with margins)
+        const marginMm = 10;
+        const printableHeightMm = pageHeight - (marginMm * 2);
+
+        // Map blocks to their scaled positions
+        const blockPositions = Array.from(blocks).map(block => {
+            return {
+                top: block.offsetTop * scaleFactor,
+                height: block.offsetHeight * scaleFactor,
+                bottom: (block.offsetTop + block.offsetHeight) * scaleFactor
+            };
         });
 
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        const pageHeight = pdf.internal.pageSize.getHeight();
+        let cursorMm = 0; // Current position on the infinite canvas (in mm)
+        let pageCursor = 0; // Current page number
 
-        // Multi-page splitting logic
-        let heightLeft = pdfHeight;
-        let position = 0;
-        let page = 0;
+        // Iterate to find pages
+        while (cursorMm < scaledContentHeight) {
+            // Start of a new page
+            // Find the split point: Cursor + PrintableHeight
+            let splitPointMm = cursorMm + printableHeightMm;
 
-        while (heightLeft > 0) {
-            position = Math.min(0, position); // Top of page
-            pdf.addImage(imgData, 'JPEG', 0, position - (page * pageHeight), pdfWidth, pdfHeight);
+            // Check if this split point cuts a block
+            let cutBlock = blockPositions.find(b => b.top < splitPointMm && b.bottom > splitPointMm);
 
-            heightLeft -= pageHeight;
-            page++;
-            if (heightLeft > 0) {
-                pdf.addPage();
+            if (cutBlock) {
+                // If we cut a block, move split point UP to the top of that block
+                // Effectively pushing that block to next page
+                splitPointMm = cutBlock.top;
             }
+
+            // Ensure we at least fit something, else infinite loop if block > page height
+            if (splitPointMm <= cursorMm) {
+                // Block is larger than page? Cut it anyway or force break
+                // For now, assume blocks < page height (which is true for our design)
+                // Just advance strict page height if stuck
+                splitPointMm = cursorMm + printableHeightMm;
+            }
+
+            // Crop Logic
+            // Source Y in pixels = cursorMm / scaleFactor
+            // Source Height in pixels = (splitPointMm - cursorMm) / scaleFactor
+
+            const sourceY = cursorMm / scaleFactor;
+            const sourceH = (splitPointMm - cursorMm) / scaleFactor;
+
+            // Add Page if not first
+            if (pageCursor > 0) pdf.addPage();
+
+            // Draw slice
+            // We use standard addImage but we need to pass crop options?
+            // jsPDF addImage doesn't crop. We must use a temporary canvas to crop.
+
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = sourceH;
+            const sliceCtx = sliceCanvas.getContext('2d');
+
+            // Draw image fragment
+            // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+            sliceCtx.fillStyle = '#ffffff';
+            sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+            sliceCtx.drawImage(
+                canvas,
+                0, sourceY, canvas.width, sourceH, // Source
+                0, 0, canvas.width, sourceH // Dest
+            );
+
+            const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+
+            // Add to PDF
+            // Width = 210mm
+            // Height = sourceH * scaleFactor
+            const destHeightMm = sourceH * scaleFactor;
+            pdf.addImage(sliceData, 'JPEG', 0, 0, pageWidth, destHeightMm);
+
+            cursorMm = splitPointMm;
+            pageCursor++;
         }
 
         // Save
         const filename = `Relatorio_Vistoria_${data.id.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-
-        // Mobile share or download
         const blob = pdf.output('blob');
         const file = new File([blob], filename, { type: 'application/pdf' });
 
-        // Safer share logic with fallback
         const tryShare = async () => {
             // @ts-ignore
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -423,25 +392,20 @@ export const generatePDF = async (rawData, type) => {
                     title: 'Relatório de Vistoria',
                     text: `Segue laudo técnico ${data.id}`
                 });
-            } else {
-                throw new Error("Share API not available");
-            }
+            } else { throw new Error("Share API not available"); }
         };
 
         try {
             await tryShare();
         } catch (shareError) {
-            console.warn("Share API failed (likely gesture timeout), falling back to download:", shareError);
+            console.warn("Share API failed, falling back to download");
             pdf.save(filename);
         }
 
     } catch (error) {
         console.error("PDF Generation Critical Error:", error);
-        console.error("Stack:", error.stack);
         alert(`Erro detalhado: ${error.message}`);
     } finally {
-        if (document.body.contains(container)) {
-            document.body.removeChild(container);
-        }
+        if (document.body.contains(container)) document.body.removeChild(container);
     }
 };
