@@ -367,8 +367,8 @@ export const generatePDF = async (rawData, type) => {
         container.appendChild(script);
     });
 
-    // Extra wait for fonts and rendering
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    // Extra wait for fonts and rendering (Reduced to avoid gesture timeout)
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     try {
         const canvas = await html2canvas(container.querySelector('#pdf-wrapper') || container, {
@@ -414,13 +414,24 @@ export const generatePDF = async (rawData, type) => {
         const blob = pdf.output('blob');
         const file = new File([blob], filename, { type: 'application/pdf' });
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                files: [file],
-                title: 'Relatório de Vistoria',
-                text: `Segue laudo técnico ${data.id}`
-            });
-        } else {
+        // Safer share logic with fallback
+        const tryShare = async () => {
+            // @ts-ignore
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'Relatório de Vistoria',
+                    text: `Segue laudo técnico ${data.id}`
+                });
+            } else {
+                throw new Error("Share API not available");
+            }
+        };
+
+        try {
+            await tryShare();
+        } catch (shareError) {
+            console.warn("Share API failed (likely gesture timeout), falling back to download:", shareError);
             pdf.save(filename);
         }
 
