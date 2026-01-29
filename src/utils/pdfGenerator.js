@@ -389,7 +389,8 @@ export const generatePDF = async (rawData, type) => {
     const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
 
     const footerHtml = `
-        <div style="margin-top: 40px; padding: 40px 35px; border-top: 1px solid #f1f5f9; page-break-inside: avoid;">
+    const footerHtml = `
+        < div id = "pdf-footer" style = "margin-top: 20px; padding: 30px 35px; border-top: 1px solid #f1f5f9; page-break-inside: avoid;" >
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
                 <div style="display: flex; gap: 40px; justify-content: center; align-items: flex-end;">
                     <!-- Agent Signature -->
@@ -425,10 +426,10 @@ export const generatePDF = async (rawData, type) => {
                     </p>
                 </div>
             </div>
-        </div>
+        </div >
     `;
 
-    container.innerHTML = `<div id="pdf-render-area" style="max-width: 840px; margin: 0 auto; background: white; min-height: 1120px; padding-bottom: 50px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
+    container.innerHTML = `< div id = "pdf-render-area" style = "width: 840px; margin: 0 auto; background: white; min-height: 1120px; padding-bottom: 20px;" > ${ headerHtml }${ contentHtml }${ photosHtml }${ footerHtml }</div > `;
     document.body.appendChild(container);
 
     const waitForImages = () => {
@@ -464,7 +465,7 @@ export const generatePDF = async (rawData, type) => {
                 const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
 
                 if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
-                    spacer.style.height = `${spacerHeight}px`;
+                    spacer.style.height = `${ spacerHeight } px`;
                     spacer.style.width = '100%';
                     spacer.setAttribute('data-pdf-spacer', 'true');
                     el.parentNode.insertBefore(spacer, el);
