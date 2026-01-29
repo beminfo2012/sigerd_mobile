@@ -425,9 +425,12 @@ export const generatePDF = async (rawData, type) => {
         }
 
     } catch (error) {
-        console.error("PDF Generation Error:", error);
-        alert("Erro ao gerar PDF. Tente novamente.");
+        console.error("PDF Generation Critical Error:", error);
+        console.error("Stack:", error.stack);
+        alert(`Erro detalhado: ${error.message}`);
     } finally {
-        document.body.removeChild(container);
+        if (document.body.contains(container)) {
+            document.body.removeChild(container);
+        }
     }
 };
