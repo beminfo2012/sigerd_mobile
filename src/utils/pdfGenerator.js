@@ -2,590 +2,426 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 
-// Deployment trigger: PDF Header Update v2
-
-const normalizeData = (data, type) => {
-    const isVistoria = type === 'vistoria';
-    if (isVistoria) {
-        return {
-            vistoriaId: data.vistoriaId || data.vistoria_id || '---',
-            processo: data.processo || data.processo_sei || '---',
-            dataHora: data.dataHora || data.data_hora || data.created_at,
-            solicitante: data.solicitante || '---',
-            cpf: data.cpf || '---',
-            telefone: data.telefone || '---',
-            enderecoSolicitante: data.enderecoSolicitante || data.endereco_solicitante || '---',
-            endereco: data.endereco || '---',
-            bairro: data.bairro || '---',
-            latitude: data.latitude || '---',
-            longitude: data.longitude || '---',
-            categoriaRisco: data.categoriaRisco || data.categoria_risco || '---',
-            subtiposRisco: data.subtiposRisco || data.subtipos_risco || [],
-            nivelRisco: data.nivelRisco || data.nivel_risco || 'Baixo',
-            situacaoObservada: data.situacaoObservada || data.situacao_observada || 'Estabilizado',
-            populacaoEstimada: data.populacaoEstimada || data.populacao_estimada || '---',
-            gruposVulneraveis: data.gruposVulneraveis || data.grupos_vulneraveis || [],
-            observacoes: data.observacoes || '---',
-            medidasTomadas: data.medidasTomadas || data.medidas_tomadas || [],
-            encaminhamentos: data.encaminhamentos || [],
-            agente: data.agente || '---',
-            matricula: data.matricula || '---',
-            fotos: (() => {
-                let photos = data.fotos || [];
-                if (typeof photos === 'string') {
-                    try { photos = JSON.parse(photos); } catch (e) { photos = []; }
-                }
-                return (Array.isArray(photos) ? photos : []).map(f => {
-                    if (typeof f === 'string') return { data: f, legenda: '' };
-                    return {
-                        ...f,
-                        data: f.data || f.url || f,
-                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
-                    };
-                });
-            })(),
-            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
-            apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null,
-            checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
-        };
-    } else {
-        return {
-            interdicaoId: data.interdicaoId || data.interdicao_id || '---',
-            dataHora: data.dataHora || data.data_hora || data.created_at,
-            responsavelNome: data.responsavelNome || data.responsavel_nome || '---',
-            responsavelCpf: data.responsavelCpf || data.responsavel_cpf || '---',
-            endereco: data.endereco || '---',
-            bairro: data.bairro || '---',
-            municipio: data.municipio || '---',
-            tipoAlvo: data.tipoAlvo || data.tipo_alvo || '---',
-            medidaTipo: data.medidaTipo || data.medida_tipo || '---',
-            riscoTipo: data.riscoTipo || data.risco_tipo || [],
-            riscoGrau: data.riscoGrau || data.risco_grau || '---',
-            medidaPrazo: data.medidaPrazo || data.medida_prazo || '---',
-            situacaoObservada: data.situacaoObservada || data.situacao_observada || '---',
-            relatorioTecnico: data.relatorioTecnico || data.relatorio_tecnico || '---',
-            recomendacoes: data.recomendacoes || '---',
-            latitude: data.latitude || '---',
-            longitude: data.longitude || '---',
-            agente: data.agente || '---',
-            matricula: data.matricula || '---',
-            fotos: (() => {
-                let photos = data.fotos || [];
-                if (typeof photos === 'string') {
-                    try { photos = JSON.parse(photos); } catch (e) { photos = []; }
-                }
-                return (Array.isArray(photos) ? photos : []).map(f => {
-                    if (typeof f === 'string') return { data: f, legenda: '' };
-                    return {
-                        ...f,
-                        data: f.data || f.url || f,
-                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
-                    };
-                });
-            })(),
-            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
-            apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null
-        };
-    }
-};
-
 export const generatePDF = async (rawData, type) => {
-    // Optimized helper to convert imported asset URLs to Base64 using Canvas
-    // This avoids fetch/CORS issues with local assets in some environments
+    // 1. Data Normalization
+    const data = type === 'vistoria' ? {
+        // Vistoria Fields
+        id: rawData.vistoriaId || rawData.vistoria_id || '---',
+        protocolo: rawData.processo || rawData.vistoriaId || '---',
+        dataRegistro: formatDate(rawData.dataHora || rawData.created_at),
+        emissao: new Date().toLocaleString('pt-BR'),
+        agente: rawData.agente || '---',
+        matricula: rawData.matricula || '---',
+        assinaturaAgente: rawData.assinaturaAgente,
+
+        solicitante: rawData.solicitante || '---',
+        endereco: rawData.endereco || '---',
+        latitude: rawData.latitude || '---',
+        longitude: rawData.longitude || '---',
+
+        // Diagnosis
+        categoria: rawData.categoriaRisco || '---',
+        nivel: rawData.nivelRisco || 'Baixo',
+        subtipo: Array.isArray(rawData.subtiposRisco) ? rawData.subtiposRisco.join(', ') : (rawData.subtiposRisco || '---'),
+        situacao: rawData.situacaoObservada || '---',
+        populacao: rawData.populacaoEstimada || '---',
+
+        // Content
+        descricao: rawData.observacoes || 'Não informado',
+        medidas: rawData.medidasTomadas || [],
+
+        // Technical
+        checklist: rawData.checklistRespostas || {},
+
+        // Photos
+        fotos: (rawData.fotos || []).map(f => typeof f === 'string' ? { data: f } : f),
+
+        apoio: rawData.apoioTecnico
+    } : {
+        // Fallback for non-vistoria (keeping minimum viable)
+        id: rawData.interdicaoId || '---',
+        protocolo: rawData.interdicaoId || '---',
+        dataRegistro: formatDate(rawData.dataHora),
+        emissao: new Date().toLocaleString('pt-BR'),
+        agente: rawData.agente || 'Agente',
+        descricao: rawData.relatorioTecnico || '---',
+        medidas: [rawData.recomendacoes].filter(Boolean)
+    };
+
+    // Helper: Level Color Mapping
+    const getLevelColor = (level) => {
+        const l = String(level).toLowerCase();
+        if (l.includes('alto') || l.includes('imininente') || l.includes('crítico')) return 'bg-orange-500 text-white shadow-orange-500/20';
+        if (l.includes('médio') || l.includes('medio')) return 'bg-yellow-500 text-white shadow-yellow-500/20';
+        return 'bg-green-600 text-white shadow-green-500/20';
+    };
+
+    // Helper: Format Date
+    function formatDate(dateStr) {
+        if (!dateStr) return '---';
+        try {
+            return new Date(dateStr).toLocaleString('pt-BR');
+        } catch (e) { return dateStr; }
+    }
+
+    // Helper: Base64 Converter
     const urlToBase64 = (url) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const img = new Image();
             img.crossOrigin = 'Anonymous';
             img.onload = () => {
-                try {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL('image/png'));
-                } catch (e) {
-                    console.warn('Canvas conversion failed, falling back to URL:', e);
-                    resolve(url);
-                }
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
             };
-            img.onerror = () => {
-                console.error('Failed to load image for PDF:', url);
-                resolve(url); // Fallback to original URL if loading fails
-            };
+            img.onerror = () => resolve(url);
             img.src = url;
         });
     };
 
-    // Pre-load logos sequentially to ensure availability
-    let logoDefesaCivilStr = LOGO_DEFESA_CIVIL;
-    let logoSigerdStr = LOGO_SIGERD;
+    // Pre-load logos
+    const logoDC = await urlToBase64(LOGO_DEFESA_CIVIL);
+    const logoSig = await urlToBase64(LOGO_SIGERD);
 
-    try {
-        [logoDefesaCivilStr, logoSigerdStr] = await Promise.all([
-            urlToBase64(LOGO_DEFESA_CIVIL),
-            urlToBase64(LOGO_SIGERD)
-        ]);
-        console.log('Logos pre-loaded successfully for PDF');
-    } catch (e) {
-        console.error('Error pre-loading logos:', e);
-    }
-
-    const data = normalizeData(rawData, type);
-    const isVistoria = type === 'vistoria';
-    const title = isVistoria ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
-    const cleanId = (data.vistoriaId || data.interdicaoId || 'doc').replace(/[\/\\]/g, '_');
-    const cleanName = (isVistoria ? data.solicitante : data.responsavelNome) || '';
-    const nameSuffix = cleanName !== '---' ? `_${cleanName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)}` : '';
-    const filename = `${type}_${cleanId}${nameSuffix}.pdf`;
-
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-3000px';
-    container.style.top = '0';
-    container.style.width = '840px';
-    container.style.padding = '0';
-    container.style.backgroundColor = 'white';
-    container.style.fontFamily = "'Inter', Arial, sans-serif";
-    container.style.color = '#1a1a1a';
-    container.style.zIndex = '-9999';
-
-    const headerHtml = `
-        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 45px 40px 25px 40px; font-family: 'Arial', sans-serif;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <!-- Left: Defesa Civil Logo -->
-                <div style="width: 120px; display: flex; justify-content: center; align-items: center;">
-                    <img src="${logoDefesaCivilStr}" style="height: 85px; width: auto; object-fit: contain;" />
+    // 2. Build HTML Content (User Provided Template)
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="utf-8"/>
+        <link href="https://fonts.googleapis.com" rel="preconnect"/>
+        <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Libre+Baskerville:ital@0;1&amp;family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+        <style>
+            .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+            /* Force white background for PDF */
+            body { background-color: white !important; -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+        </style>
+    </head>
+    <body class="bg-white font-display text-slate-800 antialiased">
+        <div id="pdf-wrapper" class="max-w-3xl mx-auto p-8 space-y-8 pb-20">
+            
+            <!-- HEADER -->
+            <div class="flex flex-col items-center text-center space-y-4 py-4 border-b border-slate-200">
+                <div class="flex justify-between w-full items-center">
+                    <img alt="Defesa Civil Logo" class="h-16 w-auto object-contain" src="${logoDC}"/>
+                    <div class="flex-1 px-4">
+                        <h2 class="text-sm font-bold uppercase leading-tight text-slate-900">Prefeitura Municipal de<br/>Santa Maria de Jetibá</h2>
+                        <p class="text-[10px] uppercase text-slate-500 mt-1">Coordenadoria Municipal de Proteção e Defesa Civil</p>
+                    </div>
+                    <img alt="SIGERD Logo" class="h-16 w-auto object-contain" src="${logoSig}"/>
                 </div>
-
-                <!-- Center: Titles -->
-                <div style="flex: 1; text-align: center; padding: 0 15px;">
-                    <h1 style="margin: 0; font-size: 22px; color: #000000; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2;">
-                        PREFEITURA MUNICIPAL DE<br/>SANTA MARIA DE JETIBÁ
-                    </h1>
-                    <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #000000; font-weight: 700; text-transform: uppercase;">
-                        COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL
-                    </h2>
-                </div>
-
-                <!-- Right: SIGERD Logo -->
-                <div style="width: 120px; display: flex; justify-content: center; align-items: center;">
-                    <img src="${logoSigerdStr}" style="height: 85px; width: auto; object-fit: contain;" />
+                <div class="w-full bg-primary py-2 rounded">
+                    <h3 class="text-white text-xs font-bold uppercase tracking-widest">Relatório de Vistoria Técnica</h3>
                 </div>
             </div>
 
-            <!-- Title Badge -->
-            <div style="text-align: center;">
-                <h1 style="margin: 0; color: #2a5299; font-weight: 900; font-size: 19px; text-transform: uppercase; letter-spacing: 1.5px;">
-                    ${title}
-                </h1>
-            </div>
-        </div>
-    `;
+            <!-- 1. IDENTIFICAÇÃO -->
+            <section class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-6 bg-primary rounded-full"></div>
+                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">1. Identificação e Responsável</h4>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                        <p class="text-[10px] uppercase text-slate-500 mb-1">Data do Registro</p>
+                        <p class="text-sm font-medium">${data.dataRegistro}</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                        <p class="text-[10px] uppercase text-slate-500 mb-1">Protocolo/Processo</p>
+                        <p class="text-sm font-bold text-primary">${data.protocolo}</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                        <p class="text-[10px] uppercase text-slate-500 mb-1">Emissão do Laudo</p>
+                        <p class="text-sm font-medium">${data.emissao}</p>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                        <p class="text-[10px] uppercase text-slate-500 mb-1">Agente Responsável</p>
+                        <p class="text-sm font-medium">${data.agente}</p>
+                    </div>
+                </div>
+            </section>
 
-    const sectionTitle = (title) => `
-        <div class="pdf-section-header" style="display: flex; align-items: center; gap: 12px; margin: 30px 0 15px 0; page-break-inside: avoid; page-break-after: avoid;">
-            <div style="width: 4px; height: 24px; background-color: #1e3a8a; border-radius: 2px;"></div>
-            <h4 style="margin: 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #1e3a8a; tracking: 0.05em;">${title}</h4>
-        </div>
-    `;
+            <!-- 2. LOCALIZAÇÃO -->
+            <section class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-6 bg-primary rounded-full"></div>
+                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">2. Localização e Solicitante</h4>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-[10px] uppercase text-slate-500">Solicitante</p>
+                                <p class="text-sm font-medium">${data.solicitante}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase text-slate-500">Endereço da Ocorrência</p>
+                                <p class="text-sm font-medium">${data.endereco}</p>
+                            </div>
+                            <div class="flex items-center gap-2 text-primary">
+                                <span class="material-symbols-rounded text-sm">location_on</span>
+                                <p class="text-xs font-mono">${data.latitude}, ${data.longitude}</p>
+                            </div>
+                        </div>
+                        <!-- Placeholder Map or First Photo -->
+                        <div class="relative h-32 rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center border border-slate-200">
+                             <div class="text-center">
+                                <span class="material-symbols-rounded text-primary text-3xl mb-1">map</span>
+                                <p class="text-[10px] text-slate-400 font-mono">LAT: ${data.latitude}<br>LNG: ${data.longitude}</p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    const renderField = (label, value) => {
-        const textValue = String(value || 'Não informado');
-        const isLongText = textValue.length > 100 || textValue.includes('\n');
+            <!-- 3. DIAGNÓSTICO -->
+            <section class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-6 bg-primary rounded-full"></div>
+                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">3. Diagnóstico de Risco</h4>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500">Categoria Principal</p>
+                            <p class="text-sm font-semibold">${data.categoria}</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <p class="text-[10px] uppercase text-slate-500 mb-1">Nível de Risco</p>
+                            <span class="${getLevelColor(data.nivel)} px-3 py-1 rounded-full text-xs font-bold tracking-widest shadow-lg">${String(data.nivel).toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <hr class="border-slate-100"/>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500">Subtipo</p>
+                            <p class="text-sm">${data.subtipo}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500">Situação</p>
+                            <p class="text-sm">${data.situacao}</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center gap-3">
+                        <span class="material-symbols-rounded text-slate-400">groups</span>
+                        <div>
+                            <p class="text-[10px] uppercase text-slate-500">População Exposta</p>
+                            <p class="text-sm font-medium">${data.populacao}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        if (isLongText) {
-            // Split by newlines and wrap each paragraph to avoid breaking inside it
-            const paragraphs = textValue.split('\n').filter(p => p.trim());
-            return `
-                <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 4px;">
-                    <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">${label}</div>
-                    ${paragraphs.map(p => `
-                        <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.5; margin-bottom: 6px; page-break-inside: avoid; break-inside: avoid;">
-                            ${p}
+            <!-- 4. PARECER -->
+            <section class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-6 bg-primary rounded-full"></div>
+                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">4. Parecer e Recomendações</h4>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-4">
+                    <div>
+                        <p class="text-[10px] uppercase text-slate-500 mb-2">Descrição Técnica</p>
+                        <p class="font-serif text-sm leading-relaxed text-slate-700 italic text-justify">
+                            "${data.descricao}"
+                        </p>
+                    </div>
+                    <div class="grid gap-4 pt-4 border-t border-slate-100">
+                        <div>
+                            <p class="text-[10px] uppercase text-primary font-bold mb-2">Medidas Recomendadas</p>
+                            <ul class="text-sm space-y-1 list-disc list-inside text-slate-600">
+                                ${(data.medidas.length ? data.medidas : ['Nenhuma medida específica']).map(m => `<li>${m}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- 5. CONSTATAÇÕES -->
+            ${Object.keys(data.checklist).some(k => data.checklist[k]) ? `
+            <section class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-6 bg-primary rounded-full"></div>
+                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">5. Constatações Técnicas</h4>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm grid gap-2">
+                    ${Object.entries(data.checklist).filter(([_, v]) => v).map(([k, v]) => `
+                        <div class="flex items-center gap-4 bg-blue-50 p-2 rounded-xl">
+                            <div class="bg-primary text-white p-1 rounded-full flex items-center justify-center min-w-[24px]">
+                                <span class="material-symbols-rounded text-xs">check</span>
+                            </div>
+                            <p class="text-xs font-medium">${k}</p>
                         </div>
                     `).join('')}
                 </div>
-            `;
-        }
+            </section>
+            ` : ''}
 
-        return `
-            <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; break-inside: avoid; margin-bottom: 4px;">
-                <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; line-height: 1;">${label}</div>
-                <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.4;">${textValue}</div>
-            </div>
-        `;
-    };
-
-    const getNivelBadge = (nivel) => {
-        const colors = {
-            'Baixo': '#22c55e',
-            'Médio': '#eab308',
-            'Alto': '#f97316',
-            'Iminente': '#ef4444'
-        };
-        const color = colors[nivel] || '#64748b';
-        return `<span style="color: ${color}; font-size: 11px; font-weight: 900; display: inline-block; vertical-align: middle; padding: 2px 0; border-bottom: 2px solid ${color}; text-transform: uppercase;">${nivel}</span>`;
-    };
-
-    let contentHtml = '';
-    if (isVistoria) {
-        contentHtml = `
-            <div style="padding: 0 35px 35px 35px;">
-                ${sectionTitle('1. Identificação e Responsável')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    ${renderField('Data do Registro', data.dataHora ? new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '---')}
-                    ${renderField('Protocolo/Processo', data.processo)}
-                    ${renderField('Emissão do Laudo', new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
-                    ${renderField('Agente Responsável', data.agente)}
+            <!-- 6. FOTOS -->
+            ${data.fotos.length > 0 ? `
+            <section class="space-y-4 break-before-page">
+                <div class="flex items-center gap-3">
+                    <div class="w-1 h-6 bg-primary rounded-full"></div>
+                    <h4 class="text-sm font-bold uppercase text-primary tracking-wide">6. Anexo Fotográfico</h4>
                 </div>
-
-                ${sectionTitle('2. Localização e Solicitante')}
-                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
-                    <div style="padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div style="grid-column: span 2;">
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Solicitante</div>
-                            <div style="font-size: 15px; color: #1e293b; font-weight: 600;">${data.solicitante}</div>
-                        </div>
-                        <div style="grid-column: span 2;">
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Endereço da Ocorrência</div>
-                            <div style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.endereco}, ${data.bairro}</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; color: #1e3a8a;">
-                            <div style="font-size: 12px; font-family: monospace; font-weight: 600;">${data.latitude}, ${data.longitude}</div>
-                        </div>
-                    </div>
-                </div>
-
-                ${sectionTitle('3. Diagnóstico de Risco')}
-                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div>
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Categoria Principal</div>
-                            <div style="font-size: 15px; color: #1e293b; font-weight: 700;">${data.categoriaRisco}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Nível de Risco</div>
-                            <div>${getNivelBadge(data.nivelRisco)}</div>
-                        </div>
-                    </div>
-                    <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0;" />
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div>
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Subtipo</div>
-                            <div style="font-size: 13px; color: #1e293b;">${data.subtiposRisco.join(', ') || 'Nenhum'}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Situação</div>
-                            <div style="font-size: 13px; color: #1e293b;">${data.situacaoObservada}</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 15px; background: #f8fafc; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 12px;">
-                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">População Exposta</div>
-                        <div style="font-size: 13px; color: #1e293b; font-weight: 600;">${data.populacaoEstimada} pessoas (${data.gruposVulneraveis.join(', ') || 'Nenhum grupo sensível'})</div>
-                    </div>
-                </div>
-
-                ${sectionTitle('4. Parecer e Recomendações')}
-                <div class="pdf-protected-section" style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px;">
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Descrição Técnica</div>
-                        <div class="pdf-text-content" style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.7;">${(() => {
-                const text = String(data.observacoes || 'Não informado');
-                const sentences = text.split(/(?<=[.!?])\s+/);
-                let chunks = [];
-                let currentChunk = '';
-
-                sentences.forEach(sentence => {
-                    if ((currentChunk + sentence).length > 500) {
-                        if (currentChunk) chunks.push(currentChunk.trim());
-                        currentChunk = sentence;
-                    } else {
-                        currentChunk += (currentChunk ? ' ' : '') + sentence;
-                    }
-                });
-                if (currentChunk) chunks.push(currentChunk.trim());
-
-                return chunks.map(chunk => `<div class="pdf-text-chunk" style="margin-bottom: 10px;">${chunk}</div>`).join('');
-            })()}</div>
-                    </div>
-                    <div style="padding-top: 15px; border-top: 1px solid #f1f5f9;">
-                        <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">Medidas Recomendadas</div>
-                        <ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; color: #475569; line-height: 1.7;">
-                            ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Orientação padrão']).map(m => `
-                                <li class="pdf-list-item" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px;">
-                                    <span style="color: #1e3a8a;">•</span>
-                                    <span>${m}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                </div>
-
-                ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
-                    ${sectionTitle('5. Constatações Técnicas')}
-                    <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 15px;">
-                        ${Object.keys(data.checklistRespostas)
-                    .filter(k => data.checklistRespostas[k])
-                    .map(item => `
-                                <div style="display: flex; align-items: center; gap: 12px; background: #eff6ff; padding: 12px; border-radius: 12px; margin-bottom: 8px;">
-                                    <div style="background: #1e3a8a; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">✓</div>
-                                    <div style="font-size: 13px; font-weight: 600; color: #1e3a8a;">${item}</div>
-                                </div>
-                            `).join('')}
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    } else {
-        // Interdição layout (compacted)
-        contentHtml = `
-            <div style="padding: 0 35px 35px 35px;">
-                ${sectionTitle('1. Identificação da Ordem')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    ${renderField('Número de Controle', data.interdicaoId)}
-                    ${renderField('Data e Hora da Ação', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
-                    ${renderField('Responsável pelo Imóvel', data.responsavelNome, true)}
-                </div>
-
-                ${sectionTitle('2. Local e Fundamentação')}
-                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; page-break-inside: avoid;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div style="grid-column: span 2;">
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Endereço</div>
-                            <div style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.endereco}, ${data.bairro}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Risco Constatado</div>
-                            <div style="font-size: 14px; color: #1e293b; font-weight: 700;">${data.riscoGrau}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Medida Aplicada</div>
-                            <div style="font-size: 14px; color: #1e293b; font-weight: 700;">${data.medidaTipo}</div>
-                        </div>
-                    </div>
-                </div>
-
-                ${sectionTitle('3. Parecer Técnico')}
-                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; page-break-inside: avoid;">
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Relatório Técnico</div>
-                        <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.6;">${data.relatorioTecnico}</div>
-                    </div>
-                    <div style="padding-top: 15px; border-top: 1px solid #f1f5f9;">
-                        <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Recomendações</div>
-                        <div style="font-size: 13px; color: #475569; line-height: 1.6;">${data.recomendacoes}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    let photosHtml = '';
-    if (data.fotos && data.fotos.length > 0) {
-        photosHtml = `
-            <div style="padding: 0 35px 35px 35px; margin-top: 20px;">
-                ${sectionTitle('6. Anexo Fotográfico')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    ${data.fotos.map((f, idx) => `
-                        <div class="pdf-photo-card" style="background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 15px;">
-                            <div style="position: relative; aspect-ratio: 4/3; width: 100%;">
-                                <img src="${f.data || f}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />
+                <div class="grid gap-6">
+                    ${data.fotos.map((foto, idx) => `
+                        <div class="group relative bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xl" style="page-break-inside: avoid;">
+                            <div class="aspect-[4/3] w-full bg-slate-200">
+                                <img src="${foto.data}" class="w-full h-full object-cover"/>
                             </div>
-                            <div style="padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
-                                <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Foto ${String(idx + 1).padStart(2, '0')}</span>
-                                ${f.legenda ? `<div style="font-size: 11px; font-weight: 600; color: #1e293b; line-height: 1.3;">${f.legenda}</div>` : ''}
+                            <div class="p-3 bg-white flex justify-between items-center">
+                                <span class="text-[10px] uppercase font-bold text-slate-400">Foto ${String(idx + 1).padStart(2, '0')}</span>
+                                ${foto.legenda ? `<span class="text-[9px] font-mono text-slate-500 truncate max-w-[200px]">${foto.legenda}</span>` : ''}
                             </div>
                         </div>
                     `).join('')}
                 </div>
-            </div>
-        `;
-    }
+            </section>
+            ` : ''}
 
-    const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
-
-    const footerHtml = `
-        <div id="pdf-footer" class="pdf-protected-section" style="margin-top: 30px; padding: 35px 35px; border-top: 1px solid #f1f5f9;">
-            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
-                <div style="display: flex; gap: 40px; justify-content: center; align-items: flex-end;">
-                    <!-- Agent Signature -->
-                    <div style="display: flex; flex-direction: column; align-items: center;">
-                        <div style="height: 80px; display: flex; align-items: flex-end; margin-bottom: 10px;">
-                            ${data.assinaturaAgente ? `
-                                <img src="${data.assinaturaAgente}" style="max-height: 80px; width: auto; max-width: 250px;" />
-                            ` : '<div style="width: 180px; border-bottom: 1px solid #cbd5e1;"></div>'}
+            <!-- SIGNATURES -->
+            <section class="py-12 flex flex-col items-center space-y-6 border-t border-slate-200 mt-12" style="page-break-inside: avoid;">
+                <div class="flex justify-center gap-12 w-full">
+                    <!-- Agente -->
+                    <div class="flex flex-col items-center">
+                        <div class="mb-4 h-20 flex items-end">
+                            ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" class="h-20 w-auto opacity-90"/>` : '<div class="h-px w-40 bg-slate-400"></div>'}
                         </div>
-                        <div style="width: 200px; height: 1px; background: #cbd5e1; margin-bottom: 10px;"></div>
-                        <h5 style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">${data.agente}</h5>
-                        <p style="margin: 2px 0; font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase;">Agente de Defesa Civil</p>
-                        <p style="margin: 0; font-size: 9px; color: #94a3b8;">Matrícula: ${data.matricula}</p>
+                        <div class="w-48 h-px bg-slate-300 mb-2"></div>
+                        <h5 class="text-sm font-bold text-primary uppercase">${data.agente}</h5>
+                        <p class="text-[10px] uppercase font-medium text-slate-500">Agente de Defesa Civil</p>
+                        <p class="text-[9px] text-slate-400">Matrícula: ${data.matricula}</p>
                     </div>
 
-                    ${hasApoio ? `
-                    <!-- Support Signature -->
-                    <div style="display: flex; flex-direction: column; align-items: center;">
-                        <div style="height: 80px; display: flex; align-items: flex-end; margin-bottom: 10px;">
-                            <img src="${data.apoioTecnico.assinatura}" style="max-height: 80px; width: auto; max-width: 250px;" />
+                    <!-- Apoio (if exists) -->
+                    ${data.apoio && data.apoio.assinatura ? `
+                    <div class="flex flex-col items-center">
+                        <div class="mb-4 h-20 flex items-end">
+                            <img src="${data.apoio.assinatura}" class="h-20 w-auto opacity-90"/>
                         </div>
-                        <div style="width: 200px; height: 1px; background: #cbd5e1; margin-bottom: 10px;"></div>
-                        <h5 style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">${data.apoioTecnico.nome}</h5>
-                        <p style="margin: 2px 0; font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase;">Apoio Técnico (Obras/Eng)</p>
-                        <p style="margin: 0; font-size: 9px; color: #94a3b8;">CREA: ${data.apoioTecnico.crea}</p>
+                        <div class="w-48 h-px bg-slate-300 mb-2"></div>
+                        <h5 class="text-sm font-bold text-primary uppercase">${data.apoio.nome}</h5>
+                        <p class="text-[10px] uppercase font-medium text-slate-500">Apoio Técnico</p>
+                        <p class="text-[9px] text-slate-400">CREA: ${data.apoio.crea}</p>
                     </div>
                     ` : ''}
                 </div>
 
-                <div style="margin-top: 30px; max-width: 500px;">
-                    <p style="font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.5;">
-                        Documento oficial gerado em ${new Date().toLocaleString('pt-BR')} pelo Sistema de Gerenciamento de Riscos e Desastres da Defesa Civil de Santa Maria de Jetibá.
+                <div class="text-center px-8">
+                    <p class="text-[9px] uppercase tracking-tighter text-slate-400 leading-normal">
+                        Documento oficial gerado em ${data.emissao} pelo sistema de gerenciamento de riscos e desastres da defesa civil.
                     </p>
                 </div>
-            </div>
+            </section>
         </div>
+    </body>
+    </html>
     `;
 
-    container.innerHTML = `<div id="pdf-render-area" style="width: 840px; margin: 0 auto; background: white; min-height: 1122px; padding-bottom: 80px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
+    // 3. Mount and Render
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.width = '840px'; // Keep fixed width for consistency
+    container.innerHTML = htmlContent;
     document.body.appendChild(container);
 
-    const waitForImages = () => {
-        const images = Array.from(container.getElementsByTagName('img'));
-        return Promise.all(images.map(img => {
-            if (img.complete) return Promise.resolve();
-            return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
-        }));
-    };
+    // Inject Tailwind Script
+    const twScript = document.createElement('script');
+    twScript.src = "https://cdn.tailwindcss.com?plugins=forms,typography";
+    container.appendChild(twScript);
 
-    // Helper to prevent elements from being split between pages
-    const applySmartPageBreaks = () => {
-        const PAGE_HEIGHT = 1050; // Conservative page height (leaving 72px margin at bottom)
-        const SAFE_ZONE = 100; // Minimum space needed at bottom of page
+    // Inject Tailwind Config
+    const twConfig = document.createElement('script');
+    twConfig.innerHTML = `
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1e3a8a",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        serif: ["Libre+Baskerville", "serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "12px",
+                    },
+                },
+            },
+        };
+    `;
+    container.appendChild(twConfig);
 
-        // Select all protected elements
-        const elements = container.querySelectorAll(
-            '.pdf-section-header, ' +
-            '.pdf-protected-section, ' +
-            '.pdf-photo-card, ' +
-            '.pdf-text-chunk, ' +
-            '.pdf-list-item, ' +
-            '#pdf-footer'
-        );
-
-        // Reset any previous spacers
-        container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
-
-        // Process page break markers first
-        const markers = container.querySelectorAll('.pdf-page-break-marker');
-        markers.forEach(marker => {
-            const rect = marker.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-            const relativeTop = rect.top - containerRect.top;
-            const pageOfMarker = Math.floor(relativeTop / PAGE_HEIGHT);
-            const spaceToNextPage = (PAGE_HEIGHT * (pageOfMarker + 1)) - relativeTop;
-
-            if (spaceToNextPage < PAGE_HEIGHT * 0.5) {
-                const spacer = document.createElement('div');
-                spacer.style.height = `${spaceToNextPage}px`;
-                spacer.style.width = '100%';
-                spacer.setAttribute('data-pdf-spacer', 'true');
-                marker.parentNode.insertBefore(spacer, marker);
-            }
-        });
-
-        // Process protected elements
-        elements.forEach(el => {
-            const rect = el.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
-
-            const relativeTop = rect.top - containerRect.top;
-            const relativeBottom = rect.bottom - containerRect.top;
-            const elementHeight = relativeBottom - relativeTop;
-
-            const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
-            const pageOfBottom = Math.floor((relativeBottom - 1) / PAGE_HEIGHT);
-            const spaceLeftOnPage = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
-
-            // If element crosses page boundary OR there's not enough safe zone
-            if (pageOfTop !== pageOfBottom || spaceLeftOnPage < SAFE_ZONE) {
-                // Only move if element can fit on next page
-                if (elementHeight < PAGE_HEIGHT - SAFE_ZONE) {
-                    const spacer = document.createElement('div');
-                    const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
-
-                    if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
-                        spacer.style.height = `${spacerHeight}px`;
-                        spacer.style.width = '100%';
-                        spacer.setAttribute('data-pdf-spacer', 'true');
-                        el.parentNode.insertBefore(spacer, el);
-                        console.log('PDF Page Break: Moved element to next page. Spacer:', spacerHeight, 'px');
-                    }
-                }
-            }
-        });
-    };
+    // Wait for Tailwind & Fonts
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     try {
-        await waitForImages();
-        // Delay for rendering stability
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Execute Smart Page Breaking logic
-        applySmartPageBreaks();
-
-        // Final pre-render delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        const canvas = await html2canvas(container, {
-            scale: 2,
+        const canvas = await html2canvas(container.querySelector('#pdf-wrapper') || container, {
+            scale: 2, // High resolution
             useCORS: true,
-            logging: true, // Enabled for debugging if needed
-            allowTaint: false,
-            backgroundColor: '#ffffff',
+            logging: false,
             windowWidth: 840,
-            onclone: (clonedDoc) => {
-                const clonedContainer = clonedDoc.getElementById('pdf-render-area');
-                if (clonedContainer) {
-                    clonedContainer.style.position = 'relative';
-                    clonedContainer.style.top = '0';
-                    clonedContainer.style.left = '0';
-                    clonedContainer.style.zIndex = '9999';
-                }
-            }
+            backgroundColor: '#ffffff'
         });
+
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height / canvas.width) * imgWidth;
 
-        let heightLeft = imgHeight;
+        // Multi-page splitting logic
+        let heightLeft = pdfHeight;
         let position = 0;
+        let page = 0;
 
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        while (heightLeft > 0) {
+            position = Math.min(0, position); // Top of page
+            pdf.addImage(imgData, 'JPEG', 0, position - (page * pageHeight), pdfWidth, pdfHeight);
 
-        while (heightLeft >= 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
+            page++;
+            if (heightLeft > 0) {
+                pdf.addPage();
+            }
         }
 
+        // Save
+        const filename = `Relatorio_Vistoria_${data.id.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+
+        // Mobile share or download
         const blob = pdf.output('blob');
         const file = new File([blob], filename, { type: 'application/pdf' });
 
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: title });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Relatório de Vistoria',
+                text: `Segue laudo técnico ${data.id}`
+            });
         } else {
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank') || (location.href = url);
+            pdf.save(filename);
         }
 
     } catch (error) {
-        console.error('PDF Error:', error);
-        alert('Erro ao gerar PDF.');
+        console.error("PDF Generation Error:", error);
+        alert("Erro ao gerar PDF. Tente novamente.");
     } finally {
-        if (document.body.contains(container)) document.body.removeChild(container);
+        document.body.removeChild(container);
     }
 };
