@@ -345,22 +345,22 @@ export const generatePDF = async (rawData, type) => {
         photosHtml = `
             <div style="padding: 0 35px 35px 35px; page-break-before: always; margin-top: 30px;">
                 ${sectionTitle('6. Anexo Fotográfico')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 25px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
-                        <div style="background: white; border-radius: 24px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); page-break-inside: avoid; margin-bottom: 10px;">
+                        <div style="background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); page-break-inside: avoid; margin-bottom: 10px;">
                             <div style="position: relative; aspect-ratio: 4/3; width: 100%;">
                                 <img src="${f.data || f}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />
-                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 15px;">
-                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; font-family: monospace; font-size: 10px; color: rgba(255,255,255,0.9);">
+                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 10px;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px; font-family: monospace; font-size: 8px; color: rgba(255,255,255,0.9);">
                                         <span>LAT: ${data.latitude}</span>
                                         <span>LNG: ${data.longitude}</span>
                                         <span>DATA: ${new Date().toLocaleDateString('pt-BR')}</span>
                                     </div>
                                 </div>
                             </div>
-                            <div style="padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Foto ${String(idx + 1).padStart(2, '0')}</span>
-                                ${f.legenda ? `<div style="font-size: 13px; font-weight: 600; color: #1e293b;">${f.legenda}</div>` : ''}
+                            <div style="padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Foto ${String(idx + 1).padStart(2, '0')}</span>
+                                ${f.legenda ? `<div style="font-size: 11px; font-weight: 600; color: #1e293b; line-height: 1.3;">${f.legenda}</div>` : ''}
                             </div>
                         </div>
                     `).join('')}
@@ -424,30 +424,27 @@ export const generatePDF = async (rawData, type) => {
 
     // Helper to prevent elements from being split between pages
     const applySmartPageBreaks = () => {
-        const PAGE_HEIGHT = 1182; // Slightly smaller height for safety margin (A4 at 840px width)
+        const PAGE_HEIGHT = 1180; // Safety margin for A4 at 840px width
         const elements = container.querySelectorAll('[style*="page-break-inside: avoid"], .pdf-section-header');
 
         // Reset any previous spacers
         container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
 
-        let currentOffset = 0;
+        // Process elements in order to handle cumulative height changes
         elements.forEach(el => {
             const rect = el.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
 
-            // Calculate position relative to container, accounting for previously added spacers
             const relativeTop = rect.top - containerRect.top;
             const relativeBottom = rect.bottom - containerRect.top;
 
             const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
-            const pageOfBottom = Math.floor((relativeBottom - 2) / PAGE_HEIGHT); // 2px buffer
+            const pageOfBottom = Math.floor((relativeBottom - 5) / PAGE_HEIGHT); // 5px buffer for rounding
 
-            // If element spans across two pages, insert a spacer before it
             if (pageOfTop !== pageOfBottom) {
                 const spacer = document.createElement('div');
                 const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
 
-                // Only insert if spacer is reasonable (not filling almost a whole page unnecessarily)
                 if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
                     spacer.style.height = `${spacerHeight}px`;
                     spacer.style.width = '100%';
