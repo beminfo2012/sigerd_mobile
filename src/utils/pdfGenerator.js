@@ -390,13 +390,12 @@ export const generatePDF = async (rawData, type) => {
 
     // Helper to prevent elements from being split between pages
     const applySmartPageBreaks = () => {
-        const PAGE_HEIGHT = 1182; // Slightly smaller height for safety margin (A4 at 840px width)
+        const PAGE_HEIGHT = 1140; // Reduced from 1182 for increased safety margin
         const elements = container.querySelectorAll('[style*="page-break-inside: avoid"], .pdf-section-header');
 
         // Reset any previous spacers
         container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
 
-        let currentOffset = 0;
         elements.forEach(el => {
             const rect = el.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
@@ -406,20 +405,22 @@ export const generatePDF = async (rawData, type) => {
             const relativeBottom = rect.bottom - containerRect.top;
 
             const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
-            const pageOfBottom = Math.floor((relativeBottom - 2) / PAGE_HEIGHT); // 2px buffer
+            const pageOfBottom = Math.floor((relativeBottom - 5) / PAGE_HEIGHT); // 5px buffer
 
-            // If element spans across two pages, insert a spacer before it
-            if (pageOfTop !== pageOfBottom) {
+            const isHeader = el.classList.contains('pdf-section-header');
+            const nearPageBottom = (relativeTop % PAGE_HEIGHT) > (PAGE_HEIGHT - 160); // Push headers if in last ~4cm
+
+            // If element spans across two pages OR it's a header too close to the bottom
+            if (pageOfTop !== pageOfBottom || (isHeader && nearPageBottom)) {
                 const spacer = document.createElement('div');
-                const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
+                const spacerHeight = PAGE_HEIGHT - (relativeTop % PAGE_HEIGHT);
 
-                // Only insert if spacer is reasonable (not filling almost a whole page unnecessarily)
                 if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
                     spacer.style.height = `${spacerHeight}px`;
                     spacer.style.width = '100%';
                     spacer.setAttribute('data-pdf-spacer', 'true');
                     el.parentNode.insertBefore(spacer, el);
-                    console.log('Smart Page Break: Inserted spacer of', spacerHeight, 'px before', el.textContent.substring(0, 20));
+                    console.log('Smart Page Break: Pushed element to next page:', el.textContent.substring(0, 30));
                 }
             }
         });
