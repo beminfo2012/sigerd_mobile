@@ -441,9 +441,10 @@ export const generatePDF = async (rawData, type) => {
 
     // Helper to prevent elements from being split between pages
     const applySmartPageBreaks = () => {
-        const PAGE_HEIGHT = 1180; // Safety margin for A4 at 840px width
-        // Select headers, avoid-break elements, AND card containers
-        const elements = container.querySelectorAll('[style*="page-break-inside: avoid"], .pdf-section-header, [style*="background: white"][style*="border-radius"]');
+        const PAGE_HEIGHT = 1120; // Optimized for A4 at 840px width (approx 297mm)
+
+        // Select headers, avoid-break elements, card containers, and the signature block
+        const elements = container.querySelectorAll('.pdf-section-header, [style*="page-break-inside: avoid"], [style*="background: white"][style*="border-radius"], #pdf-footer');
 
         // Reset any previous spacers
         container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
@@ -457,18 +458,18 @@ export const generatePDF = async (rawData, type) => {
             const relativeBottom = rect.bottom - containerRect.top;
 
             const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
-            const pageOfBottom = Math.floor((relativeBottom - 5) / PAGE_HEIGHT); // 5px buffer for rounding
+            const pageOfBottom = Math.floor((relativeBottom - 10) / PAGE_HEIGHT); // 10px buffer for safety
 
             if (pageOfTop !== pageOfBottom) {
                 const spacer = document.createElement('div');
                 const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
 
                 if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
-                    spacer.style.height = `${spacerHeight} px`;
+                    spacer.style.height = `${spacerHeight}px`;
                     spacer.style.width = '100%';
                     spacer.setAttribute('data-pdf-spacer', 'true');
                     el.parentNode.insertBefore(spacer, el);
-                    console.log('Smart Page Break: Inserted spacer of', spacerHeight, 'px before', el.textContent.substring(0, 20));
+                    console.log('Smart Page Break: Inserted spacer of', spacerHeight, 'px before', el.className || 'card');
                 }
             }
         });
