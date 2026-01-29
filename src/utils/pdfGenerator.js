@@ -425,7 +425,8 @@ export const generatePDF = async (rawData, type) => {
     // Helper to prevent elements from being split between pages
     const applySmartPageBreaks = () => {
         const PAGE_HEIGHT = 1180; // Safety margin for A4 at 840px width
-        const elements = container.querySelectorAll('[style*="page-break-inside: avoid"], .pdf-section-header');
+        // Select headers, avoid-break elements, AND card containers
+        const elements = container.querySelectorAll('[style*="page-break-inside: avoid"], .pdf-section-header, [style*="background: white"][style*="border-radius"]');
 
         // Reset any previous spacers
         container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
