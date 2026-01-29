@@ -287,9 +287,12 @@ export const generatePDF = async (rawData, type) => {
                 </div>
 
                 ${sectionTitle('4. Parecer e Recomendações')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
-                    ${renderField('Descrição Técnica', data.observacoes, true)}
-                    <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px;">
+                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; page-break-inside: avoid;">
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Descrição Técnica</div>
+                        <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.6;">${data.observacoes}</div>
+                    </div>
+                    <div style="padding-top: 15px; border-top: 1px solid #f1f5f9;">
                         <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">Medidas Recomendadas</div>
                         <ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; color: #475569; line-height: 1.6;">
                             ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Orientação padrão']).map(m => `
@@ -329,12 +332,33 @@ export const generatePDF = async (rawData, type) => {
                 </div>
 
                 ${sectionTitle('2. Local e Fundamentação')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    ${renderField('Endereço', `${data.endereco}, ${data.bairro}`, true)}
-                    ${renderField('Risco Constatado', data.riscoGrau)}
-                    ${renderField('Medida Aplicada', data.medidaTipo)}
-                    ${renderField('Parecer Técnico', data.relatorioTecnico, true)}
-                    ${renderField('Recomendações', data.recomendacoes, true)}
+                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; page-break-inside: avoid;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="grid-column: span 2;">
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Endereço</div>
+                            <div style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.endereco}, ${data.bairro}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Risco Constatado</div>
+                            <div style="font-size: 14px; color: #1e293b; font-weight: 700;">${data.riscoGrau}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Medida Aplicada</div>
+                            <div style="font-size: 14px; color: #1e293b; font-weight: 700;">${data.medidaTipo}</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${sectionTitle('3. Parecer Técnico')}
+                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; page-break-inside: avoid;">
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Relatório Técnico</div>
+                        <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.6;">${data.relatorioTecnico}</div>
+                    </div>
+                    <div style="padding-top: 15px; border-top: 1px solid #f1f5f9;">
+                        <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Recomendações</div>
+                        <div style="font-size: 13px; color: #475569; line-height: 1.6;">${data.recomendacoes}</div>
+                    </div>
                 </div>
             </div>
         `;
