@@ -64,10 +64,6 @@ export const generatePDF = async (rawData, type) => {
         };
         img.onerror = () => {
             console.warn("Failed to load image for PDF (CORS or 404):", url);
-            // Return null to trigger fallback line, or return url to hope html2canvas handles it
-            // If we return NULL, it shows the line.
-            // If we return URL, html2canvas might show empty space if CORS fails.
-            // Let's return URL as last resort
             resolve(url);
         };
         img.src = url;
@@ -105,7 +101,7 @@ export const generatePDF = async (rawData, type) => {
         </style>
     </head>
     <body class="antialiased">
-        <div id="pdf-container" style="width: 800px; padding: 40px; margin: 0 auto; background: white;">
+        <div id="pdf-container" style="width: 800px; padding: 50px 40px; margin: 0 auto; background: white;">
             
             <!-- HEADER -->
             <div class="pdf-block" style="border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 30px;">
@@ -296,12 +292,14 @@ export const generatePDF = async (rawData, type) => {
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-        // Smart Slicing Logic - Refined v2 (Tolerance + Safety Margin)
+        // Smart Slicing Logic - Refined v3 (Aggressive Safety)
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pageWidth = 210;
         const pageHeight = 297;
         const marginMm = 10;
-        const printableHeightMm = pageHeight - 30; // 30mm safety buffer
+
+        // Safety Buffer: 40mm
+        const printableHeightMm = pageHeight - 40;
 
         // Calculate dimensions
         const contentWidth = canvas.width;
@@ -333,7 +331,7 @@ export const generatePDF = async (rawData, type) => {
             let splitPointMm = cursorMm + printableHeightMm;
 
             // Check if this split point cuts a block
-            const BUFFER = 10; // 10mm tolerance
+            const BUFFER = 20; // 20mm tolerance
             let cutBlock = blockPositions.find(b =>
                 b.top < (splitPointMm - BUFFER) &&
                 b.bottom > (splitPointMm + BUFFER)
