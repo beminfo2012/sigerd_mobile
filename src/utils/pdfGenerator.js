@@ -287,17 +287,17 @@ export const generatePDF = async (rawData, type) => {
                 </div>
 
                 ${sectionTitle('4. Parecer e Recomendações')}
-                <div class="pdf-protected-section" style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 30px;">
+                <div class="pdf-protected-section" style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px;">
                     <div style="margin-bottom: 20px;">
                         <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Descrição Técnica</div>
-                        <div class="pdf-text-content" style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.8;">${(() => {
+                        <div class="pdf-text-content" style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.7;">${(() => {
                 const text = String(data.observacoes || 'Não informado');
                 const sentences = text.split(/(?<=[.!?])\s+/);
                 let chunks = [];
                 let currentChunk = '';
 
                 sentences.forEach(sentence => {
-                    if ((currentChunk + sentence).length > 400) {
+                    if ((currentChunk + sentence).length > 500) {
                         if (currentChunk) chunks.push(currentChunk.trim());
                         currentChunk = sentence;
                     } else {
@@ -306,14 +306,14 @@ export const generatePDF = async (rawData, type) => {
                 });
                 if (currentChunk) chunks.push(currentChunk.trim());
 
-                return chunks.map(chunk => `<div class="pdf-text-chunk" style="margin-bottom: 12px; page-break-inside: avoid;">${chunk}</div>`).join('');
+                return chunks.map(chunk => `<div class="pdf-text-chunk" style="margin-bottom: 10px;">${chunk}</div>`).join('');
             })()}</div>
                     </div>
                     <div style="padding-top: 15px; border-top: 1px solid #f1f5f9;">
                         <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">Medidas Recomendadas</div>
-                        <ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; color: #475569; line-height: 1.8;">
+                        <ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; color: #475569; line-height: 1.7;">
                             ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Orientação padrão']).map(m => `
-                                <li class="pdf-list-item" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; page-break-inside: avoid;">
+                                <li class="pdf-list-item" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px;">
                                     <span style="color: #1e3a8a;">•</span>
                                     <span>${m}</span>
                                 </li>
@@ -321,7 +321,6 @@ export const generatePDF = async (rawData, type) => {
                         </ul>
                     </div>
                 </div>
-                <div class="pdf-page-break-marker" style="height: 1px; margin: 40px 0;"></div>
 
                 ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
                     ${sectionTitle('5. Constatações Técnicas')}
@@ -385,12 +384,11 @@ export const generatePDF = async (rawData, type) => {
     let photosHtml = '';
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
-            <div class="pdf-page-break-marker" style="height: 1px; margin: 60px 0;"></div>
-            <div style="padding: 0 35px 35px 35px; margin-top: 30px;">
+            <div style="padding: 0 35px 35px 35px; margin-top: 20px;">
                 ${sectionTitle('6. Anexo Fotográfico')}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
-                        <div class="pdf-photo-card" style="background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                        <div class="pdf-photo-card" style="background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 15px;">
                             <div style="position: relative; aspect-ratio: 4/3; width: 100%;">
                                 <img src="${f.data || f}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />
                             </div>
@@ -408,8 +406,7 @@ export const generatePDF = async (rawData, type) => {
     const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
 
     const footerHtml = `
-        <div class="pdf-page-break-marker" style="height: 1px; margin: 80px 0;"></div>
-        <div id="pdf-footer" class="pdf-protected-section" style="margin-top: 40px; padding: 40px 35px; border-top: 1px solid #f1f5f9;">
+        <div id="pdf-footer" class="pdf-protected-section" style="margin-top: 30px; padding: 35px 35px; border-top: 1px solid #f1f5f9;">
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
                 <div style="display: flex; gap: 40px; justify-content: center; align-items: flex-end;">
                     <!-- Agent Signature -->
@@ -448,7 +445,7 @@ export const generatePDF = async (rawData, type) => {
         </div>
     `;
 
-    container.innerHTML = `<div id="pdf-render-area" style="width: 840px; margin: 0 auto; background: white; min-height: 1122px; padding-bottom: 120px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
+    container.innerHTML = `<div id="pdf-render-area" style="width: 840px; margin: 0 auto; background: white; min-height: 1122px; padding-bottom: 80px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
     document.body.appendChild(container);
 
     const waitForImages = () => {
