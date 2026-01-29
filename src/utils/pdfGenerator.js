@@ -331,38 +331,44 @@ export const generatePDF = async (rawData, type) => {
     container.innerHTML = htmlContent;
     document.body.appendChild(container);
 
-    // Inject Tailwind Script
-    const twScript = document.createElement('script');
-    twScript.src = "https://cdn.tailwindcss.com?plugins=forms,typography";
-    container.appendChild(twScript);
-
-    // Inject Tailwind Config
-    const twConfig = document.createElement('script');
-    twConfig.innerHTML = `
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#1e3a8a",
-                        "background-light": "#f8fafc",
-                        "background-dark": "#0f172a",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                        serif: ["Libre+Baskerville", "serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "12px",
+    // Inject Tailwind Script & Config - SEQ FIX
+    await new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = "https://cdn.tailwindcss.com?plugins=forms,typography";
+        script.onload = () => {
+            // Configure Tailwind after load
+            // @ts-ignore
+            window.tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#1e3a8a",
+                            "background-light": "#f8fafc",
+                            "background-dark": "#0f172a",
+                        },
+                        fontFamily: {
+                            display: ["Inter", "sans-serif"],
+                            serif: ["Libre+Baskerville", "serif"],
+                        },
+                        borderRadius: {
+                            DEFAULT: "12px",
+                        },
                     },
                 },
-            },
+            };
+            console.log("PDF Generator: Tailwind loaded and configured");
+            resolve();
         };
-    `;
-    container.appendChild(twConfig);
+        script.onerror = () => {
+            console.error("PDF Generator: Failed to load Tailwind CDN");
+            resolve(); // Verify fallback or fail
+        };
+        container.appendChild(script);
+    });
 
-    // Wait for Tailwind & Fonts
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Extra wait for fonts and rendering
+    await new Promise(resolve => setTimeout(resolve, 2500));
 
     try {
         const canvas = await html2canvas(container.querySelector('#pdf-wrapper') || container, {
