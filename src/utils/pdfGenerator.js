@@ -287,16 +287,33 @@ export const generatePDF = async (rawData, type) => {
                 </div>
 
                 ${sectionTitle('4. Parecer e Recomendações')}
-                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; page-break-inside: avoid;">
+                <div class="pdf-protected-section" style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 30px;">
                     <div style="margin-bottom: 20px;">
                         <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">Descrição Técnica</div>
-                        <div style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.6;">${data.observacoes}</div>
+                        <div class="pdf-text-content" style="font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.8;">${(() => {
+                const text = String(data.observacoes || 'Não informado');
+                const sentences = text.split(/(?<=[.!?])\s+/);
+                let chunks = [];
+                let currentChunk = '';
+
+                sentences.forEach(sentence => {
+                    if ((currentChunk + sentence).length > 400) {
+                        if (currentChunk) chunks.push(currentChunk.trim());
+                        currentChunk = sentence;
+                    } else {
+                        currentChunk += (currentChunk ? ' ' : '') + sentence;
+                    }
+                });
+                if (currentChunk) chunks.push(currentChunk.trim());
+
+                return chunks.map(chunk => `<div class="pdf-text-chunk" style="margin-bottom: 12px; page-break-inside: avoid;">${chunk}</div>`).join('');
+            })()}</div>
                     </div>
                     <div style="padding-top: 15px; border-top: 1px solid #f1f5f9;">
                         <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">Medidas Recomendadas</div>
-                        <ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; color: #475569; line-height: 1.6;">
+                        <ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; color: #475569; line-height: 1.8;">
                             ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Orientação padrão']).map(m => `
-                                <li style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                <li class="pdf-list-item" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; page-break-inside: avoid;">
                                     <span style="color: #1e3a8a;">•</span>
                                     <span>${m}</span>
                                 </li>
@@ -304,6 +321,7 @@ export const generatePDF = async (rawData, type) => {
                         </ul>
                     </div>
                 </div>
+                <div class="pdf-page-break-marker" style="height: 1px; margin: 40px 0;"></div>
 
                 ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
                     ${sectionTitle('5. Constatações Técnicas')}
@@ -367,11 +385,12 @@ export const generatePDF = async (rawData, type) => {
     let photosHtml = '';
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
-            <div style="padding: 0 35px 35px 35px; page-break-before: always; margin-top: 30px;">
+            <div class="pdf-page-break-marker" style="height: 1px; margin: 60px 0;"></div>
+            <div style="padding: 0 35px 35px 35px; margin-top: 30px;">
                 ${sectionTitle('6. Anexo Fotográfico')}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
-                        <div style="background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); page-break-inside: avoid; margin-bottom: 10px;">
+                        <div class="pdf-photo-card" style="background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px;">
                             <div style="position: relative; aspect-ratio: 4/3; width: 100%;">
                                 <img src="${f.data || f}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />
                             </div>
@@ -389,7 +408,8 @@ export const generatePDF = async (rawData, type) => {
     const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
 
     const footerHtml = `
-        <div id="pdf-footer" style="margin-top: 20px; padding: 30px 35px; border-top: 1px solid #f1f5f9; page-break-inside: avoid;">
+        <div class="pdf-page-break-marker" style="height: 1px; margin: 80px 0;"></div>
+        <div id="pdf-footer" class="pdf-protected-section" style="margin-top: 40px; padding: 40px 35px; border-top: 1px solid #f1f5f9;">
             <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
                 <div style="display: flex; gap: 40px; justify-content: center; align-items: flex-end;">
                     <!-- Agent Signature -->
@@ -428,7 +448,7 @@ export const generatePDF = async (rawData, type) => {
         </div>
     `;
 
-    container.innerHTML = `<div id="pdf-render-area" style="width: 840px; margin: 0 auto; background: white; min-height: 1122px; padding-bottom: 60px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
+    container.innerHTML = `<div id="pdf-render-area" style="width: 840px; margin: 0 auto; background: white; min-height: 1122px; padding-bottom: 120px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
     document.body.appendChild(container);
 
     const waitForImages = () => {
@@ -441,35 +461,67 @@ export const generatePDF = async (rawData, type) => {
 
     // Helper to prevent elements from being split between pages
     const applySmartPageBreaks = () => {
-        const PAGE_HEIGHT = 1122; // Precise A4 height at 840px width
+        const PAGE_HEIGHT = 1050; // Conservative page height (leaving 72px margin at bottom)
+        const SAFE_ZONE = 100; // Minimum space needed at bottom of page
 
-        // Select headers, avoid-break elements, card containers, and the signature block
-        const elements = container.querySelectorAll('.pdf-section-header, [style*="page-break-inside: avoid"], [style*="background: white"][style*="border-radius"], #pdf-footer');
+        // Select all protected elements
+        const elements = container.querySelectorAll(
+            '.pdf-section-header, ' +
+            '.pdf-protected-section, ' +
+            '.pdf-photo-card, ' +
+            '.pdf-text-chunk, ' +
+            '.pdf-list-item, ' +
+            '#pdf-footer'
+        );
 
         // Reset any previous spacers
         container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
 
-        // Process elements in order to handle cumulative height changes
+        // Process page break markers first
+        const markers = container.querySelectorAll('.pdf-page-break-marker');
+        markers.forEach(marker => {
+            const rect = marker.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const relativeTop = rect.top - containerRect.top;
+            const pageOfMarker = Math.floor(relativeTop / PAGE_HEIGHT);
+            const spaceToNextPage = (PAGE_HEIGHT * (pageOfMarker + 1)) - relativeTop;
+
+            if (spaceToNextPage < PAGE_HEIGHT * 0.5) {
+                const spacer = document.createElement('div');
+                spacer.style.height = `${spaceToNextPage}px`;
+                spacer.style.width = '100%';
+                spacer.setAttribute('data-pdf-spacer', 'true');
+                marker.parentNode.insertBefore(spacer, marker);
+            }
+        });
+
+        // Process protected elements
         elements.forEach(el => {
             const rect = el.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
 
             const relativeTop = rect.top - containerRect.top;
             const relativeBottom = rect.bottom - containerRect.top;
+            const elementHeight = relativeBottom - relativeTop;
 
             const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
-            const pageOfBottom = Math.floor((relativeBottom - 5) / PAGE_HEIGHT); // 5px buffer for safety
+            const pageOfBottom = Math.floor((relativeBottom - 1) / PAGE_HEIGHT);
+            const spaceLeftOnPage = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
 
-            if (pageOfTop !== pageOfBottom) {
-                const spacer = document.createElement('div');
-                const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
+            // If element crosses page boundary OR there's not enough safe zone
+            if (pageOfTop !== pageOfBottom || spaceLeftOnPage < SAFE_ZONE) {
+                // Only move if element can fit on next page
+                if (elementHeight < PAGE_HEIGHT - SAFE_ZONE) {
+                    const spacer = document.createElement('div');
+                    const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
 
-                if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
-                    spacer.style.height = `${spacerHeight}px`;
-                    spacer.style.width = '100%';
-                    spacer.setAttribute('data-pdf-spacer', 'true');
-                    el.parentNode.insertBefore(spacer, el);
-                    console.log('Smart Page Break: Moving element to next page to avoid splitting. Spacer:', spacerHeight, 'px');
+                    if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
+                        spacer.style.height = `${spacerHeight}px`;
+                        spacer.style.width = '100%';
+                        spacer.setAttribute('data-pdf-spacer', 'true');
+                        el.parentNode.insertBefore(spacer, el);
+                        console.log('PDF Page Break: Moved element to next page. Spacer:', spacerHeight, 'px');
+                    }
                 }
             }
         });
