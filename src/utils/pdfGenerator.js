@@ -350,13 +350,6 @@ export const generatePDF = async (rawData, type) => {
                         <div style="background: white; border-radius: 16px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); page-break-inside: avoid; margin-bottom: 10px;">
                             <div style="position: relative; aspect-ratio: 4/3; width: 100%;">
                                 <img src="${f.data || f}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />
-                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 10px;">
-                                    <div style="display: flex; flex-wrap: wrap; gap: 6px; font-family: monospace; font-size: 8px; color: rgba(255,255,255,0.9);">
-                                        <span>LAT: ${data.latitude}</span>
-                                        <span>LNG: ${data.longitude}</span>
-                                        <span>DATA: ${new Date().toLocaleDateString('pt-BR')}</span>
-                                    </div>
-                                </div>
                             </div>
                             <div style="padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
                                 <span style="font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Foto ${String(idx + 1).padStart(2, '0')}</span>
