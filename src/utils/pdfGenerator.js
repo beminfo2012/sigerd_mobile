@@ -140,9 +140,9 @@ export const generatePDF = async (rawData, type) => {
     const filename = `${type}_${cleanId}${nameSuffix}.pdf`;
 
     const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '0';
-    container.style.top = '100vh';
+    container.style.position = 'absolute';
+    container.style.left = '-3000px';
+    container.style.top = '0';
     container.style.width = '840px';
     container.style.padding = '0';
     container.style.backgroundColor = 'white';
@@ -184,17 +184,37 @@ export const generatePDF = async (rawData, type) => {
     `;
 
     const sectionTitle = (title) => `
-        <div style="border-left: 5px solid #2a5299; padding: 10px 15px; margin: 30px 0 12px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; page-break-inside: avoid; page-break-after: avoid; display: block;">
+        <div class="pdf-section-header" style="border-left: 5px solid #2a5299; padding: 10px 15px; margin: 30px 0 12px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; page-break-inside: avoid; page-break-after: avoid; display: block;">
             ${title}
         </div>
     `;
 
-    const renderField = (label, value) => `
-        <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; margin-bottom: 4px;">
-            <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; line-height: 1;">${label}</div>
-            <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.4;">${value || 'Não informado'}</div>
-        </div>
-    `;
+    const renderField = (label, value) => {
+        const textValue = String(value || 'Não informado');
+        const isLongText = textValue.length > 100 || textValue.includes('\n');
+
+        if (isLongText) {
+            // Split by newlines and wrap each paragraph to avoid breaking inside it
+            const paragraphs = textValue.split('\n').filter(p => p.trim());
+            return `
+                <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 4px;">
+                    <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">${label}</div>
+                    ${paragraphs.map(p => `
+                        <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.5; margin-bottom: 6px; page-break-inside: avoid; break-inside: avoid;">
+                            ${p}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        return `
+            <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; break-inside: avoid; margin-bottom: 4px;">
+                <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; line-height: 1;">${label}</div>
+                <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.4;">${textValue}</div>
+            </div>
+        `;
+    };
 
     const getNivelBadge = (nivel) => {
         const colors = {
@@ -370,27 +390,37 @@ export const generatePDF = async (rawData, type) => {
 
     // Helper to prevent elements from being split between pages
     const applySmartPageBreaks = () => {
-        const PAGE_HEIGHT = 1188; // Height of one A4 page in px at 840px width
-        const elements = container.querySelectorAll('[style*="page-break-inside: avoid"]');
+        const PAGE_HEIGHT = 1182; // Slightly smaller height for safety margin (A4 at 840px width)
+        const elements = container.querySelectorAll('[style*="page-break-inside: avoid"], .pdf-section-header');
 
+        // Reset any previous spacers
+        container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
+
+        let currentOffset = 0;
         elements.forEach(el => {
             const rect = el.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
+
+            // Calculate position relative to container, accounting for previously added spacers
             const relativeTop = rect.top - containerRect.top;
             const relativeBottom = rect.bottom - containerRect.top;
 
             const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
-            const pageOfBottom = Math.floor((relativeBottom - 1) / PAGE_HEIGHT);
+            const pageOfBottom = Math.floor((relativeBottom - 2) / PAGE_HEIGHT); // 2px buffer
 
             // If element spans across two pages, insert a spacer before it
             if (pageOfTop !== pageOfBottom) {
                 const spacer = document.createElement('div');
                 const spacerHeight = (PAGE_HEIGHT * (pageOfTop + 1)) - relativeTop;
-                spacer.style.height = `${spacerHeight}px`;
-                spacer.style.width = '100%';
-                spacer.setAttribute('data-pdf-spacer', 'true');
-                el.parentNode.insertBefore(spacer, el);
-                console.log('Smart Page Break: Inserted spacer of', spacerHeight, 'px before', el.textContent.substring(0, 20));
+
+                // Only insert if spacer is reasonable (not filling almost a whole page unnecessarily)
+                if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
+                    spacer.style.height = `${spacerHeight}px`;
+                    spacer.style.width = '100%';
+                    spacer.setAttribute('data-pdf-spacer', 'true');
+                    el.parentNode.insertBefore(spacer, el);
+                    console.log('Smart Page Break: Inserted spacer of', spacerHeight, 'px before', el.textContent.substring(0, 20));
+                }
             }
         });
     };
