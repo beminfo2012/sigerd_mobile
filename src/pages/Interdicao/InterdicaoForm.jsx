@@ -4,6 +4,7 @@ import { checkRiskArea } from '../../services/riskAreas'
 import { saveInterdicaoOffline } from '../../services/db'
 import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
+import { generateTXT } from '../../utils/txtGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
@@ -716,13 +717,20 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         )}
                     </button>
 
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                        <button type="button" onClick={() => generatePDF(formData, 'interdicao')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm">
-                            <Share size={20} /> Exportar PDF
+                    <div className="grid grid-cols-3 gap-3 mt-4">
+                        <button type="button" onClick={() => generatePDF(formData, 'interdicao')} className="flex flex-col justify-center items-center gap-1 p-3 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm text-[10px] uppercase tracking-tighter">
+                            <Share size={18} /> PDF
                         </button>
-                        {initialData && (
-                            <button type="button" onClick={() => alert("Excluir")} className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors">
-                                <Trash2 size={20} /> Excluir
+                        <button type="button" onClick={() => generateTXT(formData, 'interdicao')} className="flex flex-col justify-center items-center gap-1 p-3 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm text-[10px] uppercase tracking-tighter">
+                            <FileText size={18} /> TXT
+                        </button>
+                        {initialData ? (
+                            <button type="button" onClick={() => alert("Excluir")} className="flex flex-col justify-center items-center gap-1 p-3 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors text-[10px] uppercase tracking-tighter">
+                                <Trash2 size={18} /> Excluir
+                            </button>
+                        ) : (
+                            <button type="button" onClick={onBack} className="flex flex-col justify-center items-center gap-1 p-3 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors text-[10px] uppercase tracking-tighter">
+                                <Trash2 size={18} /> Cancelar
                             </button>
                         )}
                     </div>

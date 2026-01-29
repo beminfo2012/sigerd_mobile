@@ -6,6 +6,7 @@ import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
 import { generatePDF } from '../../utils/pdfGenerator'
+import { generateTXT } from '../../utils/txtGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
@@ -1130,9 +1131,16 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     <button type="submit" disabled={saving} className={`w-full p-4 rounded-xl font-bold text-lg shadow-lg active:scale-[0.98] transition-all flex justify-center items-center gap-3 ${saving ? 'bg-slate-400' : 'bg-[#2a5299] text-white hover:bg-[#1e3c72]'}`}>
                         <Save size={24} /> {saving ? 'Salvando...' : 'Salvar Vistoria'}
                     </button>
-                    <div className="grid grid-cols-2 gap-4">
-                        <button type="button" onClick={() => generatePDF(formData, 'vistoria')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 shadow-sm"><Share size={20} /> Relatório PDF</button>
-                        <button type="button" onClick={() => initialData ? alert("Use lista para excluir") : onBack()} className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50"><Trash2 size={20} /> Cancelar</button>
+                    <div className="grid grid-cols-3 gap-3">
+                        <button type="button" onClick={() => generatePDF(formData, 'vistoria')} className="flex flex-col justify-center items-center gap-1 p-3 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 shadow-sm text-[10px] uppercase tracking-tighter">
+                            <Share size={18} /> PDF
+                        </button>
+                        <button type="button" onClick={() => generateTXT(formData, 'vistoria')} className="flex flex-col justify-center items-center gap-1 p-3 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 shadow-sm text-[10px] uppercase tracking-tighter">
+                            <FileText size={18} /> TXT
+                        </button>
+                        <button type="button" onClick={() => initialData ? alert("Use lista para excluir") : onBack()} className="flex flex-col justify-center items-center gap-1 p-3 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 text-[10px] uppercase tracking-tighter">
+                            <Trash2 size={18} /> Cancelar
+                        </button>
                     </div>
                 </div>
             </form>

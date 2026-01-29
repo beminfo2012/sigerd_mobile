@@ -184,8 +184,9 @@ export const generatePDF = async (rawData, type) => {
     `;
 
     const sectionTitle = (title) => `
-        <div class="pdf-section-header" style="border-left: 5px solid #2a5299; padding: 10px 15px; margin: 30px 0 12px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; page-break-inside: avoid; page-break-after: avoid; display: block;">
-            ${title}
+        <div class="pdf-section-header" style="display: flex; align-items: center; gap: 12px; margin: 30px 0 15px 0; page-break-inside: avoid; page-break-after: avoid;">
+            <div style="width: 4px; height: 24px; background-color: #1e3a8a; border-radius: 2px;"></div>
+            <h4 style="margin: 0; font-size: 14px; font-weight: 800; text-transform: uppercase; color: #1e3a8a; tracking: 0.05em;">${title}</h4>
         </div>
     `;
 
@@ -232,53 +233,84 @@ export const generatePDF = async (rawData, type) => {
         contentHtml = `
             <div style="padding: 0 35px 35px 35px;">
                 ${sectionTitle('1. Identificação e Responsável')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     ${renderField('Data do Registro', data.dataHora ? new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '---')}
                     ${renderField('Protocolo/Processo', data.processo)}
                     ${renderField('Emissão do Laudo', new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
                     ${renderField('Agente Responsável', data.agente)}
-                    ${renderField('Matrícula do Agente', data.matricula)}
                 </div>
 
                 ${sectionTitle('2. Localização e Solicitante')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
-                    ${renderField('CPF/CNPJ', data.cpf)}
-                    ${renderField('Telefone', data.telefone)}
-                    <div style="grid-column: span 2;">${renderField('Endereço do Solicitante', data.enderecoSolicitante)}</div>
-                    <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
-                    ${renderField('Bairro / Localidade', data.bairro)}
-                    ${renderField('Coordenadas (Lat, Long)', `${data.latitude}, ${data.longitude}`)}
+                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+                    <div style="padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="grid-column: span 2;">
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Solicitante</div>
+                            <div style="font-size: 15px; color: #1e293b; font-weight: 600;">${data.solicitante}</div>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Endereço da Ocorrência</div>
+                            <div style="font-size: 14px; color: #1e293b; font-weight: 500;">${data.endereco}, ${data.bairro}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; color: #1e3a8a;">
+                            <div style="font-size: 12px; font-family: monospace; font-weight: 600;">${data.latitude}, ${data.longitude}</div>
+                        </div>
+                    </div>
                 </div>
 
                 ${sectionTitle('3. Diagnóstico de Risco')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    ${renderField('Categoria Principal', data.categoriaRisco)}
-                    <div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid;">
-                        <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">NÍVEL DE RISCO</div>
-                        <div>${getNivelBadge(data.nivelRisco)}</div>
+                <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Categoria Principal</div>
+                            <div style="font-size: 15px; color: #1e293b; font-weight: 700;">${data.categoriaRisco}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Nível de Risco</div>
+                            <div>${getNivelBadge(data.nivelRisco)}</div>
+                        </div>
                     </div>
-                    <div style="grid-column: span 2;">${renderField('Subtipos Identificados', data.subtiposRisco.join(', ') || 'Nenhum específico')}</div>
-                    <div style="grid-column: span 2;">${renderField('Situação Observada', data.situacaoObservada)}</div>
-                    <div style="grid-column: span 2;">${renderField('População Exposta', `${data.populacaoEstimada} pessoas (${data.gruposVulneraveis.join(', ') || 'Nenhum grupo sensível'})`)}</div>
+                    <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 15px 0;" />
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Subtipo</div>
+                            <div style="font-size: 13px; color: #1e293b;">${data.subtiposRisco.join(', ') || 'Nenhum'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Situação</div>
+                            <div style="font-size: 13px; color: #1e293b;">${data.situacaoObservada}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; background: #f8fafc; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">População Exposta</div>
+                        <div style="font-size: 13px; color: #1e293b; font-weight: 600;">${data.populacaoEstimada} pessoas (${data.gruposVulneraveis.join(', ') || 'Nenhum grupo sensível'})</div>
+                    </div>
                 </div>
 
                 ${sectionTitle('4. Parecer e Recomendações')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 0 30px;">
-                    ${renderField('Descrição Técnica', data.observacoes)}
-                    ${renderField('Medidas Recomendadas', data.medidasTomadas.join('; ') || 'Orientação padrão')}
-                    ${renderField('Encaminhamentos Efetuados', data.encaminhamentos.join(', ') || 'Nenhum')}
+                <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                    ${renderField('Descrição Técnica', data.observacoes, true)}
+                    <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px;">
+                        <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">Medidas Recomendadas</div>
+                        <ul style="margin: 0; padding: 0; list-style: none; font-size: 13px; color: #475569; line-height: 1.6;">
+                            ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Orientação padrão']).map(m => `
+                                <li style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                    <span style="color: #1e3a8a;">•</span>
+                                    <span>${m}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
                 </div>
 
                 ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
-                    ${sectionTitle('5. Constatações Técnicas (Checklist)')}
-                    <div style="background: #fafafa; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; page-break-inside: avoid;">
+                    ${sectionTitle('5. Constatações Técnicas')}
+                    <div style="background: white; border-radius: 16px; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 15px;">
                         ${Object.keys(data.checklistRespostas)
                     .filter(k => data.checklistRespostas[k])
                     .map(item => `
-                                <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 11px; color: #334155; line-height: 1.3;">
-                                    <div style="color: #2a5299; font-weight: bold; font-size: 14px;">✓</div>
-                                    <div style="font-weight: 600;">${item}</div>
+                                <div style="display: flex; align-items: center; gap: 12px; background: #eff6ff; padding: 12px; border-radius: 12px; margin-bottom: 8px;">
+                                    <div style="background: #1e3a8a; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">✓</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #1e3a8a;">${item}</div>
                                 </div>
                             `).join('')}
                     </div>
@@ -290,19 +322,19 @@ export const generatePDF = async (rawData, type) => {
         contentHtml = `
             <div style="padding: 0 35px 35px 35px;">
                 ${sectionTitle('1. Identificação da Ordem')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     ${renderField('Número de Controle', data.interdicaoId)}
                     ${renderField('Data e Hora da Ação', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
-                    <div style="grid-column: span 2;">${renderField('Responsável pelo Imóvel', data.responsavelNome)}</div>
+                    ${renderField('Responsável pelo Imóvel', data.responsavelNome, true)}
                 </div>
 
                 ${sectionTitle('2. Local e Fundamentação')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    <div style="grid-column: span 2;">${renderField('Endereço', data.endereco)}</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    ${renderField('Endereço', `${data.endereco}, ${data.bairro}`, true)}
                     ${renderField('Risco Constatado', data.riscoGrau)}
                     ${renderField('Medida Aplicada', data.medidaTipo)}
-                    <div style="grid-column: span 2;">${renderField('Parecer Técnico', data.relatorioTecnico)}</div>
-                    <div style="grid-column: span 2;">${renderField('Recomendações', data.recomendacoes)}</div>
+                    ${renderField('Parecer Técnico', data.relatorioTecnico, true)}
+                    ${renderField('Recomendações', data.recomendacoes, true)}
                 </div>
             </div>
         `;
@@ -311,18 +343,25 @@ export const generatePDF = async (rawData, type) => {
     let photosHtml = '';
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
-            <div style="padding: 0 45px 35px 35px; page-break-before: always; margin-top: 30px;">
+            <div style="padding: 0 35px 35px 35px; page-break-before: always; margin-top: 30px;">
                 ${sectionTitle('6. Anexo Fotográfico')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 40px; justify-items: center;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 25px;">
                     ${data.fotos.map((f, idx) => `
-                        <div style="width: 100%; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); page-break-inside: avoid; margin-bottom: 20px;">
-                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 6px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
-                            <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">FOTO ${idx + 1}</div>
-                            ${f.legenda ? `
-                                <div style="margin-top: 8px; padding: 12px; background-color: #f8fafc; border-left: 5px solid #2a5299; text-align: left; border-radius: 0 4px 4px 0;">
-                                    <div style="font-size: 13px; color: #1e293b; font-weight: 700; line-height: 1.5; word-wrap: break-word;">${f.legenda}</div>
+                        <div style="background: white; border-radius: 24px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); page-break-inside: avoid; margin-bottom: 10px;">
+                            <div style="position: relative; aspect-ratio: 4/3; width: 100%;">
+                                <img src="${f.data || f}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />
+                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 15px;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; font-family: monospace; font-size: 10px; color: rgba(255,255,255,0.9);">
+                                        <span>LAT: ${data.latitude}</span>
+                                        <span>LNG: ${data.longitude}</span>
+                                        <span>DATA: ${new Date().toLocaleDateString('pt-BR')}</span>
+                                    </div>
                                 </div>
-                            ` : ''}
+                            </div>
+                            <div style="padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Foto ${String(idx + 1).padStart(2, '0')}</span>
+                                ${f.legenda ? `<div style="font-size: 13px; font-weight: 600; color: #1e293b;">${f.legenda}</div>` : ''}
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -333,47 +372,42 @@ export const generatePDF = async (rawData, type) => {
     const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
 
     const footerHtml = `
-        <div style="margin-top: 50px; padding: 50px 45px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid; break-inside: avoid;">
-            <div style="display: flex; flex-direction: row; align-items: flex-end; justify-content: ${hasApoio ? 'space-between' : 'center'}; gap: 30px; page-break-inside: avoid; break-inside: avoid;">
-                <!-- Agent Signature Column -->
-                <div style="text-align: center; width: ${hasApoio ? '360px' : '480px'};">
-                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden;">
-                        ${data.assinaturaAgente ? `
-                            <img 
-                                src="${data.assinaturaAgente}" 
-                                style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 2px solid #2a5299;" 
-                            />
-                        ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 15px;"></div>'}
+        <div style="margin-top: 40px; padding: 40px 35px; border-top: 1px solid #f1f5f9; page-break-inside: avoid;">
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px;">
+                <div style="display: flex; gap: 40px; justify-content: center; align-items: flex-end;">
+                    <!-- Agent Signature -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="height: 80px; display: flex; align-items: flex-end; margin-bottom: 10px;">
+                            ${data.assinaturaAgente ? `
+                                <img src="${data.assinaturaAgente}" style="max-height: 80px; width: auto; max-width: 250px;" />
+                            ` : '<div style="width: 180px; border-bottom: 1px solid #cbd5e1;"></div>'}
+                        </div>
+                        <div style="width: 200px; height: 1px; background: #cbd5e1; margin-bottom: 10px;"></div>
+                        <h5 style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">${data.agente}</h5>
+                        <p style="margin: 2px 0; font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase;">Agente de Defesa Civil</p>
+                        <p style="margin: 0; font-size: 9px; color: #94a3b8;">Matrícula: ${data.matricula}</p>
                     </div>
-                    <div style="padding-top: 15px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">${data.agente}</p>
-                        <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">Agente de Defesa Civil</p>
-                        <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
+
+                    ${hasApoio ? `
+                    <!-- Support Signature -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="height: 80px; display: flex; align-items: flex-end; margin-bottom: 10px;">
+                            <img src="${data.apoioTecnico.assinatura}" style="max-height: 80px; width: auto; max-width: 250px;" />
+                        </div>
+                        <div style="width: 200px; height: 1px; background: #cbd5e1; margin-bottom: 10px;"></div>
+                        <h5 style="margin: 0; font-size: 14px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">${data.apoioTecnico.nome}</h5>
+                        <p style="margin: 2px 0; font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase;">Apoio Técnico (Obras/Eng)</p>
+                        <p style="margin: 0; font-size: 9px; color: #94a3b8;">CREA: ${data.apoioTecnico.crea}</p>
                     </div>
+                    ` : ''}
                 </div>
 
-                ${hasApoio ? `
-                <!-- Support Signature Column -->
-                <div style="text-align: center; width: 360px;">
-                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden;">
-                        <img 
-                            src="${data.apoioTecnico.assinatura}" 
-                            style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 2px solid #2a5299;" 
-                        />
-                    </div>
-                    <div style="padding-top: 15px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">${data.apoioTecnico.nome}</p>
-                        <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">APOIO TÉCNICO (OBRAS/ENG)</p>
-                        <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">
-                            CREA: ${data.apoioTecnico.crea} | Mat.: ${data.apoioTecnico.matricula}
-                        </p>
-                    </div>
+                <div style="margin-top: 30px; max-width: 500px;">
+                    <p style="font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.5;">
+                        Documento oficial gerado em ${new Date().toLocaleString('pt-BR')} pelo Sistema de Gerenciamento de Riscos e Desastres da Defesa Civil de Santa Maria de Jetibá.
+                    </p>
                 </div>
-                ` : ''}
             </div>
-            <p style="margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">
-                Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema de Gerenciamento de Riscos e Desastres da Defesa Civil de Santa Maria de Jetibá.
-            </p>
         </div>
     `;
 
