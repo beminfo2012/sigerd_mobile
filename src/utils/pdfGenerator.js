@@ -36,6 +36,8 @@ export const generatePDF = async (rawData, type) => {
         medidas: [rawData.recomendacoes].filter(Boolean)
     };
 
+    console.log("PDF Generation Data:", data);
+
     function formatDate(dateStr) {
         if (!dateStr) return '---';
         try { return new Date(dateStr).toLocaleString('pt-BR'); } catch (e) { return dateStr; }
@@ -90,7 +92,7 @@ export const generatePDF = async (rawData, type) => {
     <body class="antialiased">
         <div id="pdf-container" style="width: 800px; padding: 40px; margin: 0 auto; background: white;">
             
-            <!-- HEADER (First Page Only usually, but we include it in content flow) -->
+            <!-- HEADER -->
             <div class="pdf-block" style="border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <img src="${logoDC}" style="height: 60px; width: auto; object-fit: contain;"/>
@@ -213,7 +215,7 @@ export const generatePDF = async (rawData, type) => {
             <div class="pdf-block">
                 <div class="section-title">6. Anexo Fotográfico</div>
             </div>
-            ${photoPairs.map((pair, idx) => `
+            ${photoPairs.map((pair) => `
                 <div class="pdf-block" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                     ${pair.map(foto => `
                         <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
@@ -279,107 +281,96 @@ export const generatePDF = async (rawData, type) => {
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-        // Smart Slicing Logic
+        // Smart Slicing Logic - Refined v2 (Tolerance + Safety Margin)
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pageWidth = 210;
         const pageHeight = 297;
-        const pxToMm = 25.4 / 96; // Approximate conversion depends on device, but we use ratios
+        const marginMm = 10;
+        const printableHeightMm = pageHeight - 30; // 30mm safety buffer (header/footer)
 
         // Calculate dimensions
         const contentWidth = canvas.width;
         const contentHeight = canvas.height;
-
-        const imgWidthMm = pageWidth; // Fit to A4 width
-        const scaleFactor = imgWidthMm / contentWidth; // Scale to fit width
-
+        const imgWidthMm = pageWidth;
+        const scaleFactor = imgWidthMm / contentWidth;
         const scaledContentHeight = contentHeight * scaleFactor;
 
-        // We need to find cut points in pixels (Y)
-        const blocks = pdfContainer.querySelectorAll('.pdf-block');
-        const breakPoints = [];
-        let currentHeight = 0;
-
-        // A4 Printable Height (approx with margins)
-        const marginMm = 10;
-        const printableHeightMm = pageHeight - (marginMm * 2);
-
         // Map blocks to their scaled positions
+        const blocks = pdfContainer.querySelectorAll('.pdf-block');
         const blockPositions = Array.from(blocks).map(block => {
+            const top = block.offsetTop * scaleFactor;
+            const height = block.offsetHeight * scaleFactor;
             return {
-                top: block.offsetTop * scaleFactor,
-                height: block.offsetHeight * scaleFactor,
-                bottom: (block.offsetTop + block.offsetHeight) * scaleFactor
+                top: top,
+                height: height,
+                bottom: top + height,
+                dom: block
             };
         });
 
-        let cursorMm = 0; // Current position on the infinite canvas (in mm)
-        let pageCursor = 0; // Current page number
+        console.log("PDF Blocks (mm):", blockPositions);
 
-        // Iterate to find pages
+        let cursorMm = 0;
+        let pageCursor = 0;
+
         while (cursorMm < scaledContentHeight) {
-            // Start of a new page
-            // Find the split point: Cursor + PrintableHeight
+            // Default split point
             let splitPointMm = cursorMm + printableHeightMm;
 
             // Check if this split point cuts a block
-            let cutBlock = blockPositions.find(b => b.top < splitPointMm && b.bottom > splitPointMm);
+            const BUFFER = 10; // 10mm tolerance
+            let cutBlock = blockPositions.find(b =>
+                b.top < (splitPointMm - BUFFER) &&
+                b.bottom > (splitPointMm + BUFFER)
+            );
 
             if (cutBlock) {
-                // If we cut a block, move split point UP to the top of that block
-                // Effectively pushing that block to next page
-                splitPointMm = cutBlock.top;
+                console.warn("Detected cut block:", cutBlock);
+                // If block starts on THIS page (cursorMm), push it to NEXT page
+                if (cutBlock.top > (cursorMm + BUFFER)) {
+                    console.log("Pushing block to next page -> Split at", cutBlock.top);
+                    splitPointMm = cutBlock.top;
+                } else {
+                    console.warn("Block is larger than page or straddles. Allowing cut.");
+                }
             }
 
-            // Ensure we at least fit something, else infinite loop if block > page height
+            // Loop Safety
+            // If we are getting stuck (splitPoint <= cursor), force advance
             if (splitPointMm <= cursorMm) {
-                // Block is larger than page? Cut it anyway or force break
-                // For now, assume blocks < page height (which is true for our design)
-                // Just advance strict page height if stuck
                 splitPointMm = cursorMm + printableHeightMm;
             }
 
-            // Crop Logic
-            // Source Y in pixels = cursorMm / scaleFactor
-            // Source Height in pixels = (splitPointMm - cursorMm) / scaleFactor
-
-            const sourceY = cursorMm / scaleFactor;
-            const sourceH = (splitPointMm - cursorMm) / scaleFactor;
-
-            // Add Page if not first
             if (pageCursor > 0) pdf.addPage();
 
-            // Draw slice
-            // We use standard addImage but we need to pass crop options?
-            // jsPDF addImage doesn't crop. We must use a temporary canvas to crop.
+            // Calculate pixel crop
+            const sourceY = cursorMm / scaleFactor;
+            const sourceH = Math.min((splitPointMm - cursorMm) / scaleFactor, canvas.height - sourceY);
+
+            if (sourceH <= 0) break;
 
             const sliceCanvas = document.createElement('canvas');
             sliceCanvas.width = canvas.width;
             sliceCanvas.height = sourceH;
             const sliceCtx = sliceCanvas.getContext('2d');
 
-            // Draw image fragment
-            // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
             sliceCtx.fillStyle = '#ffffff';
             sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
             sliceCtx.drawImage(
                 canvas,
-                0, sourceY, canvas.width, sourceH, // Source
-                0, 0, canvas.width, sourceH // Dest
+                0, sourceY, canvas.width, sourceH,
+                0, 0, canvas.width, sourceH
             );
 
             const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
-
-            // Add to PDF
-            // Width = 210mm
-            // Height = sourceH * scaleFactor
             const destHeightMm = sourceH * scaleFactor;
+
             pdf.addImage(sliceData, 'JPEG', 0, 0, pageWidth, destHeightMm);
 
             cursorMm = splitPointMm;
             pageCursor++;
         }
 
-        // Save
         const filename = `Relatorio_Vistoria_${data.id.replace(/[^a-z0-9]/gi, '_')}.pdf`;
         const blob = pdf.output('blob');
         const file = new File([blob], filename, { type: 'application/pdf' });
