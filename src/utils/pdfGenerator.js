@@ -3,29 +3,32 @@ import html2canvas from 'html2canvas';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 
 export const generatePDF = async (rawData, type) => {
-    // 1. Data Normalization
+    // 1. Data Normalization with Snake Case Fallbacks
     const data = type === 'vistoria' ? {
         id: rawData.vistoriaId || rawData.vistoria_id || '---',
         protocolo: rawData.processo || rawData.vistoriaId || '---',
-        dataRegistro: formatDate(rawData.dataHora || rawData.created_at),
+        dataRegistro: formatDate(rawData.dataHora || rawData.created_at || rawData.data_hora),
         emissao: new Date().toLocaleString('pt-BR'),
         agente: rawData.agente || '---',
         matricula: rawData.matricula || '---',
-        assinaturaAgente: rawData.assinaturaAgente,
+        assinaturaAgente: rawData.assinaturaAgente || rawData.assinatura_agente,
         solicitante: rawData.solicitante || '---',
         endereco: rawData.endereco || '---',
         latitude: rawData.latitude || '---',
         longitude: rawData.longitude || '---',
-        categoria: rawData.categoriaRisco || '---',
-        nivel: rawData.nivelRisco || 'Baixo',
-        subtipo: Array.isArray(rawData.subtiposRisco) ? rawData.subtiposRisco.join(', ') : (rawData.subtiposRisco || '---'),
-        situacao: rawData.situacaoObservada || '---',
-        populacao: rawData.populacaoEstimada || '---',
+        categoria: rawData.categoriaRisco || rawData.categoria_risco || '---',
+        nivel: rawData.nivelRisco || rawData.nivel_risco || 'Baixo',
+        subtipo: (() => {
+            const sub = rawData.subtiposRisco || rawData.subtipos_risco;
+            return Array.isArray(sub) ? sub.join(', ') : (sub || '---');
+        })(),
+        situacao: rawData.situacaoObservada || rawData.situacao_observada || '---',
+        populacao: rawData.populacaoEstimada || rawData.populacao_estimada || '---',
         descricao: rawData.observacoes || 'Não informado',
-        medidas: rawData.medidasTomadas || [],
-        checklist: rawData.checklistRespostas || {},
+        medidas: rawData.medidasTomadas || rawData.medidas_tomadas || [],
+        checklist: rawData.checklistRespostas || rawData.checklist_respostas || {},
         fotos: (rawData.fotos || []).map(f => typeof f === 'string' ? { data: f } : f),
-        apoio: rawData.apoioTecnico
+        apoio: rawData.apoioTecnico || rawData.apoio_tecnico
     } : {
         id: rawData.interdicaoId || '---',
         protocolo: rawData.interdicaoId || '---',
@@ -36,7 +39,7 @@ export const generatePDF = async (rawData, type) => {
         medidas: [rawData.recomendacoes].filter(Boolean)
     };
 
-    console.log("PDF Generation Data:", data);
+    console.log("PDF Generation Data (Normalized):", data);
 
     function formatDate(dateStr) {
         if (!dateStr) return '---';
@@ -44,6 +47,11 @@ export const generatePDF = async (rawData, type) => {
     }
 
     const urlToBase64 = (url) => new Promise((resolve) => {
+        if (!url) return resolve(null);
+
+        // Handle Data URLs instantly
+        if (url.startsWith('data:')) return resolve(url);
+
         const img = new Image();
         img.crossOrigin = 'Anonymous';
         img.onload = () => {
@@ -54,7 +62,14 @@ export const generatePDF = async (rawData, type) => {
             ctx.drawImage(img, 0, 0);
             resolve(canvas.toDataURL('image/png'));
         };
-        img.onerror = () => resolve(url);
+        img.onerror = () => {
+            console.warn("Failed to load image for PDF (CORS or 404):", url);
+            // Return null to trigger fallback line, or return url to hope html2canvas handles it
+            // If we return NULL, it shows the line.
+            // If we return URL, html2canvas might show empty space if CORS fails.
+            // Let's return URL as last resort
+            resolve(url);
+        };
         img.src = url;
     });
 
@@ -74,7 +89,7 @@ export const generatePDF = async (rawData, type) => {
     <html lang="pt-BR">
     <head>
         <meta charset="utf-8"/>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
         <style>
             body { background-color: white !important; font-family: 'Inter', sans-serif; color: #1e293b; }
             .section-title { color: #1e3a8a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.8rem; margin-bottom: 0.5rem; border-left: 4px solid #1e3a8a; padding-left: 0.75rem; }
@@ -93,17 +108,17 @@ export const generatePDF = async (rawData, type) => {
         <div id="pdf-container" style="width: 800px; padding: 40px; margin: 0 auto; background: white;">
             
             <!-- HEADER -->
-            <div class="pdf-block" style="border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 30px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <img src="${logoDC}" style="height: 60px; width: auto; object-fit: contain;"/>
+            <div class="pdf-block" style="border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <img src="${logoDC}" style="height: 55px; width: auto; object-fit: contain;"/>
                     <div style="text-align: center; flex: 1; padding: 0 20px;">
-                        <h1 style="color: #0f172a; font-weight: 800; font-size: 1.1rem; text-transform: uppercase; line-height: 1.2;">Prefeitura Municipal de<br/>Santa Maria de Jetibá</h1>
-                        <p style="color: #64748b; font-size: 0.7rem; text-transform: uppercase; margin-top: 4px; letter-spacing: 0.05em;">Coordenadoria Municipal de Proteção e Defesa Civil</p>
-                        <div style="margin-top: 10px; background: #1e3a8a; color: white; padding: 4px 12px; border-radius: 4px; display: inline-block;">
-                            <span style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">Relatório de Vistoria Técnica</span>
-                        </div>
+                        <h1 style="color: #0f172a; font-weight: 800; font-size: 1.25rem; text-transform: uppercase; line-height: 1.2; letter-spacing: -0.02em;">Prefeitura Municipal de<br/>Santa Maria de Jetibá</h1>
+                        <p style="color: #64748b; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; mt: 4px; letter-spacing: 0.05em;">Coordenadoria Municipal de Proteção e Defesa Civil</p>
                     </div>
-                    <img src="${logoSig}" style="height: 60px; width: auto; object-fit: contain;"/>
+                    <img src="${logoSig}" style="height: 55px; width: auto; object-fit: contain;"/>
+                </div>
+                 <div style="text-align: center; width: 100%;">
+                    <h2 style="color: #1e3a8a; font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Relatório de Vistoria Técnica</h2>
                 </div>
             </div>
 
@@ -236,8 +251,8 @@ export const generatePDF = async (rawData, type) => {
             <div class="pdf-block" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                 <div style="display: flex; justify-content: center; gap: 40px;">
                     <div style="text-align: center;">
-                        <div style="height: 60px; display: flex; align-items: end; justify-content: center; margin-bottom: 8px;">
-                             ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="height: 60px; opacity: 0.9;"/>` : '<div style="width: 150px; border-bottom: 1px solid #cbd5e1;"></div>'}
+                        <div style="height: 80px; display: flex; align-items: end; justify-content: center; margin-bottom: 8px;">
+                             ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="max-height: 80px; max-width: 200px; object-fit: contain;"/>` : '<div style="width: 150px; border-bottom: 1px solid #cbd5e1;"></div>'}
                         </div>
                         <div style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a; text-transform: uppercase;">${data.agente}</div>
                         <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase;">Agente de Defesa Civil</div>
@@ -266,7 +281,7 @@ export const generatePDF = async (rawData, type) => {
 
     // Wait for fonts
     await document.fonts.ready;
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
         const pdfContainer = container.querySelector('#pdf-container');
@@ -275,7 +290,7 @@ export const generatePDF = async (rawData, type) => {
         const canvas = await html2canvas(pdfContainer, {
             scale: 2,
             useCORS: true,
-            logging: false,
+            logging: true,
             backgroundColor: '#ffffff'
         });
 
@@ -286,7 +301,7 @@ export const generatePDF = async (rawData, type) => {
         const pageWidth = 210;
         const pageHeight = 297;
         const marginMm = 10;
-        const printableHeightMm = pageHeight - 30; // 30mm safety buffer (header/footer)
+        const printableHeightMm = pageHeight - 30; // 30mm safety buffer
 
         // Calculate dimensions
         const contentWidth = canvas.width;
@@ -326,7 +341,6 @@ export const generatePDF = async (rawData, type) => {
 
             if (cutBlock) {
                 console.warn("Detected cut block:", cutBlock);
-                // If block starts on THIS page (cursorMm), push it to NEXT page
                 if (cutBlock.top > (cursorMm + BUFFER)) {
                     console.log("Pushing block to next page -> Split at", cutBlock.top);
                     splitPointMm = cutBlock.top;
@@ -336,7 +350,6 @@ export const generatePDF = async (rawData, type) => {
             }
 
             // Loop Safety
-            // If we are getting stuck (splitPoint <= cursor), force advance
             if (splitPointMm <= cursorMm) {
                 splitPointMm = cursorMm + printableHeightMm;
             }
