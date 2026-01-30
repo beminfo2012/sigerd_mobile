@@ -2,7 +2,8 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 
-// Deployment trigger: PDF Header Update v2
+// PDF GENERATOR - DREAM MODEL V3.0 - STRICT PAGE BREAKING
+// v1.46.21-GOLDEN
 
 const normalizeData = (data, type) => {
     const isVistoria = type === 'vistoria';
@@ -90,10 +91,8 @@ const normalizeData = (data, type) => {
 };
 
 export const generatePDF = async (rawData, type) => {
-    // Optimized helper to convert imported asset URLs to Base64 using Canvas
-    // This avoids fetch/CORS issues with local assets in some environments
     const urlToBase64 = (url) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const img = new Image();
             img.crossOrigin = 'Anonymous';
             img.onload = () => {
@@ -104,392 +103,237 @@ export const generatePDF = async (rawData, type) => {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
                     resolve(canvas.toDataURL('image/png'));
-                } catch (e) {
-                    console.warn('Canvas conversion failed, falling back to URL:', e);
-                    resolve(url);
-                }
+                } catch (e) { resolve(url); }
             };
-            img.onerror = () => {
-                console.error('Failed to load image for PDF:', url);
-                resolve(url); // Fallback to original URL if loading fails
-            };
+            img.onerror = () => resolve(url);
             img.src = url;
         });
     };
 
-    // Pre-load logos sequentially to ensure availability
-    let logoDefesaCivilStr = LOGO_DEFESA_CIVIL;
-    let logoSigerdStr = LOGO_SIGERD;
-
-    try {
-        [logoDefesaCivilStr, logoSigerdStr] = await Promise.all([
-            urlToBase64(LOGO_DEFESA_CIVIL),
-            urlToBase64(LOGO_SIGERD)
-        ]);
-        console.log('Logos pre-loaded successfully for PDF');
-    } catch (e) {
-        console.error('Error pre-loading logos:', e);
-    }
+    let [logoDefesaCivilStr, logoSigerdStr] = await Promise.all([
+        urlToBase64(LOGO_DEFESA_CIVIL),
+        urlToBase64(LOGO_SIGERD)
+    ]);
 
     const data = normalizeData(rawData, type);
     const isVistoria = type === 'vistoria';
     const title = isVistoria ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
-    const cleanId = (data.vistoriaId || data.interdicaoId || 'doc').replace(/[\/\\]/g, '_');
-    const cleanName = (isVistoria ? data.solicitante : data.responsavelNome) || '';
-    const nameSuffix = cleanName !== '---' ? `_${cleanName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)}` : '';
-    const filename = `${type}_${cleanId}${nameSuffix}.pdf`;
+    const filename = `${type}_${(data.vistoriaId || data.interdicaoId).replace(/[\/\\]/g, '_')}.pdf`;
 
     const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.left = '-3000px';
-    container.style.top = '0';
-    container.style.width = '840px';
-    container.style.padding = '0';
-    container.style.backgroundColor = 'white';
-    container.style.fontFamily = "'Inter', Arial, sans-serif";
-    container.style.color = '#1a1a1a';
-    container.style.zIndex = '-9999';
+    container.style.cssText = `position: absolute; left: -9999px; top: 0; width: 840px; background: white; font-family: 'Inter', Arial, sans-serif; color: #1a1a1a;`;
 
     const headerHtml = `
-        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 45px 40px 25px 40px; font-family: 'Arial', sans-serif;">
+        <div style="background-color: #ffffff; border-bottom: 4px solid #2a5299; padding: 45px 40px 25px 40px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <!-- Left: Defesa Civil Logo -->
-                <div style="width: 120px; display: flex; justify-content: center; align-items: center;">
-                    <img src="${logoDefesaCivilStr}" style="height: 85px; width: auto; object-fit: contain;" />
-                </div>
-
-                <!-- Center: Titles -->
+                <div style="width: 120px;"><img src="${logoDefesaCivilStr}" style="height: 85px; object-fit: contain;" /></div>
                 <div style="flex: 1; text-align: center; padding: 0 15px;">
-                    <h1 style="margin: 0; font-size: 22px; color: #000000; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2;">
-                        PREFEITURA MUNICIPAL DE<br/>SANTA MARIA DE JETIBÁ
-                    </h1>
-                    <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #000000; font-weight: 700; text-transform: uppercase;">
-                        COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL
-                    </h2>
+                    <h1 style="margin: 0; font-size: 22px; color: #000000; text-transform: uppercase; font-weight: 800; line-height: 1.2;">PREFEITURA MUNICIPAL DE<br/>SANTA MARIA DE JETIBÁ</h1>
+                    <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #000000; font-weight: 700; text-transform: uppercase;">COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</h2>
                 </div>
-
-                <!-- Right: SIGERD Logo -->
-                <div style="width: 120px; display: flex; justify-content: center; align-items: center;">
-                    <img src="${logoSigerdStr}" style="height: 85px; width: auto; object-fit: contain;" />
-                </div>
+                <div style="width: 120px; text-align: right;"><img src="${logoSigerdStr}" style="height: 85px; object-fit: contain;" /></div>
             </div>
-
-            <!-- Title Badge -->
-            <div style="text-align: center;">
-                <h1 style="margin: 0; color: #2a5299; font-weight: 900; font-size: 19px; text-transform: uppercase; letter-spacing: 1.5px;">
-                    ${title}
-                </h1>
-            </div>
+            <div style="text-align: center;"><h1 style="margin: 0; color: #2a5299; font-weight: 900; font-size: 19px; text-transform: uppercase; letter-spacing: 1.5px;">${title}</h1></div>
         </div>
     `;
 
     const sectionTitle = (title) => `
-        <div class="pdf-section-header" style="border-left: 5px solid #2a5299; padding: 10px 15px; margin: 30px 0 12px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; page-break-inside: avoid; page-break-after: avoid; display: block;">
+        <div class="pdf-section-header" style="border-left: 5px solid #2a5299; padding: 10px 15px; margin: 35px 0 15px 0; font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;">
             ${title}
         </div>
     `;
 
     const renderField = (label, value) => {
-        const textValue = String(value || 'Não informado');
-        const isLongText = textValue.length > 100 || textValue.includes('\n');
-
-        if (isLongText) {
-            // Split by newlines and wrap each paragraph to avoid breaking inside it
-            const paragraphs = textValue.split('\n').filter(p => p.trim());
-            return `
-                <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 4px;">
-                    <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px;">${label}</div>
-                    ${paragraphs.map(p => `
-                        <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.5; margin-bottom: 6px; page-break-inside: avoid; break-inside: avoid;">
-                            ${p}
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
         return `
-            <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid; break-inside: avoid; margin-bottom: 4px;">
-                <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; line-height: 1;">${label}</div>
-                <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.4;">${textValue}</div>
+            <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 4px;">
+                <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">${label}</div>
+                <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.4;">${value || '---'}</div>
             </div>
         `;
     };
 
     const getNivelBadge = (nivel) => {
-        const colors = {
-            'Baixo': '#22c55e',
-            'Médio': '#eab308',
-            'Alto': '#f97316',
-            'Iminente': '#ef4444'
-        };
-        const color = colors[nivel] || '#64748b';
-        return `<span style="color: ${color}; font-size: 11px; font-weight: 900; display: inline-block; vertical-align: middle; padding: 2px 0; border-bottom: 2px solid ${color}; text-transform: uppercase;">${nivel}</span>`;
+        const colors = { 'Baixo': '#22c55e', 'Médio': '#eab308', 'Alto': '#f97316', 'Iminente': '#ef4444' };
+        return `<span style="color: ${colors[nivel] || '#64748b'}; font-size: 11px; font-weight: 900; border-bottom: 2px solid ${colors[nivel] || '#64748b'}; text-transform: uppercase;">${nivel}</span>`;
     };
 
-    let contentHtml = '';
+    let contentHtml = `<div style="padding: 0 40px 40px 40px;">`;
+
     if (isVistoria) {
-        contentHtml = `
-            <div style="padding: 0 35px 35px 35px;">
-                ${sectionTitle('1. Identificação e Responsável')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    ${renderField('Data do Registro', data.dataHora ? new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '---')}
-                    ${renderField('Protocolo/Processo', data.processo)}
-                    ${renderField('Emissão do Laudo', new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
-                    ${renderField('Agente Responsável', data.agente)}
-                    ${renderField('Matrícula do Agente', data.matricula)}
-                </div>
-
-                ${sectionTitle('2. Localização e Solicitante')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
-                    ${renderField('CPF/CNPJ', data.cpf)}
-                    ${renderField('Telefone', data.telefone)}
-                    <div style="grid-column: span 2;">${renderField('Endereço do Solicitante', data.enderecoSolicitante)}</div>
-                    <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
-                    ${renderField('Bairro / Localidade', data.bairro)}
-                    ${renderField('Coordenadas (Lat, Long)', `${data.latitude}, ${data.longitude}`)}
-                </div>
-
-                ${sectionTitle('3. Diagnóstico de Risco')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    ${renderField('Categoria Principal', data.categoriaRisco)}
-                    <div style="padding: 6px 0; border-bottom: 1px solid #f1f5f9; page-break-inside: avoid;">
-                        <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">NÍVEL DE RISCO</div>
-                        <div>${getNivelBadge(data.nivelRisco)}</div>
-                    </div>
-                    <div style="grid-column: span 2;">${renderField('Subtipos Identificados', data.subtiposRisco.join(', ') || 'Nenhum específico')}</div>
-                    <div style="grid-column: span 2;">${renderField('Situação Observada', data.situacaoObservada)}</div>
-                    <div style="grid-column: span 2;">${renderField('População Exposta', `${data.populacaoEstimada} pessoas (${data.gruposVulneraveis.join(', ') || 'Nenhum grupo sensível'})`)}</div>
-                </div>
-
-                <div style="page-break-before: always;"></div>
-                ${sectionTitle('4. Parecer e Recomendações')}
-                <div style="display: grid; grid-template-columns: 1fr; gap: 0 30px;">
-                    ${renderField('Descrição Técnica', data.observacoes)}
-                    ${renderField('Medidas Recomendadas', data.medidasTomadas.join('; ') || 'Orientação padrão')}
-                    ${renderField('Encaminhamentos Efetuados', data.encaminhamentos.join(', ') || 'Nenhum')}
-                </div>
-
-                ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
-                    ${sectionTitle('5. Constatações Técnicas (Checklist)')}
-                    <div style="background: #fafafa; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; page-break-inside: avoid;">
-                        ${Object.keys(data.checklistRespostas)
-                    .filter(k => data.checklistRespostas[k])
-                    .map(item => `
-                                <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 11px; color: #334155; line-height: 1.3;">
-                                    <div style="color: #2a5299; font-weight: bold; font-size: 14px;">✓</div>
-                                    <div style="font-weight: 600;">${item}</div>
-                                </div>
-                            `).join('')}
-                    </div>
-                ` : ''}
+        contentHtml += `
+            ${sectionTitle('1. Identificação e Responsável')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                ${renderField('Data do Registro', new Date(data.dataHora).toLocaleString('pt-BR'))}
+                ${renderField('Protocolo/Processo', data.processo)}
+                ${renderField('Agente Responsável', data.agente)}
+                ${renderField('Matrícula do Agente', data.matricula)}
             </div>
-        `;
-    } else {
-        // Interdição layout (compacted)
-        contentHtml = `
-            <div style="padding: 0 35px 35px 35px;">
-                ${sectionTitle('1. Identificação da Ordem')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    ${renderField('Número de Controle', data.interdicaoId)}
-                    ${renderField('Data e Hora da Ação', new Date(data.dataHora).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}
-                    <div style="grid-column: span 2;">${renderField('Responsável pelo Imóvel', data.responsavelNome)}</div>
-                </div>
 
-                ${sectionTitle('2. Local e Fundamentação')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-                    <div style="grid-column: span 2;">${renderField('Endereço', data.endereco)}</div>
-                    ${renderField('Risco Constatado', data.riscoGrau)}
-                    ${renderField('Medida Aplicada', data.medidaTipo)}
-                    <div style="grid-column: span 2;">${renderField('Parecer Técnico', data.relatorioTecnico)}</div>
-                    <div style="grid-column: span 2;">${renderField('Recomendações', data.recomendacoes)}</div>
+            ${sectionTitle('2. Localização e Solicitante')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
+                ${renderField('CPF/CNPJ', data.cpf)}
+                ${renderField('Telefone', data.telefone)}
+                <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
+                ${renderField('Bairro / Localidade', data.bairro)}
+                ${renderField('Coordenadas', `${data.latitude}, ${data.longitude}`)}
+            </div>
+
+            ${sectionTitle('3. Diagnóstico de Risco')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                ${renderField('Categoria Principal', data.categoriaRisco)}
+                <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+                    <div style="font-size: 9px; color: #64748b; font-weight: 700; uppercase; margin-bottom: 3px;">Nível de Risco</div>
+                    <div>${getNivelBadge(data.nivelRisco)}</div>
                 </div>
             </div>
-        `;
-    }
 
-    let photosHtml = '';
-    if (data.fotos && data.fotos.length > 0) {
-        photosHtml = `
-            <div style="padding: 0 45px 35px 35px; margin-top: 30px;">
-                ${sectionTitle('6. Anexo Fotográfico')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; justify-items: center;">
-                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; justify-items: center;">
-                    ${data.fotos.map((f, idx) => `
-                        <div style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 10px;">
-                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 240px; border-radius: 6px; object-fit: cover; margin: 0 auto; display: block;" crossorigin="anonymous" />
-                            <div style="margin-top: 10px; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">FOTO ${idx + 1}</div>
-                            ${f.legenda ? `
-                                <div style="margin-top: 6px; padding: 8px; background-color: #f8fafc; border-left: 4px solid #2a5299; text-align: left; border-radius: 0 4px 4px 0;">
-                                    <div style="font-size: 11px; color: #1e293b; font-weight: 700; line-height: 1.4; word-wrap: break-word;">${f.legenda}</div>
-                                </div>
-                            ` : ''}
+            <div style="page-break-before: always; height: 1px;"></div>
+            
+            ${sectionTitle('4. Parecer e Recomendações')}
+            <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+                <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">DESCRIÇÃO TÉCNICA / HISTÓRICO</div>
+                <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6; margin-bottom: 20px;">
+                    "${data.observacoes}"
+                </div>
+                
+                <div style="padding-top: 15px; border-top: 1px dashed #cbd5e1;">
+                    <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">MEDIDAS RECOMENDADAS</div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Monitoramento e Orientação']).map(m => `
+                            <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #475569; font-weight: 600;">
+                                <div style="color: #2a5299;">•</div>
+                                <div>${m}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+            ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
+                ${sectionTitle('5. Constatações Técnicas')}
+                <div style="background: #eff6ff; border-radius: 12px; padding: 20px; border: 1px solid #dbeafe; margin-bottom: 25px;">
+                    ${Object.keys(data.checklistRespostas).filter(k => data.checklistRespostas[k]).map(item => `
+                        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px;">
+                            <div style="color: #2563eb; font-weight: bold; font-size: 16px;">✓</div>
+                            <div style="font-size: 11px; color: #1e3a8a; font-weight: 700; line-height: 1.3;">${item}</div>
                         </div>
                     `).join('')}
                 </div>
-            </div>
+            ` : ''}
+
+            ${data.fotos.length > 0 ? `
+                ${sectionTitle('6. Anexo Fotográfico')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    ${data.fotos.map((f, idx) => `
+                        <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
+                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: cover; display: block;" crossorigin="anonymous" />
+                            <div style="padding: 12px; background: white;">
+                                <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
+                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: ${data.latitude}, ${data.longitude}</div>
+                                ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
         `;
     }
 
     const hasApoio = data.apoioTecnico && data.apoioTecnico.assinatura;
 
-    const footerHtml = `
-        <div style="margin-top: 50px; padding: 50px 45px; text-align: center; background: #f8fafc; border-top: 1px solid #e2e8f0; page-break-inside: avoid; break-inside: avoid;">
-            <div style="display: flex; flex-direction: row; align-items: flex-end; justify-content: ${hasApoio ? 'space-between' : 'center'}; gap: 30px; page-break-inside: avoid; break-inside: avoid;">
-                <!-- Agent Signature Column -->
-                <div style="text-align: center; width: ${hasApoio ? '360px' : '480px'};">
-                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden;">
-                        ${data.assinaturaAgente ? `
-                            <img 
-                                src="${data.assinaturaAgente}" 
-                                style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 2px solid #2a5299;" 
-                            />
-                        ` : '<div style="height: 60px; border-bottom: 2px solid #cbd5e1; width: 250px; margin-bottom: 15px;"></div>'}
+    const signatureHtml = `
+        <div id="footer-signatures" style="margin-top: 50px; padding: 40px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; page-break-inside: avoid; break-inside: avoid;">
+            <div style="display: flex; justify-content: ${hasApoio ? 'space-between' : 'center'}; align-items: flex-end; gap: 40px;">
+                <div style="text-align: center; width: 340px;">
+                    <div style="height: 100px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 15px; border-bottom: 2px solid #2a5299;">
+                        ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="max-height: 90px; width: auto; max-width: 300px;" />` : ''}
                     </div>
-                    <div style="padding-top: 15px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">${data.agente}</p>
-                        <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">Agente de Defesa Civil</p>
-                        <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
-                    </div>
+                    <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
+                    <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">Agente de Defesa Civil</p>
+                    <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
                 </div>
-
                 ${hasApoio ? `
-                <!-- Support Signature Column -->
-                <div style="text-align: center; width: 360px;">
-                    <div style="height: 120px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px; overflow: hidden;">
-                        <img 
-                            src="${data.apoioTecnico.assinatura}" 
-                            style="max-height: 120px; width: auto; max-width: 320px; display: block; border-bottom: 2px solid #2a5299;" 
-                        />
+                <div style="text-align: center; width: 340px;">
+                    <div style="height: 100px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 15px; border-bottom: 2px solid #2a5299;">
+                        <img src="${data.apoioTecnico.assinatura}" style="max-height: 90px; width: auto; max-width: 300px;" />
                     </div>
-                    <div style="padding-top: 15px;">
-                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.5px;">${data.apoioTecnico.nome}</p>
-                        <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">APOIO TÉCNICO (OBRAS/ENG)</p>
-                        <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">
-                            CREA: ${data.apoioTecnico.crea} | Mat.: ${data.apoioTecnico.matricula}
-                        </p>
-                    </div>
-                </div>
-                ` : ''}
+                    <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.apoioTecnico.nome}</p>
+                    <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">Apoio Técnico (Obras/Eng)</p>
+                    <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">CREA: ${data.apoioTecnico.crea} | Mat: ${data.apoioTecnico.matricula}</p>
+                </div>` : ''}
             </div>
-            <p style="margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">
-                Documento oficial gerado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} pelo Sistema de Gerenciamento de Riscos e Desastres da Defesa Civil de Santa Maria de Jetibá.
+            <p style="margin-top: 40px; font-size: 9px; color: #94a3b8; text-align: center; font-weight: 500; opacity: 0.8;">
+                Documento oficial gerado em ${new Date().toLocaleString('pt-BR')} pelo SIGERD Mobile - Defesa Civil SMJ.
             </p>
         </div>
     `;
 
-    container.innerHTML = `<div id="pdf-render-area" style="max-width: 840px; margin: 0 auto; background: white; min-height: 1120px; padding-bottom: 50px;">${headerHtml}${contentHtml}${photosHtml}${footerHtml}</div>`;
+    contentHtml += signatureHtml + `</div>`;
+    container.innerHTML = `<div id="pdf-content">${headerHtml}${contentHtml}</div>`;
     document.body.appendChild(container);
 
-    const waitForImages = () => {
-        const images = Array.from(container.getElementsByTagName('img'));
-        return Promise.all(images.map(img => {
-            if (img.complete) return Promise.resolve();
-            return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
-        }));
-    };
+    const applySmartBreaks = () => {
+        const PAGE_PX = 1180; // Adjusted for 840px width A4
+        const blocks = container.querySelectorAll('.pdf-section-header, #footer-signatures, [style*="page-break-inside: avoid"]');
 
-    // Helper to prevent elements from being split between pages
-    const applySmartPageBreaks = () => {
-        const PAGE_HEIGHT = 1140; // Reduced from 1182 for increased safety margin
-        const elements = container.querySelectorAll('[style*="page-break-inside: avoid"], .pdf-section-header');
+        container.querySelectorAll('.pdf-spacer').forEach(s => s.remove());
 
-        // Reset any previous spacers
-        container.querySelectorAll('[data-pdf-spacer="true"]').forEach(s => s.remove());
-
-        elements.forEach(el => {
-            const rect = el.getBoundingClientRect();
+        blocks.forEach(block => {
+            const rect = block.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
+            const top = rect.top - containerRect.top;
+            const bottom = rect.bottom - containerRect.top;
 
-            // Calculate position relative to container, accounting for previously added spacers
-            const relativeTop = rect.top - containerRect.top;
-            const relativeBottom = rect.bottom - containerRect.top;
+            const pageIdx = Math.floor(top / PAGE_PX);
+            const pageBottomIdx = Math.floor((bottom - 5) / PAGE_PX);
 
-            const pageOfTop = Math.floor(relativeTop / PAGE_HEIGHT);
-            const pageOfBottom = Math.floor((relativeBottom - 5) / PAGE_HEIGHT); // 5px buffer
+            // If block crosses boundary OR it's a critical element near bottom
+            const isCritical = block.id === 'footer-signatures' || block.classList.contains('pdf-section-header');
+            const nearPageEnd = (top % PAGE_PX) > (PAGE_PX - 200);
 
-            const isHeader = el.classList.contains('pdf-section-header');
-            const nearPageBottom = (relativeTop % PAGE_HEIGHT) > (PAGE_HEIGHT - 160); // Push headers if in last ~4cm
-
-            // If element spans across two pages OR it's a header too close to the bottom
-            if (pageOfTop !== pageOfBottom || (isHeader && nearPageBottom)) {
+            if (pageIdx !== pageBottomIdx || (isCritical && nearPageEnd)) {
                 const spacer = document.createElement('div');
-                const spacerHeight = PAGE_HEIGHT - (relativeTop % PAGE_HEIGHT);
-
-                if (spacerHeight > 0 && spacerHeight < PAGE_HEIGHT) {
-                    spacer.style.height = `${spacerHeight}px`;
-                    spacer.style.width = '100%';
-                    spacer.setAttribute('data-pdf-spacer', 'true');
-                    el.parentNode.insertBefore(spacer, el);
-                    console.log('Smart Page Break: Pushed element to next page:', el.textContent.substring(0, 30));
-                }
+                spacer.className = 'pdf-spacer';
+                spacer.style.height = (PAGE_PX - (top % PAGE_PX)) + 'px';
+                block.parentNode.insertBefore(spacer, block);
             }
         });
     };
 
     try {
-        await waitForImages();
-        // Delay for rendering stability
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(r => setTimeout(r, 1500)); // Render wait
+        applySmartBreaks();
+        await new Promise(r => setTimeout(r, 800));
 
-        // Execute Smart Page Breaking logic
-        applySmartPageBreaks();
-
-        // Final pre-render delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        const canvas = await html2canvas(container, {
-            scale: 2,
-            useCORS: true,
-            logging: true, // Enabled for debugging if needed
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            windowWidth: 840,
-            onclone: (clonedDoc) => {
-                const clonedContainer = clonedDoc.getElementById('pdf-render-area');
-                if (clonedContainer) {
-                    clonedContainer.style.position = 'relative';
-                    clonedContainer.style.top = '0';
-                    clonedContainer.style.left = '0';
-                    clonedContainer.style.zIndex = '9999';
-                }
-            }
-        });
+        const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 840 });
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const pdf = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height / canvas.width) * imgWidth;
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgHeight = (canvas.height / canvas.width) * pdfWidth;
 
         let heightLeft = imgHeight;
         let position = 0;
 
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
 
-        while (heightLeft >= 0) {
+        while (heightLeft > 0) {
             position = heightLeft - imgHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
+            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
         }
 
         const blob = pdf.output('blob');
         const file = new File([blob], filename, { type: 'application/pdf' });
-
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: title });
         } else {
             const url = URL.createObjectURL(blob);
-            window.open(url, '_blank') || (location.href = url);
+            window.open(url) || (location.href = url);
         }
-
-    } catch (error) {
-        console.error('PDF Error:', error);
-        alert('Erro ao gerar PDF.');
-    } finally {
-        if (document.body.contains(container)) document.body.removeChild(container);
-    }
+    } catch (e) { console.error(e); alert('Erro ao gerar PDF'); }
+    finally { document.body.removeChild(container); }
 };
