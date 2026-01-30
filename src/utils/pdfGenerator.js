@@ -191,7 +191,7 @@ export const generatePDF = async (rawData, type) => {
             <div style="page-break-before: always; height: 1px;"></div>
             
             ${sectionTitle('4. Parecer e Recomendações')}
-            <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+            <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
                 <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">DESCRIÇÃO TÉCNICA / HISTÓRICO</div>
                 <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6; margin-bottom: 20px;">
                     "${data.observacoes}"
