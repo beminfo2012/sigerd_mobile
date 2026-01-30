@@ -1,7 +1,7 @@
 {
   "name": "defesa-civil-mobile",
   "private": true,
-  "version": "1.46.18",
+  "version": "1.46.20",
   "type": "module",
   "scripts": {
     "dev": "vite",

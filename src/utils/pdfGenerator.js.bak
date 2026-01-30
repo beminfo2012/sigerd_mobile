@@ -263,7 +263,6 @@ export const generatePDF = async (rawData, type) => {
                     <div style="grid-column: span 2;">${renderField('População Exposta', `${data.populacaoEstimada} pessoas (${data.gruposVulneraveis.join(', ') || 'Nenhum grupo sensível'})`)}</div>
                 </div>
 
-                <div style="page-break-before: always;"></div>
                 ${sectionTitle('4. Parecer e Recomendações')}
                 <div style="display: grid; grid-template-columns: 1fr; gap: 0 30px;">
                     ${renderField('Descrição Técnica', data.observacoes)}
@@ -312,17 +311,16 @@ export const generatePDF = async (rawData, type) => {
     let photosHtml = '';
     if (data.fotos && data.fotos.length > 0) {
         photosHtml = `
-            <div style="padding: 0 45px 35px 35px; margin-top: 30px;">
+            <div style="padding: 0 45px 35px 35px; page-break-before: always; margin-top: 30px;">
                 ${sectionTitle('6. Anexo Fotográfico')}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; justify-items: center;">
-                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; justify-items: center;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 40px; justify-items: center;">
                     ${data.fotos.map((f, idx) => `
-                        <div style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 10px;">
-                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 240px; border-radius: 6px; object-fit: cover; margin: 0 auto; display: block;" crossorigin="anonymous" />
-                            <div style="margin-top: 10px; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-top: 1px dashed #e2e8f0; padding-top: 6px;">FOTO ${idx + 1}</div>
+                        <div style="width: 100%; max-width: 600px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); page-break-inside: avoid; margin-bottom: 20px;">
+                            <img src="${f.data || f}" style="width: 100%; height: auto; max-height: 480px; border-radius: 6px; object-fit: contain; margin: 0 auto; display: block;" crossorigin="anonymous" />
+                            <div style="margin-top: 15px; font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">FOTO ${idx + 1}</div>
                             ${f.legenda ? `
-                                <div style="margin-top: 6px; padding: 8px; background-color: #f8fafc; border-left: 4px solid #2a5299; text-align: left; border-radius: 0 4px 4px 0;">
-                                    <div style="font-size: 11px; color: #1e293b; font-weight: 700; line-height: 1.4; word-wrap: break-word;">${f.legenda}</div>
+                                <div style="margin-top: 8px; padding: 12px; background-color: #f8fafc; border-left: 5px solid #2a5299; text-align: left; border-radius: 0 4px 4px 0;">
+                                    <div style="font-size: 13px; color: #1e293b; font-weight: 700; line-height: 1.5; word-wrap: break-word;">${f.legenda}</div>
                                 </div>
                             ` : ''}
                         </div>
