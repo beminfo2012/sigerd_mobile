@@ -197,7 +197,7 @@ export const generatePDF = async (rawData, type) => {
                     "${data.observacoes}"
                 </div>
                 
-                <div style="padding-top: 15px; border-top: 1px dashed #cbd5e1;">
+                <div style="padding-top: 25px; border-top: 1px dashed #cbd5e1; margin-top: 10px;">
                     <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">MEDIDAS RECOMENDADAS</div>
                     <div style="display: flex; flex-direction: column; gap: 6px;">
                         ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Monitoramento e Orientação']).map(m => `
@@ -212,7 +212,7 @@ export const generatePDF = async (rawData, type) => {
 
             ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
                 ${sectionTitle('5. Constatações Técnicas')}
-                <div style="background: #eff6ff; border-radius: 12px; padding: 20px; border: 1px solid #dbeafe; margin-bottom: 25px;">
+                <div style="background: #eff6ff; border-radius: 12px; padding: 12px 20px; border: 1px solid #dbeafe; margin-bottom: 25px; page-break-inside: avoid;">
                     ${Object.keys(data.checklistRespostas).filter(k => data.checklistRespostas[k]).map(item => `
                         <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px;">
                             <div style="color: #2563eb; font-weight: bold; font-size: 16px;">✓</div>
