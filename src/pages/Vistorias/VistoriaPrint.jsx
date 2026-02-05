@@ -93,15 +93,25 @@ const VistoriaPrint = () => {
         const element = document.querySelector('.print-container');
         if (!element) return;
 
-        // Use a small delay to ensure map is rendered
+        // Force scale(1) to avoid capture artifacts from mobile preview zoom
+        const originalTransform = element.style.transform;
+        const originalTransformOrigin = element.style.transformOrigin;
+        element.style.transform = 'none';
+        element.style.transformOrigin = 'unset';
+
         window.dispatchEvent(new Event('trigger-map-print-resize'));
 
         const toast = document.createElement('div');
-        toast.innerHTML = '<div style="fixed top-20 right-4 bg-blue-600 text-white p-3 rounded shadow-lg z-[99999]">Gerando PDF...</div>';
+        toast.innerHTML = `
+            <div style="position: fixed; top: 80px; right: 20px; background: #10b981; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
+                <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                Gerando PDF Multi-página...
+            </div>
+            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+        `;
         document.body.appendChild(toast);
 
         try {
-            // Wait for map and images to settle
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             const canvas = await html2canvas(element, {
@@ -114,22 +124,39 @@ const VistoriaPrint = () => {
 
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
 
             const imgWidth = canvas.width;
             const imgHeight = canvas.height;
-            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
 
-            const finalWidth = imgWidth * ratio;
+            // Calculate height in mm to fit width exactly
+            const ratio = pageWidth / imgWidth;
             const finalHeight = imgHeight * ratio;
 
-            pdf.addImage(imgData, 'JPEG', 0, 0, finalWidth, finalHeight);
+            let heightLeft = finalHeight;
+            let position = 0;
+
+            // Add first page
+            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
+            heightLeft -= pageHeight;
+
+            // Add subsequent pages if content is longer than A4
+            while (heightLeft > 0) {
+                position -= pageHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
+                heightLeft -= pageHeight;
+            }
+
             pdf.save(`Relatório_Vistoria_${data.vistoriaId || data.vistoria_id || id}.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
-            alert('Falha ao gerar download direto. Por favor, use a opção "Imprimir / Salvar PDF" do navegador.');
+            alert('Falha ao gerar download. Por favor, tente a opção "Imprimir / Salvar PDF" do navegador.');
         } finally {
+            // Restore scaling
+            element.style.transform = originalTransform;
+            element.style.transformOrigin = originalTransformOrigin;
             document.body.removeChild(toast);
         }
     };
