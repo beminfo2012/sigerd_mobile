@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail } from 'lucide-react'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getAllVistoriasLocal } from '../../services/db'
@@ -381,6 +381,13 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                     title="Exportar PDF"
                                 >
                                     <Share size={18} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); window.open(`/vistorias/imprimir/${vistoria.id || vistoria.vistoria_id}`, '_blank') }}
+                                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    title="Imprimir Relatório (Novo)"
+                                >
+                                    <Printer size={18} />
                                 </button>
                                 <button
                                     onClick={(e) => handleDelete(vistoria, e)}
