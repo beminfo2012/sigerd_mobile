@@ -41,7 +41,7 @@ const processBreakdown = (records) => {
         'Outros': 'bg-slate-400'
     };
 
-    const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
+    const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-50 dark:bg-slate-9000'];
     const total = records.length;
 
     return Object.keys(counts).map((label, idx) => ({
@@ -360,18 +360,18 @@ const Dashboard = () => {
 
 
     return (
-        <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen p-5 pb-24 font-sans">
             {/* Weather Widget */}
             {weather?.current && (
                 <div
                     onClick={() => setShowForecast(true)}
-                    className="mb-8 bg-white/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all"
+                    className="mb-8 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all"
                 >
                     <div className="flex items-center gap-6">
                         <div className="text-5xl">{getWeatherIcon(weather.current.code)}</div>
                         <div>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-black text-slate-800 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
+                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
                                 <span className="text-xl font-bold text-slate-400">°C</span>
                             </div>
                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
@@ -398,7 +398,7 @@ const Dashboard = () => {
             <CemadenAlertBanner alerts={cemadenAlerts} />
 
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-xl font-black text-gray-800 tracking-tight">Indicadores Operacionais</h1>
+                <h1 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h1>
                 <div className="flex items-center gap-1 bg-slate-200/50 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500">
                     <Calendar size={14} />
                     <span>Hoje</span>
@@ -408,7 +408,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-2 gap-4 mb-5">
                 <div
                     onClick={handleSync}
-                    className={`bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'cursor-pointer active:scale-95 hover:bg-orange-50/30' : ''}`}
+                    className={`bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'cursor-pointer active:scale-95 hover:bg-orange-50/30' : ''}`}
                 >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
                         {syncing ? (
@@ -424,7 +424,7 @@ const Dashboard = () => {
                     ) : (
                         <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">OK</div>
                     )}
-                    <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">
+                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 leading-none tabular-nums">
                         {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
                     </div>
                     <div className="text-xs font-bold text-slate-400 leading-tight">
@@ -452,7 +452,7 @@ const Dashboard = () => {
 
                 <div
                     onClick={() => navigate('/alerts')}
-                    className="bg-white p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative cursor-pointer active:scale-95 transition-all hover:bg-slate-50"
+                    className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative cursor-pointer active:scale-95 transition-all hover:bg-slate-50 dark:bg-slate-900"
                 >
                     <div className="bg-red-50 w-10 h-10 rounded-xl flex items-center justify-center text-red-600 mb-3">
                         <AlertTriangle size={20} strokeWidth={2.5} />
@@ -462,7 +462,7 @@ const Dashboard = () => {
                             {data.stats.inmetAlertsCount} Alertas
                         </div>
                     )}
-                    <div className="text-3xl font-black text-slate-800 mb-1 leading-none tabular-nums">{data.stats.activeOccurrences}</div>
+                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 leading-none tabular-nums">{data.stats.activeOccurrences}</div>
                     <div className="text-xs font-bold text-slate-400 leading-tight">Avisos</div>
                 </div>
             </div>
@@ -476,7 +476,7 @@ const Dashboard = () => {
                         onClick={() => navigate('/pluviometros')}
                         className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
                     >
-                        <div className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
+                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
                             <CloudRain size={28} strokeWidth={2.2} />
                         </div>
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Pluviômetros</span>
@@ -487,7 +487,7 @@ const Dashboard = () => {
                         onClick={() => navigate('/abrigos')}
                         className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
                     >
-                        <div className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
+                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
                             <Home size={28} strokeWidth={2.2} />
                         </div>
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Assist. Humanitária</span>
@@ -497,7 +497,7 @@ const Dashboard = () => {
                     <div className="flex flex-col items-center gap-2.5 flex-shrink-0 relative">
                         <div
                             onClick={() => setShowReportMenu(!showReportMenu)}
-                            className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)] cursor-pointer"
+                            className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)] cursor-pointer"
                         >
                             <FileText size={28} strokeWidth={2.2} />
                         </div>
@@ -505,7 +505,7 @@ const Dashboard = () => {
 
                         {/* Dropdown Menu */}
                         {showReportMenu && (
-                            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
                                 {[
                                     { label: 'Últimas 24h', hours: 24 },
                                     { label: 'Últimas 48h', hours: 48 },
@@ -594,7 +594,7 @@ const Dashboard = () => {
                                                         setGeneratingReport(false);
                                                     }
                                                 }}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-blue-50 text-blue-600 py-2 rounded-xl transition-all active:scale-95"
+                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 text-blue-600 py-2 rounded-xl transition-all active:scale-95"
                                             >
                                                 <FileText size={14} />
                                                 <span className="text-[10px] font-bold uppercase">Abrir</span>
@@ -678,7 +678,7 @@ const Dashboard = () => {
                                                         setGeneratingReport(false);
                                                     }
                                                 }}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-orange-50 text-orange-600 py-2 rounded-xl transition-all active:scale-95"
+                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900 hover:bg-orange-50 text-orange-600 py-2 rounded-xl transition-all active:scale-95"
                                             >
                                                 <Share2 size={14} />
                                                 <span className="text-[10px] font-bold uppercase">Enviar</span>
@@ -695,7 +695,7 @@ const Dashboard = () => {
                         onClick={() => navigate('/monitoramento/riscos')}
                         className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
                     >
-                        <div className="w-16 h-16 bg-white rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
+                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
                             <ShieldAlert size={28} strokeWidth={2.2} />
                         </div>
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Áreas de Risco</span>
@@ -706,7 +706,7 @@ const Dashboard = () => {
             {/* Predictive Intelligence Insight - Slim Version */}
             {predictive && (
                 <div
-                    className="bg-white p-4 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between border-l-4 border-l-indigo-500 active:scale-[0.98] transition-all cursor-default"
+                    className="bg-white dark:bg-slate-800 p-4 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between border-l-4 border-l-indigo-500 active:scale-[0.98] transition-all cursor-default"
                 >
                     <div className="flex items-center gap-4">
                         <div className="bg-indigo-50 w-11 h-11 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
@@ -716,7 +716,7 @@ const Dashboard = () => {
                             <div className="text-[10px] font-black text-indigo-500 mb-0.5 uppercase tracking-widest flex items-center gap-1">
                                 <Zap size={10} fill="currentColor" /> Previsão de Impacto
                             </div>
-                            <div className="text-sm font-black text-slate-800 leading-tight">
+                            <div className="text-sm font-black text-slate-800 dark:text-slate-100 leading-tight">
                                 {predictive.topBairros.length > 0
                                     ? predictive.topBairros.map(b => b.name).join(', ')
                                     : 'Alerta para todo o município'}
@@ -724,15 +724,15 @@ const Dashboard = () => {
                             <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">Baseado no histórico de vistorias</div>
                         </div>
                     </div>
-                    <div className="bg-slate-50 w-8 h-8 rounded-full flex items-center justify-center text-slate-200">
+                    <div className="bg-slate-50 dark:bg-slate-900 w-8 h-8 rounded-full flex items-center justify-center text-slate-200">
                         <Activity size={14} />
                     </div>
                 </div>
             )}
 
-            <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6 relative">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6 relative">
                 <div className="flex justify-between items-center mb-6 px-1">
-                    <h3 className="font-bold text-slate-800 text-sm">Vistorias por Tipologia</h3>
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Vistorias por Tipologia</h3>
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Tempo Real</span>
                         <button
@@ -764,11 +764,11 @@ const Dashboard = () => {
                                     <div className={`w-2 h-2 rounded-full ${item.color || 'bg-slate-300'}`} />
                                     <span className="text-xs font-bold text-slate-500">{item.label || 'Outros'}</span>
                                 </div>
-                                <div className="text-xs font-black text-slate-800 tabular-nums">
+                                <div className="text-xs font-black text-slate-800 dark:text-slate-100 tabular-nums">
                                     {item.percentage || 0}% <span className="text-slate-300 font-bold ml-1">{item.count || 0}</span>
                                 </div>
                             </div>
-                            <div className="w-full bg-slate-50 rounded-full h-3 p-0.5 border border-slate-100 shadow-inner">
+                            <div className="w-full bg-slate-50 dark:bg-slate-900 rounded-full h-3 p-0.5 border border-slate-100 shadow-inner">
                                 <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-slate-300'}`} style={{ width: `${item.percentage || 0}%` }} />
                             </div>
                         </div>
@@ -776,16 +776,16 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="bg-white p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden mb-6">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden mb-6">
                 <div className="flex justify-between items-center mb-4 px-1">
                     <div>
-                        <h3 className="font-bold text-slate-800 text-sm">Mapa de Concentração</h3>
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Mapa de Concentração</h3>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Ocorrências Atuais</p>
                     </div>
                     <div className="flex gap-2">
                         <button
                             onClick={() => navigate('/monitoramento')}
-                            className="bg-orange-50 hover:bg-orange-100 text-orange-600 p-2 rounded-xl transition-colors flex items-center gap-2"
+                            className="bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 p-2 rounded-xl transition-colors flex items-center gap-2"
                         >
                             <Flame size={16} />
                             <span className="text-[10px] font-black uppercase tracking-tighter">MAPA DE CALOR</span>
@@ -820,7 +820,7 @@ const Dashboard = () => {
                                 >
                                     <Popup>
                                         <div className="text-center">
-                                            <div className="font-bold text-slate-800 mb-1">{loc.risk || 'Local'}</div>
+                                            <div className="font-bold text-slate-800 dark:text-slate-100 mb-1">{loc.risk || 'Local'}</div>
                                             <div className="text-sm text-slate-600">{loc.details || ''}</div>
                                         </div>
                                     </Popup>
@@ -841,11 +841,11 @@ const Dashboard = () => {
                     >
                         <div
                             onClick={e => e.stopPropagation()}
-                            className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200"
+                            className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200"
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-800">Previsão 7 Dias</h3>
+                                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Previsão 7 Dias</h3>
                                     <div className="text-xs font-bold text-slate-400">Santa Maria de Jetibá</div>
                                 </div>
                                 <button
@@ -858,11 +858,11 @@ const Dashboard = () => {
 
                             <div className="space-y-4">
                                 {weather.daily.map((day, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:bg-slate-900 transition-colors border border-transparent hover:border-slate-100">
                                         <div className="flex items-center gap-4">
                                             <div className="text-2xl">{getWeatherIcon(day.code || day.weatherCode)}</div>
                                             <div>
-                                                <div className="text-sm font-bold text-slate-800">
+                                                <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                                     {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}
                                                 </div>
                                                 <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
@@ -873,7 +873,7 @@ const Dashboard = () => {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="text-right">
-                                                <div className="text-sm font-black text-slate-800">{Math.round(day.tempMax)}°</div>
+                                                <div className="text-sm font-black text-slate-800 dark:text-slate-100">{Math.round(day.tempMax)}°</div>
                                                 <div className="text-[10px] font-bold text-slate-400">Max</div>
                                             </div>
                                             <div className="h-8 w-px bg-slate-100" />

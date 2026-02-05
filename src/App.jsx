@@ -102,7 +102,8 @@ class ErrorBoundary extends React.Component {
 
 const AppContent = ({
     isAuthenticated, userProfile, setUserProfile, activeTab, setActiveTab, handleLogout,
-    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES
+    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES,
+    isDarkMode, setIsDarkMode
 }) => {
     const location = useLocation();
     const isPrintPage = location.pathname.includes('/imprimir/');
@@ -116,7 +117,7 @@ const AppContent = ({
     }
 
     return (
-        <div className="app-container">
+        <div className={`app-container ${isDarkMode ? 'dark' : ''}`}>
             <SyncBackground />
 
             {/* Mobile Header - Hide on print */}
@@ -124,7 +125,7 @@ const AppContent = ({
                 <header className="mobile-header">
                     <div className="header-logo-area">
                         <img src="/logo_header.png" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
-                        <h1>SIGERD <span>Mobile</span> <span className="text-[10px] opacity-30 font-light ml-1">v1.47.0-FINAL-POLISH</span></h1>
+                        <h1>SIGERD <span>Mobile</span> <span className="text-[10px] opacity-30 font-light ml-1">v1.48.0-DARK-MODE</span></h1>
                     </div>
                     <div className="header-user" onClick={handleLogout}>
                         <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
@@ -193,7 +194,7 @@ const AppContent = ({
                                 <ChecklistSaida />
                             </ProtectedRoute>
                         } />
-                        <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
+                        <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
                         <Route path="/abrigos" element={
                             <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                 <ShelterMenu />
@@ -310,6 +311,9 @@ const AppContent = ({
 }
 
 function App() {
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        return localStorage.getItem('theme') === 'dark'
+    })
     const [activeTab, setActiveTab] = useState('dashboard')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
@@ -327,6 +331,16 @@ function App() {
     const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Secretário', 'Técnico em Edificações']
     const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
     const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark')
+            localStorage.setItem('theme', 'dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+            localStorage.setItem('theme', 'light')
+        }
+    }, [isDarkMode])
 
     useEffect(() => {
         const auth = localStorage.getItem('auth')
@@ -420,6 +434,8 @@ function App() {
                         AGENT_ROLES={AGENT_ROLES}
                         HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
                         HUMANITARIAN_FULL_ROLES={HUMANITARIAN_FULL_ROLES}
+                        isDarkMode={isDarkMode}
+                        setIsDarkMode={setIsDarkMode}
                     />
                 </Router>
             </UserContext.Provider>

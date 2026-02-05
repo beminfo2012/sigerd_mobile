@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
 
-const Menu = ({ userProfile, onLogout, setUserProfile }) => {
+const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode }) => {
     const [syncDetail, setSyncDetail] = useState({ total: 0 })
     const [syncing, setSyncing] = useState(false)
     const [showProfileModal, setShowProfileModal] = useState(false)
@@ -94,7 +94,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
     }
 
     return (
-        <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen p-5 pb-24 font-sans transition-colors duration-300">
             {/* Header Back Button */}
             <div className="flex items-center gap-3 mb-6">
                 <button
@@ -103,16 +103,23 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                 >
                     <ArrowLeft size={20} />
                 </button>
-                <h1 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Menu do Sistema</h1>
+                <h1 className="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Menu do Sistema</h1>
+                <div className="flex-1"></div>
+                <button
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className="p-3 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hover:text-blue-600 transition-colors"
+                >
+                    {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
             </div>
 
             {/* User Header Card */}
-            <div className="bg-white rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex items-center mb-8">
-                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-xl font-black text-blue-600 mr-5 border-2 border-blue-100">
+            <div className="bg-white dark:bg-slate-800 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 flex items-center mb-8">
+                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xl font-black text-blue-600 mr-5 border-2 border-blue-100 dark:border-blue-900/50">
                     {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
                 </div>
                 <div className="flex-1">
-                    <h2 className="text-xl font-black text-slate-800 leading-tight">
+                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight">
                         {userProfile?.full_name || 'Usuário'}
                     </h2>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
@@ -131,7 +138,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                         setEditSignature(userProfile?.signature || null)
                         setShowProfileModal(true)
                     }}
-                    className="p-3 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    className="p-3 bg-slate-50 dark:bg-slate-700 text-slate-400 rounded-2xl hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-600 transition-colors"
                 >
                     <Edit2 size={20} />
                 </button>
@@ -139,19 +146,19 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
 
             {/* Menu Sections */}
             <div className="space-y-4">
-                <div className="bg-white rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 overflow-hidden">
+                <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                     {/* Sync Option */}
                     <button
                         onClick={handleManualSync}
                         disabled={syncing}
-                        className="w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left border-b border-slate-50"
+                        className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
                     >
                         <div className="flex items-center">
-                            <div className={`p-3 rounded-2xl mr-4 ${syncDetail.total > 0 ? 'bg-orange-50 text-orange-500' : 'bg-green-50 text-green-500'}`}>
+                            <div className={`p-3 rounded-2xl mr-4 ${syncDetail.total > 0 ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-500' : 'bg-green-50 dark:bg-green-950/30 text-green-500'}`}>
                                 <Database size={22} className={syncing ? 'animate-spin' : ''} />
                             </div>
                             <div>
-                                <span className="block font-bold text-slate-800 text-sm">Sincronizar Dados</span>
+                                <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Sincronizar Dados</span>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                                     {syncDetail.total > 0 ? `${syncDetail.total} registros pendentes` : 'Tudo atualizado'}
                                 </span>
@@ -170,13 +177,13 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                                 window.location.reload()
                             }
                         }}
-                        className="w-full p-5 flex items-center hover:bg-slate-50 transition-colors text-left border-b border-slate-50"
+                        className="w-full p-5 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
                     >
-                        <div className="p-3 bg-slate-50 text-slate-500 rounded-2xl mr-4">
+                        <div className="p-3 bg-slate-50 dark:bg-slate-700 text-slate-500 rounded-2xl mr-4">
                             <Settings size={22} />
                         </div>
                         <div>
-                            <span className="block font-bold text-slate-800 text-sm">Limpar Cache</span>
+                            <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Limpar Cache</span>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Otimizar espaço local</span>
                         </div>
                     </button>
@@ -185,9 +192,9 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                     {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
                         <button
                             onClick={handleResetDB}
-                            className="w-full p-5 flex items-center hover:bg-red-50 transition-colors text-left border-b border-slate-50"
+                            className="w-full p-5 flex items-center hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
                         >
-                            <div className="p-3 bg-red-50 text-red-500 rounded-2xl mr-4">
+                            <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-500 rounded-2xl mr-4">
                                 <ShieldAlert size={22} />
                             </div>
                             <div>
@@ -202,13 +209,13 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                 {/* Logout Card */}
                 <button
                     onClick={onLogout}
-                    className="w-full bg-white p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 flex items-center text-red-600 hover:bg-red-50 transition-colors text-left"
+                    className="w-full bg-white dark:bg-slate-800 p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
                 >
-                    <div className="p-3 bg-red-50 rounded-2xl mr-4">
+                    <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-2xl mr-4">
                         <LogOut size={22} />
                     </div>
                     <div>
-                        <span className="block font-bold text-sm">Deslogar do Sistema</span>
+                        <span className="block font-bold text-sm text-red-600 dark:text-red-500">Deslogar do Sistema</span>
                         <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight">Encerrar sessão atual</span>
                     </div>
                 </button>
@@ -217,9 +224,9 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
             {/* Profile Modal */}
             {showProfileModal && (
                 <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Editar Perfil</h3>
+                            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Editar Perfil</h3>
                             <button onClick={() => setShowProfileModal(false)} className="text-slate-300 hover:text-slate-600">
                                 <X size={24} />
                             </button>
@@ -232,7 +239,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                                     type="text"
                                     value={editName}
                                     onChange={e => setEditName(e.target.value)}
-                                    className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800 dark:text-slate-100"
                                 />
                             </div>
                             <div>
@@ -241,7 +248,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                                     type="text"
                                     value={editMatricula}
                                     onChange={e => setEditMatricula(e.target.value)}
-                                    className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800 dark:text-slate-100"
                                 />
                             </div>
 
@@ -249,7 +256,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Sua Assinatura Digital</label>
                                 <div
                                     onClick={() => setShowSignaturePad(true)}
-                                    className="w-full bg-slate-50 h-32 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer overflow-hidden group hover:border-blue-500 transition-colors"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 h-32 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center cursor-pointer overflow-hidden group hover:border-blue-500 transition-colors"
                                 >
                                     {editSignature ? (
                                         <img src={editSignature} className="h-full w-auto object-contain" />
@@ -299,7 +306,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile }) => {
             )}
 
             <div className="mt-12 flex flex-col items-center w-full">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[4px]">SIGERD MOBILE V1.2.0</p>
+                <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[4px]">SIGERD MOBILE {isDarkMode ? '🌙' : '☀️'}</p>
                 <p className="text-[10px] font-bold text-slate-200 mt-1">Defesa Civil Municipal</p>
             </div>
         </div>
