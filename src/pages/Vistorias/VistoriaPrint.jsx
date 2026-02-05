@@ -90,14 +90,17 @@ const VistoriaPrint = () => {
     };
 
     const handleDownloadPDF = async () => {
-        const element = document.querySelector('.print-container');
-        if (!element) return;
+        const container = document.querySelector('.print-container');
+        if (!container) return;
 
-        // Force scale(1) to avoid capture artifacts from mobile preview zoom
-        const originalTransform = element.style.transform;
-        const originalTransformOrigin = element.style.transformOrigin;
-        element.style.transform = 'none';
-        element.style.transformOrigin = 'unset';
+        // Force scale(1) and fixed width for stable measurement
+        const originalWidth = container.style.width;
+        const originalTransform = container.style.transform;
+        const originalTransformOrigin = container.style.transformOrigin;
+
+        container.style.width = '210mm';
+        container.style.transform = 'none';
+        container.style.transformOrigin = 'unset';
 
         window.dispatchEvent(new Event('trigger-map-print-resize'));
 
@@ -105,58 +108,72 @@ const VistoriaPrint = () => {
         toast.innerHTML = `
             <div style="position: fixed; top: 80px; right: 20px; background: #10b981; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
                 <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                Gerando PDF Multi-página...
+                Otimizando Quebras de Página...
             </div>
             <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
         `;
         document.body.appendChild(toast);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                allowTaint: true,
-                backgroundColor: '#ffffff'
-            });
-
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 10; // 10mm margin
+            const contentWidth = pageWidth - (margin * 2);
+            const usablePageHeight = pageHeight - (margin * 2);
 
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
+            // Get all direct children that are sections or headers
+            const elements = Array.from(container.children).filter(el =>
+                el.tagName === 'HEADER' || el.tagName === 'SECTION' || el.tagName === 'FOOTER' || el.classList.contains('page-break')
+            );
 
-            // Calculate height in mm to fit width exactly
-            const ratio = pageWidth / imgWidth;
-            const finalHeight = imgHeight * ratio;
+            let currentY = margin;
+            let isFirstPage = true;
 
-            let heightLeft = finalHeight;
-            let position = 0;
+            for (const el of elements) {
+                if (el.classList.contains('page-break')) {
+                    pdf.addPage();
+                    currentY = margin;
+                    continue;
+                }
 
-            // Add first page
-            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-            heightLeft -= pageHeight;
+                // Capture element
+                const canvas = await html2canvas(el, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
 
-            // Add subsequent pages if content is longer than A4
-            while (heightLeft > 0) {
-                position -= pageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-                heightLeft -= pageHeight;
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const elWidthPx = canvas.width;
+                const elHeightPx = canvas.height;
+
+                // Convert px height to mm based on A4 width
+                const elHeightMm = (elHeightPx * contentWidth) / elWidthPx;
+
+                // Check if it fits on current page
+                if (!isFirstPage && (currentY + elHeightMm > pageHeight - margin)) {
+                    pdf.addPage();
+                    currentY = margin;
+                }
+
+                pdf.addImage(imgData, 'JPEG', margin, currentY, contentWidth, elHeightMm);
+                currentY += elHeightMm + 2; // Add 2mm spacing between sections
+                isFirstPage = false;
             }
 
             pdf.save(`Relatório_Vistoria_${data.vistoriaId || data.vistoria_id || id}.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
-            alert('Falha ao gerar download. Por favor, tente a opção "Imprimir / Salvar PDF" do navegador.');
+            alert('Falha ao gerar o PDF otimizado. Por favor, use a opção "Imprimir" do navegador.');
         } finally {
-            // Restore scaling
-            element.style.transform = originalTransform;
-            element.style.transformOrigin = originalTransformOrigin;
+            // Restore original styles
+            container.style.width = originalWidth;
+            container.style.transform = originalTransform;
+            container.style.transformOrigin = originalTransformOrigin;
             document.body.removeChild(toast);
         }
     };
