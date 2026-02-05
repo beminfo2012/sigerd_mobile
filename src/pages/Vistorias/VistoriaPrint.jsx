@@ -106,69 +106,55 @@ const VistoriaPrint = () => {
 
         const toast = document.createElement('div');
         toast.innerHTML = `
-            <div style="position: fixed; top: 80px; right: 20px; background: #10b981; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
+            <div style="position: fixed; top: 80px; right: 20px; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
                 <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                Otimizando Quebras de Página...
+                Gerando PDF Compacto...
             </div>
             <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
         `;
         document.body.appendChild(toast);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
+            const canvas = await html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 10; // 10mm margin
-            const contentWidth = pageWidth - (margin * 2);
-            const usablePageHeight = pageHeight - (margin * 2);
 
-            // Get all direct children that are sections or headers
-            const elements = Array.from(container.children).filter(el =>
-                el.tagName === 'HEADER' || el.tagName === 'SECTION' || el.tagName === 'FOOTER' || el.classList.contains('page-break')
-            );
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
 
-            let currentY = margin;
-            let isFirstPage = true;
+            // Calculate height in mm to fit width exactly
+            const ratio = pageWidth / imgWidth;
+            const finalHeight = imgHeight * ratio;
 
-            for (const el of elements) {
-                if (el.classList.contains('page-break')) {
-                    pdf.addPage();
-                    currentY = margin;
-                    continue;
-                }
+            let heightLeft = finalHeight;
+            let position = 0;
 
-                // Capture element
-                const canvas = await html2canvas(el, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    logging: false
-                });
+            // Page 1
+            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
+            heightLeft -= pageHeight;
 
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const elWidthPx = canvas.width;
-                const elHeightPx = canvas.height;
-
-                // Convert px height to mm based on A4 width
-                const elHeightMm = (elHeightPx * contentWidth) / elWidthPx;
-
-                // Check if it fits on current page
-                if (!isFirstPage && (currentY + elHeightMm > pageHeight - margin)) {
-                    pdf.addPage();
-                    currentY = margin;
-                }
-
-                pdf.addImage(imgData, 'JPEG', margin, currentY, contentWidth, elHeightMm);
-                currentY += elHeightMm + 2; // Add 2mm spacing between sections
-                isFirstPage = false;
+            // Additional pages
+            while (heightLeft > 0) {
+                position -= pageHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
+                heightLeft -= pageHeight;
             }
 
             pdf.save(`Relatório_Vistoria_${data.vistoriaId || data.vistoria_id || id}.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
-            alert('Falha ao gerar o PDF otimizado. Por favor, use a opção "Imprimir" do navegador.');
+            alert('Falha ao gerar o PDF. Por favor, use a opção "Imprimir" do navegador.');
         } finally {
             // Restore original styles
             container.style.width = originalWidth;
