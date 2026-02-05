@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, lazy, Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
 import { notificationService } from './services/notificationService'
@@ -100,6 +100,215 @@ class ErrorBoundary extends React.Component {
     }
 }
 
+const AppContent = ({
+    isAuthenticated, userProfile, activeTab, setActiveTab, handleLogout,
+    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES
+}) => {
+    const location = useLocation();
+    const isPrintPage = location.pathname.includes('/imprimir/');
+
+    if (!isAuthenticated) {
+        return (
+            <ErrorBoundary>
+                <Login onLogin={handleLogin} />
+            </ErrorBoundary>
+        )
+    }
+
+    return (
+        <div className="app-container">
+            <SyncBackground />
+
+            {/* Mobile Header - Hide on print */}
+            {!isPrintPage && (
+                <header className="mobile-header">
+                    <div className="header-logo-area">
+                        <img src="/logo_header.png" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
+                        <h1>SIGERD <span>Mobile</span> <span className="text-[10px] opacity-30 font-light ml-1">v1.46.15-STABLE</span></h1>
+                    </div>
+                    <div className="header-user" onClick={handleLogout}>
+                        <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
+                            {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
+                        </div>
+                    </div>
+                </header>
+            )}
+
+            {/* Main Content Area */}
+            <main className={isPrintPage ? "" : "main-content"}>
+                <Suspense fallback={
+                    <div className="flex flex-col items-center justify-center p-20 gap-3">
+                        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Abrindo módulo...</p>
+                    </div>
+                }>
+                    <Routes>
+                        <Route path="/" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/georescue" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <GeoRescue />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/vistorias" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <Vistorias />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/vistorias/imprimir/:id" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <VistoriaPrint />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/pluviometros" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <Pluviometros onBack={() => setActiveTab('dashboard')} />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/interdicao" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <Interdicao />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/alerts" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <Alerts />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/monitoramento" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <GeoDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/monitoramento/riscos" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <RiskDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/checklist-saida" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <ChecklistSaida />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
+                        <Route path="/abrigos" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                <ShelterMenu />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/lista" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ShelterList />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/estoque" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                <StockHub />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/doacoes-central" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                <DonationHub />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/logistica" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                <LogisticsHub />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/novo" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ShelterForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/:id" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ShelterDetail />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/editar/:id" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ShelterForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/:shelterId/abrigados/novo" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <OccupantForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/:shelterId/doacoes/novo" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                <DonationForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                <DistributionForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/relatorios" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ShelterReports />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/residentes" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ShelterResidents />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/contratos" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ContractList />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/contratos/novo" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ContractForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/abrigos/contratos/editar/:id" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                <ContractForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </Suspense>
+            </main>
+
+            {/* Bottom Navigation - Hide on print */}
+            {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.email === 'bruno_pagel@hotmail.com') && (
+                <nav className="bottom-nav">
+                    <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                        <Home size={24} />
+                        <span>Início</span>
+                    </Link>
+                    <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
+                        <Map size={24} />
+                        <span>GeoRescue</span>
+                    </Link>
+                    <div className="nav-item fab-container">
+                        <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
+                            <FileText size={24} />
+                        </Link>
+                    </div>
+                    <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
+                        <AlertOctagon size={24} />
+                        <span>Interdição</span>
+                    </Link>
+                    <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
+                        <MenuIcon size={24} />
+                        <span>Menu</span>
+                    </Link>
+                </nav>
+            )}
+        </div>
+    )
+}
+
 function App() {
     const [activeTab, setActiveTab] = useState('dashboard')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -115,30 +324,23 @@ function App() {
         }
     })
 
-
+    const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Secretário', 'Técnico em Edificações']
+    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
+    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
 
     useEffect(() => {
-        // App initialized
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
             setIsAuthenticated(true)
             loadUserProfile()
-            // Restore notification permission request
             notificationService.requestPermission();
         } else {
             setIsLoading(false)
         }
     }, [])
 
-    // Roles grouping for cleaner route protection (Standardized to handle potential case variations)
-    const AGENT_ROLES = ['Agente de Defesa Civil', 'Técnico em Edificações', 'Admin', 'admin', 'agente', 'tecnico'];
-    const HUMANITARIAN_ROLES = [...AGENT_ROLES, 'Assistente Social', 'Voluntário', 'social', 'voluntario'];
-    const HUMANITARIAN_FULL_ROLES = [...AGENT_ROLES, 'Assistente Social', 'social'];
-
     const loadUserProfile = async () => {
-        // [OFFLINE FIX] If navigator is offline, skip the server check and use local cache
         if (!navigator.onLine) {
-            console.log('[App] Offline mode detected, skipping remote profile check');
             setIsLoading(false);
             return;
         }
@@ -146,325 +348,82 @@ function App() {
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
-                const { data: profile, error } = await supabase
-                const AppContent = ({
-                    isAuthenticated, userProfile, activeTab, setActiveTab, handleLogout,
-                    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES
-                }) => {
-                    const location = useLocation();
-                    const isPrintPage = location.pathname.includes('/imprimir/');
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
 
-                    if (!isAuthenticated) {
-                        return (
-                            <ErrorBoundary>
-                                <Login onLogin={handleLogin} />
-                            </ErrorBoundary>
-                        )
-                    }
-
-                    return (
-                        <div className="app-container">
-                            <SyncBackground />
-
-                            {/* Mobile Header - Hide on print */}
-                            {!isPrintPage && (
-                                <header className="mobile-header">
-                                    <div className="header-logo-area">
-                                        <img src="/logo_header.png" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
-                                        <h1>SIGERD <span>Mobile</span> <span className="text-[10px] opacity-30 font-light ml-1">v1.46.15-STABLE</span></h1>
-                                    </div>
-                                    <div className="header-user" onClick={handleLogout}>
-                                        <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
-                                            {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-                                        </div>
-                                    </div>
-                                </header>
-                            )}
-
-                            {/* Main Content Area */}
-                            <main className={isPrintPage ? "" : "main-content"}>
-                                <Suspense fallback={
-                                    <div className="flex flex-col items-center justify-center p-20 gap-3">
-                                        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Abrindo módulo...</p>
-                                    </div>
-                                }>
-                                    <Routes>
-                                        <Route path="/" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <Dashboard />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/georescue" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <GeoRescue />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/vistorias" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <Vistorias />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/vistorias/imprimir/:id" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <VistoriaPrint />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/pluviometros" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <Pluviometros onBack={() => setActiveTab('dashboard')} />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/interdicao" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <Interdicao />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/alerts" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <Alerts />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/monitoramento" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <GeoDashboard />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/monitoramento/riscos" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <RiskDashboard />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/checklist-saida" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                                <ChecklistSaida />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} />} />
-                                        <Route path="/abrigos" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                                <ShelterMenu />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/lista" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ShelterList />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/estoque" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                                <StockHub />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/doacoes-central" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                                <DonationHub />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/logistica" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                                <LogisticsHub />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/novo" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ShelterForm />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/:id" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ShelterDetail />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/editar/:id" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ShelterForm />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/:shelterId/abrigados/novo" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <OccupantForm />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/:shelterId/doacoes/novo" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                                <DonationForm />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                                <DistributionForm />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/relatorios" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ShelterReports />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/residentes" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ShelterResidents />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/contratos" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ContractList />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/contratos/novo" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ContractForm />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="/abrigos/contratos/editar/:id" element={
-                                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                                <ContractForm />
-                                            </ProtectedRoute>
-                                        } />
-                                        <Route path="*" element={<Navigate to="/" replace />} />
-                                    </Routes>
-                                </Suspense>
-                            </main>
-
-                            {/* Bottom Navigation - Hide on print */}
-                            {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.email === 'bruno_pagel@hotmail.com') && (
-                                <nav className="bottom-nav">
-                                    <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                                        <Home size={24} />
-                                        <span>Início</span>
-                                    </Link>
-                                    <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
-                                        <Map size={24} />
-                                        <span>GeoRescue</span>
-                                    </Link>
-                                    <div className="nav-item fab-container">
-                                        <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
-                                            <FileText size={24} />
-                                        </Link>
-                                    </div>
-                                    <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
-                                        <AlertOctagon size={24} />
-                                        <span>Interdição</span>
-                                    </Link>
-                                    <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
-                                        <MenuIcon size={24} />
-                                        <span>Menu</span>
-                                    </Link>
-                                </nav>
-                            )}
-                        </div>
-                    )
+                if (profile) {
+                    const standardizedProfile = {
+                        ...profile,
+                        role: profile.role || 'Agente de Defesa Civil'
+                    };
+                    setUserProfile(standardizedProfile)
+                    localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
                 }
-
-                function App() {
-                    const [isAuthenticated, setIsAuthenticated] = useState(false)
-                    const [userProfile, setUserProfile] = useState(null)
-                    const [isLoading, setIsLoading] = useState(true)
-                    const [activeTab, setActiveTab] = useState('dashboard')
-
-                    const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Secretário']
-                    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador']
-                    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador']
-
-                    useEffect(() => {
-                        const auth = localStorage.getItem('auth')
-                        const storedProfile = localStorage.getItem('userProfile')
-                        if (auth === 'true') {
-                            setIsAuthenticated(true)
-                            if (storedProfile) {
-                                setUserProfile(JSON.parse(storedProfile))
-                            }
-                            loadUserProfile()
-                        } else {
-                            setIsLoading(false)
-                        }
-                    }, [])
-
-                    const loadUserProfile = async () => {
-                        try {
-                            const { data: { user } } = await supabase.auth.getUser()
-                            if (user) {
-                                const { data: profile, error } = await supabase
-                                    .from('profiles')
-                                    .select('*')
-                                    .eq('id', user.id)
-                                    .single()
-
-                                if (profile) {
-                                    const standardizedProfile = {
-                                        ...profile,
-                                        role: profile.role || 'Agente de Defesa Civil'
-                                    };
-                                    setUserProfile(standardizedProfile)
-                                    localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
-                                } else if (!error) {
-                                    const fallbackProfile = { id: user.id, full_name: user.email, role: 'Agente de Defesa Civil', email: user.email };
-                                    setUserProfile(fallbackProfile);
-                                }
-                            } else {
-                                if (navigator.onLine) {
-                                    setIsAuthenticated(false);
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Error loading profile:', error)
-                        } finally {
-                            setIsLoading(false)
-                        }
-                    }
-
-                    const handleLogin = async () => {
-                        setIsLoading(true)
-                        localStorage.setItem('auth', 'true')
-                        setIsAuthenticated(true)
-                        await loadUserProfile()
-                    }
-
-                    const handleLogout = () => {
-                        if (!navigator.onLine) {
-                            alert('🚫 Você está offline!\n\nNão é seguro sair agora...')
-                            return
-                        }
-                        if (window.confirm("Tem certeza que deseja sair?")) {
-                            localStorage.removeItem('auth')
-                            localStorage.removeItem('userProfile')
-                            setIsAuthenticated(false)
-                            setUserProfile(null)
-                        }
-                    }
-
-                    if (isLoading) {
-                        return (
-                            <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                                <div className="flex flex-col items-center gap-4">
-                                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Carregando SIGERD...</p>
-                                </div>
-                            </div>
-                        )
-                    }
-
-                    return (
-                        <ErrorBoundary>
-                            <UserContext.Provider value={userProfile}>
-                                <Router>
-                                    <AppContent
-                                        isAuthenticated={isAuthenticated}
-                                        userProfile={userProfile}
-                                        activeTab={activeTab}
-                                        setActiveTab={setActiveTab}
-                                        handleLogout={handleLogout}
-                                        handleLogin={handleLogin}
-                                        AGENT_ROLES={AGENT_ROLES}
-                                        HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
-                                        HUMANITARIAN_FULL_ROLES={HUMANITARIAN_FULL_ROLES}
-                                    />
-                                </Router>
-                            </UserContext.Provider>
-                        </ErrorBoundary>
-                    )
+            } else {
+                if (navigator.onLine) {
+                    setIsAuthenticated(false);
                 }
+            }
+        } catch (error) {
+            console.error('Error loading profile:', error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
-                export default App
+    const handleLogin = async () => {
+        setIsLoading(true)
+        localStorage.setItem('auth', 'true')
+        setIsAuthenticated(true)
+        await loadUserProfile()
+    }
 
-                export default App
+    const handleLogout = () => {
+        if (!navigator.onLine) {
+            alert('🚫 Você está offline!\n\nNão é seguro sair agora...')
+            return
+        }
+        if (window.confirm("Tem certeza que deseja sair?")) {
+            localStorage.removeItem('auth')
+            localStorage.removeItem('userProfile')
+            setIsAuthenticated(false)
+            setUserProfile(null)
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Carregando SIGERD...</p>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <ErrorBoundary>
+            <UserContext.Provider value={userProfile}>
+                <Router>
+                    <AppContent
+                        isAuthenticated={isAuthenticated}
+                        userProfile={userProfile}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        handleLogout={handleLogout}
+                        handleLogin={handleLogin}
+                        AGENT_ROLES={AGENT_ROLES}
+                        HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
+                        HUMANITARIAN_FULL_ROLES={HUMANITARIAN_FULL_ROLES}
+                    />
+                </Router>
+            </UserContext.Provider>
+        </ErrorBoundary>
+    )
+}
+
+export default App
