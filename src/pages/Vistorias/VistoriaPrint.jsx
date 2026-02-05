@@ -151,7 +151,10 @@ const VistoriaPrint = () => {
                 heightLeft -= pageHeight;
             }
 
-            pdf.save(`Relatório_Vistoria_${data.vistoriaId || data.vistoria_id || id}.pdf`);
+            // Generated filename: ID + Solicitante
+            const vistoriaId = (data.vistoriaId || data.vistoria_id || id).toString().replace(/\//g, '-');
+            const solicitante = (data.solicitante || 'Sem_Nome').toString().replace(/\s+/g, '_').substring(0, 30);
+            pdf.save(`Relatório_Vistoria_${vistoriaId}_${solicitante}.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
             alert('Falha ao gerar o PDF. Por favor, use a opção "Imprimir" do navegador.');
@@ -463,12 +466,11 @@ const VistoriaPrint = () => {
                             <div className="grid grid-cols-2 gap-6">
                                 {photos.map((photo, i) => (
                                     <div key={i} className="space-y-2 break-inside-avoid avoid-break">
-                                        <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm">
+                                        <div className="bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shadow-sm flex items-center justify-center min-h-[200px]">
                                             <img
                                                 src={photo.data || photo.url}
                                                 alt={`Foto ${i + 1}`}
-                                                className="w-full h-full"
-                                                style={{ objectFit: 'cover' }}
+                                                className="max-w-full max-h-[400px] w-auto h-auto object-contain"
                                                 onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Erro+na+Imagem'; }}
                                             />
                                         </div>
