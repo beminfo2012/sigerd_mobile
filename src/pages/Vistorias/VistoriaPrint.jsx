@@ -5,6 +5,8 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import { getAllVistoriasLocal } from '../../services/db';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 // Utility component to recalibrate map size and center
 const MapController = ({ lat, lng }) => {
@@ -87,6 +89,51 @@ const VistoriaPrint = () => {
         setTimeout(() => window.print(), 800);
     };
 
+    const handleDownloadPDF = async () => {
+        const element = document.querySelector('.print-container');
+        if (!element) return;
+
+        // Use a small delay to ensure map is rendered
+        window.dispatchEvent(new Event('trigger-map-print-resize'));
+
+        const toast = document.createElement('div');
+        toast.innerHTML = '<div style="fixed top-20 right-4 bg-blue-600 text-white p-3 rounded shadow-lg z-[99999]">Gerando PDF...</div>';
+        document.body.appendChild(toast);
+
+        try {
+            // Wait for map and images to settle
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                allowTaint: true,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+
+            const finalWidth = imgWidth * ratio;
+            const finalHeight = imgHeight * ratio;
+
+            pdf.addImage(imgData, 'JPEG', 0, 0, finalWidth, finalHeight);
+            pdf.save(`Relatório_Vistoria_${data.vistoriaId || data.vistoria_id || id}.pdf`);
+        } catch (err) {
+            console.error('PDF Generation Error:', err);
+            alert('Falha ao gerar download direto. Por favor, use a opção "Imprimir / Salvar PDF" do navegador.');
+        } finally {
+            document.body.removeChild(toast);
+        }
+    };
+
     if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando Relatório...</div>;
     if (!data) return <div className="flex items-center justify-center min-h-screen">Relatório não encontrado.</div>;
 
@@ -138,6 +185,9 @@ const VistoriaPrint = () => {
                 <h1 className="font-bold text-lg">Visualização de Impressão</h1>
                 <div className="flex gap-4">
                     <button onClick={() => window.close()} className="px-4 py-2 hover:bg-slate-700 rounded transition-colors text-sm font-bold uppercase">Fechar</button>
+                    <button onClick={handleDownloadPDF} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-white font-bold uppercase text-sm flex items-center gap-2 transition-colors">
+                        <span className="material-symbols-outlined text-sm">download</span> Baixar PDF
+                    </button>
                     <button onClick={handlePrint} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold uppercase text-sm flex items-center gap-2 transition-colors">
                         <span className="material-symbols-outlined text-sm">print</span> Imprimir / Salvar PDF
                     </button>

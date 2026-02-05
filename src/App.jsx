@@ -101,7 +101,7 @@ class ErrorBoundary extends React.Component {
 }
 
 const AppContent = ({
-    isAuthenticated, userProfile, activeTab, setActiveTab, handleLogout,
+    isAuthenticated, userProfile, setUserProfile, activeTab, setActiveTab, handleLogout,
     handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES
 }) => {
     const location = useLocation();
@@ -412,6 +412,7 @@ function App() {
                     <AppContent
                         isAuthenticated={isAuthenticated}
                         userProfile={userProfile}
+                        setUserProfile={setUserProfile}
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
                         handleLogout={handleLogout}
