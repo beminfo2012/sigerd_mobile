@@ -376,9 +376,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                     <Mail size={18} />
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); generatePDF(vistoria, 'vistoria') }}
+                                    onClick={(e) => { e.stopPropagation(); window.open(`/vistorias/imprimir/${vistoria.id || vistoria.vistoria_id}`, '_blank') }}
                                     className="p-2 text-gray-400 hover:text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="Exportar PDF"
+                                    title="Exportar Relatório (Novo)"
                                 >
                                     <Share size={18} />
                                 </button>
