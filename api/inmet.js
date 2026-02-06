@@ -26,15 +26,13 @@ export default async function handler(request, response) {
 
         const processList = (list) => {
             if (!list) return;
-            const targetRegions = ["Afonso Cláudio", "Central Espírito-santense"];
 
             list.forEach(alert => {
+                // Strict filtering: display ONLY if the specific geocode for SMJ is present
                 const hasGeocode = alert.geocodes && alert.geocodes.includes(targetGeocode);
-                const hasMicroregion = alert.microrregioes && targetRegions.some(r => alert.microrregioes.includes(r));
-                const hasMesoregion = alert.mesorregioes && targetRegions.some(r => alert.mesorregioes.includes(r));
 
-                if (hasGeocode || hasMicroregion || hasMesoregion) {
-                    // Relaxed filtering: any alert that hasn't finished yet or starts soon (next 24h)
+                if (hasGeocode) {
+                    // Alert that hasn't finished yet or starts soon (next 24h)
                     const endDate = new Date(alert.fim);
                     const startDate = new Date(alert.inicio);
                     const isRelevant = endDate >= now || (startDate <= new Date(now.getTime() + 24 * 60 * 60 * 1000));
