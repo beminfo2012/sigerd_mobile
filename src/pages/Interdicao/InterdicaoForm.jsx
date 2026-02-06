@@ -9,6 +9,7 @@ import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { supabase } from '../../services/supabase'
 import { UserContext } from '../../App'
+import { refineReportText } from '../../services/ai'
 import bairrosData from '../../../Bairros.json'
 import logradourosData from '../../../Logradouros.json'
 
@@ -176,21 +177,19 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         if (!formData.situacaoObservada.trim()) return alert("Digite algo na situação observada primeiro.");
         setRefining(true);
         try {
-            const { data, error } = await supabase.functions.invoke('refine-report', {
-                body: {
-                    text: formData.situacaoObservada,
-                    category: formData.riscoTipo.join(', '),
-                    context: `Local: ${formData.endereco}, Alvo: ${formData.tipoAlvo}`
-                }
-            });
+            const refinedText = await refineReportText(
+                formData.situacaoObservada,
+                formData.riscoTipo.join(', '),
+                `Local: ${formData.endereco}, Alvo: ${formData.tipoAlvo}`
+            );
 
-            if (error || (data && data.error)) {
-                throw new Error(data?.error || error?.message || "Serviço de IA indisponível no momento.");
-            }
-            if (data.refinedText) {
-                if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?")) {
-                    setFormData(prev => ({ ...prev, situacaoObservada: data.refinedText }));
+            if (refinedText && !refinedText.startsWith('ERROR:')) {
+                if (window.confirm("A IA refinou o seu texto. Deseja substituir o original pelo texto técnico profissional?\n\nNOVO TEXTO:\n" + refinedText)) {
+                    setFormData(prev => ({ ...prev, situacaoObservada: refinedText }));
                 }
+            } else {
+                const errorMsg = refinedText ? refinedText.replace('ERROR:', '') : 'Serviço de IA indisponível no momento.';
+                alert(`Erro ao refinar com IA: ${errorMsg}`);
             }
         } catch (e) {
             console.error("AI Refine error:", e);

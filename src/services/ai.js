@@ -39,10 +39,10 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
     // Priority list: Model + API Version
     // Gemini 1.5 Flash is now stable on v1
     const CANDIDATES = [
-        { model: 'gemini-1.5-flash', version: 'v1' },
-        { model: 'gemini-1.5-flash', version: 'v1beta' },
-        { model: 'gemini-1.5-pro', version: 'v1' },
-        { model: 'gemini-pro', version: 'v1' }
+        { model: 'gemini-2.5-flash-lite', version: 'v1' },
+        { model: 'gemini-2.0-flash-lite', version: 'v1' },
+        { model: 'gemini-2.0-flash', version: 'v1' },
+        { model: 'gemini-1.5-flash', version: 'v1beta' }
     ];
 
     let errors = [];
