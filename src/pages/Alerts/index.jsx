@@ -348,6 +348,12 @@ const Alerts = () => {
         window.open(waChannelLink, '_blank')
     }
 
+    const shareToSecretaries = () => {
+        const message = "DEFESA CIVIL ALERTA: Previsão de evento adverso com risco ao Município. É importante que as Secretarias permaneçam em estado de atenção e prontidão, com equipes e equipamentos mobilizados. Favor Informar ocorrências à Defesa Civil."
+        const waLink = `https://wa.me/?text=${encodeURIComponent(message)}`
+        window.open(waLink, '_blank')
+    }
+
     const instructionsList = instructions
         .split('\n')
         .map(line => line.trim())
@@ -491,6 +497,16 @@ const Alerts = () => {
                             <MessageCircle size={22} fill="white" />
                             {isCopying ? 'Pronto! Texto Copiado!' : 'Postar no Canal WhatsApp'}
                         </button>
+
+                        {(severity === 'Perigo' || severity === 'Grande Perigo') && (
+                            <button
+                                onClick={shareToSecretaries}
+                                className="w-full mt-4 flex items-center justify-center gap-2 text-slate-400 hover:text-red-600 transition-colors text-[10px] font-black uppercase tracking-widest bg-slate-50 py-2 rounded-lg border border-dashed border-slate-200"
+                            >
+                                <ShieldAlert size={14} />
+                                Alertar Secretários (WhatsApp)
+                            </button>
+                        )}
 
                         <div className="bg-blue-50 p-4 rounded-2xl mt-4 border border-blue-100">
                             <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-1 flex items-center gap-2">
