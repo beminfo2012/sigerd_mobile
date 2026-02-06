@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw, Upload, MessageCircle, Copy, Check } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Upload, MessageCircle, Copy, Check, ShieldAlert } from 'lucide-react'
 import { toJpeg } from 'html-to-image'
 
 // Componente isolado da Arte para garantir consistência entre Preview e Exportação
