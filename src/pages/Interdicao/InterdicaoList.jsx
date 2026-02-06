@@ -4,7 +4,6 @@ import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteInterdicaoLocal, getAllInterdicoesLocal } from '../../services/db'
 import ConfirmModal from '../../components/ConfirmModal'
-import { supabase } from '../../services/supabase'
 
 const InterdicaoList = ({ onNew, onEdit }) => {
     const [interdicoes, setInterdicoes] = useState([])
