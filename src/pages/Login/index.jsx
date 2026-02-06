@@ -186,12 +186,24 @@ const Login = ({ onLogin }) => {
         }
 
         setLoading(true)
+        console.log('--- LOGIN ATTEMPT ---')
+        console.log('Username:', username)
 
         try {
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
+            // timeout promise
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('TIMEOUT: O servidor não respondeu a tempo.')), 15000)
+            );
+
+            // auth promise
+            const authPromise = supabase.auth.signInWithPassword({
                 email: username,
                 password: password
-            })
+            });
+
+            console.log('Starting Supabase Auth...')
+            const { data, error: authError } = await Promise.race([authPromise, timeoutPromise]);
+            console.log('Auth result:', { data, error: authError });
 
             if (authError) {
                 setError('Usuário ou senha inválidos')
@@ -199,19 +211,28 @@ const Login = ({ onLogin }) => {
                 return
             }
 
+            console.log('Login successful, checking biometrics configuration...')
             if (!localStorage.getItem('biometric_email')) {
-                if (window.confirm('Deseja ativar o login por biometria para este dispositivo?')) {
-                    await handleRegisterBiometrics()
+                // Non-blocking biometrics check
+                try {
+                    if (window.confirm('Deseja ativar o login por biometria para este dispositivo?')) {
+                        console.log('User opted for biometrics, registering...')
+                        await handleRegisterBiometrics()
+                    }
+                } catch (bioErr) {
+                    console.warn('Biometric registration failed but continuing login:', bioErr)
                 }
             }
 
+            console.log('Proceeding to onLogin()...')
             onLogin()
         } catch (err) {
-            console.error('Login error:', err)
-            setError('Erro ao conectar. Tente novamente.')
+            console.error('Login technical error:', err)
+            setError(err.message || 'Erro ao conectar. Verifique sua conexão.')
             setLoading(false)
         }
     }
+
 
     return (
         <div style={{

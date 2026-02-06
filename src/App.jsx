@@ -360,20 +360,27 @@ function App() {
     }, [])
 
     const loadUserProfile = async () => {
+        console.log('--- LOADING USER PROFILE ---')
         if (!navigator.onLine) {
+            console.warn('Network offline during profile load')
             setIsLoading(false);
             return;
         }
 
         try {
+            console.log('Fetching user from Supabase auth...')
             const { data: { user } } = await supabase.auth.getUser()
+            console.log('Auth User:', user?.id)
+
             if (user) {
+                console.log('Fetching profile data...')
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
                     .single()
 
+                console.log('Profile found:', profile?.full_name)
                 if (profile) {
                     const standardizedProfile = {
                         ...profile,
@@ -381,8 +388,10 @@ function App() {
                     };
                     setUserProfile(standardizedProfile)
                     localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
+                    console.log('Profile standardized and saved.')
                 }
             } else {
+                console.warn('No user session found.')
                 if (navigator.onLine) {
                     setIsAuthenticated(false);
                 }
@@ -390,16 +399,19 @@ function App() {
         } catch (error) {
             console.error('Error loading profile:', error)
         } finally {
+            console.log('Profile loading finished.')
             setIsLoading(false)
         }
     }
 
     const handleLogin = async () => {
+        console.log('Handling login event from component...')
         setIsLoading(true)
         localStorage.setItem('auth', 'true')
         setIsAuthenticated(true)
         await loadUserProfile()
     }
+
 
     const handleLogout = () => {
         if (!navigator.onLine) {
