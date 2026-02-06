@@ -193,10 +193,11 @@ const Alerts = () => {
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
     const [risks, setRisks] = useState('')
-    const [instructions, setInstructions] = useState(`• Evite enfrentar o mau tempo.
-• Observe alteração nas encostas.
-• Evite usar aparelhos eletrônicos ligados à tomada.
-• Obtenha mais informações junto à Defesa Civil (telefone 199) e ao Corpo de Bombeiros (telefone 193).`)
+    const [instructions, setInstructions] = useState(`- Desligue aparelhos elétricos, quadro geral de energia.
+- Observe alteração nas encostas.
+- Permaneça em local abrigado.
+- Em caso de situação de inundação, ou similar, proteja seus pertences da água envoltos em sacos plásticos.
+- Obtenha mais informações junto à Defesa Civil (telefone 199) e ao Corpo de Bombeiros (telefone 193).`)
 
     const artRef = useRef(null) // Referência apenas para visualização
     const exportRef = useRef(null) // Referência oculta para exportação fiel
@@ -300,7 +301,7 @@ const Alerts = () => {
             })
 
             const link = document.createElement('a')
-            link.download = `alerta-defesa-civil-${Date.now()}.jpg`
+            link.download = `alerta-defesa-civil-\${Date.now()}.jpg`
             link.href = dataUrl
             link.click()
         } catch (error) {
@@ -308,7 +309,6 @@ const Alerts = () => {
             alert('Erro ao gerar imagem: ' + error.message)
         }
     }
-
     const shareToWhatsApp = async () => {
         // 1. Generate formatted text
         const severityEmoji = severity.includes('Grande') ? '🔴' : (severity.includes('Potencial') ? '🟡' : '🟠')
@@ -347,6 +347,7 @@ const Alerts = () => {
         const waChannelLink = `https://whatsapp.com/channel/0029Vb7CuCcCcW4lh0Lhj115`
         window.open(waChannelLink, '_blank')
     }
+
 
     const shareToSecretaries = () => {
         const message = "DEFESA CIVIL ALERTA: Previsão de evento adverso com risco ao Município. É importante que as Secretarias permaneçam em estado de atenção e prontidão, com equipes e equipamentos mobilizados. Favor Informar ocorrências à Defesa Civil."
@@ -507,18 +508,6 @@ const Alerts = () => {
                                 Alertar Secretários (WhatsApp)
                             </button>
                         )}
-
-                        <div className="bg-blue-50 p-4 rounded-2xl mt-4 border border-blue-100">
-                            <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-1 flex items-center gap-2">
-                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                                Como publicar no canal:
-                            </p>
-                            <ol className="text-[11px] text-blue-700 space-y-1 font-medium">
-                                <li>1. A imagem será baixada e o texto copiado ✅</li>
-                                <li>2. O Canal Oficial abrirá automaticamente 📲</li>
-                                <li>3. Basta colar o texto e anexar a imagem da galeria 🖼️</li>
-                            </ol>
-                        </div>
                     </div>
                 </div>
 
@@ -540,8 +529,8 @@ const Alerts = () => {
                 </div>
             </div>
 
-            {/* Hidden Export Container - BLINDADO CONTRA LAYOUT EXTERNO */}
-            <div style={{ position: 'fixed', top: -10000, left: -10000, pointerEvents: 'none', visibility: 'visible' }}>
+            {/* Hidden Export Container */}
+            <div style={{ position: 'fixed', top: -10000, left: -10000, pointerEvents: 'none' }}>
                 <div ref={exportRef}>
                     <AlertArt
                         format={format}
