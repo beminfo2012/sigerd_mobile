@@ -1,8 +1,13 @@
 export default async function handler(request, response) {
     const API_KEY = process.env.GOOGLE_API_KEY;
 
+    console.log('API_KEY present in process.env:', !!API_KEY);
+
     if (!API_KEY) {
-        return response.status(500).json({ error: "Chave de API (GOOGLE_API_KEY) não configurada no servidor." });
+        return response.status(500).json({
+            error: "Chave de API (GOOGLE_API_KEY) não configurada no servidor.",
+            detail: "A variável de ambiente está ausente. Certifique-se de fazer um REDEPLOY na Vercel."
+        });
     }
 
     if (request.method !== 'POST') {
