@@ -19,8 +19,13 @@ export default async function handler(request, response) {
 
         const genAI = new GoogleGenerativeAI(API_KEY);
 
-        // Use gemini-1.5-flash as the primary fast and reliable model
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Define models to try in order of preference
+        const MODELS_TO_TRY = [
+            "gemini-1.5-flash",
+            "gemini-1.5-pro",
+            "gemini-pro",         // Classic stable model
+            "gemini-1.0-pro"      // Explicit version
+        ];
 
         const prompt = `
         Transforme este relato de campo em uma descrição técnica de engenharia civil densa e formal: "${text}".
@@ -36,10 +41,34 @@ export default async function handler(request, response) {
         - Use terminologia normativa: recalque, lixiviação, saturação, escorregamento, coesão, pressões neutras.
         `;
 
-        const result = await model.generateContent(prompt);
-        const refinedText = result.response.text();
+        let lastError = null;
+        let errors = [];
 
-        return response.status(200).send(refinedText.trim());
+        for (const modelName of MODELS_TO_TRY) {
+            try {
+                console.log(`[AI Proxy] Trying model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+
+                const result = await model.generateContent(prompt);
+                const refinedText = result.response.text();
+
+                if (refinedText) {
+                    return response.status(200).send(refinedText.trim());
+                }
+            } catch (e) {
+                console.warn(`[AI Proxy] Failed with ${modelName}:`, e.message);
+                lastError = e;
+                errors.push(`${modelName}: ${e.message}`);
+
+                // If it's an API Key error, no point trying other models
+                if (e.message?.includes('API key not valid')) {
+                    throw e;
+                }
+            }
+        }
+
+        // If we get here, all models failed
+        throw lastError || new Error(`Todos os modelos falharam: ${errors.join(', ')}`);
 
     } catch (error) {
         console.error('AI SDK Error:', error);
