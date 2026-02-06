@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2, Sparkles, Siren } from 'lucide-react'
+import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2, Sparkles, Siren, CheckCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { checkRiskArea } from '../../services/riskAreas'
-import { saveInterdicaoOffline } from '../../services/db'
+import { saveInterdicaoOffline, deleteInterdicaoLocal } from '../../services/db'
 import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
@@ -10,11 +11,13 @@ import VoiceInput from '../../components/VoiceInput'
 import { supabase } from '../../services/supabase'
 import { UserContext } from '../../App'
 import { refineReportText } from '../../services/ai'
+import ConfirmModal from '../../components/ConfirmModal'
 import bairrosData from '../../../Bairros.json'
 import logradourosData from '../../../Logradouros.json'
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
+    const navigate = useNavigate()
     const [formData, setFormData] = useState({
         interdicaoId: '',
         dataHora: (() => {
@@ -57,10 +60,10 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
     })
 
     const [showSignaturePad, setShowSignaturePad] = useState(false)
-
     const [saving, setSaving] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
     const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' or 'apoio'
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [refining, setRefining] = useState(false)
 
@@ -272,6 +275,34 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         } catch (e) {
             console.error(e)
             setFormData(prev => ({ ...prev, interdicaoId: '' }))
+        }
+    }
+
+    const handleDeleteFromForm = async () => {
+        if (!initialData?.id) return
+
+        const id = initialData.id
+        const supabaseId = initialData.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null)
+
+        setSaving(true)
+        try {
+            let error = null
+            if (supabaseId) {
+                const { error: remoteError } = await supabase.from('interdicoes').delete().eq('id', supabaseId)
+                error = remoteError
+            }
+
+            if (!error) {
+                await deleteInterdicaoLocal(id)
+                window.dispatchEvent(new CustomEvent('interdicao-deleted'))
+                onBack()
+            } else {
+                alert('Erro ao excluir do servidor.')
+            }
+        } catch (e) {
+            alert('Falha ao excluir.')
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -719,11 +750,13 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         <button type="button" onClick={() => generatePDF(formData, 'interdicao')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm">
                             <Share size={20} /> Exportar PDF
                         </button>
-                        {initialData && (
-                            <button type="button" onClick={() => alert("Excluir")} className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors">
-                                <Trash2 size={20} /> Excluir
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => initialData ? setShowDeleteModal(true) : onBack()}
+                            className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors"
+                        >
+                            <Trash2 size={20} /> {initialData ? 'Excluir' : 'Cancelar'}
+                        </button>
                     </div>
                 </div>
 
@@ -747,6 +780,17 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     }}
                 />
             )}
+
+            {/* Deletion Safety Modal */}
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteFromForm}
+                title="Excluir Interdição"
+                message={`Tem certeza que deseja excluir permanentemente a interdição #${formData.interdicaoId}?`}
+                confirmText="Sim, Excluir Agora"
+                cancelText="Não, Voltar"
+            />
         </div>
     )
 }

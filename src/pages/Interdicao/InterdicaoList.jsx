@@ -3,11 +3,14 @@ import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, AlertOctagon }
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteInterdicaoLocal, getAllInterdicoesLocal } from '../../services/db'
+import ConfirmModal from '../../components/ConfirmModal'
+import { supabase } from '../../services/supabase'
 
 const InterdicaoList = ({ onNew, onEdit }) => {
     const [interdicoes, setInterdicoes] = useState([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: null, displayId: '' })
 
     useEffect(() => {
         fetchInterdicoes()
@@ -68,18 +71,24 @@ const InterdicaoList = ({ onNew, onEdit }) => {
         }
     }
 
-    const handleDelete = async (id, e) => {
+    const handleDelete = (item, e) => {
         e.stopPropagation()
-        if (window.confirm('Tem certeza que deseja excluir esta interdição?')) {
-            const { error } = await supabase.from('interdicoes').delete().eq('id', id)
-            if (!error) {
-                await deleteInterdicaoLocal(id)
-                setInterdicoes(prev => prev.filter(v => v.id !== id))
-                // Dispatch event to notify forms to recalculate next ID
-                window.dispatchEvent(new CustomEvent('interdicao-deleted'))
-            } else {
-                alert('Erro ao excluir.')
-            }
+        setDeleteModal({ open: true, id: item.id, displayId: item.interdicao_id })
+    }
+
+    const confirmDeletion = async () => {
+        const id = deleteModal.id
+        if (!id) return
+
+        const { error } = await supabase.from('interdicoes').delete().eq('id', id)
+        if (!error) {
+            await deleteInterdicaoLocal(id)
+            setInterdicoes(prev => prev.filter(v => v.id !== id))
+            // Dispatch event to notify forms to recalculate next ID
+            window.dispatchEvent(new CustomEvent('interdicao-deleted'))
+        } else {
+            console.error('Delete error:', error)
+            alert('Erro ao excluir do servidor. Verifique sua conexão.')
         }
     }
 
@@ -177,6 +186,17 @@ const InterdicaoList = ({ onNew, onEdit }) => {
                     ))
                 )}
             </div>
+
+            {/* Deletion Safety Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.open}
+                onClose={() => setDeleteModal({ open: false, id: null, displayId: '' })}
+                onConfirm={confirmDeletion}
+                title="Excluir Interdição"
+                message={`Tem certeza que deseja excluir a interdição #${deleteModal.displayId}? Esta ação não pode ser desfeita.`}
+                confirmText="Sim, Excluir"
+                cancelText="Cancelar"
+            />
         </div>
     )
 }

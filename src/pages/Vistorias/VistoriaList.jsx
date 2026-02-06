@@ -3,6 +3,7 @@ import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, Che
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getAllVistoriasLocal } from '../../services/db'
+import ConfirmModal from '../../components/ConfirmModal'
 
 const VistoriaList = ({ onNew, onEdit }) => {
     const [vistorias, setVistorias] = useState([])
@@ -17,6 +18,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
     })
     const [emailModal, setEmailModal] = useState({ open: false, vistoria: null })
     const [emailAddress, setEmailAddress] = useState('')
+    const [deleteModal, setDeleteModal] = useState({ open: false, vistoria: null })
 
     useEffect(() => {
         fetchVistorias()
@@ -98,30 +100,35 @@ const VistoriaList = ({ onNew, onEdit }) => {
         }
     }
 
-    const handleDelete = async (vistoria, e) => {
+    const handleDelete = (vistoria, e) => {
         e.stopPropagation()
+        setDeleteModal({ open: true, vistoria })
+    }
+
+    const confirmDeletion = async () => {
+        const vistoria = deleteModal.vistoria
+        if (!vistoria) return
+
         const id = vistoria.id
         const supabaseId = vistoria.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null)
 
-        if (window.confirm('Tem certeza que deseja excluir esta vistoria?')) {
-            let error = null
+        let error = null
 
-            // 1. If it has a Supabase ID, try to delete from cloud
-            if (supabaseId) {
-                const { error: remoteError } = await supabase.from('vistorias').delete().eq('id', supabaseId)
-                error = remoteError
-            }
+        // 1. If it has a Supabase ID, try to delete from cloud
+        if (supabaseId) {
+            const { error: remoteError } = await supabase.from('vistorias').delete().eq('id', supabaseId)
+            error = remoteError
+        }
 
-            // 2. If no remote error (success or wasn't in cloud), delete locally
-            if (!error) {
-                await deleteVistoriaLocal(id)
-                setVistorias(prev => prev.filter(v => v.id !== id))
-                // Dispatch event to notify forms to recalculate next ID
-                window.dispatchEvent(new CustomEvent('vistoria-deleted'))
-            } else {
-                console.error('Delete error:', error)
-                alert('Erro ao excluir do servidor. Verifique sua conexão.')
-            }
+        // 2. If no remote error (success or wasn't in cloud), delete locally
+        if (!error) {
+            await deleteVistoriaLocal(id)
+            setVistorias(prev => prev.filter(v => v.id !== id))
+            // Dispatch event to notify forms to recalculate next ID
+            window.dispatchEvent(new CustomEvent('vistoria-deleted'))
+        } else {
+            console.error('Delete error:', error)
+            alert('Erro ao excluir do servidor. Verifique sua conexão.')
         }
     }
 
@@ -454,6 +461,17 @@ const VistoriaList = ({ onNew, onEdit }) => {
                     </div>
                 </div>
             )}
+
+            {/* Deletion Safety Modal */}
+            <ConfirmModal
+                isOpen={deleteModal.open}
+                onClose={() => setDeleteModal({ open: false, vistoria: null })}
+                onConfirm={confirmDeletion}
+                title="Excluir Vistoria"
+                message={`Tem certeza que deseja excluir a vistoria #${deleteModal.vistoria?.vistoria_id}? Esta ação não pode ser desfeita.`}
+                confirmText="Sim, Excluir"
+                cancelText="Mantenha para mim"
+            />
         </div>
     )
 }

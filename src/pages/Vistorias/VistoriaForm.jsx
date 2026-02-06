@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
-import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal } from '../../services/db'
+import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
@@ -11,6 +12,7 @@ import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { checkRiskArea } from '../../services/riskAreas'
 import { refineReportText } from '../../services/ai'
+import ConfirmModal from '../../components/ConfirmModal'
 import bairrosDataRaw from '../../../Bairros.json'
 import logradourosDataRaw from '../../../nomesderuas.json'
 
@@ -89,6 +91,7 @@ const ENCAMINHAMENTOS_LIST = [
 
 const VistoriaForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
+    const navigate = useNavigate()
 
     const [formData, setFormData] = useState({
         vistoriaId: '',
@@ -147,6 +150,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     const [showSignaturePad, setShowSignaturePad] = useState(false)
     const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' ou 'apoio'
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
 
     const [saving, setSaving] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
@@ -464,6 +468,34 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         if (comparisonContent?.refined) {
             setFormData(prev => ({ ...prev, observacoes: comparisonContent.refined }));
             setComparisonContent(null); // Close modal
+        }
+    }
+
+    const handleDeleteFromForm = async () => {
+        if (!initialData?.id) return
+
+        const id = initialData.id
+        const supabaseId = initialData.supabase_id
+
+        setSaving(true)
+        try {
+            let error = null
+            if (supabaseId) {
+                const { error: remoteError } = await supabase.from('vistorias').delete().eq('id', supabaseId)
+                error = remoteError
+            }
+
+            if (!error) {
+                await deleteVistoriaLocal(id)
+                window.dispatchEvent(new CustomEvent('vistoria-deleted'))
+                onBack()
+            } else {
+                alert('Erro ao excluir do servidor.')
+            }
+        } catch (e) {
+            alert('Falha ao excluir.')
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -1132,7 +1164,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </button>
                     <div className="grid grid-cols-2 gap-4">
                         <button type="button" onClick={() => generatePDF(formData, 'vistoria')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 shadow-sm"><Share size={20} /> Relatório PDF</button>
-                        <button type="button" onClick={() => initialData ? alert("Use lista para excluir") : onBack()} className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50"><Trash2 size={20} /> Cancelar</button>
+                        <button
+                            type="button"
+                            onClick={() => initialData ? setShowDeleteModal(true) : onBack()}
+                            className="flex justify-center items-center gap-2 p-4 border border-red-100 text-red-500 bg-red-50/50 rounded-xl font-bold hover:bg-red-100/50 transition-colors"
+                        >
+                            <Trash2 size={20} /> {initialData ? 'Excluir' : 'Cancelar'}
+                        </button>
                     </div>
                 </div>
             </form>
@@ -1206,6 +1244,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     }}
                 />
             )}
+
+            {/* Deletion Safety Modal */}
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDeleteFromForm}
+                title="Excluir Vistoria"
+                message={`Tem certeza que deseja excluir permanentemente a vistoria #${formData.vistoriaId}?`}
+                confirmText="Sim, Excluir Agora"
+                cancelText="Não, Voltar"
+            />
         </div>
     )
 }
