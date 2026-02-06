@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getLightweightVistoriasLocal, getVistoriaFull } from '../../services/db'
 import ConfirmModal from '../../components/ConfirmModal'
 
 const VistoriaList = ({ onNew, onEdit }) => {
+    const navigate = useNavigate()
     const [vistorias, setVistorias] = useState([])
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
@@ -228,7 +230,12 @@ const VistoriaList = ({ onNew, onEdit }) => {
             {/* Header */}
             <div className="bg-white px-5 py-4 shadow-sm sticky top-0 z-10 border-b border-gray-100">
                 <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-black text-gray-800 tracking-tight">Vistorias</h1>
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => navigate('/')} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                            <ArrowLeft size={24} />
+                        </button>
+                        <h1 className="text-2xl font-black text-gray-800 tracking-tight">Vistorias</h1>
+                    </div>
                     <button
                         onClick={onNew}
                         className="bg-[#2a5299] text-white p-2 px-4 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg hover:bg-[#1e3c72]"
