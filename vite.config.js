@@ -26,7 +26,7 @@ export default defineConfig({
         short_name: 'DefesaCivil',
         description: 'Aplicativo de uso em campo para Defesa Civil',
         theme_color: '#2a5299',
-        version: '1.34.1',
+        version: '1.46.23',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -58,5 +58,13 @@ export default defineConfig({
       }
     })
   ],
-
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://sigerd-mobile.vercel.app', // Fallback para produção para evitar o erro local
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    }
+  }
 })

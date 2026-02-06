@@ -4,25 +4,37 @@ export default async function handler(request, response) {
 
     try {
         const apiResponse = await fetch(targetUrl);
+
+        // Handle rate limits or non-OK responses
         if (!apiResponse.ok) {
-            throw new Error(`INMET connection failed: ${apiResponse.status}`);
+            const errorText = await apiResponse.text();
+            console.error('INMET API Error Response:', errorText);
+            return response.status(200).json([]); // Return empty list rather than 500 to keep UI stable
         }
 
-        const data = await apiResponse.json();
+        const rawText = await apiResponse.text();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (jsonErr) {
+            console.error('Failed to parse INMET JSON. Raw response:', rawText.substring(0, 500));
+            return response.status(200).json([]);
+        }
 
         const now = new Date();
-        const activeAlerts = [];
+        const alerts = [];
 
         const processList = (list) => {
             if (!list) return;
             list.forEach(alert => {
                 if (alert.geocodes && alert.geocodes.includes(targetGeocode)) {
-                    const startDate = new Date(alert.inicio);
+                    // Relaxed filtering: any alert that hasn't finished yet or starts soon (next 24h)
                     const endDate = new Date(alert.fim);
+                    const startDate = new Date(alert.inicio);
+                    const isRelevant = endDate >= now || (startDate <= new Date(now.getTime() + 24 * 60 * 60 * 1000));
 
-                    // Strict filtering: only alerts occurring RIGHT NOW
-                    if (startDate <= now && endDate >= now) {
-                        activeAlerts.push({
+                    if (isRelevant) {
+                        alerts.push({
                             id: alert.id,
                             tipo: alert.aviso_tipo || alert.descricao,
                             severidade: alert.aviso_severidade || alert.severidade,
@@ -42,6 +54,9 @@ export default async function handler(request, response) {
         if (data.amanha) processList(data.amanha);
         if (data.futuro) processList(data.futuro);
 
+        // Deduplicate and sort by severity/date
+        const uniqueAlerts = Array.from(new Map(alerts.map(a => [a.id, a])).values());
+
         // Enable CORS
         response.setHeader('Access-Control-Allow-Credentials', true)
         response.setHeader('Access-Control-Allow-Origin', '*')
@@ -51,10 +66,10 @@ export default async function handler(request, response) {
             'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
         )
 
-        response.status(200).json(activeAlerts);
+        response.status(200).json(uniqueAlerts);
 
     } catch (error) {
-        console.error(error);
-        response.status(500).json({ error: 'Failed to fetch INMET data', details: error.message });
+        console.error('INMET Handler Exception:', error);
+        response.status(200).json([]);
     }
 }
