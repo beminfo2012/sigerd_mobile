@@ -1,12 +1,15 @@
 export default async function handler(request, response) {
-    const API_KEY = process.env.GOOGLE_API_KEY;
+    const API_KEY = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY;
 
-    console.log('API_KEY present in process.env:', !!API_KEY);
+    console.log('--- AI PROXY DIAGNOSTICS ---');
+    console.log('Available Env Keys:', Object.keys(process.env).filter(k => k.includes('GOOGLE') || k.includes('KEY')));
+    console.log('API_KEY found:', !!API_KEY);
 
     if (!API_KEY) {
+        const detectedKeys = Object.keys(process.env).filter(k => k.includes('KEY')).join(', ');
         return response.status(500).json({
-            error: "Chave de API (GOOGLE_API_KEY) não configurada no servidor.",
-            detail: "A variável de ambiente está ausente. Certifique-se de fazer um REDEPLOY na Vercel."
+            error: "Chave de API não configurada no servidor Vercel.",
+            detail: `Nenhuma das chaves (GOOGLE_API_KEY ou VITE_GOOGLE_API_KEY) foi encontrada. Chaves com 'KEY' detectadas: ${detectedKeys || 'Nenhuma'}. Certifique-se de fazer um REDEPLOY na Vercel.`
         });
     }
 

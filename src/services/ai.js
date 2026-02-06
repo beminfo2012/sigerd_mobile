@@ -34,7 +34,8 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
             return refinedText;
         } else {
             const errData = await response.json().catch(() => ({}));
-            return `ERROR: ${errData.error || 'Falha na comunicação com o servidor de IA.'}`;
+            const detail = errData.detail ? `\n\nDetalhe: ${errData.detail}` : '';
+            return `ERROR: ${errData.error || 'Falha na comunicação com o servidor de IA.'}${detail}`;
         }
     } catch (e) {
         console.error('AI Refine Error:', e);
