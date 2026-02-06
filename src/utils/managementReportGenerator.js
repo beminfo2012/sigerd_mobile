@@ -86,20 +86,21 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
         });
 
         // 4. Risk Profile Table
-        const lastY = doc.lastAutoTable.finalY || 165;
+        const lastY1 = doc.lastAutoTable.finalY || 165;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('3. PERFIL DE SEVERIDADE', 20, lastY + 20);
+        doc.setTextColor(...primaryColor);
+        doc.text('3. PERFIL DE SEVERIDADE', 20, lastY1 + 15);
 
-        const totalStats = stats.riskChart.reduce((acc, curr) => acc + curr.value, 0);
+        const totalRisks = stats.riskChart.reduce((acc, curr) => acc + curr.value, 0);
         const riskData = stats.riskChart.map(r => [
             r.name,
             r.value,
-            `${Math.round((r.value / totalStats) * 100)}%`
+            totalRisks > 0 ? `${Math.round((r.value / totalRisks) * 100)}%` : '0%'
         ]);
 
         autoTable(doc, {
-            startY: lastY + 30,
+            startY: lastY1 + 22,
             head: [['Nível de Risco', 'Ocorrências', 'Representatividade']],
             body: riskData,
             theme: 'grid',
@@ -107,17 +108,58 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
             margin: { left: 20, right: 20 }
         });
 
-        // 5. Footnote
+        // 5. Tipology Breakdown
+        const lastY2 = doc.lastAutoTable.finalY || 200;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('4. DISTRIBUIÇÃO POR TIPOLOGIA', 20, lastY2 + 15);
+
+        const categoryData = stats.categoryChart.map(c => [
+            c.name,
+            c.value,
+            stats.total > 0 ? `${Math.round((c.value / stats.total) * 100)}%` : '0%'
+        ]);
+
+        autoTable(doc, {
+            startY: lastY2 + 22,
+            head: [['Tipologia de Risco', 'Total', '%']],
+            body: categoryData,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229] }, // Indigo
+            margin: { left: 20, right: 20 }
+        });
+
+        // 6. Monthly Trend
+        const lastY3 = doc.lastAutoTable.finalY || 240;
+        if (lastY3 > 240) doc.addPage();
+        const trendY = lastY3 > 240 ? 30 : lastY3 + 15;
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('5. TENDÊNCIA DE ATUAÇÃO (MENSAL)', 20, trendY);
+
+        const trendData = stats.trendChart.map(t => [t.name, t.value]);
+
+        autoTable(doc, {
+            startY: trendY + 7,
+            head: [['Mês/Período', 'Volume de Vistorias']],
+            body: trendData,
+            theme: 'grid',
+            headStyles: { fillColor: [30, 41, 59] },
+            margin: { left: 20, right: 20 }
+        });
+
+        // 7. Footnote
+        const finalY = doc.lastAutoTable.finalY || 260;
         doc.setFontSize(9);
         doc.setTextColor(150, 150, 150);
-        doc.text(`Gerado via SIGERD MOBILE Intelligence em ${new Date().toLocaleString('pt-BR')}`, 105, 280, { align: 'center' });
-        doc.text(`Responsável Institucional: ${userProfile?.full_name || 'Usuário do Sistema'}`, 105, 285, { align: 'center' });
+        doc.text(`Gerado via SIGERD MOBILE Intelligence em ${new Date().toLocaleString('pt-BR')}`, 105, 285, { align: 'center' });
+        doc.text(`Responsável Institucional: ${userProfile?.full_name || 'Usuário do Sistema'}`, 105, 290, { align: 'center' });
         doc.setFont('helvetica', 'bold');
         doc.text('Relatório para fins de Gestão e Tomada de Decisão Estratégica', 105, 290, { align: 'center' });
 
         // Save
         doc.save(`Relatorio_Gestao_Estrategica_${timeframe}_${new Date().getTime()}.pdf`);
-        console.log("Relatório gerado com sucesso!");
     } catch (error) {
         console.error("Erro detalhado na geração do PDF:", error);
         alert("Erro ao gerar PDF: " + error.message);
