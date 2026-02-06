@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, BarChart3, Calendar, Download, Users, ShieldAlert, Home, Activity, CheckCircle, Clock, Filter, Printer, Share2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { getAllVistoriasLocal, getRemoteVistoriasCache } from '../../services/db'
+import { getAllVistoriasLocal, getRemoteVistoriasCache, getAllInterdicoesLocal } from '../../services/db'
+import { getOccupants } from '../../services/shelterDb'
 import { generateManagementReport } from '../../utils/managementReportGenerator'
 
 const ManagementDashboard = () => {
@@ -29,12 +30,18 @@ const ManagementDashboard = () => {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [local, remote] = await Promise.all([
+            const [local, remote, interdicoes, occupants] = await Promise.all([
                 getAllVistoriasLocal(),
-                getRemoteVistoriasCache()
+                getRemoteVistoriasCache(),
+                getAllInterdicoesLocal(),
+                getOccupants()
             ])
-            const combined = [...remote, ...local]
-            setAllData(combined)
+
+            setAllData({
+                vistorias: [...remote, ...local],
+                interdicoes: interdicoes || [],
+                occupants: occupants || []
+            })
         } catch (error) {
             console.error('Erro ao carregar dados:', error)
         } finally {
@@ -43,28 +50,40 @@ const ManagementDashboard = () => {
     }
 
     const filteredData = useMemo(() => {
-        if (timeframe === 'all') return allData
-
         const now = new Date()
         const threshold = new Date()
 
         if (timeframe === 'month') threshold.setMonth(now.getMonth() - 1)
         else if (timeframe === 'quarter') threshold.setMonth(now.getMonth() - 3)
-        else if (timeframe === 'year') threshold.setFullYear(now.getFullYear(), 0, 1) // Start of year
+        else if (timeframe === 'year') threshold.setFullYear(now.getFullYear(), 0, 1)
+        else return allData
 
-        return allData.filter(item => {
+        const filterByDate = (list) => list.filter(item => {
             const date = new Date(item.created_at || item.data_hora || Date.now())
             return date >= threshold
         })
+
+        return {
+            vistorias: filterByDate(allData.vistorias || []),
+            interdicoes: filterByDate(allData.interdicoes || []),
+            occupants: allData.occupants || [] // Occupants are current state, usually not filtered by entry date for management view but can be if needed
+        }
     }, [allData, timeframe])
 
     const stats = useMemo(() => {
-        const total = filteredData.length
+        const vistorias = filteredData.vistorias || []
+        const total = vistorias.length
         const riskLevels = { 'Muito Alto': 0, 'Alto': 0, 'Médio': 0, 'Baixo': 0, 'Outros': 0 }
         const categories = {}
         const monthlyTrend = {}
 
-        filteredData.forEach(item => {
+        // Advanced Indicators
+        let totalInterdicoes = (filteredData.interdicoes || []).length
+        let desabrigados = (filteredData.occupants || []).filter(o => o.status !== 'exited').length
+        let desalojados = 0
+        let totalPeopleAssist = 0
+
+        vistorias.forEach(item => {
             // Risk Level
             const risk = item.nivel_risco || item.nivelRisco || 'Outros'
             riskLevels[risk] = (riskLevels[risk] || 0) + 1
@@ -73,21 +92,37 @@ const ManagementDashboard = () => {
             const cat = item.categoria_risco || item.categoriaRisco || 'Outros'
             categories[cat] = (categories[cat] || 0) + 1
 
-            // Trend (Month/Year)
+            // Trend
             const date = new Date(item.created_at || item.data_hora || Date.now())
             const monthKey = date.toLocaleDateString('pt-BR', { month: 'short' })
             monthlyTrend[monthKey] = (monthlyTrend[monthKey] || 0) + 1
+
+            // Displaced/Interdicted in Vistoria
+            const medidas = item.medidas_tomadas || item.medidasTomadas || []
+            if (medidas.includes('Interdição Parcial') || medidas.includes('Interdição Total')) {
+                // If it's not already counted in interdicoes table (to avoid double counting if UI creates both)
+                // For simplicity, we assume interdicoes table is primary for legal acts
+            }
+
+            if (medidas.includes('Desalojamento') || medidas.includes('Orientação ao morador (sair do imóvel)')) {
+                desalojados += parseInt(item.populacao_estimada || item.populacaoEstimada || 0)
+            }
+
+            totalPeopleAssist += parseInt(item.populacao_estimada || item.populacaoEstimada || 0)
         })
 
         return {
             total,
+            interdicoes: totalInterdicoes,
+            desabrigados,
+            desalojados,
             riskChart: Object.entries(riskLevels).map(([name, value]) => ({ name, value })),
             categoryChart: Object.entries(categories)
                 .map(([name, value]) => ({ name, value }))
                 .sort((a, b) => b.value - a.value)
                 .slice(0, 5),
             trendChart: Object.entries(monthlyTrend).map(([name, value]) => ({ name, value })),
-            familiesAfected: total * 3.5 // Estimated multiplier
+            familiesAfected: totalPeopleAssist || (total * 3.5)
         }
     }, [filteredData])
 
@@ -151,7 +186,23 @@ const ManagementDashboard = () => {
                             <Users size={20} />
                         </div>
                         <div className="text-4xl font-black text-slate-900 leading-none">{Math.round(stats.familiesAfected)}</div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Pessoas Assistidas</div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Cidadãos Impactados</div>
+                    </div>
+
+                    {/* New KPIs */}
+                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                        <div className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4 border border-red-100/50">
+                            <ShieldAlert size={20} />
+                        </div>
+                        <div className="text-4xl font-black text-slate-900 leading-none">{stats.interdicoes}</div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Interdições</div>
+                    </div>
+                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                        <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-4 border border-orange-100/50">
+                            <Home size={20} />
+                        </div>
+                        <div className="text-4xl font-black text-slate-900 leading-none">{stats.desabrigados + stats.desalojados}</div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Desabr./Desaloj.</div>
                     </div>
                 </div>
 
@@ -179,6 +230,7 @@ const ManagementDashboard = () => {
                                     dataKey="value"
                                     stroke="#fff"
                                     strokeWidth={3}
+                                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                                 >
                                     {stats.riskChart.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={RISK_COLORS[entry.name] || '#94a3b8'} />
