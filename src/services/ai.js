@@ -24,16 +24,17 @@ export const refineReportText = async (text, category = 'Geral', context = '') =
     if (!API_KEY) return "ERROR: Chave de API não encontrada (VITE_GOOGLE_API_KEY).";
 
     const prompt = `
-    Atue como Engenheiro Civil Sênior de Defesa Civil.
-    Reescreva o texto abaixo em linguagem técnica formal para laudo oficial.
+    Transforme este relato de campo em uma descrição técnica de engenharia civil densa e formal: "${text}".
     
-    ENTRADA: "${text}"
-    CONTEXTO: ${category} | ${context}
+    CATEGORIA: ${category}
+    CONTEXTO: ${context}
     
-    REGRAS:
-    1. Mantenha os fatos, melhore o vocabulário.
-    2. Voz passiva e impessoal.
-    3. Responda APENAS o texto reescrito.
+    REGRAS RÍGIDAS:
+    - Retorne APENAS o texto técnico, sem títulos, sem cabeçalhos e sem introduções.
+    - O texto deve ser uma narrativa técnica profissional em voz passiva.
+    - COMPLEMENTE com termos técnicos e riscos prováveis baseados na Categoria informada.
+    - NÃO use "Relatório", "Evento" ou campos de preenchimento.
+    - Use terminologia normativa: recalque, lixiviação, saturação, escorregamento, coesão, pressões neutras.
     `;
 
     // Priority list: Model + API Version
