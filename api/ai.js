@@ -67,23 +67,37 @@ export default async function handler(request, response) {
             }
         }
 
-        // If we get here, all models failed
-        throw lastError || new Error(`Todos os modelos falharam: ${errors.join(', ')}`);
+        // If we get here, all models failed. 
+        // Let's diagnose by listing available models.
+        let availableModels = "Unable to list models";
+        try {
+            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
+            if (listRes.ok) {
+                const listData = await listRes.json();
+                availableModels = listData.models
+                    ? listData.models.map(m => m.name.replace('models/', '')).join(', ')
+                    : "No models returned";
+            } else {
+                availableModels = `List failed: ${listRes.status}`;
+            }
+        } catch (listErr) {
+            availableModels = `List error: ${listErr.message}`;
+        }
+
+        console.error('All models failed. Available:', availableModels);
+
+        throw new Error(
+            `Falha em todos os modelos (${MODELS_TO_TRY.join(', ')}).\n` +
+            `Erros: ${errors.join(' | ')}\n` +
+            `Modelos disponíveis para esta chave/região: [${availableModels}]`
+        );
 
     } catch (error) {
         console.error('AI SDK Error:', error);
 
-        // Provide clear error message for the user based on the SDK error
-        let userMessage = error.message;
-        if (error.message?.includes('API key not valid')) {
-            userMessage = "A Chave de API fornecida é inválida. Verifique na Vercel.";
-        } else if (error.message?.includes('quota')) {
-            userMessage = "Cota de uso da IA excedida. Tente novamente mais tarde.";
-        }
-
         return response.status(500).json({
-            error: "Erro no processamento da IA (SDK) v3.1",
-            detail: `${userMessage}\n\n[Diagnóstico v3.1: ${new Date().toISOString()}]`
+            error: "Erro Diagnóstico AI (v4.0)",
+            detail: error.message
         });
     }
 }
