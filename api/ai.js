@@ -1,9 +1,9 @@
 export default async function handler(request, response) {
-    const API_KEY = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY;
+    const API_KEY = (process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY || "").trim();
 
     console.log('--- AI PROXY DIAGNOSTICS ---');
     console.log('Available Env Keys:', Object.keys(process.env).filter(k => k.includes('GOOGLE') || k.includes('KEY')));
-    console.log('API_KEY found:', !!API_KEY);
+    console.log('API_KEY found & trimmed:', !!API_KEY);
 
     if (!API_KEY) {
         const detectedKeys = Object.keys(process.env).filter(k => k.includes('KEY')).join(', ');
@@ -34,12 +34,12 @@ export default async function handler(request, response) {
     `;
 
     const CANDIDATES = [
-        { model: 'gemini-2.0-flash', version: 'v1' },
         { model: 'gemini-1.5-flash', version: 'v1' },
-        { model: 'gemini-1.5-flash', version: 'v1beta' }
+        { model: 'gemini-1.5-pro', version: 'v1' },
+        { model: 'gemini-1.0-pro', version: 'v1' }
     ];
 
-    let lastError = null;
+    let errors = [];
 
     for (const cand of CANDIDATES) {
         try {
@@ -61,12 +61,16 @@ export default async function handler(request, response) {
                 }
             } else {
                 const errData = await apiRes.json().catch(() => ({}));
-                lastError = errData.error?.message || apiRes.statusText;
+                const msg = errData.error?.message || apiRes.statusText;
+                errors.push(`${cand.model}(${cand.version}): ${msg}`);
             }
         } catch (e) {
-            lastError = e.message;
+            errors.push(`${cand.model}(${cand.version}): ${e.message}`);
         }
     }
 
-    return response.status(500).json({ error: `Falha na IA: ${lastError}` });
+    return response.status(500).json({
+        error: "Falha geral nos modelos de IA.",
+        detail: `Erros por modelo:\n${errors.join('\n')}`
+    });
 }
