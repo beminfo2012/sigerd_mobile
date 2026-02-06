@@ -20,11 +20,12 @@ export default async function handler(request, response) {
         const genAI = new GoogleGenerativeAI(API_KEY);
 
         // Define models to try in order of preference
+        // Based on Diagnostic v5.0: User has access to Gemini 2.0/2.5 series
         const MODELS_TO_TRY = [
-            "gemini-pro",         // PRIMARY: Classic stable model (most compatible)
-            "gemini-1.5-flash",   // Second try
-            "gemini-1.5-pro",
-            "gemini-1.0-pro"
+            "gemini-2.0-flash",       // PRIMARY: Detected available
+            "gemini-2.0-flash-lite",  // Fallback 1
+            "gemini-2.5-flash",       // Fallback 2 (Experimental)
+            "gemini-2.5-pro"          // Fallback 3 (Experimental)
         ];
 
         const prompt = `
