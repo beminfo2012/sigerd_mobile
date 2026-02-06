@@ -317,10 +317,10 @@ const ManagementDashboard = () => {
                 {/* Executive Action Button */}
                 <button
                     onClick={() => generateManagementReport(stats, timeframe, userProfile)}
-                    className="w-full bg-[#1e293b] text-white p-6 rounded-[32px] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 shadow-xl shadow-slate-900/20 active:scale-[0.98] transition-all hover:bg-slate-800"
+                    className="w-full bg-[#1e293b] text-white p-4 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 shadow-lg shadow-slate-900/10 active:scale-[0.98] transition-all hover:bg-slate-800"
                 >
-                    <Download size={24} />
-                    Gerador de Relatório Executivo (PDF)
+                    <Download size={18} />
+                    Gerar Relatório Executivo (PDF)
                 </button>
             </main>
         </div>
