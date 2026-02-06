@@ -4,9 +4,13 @@ import { AlertTriangle } from 'lucide-react'
 import VistoriaForm from './VistoriaForm'
 import VistoriaList from './VistoriaList'
 
+import { supabase } from '../../services/supabase'
+import { getVistoriaFull } from '../../services/db'
+
 const Vistorias = () => {
     const [view, setView] = useState('list') // 'list' | 'form'
     const [selectedVistoria, setSelectedVistoria] = useState(null)
+    const [loadingEdit, setLoadingEdit] = useState(false)
 
     const [showBlockModal, setShowBlockModal] = useState(false)
     const navigate = useNavigate()
@@ -30,22 +34,56 @@ const Vistorias = () => {
         setView('form')
     }
 
-    const handleEdit = (vistoria) => {
-        // Need to map DB fields to Form fields if they differ
-        // For now passing raw, assuming Form handles it or we map here
-        // DB: tipo_info, etc. Form: tipoInfo
-        // Simplest mapping:
-        const mappedData = {
-            ...vistoria,
-            tipoInfo: vistoria.tipo_info,
-            vistoriaId: vistoria.vistoria_id,
-            dataHora: vistoria.data_hora || new Date().toISOString().slice(0, 16),
-            fotos: vistoria.fotos || [], // If JSONB is array of objects
-            documentos: vistoria.documentos || []
-        }
+    const handleEdit = async (vistoriaPartial) => {
+        setLoadingEdit(true)
+        try {
+            console.log('[Edit] Fetching full details for:', vistoriaPartial.vistoria_id);
 
-        setSelectedVistoria(mappedData)
-        setView('form')
+            // 1. Try Local/Cache first via DB helper
+            let fullData = await getVistoriaFull(vistoriaPartial.id);
+
+            // 2. If not found locally, try Cloud (specific fetch)
+            if (!fullData) {
+                // If it's a cloud item, 'id' is likely the UUID
+                // If local item, 'supabase_id' would be the UUID
+                const targetId = vistoriaPartial.supabase_id || vistoriaPartial.id;
+
+                // Only try fetching if it looks like a UUID or we have a valid ID
+                if (targetId) {
+                    const { data, error } = await supabase
+                        .from('vistorias')
+                        .select('*')
+                        .eq('id', targetId)
+                        .single();
+
+                    if (data) fullData = data;
+                }
+            }
+
+            // Fallback to partial if absolutely nothing found (prevents crash, but warns)
+            const vistoria = fullData || vistoriaPartial;
+
+            // Need to map DB fields to Form fields if they differ
+            // For now passing raw, assuming Form handles it or we map here
+            // DB: tipo_info, etc. Form: tipoInfo
+            // Simplest mapping:
+            const mappedData = {
+                ...vistoria,
+                tipoInfo: vistoria.tipo_info,
+                vistoriaId: vistoria.vistoria_id,
+                dataHora: vistoria.data_hora || new Date().toISOString().slice(0, 16),
+                fotos: vistoria.fotos || [], // If JSONB is array of objects
+                documentos: vistoria.documentos || []
+            }
+
+            setSelectedVistoria(mappedData)
+            setView('form')
+        } catch (e) {
+            console.error("Edit load failed:", e)
+            alert("Erro ao carregar detalhes da vistoria.")
+        } finally {
+            setLoadingEdit(false)
+        }
     }
 
     const handleBack = () => {

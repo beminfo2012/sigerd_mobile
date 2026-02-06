@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
-import { deleteVistoriaLocal, getAllVistoriasLocal } from '../../services/db'
+import { deleteVistoriaLocal, getLightweightVistoriasLocal, getVistoriaFull } from '../../services/db'
 import ConfirmModal from '../../components/ConfirmModal'
 
 const VistoriaList = ({ onNew, onEdit }) => {
     const [vistorias, setVistorias] = useState([])
     const [loading, setLoading] = useState(true)
+    const [sending, setSending] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [filters, setFilters] = useState({
@@ -35,14 +36,16 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const fetchVistorias = async () => {
         setLoading(true)
         try {
-            // 1. Fetch from Supabase
+            // 1. Fetch from Supabase (Optimized Select)
             const { data: cloudData, error } = await supabase
                 .from('vistorias')
-                .select('*')
+                .select('id, vistoria_id, created_at, solicitante, endereco, bairro, nivel_risco, categoria_risco, tipo_info, fotos') // Keeping fotos for now if needed for thumbnails, but maybe removing strictly? List doesn't show thumbs.
+                // Wait, list DOES NOT show thumbs. Let's remove fotos.
+                .select('id, vistoria_id, created_at, solicitante, endereco, bairro, nivel_risco, categoria_risco, tipo_info, synced')
                 .order('created_at', { ascending: false })
 
-            // 2. Fetch from Local
-            const localData = await getAllVistoriasLocal().catch(() => [])
+            // 2. Fetch from Local (Lightweight)
+            const localData = await getLightweightVistoriasLocal().catch(() => [])
 
             // 3. Merge and De-duplicate [FIXED]
             const merged = [...(cloudData || [])]
@@ -155,31 +158,49 @@ const VistoriaList = ({ onNew, onEdit }) => {
             return
         }
 
-        // Generate PDF first
-        await generatePDF(emailModal.vistoria, 'vistoria')
+        setSending(true)
+        try {
+            // 1. Fetch full data (photos etc)
+            let fullVistoria = await getVistoriaFull(emailModal.vistoria.id);
+            if (!fullVistoria && (emailModal.vistoria.supabase_id || emailModal.vistoria.id)) {
+                const targetId = emailModal.vistoria.supabase_id || emailModal.vistoria.id;
+                const { data } = await supabase.from('vistorias').select('*').eq('id', targetId).single();
+                if (data) fullVistoria = data;
+            }
+            // Fallback
+            fullVistoria = fullVistoria || emailModal.vistoria;
 
-        // Prepare email
-        const vistoriaId = emailModal.vistoria.vistoria_id || 'N/A'
-        const solicitante = emailModal.vistoria.solicitante || 'Solicitante'
-        const endereco = emailModal.vistoria.endereco || 'Endereço não informado'
+            // Generate PDF first (this downloads it)
+            await generatePDF(fullVistoria, 'vistoria')
 
-        const subject = encodeURIComponent(`Relatório de Vistoria Técnica ${vistoriaId}`)
-        const body = (
-            `Prezado(a),\n\n` +
-            `Segue em anexo o Relatório de Vistoria Técnica ${vistoriaId}.\n\n` +
-            `Solicitante: ${solicitante}\n` +
-            `Local: ${endereco}\n\n` +
-            `O arquivo PDF foi baixado no seu dispositivo. Por favor, anexe-o a este email antes de enviar.\n\n` +
-            `Atenciosamente,\n` +
-            `Defesa Civil Municipal de Santa Maria de Jetibá`
-        )
+            // Prepare email
+            const vistoriaId = fullVistoria.vistoria_id || fullVistoria.vistoriaId || 'N/A'
+            const solicitante = fullVistoria.solicitante || 'Solicitante'
+            const endereco = fullVistoria.endereco || 'Endereço não informado'
 
-        // Open email client with mailto
-        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`
+            const subject = encodeURIComponent(`Relatório de Vistoria Técnica ${vistoriaId}`)
+            const body = (
+                `Prezado(a),\n\n` +
+                `Segue em anexo o Relatório de Vistoria Técnica ${vistoriaId}.\n\n` +
+                `Solicitante: ${solicitante}\n` +
+                `Local: ${endereco}\n\n` +
+                `O arquivo PDF foi baixado no seu dispositivo. Por favor, anexe-o a este email antes de enviar.\n\n` +
+                `Atenciosamente,\n` +
+                `Defesa Civil Municipal de Santa Maria de Jetibá`
+            )
 
-        // Close modal
-        setEmailModal({ open: false, vistoria: null })
-        setEmailAddress('')
+            // Open email client with mailto
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`
+
+            // Close modal
+            setEmailModal({ open: false, vistoria: null })
+            setEmailAddress('')
+        } catch (e) {
+            console.error(e)
+            alert('Erro ao gerar PDF ou preparar email.')
+        } finally {
+            setSending(false)
+        }
     }
 
     const neighborhoods = [...new Set(vistorias.map(v => v.bairro).filter(Boolean))].sort()

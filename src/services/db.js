@@ -497,6 +497,64 @@ export const getAllVistoriasLocal = async () => {
     }))
 }
 
+export const getLightweightVistoriasLocal = async () => {
+    const db = await initDB()
+    const tx = db.transaction('vistorias', 'readonly')
+    const store = tx.objectStore('vistorias')
+    let cursor = await store.openCursor()
+    const items = []
+
+    while (cursor) {
+        const v = cursor.value
+        // Only select lightweight fields needed for the list
+        items.push({
+            id: v.id,
+            vistoria_id: v.vistoria_id || v.vistoriaId,
+            supabase_id: v.supabase_id,
+            created_at: v.created_at || v.createdAt,
+            solicitante: v.solicitante,
+            endereco: v.endereco,
+            bairro: v.bairro,
+            nivelRisco: v.nivelRisco || v.nivel_risco,
+            categoriaRisco: v.categoriaRisco || v.categoria_risco,
+            tipo_info: v.tipo_info || v.tipoInfo || v.categoriaRisco || 'Vistoria Geral',
+            synced: v.synced,
+            // Exclude heavy fields: fotos, documentos, etc.
+        })
+        cursor = await cursor.continue()
+    }
+    return items
+}
+
+export const getVistoriaFull = async (id) => {
+    const db = await initDB()
+    const tx = db.transaction(['vistorias', 'remote_vistorias_cache'], 'readonly')
+
+    // 1. Try Local Store
+    const vStore = tx.objectStore('vistorias')
+    // Support finding by various ID types
+    let item = await vStore.get(id)
+    if (!item) {
+        // Try scanning if ID is a string but key is auto-increment
+        // Or if ID is the vistoria_id string
+        const all = await vStore.getAll()
+        item = all.find(v => v.id === id || v.vistoria_id === id || v.supabase_id === id)
+    }
+
+    // 2. Try Cache if not in local
+    if (!item) {
+        const cStore = tx.objectStore('remote_vistorias_cache')
+        item = await cStore.get(id)
+        if (!item) {
+            const allCache = await cStore.getAll()
+            item = allCache.find(v => v.id === id || v.vistoria_id === id || v.id === parseInt(id))
+        }
+    }
+
+    await tx.done
+    return item
+}
+
 export const getAllInterdicoesLocal = async () => {
     const db = await initDB()
     const all = await db.getAll('interdicoes')
