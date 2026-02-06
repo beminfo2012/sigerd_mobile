@@ -21,6 +21,7 @@ const GeoDashboard = lazy(() => import('./pages/Monitoramento/GeoDashboard'))
 const RiskDashboard = lazy(() => import('./pages/Monitoramento/RiskDashboard'))
 const ChecklistSaida = lazy(() => import('./pages/Checklist/ChecklistSaida'))
 const VistoriaPrint = lazy(() => import('./pages/Vistorias/VistoriaPrint'))
+const ManagementDashboard = lazy(() => import('./pages/Monitoramento/ManagementDashboard'))
 
 // Shelter Module (Lazy)
 const ShelterMenu = lazy(() => import('./pages/Abrigos/Menu'))
@@ -187,6 +188,11 @@ const AppContent = ({
                         <Route path="/monitoramento/riscos" element={
                             <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                 <RiskDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/monitoramento/gestao" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <ManagementDashboard />
                             </ProtectedRoute>
                         } />
                         <Route path="/checklist-saida" element={
