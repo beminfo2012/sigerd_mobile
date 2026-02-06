@@ -68,15 +68,23 @@ export default async function handler(request, response) {
         }
 
         // If we get here, all models failed. 
-        // Let's diagnose by listing available models.
-        let availableModels = "Unable to list models";
+        // Let's diagnose by listing available models using v1 (stable).
+        let availableModels = "Unable to list";
+        let modelCount = 0;
         try {
-            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`);
+            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${API_KEY}`);
             if (listRes.ok) {
                 const listData = await listRes.json();
-                availableModels = listData.models
-                    ? listData.models.map(m => m.name.replace('models/', '')).join(', ')
-                    : "No models returned";
+                if (listData.models) {
+                    modelCount = listData.models.length;
+                    // Get just the base names, e.g. "gemini-pro"
+                    availableModels = listData.models
+                        .map(m => m.name.replace('models/', ''))
+                        .filter(n => n.includes('gemini'))
+                        .join(', ');
+                } else {
+                    availableModels = "No models found";
+                }
             } else {
                 availableModels = `List failed: ${listRes.status}`;
             }
@@ -86,17 +94,18 @@ export default async function handler(request, response) {
 
         console.error('All models failed. Available:', availableModels);
 
+        // Throw a concise error for mobile alerts
         throw new Error(
-            `Falha em todos os modelos (${MODELS_TO_TRY.join(', ')}).\n` +
-            `Erros: ${errors.join(' | ')}\n` +
-            `Modelos disponíveis para esta chave/região: [${availableModels}]`
+            `DIAGNÓSTICO (v5.0):\n` +
+            `Modelos Disponíveis (${modelCount}): [${availableModels}]\n\n` +
+            `Tentativas falharam em: ${MODELS_TO_TRY.join(', ')}`
         );
 
     } catch (error) {
         console.error('AI SDK Error:', error);
 
         return response.status(500).json({
-            error: "Erro Diagnóstico AI (v4.0)",
+            error: "Erro de Conectividade AI (v5.0)",
             detail: error.message
         });
     }
