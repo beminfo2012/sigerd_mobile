@@ -21,78 +21,24 @@ const listAvailableModels = async () => {
 
 export const refineReportText = async (text, category = 'Geral', context = '') => {
     if (!text) return null;
-    if (!API_KEY) return "ERROR: Chave de API não encontrada (VITE_GOOGLE_API_KEY).";
 
-    const prompt = `
-    Transforme este relato de campo em uma descrição técnica de engenharia civil densa e formal: "${text}".
-    
-    CATEGORIA: ${category}
-    CONTEXTO: ${context}
-    
-    REGRAS RÍGIDAS:
-    - Retorne APENAS o texto técnico, sem títulos, sem cabeçalhos e sem introduções.
-    - O texto deve ser uma narrativa técnica profissional em voz passiva.
-    - COMPLEMENTE com termos técnicos e riscos prováveis baseados na Categoria informada.
-    - NÃO use "Relatório", "Evento" ou campos de preenchimento.
-    - Use terminologia normativa: recalque, lixiviação, saturação, escorregamento, coesão, pressões neutras.
-    `;
+    try {
+        const response = await fetch('/api/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, category, context })
+        });
 
-    // Priority list: Model + API Version
-    // Gemini 1.5 Flash is now stable on v1
-    const CANDIDATES = [
-        { model: 'gemini-2.5-flash-lite', version: 'v1' },
-        { model: 'gemini-2.0-flash-lite', version: 'v1' },
-        { model: 'gemini-2.0-flash', version: 'v1' },
-        { model: 'gemini-1.5-flash', version: 'v1beta' }
-    ];
-
-    let errors = [];
-
-    const fetchWithTimeout = async (url, options, timeout = 20000) => {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        try {
-            const response = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(id);
-            return response;
-        } catch (error) {
-            clearTimeout(id);
-            throw error;
+        if (response.ok) {
+            const refinedText = await response.text();
+            return refinedText;
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            return `ERROR: ${errData.error || 'Falha na comunicação com o servidor de IA.'}`;
         }
-    };
-
-    for (const cand of CANDIDATES) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/${cand.version}/models/${cand.model}:generateContent?key=${API_KEY}`;
-
-            const response = await fetchWithTimeout(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const refined = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (refined) return refined.trim();
-            } else {
-                const errData = await response.json().catch(() => ({}));
-                const msg = errData.error?.message || response.statusText;
-                errors.push(`${cand.model} (${cand.version}): ${response.status} - ${msg}`);
-            }
-
-        } catch (error) {
-            errors.push(`${cand.model}: ${error.message}`);
-        }
+    } catch (e) {
+        console.error('AI Refine Error:', e);
+        return `ERROR: Erro de conexão com o serviço de refinamento.`;
     }
-
-    // Try discovery as last resort
-    const discovered = await listAvailableModels();
-    const discoveryMsg = discovered.length > 0
-        ? `\n\nModelos visíveis pela sua chave: ${discovered.slice(0, 5).join(', ')}`
-        : "\n\nSua chave não parece ter acesso a nenhum modelo Gemini (Verifique se a API de Linguagem Generativa está ativa no Cloud Console).";
-
-    return `ERROR: Falha técnica na IA.${discoveryMsg}\n\nDetalhes:\n${errors.join('\n')}`;
 };
+
