@@ -21,10 +21,10 @@ export default async function handler(request, response) {
 
         // Define models to try in order of preference
         const MODELS_TO_TRY = [
-            "gemini-1.5-flash",
+            "gemini-pro",         // PRIMARY: Classic stable model (most compatible)
+            "gemini-1.5-flash",   // Second try
             "gemini-1.5-pro",
-            "gemini-pro",         // Classic stable model
-            "gemini-1.0-pro"      // Explicit version
+            "gemini-1.0-pro"
         ];
 
         const prompt = `
@@ -46,7 +46,7 @@ export default async function handler(request, response) {
 
         for (const modelName of MODELS_TO_TRY) {
             try {
-                console.log(`[AI Proxy] Trying model: ${modelName}`);
+                console.log(`[AI Proxy v3.1] Trying model: ${modelName}`);
                 const model = genAI.getGenerativeModel({ model: modelName });
 
                 const result = await model.generateContent(prompt);
@@ -56,7 +56,7 @@ export default async function handler(request, response) {
                     return response.status(200).send(refinedText.trim());
                 }
             } catch (e) {
-                console.warn(`[AI Proxy] Failed with ${modelName}:`, e.message);
+                console.warn(`[AI Proxy v3.1] Failed with ${modelName}:`, e.message);
                 lastError = e;
                 errors.push(`${modelName}: ${e.message}`);
 
@@ -82,8 +82,8 @@ export default async function handler(request, response) {
         }
 
         return response.status(500).json({
-            error: "Erro no processamento da IA (SDK)",
-            detail: userMessage
+            error: "Erro no processamento da IA (SDK) v3.1",
+            detail: `${userMessage}\n\n[Diagnóstico v3.1: ${new Date().toISOString()}]`
         });
     }
 }
