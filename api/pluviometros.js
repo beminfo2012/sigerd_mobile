@@ -66,23 +66,55 @@ export default async function handler(request, response) {
                             return {
                                 DataHora: get("DataHora"),
                                 Nivel: get("Nivel"),
-                                Vazao: get("Vazao")
+                                Vazao: get("Vazao"),
+                                Chuva: get("Chuva")
                             };
                         }).filter(i => i.DataHora);
                     }
                 }
 
-                const latest = items.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora))[0];
+                const sortedItems = items.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora));
+                const latest = sortedItems[0];
 
                 if (!latest) throw new Error("Sem dados");
+
+                // Calculate Rain Accumulation
+                const latestDate = new Date(latest.DataHora);
+                // 1 Hour ago
+                const oneHourAgo = new Date(latestDate.getTime() - 60 * 60 * 1000);
+                // 24 Hours ago
+                const twentyFourHoursAgo = new Date(latestDate.getTime() - 24 * 60 * 60 * 1000);
+
+                const acc1hr = sortedItems.reduce((sum, item) => {
+                    const d = new Date(item.DataHora);
+                    // Check if date is valid
+                    if (isNaN(d.getTime())) return sum;
+
+                    if (d > oneHourAgo && d <= latestDate) {
+                        return sum + (parseFloat(item.Chuva) || 0);
+                    }
+                    return sum;
+                }, 0);
+
+                const acc24hr = sortedItems.reduce((sum, item) => {
+                    const d = new Date(item.DataHora);
+                    if (isNaN(d.getTime())) return sum;
+
+                    if (d > twentyFourHoursAgo && d <= latestDate) {
+                        return sum + (parseFloat(item.Chuva) || 0);
+                    }
+                    return sum;
+                }, 0);
 
                 return {
                     id: station.id,
                     name: station.name,
-                    type: "fluviometric",
+                    type: "fluviometric", // Keep as fluviometric to show level/flow if available
                     isRealTime: true,
                     level: parseFloat(latest.Nivel || 0),
                     flow: parseFloat(latest.Vazao || 0),
+                    acc1hr: parseFloat(acc1hr.toFixed(1)),
+                    acc24hr: parseFloat(acc24hr.toFixed(1)),
                     status: "Online",
                     lastUpdate: latest.DataHora
                 };
