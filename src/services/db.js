@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 11
+const DB_VERSION = 12
 
 
 let dbPromise = null;
@@ -66,6 +66,15 @@ export const initDB = async () => {
             } else {
                 ensureSyncedIndex('emergency_contracts');
             }
+
+            // Manual Rain Readings
+            if (!db.objectStoreNames.contains('manual_readings')) {
+                const store = db.createObjectStore('manual_readings', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('date', 'date', { unique: false });
+                store.createIndex('synced', 'synced', { unique: false });
+            } else {
+                ensureSyncedIndex('manual_readings');
+            }
         },
     });
     return dbPromise;
@@ -88,6 +97,41 @@ const base64ToBlob = (base64) => {
         console.error('Base64 conversion error:', e)
         return null
     }
+}
+
+export const saveManualReading = async (volume, date) => {
+    const db = await initDB()
+    const reading = {
+        station_id: 'MANUAL_SEDE',
+        volume: parseFloat(volume),
+        date: date || new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        synced: false
+    }
+
+    // Save locally
+    const id = await db.put('manual_readings', reading)
+
+    // Try sync if online (Basic Implementation)
+    if (navigator.onLine) {
+        // In a real scenario, we'd sync to a Supabase table 'manual_readings'
+        // For now, we keep it local-first and persistent.
+        // await syncManualReadings(); 
+    }
+    return id
+}
+
+export const getManualReadings = async () => {
+    const db = await initDB()
+    // Get all readings
+    // In a real app with many readings, we'd use a cursor or index range
+    const all = await db.getAll('manual_readings')
+    return all.sort((a, b) => new Date(b.date) - new Date(a.date))
+}
+
+export const deleteManualReading = async (id) => {
+    const db = await initDB()
+    await db.delete('manual_readings', id)
 }
 
 export const saveVistoriaOffline = async (data) => {

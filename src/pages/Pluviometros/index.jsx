@@ -1,13 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity, Plus } from 'lucide-react'
 import html2canvas from 'html2canvas'
+import { saveManualReading, getManualReadings } from '../../services/db'
 
 const Pluviometros = () => {
     const navigate = useNavigate()
     const [stations, setStations] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [manualModalOpen, setManualModalOpen] = useState(false)
+    const [manualDate, setManualDate] = useState(new Date().toISOString().slice(0, 16))
+    const [manualVolume, setManualVolume] = useState('')
     const reportRef = useRef(null)
 
     useEffect(() => {
@@ -18,16 +22,52 @@ const Pluviometros = () => {
         setLoading(true)
         setError(null)
         try {
-            // Try local function relative path, or direct if valid
-            // Vercel routes /api/pluviometros to api/pluviometros.js
+            // 1. Fetch Manual Readings (SEDE)
+            const manualReadings = await getManualReadings()
+
+            // Calculate Accumulators for Manual Station
+            const now = new Date()
+            const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+            const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+
+            const manualAcc1h = manualReadings
+                .filter(r => new Date(r.date) > oneHourAgo && new Date(r.date) <= now)
+                .reduce((sum, r) => sum + r.volume, 0)
+
+            const manualAcc24h = manualReadings
+                .filter(r => new Date(r.date) > twentyFourHoursAgo && new Date(r.date) <= now)
+                .reduce((sum, r) => sum + r.volume, 0)
+
+            const lastManualDate = manualReadings.length > 0 ? manualReadings[0].date : null
+
+            const manualStation = {
+                id: 'SEDE_DEFESA_CIVIL',
+                name: 'SEDE DEFESA CIVIL (Manual)',
+                type: 'pluviometric',
+                status: 'Online',
+                acc1hr: manualAcc1h,
+                acc24hr: manualAcc24h,
+                level: 0,
+                flow: 0,
+                lastUpdate: lastManualDate,
+                isManual: true
+            }
+
+            // 2. Fetch Automatic Data
             const res = await fetch('/api/pluviometros')
-            if (!res.ok) throw new Error('Falha ao carregar dados')
-            const data = await res.json()
-            setStations(data)
+            let apiData = []
+            if (res.ok) {
+                apiData = await res.json()
+            } else {
+                console.warn("API fetch failed, showing only manual or cache")
+            }
+
+            // Merge: Manual Station First
+            setStations([manualStation, ...apiData])
+
         } catch (err) {
             console.error(err)
-            // Fallback mock data purely for demonstration if API fails locally
-            setError('Não foi possível conectar ao CEMADEN. Tente novamente.')
+            setError('Não foi possível carregar os dados.')
         } finally {
             setLoading(false)
         }
@@ -73,6 +113,22 @@ const Pluviometros = () => {
         link.click()
     }
 
+    const handleSaveManual = async () => {
+        if (!manualVolume || isNaN(parseFloat(manualVolume))) {
+            alert("Digite um volume válido")
+            return
+        }
+        try {
+            await saveManualReading(manualVolume, manualDate)
+            setManualModalOpen(false)
+            setManualVolume('')
+            setManualDate(new Date().toISOString().slice(0, 16))
+            fetchData() // Refresh list
+        } catch (e) {
+            alert("Erro ao salvar leitura")
+        }
+    }
+
     const getRiskLevel = (acc24) => {
         if (acc24 >= 80) return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-600', label: 'ALERTA MÁXIMO' }
         if (acc24 >= 50) return { bg: 'bg-orange-50', border: 'border-orange-100', text: 'text-orange-600', label: 'ATENÇÃO' }
@@ -109,9 +165,14 @@ const Pluviometros = () => {
                     </button>
                     <h1 className="text-xl font-black text-gray-800 tracking-tight">Pluviômetros</h1>
                 </div>
-                <button onClick={fetchData} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full">
-                    <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setManualModalOpen(true)} className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-full">
+                        <Plus size={24} />
+                    </button>
+                    <button onClick={fetchData} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full">
+                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                </div>
             </div>
 
             {/* Content to Capture */}
@@ -210,7 +271,7 @@ const Pluviometros = () => {
             </div>
 
             {/* Fab Button */}
-            {!loading && !error && (
+            {!loading && (
                 <div className="fixed bottom-24 right-6 z-20">
                     <button
                         onClick={shareImage}
@@ -219,6 +280,53 @@ const Pluviometros = () => {
                         <Share2 size={24} />
                         Compartilhar
                     </button>
+                </div>
+            )}
+
+            {/* Manual Entry Modal */}
+            {manualModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setManualModalOpen(false)}
+                            className="absolute top-4 right-4 p-2 text-gray-400 hover:bg-gray-100 rounded-full"
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+
+                        <h2 className="text-xl font-black text-gray-800 mb-1">Nova Leitura Manual</h2>
+                        <p className="text-sm text-gray-500 mb-6">Sede Defesa Civil</p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Data e Hora</label>
+                                <input
+                                    type="datetime-local"
+                                    className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 font-medium outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    value={manualDate}
+                                    onChange={e => setManualDate(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Volume (mm)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    placeholder="0.0"
+                                    className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 font-bold text-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    value={manualVolume}
+                                    onChange={e => setManualVolume(e.target.value)}
+                                />
+                            </div>
+
+                            <button
+                                onClick={handleSaveManual}
+                                className="w-full py-4 bg-[#2a5299] text-white font-bold rounded-xl shadow-lg mt-4 active:scale-95 transition-all"
+                            >
+                                Salvar Leitura
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
