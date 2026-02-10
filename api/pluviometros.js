@@ -38,17 +38,41 @@ export default async function handler(request, response) {
                 // Helper for fetching with timeout and proxy fallback
                 const fetchWithFallback = async (url) => {
                     const controller = new AbortController();
-                    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+                    // 1. Try Direct
                     try {
+                        console.log(`[API] Fetching direct: ${url}`);
                         const res = await fetch(url, { signal: controller.signal });
                         clearTimeout(timeout);
-                        return res;
+                        if (res.ok) return res;
+                        console.warn(`[API] Direct fetch failed status: ${res.status}`);
                     } catch (e) {
-                        clearTimeout(timeout);
-                        // Try with CORS proxy if direct fails
-                        console.log(`Direct fetch failed for ${url}, trying proxy...`);
-                        return fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+                        console.warn(`[API] Direct fetch error: ${e.message}`);
                     }
+
+                    // 2. Try CORS Proxy (corsproxy.io)
+                    try {
+                        clearTimeout(timeout); // Reset timeout
+                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`[API] Fetching proxy 1: ${proxyUrl}`);
+                        const res = await fetch(proxyUrl);
+                        if (res.ok) return res;
+                    } catch (e) {
+                        console.warn(`[API] Proxy 1 error: ${e.message}`);
+                    }
+
+                    // 3. Try AllOrigins (Raw)
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                        console.log(`[API] Fetching proxy 2: ${proxyUrl}`);
+                        const res = await fetch(proxyUrl);
+                        if (res.ok) return res;
+                    } catch (e) {
+                        console.warn(`[API] Proxy 2 error: ${e.message}`);
+                    }
+
+                    throw new Error("All fetch methods failed");
                 };
 
                 // TRY 1: Modern REST API (JSON)
