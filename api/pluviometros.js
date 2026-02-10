@@ -35,6 +35,22 @@ export default async function handler(request, response) {
             try {
                 let items = [];
 
+                // Helper for fetching with timeout and proxy fallback
+                const fetchWithFallback = async (url) => {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+                    try {
+                        const res = await fetch(url, { signal: controller.signal });
+                        clearTimeout(timeout);
+                        return res;
+                    } catch (e) {
+                        clearTimeout(timeout);
+                        // Try with CORS proxy if direct fails
+                        console.log(`Direct fetch failed for ${url}, trying proxy...`);
+                        return fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+                    }
+                };
+
                 // TRY 1: Modern REST API (JSON)
                 try {
                     const endDate = new Date();
@@ -43,33 +59,36 @@ export default async function handler(request, response) {
                     const fmt = d => d.toISOString().split('T')[0];
                     const restUrl = `https://www.ana.gov.br/hidrowebservice/rest/estacoestelemetricas/gethidroinfoanaserietelemetricaAdotada?codEstacao=${station.id}&dataInicio=${fmt(startDate)}&dataFim=${fmt(endDate)}`;
 
-                    const resRest = await fetch(restUrl);
+                    const resRest = await fetchWithFallback(restUrl);
                     if (resRest.ok) {
                         const jsonRest = await resRest.json();
                         items = jsonRest?.items || [];
                     }
                 } catch (e) {
-                    console.warn(`REST fail for ${station.id}, trying SOAP...`);
+                    console.warn(`REST fail for ${station.id}: ${e.message}`);
                 }
 
-                // TRY 2: Legacy SOAP/ASMx (XML) - Often more stable
+                // TRY 2: Legacy SOAP/ASMx (XML)
                 if (items.length === 0) {
                     const soapUrl = `http://telemetriaws.ana.gov.br/HidroWebWS/EstacoesTelemetricas.asmx/DadosHidrometeorologicos?codEstacao=${station.id}`;
-                    const resSoap = await fetch(soapUrl);
-                    if (resSoap.ok) {
-                        const xml = await resSoap.text();
-                        // Minimal XML parsing via regex
-                        const matches = [...xml.matchAll(/<DadosHidrometereologicos>([\s\S]*?)<\/DadosHidrometereologicos>/g)];
-                        items = matches.map(m => {
-                            const content = m[1];
-                            const get = tag => (content.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`)) || [])[1] || "";
-                            return {
-                                DataHora: get("DataHora"),
-                                Nivel: get("Nivel"),
-                                Vazao: get("Vazao"),
-                                Chuva: get("Chuva")
-                            };
-                        }).filter(i => i.DataHora);
+                    try {
+                        const resSoap = await fetchWithFallback(soapUrl);
+                        if (resSoap.ok) {
+                            const xml = await resSoap.text();
+                            const matches = [...xml.matchAll(/<DadosHidrometereologicos>([\s\S]*?)<\/DadosHidrometereologicos>/g)];
+                            items = matches.map(m => {
+                                const content = m[1];
+                                const get = tag => (content.match(new RegExp(`<${tag}>(.*?)<\/${tag}>`)) || [])[1] || "";
+                                return {
+                                    DataHora: get("DataHora"),
+                                    Nivel: get("Nivel"),
+                                    Vazao: get("Vazao"),
+                                    Chuva: get("Chuva")
+                                };
+                            }).filter(i => i.DataHora);
+                        }
+                    } catch (e) {
+                        console.warn(`SOAP fail for ${station.id}: ${e.message}`);
                     }
                 }
 
