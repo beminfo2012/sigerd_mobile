@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { Search, Loader2, Navigation, MapPin } from 'lucide-react'
+import { Search, Loader2, Navigation, MapPin, RefreshCw } from 'lucide-react'
 import { georescue } from '../../services/supabase'
 import { searchInstallations, getInstallationsCount, importInstallations } from '../../services/db'
 
@@ -40,6 +40,8 @@ const GeoRescue = () => {
     const [totalInstallations, setTotalInstallations] = useState(0)
     const [isImporting, setIsImporting] = useState(false)
     const [importProgress, setImportProgress] = useState(0)
+    const [isSyncing, setIsSyncing] = useState(false)
+    const syncInProgress = useRef(false)
 
     useEffect(() => {
         // Init handled by separate effect
@@ -97,6 +99,72 @@ const GeoRescue = () => {
         }
     }
 
+    // Background sync from Supabase (silent, no overlay)
+    const syncFromSupabase = useCallback(async () => {
+        if (syncInProgress.current) return
+        syncInProgress.current = true
+        setIsSyncing(true)
+
+        try {
+            console.log('[GeoRescue] Background sync starting...')
+
+            // 1. Fetch total count from Supabase
+            const { count: remoteCount, error: countError } = await georescue
+                .from('electrical_installations')
+                .select('*', { count: 'exact', head: true })
+
+            if (countError) {
+                console.warn('[GeoRescue] Sync count check failed:', countError.message)
+                return
+            }
+
+            const localCount = await getInstallationsCount()
+            console.log(`[GeoRescue] Sync check: local=${localCount}, remote=${remoteCount}`)
+
+            // 2. If counts match, skip reimport
+            if (localCount === remoteCount && remoteCount > 0) {
+                console.log('[GeoRescue] Database is up to date, skipping sync.')
+                setTotalInstallations(localCount)
+                return
+            }
+
+            // 3. Fetch all data from Supabase in pages
+            console.log(`[GeoRescue] Syncing ${remoteCount} records from Supabase...`)
+            const PAGE_SIZE = 1000
+            let allData = []
+
+            for (let offset = 0; offset < remoteCount; offset += PAGE_SIZE) {
+                const { data, error } = await georescue
+                    .from('electrical_installations')
+                    .select('*')
+                    .range(offset, offset + PAGE_SIZE - 1)
+
+                if (error) {
+                    console.error('[GeoRescue] Sync page fetch error:', error.message)
+                    break
+                }
+                if (data) allData = allData.concat(data)
+            }
+
+            if (allData.length === 0) {
+                console.warn('[GeoRescue] No data fetched from Supabase, keeping local.')
+                return
+            }
+
+            // 4. Reimport silently
+            await importInstallations(allData, null)
+            const updatedCount = await getInstallationsCount()
+            setTotalInstallations(updatedCount)
+
+            console.log(`[GeoRescue] Background sync complete: ${updatedCount} records.`)
+        } catch (e) {
+            console.error('[GeoRescue] Background sync failed:', e)
+        } finally {
+            syncInProgress.current = false
+            setIsSyncing(false)
+        }
+    }, [])
+
     // Check on startup
     useEffect(() => {
         const checkAndImport = async () => {
@@ -108,10 +176,16 @@ const GeoRescue = () => {
             if (dbVersion !== 'v4' || count < 21000) {
                 console.log('[GeoRescue] Auto-start import. Version:', dbVersion, 'Count:', count);
                 await startImport()
+            } else {
+                // DB already loaded — show local count and sync from Supabase in background
+                setTotalInstallations(count)
             }
+
+            // Always attempt background sync from Supabase (after initial load)
+            syncFromSupabase()
         }
         checkAndImport()
-    }, [])
+    }, [syncFromSupabase])
 
     const handleSearch = async (query) => {
         setSearchQuery(query)
@@ -216,10 +290,17 @@ const GeoRescue = () => {
                             <MapPin size={14} />
                             <span className="font-bold">{totalInstallations.toLocaleString()}</span>
                             <span>unidades</span>
+                            {isSyncing && (
+                                <span className="flex items-center gap-1 text-blue-500 ml-1">
+                                    <RefreshCw size={10} className="animate-spin" />
+                                    <span className="text-[9px]">Sincronizando...</span>
+                                </span>
+                            )}
                         </div>
                         <button
                             onClick={startImport}
-                            className="text-[10px] font-bold text-blue-600 uppercase tracking-wider hover:bg-blue-50 px-2 py-1 rounded"
+                            disabled={isSyncing}
+                            className="text-[10px] font-bold text-blue-600 uppercase tracking-wider hover:bg-blue-50 px-2 py-1 rounded disabled:opacity-40"
                         >
                             Atualizar Base
                         </button>
