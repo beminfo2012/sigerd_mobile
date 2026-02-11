@@ -256,13 +256,13 @@ const Login = ({ onLogin }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '16px'
             }}>
 
                 {/* Logo Section */}
                 <div style={{
-                    marginTop: '20px',
-                    marginBottom: '10px',
+                    marginTop: '10px',
+                    marginBottom: '4px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center'
@@ -271,29 +271,31 @@ const Login = ({ onLogin }) => {
                         src="/logo_sigerd_new.png"
                         alt="Logo SIGERD"
                         style={{
-                            width: '180px',
-                            height: '180px',
-                            objectFit: 'contain'
+                            width: '140px',
+                            height: '140px',
+                            objectFit: 'contain',
+                            filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.3))'
                         }}
                     />
                 </div>
 
                 {/* Title Section */}
-                <div style={{ marginBottom: '10px' }}>
+                <div style={{ marginBottom: '4px' }}>
                     <h1 style={{
                         color: 'white',
-                        fontSize: '42px',
+                        fontSize: '34px',
                         fontWeight: '800',
                         margin: '0',
-                        letterSpacing: '1px'
+                        letterSpacing: '3px'
                     }}>SIGERD</h1>
 
                     <p style={{
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        fontSize: '14px',
-                        margin: '5px auto 0',
-                        maxWidth: '280px',
-                        lineHeight: '1.4'
+                        color: 'rgba(255, 255, 255, 0.65)',
+                        fontSize: '13px',
+                        margin: '6px auto 0',
+                        maxWidth: '260px',
+                        lineHeight: '1.5',
+                        fontWeight: '500'
                     }}>Sistema Integrado de Gerenciamento de Riscos e Desastres</p>
                 </div>
 
@@ -307,17 +309,17 @@ const Login = ({ onLogin }) => {
                         background: 'white',
                         color: '#0f3470',
                         border: 'none',
-                        padding: '14px',
+                        padding: '13px',
                         borderRadius: '50px',
                         cursor: loading ? 'not-allowed' : 'pointer',
-                        fontSize: '18px',
+                        fontSize: '16px',
                         fontWeight: '700',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '12px',
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                        transition: 'transform 0.2s active'
+                        gap: '10px',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                        transition: 'transform 0.2s'
                     }}
                 >
                     <Fingerprint size={24} strokeWidth={2.5} />
@@ -329,14 +331,14 @@ const Login = ({ onLogin }) => {
                     display: 'flex',
                     alignItems: 'center',
                     width: '100%',
-                    margin: '15px 0',
-                    gap: '15px'
+                    margin: '4px 0',
+                    gap: '14px'
                 }}>
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
-                    <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
                         ou use sua conta
                     </span>
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.2)' }}></div>
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
                 </div>
 
                 {/* Login Form */}
@@ -418,17 +420,18 @@ const Login = ({ onLogin }) => {
                         disabled={loading}
                         style={{
                             width: '100%',
-                            background: '#ff5722',
+                            background: 'linear-gradient(135deg, #ff6d3a 0%, #ff5722 100%)',
                             color: 'white',
                             border: 'none',
                             padding: '14px',
-                            borderRadius: '12px',
+                            borderRadius: '50px',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: '18px',
+                            fontSize: '16px',
                             fontWeight: '700',
-                            marginTop: '10px',
-                            boxShadow: '0 4px 15px rgba(255, 87, 34, 0.3)',
-                            transition: 'all 0.3s'
+                            marginTop: '6px',
+                            boxShadow: '0 4px 20px rgba(255, 87, 34, 0.35)',
+                            transition: 'all 0.3s',
+                            letterSpacing: '0.5px'
                         }}
                     >
                         {loading ? 'Entrando...' : 'Entrar no App'}
@@ -438,14 +441,16 @@ const Login = ({ onLogin }) => {
                 {/* Footer */}
                 <div style={{
                     marginTop: 'auto',
-                    paddingTop: '20px',
+                    paddingTop: '24px',
                     fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.6)',
+                    color: 'rgba(255, 255, 255, 0.5)',
                     textAlign: 'center',
-                    lineHeight: '1.6'
+                    lineHeight: '1.6',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                    width: '60%'
                 }}>
-                    <p style={{ fontWeight: '800', fontSize: '12px', color: 'white', marginBottom: '4px' }}>Defesa Civil de Santa Maria de Jetibá</p>
-                    <p>© 2024-2026 SIGERD Mobile - v1.46.16</p>
+                    <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px', marginTop: '12px' }}>Defesa Civil de Santa Maria de Jetibá</p>
+                    <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.16</p>
                 </div>
             </div>
 
