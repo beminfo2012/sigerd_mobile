@@ -15,7 +15,12 @@ export const CHECKLIST_DATA = {
         'Há sinais de erosão marginal em córrego próximo',
         'O escoamento de água da chuva é direcionado para o talude',
         'Há histórico de inundações recorrentes neste local',
-        'Foi observado refluxo de esgoto durante as chuvas'
+        'Foi observado refluxo de esgoto durante as chuvas',
+        'Erosão Hídrica (causada pela ação da água)',
+        'Erosão Eólica (causada pela ação do vento)',
+        'Erosão Glacial (causada pela ação do gelo)',
+        'Erosão Gravitacional (causada por movimento de massa)',
+        'Erosão Biológica (causada por organismos vivos)'
     ],
     'Estrutural': [
         'Existem trincas em diagonal (cisalhamento) nas paredes/vigas',
