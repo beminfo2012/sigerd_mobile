@@ -93,6 +93,7 @@ const Pluviometros = () => {
     const [manualVolume, setManualVolume] = useState('')
     const [manualPeriod, setManualPeriod] = useState('1h')
     const reportRef = useRef(null)
+    const [isCapturing, setIsCapturing] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -165,10 +166,17 @@ const Pluviometros = () => {
         if (!reportRef.current) return
 
         try {
+            // Temporarily hide zero-rainfall stations for the capture
+            setIsCapturing(true)
+            // Wait for React to re-render with filtered stations
+            await new Promise(r => setTimeout(r, 100))
+
             const canvas = await html2canvas(reportRef.current, {
                 backgroundColor: '#ffffff',
                 scale: 2 // High resolution
             })
+
+            setIsCapturing(false)
 
             canvas.toBlob(async (blob) => {
                 const file = new File([blob], "pluviometros_smj.jpg", { type: "image/jpeg" })
@@ -189,6 +197,7 @@ const Pluviometros = () => {
                 }
             }, 'image/jpeg')
         } catch (err) {
+            setIsCapturing(false)
             console.error('Erro ao gerar imagem:', err)
             alert('Erro ao gerar imagem para compartilhamento.')
         }
@@ -290,67 +299,77 @@ const Pluviometros = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-4">
-                        {stations.map(station => {
-                            const risk = getRiskLevel(station.acc24hr)
-                            return (
-                                <div
-                                    key={station.id}
-                                    onClick={() => setSelectedStation(station)}
-                                    className={`bg-white p-5 rounded-2xl shadow-sm border ${risk.border} relative overflow-hidden active:scale-[0.98] transition-transform cursor-pointer`}
-                                >
-                                    <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-black uppercase rounded-bl-xl ${risk.bg} ${risk.text}`}>
-                                        {risk.label}
-                                    </div>
-                                    <h3 className="font-bold text-gray-800 text-lg mb-1 pr-20 truncate leading-relaxed py-1">{station.name}</h3>
-                                    <div className="text-xs text-gray-400 mb-4">ID: {station.id}</div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <div className="text-xs text-gray-500 mb-1 font-bold uppercase">Última Hora</div>
-                                            <div className="text-2xl font-black text-gray-800">
-                                                {station.acc1hr?.toFixed(1)} <span className="text-sm font-medium text-gray-400">mm</span>
-                                            </div>
+                        {stations
+                            .filter(station => {
+                                // When capturing for share, hide stations with zero rainfall
+                                if (!isCapturing) return true
+                                const hasRain = (station.acc1hr || 0) > 0 ||
+                                    (station.acc24hr || 0) > 0 ||
+                                    (station.acc48hr || 0) > 0 ||
+                                    (station.acc96hr || 0) > 0
+                                return hasRain
+                            })
+                            .map(station => {
+                                const risk = getRiskLevel(station.acc24hr)
+                                return (
+                                    <div
+                                        key={station.id}
+                                        onClick={() => setSelectedStation(station)}
+                                        className={`bg-white p-5 rounded-2xl shadow-sm border ${risk.border} relative overflow-hidden active:scale-[0.98] transition-transform cursor-pointer`}
+                                    >
+                                        <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-black uppercase rounded-bl-xl ${risk.bg} ${risk.text}`}>
+                                            {risk.label}
                                         </div>
-                                        <div>
-                                            <div className="text-xs text-gray-500 mb-1 font-bold uppercase">24 Horas</div>
-                                            <div className={`text-2xl font-black ${risk.text}`}>
-                                                {station.acc24hr?.toFixed(1)} <span className="text-sm font-medium text-gray-400">mm</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        <h3 className="font-bold text-gray-800 text-lg mb-1 pr-20 truncate leading-relaxed py-1">{station.name}</h3>
+                                        <div className="text-xs text-gray-400 mb-4">ID: {station.id}</div>
 
-                                    {/* Mini Sparkline */}
-                                    <MiniSparkline station={station} riskColor={risk.text} />
-
-                                    {station.type === 'fluviometric' && (
-                                        <div className="mt-4 pt-4 border-t border-slate-50 grid grid-cols-2 gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
-                                                    <Waves size={16} />
-                                                </div>
-                                                <div>
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase leading-none">Nível</div>
-                                                    <div className="text-lg font-black text-slate-700 leading-tight">{station.level} <span className="text-[10px] font-medium text-slate-400">cm</span></div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="text-xs text-gray-500 mb-1 font-bold uppercase">Última Hora</div>
+                                                <div className="text-2xl font-black text-gray-800">
+                                                    {station.acc1hr?.toFixed(1)} <span className="text-sm font-medium text-gray-400">mm</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="p-2 bg-indigo-50 text-indigo-500 rounded-lg">
-                                                    <Activity size={16} />
-                                                </div>
-                                                <div>
-                                                    <div className="text-[10px] font-bold text-slate-400 uppercase leading-none">Vazão</div>
-                                                    <div className="text-lg font-black text-slate-700 leading-tight">{station.flow} <span className="text-[10px] font-medium text-slate-400">m³/s</span></div>
+                                            <div>
+                                                <div className="text-xs text-gray-500 mb-1 font-bold uppercase">24 Horas</div>
+                                                <div className={`text-2xl font-black ${risk.text}`}>
+                                                    {station.acc24hr?.toFixed(1)} <span className="text-sm font-medium text-gray-400">mm</span>
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
 
-                                    <div className="mt-3 pt-3 border-t border-gray-50 text-[10px] text-center text-gray-400 uppercase font-bold tracking-widest">
-                                        Toque para ver detalhes
+                                        {/* Mini Sparkline */}
+                                        <MiniSparkline station={station} riskColor={risk.text} />
+
+                                        {station.type === 'fluviometric' && (
+                                            <div className="mt-4 pt-4 border-t border-slate-50 grid grid-cols-2 gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+                                                        <Waves size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] font-bold text-slate-400 uppercase leading-none">Nível</div>
+                                                        <div className="text-lg font-black text-slate-700 leading-tight">{station.level} <span className="text-[10px] font-medium text-slate-400">cm</span></div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="p-2 bg-indigo-50 text-indigo-500 rounded-lg">
+                                                        <Activity size={16} />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] font-bold text-slate-400 uppercase leading-none">Vazão</div>
+                                                        <div className="text-lg font-black text-slate-700 leading-tight">{station.flow} <span className="text-[10px] font-medium text-slate-400">m³/s</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="mt-3 pt-3 border-t border-gray-50 text-[10px] text-center text-gray-400 uppercase font-bold tracking-widest">
+                                            Toque para ver detalhes
+                                        </div>
                                     </div>
-                                </div>
-                            )
-                        })}
+                                )
+                            })}
                     </div>
                 )}
 
