@@ -14,11 +14,18 @@ export default async function handler(request, response) {
             s.cidade && s.cidade.toLowerCase().includes("maria de jetib")
         );
 
+        const parseAcc = (v) => (v === "-" || !v) ? 0.0 : parseFloat(v);
         const result = cityData.map(s => ({
             id: s.idestacao,
             name: s.nomeestacao,
-            acc24hr: (s.acc24hr === "-" || !s.acc24hr) ? 0.0 : parseFloat(s.acc24hr),
-            acc1hr: (s.acc1hr === "-" || !s.acc1hr) ? 0.0 : parseFloat(s.acc1hr),
+            acc1hr: parseAcc(s.acc1hr),
+            acc3hr: parseAcc(s.acc3hr),
+            acc6hr: parseAcc(s.acc6hr),
+            acc12hr: parseAcc(s.acc12hr),
+            acc24hr: parseAcc(s.acc24hr),
+            acc48hr: parseAcc(s.acc48hr),
+            acc72hr: parseAcc(s.acc72hr),
+            acc96hr: parseAcc(s.acc96hr),
             lastUpdate: s.datahoraUltimovalor
         }));
 

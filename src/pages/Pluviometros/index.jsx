@@ -1,8 +1,87 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity, Plus } from 'lucide-react'
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
 import html2canvas from 'html2canvas'
 import { saveManualReading, getManualReadings } from '../../services/db'
+
+// Mini Sparkline component for rain distribution
+const MiniSparkline = ({ station, riskColor }) => {
+    // Build incremental rainfall data from accumulated values
+    // Each point = rain that fell in that specific window
+    const accValues = [
+        { key: '1h', acc: station.acc1hr || 0 },
+        { key: '3h', acc: station.acc3hr || 0 },
+        { key: '6h', acc: station.acc6hr || 0 },
+        { key: '12h', acc: station.acc12hr || 0 },
+        { key: '24h', acc: station.acc24hr || 0 },
+        { key: '48h', acc: station.acc48hr || 0 },
+        { key: '96h', acc: station.acc96hr || 0 },
+    ]
+
+    // Compute incremental rain per period (difference between consecutive accumulations)
+    const data = accValues.map((item, i) => ({
+        name: item.key,
+        value: item.acc,
+    }))
+
+    // Only show if there's any data
+    const hasData = data.some(d => d.value > 0)
+    if (!hasData) return null
+
+    const colorMap = {
+        'text-green-600': { stroke: '#22c55e', fill: '#22c55e' },
+        'text-yellow-600': { stroke: '#eab308', fill: '#eab308' },
+        'text-orange-600': { stroke: '#f97316', fill: '#f97316' },
+        'text-red-600': { stroke: '#ef4444', fill: '#ef4444' },
+    }
+    const colors = colorMap[riskColor] || colorMap['text-green-600']
+
+    const CustomTooltip = ({ active, payload }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div style={{
+                    background: 'rgba(15,23,42,0.9)',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '10px',
+                    color: 'white',
+                    fontWeight: '700',
+                    backdropFilter: 'blur(4px)'
+                }}>
+                    {payload[0].payload.name}: {payload[0].value.toFixed(1)}mm
+                </div>
+            )
+        }
+        return null
+    }
+
+    return (
+        <div className="mt-3 pt-3 border-t border-gray-50">
+            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Acumulado 1h → 96h</div>
+            <ResponsiveContainer width="100%" height={45}>
+                <AreaChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id={`grad-${station.id}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={colors.fill} stopOpacity={0.3} />
+                            <stop offset="100%" stopColor={colors.fill} stopOpacity={0.05} />
+                        </linearGradient>
+                    </defs>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke={colors.stroke}
+                        strokeWidth={2}
+                        fill={`url(#grad-${station.id})`}
+                        dot={false}
+                        activeDot={{ r: 3, strokeWidth: 0, fill: colors.stroke }}
+                    />
+                </AreaChart>
+            </ResponsiveContainer>
+        </div>
+    )
+}
 
 const Pluviometros = () => {
     const navigate = useNavigate()
@@ -239,6 +318,9 @@ const Pluviometros = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Mini Sparkline */}
+                                    <MiniSparkline station={station} riskColor={risk.text} />
 
                                     {station.type === 'fluviometric' && (
                                         <div className="mt-4 pt-4 border-t border-slate-50 grid grid-cols-2 gap-4">
