@@ -703,32 +703,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Predictive Intelligence Insight - Slim Version */}
-            {predictive && (
-                <div
-                    className="bg-white dark:bg-slate-800 p-4 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-5 flex items-center justify-between border-l-4 border-l-indigo-500 active:scale-[0.98] transition-all cursor-default"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="bg-indigo-50 w-11 h-11 rounded-2xl flex items-center justify-center text-indigo-600 shadow-inner">
-                            <ShieldAlert size={22} strokeWidth={2.5} />
-                        </div>
-                        <div>
-                            <div className="text-[10px] font-black text-indigo-500 mb-0.5 uppercase tracking-widest flex items-center gap-1">
-                                <Zap size={10} fill="currentColor" /> Previsão de Impacto
-                            </div>
-                            <div className="text-sm font-black text-slate-800 dark:text-slate-100 leading-tight">
-                                {predictive.topBairros.length > 0
-                                    ? predictive.topBairros.map(b => b.name).join(', ')
-                                    : 'Alerta para todo o município'}
-                            </div>
-                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">Baseado no histórico de vistorias</div>
-                        </div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-slate-900 w-8 h-8 rounded-full flex items-center justify-center text-slate-200">
-                        <Activity size={14} />
-                    </div>
-                </div>
-            )}
+
+
 
             <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6 relative">
                 <div className="flex justify-between items-center mb-6 px-1">
