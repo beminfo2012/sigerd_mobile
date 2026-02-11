@@ -12,6 +12,7 @@ const Pluviometros = () => {
     const [manualModalOpen, setManualModalOpen] = useState(false)
     const [manualDate, setManualDate] = useState(new Date().toISOString().slice(0, 16))
     const [manualVolume, setManualVolume] = useState('')
+    const [manualPeriod, setManualPeriod] = useState('1h')
     const reportRef = useRef(null)
 
     useEffect(() => {
@@ -27,16 +28,22 @@ const Pluviometros = () => {
 
             // Calculate Accumulators for Manual Station
             const now = new Date()
-            const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
-            const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-            const manualAcc1h = manualReadings
-                .filter(r => new Date(r.date) > oneHourAgo && new Date(r.date) <= now)
-                .reduce((sum, r) => sum + r.volume, 0)
+            // Helper to get latest reading for a period within its window
+            const getLatestForPeriod = (period, hours) => {
+                const windowStart = new Date(now.getTime() - hours * 60 * 60 * 1000)
+                const relevant = manualReadings.filter(r =>
+                    (r.period === period || (!r.period && period === '1h')) && // Support legacy as 1h
+                    new Date(r.date) > windowStart &&
+                    new Date(r.date) <= now
+                )
+                return relevant.length > 0 ? parseFloat(relevant[0].volume) : 0
+            }
 
-            const manualAcc24h = manualReadings
-                .filter(r => new Date(r.date) > twentyFourHoursAgo && new Date(r.date) <= now)
-                .reduce((sum, r) => sum + r.volume, 0)
+            const manualAcc1h = getLatestForPeriod('1h', 1)
+            const manualAcc24h = getLatestForPeriod('24h', 24)
+            const manualAcc48h = getLatestForPeriod('48h', 48)
+            const manualAcc96h = getLatestForPeriod('96h', 96)
 
             const lastManualDate = manualReadings.length > 0 ? manualReadings[0].date : null
 
@@ -47,6 +54,8 @@ const Pluviometros = () => {
                 status: 'Online',
                 acc1hr: manualAcc1h,
                 acc24hr: manualAcc24h,
+                acc48hr: manualAcc48h,
+                acc96hr: manualAcc96h,
                 level: 0,
                 flow: 0,
                 lastUpdate: lastManualDate,
@@ -119,7 +128,7 @@ const Pluviometros = () => {
             return
         }
         try {
-            await saveManualReading(manualVolume, manualDate)
+            await saveManualReading(manualVolume, manualDate, manualPeriod)
             setManualModalOpen(false)
             setManualVolume('')
             setManualDate(new Date().toISOString().slice(0, 16))
@@ -188,7 +197,7 @@ const Pluviometros = () => {
                         {new Date().toLocaleString('pt-BR')}
                     </div>
                     <div className="mt-4 text-xs opacity-75">
-                        Dados: CEMADEN (Automático)
+                        Dados: CEMADEN (Automático) / SEDE (Manual)
                     </div>
                 </div>
 
@@ -308,6 +317,20 @@ const Pluviometros = () => {
                                 />
                             </div>
                             <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Período Relacionado</label>
+                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                    {['1h', '24h', '48h', '96h'].map(p => (
+                                        <button
+                                            key={p}
+                                            onClick={() => setManualPeriod(p)}
+                                            className={`py-2 px-3 rounded-xl border font-bold transition-all ${manualPeriod === p ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-gray-500 border-gray-200'}`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Volume (mm)</label>
                                 <input
                                     type="number"
@@ -370,6 +393,25 @@ const Pluviometros = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {(selectedStation.acc48hr !== undefined || selectedStation.acc96hr !== undefined) && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">48 Horas</div>
+                                        <div className="text-2xl font-black text-slate-700">
+                                            {selectedStation.acc48hr?.toFixed(1) || '0.0'}
+                                            <span className="text-sm font-bold text-slate-400 ml-1">mm</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">96 Horas</div>
+                                        <div className="text-2xl font-black text-slate-700">
+                                            {selectedStation.acc96hr?.toFixed(1) || '0.0'}
+                                            <span className="text-sm font-bold text-slate-400 ml-1">mm</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {selectedStation.type === 'fluviometric' && (
                                 <div className="grid grid-cols-2 gap-4">

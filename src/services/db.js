@@ -99,12 +99,13 @@ const base64ToBlob = (base64) => {
     }
 }
 
-export const saveManualReading = async (volume, date) => {
+export const saveManualReading = async (volume, date, period = '1h') => {
     const db = await initDB()
     const reading = {
         station_id: 'MANUAL_SEDE',
         volume: parseFloat(volume),
         date: date || new Date().toISOString(),
+        period: period, // '1h', '24h', '48h', '96h'
         created_at: new Date().toISOString(),
         synced: false
     }
