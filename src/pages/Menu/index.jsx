@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3 } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
@@ -204,6 +204,27 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                         </button>
                     )}
                 </div>
+
+                {/* S2ID Strategic Module - Access for S2id roles and Defesa Civil */}
+                {(['Admin', 'Coordenador', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role)) && (
+                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <button
+                            onClick={() => window.location.href = '/s2id'}
+                            className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+                        >
+                            <div className="flex items-center">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-2xl mr-4">
+                                    <Globe size={22} />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo S2id</span>
+                                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-tight">Preenchimento Setorial de Danos</span>
+                                </div>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Nacional</div>
+                        </button>
+                    </div>
+                )}
 
                 {/* Management Section (Strategic) - FOR COORDINATORS AND ADMINS */}
                 {['Admin', 'Coordenador', 'Secretário', 'admin'].includes(userProfile?.role) && (

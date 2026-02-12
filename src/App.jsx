@@ -43,6 +43,10 @@ const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
 
+// S2id Module (Lazy)
+const S2idDashboard = lazy(() => import('./pages/S2id/S2idDashboard'))
+const S2idForm = lazy(() => import('./pages/S2id/S2idForm'))
+
 // Create context for user profile
 export const UserContext = createContext(null)
 
@@ -282,6 +286,24 @@ const AppContent = ({
                                 <ContractForm />
                             </ProtectedRoute>
                         } />
+
+                        {/* S2ID Routes */}
+                        <Route path="/s2id" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
+                                <S2idDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/s2id/novo" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
+                                <S2idForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/s2id/editar/:id" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
+                                <S2idForm />
+                            </ProtectedRoute>
+                        } />
+
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </Suspense>
@@ -338,6 +360,7 @@ function App() {
     const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Secretário', 'Técnico em Edificações']
     const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
     const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
+    const S2ID_ROLES = ['Admin', 'Coordenador', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura', 'S2id_Social', 'Agente de Defesa Civil']
 
     useEffect(() => {
         if (isDarkMode) {

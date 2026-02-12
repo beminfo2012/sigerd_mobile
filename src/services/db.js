@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 13
+const DB_VERSION = 14
 
 
 let dbPromise = null;
@@ -93,6 +93,14 @@ export const initDB = async () => {
                 store.createIndex('synced', 'synced', { unique: false });
             } else {
                 ensureSyncedIndex('manual_readings');
+            }
+
+            // S2ID Records (v14)
+            if (!db.objectStoreNames.contains('s2id_records')) {
+                const s2idStore = db.createObjectStore('s2id_records', { keyPath: 'id', autoIncrement: true });
+                s2idStore.createIndex('synced', 'synced', { unique: false });
+                s2idStore.createIndex('status', 'status', { unique: false });
+                s2idStore.createIndex('created_at', 'created_at', { unique: false });
             }
         },
     });
