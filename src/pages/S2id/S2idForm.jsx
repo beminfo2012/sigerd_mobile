@@ -332,7 +332,12 @@ const S2idForm = () => {
                     <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">COBRADE</label>
+                                <label className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                    COBRADE
+                                    {!canEditSection('tipificacao') && (
+                                        <span className="text-[7px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded border border-blue-100">Definido pela Defesa Civil</span>
+                                    )}
+                                </label>
                                 <input
                                     type="text"
                                     disabled={!canEditSection('tipificacao')}
@@ -343,7 +348,12 @@ const S2idForm = () => {
                                 />
                             </div>
                             <div className="sm:col-span-2">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Denominação (Tipo/Subtipo)</label>
+                                <label className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                                    Denominação (Tipo/Subtipo)
+                                    {!canEditSection('tipificacao') && (
+                                        <span className="text-[7px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded border border-blue-100">Definido pela Defesa Civil</span>
+                                    )}
+                                </label>
                                 <input
                                     type="text"
                                     list="cobrade-options"
@@ -362,7 +372,12 @@ const S2idForm = () => {
                         </div>
 
                         <div className="grid grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <div className="col-span-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Data da Ocorrência</div>
+                            <div className="col-span-4 flex items-center justify-between text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">
+                                Data da Ocorrência
+                                {!canEditSection('data_ocorrencia') && (
+                                    <span className="text-[7px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded border border-blue-100">Definido pela Defesa Civil</span>
+                                )}
+                            </div>
                             {['dia', 'mes', 'ano', 'horario'].map(f => (
                                 <div key={f}>
                                     <label className="block text-[8px] font-bold text-slate-400 uppercase mb-1">{f}</label>

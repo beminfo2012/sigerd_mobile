@@ -272,9 +272,13 @@ const S2idDashboard = () => {
                                                 return (
                                                     <td key={sec} className="px-2 py-4 text-center">
                                                         {sub?.preenchido ? (
-                                                            <div className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-sm" title={`Finalizado por ${sub.usuario}`}>
-                                                                <CheckCircle size={14} />
-                                                            </div>
+                                                            <button
+                                                                onClick={() => generateS2idReport(r, user, sec)}
+                                                                className="w-7 h-7 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mx-auto shadow-sm hover:bg-green-600 hover:text-white transition-all active:scale-90"
+                                                                title={`Baixar Relatório Setorial: ${sec.toUpperCase()}\nFinalizado por ${sub.usuario}`}
+                                                            >
+                                                                <Download size={14} />
+                                                            </button>
                                                         ) : (
                                                             <div className="w-6 h-6 border-2 border-dashed border-slate-200 rounded-full mx-auto"></div>
                                                         )}

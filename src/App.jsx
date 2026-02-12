@@ -120,12 +120,12 @@ const AppContent = ({
             if (isAuthenticated && userProfile?.email?.endsWith('@s2id.com') && location.pathname === '/') {
                 try {
                     const draft = await getLatestDraftS2id();
-                    if (draft) {
+                    // Só redireciona se for um rascunho válido (com COBRADE definido pela DC)
+                    if (draft && draft.data.tipificacao.cobrade) {
                         navigate(`/s2id/editar/${draft.id}`);
                     } else {
-                        // Se não houver rascunho, cria um novo ou vai para o dashboard? 
-                        // O usuário disse: "já seja direcionado para o formulário COMPLETO que a ele cabe preencher"
-                        navigate('/s2id/novo');
+                        // Se não houver rascunho com COBRADE, vai para o dashboard monitorar
+                        navigate('/s2id');
                     }
                 } catch (error) {
                     console.error('Redirection error:', error);
