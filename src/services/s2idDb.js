@@ -68,6 +68,21 @@ export const INITIAL_S2ID_STATE = {
             industria: 0,
             comercio: 0,
             servicos: 0
+        },
+        // Campos específicos por Secretaria
+        setorial: {
+            saude: { unidades_afetadas: '', medicamentos_perda: '', atendimentos_extra: '', observacoes: '' },
+            obras: { pontes_danificadas: '', bueiros_obstruidos: '', pavimentacao_m2: '', maquinario_horas: '' },
+            educacao: { escolas_afetadas: '', alunos_sem_aula: '', danos_material_didatico: '', transporte_escolar_parado: '' },
+            social: { cestas_basicas: '', kits_higiene: '', colchoes_entregues: '', familias_desabrigadas: '' },
+            agricultura: { safra_perda_percentual: '', area_cultivo_afetada: '', estradas_rurais_obstruidas: '', rebanho_atingido: '' }
+        },
+        evidencias: [], // Array de { url, lat, lng, timestamp }
+        assinatura: {
+            responsavel: '',
+            cargo: '',
+            data_url: null,
+            data_assinatura: null
         }
     }
 };
