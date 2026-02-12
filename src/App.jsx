@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, lazy, Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
 import { notificationService } from './services/notificationService'
@@ -108,11 +108,17 @@ class ErrorBoundary extends React.Component {
 
 const AppContent = ({
     isAuthenticated, userProfile, setUserProfile, activeTab, setActiveTab, handleLogout,
-    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES, S2ID_ROLES,
-    isDarkMode, setIsDarkMode
+    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES, S2ID_ROLES, isDarkMode, setIsDarkMode
 }) => {
+    const navigate = useNavigate();
     const location = useLocation();
     const isPrintPage = location.pathname.includes('/imprimir/');
+
+    useEffect(() => {
+        if (isAuthenticated && userProfile?.email?.endsWith('@s2id.com') && location.pathname === '/') {
+            navigate('/s2id');
+        }
+    }, [isAuthenticated, userProfile, location.pathname, navigate]);
 
     if (!isAuthenticated) {
         return (

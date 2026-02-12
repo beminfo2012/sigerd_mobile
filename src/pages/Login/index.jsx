@@ -188,6 +188,7 @@ const Login = ({ onLogin }) => {
         const TEST_ACCOUNTS = {
             'saude@s2id.com': { role: 'S2id_Saude', name: 'Secretaria de Saúde' },
             'obras@s2id.com': { role: 'S2id_Obras', name: 'Secretaria de Obras' },
+            'social@s2id.com': { role: 'S2id_Social', name: 'Secretaria de Assistência Social' },
             'defesa@s2id.com': { role: 'Agente de Defesa Civil', name: 'Agente de Teste' },
             'admin@s2id.com': { role: 'Admin', name: 'Administrador de Teste' }
         };
@@ -479,7 +480,7 @@ const Login = ({ onLogin }) => {
                         border: '1px dashed rgba(255,255,255,0.1)'
                     }}>
                         <p style={{ fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginBottom: '4px' }}>Contas de Teste (Senha: teste123):</p>
-                        <p style={{ fontSize: '10px' }}>saude@s2id.com | obras@s2id.com | defesa@s2id.com</p>
+                        <p style={{ fontSize: '10px' }}>saude@s2id.com | obras@s2id.com | social@s2id.com</p>
                     </div>
                     <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px' }}>Defesa Civil de Santa Maria de Jetibá</p>
                     <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.24</p>
