@@ -87,22 +87,22 @@ export const INITIAL_S2ID_STATE = {
         },
         // Controle de quem já preencheu
         submissoes_setoriais: {
-            saude: { preenchido: false, data: null, usuario: '' },
-            obras: { preenchido: false, data: null, usuario: '' },
-            educacao: { preenchido: false, data: null, usuario: '' },
-            social: { preenchido: false, data: null, usuario: '' },
-            agricultura: { preenchido: false, data: null, usuario: '' },
-            administracao: { preenchido: false, data: null, usuario: '' },
-            cdl: { preenchido: false, data: null, usuario: '' },
-            cesan: { preenchido: false, data: null, usuario: '' },
-            defesa_social: { preenchido: false, data: null, usuario: '' },
-            esporte_turismo: { preenchido: false, data: null, usuario: '' },
-            interior: { preenchido: false, data: null, usuario: '' },
-            servicos_urbanos: { preenchido: false, data: null, usuario: '' },
-            transportes: { preenchido: false, data: null, usuario: '' }
+            saude: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            obras: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            educacao: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            social: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            agricultura: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            administracao: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            cdl: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            cesan: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            defesa_social: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            esporte_turismo: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            interior: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            servicos_urbanos: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            transportes: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null }
         },
-        evidencias: [], // Array de { url, lat, lng, timestamp }
-        assinatura: {
+        evidencias: [], // Array de { url, lat, lng, timestamp, sector }
+        assinatura: { // Assinatura Global (Defesa Civil)
             responsavel: '',
             cargo: '',
             data_url: null,

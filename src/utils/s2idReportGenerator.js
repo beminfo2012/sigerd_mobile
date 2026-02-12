@@ -7,7 +7,10 @@ import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
  * Generates a professional PDF report from S2id record data.
  */
 
-export const generateS2idReport = async (record, userProfile) => {
+export const generateS2idReport = async (record, userProfile, activeSector = null) => {
+    // Definir se é um relatório consolidado ou setorial
+    const isSectoral = !!activeSector;
+    const sectorName = activeSector ? activeSector.toUpperCase().replace(/_/g, ' ') : '';
     const urlToBase64 = (url) => {
         return new Promise((resolve) => {
             const img = new Image();
@@ -32,7 +35,9 @@ export const generateS2idReport = async (record, userProfile) => {
         urlToBase64(LOGO_SIGERD)
     ]);
 
-    const filename = `S2ID_FIDE_${record.data.tipificacao.cobrade.replace(/\./g, '_')}_${new Date().getTime()}.pdf`;
+    const filename = isSectoral
+        ? `S2ID_SETORIAL_${activeSector.toUpperCase()}_${record.data.tipificacao.cobrade.replace(/\./g, '_')}.pdf`
+        : `S2ID_FIDE_${record.data.tipificacao.cobrade.replace(/\./g, '_')}_${new Date().getTime()}.pdf`;
     const data = record.data;
 
     const container = document.createElement('div');
@@ -44,7 +49,9 @@ export const generateS2idReport = async (record, userProfile) => {
                 <div style="width: 120px;"><img src="${logoDefesaCivilStr}" style="height: 85px; object-fit: contain;" /></div>
                 <div style="flex: 1; text-align: center; padding: 0 15px;">
                     <h1 style="margin: 0; font-size: 20px; color: #000000; text-transform: uppercase; font-weight: 800; line-height: 1.2;">SISTEMA NACIONAL DE PROTEÇÃO E DEFESA CIVIL</h1>
-                    <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #1e3a8a; font-weight: 700; text-transform: uppercase;">FORMULÁRIO DE INFORMAÇÕES DO DESASTRE (FIDE)</h2>
+                    <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #1e3a8a; font-weight: 700; text-transform: uppercase;">
+                        ${isSectoral ? `LEVANTAMENTO SETORIAL: ${sectorName}` : 'FORMULÁRIO DE INFORMAÇÕES DO DESASTRE (FIDE)'}
+                    </h2>
                     <p style="margin: 5px 0 0 0; font-size: 10px; color: #64748b; font-weight: 600;">PORTARIA MDR Nº 2.601, DE 14 DE DEZEMBRO DE 2020</p>
                 </div>
                 <div style="width: 120px; text-align: right;"><img src="${logoSigerdStr}" style="height: 85px; object-fit: contain;" /></div>
@@ -52,6 +59,7 @@ export const generateS2idReport = async (record, userProfile) => {
             <div style="display: flex; justify-content: center; gap: 40px; margin-top: 10px;">
                 <div style="text-align: center;"><span style="font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase;">Estado</span><br/><span style="font-size: 12px; font-weight: 700;">ESPIRITO SANTO</span></div>
                 <div style="text-align: center;"><span style="font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase;">Município</span><br/><span style="font-size: 12px; font-weight: 700;">SANTA MARIA DE JETIBÁ</span></div>
+                ${isSectoral ? `<div style="text-align: center;"><span style="font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase;">Setor Responsável</span><br/><span style="font-size: 12px; font-weight: 700; color: #1e3a8a;">${sectorName}</span></div>` : ''}
             </div>
         </div>
     `;
@@ -138,59 +146,115 @@ export const generateS2idReport = async (record, userProfile) => {
         ` : ''}
     `;
 
-    // 6.2 Materiais
-    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">6.2 Danos Materiais</div>`;
-    const materialRows = Object.keys(data.danos_materiais).map(key => [
-        key.replace(/_/g, ' ').toUpperCase(),
-        data.danos_materiais[key].danificadas,
-        data.danos_materiais[key].destruidas,
-        `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
-    ]);
-    contentHtml += renderTable(['Discriminação', 'Danificadas', 'Destruídas', 'Valor (R$)'], materialRows, ['40%', '20%', '20%', '20%']);
+    if (!isSectoral) {
+        // 6.2 Materiais
+        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">6.2 Danos Materiais</div>`;
+        const materialRows = Object.keys(data.danos_materiais).map(key => [
+            key.replace(/_/g, ' ').toUpperCase(),
+            data.danos_materiais[key].danificadas,
+            data.danos_materiais[key].destruidas,
+            `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
+        ]);
+        contentHtml += renderTable(['Discriminação', 'Danificadas', 'Destruídas', 'Valor (R$)'], materialRows, ['40%', '20%', '20%', '20%']);
 
-    // 6.3 Ambientais
-    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">6.3 Danos Ambientais</div>`;
-    const ambientalRows = Object.keys(data.danos_ambientais).filter(k => k !== 'descricao').map(key => [
-        key.replace(/_/g, ' ').toUpperCase(),
-        data.danos_ambientais[key].sim ? 'SIM' : 'NÃO',
-        data.danos_ambientais[key].area || data.danos_ambientais[key].populacao || '---'
-    ]);
-    contentHtml += renderTable(['Impacto Ambiental', 'Ocorrência', 'Obs/Área/Pop.'], ambientalRows, ['50%', '20%', '30%']);
+        // 6.3 Ambientais
+        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">6.3 Danos Ambientais</div>`;
+        const ambientalRows = Object.keys(data.danos_ambientais).filter(k => k !== 'descricao').map(key => [
+            key.replace(/_/g, ' ').toUpperCase(),
+            data.danos_ambientais[key].sim ? 'SIM' : 'NÃO',
+            data.danos_ambientais[key].area || data.danos_ambientais[key].populacao || '---'
+        ]);
+        contentHtml += renderTable(['Impacto Ambiental', 'Ocorrência', 'Obs/Área/Pop.'], ambientalRows, ['50%', '20%', '30%']);
 
-    // 7. Prejuízos
-    contentHtml += `<div style="page-break-before: always; height: 1px;"></div>`;
-    contentHtml += sectionTitle('7', 'Prejuízos Econômicos');
+        // 7. Prejuízos
+        contentHtml += `<div style="page-break-before: always; height: 1px;"></div>`;
+        contentHtml += sectionTitle('7', 'Prejuízos Econômicos');
 
-    // 7.1 Públicos
-    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 0;">7.1 Setor Público</div>`;
-    const publicoRows = Object.keys(data.prejuizos_publicos).map(key => [
-        key.replace(/_/g, ' ').toUpperCase(),
-        `R$ ${data.prejuizos_publicos[key].toLocaleString('pt-BR')}`
-    ]);
-    contentHtml += renderTable(['Instalação / Serviço', 'Valor Estimado (R$)'], publicoRows, ['70%', '30%']);
+        // 7.1 Públicos
+        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 0;">7.1 Setor Público</div>`;
+        const publicoRows = Object.keys(data.prejuizos_publicos).map(key => [
+            key.replace(/_/g, ' ').toUpperCase(),
+            `R$ ${data.prejuizos_publicos[key].toLocaleString('pt-BR')}`
+        ]);
+        contentHtml += renderTable(['Instalação / Serviço', 'Valor Estimado (R$)'], publicoRows, ['70%', '30%']);
 
-    // 7.2 Privados
-    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">7.2 Setor Privado</div>`;
-    const privadoRows = Object.keys(data.prejuizos_privados).map(key => [
-        key.replace(/_/g, ' ').toUpperCase(),
-        `R$ ${data.prejuizos_privados[key].toLocaleString('pt-BR')}`
-    ]);
-    contentHtml += renderTable(['Atividade / Bens', 'Valor Estimado (R$)'], privadoRows, ['70%', '30%']);
+        // 7.2 Privados
+        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">7.2 Setor Privado</div>`;
+        const privadoRows = Object.keys(data.prejuizos_privados).map(key => [
+            key.replace(/_/g, ' ').toUpperCase(),
+            `R$ ${data.prejuizos_privados[key].toLocaleString('pt-BR')}`
+        ]);
+        contentHtml += renderTable(['Atividade / Bens', 'Valor Estimado (R$)'], privadoRows, ['70%', '30%']);
+    } else {
+        // MOSTRAR APENAS DADOS DO SETOR
+        contentHtml += sectionTitle('S', `Levantamento Específico: ${sectorName}`);
+        const sectorData = data.setorial[activeSector] || {};
+        const sectorRows = Object.entries(sectorData)
+            .filter(([k, v]) => v !== 0 && v !== '')
+            .map(([key, val]) => [
+                key.replace(/_/g, ' ').toUpperCase(),
+                val
+            ]);
 
-    // Footer / Signature
+        if (sectorRows.length > 0) {
+            contentHtml += renderTable(['Descrição do Dano/Necessidade', 'Quantidade/Valor'], sectorRows, ['70%', '30%']);
+        } else {
+            contentHtml += `<p style="font-size: 12px; color: #64748b; font-style: italic;">Nenhum dado quantitativo registrado para este setor.</p>`;
+        }
+
+        if (sectorData.observacoes) {
+            contentHtml += `
+                <div style="background: #fdf2f2; padding: 15px; border-radius: 12px; border: 1px solid #fee2e2; margin-top: 20px;">
+                    <div style="font-size: 9px; color: #b91c1c; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Observações Setoriais</div>
+                    <div style="font-size: 11px; color: #7f1d1d; line-height: 1.5;">${sectorData.observacoes}</div>
+                </div>
+            `;
+        }
+    }
+
+    // 8. Fotos (Relatório Fotográfico)
+    contentHtml += sectionTitle('F', 'Relatório Fotográfico');
+    const photosToRender = data.evidencias.filter(p => !isSectoral || p.sector === activeSector);
+
+    if (photosToRender.length > 0) {
+        contentHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
+        for (const photo of photosToRender) {
+            contentHtml += `
+                <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
+                    <img src="${photo.url}" style="width: 100%; height: 200px; object-fit: cover;" />
+                    <div style="padding: 10px; background: #f8fafc;">
+                        <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Coordenadas Geográficas</div>
+                        <div style="font-size: 9px; font-weight: 700; color: #334155;">LAT: ${photo.lat.toFixed(6)} | LNG: ${photo.lng.toFixed(6)}</div>
+                        <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin-top: 5px;">Data/Hora</div>
+                        <div style="font-size: 9px; font-weight: 700; color: #334155;">${new Date(photo.timestamp).toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+        }
+        contentHtml += `</div>`;
+    } else {
+        contentHtml += `<p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 11px;">Nenhuma evidência fotográfica anexada ${isSectoral ? 'para este setor' : ''}.</p>`;
+    }
+
+    // Footer / Signature (Sectoral vs Global)
+    const sectorSub = isSectoral ? data.submissoes_setoriais[activeSector] : null;
+    const finalSignature = isSectoral ? sectorSub?.assinatura_url : data.assinatura.data_url;
+    const finalName = isSectoral ? sectorSub?.responsavel : data.assinatura.responsavel;
+    const finalRole = isSectoral ? sectorSub?.cargo : 'Agente Municipal de Defesa Civil';
+
     contentHtml += `
         <div style="margin-top: 50px; padding: 40px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; page-break-inside: avoid;">
             <div style="text-align: center;">
                 <div style="width: 300px; margin: 0 auto; border-bottom: 2px solid #1e3a8a; height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 15px;">
-                    ${userProfile?.signature ? `<img src="${userProfile.signature}" style="max-height: 70px; width: auto;" />` : ''}
+                    ${finalSignature ? `<img src="${finalSignature}" style="max-height: 70px; width: auto;" />` : ''}
                 </div>
-                <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${userProfile?.full_name || 'Agente Responsável'}</p>
-                <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">Agente Municipal de Defesa Civil</p>
-                <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${userProfile?.matricula || '---'}</p>
+                <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${finalName || 'Responsável'}</p>
+                <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">${finalRole}</p>
+                ${isSectoral ? `<p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Secretaria de ${sectorName}</p>` : `<p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Defesa Civil Municipal</p>`}
             </div>
             <p style="margin-top: 40px; font-size: 9px; color: #94a3b8; text-align: center; font-weight: 500; opacity: 0.8;">
                 Documento gerado em ${new Date().toLocaleString('pt-BR')} via SIGERD MOBILE S2ID.
-                A autenticidade deste documento pode ser verificada no sistema municipal.
+                Relatório ${isSectoral ? 'Setorial' : 'FIDE Consolidado'}.
             </p>
         </div>
     `;

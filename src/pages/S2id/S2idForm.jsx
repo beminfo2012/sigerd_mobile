@@ -32,6 +32,24 @@ const S2idForm = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const user = React.useContext(UserContext);
+
+    const ROLE_MAP = {
+        'S2id_Saude': 'saude',
+        'S2id_Obras': 'obras',
+        'S2id_Social': 'social',
+        'S2id_Educacao': 'educacao',
+        'S2id_Agricultura': 'agricultura',
+        'S2id_Interior': 'interior',
+        'S2id_Administracao': 'administracao',
+        'S2id_CDL': 'cdl',
+        'S2id_Cesan': 'cesan',
+        'S2id_DefesaSocial': 'defesa_social',
+        'S2id_EsporteTurismo': 'esporte_turismo',
+        'S2id_ServicosUrbanos': 'servicos_urbanos',
+        'S2id_Transportes': 'transportes'
+    };
+
+    const activeSector = ROLE_MAP[user?.role] || (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null);
     const [formData, setFormData] = useState(INITIAL_S2ID_STATE);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -118,26 +136,27 @@ const S2idForm = () => {
     const canEditSection = (section) => {
         if (!user) return false;
         const role = user.role;
-        const fullAccess = ['Admin', 'Coordenador', 'Agente de Defesa Civil', 'S2id_Geral', 'admin'].includes(role);
-        if (fullAccess) return true;
+        const isDC = ['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(role);
+
+        if (isDC) return true;
 
         const permissions = {
-            tipificacao: ['Admin', 'Coordenador'],
-            data_ocorrencia: ['Admin', 'Coordenador'],
-            danos_humanos: ['S2id_Saude', 'S2id_Social'],
-            danos_materiais: ['S2id_Obras', 'S2id_Setorial'],
-            danos_ambientais: ['S2id_MeioAmbiente', 'S2id_Agricultura'],
-            prejuizos_publicos: ['S2id_Obras', 'S2id_Educacao', 'S2id_Saude'],
-            prejuizos_privados: ['S2id_Agricultura', 'S2id_Social'],
-            setorial: ['S2id_Saude', 'S2id_Obras', 'S2id_Social', 'S2id_Educacao', 'S2id_Agricultura', 'S2id_Setorial'],
-            evidencias: ['S2id_Saude', 'S2id_Obras', 'S2id_Social', 'S2id_Educacao', 'S2id_Agricultura', 'S2id_Setorial'],
-            assinatura: ['S2id_Saude', 'S2id_Obras', 'S2id_Social', 'S2id_Educacao', 'S2id_Agricultura', 'S2id_Setorial']
+            tipificacao: false, // Read-only for sectors
+            data_ocorrencia: false, // Read-only for sectors
+            danos_humanos: false, // Sectors should not edit general S2id human damages unless specifically allowed
+            danos_materiais: false,
+            danos_ambientais: false,
+            prejuizos_publicos: false,
+            prejuizos_privados: false,
+            setorial: true, // Only for their own sector (handled in rendering)
+            evidencias: true,
+            assinatura: true
         };
 
-        return permissions[section]?.includes(role) || false;
+        return permissions[section] || false;
     };
 
-    const isGlobalReadOnly = !['Admin', 'Coordenador', 'Agente de Defesa Civil', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura', 'S2id_Social', 'admin'].includes(user?.role);
+    const isGlobalReadOnly = !(['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role) || user?.role?.startsWith('S2id_'));
 
     const updateData = (section, field, value) => {
         if (!canEditSection(section)) return;
@@ -168,6 +187,7 @@ const S2idForm = () => {
     };
 
     const updateSetorialField = (sector, field, value) => {
+        if (activeSector && sector !== activeSector) return;
         setFormData(prev => ({
             ...prev,
             data: {
@@ -183,13 +203,32 @@ const S2idForm = () => {
         }));
     };
 
+    const updateSectoralSubmission = (sector, field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                submissoes_setoriais: {
+                    ...formData.data.submissoes_setoriais,
+                    [sector]: {
+                        ...formData.data.submissoes_setoriais[sector],
+                        [field]: value
+                    }
+                }
+            }
+        }));
+    };
+
     const finalizeSectoral = async (sector) => {
-        if (!formData.data.evidencias.length) {
-            toast('⚠️ É obrigatório anexar pelo menos uma foto das evidências.', 'error');
+        const sectorPhotos = formData.data.evidencias.filter(p => p.sector === sector);
+        if (!sectorPhotos.length) {
+            toast('⚠️ É obrigatório anexar pelo menos uma foto das evidências do seu setor.', 'error');
             return;
         }
-        if (!formData.data.assinatura.data_url) {
-            toast('⚠️ É obrigatório assinar o relatório para finalizar.', 'error');
+
+        const sectorSub = formData.data.submissoes_setoriais[sector];
+        if (!sectorSub.assinatura_url) {
+            toast('⚠️ É obrigatório coletar a assinatura do responsável do setor para finalizar.', 'error');
             return;
         }
 
@@ -200,6 +239,7 @@ const S2idForm = () => {
                 submissoes_setoriais: {
                     ...formData.data.submissoes_setoriais,
                     [sector]: {
+                        ...sectorSub,
                         preenchido: true,
                         data: new Date().toISOString(),
                         usuario: user?.full_name || user?.email
@@ -212,23 +252,6 @@ const S2idForm = () => {
         toast('✅ Seção setorial finalizada com sucesso! A Defesa Civil foi notificada.', 'success');
     };
 
-    const ROLE_MAP = {
-        'S2id_Saude': 'saude',
-        'S2id_Obras': 'obras',
-        'S2id_Social': 'social',
-        'S2id_Educacao': 'educacao',
-        'S2id_Agricultura': 'agricultura',
-        'S2id_Interior': 'interior',
-        'S2id_Administracao': 'administracao',
-        'S2id_CDL': 'cdl',
-        'S2id_Cesan': 'cesan',
-        'S2id_DefesaSocial': 'defesa_social',
-        'S2id_EsporteTurismo': 'esporte_turismo',
-        'S2id_ServicosUrbanos': 'servicos_urbanos',
-        'S2id_Transportes': 'transportes'
-    };
-
-    const activeSector = ROLE_MAP[user?.role];
 
     const updateDeepData = (section, field, subfield, value) => {
         setFormData(prev => ({
@@ -586,15 +609,29 @@ const S2idForm = () => {
                                             </div>
                                         </div>
                                         {/* Listar todas com resumo básico para admin */}
-                                        <div className="grid grid-cols-1 gap-2">
+                                        <div className="space-y-4">
                                             {Object.keys(formData.data.submissoes_setoriais).map(s => (
-                                                <div key={s} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-[10px]">
-                                                    <span className="font-bold uppercase text-slate-500">{s}</span>
-                                                    {formData.data.submissoes_setoriais[s].preenchido ? (
-                                                        <span className="text-green-600 font-black flex items-center gap-1">FINALIZADO <Shield size={12} /></span>
-                                                    ) : (
-                                                        <span className="text-slate-400 italic">Pendente</span>
-                                                    )}
+                                                <div key={s} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="font-black uppercase text-slate-500 text-[9px] tracking-widest">{s}</span>
+                                                        {formData.data.submissoes_setoriais[s].preenchido ? (
+                                                            <span className="text-green-600 font-black text-[9px] flex items-center gap-1">FINALIZADO <Shield size={12} /></span>
+                                                        ) : (
+                                                            <span className="text-slate-400 italic text-[9px]">Pendente</span>
+                                                        )}
+                                                    </div>
+                                                    {/* Mostrar campos preenchidos p/ admin */}
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {Object.entries(formData.data.setorial[s])
+                                                            .filter(([k, v]) => k !== 'observacoes' && (v !== 0 && v !== ''))
+                                                            .map(([k, v]) => (
+                                                                <div key={k} className="flex justify-between border-b border-slate-200 pb-1">
+                                                                    <span className="text-[8px] text-slate-400 uppercase">{k.replace(/_/g, ' ')}</span>
+                                                                    <span className="text-[9px] font-bold">{v}</span>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -616,25 +653,27 @@ const S2idForm = () => {
                 {openSections.evidencias && (
                     <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {formData.data.evidencias.map((photo, index) => (
-                                <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 group shadow-sm">
-                                    <img src={photo.url} className="w-full h-full object-cover" alt="Evidência" />
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end">
-                                        <p className="text-[8px] text-white font-bold flex items-center gap-1"><MapPin size={10} /> {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}</p>
-                                        <p className="text-[8px] text-white/70 flex items-center gap-1"><ClockIcon size={10} /> {new Date(photo.timestamp).toLocaleTimeString()}</p>
+                            {formData.data.evidencias
+                                .filter(p => !activeSector || p.sector === activeSector || ['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role))
+                                .map((photo, index) => (
+                                    <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 group shadow-sm">
+                                        <img src={photo.url} className="w-full h-full object-cover" alt="Evidência" />
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end">
+                                            <p className="text-[8px] text-white font-bold flex items-center gap-1"><MapPin size={10} /> {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}</p>
+                                            <p className="text-[8px] text-white/70 flex items-center gap-1"><ClockIcon size={10} /> {new Date(photo.timestamp).toLocaleTimeString()}</p>
+                                            {photo.sector && <p className="text-[7px] text-blue-300 font-black uppercase mt-1">Setor: {photo.sector}</p>}
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const newPhotos = formData.data.evidencias.filter((_, i) => i !== index);
+                                                setFormData(prev => ({ ...prev, data: { ...prev.data, evidencias: newPhotos } }));
+                                            }}
+                                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            const newPhotos = [...formData.data.evidencias];
-                                            newPhotos.splice(index, 1);
-                                            setFormData(prev => ({ ...prev, data: { ...prev.data, evidencias: newPhotos } }));
-                                        }}
-                                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg"
-                                    >
-                                        <Trash2 size={12} />
-                                    </button>
-                                </div>
-                            ))}
+                                ))}
                             <button
                                 onClick={() => setShowCamera(true)}
                                 className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-colors text-slate-400"
@@ -661,38 +700,57 @@ const S2idForm = () => {
                                 <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">Nome do Responsável</label>
                                 <input
                                     type="text"
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold"
-                                    value={formData.data.assinatura.responsavel}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, data: { ...prev.data, assinatura: { ...prev.data.assinatura, responsavel: e.target.value } } }))}
+                                    disabled={activeSector && formData.data.submissoes_setoriais[activeSector]?.preenchido}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold disabled:opacity-60"
+                                    value={activeSector ? formData.data.submissoes_setoriais[activeSector].responsavel : formData.data.assinatura.responsavel}
+                                    onChange={(e) => {
+                                        if (activeSector) {
+                                            updateSectoralSubmission(activeSector, 'responsavel', e.target.value);
+                                        } else {
+                                            setFormData(prev => ({ ...prev, data: { ...prev.data, assinatura: { ...prev.data.assinatura, responsavel: e.target.value } } }));
+                                        }
+                                    }}
                                 />
                             </div>
                             <div>
                                 <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">Cargo / Função</label>
                                 <input
                                     type="text"
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold"
-                                    value={formData.data.assinatura.cargo}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, data: { ...prev.data, assinatura: { ...prev.data.assinatura, cargo: e.target.value } } }))}
+                                    disabled={activeSector && formData.data.submissoes_setoriais[activeSector]?.preenchido}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold disabled:opacity-60"
+                                    value={activeSector ? formData.data.submissoes_setoriais[activeSector].cargo : formData.data.assinatura.cargo}
+                                    onChange={(e) => {
+                                        if (activeSector) {
+                                            updateSectoralSubmission(activeSector, 'cargo', e.target.value);
+                                        } else {
+                                            setFormData(prev => ({ ...prev, data: { ...prev.data, assinatura: { ...prev.data.assinatura, cargo: e.target.value } } }));
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>
 
                         <div className="mt-4 p-4 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50 flex flex-col items-center justify-center min-h-[150px]">
-                            {formData.data.assinatura.data_url ? (
+                            {(activeSector ? formData.data.submissoes_setoriais[activeSector].assinatura_url : formData.data.assinatura.data_url) ? (
                                 <div className="text-center">
-                                    <img src={formData.data.assinatura.data_url} className="max-h-[100px] mb-2 grayscale contrast-125" alt="Assinatura" />
-                                    <p className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest">Assinado Digitalmente em {new Date(formData.data.assinatura.data_assinatura).toLocaleString()}</p>
-                                    <button onClick={() => setShowSignature(true)} className="mt-2 text-[9px] text-blue-600 font-black uppercase">Alterar Assinatura</button>
+                                    <img src={activeSector ? formData.data.submissoes_setoriais[activeSector].assinatura_url : formData.data.assinatura.data_url} className="max-h-[100px] mb-2 grayscale contrast-125" alt="Assinatura" />
+                                    <p className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest">
+                                        Assinado Digitalmente {activeSector ? `por ${activeSector.toUpperCase()}` : ''}
+                                    </p>
+                                    {!((activeSector && formData.data.submissoes_setoriais[activeSector]?.preenchido) || isGlobalReadOnly) && (
+                                        <button onClick={() => setShowSignature(true)} className="mt-2 text-[9px] text-blue-600 font-black uppercase">Alterar Assinatura</button>
+                                    )}
                                 </div>
                             ) : (
                                 <button
                                     onClick={() => setShowSignature(true)}
-                                    className="flex flex-col items-center gap-2 group"
+                                    disabled={(activeSector && formData.data.submissoes_setoriais[activeSector]?.preenchido) || isGlobalReadOnly}
+                                    className="flex flex-col items-center gap-2 group disabled:opacity-40"
                                 >
                                     <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm group-active:scale-95 transition-all">
                                         <PenTool size={20} className="text-slate-400" />
                                     </div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Coletar Assinatura</span>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Coletar Assinatura Setorial</span>
                                 </button>
                             )}
                         </div>
@@ -714,7 +772,8 @@ const S2idForm = () => {
             {showCamera && (
                 <S2idPhotoCapture
                     onSave={(photo) => {
-                        setFormData(prev => ({ ...prev, data: { ...prev.data, evidencias: [...prev.data.evidencias, photo] } }));
+                        const photoWithSector = { ...photo, sector: activeSector || 'defesa_civil' };
+                        setFormData(prev => ({ ...prev, data: { ...prev.data, evidencias: [...prev.data.evidencias, photoWithSector] } }));
                         setShowCamera(false);
                         toast.success('Pronto', 'Foto georreferenciada capturada.');
                     }}
@@ -725,17 +784,21 @@ const S2idForm = () => {
             {showSignature && (
                 <S2idSignature
                     onSave={(dataUrl) => {
-                        setFormData(prev => ({
-                            ...prev,
-                            data: {
-                                ...prev.data,
-                                assinatura: {
-                                    ...prev.data.assinatura,
-                                    data_url: dataUrl,
-                                    data_assinatura: new Date().toISOString()
+                        if (activeSector) {
+                            updateSectoralSubmission(activeSector, 'assinatura_url', dataUrl);
+                        } else {
+                            setFormData(prev => ({
+                                ...prev,
+                                data: {
+                                    ...prev.data,
+                                    assinatura: {
+                                        ...prev.data.assinatura,
+                                        data_url: dataUrl,
+                                        data_assinatura: new Date().toISOString()
+                                    }
                                 }
-                            }
-                        }));
+                            }));
+                        }
                         setShowSignature(false);
                         toast.success('Sucesso', 'Assinatura registrada.');
                     }}

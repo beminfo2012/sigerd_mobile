@@ -23,6 +23,24 @@ const S2idDashboard = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
 
+    const ROLE_MAP = {
+        'S2id_Saude': 'saude',
+        'S2id_Obras': 'obras',
+        'S2id_Social': 'social',
+        'S2id_Educacao': 'educacao',
+        'S2id_Agricultura': 'agricultura',
+        'S2id_Interior': 'interior',
+        'S2id_Administracao': 'administracao',
+        'S2id_CDL': 'cdl',
+        'S2id_Cesan': 'cesan',
+        'S2id_DefesaSocial': 'defesa_social',
+        'S2id_EsporteTurismo': 'esporte_turismo',
+        'S2id_ServicosUrbanos': 'servicos_urbanos',
+        'S2id_Transportes': 'transportes'
+    };
+
+    const activeSector = ROLE_MAP[user?.role] || (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null);
+
     useEffect(() => {
         loadRecords();
     }, []);
@@ -150,6 +168,18 @@ const S2idDashboard = () => {
                                                 <Clock size={14} className="text-slate-400" />
                                                 Criado em {new Date(record.created_at).toLocaleDateString()}
                                             </p>
+
+                                            {/* Levantamento Setorial Badges */}
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {Object.entries(record.data.submissoes_setoriais || {})
+                                                    .filter(([_, sub]) => sub.preenchido)
+                                                    .map(([sec, _]) => (
+                                                        <span key={sec} className="text-[7px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-tighter">
+                                                            {sec.replace(/_/g, ' ')}
+                                                        </span>
+                                                    ))
+                                                }
+                                            </div>
                                         </div>
 
                                         <div className="flex flex-col gap-2">
@@ -185,10 +215,10 @@ const S2idDashboard = () => {
                                             )}
                                         </div>
                                         <button
-                                            onClick={() => generateS2idReport(record)}
+                                            onClick={() => generateS2idReport(record, user, activeSector)}
                                             className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:bg-blue-50 px-3 py-1.5 rounded-xl transition-all"
                                         >
-                                            <Download size={14} /> Gerar PDF
+                                            <Download size={14} /> {activeSector ? 'Relatório Setorial' : 'Gerar PDF'}
                                         </button>
                                     </div>
                                 </div>
