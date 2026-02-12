@@ -9,6 +9,7 @@ import { getS2idById, saveS2idLocal, INITIAL_S2ID_STATE } from '../../services/s
 import { useToast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
 import { COBRADE_LIST } from '../../utils/cobradeData';
+import { generateS2idReport } from '../../utils/s2idReportGenerator';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle, color = "blue" }) => (
     <div
@@ -199,16 +200,25 @@ const S2idForm = () => {
                         </div>
                     </div>
                 </div>
-                <button
-                    onClick={() => {
-                        setFormData(prev => ({ ...prev, status: 'submitted' }));
-                        toast.success('Finalizado', 'Formulário marcado como finalizado.');
-                    }}
-                    disabled={saving || !['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role)}
-                    className="bg-emerald-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all"
-                >
-                    Finalizar
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => generateS2idReport(formData, user)}
+                        className="bg-slate-100 text-slate-700 p-2.5 rounded-xl active:scale-95 transition-all hover:bg-slate-200 flex items-center gap-2"
+                        title="Gerar Relatório PDF"
+                    >
+                        <FileText size={18} />
+                    </button>
+                    <button
+                        onClick={() => {
+                            setFormData(prev => ({ ...prev, status: 'submitted' }));
+                            toast.success('Finalizado', 'Formulário marcado como finalizado.');
+                        }}
+                        disabled={saving || !['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role)}
+                        className="bg-emerald-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all"
+                    >
+                        Finalizar
+                    </button>
+                </div>
             </header>
 
             <div className="max-w-4xl mx-auto">

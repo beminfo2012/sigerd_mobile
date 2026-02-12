@@ -9,10 +9,13 @@ import {
 import { getS2idRecords, deleteS2idLocal } from '../../services/s2idDb';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
+import { UserContext } from '../../App';
+import { generateS2idReport } from '../../utils/s2idReportGenerator';
 
 const S2idDashboard = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
+    const user = React.useContext(UserContext);
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -179,6 +182,7 @@ const S2idDashboard = () => {
                                         <Edit3 size={14} /> Editar
                                     </button>
                                     <button
+                                        onClick={() => generateS2idReport(record, user)}
                                         className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                                     >
                                         <Download size={14} /> Relatório
