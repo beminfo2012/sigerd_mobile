@@ -385,6 +385,23 @@ function App() {
 
     const loadUserProfile = async () => {
         console.log('--- LOADING USER PROFILE ---')
+
+        // Check for mock profile first
+        try {
+            const saved = localStorage.getItem('userProfile');
+            if (saved) {
+                const profile = JSON.parse(saved);
+                if (profile.is_mock) {
+                    console.log('Using mock profile for testing:', profile.role);
+                    setUserProfile(profile);
+                    setIsLoading(false);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('Error checking for mock profile:', e);
+        }
+
         if (!navigator.onLine) {
             console.warn('Network offline during profile load')
             setIsLoading(false);

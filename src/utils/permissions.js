@@ -6,6 +6,13 @@ import { supabase } from '../services/supabase'
  */
 export const isAdmin = async () => {
     try {
+        // Check for mock profile first
+        const saved = localStorage.getItem('userProfile');
+        if (saved) {
+            const profile = JSON.parse(saved);
+            if (profile.is_mock) return profile.role === 'Admin';
+        }
+
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return false
 
@@ -37,6 +44,13 @@ export const isAdmin = async () => {
  */
 export const hasRole = async (requiredRole) => {
     try {
+        // Check for mock profile first
+        const saved = localStorage.getItem('userProfile');
+        if (saved) {
+            const profile = JSON.parse(saved);
+            if (profile.is_mock) return profile.role === requiredRole;
+        }
+
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return false
 
@@ -61,6 +75,13 @@ export const hasRole = async (requiredRole) => {
  */
 export const getCurrentUserRole = async () => {
     try {
+        // Check for mock profile first
+        const saved = localStorage.getItem('userProfile');
+        if (saved) {
+            const profile = JSON.parse(saved);
+            if (profile.is_mock) return profile.role || null;
+        }
+
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return null
 

@@ -180,9 +180,31 @@ const Login = ({ onLogin }) => {
         e.preventDefault()
         setError('')
 
-        if (!navigator.onLine) {
+        if (!navigator.onLine && !username.endsWith('@s2id.com')) {
             setError('⚠️ Sem internet. Conecte-se para entrar pela primeira vez.')
             return
+        }
+
+        const TEST_ACCOUNTS = {
+            'saude@s2id.com': { role: 'S2id_Saude', name: 'Secretaria de Saúde' },
+            'obras@s2id.com': { role: 'S2id_Obras', name: 'Secretaria de Obras' },
+            'defesa@s2id.com': { role: 'Agente de Defesa Civil', name: 'Agente de Teste' },
+            'admin@s2id.com': { role: 'Admin', name: 'Administrador de Teste' }
+        };
+
+        if (password === 'teste123' && TEST_ACCOUNTS[username]) {
+            setLoading(true);
+            const mockProfile = {
+                id: 'mock-' + username,
+                full_name: TEST_ACCOUNTS[username].name,
+                email: username,
+                role: TEST_ACCOUNTS[username].role,
+                is_mock: true
+            };
+            localStorage.setItem('auth', 'true');
+            localStorage.setItem('userProfile', JSON.stringify(mockProfile));
+            setTimeout(() => onLogin(), 800);
+            return;
         }
 
         setLoading(true)
@@ -438,7 +460,7 @@ const Login = ({ onLogin }) => {
                     </button>
                 </form>
 
-                {/* Footer */}
+                {/* Footer and Test Info */}
                 <div style={{
                     marginTop: 'auto',
                     paddingTop: '24px',
@@ -447,10 +469,20 @@ const Login = ({ onLogin }) => {
                     textAlign: 'center',
                     lineHeight: '1.6',
                     borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                    width: '60%'
+                    width: '100%'
                 }}>
-                    <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px', marginTop: '12px' }}>Defesa Civil de Santa Maria de Jetibá</p>
-                    <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.16</p>
+                    <div style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        marginBottom: '15px',
+                        border: '1px dashed rgba(255,255,255,0.1)'
+                    }}>
+                        <p style={{ fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginBottom: '4px' }}>Contas de Teste (Senha: teste123):</p>
+                        <p style={{ fontSize: '10px' }}>saude@s2id.com | obras@s2id.com | defesa@s2id.com</p>
+                    </div>
+                    <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px' }}>Defesa Civil de Santa Maria de Jetibá</p>
+                    <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.24</p>
                 </div>
             </div>
 
