@@ -461,7 +461,7 @@ const Login = ({ onLogin }) => {
                     </button>
                 </form>
 
-                {/* Footer and Test Info */}
+                {/* Footer */}
                 <div style={{
                     marginTop: 'auto',
                     paddingTop: '24px',
@@ -470,20 +470,10 @@ const Login = ({ onLogin }) => {
                     textAlign: 'center',
                     lineHeight: '1.6',
                     borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                    width: '100%'
+                    width: '60%'
                 }}>
-                    <div style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        marginBottom: '15px',
-                        border: '1px dashed rgba(255,255,255,0.1)'
-                    }}>
-                        <p style={{ fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginBottom: '4px' }}>Contas de Teste (Senha: teste123):</p>
-                        <p style={{ fontSize: '10px' }}>saude@s2id.com | obras@s2id.com | social@s2id.com</p>
-                    </div>
-                    <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px' }}>Defesa Civil de Santa Maria de Jetibá</p>
-                    <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.24</p>
+                    <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px', marginTop: '12px' }}>Defesa Civil de Santa Maria de Jetibá</p>
+                    <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.25</p>
                 </div>
             </div>
 
