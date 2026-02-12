@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } f
 import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-react'
 import SyncBackground from './components/SyncBackground'
 import { notificationService } from './services/notificationService'
+import { ToastContainer } from './components/ToastNotification'
 
 // Core Components (Always loaded)
 import Dashboard from './pages/Dashboard'
@@ -456,6 +457,7 @@ function App() {
                         setIsDarkMode={setIsDarkMode}
                     />
                 </Router>
+                <ToastContainer />
             </UserContext.Provider>
         </ErrorBoundary>
     )

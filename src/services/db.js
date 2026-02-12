@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 12
+const DB_VERSION = 13
 
 
 let dbPromise = null;
@@ -53,10 +53,29 @@ export const initDB = async () => {
                 if (!db.objectStoreNames.contains(name)) {
                     const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
                     store.createIndex('synced', 'synced', { unique: false });
+                    // Add shelter_id index for donations, inventory, distributions
+                    if (['donations', 'inventory', 'distributions'].includes(name)) {
+                        store.createIndex('shelter_id', 'shelter_id', { unique: false });
+                    }
                 } else {
                     ensureSyncedIndex(name);
+                    // Ensure shelter_id index exists on humanitarian stores
+                    if (['donations', 'inventory', 'distributions'].includes(name)) {
+                        const store = transaction.objectStore(name);
+                        if (!store.indexNames.contains('shelter_id')) {
+                            store.createIndex('shelter_id', 'shelter_id', { unique: false });
+                        }
+                    }
                 }
             });
+
+            // Audit Log Store (v13)
+            if (!db.objectStoreNames.contains('audit_log')) {
+                const auditStore = db.createObjectStore('audit_log', { keyPath: 'id', autoIncrement: true });
+                auditStore.createIndex('entity_type', 'entity_type', { unique: false });
+                auditStore.createIndex('entity_id', 'entity_id', { unique: false });
+                auditStore.createIndex('timestamp', 'timestamp', { unique: false });
+            }
 
             // Emergency Contracts
             if (!db.objectStoreNames.contains('emergency_contracts')) {

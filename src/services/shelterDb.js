@@ -8,7 +8,9 @@ import { initDB, triggerSync } from './db';
 // --- HELPERS ---
 
 const generateId = (prefix) => {
-    return `${prefix}-${Math.floor(Math.random() * 900) + 100}`;
+    const ts = Date.now().toString(36);
+    const rand = Math.random().toString(36).substring(2, 6);
+    return `${prefix}-${ts}-${rand}`;
 };
 
 // --- SHELTERS ---
@@ -153,18 +155,28 @@ export const exitOccupant = async (occupantId, shelterId) => {
 
 export const getDonations = async (shelterId) => {
     const db = await initDB();
+    let items;
     if (shelterId && shelterId !== 'CENTRAL') {
-        return db.getAllFromIndex('donations', 'shelter_id', String(shelterId));
-    }
-    // For CENTRAL or global view
-    if (shelterId === 'CENTRAL') {
+        items = await db.getAllFromIndex('donations', 'shelter_id', String(shelterId));
+    } else if (shelterId === 'CENTRAL') {
         const all = await db.getAll('donations');
-        return all.filter(d => d.shelter_id === 'CENTRAL');
+        items = all.filter(d => d.shelter_id === 'CENTRAL');
+    } else {
+        items = await db.getAll('donations');
     }
-    return db.getAll('donations');
+    return (items || []).filter(d => d.status !== 'deleted');
 };
 
 export const addDonation = async (donationData) => {
+    // --- VALIDATION: prevent empty records ---
+    if (!donationData.item_description || !donationData.item_description.trim()) {
+        throw new Error('Descrição do item é obrigatória. Não é possível salvar doação sem descrição.');
+    }
+    const qty = parseFloat(donationData.quantity);
+    if (!qty || qty <= 0 || isNaN(qty)) {
+        throw new Error('Quantidade deve ser maior que zero.');
+    }
+
     const db = await initDB();
     const newDonation = {
         ...donationData,
@@ -176,9 +188,10 @@ export const addDonation = async (donationData) => {
         synced: false
     };
 
-    const tx = db.transaction(['donations', 'inventory'], 'readwrite');
+    const tx = db.transaction(['donations', 'inventory', 'audit_log'], 'readwrite');
     const donStore = tx.objectStore('donations');
     const invStore = tx.objectStore('inventory');
+    const auditStore = tx.objectStore('audit_log');
 
     await donStore.add(newDonation);
 
@@ -187,38 +200,46 @@ export const addDonation = async (donationData) => {
     let existingItem;
 
     if (shelterIdStr) {
-        // Safe to get all and filter? For MVP yes.
         const allInv = await invStore.getAll();
         existingItem = allInv.find(i =>
             String(i.shelter_id) === String(shelterIdStr) &&
-            i.item_name.toLowerCase() === newDonation.item_description.toLowerCase()
+            i.item_name.toLowerCase() === newDonation.item_description.toLowerCase() &&
+            i.status !== 'deleted'
         );
     }
 
     if (existingItem) {
-        // Update quantity
         const updatedItem = {
             ...existingItem,
-            quantity: parseFloat(existingItem.quantity) + parseFloat(newDonation.quantity),
+            quantity: parseFloat(existingItem.quantity) + qty,
             updated_at: new Date().toISOString(),
             synced: false
         };
         await invStore.put(updatedItem);
     } else {
-        // Create new inventory item
         const newItem = {
             item_id: generateId('INV'),
             shelter_id: shelterIdStr,
             item_name: newDonation.item_description,
-            category: newDonation.donation_type, // Map donation type to category
-            quantity: parseFloat(newDonation.quantity),
+            category: newDonation.donation_type,
+            quantity: qty,
             unit: newDonation.unit,
-            min_quantity: 5, // Default
+            min_quantity: 5,
+            status: 'active',
             updated_at: new Date().toISOString(),
             synced: false
         };
         await invStore.add(newItem);
     }
+
+    // Audit log
+    await auditStore.add({
+        action: 'DONATION_RECEIVED',
+        entity_type: 'donation',
+        entity_id: newDonation.donation_id,
+        details: `${newDonation.item_description}: ${qty} ${newDonation.unit} -> ${shelterIdStr}`,
+        timestamp: new Date().toISOString()
+    });
 
     await tx.done;
     triggerSync();
@@ -227,20 +248,23 @@ export const addDonation = async (donationData) => {
 
 export const getInventory = async (shelterId) => {
     const db = await initDB();
+    let items;
     if (shelterId && shelterId !== 'CENTRAL') {
-        return db.getAllFromIndex('inventory', 'shelter_id', String(shelterId));
-    }
-    if (shelterId === 'CENTRAL') {
-        // Filter manually for now
+        items = await db.getAllFromIndex('inventory', 'shelter_id', String(shelterId));
+    } else if (shelterId === 'CENTRAL') {
         const all = await db.getAll('inventory');
-        return all.filter(i => i.shelter_id === 'CENTRAL');
+        items = all.filter(i => i.shelter_id === 'CENTRAL');
+    } else {
+        items = await db.getAll('inventory');
     }
-    return db.getAll('inventory');
+    // Filter out soft-deleted items
+    return (items || []).filter(i => i.status !== 'deleted');
 };
 
 export const getGlobalInventory = async () => {
     const db = await initDB();
-    return db.getAll('inventory');
+    const all = await db.getAll('inventory');
+    return all.filter(i => i.status !== 'deleted');
 };
 
 export const transferStock = async (itemId, fromShelterId, toShelterId, quantity) => {
@@ -317,17 +341,21 @@ export const transferStock = async (itemId, fromShelterId, toShelterId, quantity
 
 export const getDistributions = async (shelterId) => {
     const db = await initDB();
+    let items;
     if (shelterId) {
-        return db.getAllFromIndex('distributions', 'shelter_id', String(shelterId));
+        items = await db.getAllFromIndex('distributions', 'shelter_id', String(shelterId));
+    } else {
+        items = await db.getAll('distributions');
     }
-    return db.getAll('distributions');
+    return (items || []).filter(d => d.status !== 'deleted');
 };
 
 export const addDistribution = async (distribution) => {
     const db = await initDB();
-    const tx = db.transaction(['inventory', 'distributions'], 'readwrite');
+    const tx = db.transaction(['inventory', 'distributions', 'audit_log'], 'readwrite');
     const invStore = tx.objectStore('inventory');
     const distStore = tx.objectStore('distributions');
+    const auditStore = tx.objectStore('audit_log');
 
     // 1. Find Inventory Item
     let item;
@@ -337,7 +365,7 @@ export const addDistribution = async (distribution) => {
 
     if (!item && distribution.item_name) {
         const allItems = await invStore.getAll();
-        item = allItems.find(i => i.item_name === distribution.item_name);
+        item = allItems.find(i => i.item_name === distribution.item_name && i.status !== 'deleted');
         if (item) distribution.inventory_id = item.id;
     }
 
@@ -366,6 +394,15 @@ export const addDistribution = async (distribution) => {
     };
     await distStore.add(newDist);
 
+    // 4. Audit log
+    await auditStore.add({
+        action: 'DISTRIBUTION',
+        entity_type: 'distribution',
+        entity_id: newDist.distribution_id,
+        details: `${distribution.item_name}: -${distribution.quantity} ${distribution.unit || ''} -> ${distribution.recipient_name || distribution.shelter_id || 'N/A'}`,
+        timestamp: new Date().toISOString()
+    });
+
     await tx.done;
     triggerSync();
     return newDist;
@@ -375,19 +412,34 @@ export const addDistribution = async (distribution) => {
 
 export const clearInventory = async (shelterId) => {
     const db = await initDB();
-    const tx = db.transaction('inventory', 'readwrite');
+    const tx = db.transaction(['inventory', 'audit_log'], 'readwrite');
     const store = tx.objectStore('inventory');
+    const auditStore = tx.objectStore('audit_log');
 
-    // We can't deleteByIndex directly in simple IDB wrapper without iterating
-    // But since this is a rare admin action, iterating is fine
     const allItems = await store.getAll();
-    const itemsToDelete = shelterId
-        ? allItems.filter(i => String(i.shelter_id) === String(shelterId))
-        : allItems;
+    const itemsToSoftDelete = shelterId
+        ? allItems.filter(i => String(i.shelter_id) === String(shelterId) && i.status !== 'deleted')
+        : allItems.filter(i => i.status !== 'deleted');
 
-    for (const item of itemsToDelete) {
-        await store.delete(item.id); // Assuming 'id' is keyPath
+    for (const item of itemsToSoftDelete) {
+        const updated = {
+            ...item,
+            status: 'deleted',
+            deleted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            synced: false
+        };
+        await store.put(updated);
     }
+
+    // Audit log
+    await auditStore.add({
+        action: 'CLEAR_INVENTORY',
+        entity_type: 'inventory',
+        entity_id: shelterId || 'ALL',
+        details: `Soft-deleted ${itemsToSoftDelete.length} items from ${shelterId || 'ALL'}`,
+        timestamp: new Date().toISOString()
+    });
 
     await tx.done;
     return true;
@@ -395,11 +447,196 @@ export const clearInventory = async (shelterId) => {
 
 export const clearReports = async () => {
     const db = await initDB();
-    const tx = db.transaction(['distributions', 'donations'], 'readwrite');
+    const tx = db.transaction(['distributions', 'donations', 'audit_log'], 'readwrite');
 
-    await tx.objectStore('distributions').clear();
-    await tx.objectStore('donations').clear();
+    // Soft delete donations
+    const donStore = tx.objectStore('donations');
+    const allDonations = await donStore.getAll();
+    for (const d of allDonations) {
+        if (d.status !== 'deleted') {
+            await donStore.put({ ...d, status: 'deleted', deleted_at: new Date().toISOString(), synced: false });
+        }
+    }
+
+    // Soft delete distributions
+    const distStore = tx.objectStore('distributions');
+    const allDist = await distStore.getAll();
+    for (const d of allDist) {
+        if (d.status !== 'deleted') {
+            await distStore.put({ ...d, status: 'deleted', deleted_at: new Date().toISOString(), synced: false });
+        }
+    }
+
+    // Audit log
+    const auditStore = tx.objectStore('audit_log');
+    await auditStore.add({
+        action: 'CLEAR_REPORTS',
+        entity_type: 'reports',
+        entity_id: 'ALL',
+        details: `Soft-deleted ${allDonations.length} donations and ${allDist.length} distributions`,
+        timestamp: new Date().toISOString()
+    });
 
     await tx.done;
     return true;
+};
+
+// --- NEW: Individual Item Management ---
+
+export const updateInventoryItem = async (id, changes) => {
+    const db = await initDB();
+    const tx = db.transaction(['inventory', 'audit_log'], 'readwrite');
+    const store = tx.objectStore('inventory');
+    const auditStore = tx.objectStore('audit_log');
+
+    const item = await store.get(parseInt(id));
+    if (!item || item.status === 'deleted') throw new Error('Item não encontrado.');
+
+    const oldQty = item.quantity;
+    const updated = {
+        ...item,
+        ...changes,
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+    await store.put(updated);
+
+    await auditStore.add({
+        action: 'INVENTORY_EDIT',
+        entity_type: 'inventory',
+        entity_id: item.item_id || String(id),
+        details: `${item.item_name}: qty ${oldQty} -> ${changes.quantity || oldQty}`,
+        timestamp: new Date().toISOString()
+    });
+
+    await tx.done;
+    triggerSync();
+    return updated;
+};
+
+export const deleteInventoryItem = async (id) => {
+    const db = await initDB();
+    const tx = db.transaction(['inventory', 'audit_log'], 'readwrite');
+    const store = tx.objectStore('inventory');
+    const auditStore = tx.objectStore('audit_log');
+
+    const item = await store.get(parseInt(id));
+    if (!item) throw new Error('Item não encontrado.');
+
+    const updated = {
+        ...item,
+        status: 'deleted',
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+    await store.put(updated);
+
+    await auditStore.add({
+        action: 'INVENTORY_DELETE',
+        entity_type: 'inventory',
+        entity_id: item.item_id || String(id),
+        details: `Soft-deleted: ${item.item_name} (${item.quantity} ${item.unit})`,
+        timestamp: new Date().toISOString()
+    });
+
+    await tx.done;
+    triggerSync();
+    return true;
+};
+
+export const getAuditLog = async (entityType, limit = 50) => {
+    const db = await initDB();
+    const all = await db.getAll('audit_log');
+    let filtered = all;
+    if (entityType) {
+        filtered = all.filter(e => e.entity_type === entityType);
+    }
+    return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, limit);
+};
+
+export const getDataConsistencyReport = async (shelterId) => {
+    const db = await initDB();
+    const sid = shelterId || 'CENTRAL';
+
+    const allDonations = await db.getAll('donations');
+    const donations = allDonations.filter(d =>
+        String(d.shelter_id) === String(sid) && d.status !== 'deleted'
+    );
+
+    const allDistributions = await db.getAll('distributions');
+    const distributions = allDistributions.filter(d =>
+        String(d.shelter_id) === String(sid) && d.status !== 'deleted'
+    );
+
+    const allInventory = await db.getAll('inventory');
+    const inventory = allInventory.filter(i =>
+        String(i.shelter_id) === String(sid) && i.status !== 'deleted'
+    );
+
+    const totalDonated = donations.reduce((acc, d) => acc + (parseFloat(d.quantity) || 0), 0);
+    const totalDistributed = distributions.reduce((acc, d) => acc + (parseFloat(d.quantity) || 0), 0);
+    const currentStock = inventory.reduce((acc, i) => acc + (parseFloat(i.quantity) || 0), 0);
+    const expectedStock = totalDonated - totalDistributed;
+    const divergence = Math.abs(currentStock - expectedStock);
+
+    // Detect incomplete records
+    const incompleteDonations = allDonations.filter(d =>
+        d.status !== 'deleted' && (!d.item_description || !d.item_description.trim() || !d.quantity || parseFloat(d.quantity) <= 0)
+    );
+
+    return {
+        totalDonated,
+        totalDistributed,
+        expectedStock,
+        currentStock,
+        divergence,
+        isConsistent: divergence < 0.01,
+        donationCount: donations.length,
+        distributionCount: distributions.length,
+        inventoryItemCount: inventory.length,
+        incompleteDonations: incompleteDonations.length
+    };
+};
+
+export const getItemMovementHistory = async (itemName, shelterId) => {
+    const db = await initDB();
+    const sid = shelterId || 'CENTRAL';
+    const movements = [];
+
+    // Donations for this item
+    const allDonations = await db.getAll('donations');
+    allDonations.filter(d =>
+        String(d.shelter_id) === String(sid) &&
+        d.item_description && d.item_description.toLowerCase() === itemName.toLowerCase() &&
+        d.status !== 'deleted'
+    ).forEach(d => {
+        movements.push({
+            type: 'entrada',
+            date: d.donation_date || d.created_at,
+            quantity: parseFloat(d.quantity) || 0,
+            unit: d.unit,
+            description: `Doação de ${d.donor_name || 'Anônimo'}`,
+            icon: 'gift'
+        });
+    });
+
+    // Distributions of this item
+    const allDistributions = await db.getAll('distributions');
+    allDistributions.filter(d =>
+        String(d.shelter_id) === String(sid) &&
+        d.item_name && d.item_name.toLowerCase() === itemName.toLowerCase() &&
+        d.status !== 'deleted'
+    ).forEach(d => {
+        movements.push({
+            type: 'saida',
+            date: d.distribution_date || d.created_at,
+            quantity: parseFloat(d.quantity) || 0,
+            unit: d.unit,
+            description: `Distribuição para ${d.recipient_name || 'N/A'}`,
+            icon: 'truck'
+        });
+    });
+
+    return movements.sort((a, b) => new Date(b.date) - new Date(a.date));
 };

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Gift, User, Phone, Package, Hash, ArrowLeft } from 'lucide-react';
+import { Gift, User, Phone, Package, Hash, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { addDonation, getShelterById } from '../../services/shelterDb.js';
 import VoiceInput from '../../components/VoiceInput';
+import { toast } from '../../components/ToastNotification';
 
 export function DonationForm() {
     const { shelterId } = useParams();
@@ -35,6 +36,7 @@ export function DonationForm() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lastFocusedField, setLastFocusedField] = useState(null);
+    const [errors, setErrors] = useState({});
 
     const handleVoiceResult = (transcript) => {
         if (lastFocusedField) {
@@ -52,8 +54,25 @@ export function DonationForm() {
         });
     };
 
+    const validateForm = () => {
+        const e = {};
+        if (!formData.item_description || !formData.item_description.trim()) {
+            e.item_description = 'Descrição do item é obrigatória';
+        }
+        const qty = parseFloat(formData.quantity);
+        if (!qty || qty <= 0 || isNaN(qty)) {
+            e.quantity = 'Quantidade deve ser maior que zero';
+        }
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            toast.error('Campos obrigatórios', 'Preencha todos os campos destacados.');
+            return;
+        }
         setIsSubmitting(true);
 
         try {
@@ -62,11 +81,11 @@ export function DonationForm() {
                 shelter_id: idStr
             });
 
-            alert('Doação registrada com sucesso!');
+            toast.success('Doação registrada!', `${formData.item_description} (${formData.quantity} ${formData.unit}) adicionado.`);
             navigate(`/abrigos/${shelterId}`);
         } catch (error) {
             console.error('Error saving donation:', error);
-            alert('Erro ao registrar doação. Tente novamente.');
+            toast.error('Erro ao registrar', error.message || 'Tente novamente.');
         } finally {
             setIsSubmitting(false);
         }

@@ -6,7 +6,7 @@ import {
     Home, Info
 } from 'lucide-react';
 import { UserContext } from '../../App';
-import { getShelters, getOccupants, getDonations, getGlobalInventory } from '../../services/shelterDb.js';
+import { getShelters, getOccupants, getDonations, getGlobalInventory, getDataConsistencyReport } from '../../services/shelterDb.js';
 import { shelterSyncService } from '../../services/shelterSyncService';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie
@@ -31,6 +31,7 @@ export default function ShelterMenu() {
     const [chartData, setChartData] = useState({ inventory: [], occupancy: [] });
     const [syncPercentage, setSyncPercentage] = useState(100);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [consistency, setConsistency] = useState(null);
 
     // Master bypass for admin email
     const isAdminEmail = userEmail === 'bruno_pagel@hotmail.com';
@@ -52,6 +53,7 @@ export default function ShelterMenu() {
             const activeShelters = shelters.filter(s => s.status === 'active');
             const totalCapacity = shelters.reduce((acc, s) => acc + parseInt(s.capacity || 0), 0);
             const totalOccupancy = shelters.reduce((acc, s) => acc + parseInt(s.current_occupancy || 0), 0);
+            const totalItemsQty = inventory.reduce((acc, i) => acc + (parseFloat(i.quantity) || 0), 0);
 
             setStats({
                 totalShelters: shelters.length,
@@ -59,8 +61,15 @@ export default function ShelterMenu() {
                 totalOccupants: occupants.length,
                 totalDonations: donations.length,
                 itemsCount: inventory.length,
+                totalItemsQty,
                 occupancyRate: totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0
             });
+
+            // Load consistency report
+            try {
+                const report = await getDataConsistencyReport('CENTRAL');
+                setConsistency(report);
+            } catch (e) { console.warn('Consistency check failed:', e); }
 
             // Prepare Chart Data
             // 1. Inventory Top 5 by Quantity
@@ -253,9 +262,14 @@ export default function ShelterMenu() {
                         <div className="bg-white p-4 rounded-[28px] border border-slate-100 shadow-sm relative overflow-hidden group">
                             <div className="flex justify-between items-start mb-2">
                                 <Package className="text-purple-500" size={20} />
+                                {consistency && (
+                                    <div className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${consistency.isConsistent ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                        {consistency.isConsistent ? '✓ OK' : '⚠ DIVERGÊNCIA'}
+                                    </div>
+                                )}
                             </div>
-                            <div className="text-3xl font-black text-slate-800">{stats.itemsCount}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Itens em Estoque</div>
+                            <div className="text-3xl font-black text-slate-800">{(stats.totalItemsQty || 0).toLocaleString('pt-BR')}</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{stats.itemsCount} tipos em estoque</div>
                         </div>
                     </div>
                 )}

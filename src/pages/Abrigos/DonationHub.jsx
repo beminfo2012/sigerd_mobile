@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, User, Phone, Package, Hash, ArrowLeft, Building2 } from 'lucide-react';
+import { Gift, User, Phone, Package, Hash, ArrowLeft, Building2, AlertCircle } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { addDonation, getShelters } from '../../services/shelterDb.js';
 import VoiceInput from '../../components/VoiceInput';
+import { toast } from '../../components/ToastNotification';
 
 export default function DonationHub() {
     const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function DonationHub() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lastFocusedField, setLastFocusedField] = useState(null);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         const loadShelters = async () => {
@@ -48,22 +50,41 @@ export default function DonationHub() {
         }
     };
 
+    const validateForm = () => {
+        const e = {};
+        if (!formData.item_description || !formData.item_description.trim()) {
+            e.item_description = 'Descrição do item é obrigatória';
+        }
+        const qty = parseFloat(formData.quantity);
+        if (!qty || qty <= 0 || isNaN(qty)) {
+            e.quantity = 'Quantidade deve ser maior que zero';
+        }
+        if (formData.destination_type === 'SHELTER' && !formData.shelter_id) {
+            e.shelter_id = 'Selecione um abrigo';
+        }
+        setErrors(e);
+        return Object.keys(e).length === 0;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            toast.error('Campos obrigatórios', 'Preencha todos os campos destacados em vermelho.');
+            return;
+        }
         setIsSubmitting(true);
 
         try {
             await addDonation({
                 ...formData,
-                // If CENTRAL, shelter_id is 'CENTRAL' (handled by setter or here)
                 shelter_id: formData.destination_type === 'CENTRAL' ? 'CENTRAL' : formData.shelter_id
             });
 
-            alert('Doação registrada com sucesso!');
+            toast.success('Doação registrada!', `${formData.item_description} (${formData.quantity} ${formData.unit}) adicionado ao estoque.`);
             navigate('/abrigos');
         } catch (error) {
             console.error('Error saving donation:', error);
-            alert('Erro ao registrar doação. Tente novamente.');
+            toast.error('Erro ao registrar', error.message || 'Tente novamente.');
         } finally {
             setIsSubmitting(false);
         }
@@ -218,12 +239,17 @@ export default function DonationHub() {
                                 label="Descrição do Item"
                                 name="item_description"
                                 value={formData.item_description}
-                                onChange={handleChange}
+                                onChange={(e) => { handleChange(e); if (errors.item_description) setErrors(prev => ({ ...prev, item_description: '' })); }}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 required
                                 icon={Package}
                                 placeholder="Ex: Cesta Básica, Colchão..."
                             />
+                            {errors.item_description && (
+                                <p className="text-xs text-red-500 font-semibold flex items-center gap-1 -mt-2">
+                                    <AlertCircle size={12} /> {errors.item_description}
+                                </p>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <Input
@@ -232,12 +258,17 @@ export default function DonationHub() {
                                     type="number"
                                     step="0.01"
                                     value={formData.quantity}
-                                    onChange={handleChange}
+                                    onChange={(e) => { handleChange(e); if (errors.quantity) setErrors(prev => ({ ...prev, quantity: '' })); }}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     required
                                     icon={Hash}
                                     placeholder="0"
                                 />
+                                {errors.quantity && (
+                                    <p className="text-xs text-red-500 font-semibold flex items-center gap-1 -mt-2">
+                                        <AlertCircle size={12} /> {errors.quantity}
+                                    </p>
+                                )}
                                 <div className="space-y-2">
                                     <label className="block text-sm font-semibold text-slate-700">
                                         Unidade
@@ -264,7 +295,7 @@ export default function DonationHub() {
                         <Button type="button" variant="secondary" onClick={() => navigate('/abrigos')} className="flex-1">
                             Cancelar
                         </Button>
-                        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                        <Button type="submit" className="flex-1" disabled={isSubmitting || (!formData.item_description.trim() || !formData.quantity)}>
                             {isSubmitting ? 'Salvando...' : 'Confirmar Doação'}
                         </Button>
                     </div>

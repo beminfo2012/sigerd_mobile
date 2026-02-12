@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, Package, TrendingUp, Calendar, MapPin, User, Download, Printer, Trash2, ArrowLeft } from 'lucide-react';
+import { Gift, Package, TrendingUp, Calendar, MapPin, User, Download, Printer, Trash2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { getDonations, getDistributions, getShelters, clearReports } from '../../services/shelterDb.js';
+import ConfirmModal from '../../components/ConfirmModal';
+import { toast } from '../../components/ToastNotification';
 
 export function Reports() {
     const navigate = useNavigate();
     const [donations, setDonations] = useState([]);
     const [distributions, setDistributions] = useState([]);
     const [shelters, setShelters] = useState([]);
+    const [showClearModal, setShowClearModal] = useState(false);
 
     const loadData = async () => {
         const d = await getDonations();
@@ -22,15 +25,13 @@ export function Reports() {
     };
 
     const handleClearReports = async () => {
-        if (window.confirm('Deseja apagar TODO o histórico de doações e distribuições? Esta ação não pode ser desfeita.')) {
-            try {
-                await clearReports();
-                await loadData();
-                alert('Histórico limpo com sucesso.');
-            } catch (error) {
-                console.error(error);
-                alert('Erro ao limpar histórico.');
-            }
+        try {
+            await clearReports();
+            await loadData();
+            toast.success('Histórico arquivado', 'Todos os registros foram arquivados com sucesso.');
+        } catch (error) {
+            console.error(error);
+            toast.error('Erro', 'Não foi possível limpar o histórico.');
         }
     };
 
@@ -108,7 +109,7 @@ export function Reports() {
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="secondary"
-                                onClick={handleClearReports}
+                                onClick={() => setShowClearModal(true)}
                                 className="flex-1 md:flex-none flex items-center justify-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 print:hidden"
                             >
                                 <Trash2 size={18} />
@@ -150,7 +151,12 @@ export function Reports() {
                         ) : (
                             <div className="space-y-3">
                                 {donations.map((donation) => (
-                                    <Card key={donation.id} className="p-4 border-l-4 border-l-amber-500">
+                                    <Card key={donation.id} className={`p-4 border-l-4 ${(!donation.item_description || !donation.item_description.trim() || !donation.quantity) ? 'border-l-red-400 bg-red-50/30' : 'border-l-amber-500'}`}>
+                                        {(!donation.item_description || !donation.item_description.trim() || !donation.quantity) && (
+                                            <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold mb-2">
+                                                <AlertTriangle size={10} /> Registro Incompleto
+                                            </div>
+                                        )}
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <h3 className="font-bold text-slate-800 capitalize">{donation.item_description}</h3>
@@ -239,6 +245,17 @@ export function Reports() {
                     </section>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showClearModal}
+                onClose={() => setShowClearModal(false)}
+                onConfirm={handleClearReports}
+                title="Limpar Todo o Histórico?"
+                message={`Essa ação irá arquivar ${donations.length} doações e ${distributions.length} distribuições. Os dados podem ser recuperados pelo administrador.`}
+                confirmText="Limpar Histórico"
+                type="danger"
+                requireTypedConfirmation={true}
+            />
         </div>
     );
 }
