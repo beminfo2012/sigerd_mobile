@@ -8,6 +8,7 @@ import {
 import { getS2idById, saveS2idLocal, INITIAL_S2ID_STATE } from '../../services/s2idDb';
 import { useToast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
+import { COBRADE_LIST } from '../../utils/cobradeData';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle, color = "blue" }) => (
     <div
@@ -44,6 +45,20 @@ const S2idForm = () => {
         if (id && id !== 'novo') {
             loadRecord(id);
         } else {
+            // New record: Set current date and time
+            const now = new Date();
+            setFormData(prev => ({
+                ...prev,
+                data: {
+                    ...prev.data,
+                    data_ocorrencia: {
+                        dia: String(now.getDate()).padStart(2, '0'),
+                        mes: String(now.getMonth() + 1).padStart(2, '0'),
+                        ano: String(now.getFullYear()),
+                        horario: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+                    }
+                }
+            }));
             setLoading(false);
         }
     }, [id]);
@@ -114,16 +129,28 @@ const S2idForm = () => {
 
     const updateData = (section, field, value) => {
         if (!canEditSection(section)) return;
-        setFormData(prev => ({
-            ...prev,
-            data: {
-                ...prev.data,
-                [section]: {
-                    ...prev.data[section],
-                    [field]: value
+        setFormData(prev => {
+            const newState = {
+                ...prev,
+                data: {
+                    ...prev.data,
+                    [section]: {
+                        ...prev.data[section],
+                        [field]: value
+                    }
+                }
+            };
+
+            // Autofill COBRADE if denomination changes
+            if (section === 'tipificacao' && field === 'denominacao') {
+                const selected = COBRADE_LIST.find(c => c.name === value);
+                if (selected) {
+                    newState.data.tipificacao.cobrade = selected.code;
                 }
             }
-        }));
+
+            return newState;
+        });
     };
 
     const updateDeepData = (section, field, subfield, value) => {
@@ -210,12 +237,18 @@ const S2idForm = () => {
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Denominação (Tipo/Subtipo)</label>
                                 <input
                                     type="text"
+                                    list="cobrade-options"
                                     disabled={!canEditSection('tipificacao')}
                                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm disabled:opacity-60"
                                     value={formData.data.tipificacao.denominacao}
                                     onChange={(e) => updateData('tipificacao', 'denominacao', e.target.value)}
-                                    placeholder="Ex: Enxurradas"
+                                    placeholder="Escolha ou digite o tipo de desastre..."
                                 />
+                                <datalist id="cobrade-options">
+                                    {COBRADE_LIST.map(item => (
+                                        <option key={item.code} value={item.name} />
+                                    ))}
+                                </datalist>
                             </div>
                         </div>
 
