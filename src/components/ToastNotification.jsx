@@ -93,6 +93,8 @@ export const toast = {
     info: (title, message) => notify('info', title, message),
 };
 
+export const useToast = () => ({ toast });
+
 const notify = (type, title, message) => {
     const id = ++toastCounter;
     const t = { id, type, title, message };
