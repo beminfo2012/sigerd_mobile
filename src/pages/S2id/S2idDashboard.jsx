@@ -4,7 +4,7 @@ import {
     Plus, FileText, Trash2, Edit3,
     ArrowLeft, Search, AlertCircle,
     Download, Clock, CheckCircle,
-    ChevronRight, Globe
+    ChevronRight, Globe, Shield
 } from 'lucide-react';
 import { getS2idRecords, deleteS2idLocal } from '../../services/s2idDb';
 import { useToast } from '../../components/ToastNotification';
@@ -19,6 +19,7 @@ const S2idDashboard = () => {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTabInternal] = useState('relatorios'); // 'relatorios' or 'monitoramento'
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
 
@@ -32,7 +33,7 @@ const S2idDashboard = () => {
             setRecords(data.filter(r => r.status !== 'deleted'));
         } catch (error) {
             console.error('Error loading records:', error);
-            toast.error('Erro', 'Falha ao carregar registros S2id.');
+            toast('Falha ao carregar registros S2id.', 'error');
         } finally {
             setLoading(false);
         }
@@ -42,10 +43,10 @@ const S2idDashboard = () => {
         if (!recordToDelete) return;
         try {
             await deleteS2idLocal(recordToDelete.id);
-            toast.success('Excluído', 'Registro removido com sucesso.');
+            toast('Registro removido com sucesso.', 'success');
             loadRecords();
         } catch (error) {
-            toast.error('Erro', 'Falha ao excluir registro.');
+            toast('Falha ao excluir registro.', 'error');
         } finally {
             setShowDeleteModal(false);
             setRecordToDelete(null);
@@ -65,6 +66,12 @@ const S2idDashboard = () => {
         );
     }
 
+    const secretariasOrder = [
+        'saude', 'obras', 'social', 'educacao', 'agricultura', 'interior',
+        'administracao', 'cdl', 'cesan', 'defesa_social', 'esporte_turismo',
+        'servicos_urbanos', 'transportes'
+    ];
+
     return (
         <div className="bg-slate-50 min-h-screen pb-24 font-sans text-slate-800">
             {/* Header */}
@@ -80,136 +87,178 @@ const S2idDashboard = () => {
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sistema Nacional de Desastres</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => navigate('/s2id/novo')}
-                    className="bg-blue-600 text-white p-2.5 rounded-xl shadow-md active:scale-95 transition-all hover:bg-blue-700 flex items-center gap-2"
-                >
-                    <Plus size={20} />
-                    <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo Registro</span>
-                </button>
+                {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
+                    <button
+                        onClick={() => navigate('/s2id/novo')}
+                        className="bg-blue-600 text-white p-2.5 rounded-xl shadow-md active:scale-95 transition-all hover:bg-blue-700 flex items-center gap-2"
+                    >
+                        <Plus size={20} />
+                        <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo Registro</span>
+                    </button>
+                )}
             </header>
 
-            <main className="p-4 max-w-4xl mx-auto space-y-4">
-                {/* Search */}
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por tipificação ou COBRADE..."
-                        className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-
-                {/* Dashboard Stats */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
-                        <Clock className="text-amber-500 mb-2" size={20} />
-                        <div>
-                            <div className="text-2xl font-black text-slate-800">{records.filter(r => r.status === 'draft').length}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rascunhos</div>
-                        </div>
+            <main className="p-4 max-w-5xl mx-auto space-y-4">
+                {/* Tabs */}
+                {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
+                    <div className="flex p-1 bg-slate-200/50 rounded-2xl w-fit mx-auto sm:mx-0">
+                        <button
+                            onClick={() => setActiveTabInternal('relatorios')}
+                            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'relatorios' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Relatórios
+                        </button>
+                        <button
+                            onClick={() => setActiveTabInternal('monitoramento')}
+                            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'monitoramento' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Monitoramento
+                        </button>
                     </div>
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
-                        <CheckCircle className="text-emerald-500 mb-2" size={20} />
-                        <div>
-                            <div className="text-2xl font-black text-slate-800">{records.filter(r => r.status === 'submitted').length}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enviados</div>
-                        </div>
-                    </div>
-                </div>
+                )}
 
-                {/* Records List */}
-                <div className="space-y-3">
-                    <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Registros Recentes</h2>
-
-                    {filteredRecords.length === 0 ? (
-                        <div className="bg-white border border-dashed border-slate-300 rounded-[32px] p-12 flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in duration-300">
-                            <div className="w-16 h-16 bg-slate-50 flex items-center justify-center rounded-full">
-                                <FileText size={32} className="text-slate-300" />
-                            </div>
-                            <div>
-                                <h3 className="font-black text-slate-800">Nenhum registro encontrado</h3>
-                                <p className="text-slate-400 text-xs mt-1">Toque em "Novo Registro" para começar.</p>
-                            </div>
-                            <button
-                                onClick={() => navigate('/s2id/novo')}
-                                className="mt-2 text-blue-600 font-bold text-xs uppercase tracking-widest hover:underline"
-                            >
-                                Criar Primeiro Registro
-                            </button>
+                {activeTab === 'relatorios' ? (
+                    <>
+                        {/* Search */}
+                        <div className="relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Buscar por tipificação ou COBRADE..."
+                                className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                    ) : (
-                        filteredRecords.map((record, index) => (
-                            <div
-                                key={record.id}
-                                className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-5 hover:shadow-md transition-all active:scale-[0.98] group relative"
-                                style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-3 rounded-2xl ${record.status === 'submitted' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                                            <FileText size={20} />
+
+                        {/* List */}
+                        <div className="grid gap-4">
+                            {filteredRecords.map((record) => (
+                                <div key={record.id} className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-all active:scale-[0.99] group relative overflow-hidden">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[9px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase tracking-widest">{record.data.tipificacao.cobrade || 'Pendente'}</span>
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${record.status === 'finalized' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                    {record.status}
+                                                </span>
+                                            </div>
+                                            <h3 className="font-black text-slate-800 text-base leading-tight group-hover:text-blue-600 transition-colors">
+                                                {record.data.tipificacao.denominacao || 'Relatório Sem Título'}
+                                            </h3>
+                                            <p className="text-[11px] text-slate-500 flex items-center gap-2">
+                                                <Clock size={14} className="text-slate-400" />
+                                                Criado em {new Date(record.created_at).toLocaleDateString()}
+                                            </p>
                                         </div>
-                                        <div>
-                                            <div className="font-black text-slate-800 text-sm">
-                                                {record.data.tipificacao.denominacao || "Sem Tipificação"}
-                                            </div>
-                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                COBRADE: {record.data.tipificacao.cobrade || '---'}
-                                            </div>
+
+                                        <div className="flex flex-col gap-2">
+                                            <button
+                                                onClick={() => navigate(`/s2id/editar/${record.id}`)}
+                                                className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                            >
+                                                <Edit3 size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setRecordToDelete(record);
+                                                    setShowDeleteModal(true);
+                                                }}
+                                                className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${record.synced ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                        {record.synced ? 'Sincronizado' : 'Local'}
+
+                                    {/* Quick Actions Footer */}
+                                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                                        <div className="flex gap-2">
+                                            {record.synced ? (
+                                                <span className="flex items-center gap-1 text-[8px] font-black text-green-600 uppercase tracking-tighter bg-green-50 px-2 py-1 rounded-lg">
+                                                    <CheckCircle size={10} /> Sincronizado
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-1 text-[8px] font-black text-amber-600 uppercase tracking-tighter bg-amber-50 px-2 py-1 rounded-lg">
+                                                    <Clock size={10} /> Pendente
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => generateS2idReport(record)}
+                                            className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:bg-blue-50 px-3 py-1.5 rounded-xl transition-all"
+                                        >
+                                            <Download size={14} /> Gerar PDF
+                                        </button>
                                     </div>
                                 </div>
+                            ))}
 
-                                <div className="flex items-center gap-4 py-3 border-t border-slate-50 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                    <span className="flex items-center gap-1"><Clock size={12} /> {new Date(record.updated_at).toLocaleDateString()}</span>
-                                    <span className={`flex items-center gap-1 ${record.status === 'submitted' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                        <div className={`w-1.5 h-1.5 rounded-full ${record.status === 'submitted' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                                        {record.status === 'submitted' ? 'Finalizado' : 'Em Aberto'}
-                                    </span>
+                            {filteredRecords.length === 0 && (
+                                <div className="p-12 text-center space-y-4">
+                                    <div className="bg-slate-100 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-slate-400">
+                                        <FileText size={32} />
+                                    </div>
+                                    <p className="text-slate-400 text-sm font-medium">Nenhum registro encontrado.</p>
                                 </div>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    /* Monitoramento Grid */
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm overflow-x-auto">
+                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Shield className="text-blue-600" size={18} /> Painel de Progresso Setorial
+                            </h2>
 
-                                <div className="flex gap-2 pt-3 border-t border-slate-50">
-                                    <button
-                                        onClick={() => navigate(`/s2id/editar/${record.id}`)}
-                                        className="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Edit3 size={14} /> Editar
-                                    </button>
-                                    <button
-                                        onClick={() => generateS2idReport(record, user)}
-                                        className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Download size={14} /> Relatório
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setRecordToDelete(record);
-                                            setShowDeleteModal(true);
-                                        }}
-                                        className="w-11 h-11 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl transition-colors flex items-center justify-center shrink-0"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                            <table className="w-full text-[10px] border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr className="border-b border-slate-100">
+                                        <th className="text-left pb-4 font-black text-slate-400 uppercase tracking-widest">Relatório</th>
+                                        {secretariasOrder.map(sec => (
+                                            <th key={sec} className="px-2 pb-4 font-black text-slate-400 uppercase tracking-tighter text-center">
+                                                <div className="w-8 mx-auto truncate" title={sec}>{sec.substring(0, 3)}</div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {records.map(r => (
+                                        <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="py-4 pr-4">
+                                                <p className="font-bold text-slate-700 capitalize text-xs">{r.data.tipificacao.denominacao}</p>
+                                                <p className="text-[8px] text-slate-400 font-black">{r.data.tipificacao.cobrade}</p>
+                                            </td>
+                                            {secretariasOrder.map(sec => {
+                                                const sub = r.data.submissoes_setoriais?.[sec];
+                                                return (
+                                                    <td key={sec} className="px-2 py-4 text-center">
+                                                        {sub?.preenchido ? (
+                                                            <div className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-sm" title={`Finalizado por ${sub.usuario}`}>
+                                                                <CheckCircle size={14} />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-6 h-6 border-2 border-dashed border-slate-200 rounded-full mx-auto"></div>
+                                                        )}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </main>
 
             <ConfirmModal
                 isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={handleDelete}
                 title="Excluir Registro"
-                message="Tem certeza que deseja excluir este formulário S2id? Esta ação pode ser desfeita apenas pela Defesa Civil."
-                confirmText="Excluir"
+                message={`Tem certeza que deseja excluir este relatório?`}
+                onConfirm={handleDelete}
+                onCancel={() => setShowDeleteModal(false)}
                 type="danger"
             />
         </div>

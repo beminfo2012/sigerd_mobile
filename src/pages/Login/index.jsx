@@ -189,6 +189,16 @@ const Login = ({ onLogin }) => {
             'saude@s2id.com': { role: 'S2id_Saude', name: 'Secretaria de Saúde' },
             'obras@s2id.com': { role: 'S2id_Obras', name: 'Secretaria de Obras' },
             'social@s2id.com': { role: 'S2id_Social', name: 'Secretaria de Assistência Social' },
+            'educacao@s2id.com': { role: 'S2id_Educacao', name: 'Secretaria de Educação' },
+            'agricultura@s2id.com': { role: 'S2id_Agricultura', name: 'Secretaria de Agricultura' },
+            'interior@s2id.com': { role: 'S2id_Interior', name: 'Secretaria de Interior' },
+            'administracao@s2id.com': { role: 'S2id_Administracao', name: 'Secretaria de Administração' },
+            'cdl@s2id.com': { role: 'S2id_CDL', name: 'CDL - Comércio e Serviços' },
+            'cesan@s2id.com': { role: 'S2id_Cesan', name: 'CESAN - Água e Esgoto' },
+            'defesasocial@s2id.com': { role: 'S2id_DefesaSocial', name: 'Secretaria de Defesa Social' },
+            'esporte@s2id.com': { role: 'S2id_EsporteTurismo', name: 'Secretaria de Esporte e Turismo' },
+            'servicos@s2id.com': { role: 'S2id_ServicosUrbanos', name: 'Secretaria de Serviços Urbanos' },
+            'transportes@s2id.com': { role: 'S2id_Transportes', name: 'Secretaria de Transportes' },
             'defesa@s2id.com': { role: 'Agente de Defesa Civil', name: 'Agente de Teste' },
             'admin@s2id.com': { role: 'Admin', name: 'Administrador de Teste' }
         };

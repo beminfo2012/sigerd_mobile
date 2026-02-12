@@ -1,23 +1,31 @@
+import mammoth from 'mammoth';
 import fs from 'fs';
+import path from 'path';
 
-try {
-    const buffer = fs.readFileSync('PROMPTS.docx');
-    const content = buffer.toString('utf8');
-    const matches = content.match(/AIza[0-9A-Za-z_-]{35}/g);
-    if (matches) {
-        console.log("FOUND KEYS in DOCX BINARY:");
-        [...new Set(matches)].forEach(k => console.log(k));
-    } else {
-        // Try latin1 as well
-        const content2 = buffer.toString('latin1');
-        const matches2 = content2.match(/AIza[0-9A-Za-z_-]{35}/g);
-        if (matches2) {
-            console.log("FOUND KEYS in DOCX BINARY (latin1):");
-            [...new Set(matches2)].forEach(k => console.log(k));
-        } else {
-            console.log("No keys found in DOCX.");
+const directoryPath = 'c:/Users/Coord01/Desktop/DEFESA_CIVIL_MOBILE/Relatórios_Fide';
+const outputDir = 'c:/Users/Coord01/Desktop/DEFESA_CIVIL_MOBILE/saude_extracted';
+
+if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+}
+
+async function extractText() {
+    const files = fs.readdirSync(directoryPath);
+
+    for (const file of files) {
+        if (file.endsWith('.docx')) {
+            const filePath = path.join(directoryPath, file);
+            try {
+                const result = await mammoth.extractRawText({ path: filePath });
+                const text = result.value;
+                const outPath = path.join(outputDir, file.replace('.docx', '.txt'));
+                fs.writeFileSync(outPath, text);
+                console.log(`Extracted: ${file}`);
+            } catch (err) {
+                console.error(`Error extracting ${file}:`, err);
+            }
         }
     }
-} catch (e) {
-    console.error("FAILED to read DOCX:", e.message);
 }
+
+extractText();

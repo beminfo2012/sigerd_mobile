@@ -183,6 +183,53 @@ const S2idForm = () => {
         }));
     };
 
+    const finalizeSectoral = async (sector) => {
+        if (!formData.data.evidencias.length) {
+            toast('⚠️ É obrigatório anexar pelo menos uma foto das evidências.', 'error');
+            return;
+        }
+        if (!formData.data.assinatura.data_url) {
+            toast('⚠️ É obrigatório assinar o relatório para finalizar.', 'error');
+            return;
+        }
+
+        const newFormData = {
+            ...formData,
+            data: {
+                ...formData.data,
+                submissoes_setoriais: {
+                    ...formData.data.submissoes_setoriais,
+                    [sector]: {
+                        preenchido: true,
+                        data: new Date().toISOString(),
+                        usuario: user?.full_name || user?.email
+                    }
+                }
+            }
+        };
+        setFormData(newFormData);
+        await saveS2idLocal(newFormData);
+        toast('✅ Seção setorial finalizada com sucesso! A Defesa Civil foi notificada.', 'success');
+    };
+
+    const ROLE_MAP = {
+        'S2id_Saude': 'saude',
+        'S2id_Obras': 'obras',
+        'S2id_Social': 'social',
+        'S2id_Educacao': 'educacao',
+        'S2id_Agricultura': 'agricultura',
+        'S2id_Interior': 'interior',
+        'S2id_Administracao': 'administracao',
+        'S2id_CDL': 'cdl',
+        'S2id_Cesan': 'cesan',
+        'S2id_DefesaSocial': 'defesa_social',
+        'S2id_EsporteTurismo': 'esporte_turismo',
+        'S2id_ServicosUrbanos': 'servicos_urbanos',
+        'S2id_Transportes': 'transportes'
+    };
+
+    const activeSector = ROLE_MAP[user?.role];
+
     const updateDeepData = (section, field, subfield, value) => {
         setFormData(prev => ({
             ...prev,
@@ -484,44 +531,74 @@ const S2idForm = () => {
                         />
                         {openSections.setorial && (
                             <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
-                                {user?.role === 'S2id_Saude' && (
-                                    <>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Unidades de Saúde Afetadas</label>
-                                            <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl" value={formData.data.setorial.saude.unidades_afetadas} onChange={(e) => updateSetorialField('saude', 'unidades_afetadas', e.target.value)} />
+                                {activeSector && (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {Object.keys(formData.data.setorial[activeSector])
+                                                .filter(k => k !== 'observacoes')
+                                                .map(fieldKey => (
+                                                    <div key={fieldKey}>
+                                                        <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">
+                                                            {fieldKey.replace(/_/g, ' ').toUpperCase()}
+                                                        </label>
+                                                        <input
+                                                            type={typeof formData.data.setorial[activeSector][fieldKey] === 'number' ? 'number' : 'text'}
+                                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                            value={formData.data.setorial[activeSector][fieldKey]}
+                                                            onChange={(e) => updateSetorialField(activeSector, fieldKey, e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
+                                                        />
+                                                    </div>
+                                                ))}
                                         </div>
                                         <div>
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Perda de Medicamentos/Insumos</label>
-                                            <textarea className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" value={formData.data.setorial.saude.medicamentos_perda} onChange={(e) => updateSetorialField('saude', 'medicamentos_perda', e.target.value)} />
+                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">Observações Gerais do Setor</label>
+                                            <textarea
+                                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm min-h-[100px]"
+                                                value={formData.data.setorial[activeSector].observacoes}
+                                                onChange={(e) => updateSetorialField(activeSector, 'observacoes', e.target.value)}
+                                            />
                                         </div>
-                                    </>
+
+                                        <button
+                                            onClick={() => finalizeSectoral(activeSector)}
+                                            disabled={formData.data.submissoes_setoriais[activeSector]?.preenchido}
+                                            className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all ${formData.data.submissoes_setoriais[activeSector]?.preenchido
+                                                ? 'bg-green-100 text-green-600 cursor-not-allowed'
+                                                : 'bg-blue-600 text-white shadow-lg shadow-blue-200 active:scale-95'
+                                                }`}
+                                        >
+                                            {formData.data.submissoes_setoriais[activeSector]?.preenchido ? (
+                                                <>Parte Finalizada <Shield size={16} /></>
+                                            ) : (
+                                                <>Finalizar Minha Parte <Save size={16} /></>
+                                            )}
+                                        </button>
+                                    </div>
                                 )}
-                                {user?.role === 'S2id_Obras' && (
-                                    <>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Pontes/Pontilhões Comprometidos</label>
-                                            <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl" value={formData.data.setorial.obras.pontes_danificadas} onChange={(e) => updateSetorialField('obras', 'pontes_danificadas', e.target.value)} />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Área de Pavimentação Atingida (m²)</label>
-                                            <input type="number" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl" value={formData.data.setorial.obras.pavimentacao_m2} onChange={(e) => updateSetorialField('obras', 'pavimentacao_m2', e.target.value)} />
-                                        </div>
-                                    </>
-                                )}
-                                {user?.role === 'S2id_Social' && (
-                                    <>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Famílias cadastradas p/ Assistência</label>
-                                            <input type="number" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl" value={formData.data.setorial.social.familias_desabrigadas} onChange={(e) => updateSetorialField('social', 'familias_desabrigadas', e.target.value)} />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Necessidade de Cestas Básicas / Kits</label>
-                                            <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl" value={formData.data.setorial.social.cestas_basicas} onChange={(e) => updateSetorialField('social', 'cestas_basicas', e.target.value)} />
-                                        </div>
-                                    </>
-                                )}
+
                                 {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
-                                    <p className="text-[10px] text-slate-400 italic">Visão consolidada: Todos os campos setoriais estão disponíveis para edição administrativa.</p>
+                                    <div className="space-y-4">
+                                        <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-start gap-3">
+                                            <Shield className="text-blue-600 mt-0.5" size={16} />
+                                            <div>
+                                                <p className="text-[10px] font-bold text-blue-900 uppercase">Visão de Monitoramento</p>
+                                                <p className="text-[9px] text-blue-700">Como Agente, você visualiza todas as secretarias. Use o dashboard para ver o progresso detalhado.</p>
+                                            </div>
+                                        </div>
+                                        {/* Listar todas com resumo básico para admin */}
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {Object.keys(formData.data.submissoes_setoriais).map(s => (
+                                                <div key={s} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg text-[10px]">
+                                                    <span className="font-bold uppercase text-slate-500">{s}</span>
+                                                    {formData.data.submissoes_setoriais[s].preenchido ? (
+                                                        <span className="text-green-600 font-black flex items-center gap-1">FINALIZADO <Shield size={12} /></span>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic">Pendente</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}

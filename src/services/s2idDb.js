@@ -69,13 +69,37 @@ export const INITIAL_S2ID_STATE = {
             comercio: 0,
             servicos: 0
         },
-        // Campos específicos por Secretaria
+        // Campos específicos por Secretaria (Mapping dos 12 templates .docx)
         setorial: {
-            saude: { unidades_afetadas: '', medicamentos_perda: '', atendimentos_extra: '', observacoes: '' },
-            obras: { pontes_danificadas: '', bueiros_obstruidos: '', pavimentacao_m2: '', maquinario_horas: '' },
-            educacao: { escolas_afetadas: '', alunos_sem_aula: '', danos_material_didatico: '', transporte_escolar_parado: '' },
-            social: { cestas_basicas: '', kits_higiene: '', colchoes_entregues: '', familias_desabrigadas: '' },
-            agricultura: { safra_perda_percentual: '', area_cultivo_afetada: '', estradas_rurais_obstruidas: '', rebanho_atingido: '' }
+            saude: { mortos: 0, feridos: 0, enfermos: 0, inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_medico: 0, prejuizo_epidemiologica: 0, prejuizo_sanitaria: 0, prejuizo_pragas: 0, observacoes: '' },
+            obras: { pontes_danificadas: 0, bueiros_obstruidos: 0, pavimentacao_m2: 0, maquinario_horas: 0, observacoes: '' }, // Obras Gerais
+            educacao: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_ensino: 0, observacoes: '' },
+            social: { cestas_basicas: 0, kits_higiene: 0, colchoes_entregues: 0, familias_desabrigadas: 0, familias_desalojadas: 0, observacoes: '' },
+            agricultura: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_agricultura: 0, prejuizo_pecuaria: 0, observacoes: '' },
+            administracao: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, observacoes: '' },
+            cdl: { prejuizo_comercio: 0, prejuizo_servicos: 0, observacoes: '' },
+            cesan: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_abastecimento: 0, prejuizo_esgoto: 0, observacoes: '' },
+            defesa_social: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_seguranca: 0, observacoes: '' },
+            esporte_turismo: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, observacoes: '' },
+            interior: { ponte_madeira: 0, ponte_concreto: 0, bueiros: 0, galerias: 0, estradas_vicinais: 0, inst_danificadas: 0, total_valor: 0, observacoes: '' },
+            servicos_urbanos: { inst_prestadoras: 0, inst_comunitarias: 0, infra_urbana: 0, prejuizo_limpeza: 0, observacoes: '' },
+            transportes: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_transportes: 0, prejuizo_combustiveis: 0, observacoes: '' }
+        },
+        // Controle de quem já preencheu
+        submissoes_setoriais: {
+            saude: { preenchido: false, data: null, usuario: '' },
+            obras: { preenchido: false, data: null, usuario: '' },
+            educacao: { preenchido: false, data: null, usuario: '' },
+            social: { preenchido: false, data: null, usuario: '' },
+            agricultura: { preenchido: false, data: null, usuario: '' },
+            administracao: { preenchido: false, data: null, usuario: '' },
+            cdl: { preenchido: false, data: null, usuario: '' },
+            cesan: { preenchido: false, data: null, usuario: '' },
+            defesa_social: { preenchido: false, data: null, usuario: '' },
+            esporte_turismo: { preenchido: false, data: null, usuario: '' },
+            interior: { preenchido: false, data: null, usuario: '' },
+            servicos_urbanos: { preenchido: false, data: null, usuario: '' },
+            transportes: { preenchido: false, data: null, usuario: '' }
         },
         evidencias: [], // Array de { url, lat, lng, timestamp }
         assinatura: {
@@ -85,6 +109,18 @@ export const INITIAL_S2ID_STATE = {
             data_assinatura: null
         }
     }
+};
+
+/**
+ * Get the most recent draft S2id record
+ */
+export const getLatestDraftS2id = async () => {
+    const db = await initDB();
+    const records = await db.getAll('s2id_records');
+    const drafts = records
+        .filter(r => r.status === 'draft')
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    return drafts.length > 0 ? drafts[0] : null;
 };
 
 /**

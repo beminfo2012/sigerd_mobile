@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import Menu from './pages/Menu'
 import ProtectedRoute from './components/ProtectedRoute'
 import { supabase } from './services/supabase'
+import { getLatestDraftS2id } from './services/s2idDb'
 
 // Lazy loaded components
 const GeoRescue = lazy(() => import('./pages/GeoRescue'))
@@ -115,9 +116,24 @@ const AppContent = ({
     const isPrintPage = location.pathname.includes('/imprimir/');
 
     useEffect(() => {
-        if (isAuthenticated && userProfile?.email?.endsWith('@s2id.com') && location.pathname === '/') {
-            navigate('/s2id');
-        }
+        const checkRedirect = async () => {
+            if (isAuthenticated && userProfile?.email?.endsWith('@s2id.com') && location.pathname === '/') {
+                try {
+                    const draft = await getLatestDraftS2id();
+                    if (draft) {
+                        navigate(`/s2id/editar/${draft.id}`);
+                    } else {
+                        // Se não houver rascunho, cria um novo ou vai para o dashboard? 
+                        // O usuário disse: "já seja direcionado para o formulário COMPLETO que a ele cabe preencher"
+                        navigate('/s2id/novo');
+                    }
+                } catch (error) {
+                    console.error('Redirection error:', error);
+                    navigate('/s2id');
+                }
+            }
+        };
+        checkRedirect();
     }, [isAuthenticated, userProfile, location.pathname, navigate]);
 
     if (!isAuthenticated) {
