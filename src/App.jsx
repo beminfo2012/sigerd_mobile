@@ -108,7 +108,7 @@ class ErrorBoundary extends React.Component {
 
 const AppContent = ({
     isAuthenticated, userProfile, setUserProfile, activeTab, setActiveTab, handleLogout,
-    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES,
+    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES, S2ID_ROLES,
     isDarkMode, setIsDarkMode
 }) => {
     const location = useLocation();
@@ -476,6 +476,7 @@ function App() {
                         AGENT_ROLES={AGENT_ROLES}
                         HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
                         HUMANITARIAN_FULL_ROLES={HUMANITARIAN_FULL_ROLES}
+                        S2ID_ROLES={S2ID_ROLES}
                         isDarkMode={isDarkMode}
                         setIsDarkMode={setIsDarkMode}
                     />
