@@ -102,7 +102,14 @@ const S2idDashboard = () => {
                         <h1 className="text-base font-black text-slate-800 leading-tight flex items-center gap-2">
                             Módulo S2id <Globe size={16} className="text-blue-600" />
                         </h1>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sistema Nacional de Desastres</p>
+                        <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sistema Nacional de Desastres</p>
+                            {activeSector && (
+                                <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full uppercase border border-blue-100">
+                                    Setor: {activeSector.replace(/_/g, ' ')}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
                 {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
