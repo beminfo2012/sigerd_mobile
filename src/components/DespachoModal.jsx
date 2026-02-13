@@ -86,10 +86,10 @@ const DespachoModal = ({ isOpen, onClose, vistoriaData, userProfile }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 max-h-[85vh] flex flex-col">
+            <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 max-h-[70vh] flex flex-col mb-0 sm:mb-auto">
 
                 {/* Header */}
-                <div className="bg-[#2a5299] p-5 flex justify-between items-center text-white">
+                <div className="bg-[#2a5299] p-5 flex justify-between items-center text-white shrink-0">
                     <h3 className="font-bold text-lg flex items-center gap-2">
                         <FileText className="text-blue-200" />
                         Gerar Despacho
@@ -99,7 +99,7 @@ const DespachoModal = ({ isOpen, onClose, vistoriaData, userProfile }) => {
                 </div>
 
                 {step === 1 ? (
-                    <div className="p-6 space-y-5 overflow-y-auto pb-safe">
+                    <div className="p-6 space-y-5 overflow-y-auto pb-24 sm:pb-6">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Setor de Destino</label>
                             <select
