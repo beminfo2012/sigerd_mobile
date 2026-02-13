@@ -269,29 +269,31 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
         </div>
     `;
 
-    // 6. RELATÓRIO FOTOGRÁFICO
-    contentHtml += sectionTitle('6', 'Relatório Fotográfico');
-    const photosToRender = data.evidencias.filter(p => !isSectoral || p.sector === activeSector);
+    // 6. RELATÓRIO FOTOGRÁFICO (Apenas para Relatórios Setoriais)
+    if (isSectoral) {
+        contentHtml += sectionTitle('6', 'Relatório Fotográfico');
+        const photosToRender = data.evidencias.filter(p => p.sector === activeSector);
 
-    if (photosToRender.length > 0) {
-        contentHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
-        for (const photo of photosToRender) {
-            contentHtml += `
-                <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff; page-break-inside: avoid;">
-                    <img src="${photo.url}" style="width: 100%; height: 200px; object-fit: cover;" />
-                    <div style="padding: 10px; background: #f8fafc;">
-                        <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Coordenadas Geográficas</div>
-                        <div style="font-size: 9px; font-weight: 700; color: #334155;">LAT: ${photo.lat.toFixed(6)} | LNG: ${photo.lng.toFixed(6)}</div>
-                        <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin-top: 5px;">Data/Hora</div>
-                        <div style="font-size: 9px; font-weight: 700; color: #334155;">${new Date(photo.timestamp).toLocaleString()}</div>
-                        ${photo.sector ? `<div style="font-size: 7px; color: #1e3a8a; font-weight: 900; margin-top: 5px;">SETOR: ${photo.sector.toUpperCase()}</div>` : ''}
+        if (photosToRender.length > 0) {
+            contentHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
+            for (const photo of photosToRender) {
+                contentHtml += `
+                    <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff; page-break-inside: avoid;">
+                        <img src="${photo.url}" style="width: 100%; height: 200px; object-fit: cover;" />
+                        <div style="padding: 10px; background: #f8fafc;">
+                            <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Coordenadas Geográficas</div>
+                            <div style="font-size: 9px; font-weight: 700; color: #334155;">LAT: ${photo.lat.toFixed(6)} | LNG: ${photo.lng.toFixed(6)}</div>
+                            <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin-top: 5px;">Data/Hora</div>
+                            <div style="font-size: 9px; font-weight: 700; color: #334155;">${new Date(photo.timestamp).toLocaleString()}</div>
+                            ${photo.sector ? `<div style="font-size: 7px; color: #1e3a8a; font-weight: 900; margin-top: 5px;">SETOR: ${photo.sector.toUpperCase()}</div>` : ''}
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
+            contentHtml += `</div>`;
+        } else {
+            contentHtml += `<p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 11px;">Nenhuma evidência fotográfica anexada neste setor.</p>`;
         }
-        contentHtml += `</div>`;
-    } else {
-        contentHtml += `<p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 11px;">Nenhuma evidência fotográfica anexada.</p>`;
     }
 
     // Footer / Signature (Sectoral vs Global)
