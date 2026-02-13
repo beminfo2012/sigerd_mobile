@@ -85,8 +85,8 @@ const DespachoModal = ({ isOpen, onClose, vistoriaData, userProfile }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 max-h-[85vh] flex flex-col">
 
                 {/* Header */}
                 <div className="bg-[#2a5299] p-5 flex justify-between items-center text-white">
@@ -99,7 +99,7 @@ const DespachoModal = ({ isOpen, onClose, vistoriaData, userProfile }) => {
                 </div>
 
                 {step === 1 ? (
-                    <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+                    <div className="p-6 space-y-5 overflow-y-auto pb-safe">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Setor de Destino</label>
                             <select
@@ -149,14 +149,16 @@ const DespachoModal = ({ isOpen, onClose, vistoriaData, userProfile }) => {
                             </div>
                         )}
 
-                        <button
-                            onClick={handleGenerate}
-                            disabled={generating}
-                            className="w-full bg-[#2a5299] text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1e3c72] active:scale-95 transition-all shadow-lg shadow-blue-900/20"
-                        >
-                            {generating ? <Loader2 className="animate-spin" /> : <Send size={20} />}
-                            {generating ? 'Gerando Documento...' : 'Emitir Despacho Oficial'}
-                        </button>
+                        <div className="pt-2">
+                            <button
+                                onClick={handleGenerate}
+                                disabled={generating}
+                                className="w-full bg-[#2a5299] text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1e3c72] active:scale-95 transition-all shadow-lg shadow-blue-900/20"
+                            >
+                                {generating ? <Loader2 className="animate-spin" /> : <Send size={20} />}
+                                {generating ? 'Gerando Documento...' : 'Emitir Despacho Oficial'}
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="p-10 text-center space-y-6">

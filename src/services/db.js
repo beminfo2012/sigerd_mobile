@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 14
+const DB_VERSION = 15
 
 
 let dbPromise = null;
