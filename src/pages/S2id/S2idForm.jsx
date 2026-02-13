@@ -94,7 +94,41 @@ const S2idForm = () => {
         try {
             const record = await getS2idById(recordId);
             if (record) {
-                setFormData(record);
+                // Determine active sector for this user or record
+                const targetSector = ROLE_MAP[user?.role] || (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null);
+
+                // Deep merge setorial data to ensure new fields (values) appear
+                const mergedRecord = {
+                    ...record,
+                    data: {
+                        ...record.data,
+                        setorial: {
+                            ...INITIAL_S2ID_STATE.data.setorial, // Base structure
+                            ...record.data.setorial, // Overwrite with saved data
+                            // Ensure specific sector object is also merged deeply if it exists
+                            ...(targetSector && record.data.setorial && record.data.setorial[targetSector] ? {
+                                [targetSector]: {
+                                    ...INITIAL_S2ID_STATE.data.setorial[targetSector],
+                                    ...record.data.setorial[targetSector]
+                                }
+                            } : {})
+                        }
+                    }
+                };
+
+                // Also merge deeply for all sectors if user is Admin/Coordinator (viewing all)
+                if (['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) {
+                    Object.keys(INITIAL_S2ID_STATE.data.setorial).forEach(sector => {
+                        if (record.data.setorial && record.data.setorial[sector]) {
+                            mergedRecord.data.setorial[sector] = {
+                                ...INITIAL_S2ID_STATE.data.setorial[sector],
+                                ...record.data.setorial[sector]
+                            };
+                        }
+                    });
+                }
+
+                setFormData(mergedRecord);
             }
         } catch (error) {
             console.error('Error loading record:', error);
