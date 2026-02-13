@@ -105,11 +105,30 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
 
     // 3.1 Danos Humanos
     const humanoData = isSectoral ? data.setorial[activeSector] : data.danos_humanos;
+
+    // Se for consolidado, tentar enriquecer com dados da saúde/social se disponível
+    if (!isSectoral && data.setorial) {
+        // Exemplo simples: Se saúde reportou mais feridos que o global, usar saúde (ou somar, dependendo da regra de negócio. Aqui vamos priorizar o maior valor para segurança)
+        if (data.setorial.saude) {
+            humanoData.mortos = Math.max(humanoData.mortos || 0, data.setorial.saude.mortos || 0);
+            humanoData.feridos = Math.max(humanoData.feridos || 0, data.setorial.saude.feridos || 0);
+            humanoData.enfermos = Math.max(humanoData.enfermos || 0, data.setorial.saude.enfermos || 0);
+        }
+        if (data.setorial.social) {
+            // Social pode ter desabrigados/desalojados, que não estão no array padrão de exibição simplificada, mas poderiam ser adicionados
+        }
+    }
+
     const humanoRows = [
         ['Mortos', humanoData.mortos || 0],
         ['Feridos', humanoData.feridos || 0],
         ['Enfermos', humanoData.enfermos || 0]
     ];
+
+    if (!isSectoral) {
+        if (data.danos_humanos.desabrigados > 0) humanoRows.push(['Desabrigados', data.danos_humanos.desabrigados]);
+        if (data.danos_humanos.desalojados > 0) humanoRows.push(['Desalojados', data.danos_humanos.desalojados]);
+    }
 
     // Mostrar Danos Humanos apenas se houver dados ou se for consolidado
     if (!isSectoral || humanoRows.some(r => r[1] > 0)) {
@@ -151,15 +170,49 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     } else {
         // Consolidado
         let infraRows = [];
+
+        // 1. Danos Materiais Globais (FIDE Padrão)
         Object.keys(data.danos_materiais).forEach(key => {
-            infraRows.push([
-                key.replace(/_/g, ' ').toUpperCase(),
-                data.danos_materiais[key].danificadas,
-                data.danos_materiais[key].destruidas,
-                `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
-            ]);
+            if (data.danos_materiais[key].danificadas > 0 || data.danos_materiais[key].destruidas > 0 || data.danos_materiais[key].valor > 0) {
+                infraRows.push([
+                    key.replace(/_/g, ' ').toUpperCase(),
+                    data.danos_materiais[key].danificadas,
+                    data.danos_materiais[key].destruidas,
+                    `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
+                ]);
+            }
         });
-        contentHtml += renderTable(['Discriminação', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
+
+        // 2. Agregação de Danos Setoriais
+        if (data.setorial) {
+            const skipFieldsGlobal = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'introducao', 'consideracoes', 'observacoes'];
+
+            Object.entries(data.setorial).forEach(([sectorName, sData]) => {
+                // Adicionar Instalações do Setor se houver
+                if (sData.inst_danificadas > 0 || sData.inst_destruidas > 0 || sData.inst_valor > 0) {
+                    infraRows.push([
+                        `INSTALAÇÕES - ${sectorName.toUpperCase()}`,
+                        sData.inst_danificadas || 0,
+                        sData.inst_destruidas || 0,
+                        `R$ ${(sData.inst_valor || 0).toLocaleString('pt-BR')}`
+                    ]);
+                }
+
+                // Adicionar Itens Específicos do Setor
+                Object.entries(sData).forEach(([key, value]) => {
+                    if (!skipFieldsGlobal.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0) {
+                        const label = `${key.replace(/_/g, ' ').toUpperCase()} (${sectorName.toUpperCase()})`;
+                        infraRows.push([label, value, '-', '-']);
+                    }
+                });
+            });
+        }
+
+        if (infraRows.length > 0) {
+            contentHtml += renderTable(['Discriminação / Item Setorial', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor Estimado (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
+        } else {
+            contentHtml += `<p style="font-size: 10px; color: #94a3b8; font-style: italic;">Não há registros de danos à infraestrutura consolidados.</p>`;
+        }
     }
 
     // 4. PREJUÍZOS ECONÔMICOS
@@ -175,12 +228,30 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
             }
         });
     } else {
+        // Consolidado
+        // 1. Prejuízos Globais
         Object.keys(data.prejuizos_publicos).forEach(key => {
-            prejuRows.push([key.replace(/_/g, ' ').toUpperCase(), `R$ ${data.prejuizos_publicos[key].toLocaleString('pt-BR')}`]);
+            if (data.prejuizos_publicos[key] > 0) {
+                prejuRows.push([key.replace(/_/g, ' ').toUpperCase(), `R$ ${data.prejuizos_publicos[key].toLocaleString('pt-BR')}`]);
+            }
         });
         Object.keys(data.prejuizos_privados).forEach(key => {
-            prejuRows.push([`PRIVADO: ${key.replace(/_/g, ' ').toUpperCase()}`, `R$ ${data.prejuizos_privados[key].toLocaleString('pt-BR')}`]);
+            if (data.prejuizos_privados[key] > 0) {
+                prejuRows.push([`PRIVADO: ${key.replace(/_/g, ' ').toUpperCase()}`, `R$ ${data.prejuizos_privados[key].toLocaleString('pt-BR')}`]);
+            }
         });
+
+        // 2. Agregação de Prejuízos Setoriais
+        if (data.setorial) {
+            Object.entries(data.setorial).forEach(([sectorName, sData]) => {
+                Object.entries(sData).forEach(([k, v]) => {
+                    if (k.startsWith('prejuizo_') && v > 0) {
+                        const label = `${k.replace('prejuizo_', '').replace(/_/g, ' ').toUpperCase()} (${sectorName.toUpperCase()})`;
+                        prejuRows.push([label, `R$ ${v.toLocaleString('pt-BR')}`]);
+                    }
+                });
+            });
+        }
     }
 
     if (prejuRows.length > 0) {
