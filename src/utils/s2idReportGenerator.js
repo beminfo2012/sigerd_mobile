@@ -155,10 +155,43 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
 
         // 2. Outros campos numéricos (Pontes, Bueiros, Cestas, etc)
         const skipFields = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'introducao', 'consideracoes', 'observacoes'];
+
+        // Mapeamento de pares Item -> Valor
+        const ITEM_VALUE_MAP = {
+            'pontes_danificadas': 'valor_pontes',
+            'bueiros_obstruidos': 'valor_bueiros',
+            'pavimentacao_m2': 'valor_pavimentacao',
+            'maquinario_horas': 'valor_maquinario',
+            'ponte_madeira': 'valor_ponte_madeira',
+            'ponte_concreto': 'valor_ponte_concreto',
+            'bueiros': 'valor_bueiros',
+            'galerias': 'valor_galerias',
+            'estradas_vicinais': 'valor_estradas',
+            'cestas_basicas': 'custo_cestas',
+            'kits_higiene': 'custo_kits',
+            'colchoes_entregues': 'custo_colchoes',
+            'inst_prestadoras': 'valor_inst_prestadoras',
+            'inst_comunitarias': 'valor_inst_comunitarias',
+            'infra_urbana': 'valor_infra_urbana'
+        };
+
+        const valueFields = Object.values(ITEM_VALUE_MAP);
+
         Object.entries(sData).forEach(([key, value]) => {
-            if (!skipFields.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0) {
+            // Se for um item numérico, não estiver na lista de ignore, E NÃO FOR um campo de valor isolado
+            if (!skipFields.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0 && !valueFields.includes(key) && !key.startsWith('valor_') && !key.startsWith('custo_')) {
+
                 const label = key.replace(/_/g, ' ').toUpperCase();
-                specificRows.push([label, value, '-', '-']);
+
+                // Buscar valor correspondente no mapa ou por convenção
+                let valorEstimado = '-';
+                const valueKey = ITEM_VALUE_MAP[key];
+
+                if (valueKey && sData[valueKey] > 0) {
+                    valorEstimado = `R$ ${sData[valueKey].toLocaleString('pt-BR')}`;
+                }
+
+                specificRows.push([label, value, '-', valorEstimado]);
             }
         });
 
@@ -198,14 +231,45 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                     ]);
                 }
 
+                // Mapeamento de pares Item -> Valor (Reutilizado)
+                const ITEM_VALUE_MAP = {
+                    'pontes_danificadas': 'valor_pontes',
+                    'bueiros_obstruidos': 'valor_bueiros',
+                    'pavimentacao_m2': 'valor_pavimentacao',
+                    'maquinario_horas': 'valor_maquinario',
+                    'ponte_madeira': 'valor_ponte_madeira',
+                    'ponte_concreto': 'valor_ponte_concreto',
+                    'bueiros': 'valor_bueiros',
+                    'galerias': 'valor_galerias',
+                    'estradas_vicinais': 'valor_estradas',
+                    'cestas_basicas': 'custo_cestas',
+                    'kits_higiene': 'custo_kits',
+                    'colchoes_entregues': 'custo_colchoes',
+                    'inst_prestadoras': 'valor_inst_prestadoras',
+                    'inst_comunitarias': 'valor_inst_comunitarias',
+                    'infra_urbana': 'valor_infra_urbana'
+                };
+                const valueFields = Object.values(ITEM_VALUE_MAP);
+
                 // Adicionar Itens Específicos do Setor
                 Object.entries(sData).forEach(([key, value]) => {
-                    if (!skipFieldsGlobal.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0) {
+                    if (!skipFieldsGlobal.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0 && !valueFields.includes(key) && !key.startsWith('valor_') && !key.startsWith('custo_')) {
+
                         const label = `${key.replace(/_/g, ' ').toUpperCase()} (${sectorName.toUpperCase()})`;
-                        infraRows.push([label, value, '-', '-']);
+
+                        // Buscar valor correspondente
+                        let valorEstimado = '-';
+                        const valueKey = ITEM_VALUE_MAP[key];
+
+                        if (valueKey && sData[valueKey] > 0) {
+                            valorEstimado = `R$ ${sData[valueKey].toLocaleString('pt-BR')}`;
+                        }
+
+                        infraRows.push([label, value, '-', valorEstimado]);
                     }
                 });
             });
+
         }
 
         if (infraRows.length > 0) {
