@@ -15,32 +15,55 @@ export default async function handler(request, response) {
     }
 
     try {
-        const { text, category, context } = request.body;
+        const { text, category, context, type = 'refine' } = request.body;
 
         const genAI = new GoogleGenerativeAI(API_KEY);
 
-        // Define models to try in order of preference
-        // Based on Diagnostic v5.0: User has access to Gemini 2.0/2.5 series
         const MODELS_TO_TRY = [
-            "gemini-2.0-flash",       // PRIMARY: Detected available
-            "gemini-2.0-flash-lite",  // Fallback 1
-            "gemini-2.5-flash",       // Fallback 2 (Experimental)
-            "gemini-2.5-pro"          // Fallback 3 (Experimental)
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-2.5-flash",
+            "gemini-2.5-pro"
         ];
 
-        const prompt = `
-        Transforme este relato de campo em uma descrição técnica de engenharia civil densa e formal: "${text}".
-        
-        CATEGORIA: ${category || 'Geral'}
-        CONTEXTO: ${context || ''}
-        
-        REGRAS RÍGIDAS:
-        - Retorne APENAS o texto técnico, sem títulos, sem cabeçalhos e sem introduções.
-        - O texto deve ser uma narrativa técnica profissional em voz passiva.
-        - COMPLEMENTE com termos técnicos e riscos prováveis baseados na Categoria informada.
-        - NÃO use "Relatório", "Evento" ou campos de preenchimento.
-        - Use terminologia normativa: recalque, lixiviação, saturação, escorregamento, coesão, pressões neutras.
-        `;
+        let prompt = "";
+
+        if (type === 'introducao') {
+            prompt = `
+            Com base nos dados do desastre abaixo, escreva uma INTRODUÇÃO formal e técnica para um relatório de danos.
+            O texto deve ser uma narrativa densa, profissional e em voz passiva.
+            
+            COBRADE/DENOMINAÇÃO: ${category}
+            DADOS DO RELATÓRIO: ${context}
+            RELATO DO CAMPO: ${text}
+            
+            REGRAS:
+            - Retorne APENAS o texto da introdução.
+            - Seja direto e técnico (linguagem de Defesa Civil/Engenharia).
+            - Não use "Olá", "Aqui está" ou títulos.
+            `;
+        } else if (type === 'consideracoes') {
+            prompt = `
+            Com base nos danos e prejuízos relatados abaixo, escreva as CONSIDERAÇÕES FINAIS técnicas para o relatório.
+            Destaque os impactos socioeconômicos e a necessidade de apoio.
+            
+            DADOS: ${context}
+            OBSERVAÇÕES: ${text}
+            
+            REGRAS:
+            - Retorne APENAS o texto das considerações finais.
+            - Use tom formal, conclusivo e urgente (padrão S2id).
+            `;
+        } else {
+            prompt = `
+            Transforme este relato de campo em uma descrição técnica de engenharia civil densa e formal: "${text}".
+            CATEGORIA: ${category || 'Geral'}
+            CONTEXTO: ${context || ''}
+            REGRAS RÍGIDAS:
+            - Retorne APENAS o texto técnico, sem títulos e sem introduções.
+            - Narrativa técnica profissional em voz passiva.
+            `;
+        }
 
         let lastError = null;
         let errors = [];

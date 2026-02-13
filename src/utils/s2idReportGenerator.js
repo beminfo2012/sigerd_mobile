@@ -72,16 +72,16 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     `;
 
     const renderTable = (headers, rows, widths) => `
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; border: 1px solid #e2e8f0;">
             <thead>
-                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                    ${headers.map((h, i) => `<th style="padding: 10px; text-align: ${i === 0 ? 'left' : 'center'}; color: #64748b; font-weight: 800; text-transform: uppercase; font-size: 9px; width: ${widths[i]};">${h}</th>`).join('')}
+                <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+                    ${headers.map((h, i) => `<th style="padding: 10px; text-align: ${i === 0 ? 'left' : 'center'}; color: #1e3a8a; font-weight: 800; text-transform: uppercase; font-size: 9px; width: ${widths[i]}; border: 1px solid #e2e8f0;">${h}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
-                ${rows.map(row => `
-                    <tr style="border-bottom: 1px solid #f1f5f9;">
-                        ${row.map((cell, i) => `<td style="padding: 10px; text-align: ${i === 0 ? 'left' : 'center'}; font-weight: ${i === 0 ? '700' : '600'}; color: #334155;">${cell}</td>`).join('')}
+                ${rows.map((row, idx) => `
+                    <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; border-bottom: 1px solid #e2e8f0;">
+                        ${row.map((cell, i) => `<td style="padding: 10px; text-align: ${i === 0 ? 'left' : 'center'}; font-weight: ${i === 0 ? '700' : '600'}; color: #334155; border: 1px solid #e2e8f0;">${cell}</td>`).join('')}
                     </tr>
                 `).join('')}
             </tbody>
@@ -90,150 +90,117 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
 
     let contentHtml = `<div style="padding: 0 40px 40px 40px;">`;
 
-    // 2. Tipificação
-    contentHtml += sectionTitle('2', 'Tipificação do Desastre');
+    // 2. INTRODUÇÃO (AI OU MANUAL)
+    contentHtml += sectionTitle('2', 'Introdução');
+    const introText = isSectoral ? (data.setorial[activeSector].introducao || '') : '';
     contentHtml += `
-        <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 20px;">
-            <div style="background: #eff6ff; padding: 15px; border-radius: 12px; border: 1px solid #dbeafe;">
-                <div style="font-size: 9px; color: #2563eb; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Codificação (COBRADE)</div>
-                <div style="font-size: 16px; font-weight: 900; color: #1e3a8a;">${data.tipificacao.cobrade}</div>
-            </div>
-            <div style="background: #eff6ff; padding: 15px; border-radius: 12px; border: 1px solid #dbeafe;">
-                <div style="font-size: 9px; color: #2563eb; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Denominação</div>
-                <div style="font-size: 14px; font-weight: 700; color: #1e3a8a;">${data.tipificacao.denominacao}</div>
-            </div>
+        <div style="background: #ffffff; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px; font-size: 11px; line-height: 1.6; color: #334155;">
+            ${introText || 'O presente relatório detalha os danos e prejuízos identificados em decorrência do evento adverso registrado.'}
         </div>
     `;
 
-    // 3. Ocorrência
-    contentHtml += sectionTitle('3', 'Data e Horário da Ocorrência');
-    contentHtml += `
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-            ${['Dia', 'Mês', 'Ano', 'Horário'].map(label => `
-                <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; text-align: center;">
-                    <div style="font-size: 8px; color: #94a3b8; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">${label}</div>
-                    <div style="font-size: 13px; font-weight: 700;">${data.data_ocorrencia[label.toLowerCase()]}</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    // 3. DANOS (ESTIMATIVAS)
+    const danoPrefix = isSectoral ? '3' : '6';
+    contentHtml += sectionTitle(danoPrefix, `Danos no Setor: ${isSectoral ? sectorName : 'Geral'}`);
 
-    // 6. Danos
-    contentHtml += sectionTitle('6', 'Danos (Estimativas Totais)');
+    // 3.1 Danos Humanos
+    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 20px 0 10px 0;">${danoPrefix}.1 Danos Humanos</div>`;
 
-    // 6.1 Humanos
-    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 0;">6.1 Danos Humanos</div>`;
+    const humanoData = isSectoral ? data.setorial[activeSector] : data.danos_humanos;
     const humanoRows = [
-        ['Mortos', data.danos_humanos.mortos, 'Feridos', data.danos_humanos.feridos],
-        ['Enfermos', data.danos_humanos.enfermos, 'Desabrigados', data.danos_humanos.desabrigados],
-        ['Desalojados', data.danos_humanos.desalojados, 'Desaparecidos', data.danos_humanos.desaparecidos],
-        ['Outros Afetados', data.danos_humanos.outros_afetados, '', '']
+        ['Mortos', humanoData.mortos || 0],
+        ['Feridos', humanoData.feridos || 0],
+        ['Enfermos', humanoData.enfermos || 0]
     ];
-    contentHtml += `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-            ${humanoRows.map(row => `
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1; display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #f1f5f9;"><span style="font-size: 11px; font-weight: 600;">${row[0]}</span><span style="font-weight: 800; color: #1e3a8a;">${row[1]}</span></div>
-                    ${row[2] ? `<div style="flex: 1; display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #f1f5f9;"><span style="font-size: 11px; font-weight: 600;">${row[2]}</span><span style="font-weight: 800; color: #1e3a8a;">${row[3]}</span></div>` : '<div style="flex: 1;"></div>'}
-                </div>
-            `).join('')}
-        </div>
-        ${data.danos_humanos.descricao ? `
-            <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 4px solid #cbd5e1; margin-bottom: 30px;">
-                <div style="font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Detalhamento de Danos Humanos</div>
-                <div style="font-size: 11px; color: #334155; line-height: 1.5; font-style: italic;">"${data.danos_humanos.descricao}"</div>
-            </div>
-        ` : ''}
-    `;
 
-    if (!isSectoral) {
-        // 6.2 Materiais
-        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">6.2 Danos Materiais</div>`;
-        const materialRows = Object.keys(data.danos_materiais).map(key => [
-            key.replace(/_/g, ' ').toUpperCase(),
-            data.danos_materiais[key].danificadas,
-            data.danos_materiais[key].destruidas,
-            `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
-        ]);
-        contentHtml += renderTable(['Discriminação', 'Danificadas', 'Destruídas', 'Valor (R$)'], materialRows, ['40%', '20%', '20%', '20%']);
+    contentHtml += renderTable(['Discriminação', 'Quantidade'], humanoRows, ['70%', '30%']);
 
-        // 6.3 Ambientais
-        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">6.3 Danos Ambientais</div>`;
-        const ambientalRows = Object.keys(data.danos_ambientais).filter(k => k !== 'descricao').map(key => [
-            key.replace(/_/g, ' ').toUpperCase(),
-            data.danos_ambientais[key].sim ? 'SIM' : 'NÃO',
-            data.danos_ambientais[key].area || data.danos_ambientais[key].populacao || '---'
-        ]);
-        contentHtml += renderTable(['Impacto Ambiental', 'Ocorrência', 'Obs/Área/Pop.'], ambientalRows, ['50%', '20%', '30%']);
+    // 3.2 Danos à Infraestrutura / Materiais
+    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 30px 0 10px 0;">${danoPrefix}.2 Danos à Infraestrutura</div>`;
 
-        // 7. Prejuízos
-        contentHtml += `<div style="page-break-before: always; height: 1px;"></div>`;
-        contentHtml += sectionTitle('7', 'Prejuízos Econômicos');
-
-        // 7.1 Públicos
-        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 20px 0 10px 0;">7.1 Setor Público</div>`;
-        const publicoRows = Object.keys(data.prejuizos_publicos).map(key => [
-            key.replace(/_/g, ' ').toUpperCase(),
-            `R$ ${data.prejuizos_publicos[key].toLocaleString('pt-BR')}`
-        ]);
-        contentHtml += renderTable(['Instalação / Serviço', 'Valor Estimado (R$)'], publicoRows, ['70%', '30%']);
-
-        // 7.2 Privados
-        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin: 30px 0 10px 0;">7.2 Setor Privado</div>`;
-        const privadoRows = Object.keys(data.prejuizos_privados).map(key => [
-            key.replace(/_/g, ' ').toUpperCase(),
-            `R$ ${data.prejuizos_privados[key].toLocaleString('pt-BR')}`
-        ]);
-        contentHtml += renderTable(['Atividade / Bens', 'Valor Estimado (R$)'], privadoRows, ['70%', '30%']);
+    let infraRows = [];
+    if (isSectoral) {
+        // Mapear campos que pareçam infraestrutura do setor
+        const sData = data.setorial[activeSector];
+        if (sData.inst_danificadas !== undefined) {
+            infraRows.push(['Instalações Públicas', sData.inst_danificadas || 0, sData.inst_destruidas || 0, `R$ ${(sData.inst_valor || 0).toLocaleString('pt-BR')}`]);
+        }
     } else {
-        // MOSTRAR APENAS DADOS DO SETOR
-        contentHtml += sectionTitle('S', `Levantamento Específico: ${sectorName}`);
-        const sectorData = data.setorial[activeSector] || {};
-        const sectorRows = Object.entries(sectorData)
-            .filter(([k, v]) => v !== 0 && v !== '')
-            .map(([key, val]) => [
+        Object.keys(data.danos_materiais).forEach(key => {
+            infraRows.push([
                 key.replace(/_/g, ' ').toUpperCase(),
-                val
+                data.danos_materiais[key].danificadas,
+                data.danos_materiais[key].destruidas,
+                `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
             ]);
-
-        if (sectorRows.length > 0) {
-            contentHtml += renderTable(['Descrição do Dano/Necessidade', 'Quantidade/Valor'], sectorRows, ['70%', '30%']);
-        } else {
-            contentHtml += `<p style="font-size: 12px; color: #64748b; font-style: italic;">Nenhum dado quantitativo registrado para este setor.</p>`;
-        }
-
-        if (sectorData.observacoes) {
-            contentHtml += `
-                <div style="background: #fdf2f2; padding: 15px; border-radius: 12px; border: 1px solid #fee2e2; margin-top: 20px;">
-                    <div style="font-size: 9px; color: #b91c1c; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Observações Setoriais</div>
-                    <div style="font-size: 11px; color: #7f1d1d; line-height: 1.5;">${sectorData.observacoes}</div>
-                </div>
-            `;
-        }
+        });
     }
 
-    // 8. Fotos (Relatório Fotográfico)
-    contentHtml += sectionTitle('F', 'Relatório Fotográfico');
+    if (infraRows.length > 0) {
+        contentHtml += renderTable(['Discriminação', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
+    } else {
+        contentHtml += `<p style="font-size: 10px; color: #94a3b8; font-style: italic;">Não há registros de danos à infraestrutura para este setor.</p>`;
+    }
+
+    // 4. PREJUÍZOS ECONÔMICOS
+    const prejuPrefix = isSectoral ? '4' : '7';
+    contentHtml += sectionTitle(prejuPrefix, `Prejuízos Econômicos`);
+
+    let prejuRows = [];
+    if (isSectoral) {
+        const sData = data.setorial[activeSector];
+        Object.entries(sData).forEach(([k, v]) => {
+            if (k.startsWith('prejuizo_') && v > 0) {
+                prejuRows.push([k.replace('prejuizo_', '').replace(/_/g, ' ').toUpperCase(), `R$ ${v.toLocaleString('pt-BR')}`]);
+            }
+        });
+    } else {
+        Object.keys(data.prejuizos_publicos).forEach(key => {
+            prejuRows.push([key.replace(/_/g, ' ').toUpperCase(), `R$ ${data.prejuizos_publicos[key].toLocaleString('pt-BR')}`]);
+        });
+        Object.keys(data.prejuizos_privados).forEach(key => {
+            prejuRows.push([`PRIVADO: ${key.replace(/_/g, ' ').toUpperCase()}`, `R$ ${data.prejuizos_privados[key].toLocaleString('pt-BR')}`]);
+        });
+    }
+
+    if (prejuRows.length > 0) {
+        contentHtml += renderTable(['Serviço Essencial / Atividade', 'Valor do Prejuízo (R$)'], prejuRows, ['70%', '30%']);
+    } else {
+        contentHtml += `<p style="font-size: 10px; color: #94a3b8; font-style: italic;">Nenhum prejuízo econômico quantificado.</p>`;
+    }
+
+    // 5. CONSIDERAÇÕES FINAIS (AI OU MANUAL)
+    contentHtml += sectionTitle('5', 'Considerações Finais');
+    const considerText = isSectoral ? (data.setorial[activeSector].consideracoes || '') : '';
+    contentHtml += `
+        <div style="background: #ffffff; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px; font-size: 11px; line-height: 1.6; color: #334155; font-style: italic;">
+            ${considerText || 'Com base no exposto, conclui-se que os danos observados impactam a normalidade local, sendo necessária a mobilização de esforços para recuperação e assistência.'}
+        </div>
+    `;
+
+    // 6. RELATÓRIO FOTOGRÁFICO
+    contentHtml += sectionTitle('6', 'Relatório Fotográfico');
     const photosToRender = data.evidencias.filter(p => !isSectoral || p.sector === activeSector);
 
     if (photosToRender.length > 0) {
         contentHtml += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">`;
         for (const photo of photosToRender) {
             contentHtml += `
-                <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
+                <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff; page-break-inside: avoid;">
                     <img src="${photo.url}" style="width: 100%; height: 200px; object-fit: cover;" />
                     <div style="padding: 10px; background: #f8fafc;">
                         <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Coordenadas Geográficas</div>
                         <div style="font-size: 9px; font-weight: 700; color: #334155;">LAT: ${photo.lat.toFixed(6)} | LNG: ${photo.lng.toFixed(6)}</div>
                         <div style="font-size: 8px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin-top: 5px;">Data/Hora</div>
                         <div style="font-size: 9px; font-weight: 700; color: #334155;">${new Date(photo.timestamp).toLocaleString()}</div>
+                        ${photo.sector ? `<div style="font-size: 7px; color: #1e3a8a; font-weight: 900; margin-top: 5px;">SETOR: ${photo.sector.toUpperCase()}</div>` : ''}
                     </div>
                 </div>
             `;
         }
         contentHtml += `</div>`;
     } else {
-        contentHtml += `<p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 11px;">Nenhuma evidência fotográfica anexada ${isSectoral ? 'para este setor' : ''}.</p>`;
+        contentHtml += `<p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 11px;">Nenhuma evidência fotográfica anexada.</p>`;
     }
 
     // Footer / Signature (Sectoral vs Global)

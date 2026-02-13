@@ -71,19 +71,19 @@ export const INITIAL_S2ID_STATE = {
         },
         // Campos específicos por Secretaria (Mapping dos 12 templates .docx)
         setorial: {
-            saude: { mortos: 0, feridos: 0, enfermos: 0, inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_medico: 0, prejuizo_epidemiologica: 0, prejuizo_sanitaria: 0, prejuizo_pragas: 0, observacoes: '' },
-            obras: { pontes_danificadas: 0, bueiros_obstruidos: 0, pavimentacao_m2: 0, maquinario_horas: 0, observacoes: '' }, // Obras Gerais
-            educacao: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_ensino: 0, observacoes: '' },
-            social: { cestas_basicas: 0, kits_higiene: 0, colchoes_entregues: 0, familias_desabrigadas: 0, familias_desalojadas: 0, observacoes: '' },
-            agricultura: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_agricultura: 0, prejuizo_pecuaria: 0, observacoes: '' },
-            administracao: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, observacoes: '' },
-            cdl: { prejuizo_comercio: 0, prejuizo_servicos: 0, observacoes: '' },
-            cesan: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_abastecimento: 0, prejuizo_esgoto: 0, observacoes: '' },
-            defesa_social: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_seguranca: 0, observacoes: '' },
-            esporte_turismo: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, observacoes: '' },
-            interior: { ponte_madeira: 0, ponte_concreto: 0, bueiros: 0, galerias: 0, estradas_vicinais: 0, inst_danificadas: 0, total_valor: 0, observacoes: '' },
-            servicos_urbanos: { inst_prestadoras: 0, inst_comunitarias: 0, infra_urbana: 0, prejuizo_limpeza: 0, observacoes: '' },
-            transportes: { inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_transportes: 0, prejuizo_combustiveis: 0, observacoes: '' }
+            saude: { introducao: '', consideracoes: '', mortos: 0, feridos: 0, enfermos: 0, inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_medico: 0, prejuizo_epidemiologica: 0, prejuizo_sanitaria: 0, prejuizo_pragas: 0, observacoes: '' },
+            obras: { introducao: '', consideracoes: '', pontes_danificadas: 0, bueiros_obstruidos: 0, pavimentacao_m2: 0, maquinario_horas: 0, observacoes: '' }, // Obras Gerais
+            educacao: { introducao: '', consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_ensino: 0, observacoes: '' },
+            social: { introducao: '', consideracoes: '', cestas_basicas: 0, kits_higiene: 0, colchoes_entregues: 0, familias_desabrigadas: 0, familias_desalojadas: 0, observacoes: '' },
+            agricultura: { introducao: '', consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_agricultura: 0, prejuizo_pecuaria: 0, observacoes: '' },
+            administracao: { introducao: '', consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, observacoes: '' },
+            cdl: { introducao: '', consideracoes: '', prejuizo_comercio: 0, prejuizo_servicos: 0, observacoes: '' },
+            cesan: { introducao: '', consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_abastecimento: 0, prejuizo_esgoto: 0, observacoes: '' },
+            defesa_social: { introducao: '', consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_seguranca: 0, observacoes: '' },
+            esporte_turismo: { introducao: '', consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, observacoes: '' },
+            interior: { introducao: '', consideracoes: '', ponte_madeira: 0, ponte_concreto: 0, bueiros: 0, galerias: 0, estradas_vicinais: 0, inst_danificadas: 0, total_valor: 0, observacoes: '' },
+            servicos_urbanos: { introducao: '', consideracoes: '', inst_prestadoras: 0, inst_comunitarias: 0, infra_urbana: 0, prejuizo_limpeza: 0, observacoes: '' },
+            transportes: { introducao: '', consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_transportes: 0, prejuizo_combustiveis: 0, observacoes: '' }
         },
         // Controle de quem já preencheu
         submissoes_setoriais: {

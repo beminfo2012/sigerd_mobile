@@ -19,14 +19,14 @@ const listAvailableModels = async () => {
     return [];
 };
 
-export const refineReportText = async (text, category = 'Geral', context = '') => {
-    if (!text) return null;
+export const refineReportText = async (text, category = 'Geral', context = '', type = 'refine') => {
+    if (!text && type === 'refine') return null;
 
     try {
         const response = await fetch('/api/ai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, category, context })
+            body: JSON.stringify({ text, category, context, type })
         });
 
         if (response.ok) {

@@ -158,6 +158,43 @@ const S2idForm = () => {
 
     const isGlobalReadOnly = !(['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role) || user?.role?.startsWith('S2id_'));
 
+    // AI Generation Logic
+    const handleGenerateIA = async (field) => {
+        if (!activeSector) return;
+
+        setGeneratingIA(prev => ({ ...prev, [field]: true }));
+        try {
+            const cobradeContext = `${formData.data.tipificacao.cobrade} - ${formData.data.tipificacao.denominacao}`;
+            const reportData = JSON.stringify({
+                ocorrencia: formData.data.data_ocorrencia,
+                setorial: formData.data.setorial[activeSector]
+            });
+
+            const textInput = field === 'introducao'
+                ? `Gerar introdução para desastre ${cobradeContext}`
+                : `Gerar considerações finais para o setor ${activeSector} com os dados fornecidos.`;
+
+            const generated = await refineReportText(
+                textInput,
+                cobradeContext,
+                reportData,
+                field
+            );
+
+            if (generated && !generated.startsWith('ERROR:')) {
+                updateSetorialField(activeSector, field, generated);
+                toast.success('Sucesso', 'Narrativa gerada com apoio da IA.');
+            } else {
+                toast.error('Erro', 'Não foi possível gerar o texto com IA.');
+            }
+        } catch (error) {
+            console.error('IA Generation Error:', error);
+            toast.error('Erro', 'Falha na conexão com serviço de IA.');
+        } finally {
+            setGeneratingIA(prev => ({ ...prev, [field]: false }));
+        }
+    };
+
     const updateData = (section, field, value) => {
         if (!canEditSection(section)) return;
         setFormData(prev => {
@@ -571,9 +608,30 @@ const S2idForm = () => {
                             <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
                                 {activeSector && (
                                     <div className="space-y-4">
+                                        {/* 1. INTRODUÇÃO IA */}
+                                        <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100/50">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest">2. Introdução Técnica</label>
+                                                <button
+                                                    onClick={() => handleGenerateIA('introducao')}
+                                                    disabled={generatingIA.introducao}
+                                                    className="text-[9px] font-black bg-blue-600 text-white px-3 py-1.5 rounded-lg uppercase tracking-tighter flex items-center gap-1.5 shadow-sm active:scale-95 transition-all disabled:opacity-50"
+                                                >
+                                                    {generatingIA.introducao ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
+                                                    Gerar com IA
+                                                </button>
+                                            </div>
+                                            <textarea
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm min-h-[120px] focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                placeholder="A introdução técnica será gerada aqui..."
+                                                value={formData.data.setorial[activeSector].introducao}
+                                                onChange={(e) => updateSetorialField(activeSector, 'introducao', e.target.value)}
+                                            />
+                                        </div>
+
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {Object.keys(formData.data.setorial[activeSector])
-                                                .filter(k => k !== 'observacoes')
+                                                .filter(k => !['observacoes', 'introducao', 'consideracoes'].includes(k))
                                                 .map(fieldKey => (
                                                     <div key={fieldKey}>
                                                         <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">
@@ -588,6 +646,28 @@ const S2idForm = () => {
                                                     </div>
                                                 ))}
                                         </div>
+
+                                        {/* 5. CONSIDERAÇÕES FINAIS IA */}
+                                        <div className="bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100/50">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">5. Considerações Finais</label>
+                                                <button
+                                                    onClick={() => handleGenerateIA('consideracoes')}
+                                                    disabled={generatingIA.consideracoes}
+                                                    className="text-[9px] font-black bg-indigo-600 text-white px-3 py-1.5 rounded-lg uppercase tracking-tighter flex items-center gap-1.5 shadow-sm active:scale-95 transition-all disabled:opacity-50"
+                                                >
+                                                    {generatingIA.consideracoes ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
+                                                    Gerar com IA
+                                                </button>
+                                            </div>
+                                            <textarea
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm min-h-[120px] focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                                placeholder="As considerações finais serão geradas aqui..."
+                                                value={formData.data.setorial[activeSector].consideracoes}
+                                                onChange={(e) => updateSetorialField(activeSector, 'consideracoes', e.target.value)}
+                                            />
+                                        </div>
+
                                         <div>
                                             <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">Observações Gerais do Setor</label>
                                             <textarea
@@ -638,7 +718,7 @@ const S2idForm = () => {
                                                     {/* Mostrar campos preenchidos p/ admin */}
                                                     <div className="grid grid-cols-2 gap-2">
                                                         {Object.entries(formData.data.setorial[s])
-                                                            .filter(([k, v]) => k !== 'observacoes' && (v !== 0 && v !== ''))
+                                                            .filter(([k, v]) => !['introducao', 'consideracoes', 'observacoes'].includes(k) && (v !== 0 && v !== ''))
                                                             .map(([k, v]) => (
                                                                 <div key={k} className="flex justify-between border-b border-slate-200 pb-1">
                                                                     <span className="text-[8px] text-slate-400 uppercase">{k.replace(/_/g, ' ')}</span>
@@ -774,53 +854,59 @@ const S2idForm = () => {
             </div>
 
             {/* Offline/Warning Footer */}
-            {!navigator.onLine && (
-                <div className="fixed bottom-24 left-4 right-4 bg-amber-500 text-white p-3 rounded-2xl shadow-lg flex items-center gap-3 animate-bounce">
-                    <AlertTriangle size={20} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white leading-tight">
-                        Você está offline. Alterações salvas localmente!
-                    </span>
-                </div>
-            )}
+            {
+                !navigator.onLine && (
+                    <div className="fixed bottom-24 left-4 right-4 bg-amber-500 text-white p-3 rounded-2xl shadow-lg flex items-center gap-3 animate-bounce">
+                        <AlertTriangle size={20} />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white leading-tight">
+                            Você está offline. Alterações salvas localmente!
+                        </span>
+                    </div>
+                )
+            }
 
             {/* MODALS */}
-            {showCamera && (
-                <S2idPhotoCapture
-                    onSave={(photo) => {
-                        const photoWithSector = { ...photo, sector: activeSector || 'defesa_civil' };
-                        setFormData(prev => ({ ...prev, data: { ...prev.data, evidencias: [...prev.data.evidencias, photoWithSector] } }));
-                        setShowCamera(false);
-                        toast.success('Pronto', 'Foto georreferenciada capturada.');
-                    }}
-                    onCancel={() => setShowCamera(false)}
-                />
-            )}
+            {
+                showCamera && (
+                    <S2idPhotoCapture
+                        onSave={(photo) => {
+                            const photoWithSector = { ...photo, sector: activeSector || 'defesa_civil' };
+                            setFormData(prev => ({ ...prev, data: { ...prev.data, evidencias: [...prev.data.evidencias, photoWithSector] } }));
+                            setShowCamera(false);
+                            toast.success('Pronto', 'Foto georreferenciada capturada.');
+                        }}
+                        onCancel={() => setShowCamera(false)}
+                    />
+                )
+            }
 
-            {showSignature && (
-                <S2idSignature
-                    onSave={(dataUrl) => {
-                        if (activeSector) {
-                            updateSectoralSubmission(activeSector, 'assinatura_url', dataUrl);
-                        } else {
-                            setFormData(prev => ({
-                                ...prev,
-                                data: {
-                                    ...prev.data,
-                                    assinatura: {
-                                        ...prev.data.assinatura,
-                                        data_url: dataUrl,
-                                        data_assinatura: new Date().toISOString()
+            {
+                showSignature && (
+                    <S2idSignature
+                        onSave={(dataUrl) => {
+                            if (activeSector) {
+                                updateSectoralSubmission(activeSector, 'assinatura_url', dataUrl);
+                            } else {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    data: {
+                                        ...prev.data,
+                                        assinatura: {
+                                            ...prev.data.assinatura,
+                                            data_url: dataUrl,
+                                            data_assinatura: new Date().toISOString()
+                                        }
                                     }
-                                }
-                            }));
-                        }
-                        setShowSignature(false);
-                        toast.success('Sucesso', 'Assinatura registrada.');
-                    }}
-                    onCancel={() => setShowSignature(false)}
-                />
-            )}
-        </div>
+                                }));
+                            }
+                            setShowSignature(false);
+                            toast.success('Sucesso', 'Assinatura registrada.');
+                        }}
+                        onCancel={() => setShowSignature(false)}
+                    />
+                )
+            }
+        </div >
     );
 };
 
