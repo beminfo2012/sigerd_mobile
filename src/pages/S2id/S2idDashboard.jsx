@@ -4,8 +4,9 @@ import {
     Plus, FileText, Trash2, Edit3,
     ArrowLeft, Search, AlertCircle,
     Download, Clock, CheckCircle,
-    ChevronRight, Globe, Shield
+    ChevronRight, Globe, Shield, FileStack
 } from 'lucide-react';
+import S2idDocsModal from './components/S2idDocsModal';
 import { getS2idRecords, deleteS2idLocal } from '../../services/s2idDb';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -22,6 +23,8 @@ const S2idDashboard = () => {
     const [activeTab, setActiveTabInternal] = useState('relatorios'); // 'relatorios' or 'monitoramento'
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
+    const [showDocsModal, setShowDocsModal] = useState(false);
+    const [selectedRecordForDocs, setSelectedRecordForDocs] = useState(null);
 
     const ROLE_MAP = {
         'S2id_Saude': 'saude',
@@ -227,6 +230,18 @@ const S2idDashboard = () => {
                                         >
                                             <Download size={14} /> {activeSector ? 'Relatório Setorial' : 'Gerar PDF'}
                                         </button>
+
+                                        {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedRecordForDocs(record);
+                                                    setShowDocsModal(true);
+                                                }}
+                                                className="text-[9px] font-black text-blue-700 uppercase tracking-widest flex items-center gap-1 hover:bg-blue-100 bg-blue-50/50 px-3 py-1.5 rounded-xl transition-all border border-blue-100"
+                                            >
+                                                <FileStack size={14} /> Documentos
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -301,6 +316,16 @@ const S2idDashboard = () => {
                 onConfirm={handleDelete}
                 onCancel={() => setShowDeleteModal(false)}
                 type="danger"
+            />
+
+            <S2idDocsModal
+                isOpen={showDocsModal}
+                onClose={() => {
+                    setShowDocsModal(false);
+                    setSelectedRecordForDocs(null);
+                }}
+                record={selectedRecordForDocs}
+                onUpdate={loadRecords}
             />
         </div>
     );
