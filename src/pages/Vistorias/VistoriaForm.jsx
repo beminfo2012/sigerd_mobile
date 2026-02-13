@@ -1179,7 +1179,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
             {/* Admin Feature: Gerar Despacho - Only for Coordinators */}
             {
-                userProfile?.role === 'Coordenador de Proteção e Defesa Civil' && (
+                ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
                     <div className="fixed bottom-24 right-4 z-40">
                         <button
                             onClick={() => setShowDespachoModal(true)}

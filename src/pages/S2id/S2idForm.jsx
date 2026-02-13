@@ -117,7 +117,7 @@ const S2idForm = () => {
                 };
 
                 // Also merge deeply for all sectors if user is Admin/Coordinator (viewing all)
-                if (['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) {
+                if (['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) {
                     Object.keys(INITIAL_S2ID_STATE.data.setorial).forEach(sector => {
                         if (record.data.setorial && record.data.setorial[sector]) {
                             mergedRecord.data.setorial[sector] = {
@@ -170,7 +170,7 @@ const S2idForm = () => {
     const canEditSection = (section) => {
         if (!user) return false;
         const role = user.role;
-        const isDC = ['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(role);
+        const isDC = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(role);
 
         if (isDC) return true;
 
@@ -190,7 +190,7 @@ const S2idForm = () => {
         return permissions[section] || false;
     };
 
-    const isGlobalReadOnly = !(['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role) || user?.role?.startsWith('S2id_'));
+    const isGlobalReadOnly = !(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role) || user?.role?.startsWith('S2id_'));
 
     // AI Generation Logic
     const handleGenerateIA = async (field) => {
@@ -396,7 +396,7 @@ const S2idForm = () => {
                             setFormData(prev => ({ ...prev, status: 'submitted' }));
                             toast.success('Finalizado', 'Formulário marcado como finalizado.');
                         }}
-                        disabled={saving || !['Admin', 'Coordenador', 'Agente de Defesa Civil', 'admin'].includes(user?.role)}
+                        disabled={saving || !['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)}
                         className="bg-emerald-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all"
                     >
                         Finalizar
@@ -637,7 +637,7 @@ const S2idForm = () => {
                 )}
 
                 {/* EXPANSÃO SETORIAL ESPECÍFICA */}
-                {(user?.role.startsWith('S2id_') || ['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role)) && (
+                {(user?.role.startsWith('S2id_') || ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role)) && (
                     <>
                         <SectionHeader
                             icon={Globe}
@@ -755,7 +755,7 @@ const S2idForm = () => {
                                     </div>
                                 )}
 
-                                {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
+                                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role) && (
                                     <div className="space-y-4">
                                         <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-start gap-3">
                                             <Shield className="text-blue-600 mt-0.5" size={16} />

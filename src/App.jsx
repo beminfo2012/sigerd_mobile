@@ -379,10 +379,10 @@ function App() {
         }
     })
 
-    const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Secretário', 'Técnico em Edificações']
-    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
-    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador', 'Assistente Social']
-    const S2ID_ROLES = ['Admin', 'Coordenador', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura', 'S2id_Social', 'Agente de Defesa Civil']
+    const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'Técnico em Edificações']
+    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
+    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
+    const S2ID_ROLES = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura', 'S2id_Social', 'Agente de Defesa Civil']
 
     useEffect(() => {
         if (isDarkMode) {

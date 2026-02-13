@@ -115,7 +115,7 @@ const S2idDashboard = () => {
                         </div>
                     </div>
                 </div>
-                {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
+                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role) && (
                     <button
                         onClick={() => navigate('/s2id/novo')}
                         className="bg-blue-600 text-white p-2.5 rounded-xl shadow-md active:scale-95 transition-all hover:bg-blue-700 flex items-center gap-2"
@@ -128,7 +128,7 @@ const S2idDashboard = () => {
 
             <main className="p-4 max-w-5xl mx-auto space-y-4">
                 {/* Tabs */}
-                {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
+                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role) && (
                     <div className="flex p-1 bg-slate-200/50 rounded-2xl w-fit mx-auto sm:mx-0">
                         <button
                             onClick={() => setActiveTabInternal('relatorios')}
@@ -231,7 +231,7 @@ const S2idDashboard = () => {
                                             <Download size={14} /> {activeSector ? 'Relatório Setorial' : 'Gerar PDF'}
                                         </button>
 
-                                        {['Admin', 'Coordenador', 'Agente de Defesa Civil'].includes(user?.role) && (
+                                        {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role) && (
                                             <button
                                                 onClick={() => {
                                                     setSelectedRecordForDocs(record);
