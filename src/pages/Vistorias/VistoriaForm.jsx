@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
@@ -13,6 +13,7 @@ import VoiceInput from '../../components/VoiceInput'
 import { checkRiskArea } from '../../services/riskAreas'
 import { refineReportText } from '../../services/ai'
 import ConfirmModal from '../../components/ConfirmModal'
+import DespachoModal from '../../components/DespachoModal'
 import bairrosDataRaw from '../../../Bairros.json'
 import logradourosDataRaw from '../../../nomesderuas.json'
 
@@ -151,6 +152,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [showSignaturePad, setShowSignaturePad] = useState(false)
     const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' ou 'apoio'
     const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [showDespachoModal, setShowDespachoModal] = useState(false)
 
     const [saving, setSaving] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
@@ -1175,75 +1177,104 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 </div>
             </form>
 
+            {/* Admin Feature: Gerar Despacho - Only for Coordinators */}
+            {
+                userProfile?.role === 'Coordenador de Proteção e Defesa Civil' && (
+                    <div className="fixed bottom-24 right-4 z-40">
+                        <button
+                            onClick={() => setShowDespachoModal(true)}
+                            className="bg-slate-800 text-white p-4 rounded-full shadow-xl shadow-slate-900/30 flex items-center justify-center animate-in zoom-in spin-in-12 duration-500 hover:scale-110 transition-transform"
+                            title="Gerar Despacho Administrativo"
+                        >
+                            <FileText size={24} />
+                        </button>
+                        <span className="absolute right-16 top-2 text-xs font-bold bg-white px-2 py-1 rounded-md shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                            Novo Despacho
+                        </span>
+                    </div>
+                )
+            }
+
+            <DespachoModal
+                isOpen={showDespachoModal}
+                onClose={() => setShowDespachoModal(false)}
+                vistoriaData={formData}
+                userProfile={userProfile}
+            />
+
             {/* AI Comparison Modal - Safe & Explicit */}
-            {comparisonContent && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setComparisonContent(null)}>
-                    <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-                        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-4 flex justify-between items-center text-white">
-                            <h3 className="font-bold flex items-center gap-2 text-lg">
-                                <Sparkles size={20} className="text-yellow-300" />
-                                Refinamento Inteligente
-                            </h3>
-                            <button onClick={() => setComparisonContent(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors"><X size={20} /></button>
-                        </div>
+            {
+                comparisonContent && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setComparisonContent(null)}>
+                        <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-4 flex justify-between items-center text-white">
+                                <h3 className="font-bold flex items-center gap-2 text-lg">
+                                    <Sparkles size={20} className="text-yellow-300" />
+                                    Refinamento Inteligente
+                                </h3>
+                                <button onClick={() => setComparisonContent(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors"><X size={20} /></button>
+                            </div>
 
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
-                            {/* Original */}
-                            <div className="space-y-2">
-                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Seu Texto Original</span>
-                                <div className="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
-                                    {comparisonContent.original}
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
+                                {/* Original */}
+                                <div className="space-y-2">
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Seu Texto Original</span>
+                                    <div className="bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                                        {comparisonContent.original}
+                                    </div>
+                                </div>
+
+                                {/* Refined */}
+                                <div className="space-y-2">
+                                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block flex items-center gap-1">
+                                        <Sparkles size={12} /> Sugestão da IA
+                                    </span>
+                                    <div className="bg-indigo-50 p-4 rounded-xl border-2 border-indigo-100 text-indigo-900 text-sm leading-relaxed whitespace-pre-wrap font-medium shadow-sm">
+                                        {comparisonContent.refined}
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Refined */}
-                            <div className="space-y-2">
-                                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block flex items-center gap-1">
-                                    <Sparkles size={12} /> Sugestão da IA
-                                </span>
-                                <div className="bg-indigo-50 p-4 rounded-xl border-2 border-indigo-100 text-indigo-900 text-sm leading-relaxed whitespace-pre-wrap font-medium shadow-sm">
-                                    {comparisonContent.refined}
-                                </div>
+                            <div className="bg-gray-50 p-4 flex gap-3 justify-end border-t border-gray-100">
+                                <button
+                                    onClick={() => setComparisonContent(null)}
+                                    className="px-5 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                                >
+                                    Manter Original
+                                </button>
+                                <button
+                                    onClick={applyRefinement}
+                                    className="px-5 py-2.5 rounded-xl font-bold bg-[#2a5299] text-white hover:bg-[#1e3c72] shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
+                                >
+                                    <CheckCircle size={18} />
+                                    Aplicar Melhoria
+                                </button>
                             </div>
-                        </div>
-
-                        <div className="bg-gray-50 p-4 flex gap-3 justify-end border-t border-gray-100">
-                            <button
-                                onClick={() => setComparisonContent(null)}
-                                className="px-5 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                            >
-                                Manter Original
-                            </button>
-                            <button
-                                onClick={applyRefinement}
-                                className="px-5 py-2.5 rounded-xl font-bold bg-[#2a5299] text-white hover:bg-[#1e3c72] shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2"
-                            >
-                                <CheckCircle size={18} />
-                                Aplicar Melhoria
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Signature Modal */}
-            {showSignaturePad && (
-                <SignaturePadComp
-                    title={activeSignatureType === 'agente' ? "Assinatura do Agente" : "Assinatura do Apoio Técnico"}
-                    onCancel={() => setShowSignaturePad(false)}
-                    onSave={(dataUrl) => {
-                        if (activeSignatureType === 'agente') {
-                            setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }))
-                        } else {
-                            setFormData(prev => ({
-                                ...prev,
-                                apoioTecnico: { ...prev.apoioTecnico, assinatura: dataUrl }
-                            }))
-                        }
-                        setShowSignaturePad(false)
-                    }}
-                />
-            )}
+            {
+                showSignaturePad && (
+                    <SignaturePadComp
+                        title={activeSignatureType === 'agente' ? "Assinatura do Agente" : "Assinatura do Apoio Técnico"}
+                        onCancel={() => setShowSignaturePad(false)}
+                        onSave={(dataUrl) => {
+                            if (activeSignatureType === 'agente') {
+                                setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }))
+                            } else {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    apoioTecnico: { ...prev.apoioTecnico, assinatura: dataUrl }
+                                }))
+                            }
+                            setShowSignaturePad(false)
+                        }}
+                    />
+                )
+            }
 
             {/* Deletion Safety Modal */}
             <ConfirmModal
@@ -1255,7 +1286,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 confirmText="Sim, Excluir Agora"
                 cancelText="Não, Voltar"
             />
-        </div>
+        </div >
     )
 }
 

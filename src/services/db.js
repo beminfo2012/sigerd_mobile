@@ -102,6 +102,15 @@ export const initDB = async () => {
                 s2idStore.createIndex('status', 'status', { unique: false });
                 s2idStore.createIndex('created_at', 'created_at', { unique: false });
             }
+
+            // Despachos (v15) - New Feature
+            if (!db.objectStoreNames.contains('despachos')) {
+                const despachoStore = db.createObjectStore('despachos', { keyPath: 'id', autoIncrement: true });
+                despachoStore.createIndex('despacho_id', 'despacho_id', { unique: true });
+                despachoStore.createIndex('vistoria_id', 'vistoria_id', { unique: false });
+                despachoStore.createIndex('created_at', 'created_at', { unique: false });
+                despachoStore.createIndex('synced', 'synced', { unique: false });
+            }
         },
     });
     return dbPromise;
@@ -798,6 +807,44 @@ export const getInstallationsCount = async () => {
 }
 
 // Remote Vistorias Cache Helpers
+
+// --- Despacho Feature Functions ---
+
+export const saveDespachoOffline = async (data) => {
+    const db = await initDB()
+    const id = await db.put('despachos', {
+        ...data,
+        createdAt: new Date().toISOString(),
+        synced: false
+    })
+
+    // Try sync if online
+    if (navigator.onLine) {
+        // await syncSingleItem('despachos', item, db) // Future implementation
+    }
+    return id
+}
+
+export const getNextDespachoId = async () => {
+    const db = await initDB()
+    const currentYear = new Date().getFullYear()
+
+    // 1. Get max from local
+    const all = await db.getAll('despachos')
+    let maxNum = 0
+
+    all.forEach(d => {
+        if (d.despacho_id && d.despacho_id.includes(`/${currentYear}`)) {
+            const num = parseInt(d.despacho_id.split('/')[0])
+            if (!isNaN(num) && num > maxNum) maxNum = num
+        }
+    })
+
+    // 2. Mock check for remote (In real app, we'd query Supabase count)
+    // For now, local consistency is enough for the requested scope
+
+    return `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`
+}
 export const getRemoteVistoriasCache = async () => {
     const db = await initDB()
     return db.getAll('remote_vistorias_cache')
