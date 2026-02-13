@@ -104,8 +104,6 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     contentHtml += sectionTitle(danoPrefix, `Danos no Setor: ${isSectoral ? sectorName : 'Geral'}`);
 
     // 3.1 Danos Humanos
-    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 20px 0 10px 0;">${danoPrefix}.1 Danos Humanos</div>`;
-
     const humanoData = isSectoral ? data.setorial[activeSector] : data.danos_humanos;
     const humanoRows = [
         ['Mortos', humanoData.mortos || 0],
@@ -113,19 +111,46 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
         ['Enfermos', humanoData.enfermos || 0]
     ];
 
-    contentHtml += renderTable(['Discriminação', 'Quantidade'], humanoRows, ['70%', '30%']);
+    // Mostrar Danos Humanos apenas se houver dados ou se for consolidado
+    if (!isSectoral || humanoRows.some(r => r[1] > 0)) {
+        contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 20px 0 10px 0;">${danoPrefix}.1 Danos Humanos</div>`;
+        contentHtml += renderTable(['Discriminação', 'Quantidade'], humanoRows, ['70%', '30%']);
+    }
 
-    // 3.2 Danos à Infraestrutura / Materiais
-    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 30px 0 10px 0;">${danoPrefix}.2 Danos à Infraestrutura</div>`;
+    // 3.2 Danos à Infraestrutura / Materiais / Levantamento Detalhado
+    contentHtml += `<div style="font-size: 10px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 30px 0 10px 0;">${danoPrefix}.2 Levantamento de Danos e Necessidades</div>`;
 
-    let infraRows = [];
     if (isSectoral) {
-        // Mapear campos que pareçam infraestrutura do setor
         const sData = data.setorial[activeSector];
-        if (sData.inst_danificadas !== undefined) {
-            infraRows.push(['Instalações Públicas', sData.inst_danificadas || 0, sData.inst_destruidas || 0, `R$ ${(sData.inst_valor || 0).toLocaleString('pt-BR')}`]);
+        let specificRows = [];
+
+        // 1. Campos Padrão de Infraestrutura do Setor
+        if (sData.inst_danificadas !== undefined || sData.inst_destruidas !== undefined) {
+            specificRows.push([
+                'Instalações do Setor',
+                sData.inst_danificadas || 0,
+                sData.inst_destruidas || 0,
+                `R$ ${(sData.inst_valor || 0).toLocaleString('pt-BR')}`
+            ]);
+        }
+
+        // 2. Outros campos numéricos (Pontes, Bueiros, Cestas, etc)
+        const skipFields = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'introducao', 'consideracoes', 'observacoes'];
+        Object.entries(sData).forEach(([key, value]) => {
+            if (!skipFields.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0) {
+                const label = key.replace(/_/g, ' ').toUpperCase();
+                specificRows.push([label, value, '-', '-']);
+            }
+        });
+
+        if (specificRows.length > 0) {
+            contentHtml += renderTable(['Discriminação / Item', 'Qtd. Danificada / Valor', 'Qtd. Destruída', 'Estimativa (R$)'], specificRows, ['40%', '20%', '20%', '20%']);
+        } else {
+            contentHtml += `<p style="font-size: 10px; color: #94a3b8; font-style: italic;">Não há registros de danos específicos para este setor.</p>`;
         }
     } else {
+        // Consolidado
+        let infraRows = [];
         Object.keys(data.danos_materiais).forEach(key => {
             infraRows.push([
                 key.replace(/_/g, ' ').toUpperCase(),
@@ -134,12 +159,7 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                 `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
             ]);
         });
-    }
-
-    if (infraRows.length > 0) {
         contentHtml += renderTable(['Discriminação', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
-    } else {
-        contentHtml += `<p style="font-size: 10px; color: #94a3b8; font-style: italic;">Não há registros de danos à infraestrutura para este setor.</p>`;
     }
 
     // 4. PREJUÍZOS ECONÔMICOS
