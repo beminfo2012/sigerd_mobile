@@ -10,9 +10,10 @@ import { useToast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
 import { COBRADE_LIST } from '../../utils/cobradeData';
 import { generateS2idReport } from '../../utils/s2idReportGenerator';
+import { refineReportText } from '../../services/ai';
 import S2idSignature from './components/S2idSignature';
 import S2idPhotoCapture from './components/S2idPhotoCapture';
-import { Camera, PenTool, Trash2, MapPin, Clock as ClockIcon, Image as ImageIcon } from 'lucide-react';
+import { Camera, PenTool, Trash2, MapPin, Clock as ClockIcon, Image as ImageIcon, Sparkles } from 'lucide-react';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle, color = "blue" }) => (
     <div
@@ -66,6 +67,7 @@ const S2idForm = () => {
     });
     const [showCamera, setShowCamera] = useState(false);
     const [showSignature, setShowSignature] = useState(false);
+    const [generatingIA, setGeneratingIA] = useState({ introducao: false, consideracoes: false });
 
     // Load record if editing
     useEffect(() => {
