@@ -23,6 +23,33 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
         setSyncDetail(detail)
     }
 
+    // [HOTFIX] Auto-promote Bruno to Coordinator
+    useEffect(() => {
+        const promoteUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user?.email === 'bruno_pagel@hotmail.com' && userProfile?.role !== 'Coordenador de Proteção e Defesa Civil') {
+                console.log('Promoting user to Coordinator...')
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        role: 'Coordenador de Proteção e Defesa Civil',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', user.id)
+
+                if (!error) {
+                    const newProfile = { ...userProfile, role: 'Coordenador de Proteção e Defesa Civil' }
+                    setUserProfile(newProfile)
+                    localStorage.setItem('userProfile', JSON.stringify(newProfile))
+                    alert('Seu perfil foi atualizado para Coordenador de Proteção e Defesa Civil com sucesso!')
+                } else {
+                    console.error('Failed to promote user:', error)
+                }
+            }
+        }
+        promoteUser()
+    }, [userProfile])
+
     const handleManualSync = async () => {
         if (syncDetail.total === 0 || syncing) return
         if (!navigator.onLine) {
