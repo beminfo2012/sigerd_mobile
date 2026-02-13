@@ -102,6 +102,19 @@ export const INITIAL_S2ID_STATE = {
             transportes: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null }
         },
         evidencias: [], // Array de { url, lat, lng, timestamp, sector }
+        metadata_oficial: {
+            nome_prefeito: 'Kleber Medici Costa', // Valor padrão para SMJ
+            decreto_numero: '',
+            decreto_data: '',
+            decreto_vigencia: '180',
+            protocolo_s2id: '',
+            diario_oficial_info: '',
+            justificativa_federal: '',
+            reconhecimento_reconsideracao: false,
+            processo_anterior_numero: '',
+            beneficios_pretendidos: '',
+            parecer_numero: ''
+        },
         assinatura: { // Assinatura Global (Defesa Civil)
             responsavel: '',
             cargo: '',
