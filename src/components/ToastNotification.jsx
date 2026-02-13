@@ -86,14 +86,21 @@ const Toast = ({ id, type = 'success', title, message, onDismiss, duration = 400
 let toastListeners = [];
 let toastCounter = 0;
 
-export const toast = {
-    success: (title, message) => notify('success', title, message),
-    error: (title, message) => notify('error', title, message),
-    warning: (title, message) => notify('warning', title, message),
-    info: (title, message) => notify('info', title, message),
+const toastBase = (title, messageOrType) => {
+    if (['success', 'error', 'warning', 'info'].includes(messageOrType)) {
+        notify(messageOrType, title);
+    } else {
+        notify('info', title, messageOrType);
+    }
 };
 
-export const useToast = () => ({ toast });
+toastBase.success = (title, message) => notify('success', title, message);
+toastBase.error = (title, message) => notify('error', title, message);
+toastBase.warning = (title, message) => notify('warning', title, message);
+toastBase.info = (title, message) => notify('info', title, message);
+
+export const toast = toastBase;
+export const useToast = () => ({ toast: toastBase });
 
 const notify = (type, title, message) => {
     const id = ++toastCounter;

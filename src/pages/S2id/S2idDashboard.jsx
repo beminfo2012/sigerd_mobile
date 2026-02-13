@@ -64,10 +64,10 @@ const S2idDashboard = () => {
         if (!recordToDelete) return;
         try {
             await deleteS2idLocal(recordToDelete.id);
-            toast('Registro removido com sucesso.', 'success');
+            toast.success('Registro removido com sucesso.');
             loadRecords();
         } catch (error) {
-            toast('Falha ao excluir registro.', 'error');
+            toast.error('Falha ao excluir registro.');
         } finally {
             setShowDeleteModal(false);
             setRecordToDelete(null);

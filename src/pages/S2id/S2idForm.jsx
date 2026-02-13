@@ -276,13 +276,13 @@ const S2idForm = () => {
     const finalizeSectoral = async (sector) => {
         const sectorPhotos = formData.data.evidencias.filter(p => p.sector === sector);
         if (!sectorPhotos.length) {
-            toast('⚠️ É obrigatório anexar pelo menos uma foto das evidências do seu setor.', 'error');
+            toast.error('Evidência Obrigatória', 'É obrigatório anexar pelo menos uma foto das evidências do seu setor.');
             return;
         }
 
         const sectorSub = formData.data.submissoes_setoriais[sector];
         if (!sectorSub.assinatura_url) {
-            toast('⚠️ É obrigatório coletar a assinatura do responsável do setor para finalizar.', 'error');
+            toast.error('Assinatura Pendente', 'É obrigatório coletar a assinatura do responsável do setor para finalizar.');
             return;
         }
 
