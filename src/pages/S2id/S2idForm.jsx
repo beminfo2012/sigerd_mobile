@@ -671,41 +671,145 @@ const S2idForm = () => {
                                             />
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {Object.keys(formData.data.setorial[activeSector])
-                                                .filter(k => !['observacoes', 'introducao', 'consideracoes'].includes(k))
-                                                .map(fieldKey => {
+                                        {/* LAYOUT RENDERER */}
+                                        <div className="space-y-4">
+                                            {(() => {
+                                                // 1. Define Layouts (Field Pairing)
+                                                const SECTOR_LAYOUTS = {
+                                                    obras: [
+                                                        ['pontes_danificadas', 'valor_pontes'],
+                                                        ['bueiros_obstruidos', 'valor_bueiros'],
+                                                        ['pavimentacao_m2', 'valor_pavimentacao'],
+                                                        ['maquinario_horas', 'valor_maquinario']
+                                                    ],
+                                                    interior: [
+                                                        ['ponte_madeira', 'valor_ponte_madeira'],
+                                                        ['ponte_concreto', 'valor_ponte_concreto'],
+                                                        ['bueiros', 'valor_bueiros'],
+                                                        ['galerias', 'valor_galerias'],
+                                                        ['estradas_vicinais', 'valor_estradas'],
+                                                        ['inst_danificadas', 'total_valor']
+                                                    ],
+                                                    social: [
+                                                        ['cestas_basicas', 'custo_cestas'],
+                                                        ['kits_higiene', 'custo_kits'],
+                                                        ['colchoes_entregues', 'custo_colchoes'],
+                                                        ['familias_desabrigadas', 'familias_desalojadas']
+                                                    ],
+                                                    servicos_urbanos: [
+                                                        ['inst_prestadoras', 'valor_inst_prestadoras'],
+                                                        ['inst_comunitarias', 'valor_inst_comunitarias'],
+                                                        ['infra_urbana', 'valor_infra_urbana'],
+                                                        ['prejuizo_limpeza', null]
+                                                    ],
+                                                    saude: [
+                                                        ['mortos', 'feridos'],
+                                                        ['enfermos', null],
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', null],
+                                                        ['prejuizo_medico', 'prejuizo_epidemiologica'],
+                                                        ['prejuizo_sanitaria', 'prejuizo_pragas']
+                                                    ],
+                                                    educacao: [
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', 'prejuizo_ensino']
+                                                    ],
+                                                    agricultura: [
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', null],
+                                                        ['prejuizo_agricultura', 'prejuizo_pecuaria']
+                                                    ],
+                                                    transportes: [
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', null],
+                                                        ['prejuizo_transportes', 'prejuizo_combustiveis']
+                                                    ],
+                                                    cesan: [
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', null],
+                                                        ['prejuizo_abastecimento', 'prejuizo_esgoto']
+                                                    ],
+                                                    cdl: [
+                                                        ['prejuizo_comercio', 'prejuizo_servicos']
+                                                    ],
+                                                    administracao: [
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', null]
+                                                    ],
+                                                    defesa_social: [
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', 'prejuizo_seguranca']
+                                                    ],
+                                                    esporte_turismo: [
+                                                        ['inst_danificadas', 'inst_destruidas'],
+                                                        ['inst_valor', null]
+                                                    ]
+                                                    // Default layout logic for others can be handled by "remaining fields"
+                                                };
+
+                                                const layout = SECTOR_LAYOUTS[activeSector] || [];
+
+                                                // Track rendered fields to handle leftovers
+                                                const renderedFields = new Set(layout.flat().filter(Boolean));
+                                                const allFields = Object.keys(formData.data.setorial[activeSector])
+                                                    .filter(k => !['observacoes', 'introducao', 'consideracoes'].includes(k));
+
+                                                const remainingFields = allFields.filter(f => !renderedFields.has(f));
+
+                                                // Helper to render a single input
+                                                const renderInput = (fieldKey) => {
+                                                    if (!fieldKey) return null; // Spacer
                                                     const isCurrency = ['valor', 'prejuizo', 'custo'].some(term => fieldKey.includes(term));
                                                     const isNumber = typeof formData.data.setorial[activeSector][fieldKey] === 'number';
 
                                                     return (
-                                                        <div key={fieldKey}>
-                                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">
+                                                        <div key={fieldKey} className="w-full">
+                                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1 truncate" title={fieldKey.replace(/_/g, ' ')}>
                                                                 {fieldKey.replace(/_/g, ' ').toUpperCase()}
                                                             </label>
                                                             {isCurrency ? (
                                                                 <CurrencyInput
-                                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
                                                                     value={formData.data.setorial[activeSector][fieldKey]}
                                                                     onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
                                                                 />
                                                             ) : isNumber ? (
                                                                 <NumberInput
-                                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
                                                                     value={formData.data.setorial[activeSector][fieldKey]}
                                                                     onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
                                                                 />
                                                             ) : (
                                                                 <input
                                                                     type="text"
-                                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
                                                                     value={formData.data.setorial[activeSector][fieldKey]}
                                                                     onChange={(e) => updateSetorialField(activeSector, fieldKey, e.target.value)}
                                                                 />
                                                             )}
                                                         </div>
                                                     );
-                                                })}
+                                                };
+
+                                                return (
+                                                    <div className="space-y-3">
+                                                        {/* Render Configured Layout */}
+                                                        {layout.map((row, i) => (
+                                                            <div key={i} className="grid grid-cols-2 gap-3">
+                                                                {renderInput(row[0])}
+                                                                {row[1] ? renderInput(row[1]) : <div />}
+                                                            </div>
+                                                        ))}
+
+                                                        {/* Render Remaining Fields (Grid Flow) */}
+                                                        {remainingFields.length > 0 && (
+                                                            <div className="grid grid-cols-2 gap-3 mt-2 border-t border-dashed border-slate-200 pt-3">
+                                                                {remainingFields.map(field => renderInput(field))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* 5. CONSIDERAÇÕES FINAIS IA */}
