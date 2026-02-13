@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-    ArrowLeft, Save, Globe, AlertTriangle,
-    ChevronDown, ChevronUp, FileText,
-    Users, Home, Leaf, Shield
-} from 'lucide-react';
+import { MapPin, Clock as ClockIcon, Calendar, Info, FileText, CheckCircle2, AlertTriangle, X, Camera, Save, Trash2, Home, Users, Leaf, Globe, Shield, Search, ChevronDown, ChevronUp, AlertCircle, Calculator, Sparkles, ArrowLeft, PenTool, Image as ImageIcon, FileStack } from 'lucide-react';
+import { CurrencyInput, NumberInput } from '../../components/S2idInputs';
 import { getS2idById, saveS2idLocal, INITIAL_S2ID_STATE } from '../../services/s2idDb';
 import { useToast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
@@ -13,7 +10,6 @@ import { generateS2idReport } from '../../utils/s2idReportGenerator';
 import { refineReportText } from '../../services/ai';
 import S2idSignature from './components/S2idSignature';
 import S2idPhotoCapture from './components/S2idPhotoCapture';
-import { Camera, PenTool, Trash2, MapPin, Clock as ClockIcon, Image as ImageIcon, Sparkles, FileStack } from 'lucide-react';
 import { generateS2idDoc } from '../../utils/s2idDocTemplates';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle, color = "blue" }) => (
@@ -461,12 +457,11 @@ const S2idForm = () => {
                         {['mortos', 'feridos', 'enfermos', 'desabrigados', 'desalojados', 'desaparecidos', 'outros_afetados'].map(field => (
                             <div key={field}>
                                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">{field.replace('_', ' ')}</label>
-                                <input
-                                    type="number"
+                                <NumberInput
                                     disabled={!canEditSection('danos_humanos')}
                                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm font-bold disabled:opacity-60"
                                     value={formData.data.danos_humanos[field]}
-                                    onChange={(e) => updateData('danos_humanos', field, parseInt(e.target.value) || 0)}
+                                    onChange={(val) => updateData('danos_humanos', field, val)}
                                 />
                             </div>
                         ))}
@@ -509,30 +504,27 @@ const S2idForm = () => {
                                             {key.replace(/_/g, ' ')}
                                         </td>
                                         <td className="py-2 text-center">
-                                            <input
-                                                type="number"
+                                            <NumberInput
                                                 disabled={!canEditSection('danos_materiais')}
                                                 className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
                                                 value={formData.data.danos_materiais[key].danificadas}
-                                                onChange={(e) => updateDeepData('danos_materiais', key, 'danificadas', parseInt(e.target.value) || 0)}
+                                                onChange={(val) => updateDeepData('danos_materiais', key, 'danificadas', val)}
                                             />
                                         </td>
                                         <td className="py-2 text-center">
-                                            <input
-                                                type="number"
+                                            <NumberInput
                                                 disabled={!canEditSection('danos_materiais')}
                                                 className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
                                                 value={formData.data.danos_materiais[key].destruidas}
-                                                onChange={(e) => updateDeepData('danos_materiais', key, 'destruidas', parseInt(e.target.value) || 0)}
+                                                onChange={(val) => updateDeepData('danos_materiais', key, 'destruidas', val)}
                                             />
                                         </td>
                                         <td className="py-2 pr-2 text-right">
-                                            <input
-                                                type="number"
+                                            <CurrencyInput
                                                 disabled={!canEditSection('danos_materiais')}
                                                 className="w-24 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
                                                 value={formData.data.danos_materiais[key].valor}
-                                                onChange={(e) => updateDeepData('danos_materiais', key, 'valor', parseFloat(e.target.value) || 0)}
+                                                onChange={(val) => updateDeepData('danos_materiais', key, 'valor', val)}
                                             />
                                         </td>
                                     </tr>
@@ -597,12 +589,11 @@ const S2idForm = () => {
                                 {Object.keys(formData.data.prejuizos_publicos).map(key => (
                                     <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                                         <span className="text-[10px] font-bold text-slate-600 uppercase capitalize">{key.replace(/_/g, ' ')}</span>
-                                        <input
-                                            type="number"
+                                        <CurrencyInput
                                             disabled={!canEditSection('prejuizos_publicos')}
                                             className="w-24 p-1.5 bg-white border border-slate-200 rounded-lg text-right font-bold text-xs outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
                                             value={formData.data.prejuizos_publicos[key]}
-                                            onChange={(e) => updateData('prejuizos_publicos', key, parseFloat(e.target.value) || 0)}
+                                            onChange={(val) => updateData('prejuizos_publicos', key, val)}
                                         />
                                     </div>
                                 ))}
@@ -649,19 +640,38 @@ const S2idForm = () => {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {Object.keys(formData.data.setorial[activeSector])
                                                 .filter(k => !['observacoes', 'introducao', 'consideracoes'].includes(k))
-                                                .map(fieldKey => (
-                                                    <div key={fieldKey}>
-                                                        <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">
-                                                            {fieldKey.replace(/_/g, ' ').toUpperCase()}
-                                                        </label>
-                                                        <input
-                                                            type={typeof formData.data.setorial[activeSector][fieldKey] === 'number' ? 'number' : 'text'}
-                                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                                                            value={formData.data.setorial[activeSector][fieldKey]}
-                                                            onChange={(e) => updateSetorialField(activeSector, fieldKey, e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
-                                                        />
-                                                    </div>
-                                                ))}
+                                                .map(fieldKey => {
+                                                    const isCurrency = ['valor', 'prejuizo', 'custo'].some(term => fieldKey.includes(term));
+                                                    const isNumber = typeof formData.data.setorial[activeSector][fieldKey] === 'number';
+
+                                                    return (
+                                                        <div key={fieldKey}>
+                                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1">
+                                                                {fieldKey.replace(/_/g, ' ').toUpperCase()}
+                                                            </label>
+                                                            {isCurrency ? (
+                                                                <CurrencyInput
+                                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    value={formData.data.setorial[activeSector][fieldKey]}
+                                                                    onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
+                                                                />
+                                                            ) : isNumber ? (
+                                                                <NumberInput
+                                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    value={formData.data.setorial[activeSector][fieldKey]}
+                                                                    onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
+                                                                />
+                                                            ) : (
+                                                                <input
+                                                                    type="text"
+                                                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    value={formData.data.setorial[activeSector][fieldKey]}
+                                                                    onChange={(e) => updateSetorialField(activeSector, fieldKey, e.target.value)}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
                                         </div>
 
                                         {/* 5. CONSIDERAÇÕES FINAIS IA */}

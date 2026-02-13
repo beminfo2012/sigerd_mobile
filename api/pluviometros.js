@@ -1,35 +1,84 @@
 export default async function handler(request, response) {
-    const url = "https://resources.cemaden.gov.br/graficos/interativo/getJson2.php?uf=ES";
+    // Enable CORS
+    response.setHeader('Access-Control-Allow-Credentials', true);
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    response.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
-    try {
-        const apiResponse = await fetch(url);
-        if (!apiResponse.ok) {
-            throw new Error(`CEMADEN connection failed: ${apiResponse.status}`);
+    if (request.method === 'OPTIONS') {
+        response.status(200).end();
+        return;
+    }
+
+    // Helper: format date as dd/mm/yyyy for ANA SOAP API
+    const fmtBR = (d) => {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+    };
+
+    // Helper: accumulate rain within a time window
+    const calcAccumulation = (items, latestDate, hoursBack) => {
+        const cutoff = new Date(latestDate.getTime() - hoursBack * 60 * 60 * 1000);
+        return items.reduce((sum, item) => {
+            const d = new Date(item.DataHora);
+            if (isNaN(d.getTime())) return sum;
+            if (d > cutoff && d <= latestDate) {
+                return sum + (parseFloat(item.Chuva) || 0);
+            }
+            return sum;
+        }, 0);
+    };
+
+    // --- FETCH CEMADEN ---
+    const fetchCemaden = async () => {
+        const url = "https://resources.cemaden.gov.br/graficos/interativo/getJson2.php?uf=ES";
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+        try {
+            console.log(`[CEMADEN] Fetching...`);
+            const apiResponse = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeout);
+
+            if (!apiResponse.ok) {
+                throw new Error(`CEMADEN connection failed: ${apiResponse.status}`);
+            }
+
+            const data = await apiResponse.json();
+
+            // Filter for Santa Maria de Jetibá
+            const cityData = data.filter(s =>
+                s.cidade && s.cidade.toLowerCase().includes("maria de jetib")
+            );
+
+            const parseAcc = (v) => (v === "-" || !v) ? 0.0 : parseFloat(v);
+            return cityData.map(s => ({
+                id: s.idestacao,
+                name: s.nomeestacao,
+                acc1hr: parseAcc(s.acc1hr),
+                acc3hr: parseAcc(s.acc3hr),
+                acc6hr: parseAcc(s.acc6hr),
+                acc12hr: parseAcc(s.acc12hr),
+                acc24hr: parseAcc(s.acc24hr),
+                acc48hr: parseAcc(s.acc48hr),
+                acc72hr: parseAcc(s.acc72hr),
+                acc96hr: parseAcc(s.acc96hr),
+                lastUpdate: s.datahoraUltimovalor,
+                type: 'pluviometric'
+            }));
+        } catch (error) {
+            console.warn(`[CEMADEN] Failed: ${error.message}`);
+            return []; // Return empty array on failure, don't crash everything
         }
+    };
 
-        const data = await apiResponse.json();
-
-        // Filter for Santa Maria de Jetibá
-        const cityData = data.filter(s =>
-            s.cidade && s.cidade.toLowerCase().includes("maria de jetib")
-        );
-
-        const parseAcc = (v) => (v === "-" || !v) ? 0.0 : parseFloat(v);
-        const result = cityData.map(s => ({
-            id: s.idestacao,
-            name: s.nomeestacao,
-            acc1hr: parseAcc(s.acc1hr),
-            acc3hr: parseAcc(s.acc3hr),
-            acc6hr: parseAcc(s.acc6hr),
-            acc12hr: parseAcc(s.acc12hr),
-            acc24hr: parseAcc(s.acc24hr),
-            acc48hr: parseAcc(s.acc48hr),
-            acc72hr: parseAcc(s.acc72hr),
-            acc96hr: parseAcc(s.acc96hr),
-            lastUpdate: s.datahoraUltimovalor
-        }));
-
-        // ANA STATIONS CONFIGURATION
+    // --- FETCH ANA ---
+    const fetchAna = async () => {
         const ANA_STATIONS = [
             { id: "57118080", name: "PCH RIO BONITO MONTANTE 1" },
             { id: "57090000", name: "SÃO JOÃO DE GARRAFÃO" },
@@ -37,28 +86,6 @@ export default async function handler(request, response) {
             { id: "57119000", name: "PCH RIO BONITO BARRAMENTO" }
         ];
 
-        // Helper: format date as dd/mm/yyyy for ANA SOAP API
-        const fmtBR = (d) => {
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const yyyy = d.getFullYear();
-            return `${dd}/${mm}/${yyyy}`;
-        };
-
-        // Helper: accumulate rain within a time window
-        const calcAccumulation = (items, latestDate, hoursBack) => {
-            const cutoff = new Date(latestDate.getTime() - hoursBack * 60 * 60 * 1000);
-            return items.reduce((sum, item) => {
-                const d = new Date(item.DataHora);
-                if (isNaN(d.getTime())) return sum;
-                if (d > cutoff && d <= latestDate) {
-                    return sum + (parseFloat(item.Chuva) || 0);
-                }
-                return sum;
-            }, 0);
-        };
-
-        // Fetch ANA Data in Parallel
         const anaPromises = ANA_STATIONS.map(async (station) => {
             try {
                 let items = [];
@@ -70,17 +97,15 @@ export default async function handler(request, response) {
                     startDate.setDate(endDate.getDate() - 5); // 5 days back for 96h accumulation
 
                     const soapUrl = `https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=${station.id}&dataInicio=${fmtBR(startDate)}&dataFim=${fmtBR(endDate)}`;
-                    console.log(`[ANA-SOAP] Fetching: ${soapUrl}`);
 
                     const controller = new AbortController();
-                    const timeout = setTimeout(() => controller.abort(), 20000);
+                    const timeout = setTimeout(() => controller.abort(), 15000);
 
                     const resSoap = await fetch(soapUrl, { signal: controller.signal });
                     clearTimeout(timeout);
 
                     if (resSoap.ok) {
                         const xml = await resSoap.text();
-                        // Parse XML — extract DadosHidrometereologicos elements
                         const matches = [...xml.matchAll(/<DadosHidrometereologicos[^>]*>([\s\S]*?)<\/DadosHidrometereologicos>/g)];
                         items = matches.map(m => {
                             const content = m[1];
@@ -92,15 +117,12 @@ export default async function handler(request, response) {
                                 Chuva: get("Chuva")
                             };
                         }).filter(i => i.DataHora);
-                        console.log(`[ANA-SOAP] Station ${station.id}: ${items.length} records`);
-                    } else {
-                        console.warn(`[ANA-SOAP] Station ${station.id} failed: ${resSoap.status}`);
                     }
                 } catch (e) {
                     console.warn(`[ANA-SOAP] Station ${station.id} error: ${e.message}`);
                 }
 
-                // === FALLBACK: ANA REST API (hidrowebservice — needs auth) ===
+                // === FALLBACK: ANA REST API ===
                 if (items.length === 0) {
                     try {
                         const identifier = process.env.ANA_IDENTIFICADOR;
@@ -112,9 +134,7 @@ export default async function handler(request, response) {
                             startDate.setDate(endDate.getDate() - 5);
                             const fmtISO = d => d.toISOString().split('T')[0];
 
-                            // First, get auth token
                             const authUrl = `https://www.ana.gov.br/hidrowebservice/authenticate?identificador=${encodeURIComponent(identifier)}&senha=${encodeURIComponent(password)}`;
-                            console.log(`[ANA-REST] Authenticating...`);
                             const authRes = await fetch(authUrl, { method: 'POST' });
 
                             if (authRes.ok) {
@@ -123,7 +143,6 @@ export default async function handler(request, response) {
 
                                 if (token) {
                                     const restUrl = `https://www.ana.gov.br/hidrowebservice/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1?codEstacao=${station.id}&dataInicio=${fmtISO(startDate)}&dataFim=${fmtISO(endDate)}`;
-                                    console.log(`[ANA-REST] Fetching: ${restUrl}`);
 
                                     const resRest = await fetch(restUrl, {
                                         headers: { 'Authorization': `Bearer ${token}` }
@@ -139,7 +158,6 @@ export default async function handler(request, response) {
                                                 Vazao: String(i.Vazao || i.vazao || ''),
                                                 Chuva: String(i.Chuva || i.chuva || '')
                                             })).filter(i => i.DataHora);
-                                            console.log(`[ANA-REST] Station ${station.id}: ${items.length} records`);
                                         }
                                     }
                                 }
@@ -150,13 +168,12 @@ export default async function handler(request, response) {
                     }
                 }
 
-                // Sort by date descending
+                // Process items
                 const sortedItems = items.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora));
                 const latest = sortedItems[0];
 
                 if (!latest) throw new Error("Sem dados");
 
-                // Calculate Rain Accumulations for multiple time windows
                 const latestDate = new Date(latest.DataHora);
 
                 const acc1hr = calcAccumulation(sortedItems, latestDate, 1);
@@ -187,12 +204,13 @@ export default async function handler(request, response) {
 
             } catch (err) {
                 console.error(`[ANA] Station ${station.id} total failure: ${err.message}`);
+                // Return offline placeholder instead of throwing, so other stations still load
                 return {
                     id: station.id,
                     name: station.name,
                     type: "fluviometric",
                     isRealTime: false,
-                    status: "Offline (ANA)",
+                    status: "Offline",
                     level: 0,
                     flow: 0,
                     acc1hr: 0, acc3hr: 0, acc6hr: 0, acc12hr: 0,
@@ -202,22 +220,25 @@ export default async function handler(request, response) {
             }
         });
 
-        const anaResults = await Promise.all(anaPromises);
-        const finalResult = [...result, ...anaResults];
+        return Promise.all(anaPromises);
+    };
 
-        // Enable CORS
-        response.setHeader('Access-Control-Allow-Credentials', true)
-        response.setHeader('Access-Control-Allow-Origin', '*')
-        response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
-        response.setHeader(
-            'Access-Control-Allow-Headers',
-            'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-        )
+    try {
+        // Execute both fetches in parallel
+        const [cemadenResult, anaResult] = await Promise.allSettled([
+            fetchCemaden(),
+            fetchAna()
+        ]);
+
+        const cemadenData = cemadenResult.status === 'fulfilled' ? cemadenResult.value : [];
+        const anaData = anaResult.status === 'fulfilled' ? anaResult.value : [];
+
+        const finalResult = [...cemadenData, ...anaData];
 
         response.status(200).json(finalResult);
 
     } catch (error) {
-        console.error(error);
+        console.error("Critical API Error:", error);
         response.status(500).json({ error: 'Failed to fetch data', details: error.message });
     }
 }
