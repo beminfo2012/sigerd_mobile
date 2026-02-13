@@ -47,6 +47,29 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     }
                 }
             }
+
+            // [FIX] Ensure freitas.edificar@gmail.com has correct role (S2id_Obras)
+            if (userProfile?.email === 'freitas.edificar@gmail.com' && userProfile?.role !== 'S2id_Obras') {
+                console.log('Correcting freitas role to S2id_Obras...')
+                const { data: { user } } = await supabase.auth.getUser()
+
+                if (user) {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({
+                            role: 'S2id_Obras',
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', user.id)
+
+                    if (!error) {
+                        const newProfile = { ...userProfile, role: 'S2id_Obras' }
+                        setUserProfile(newProfile)
+                        localStorage.setItem('userProfile', JSON.stringify(newProfile))
+                        alert('Acesso liberado ao módulo S2id (Obras).')
+                    }
+                }
+            }
         }
         fixRole()
     }, [userProfile])
