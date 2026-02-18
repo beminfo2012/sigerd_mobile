@@ -262,6 +262,25 @@ const S2idForm = () => {
         });
     };
 
+    // Auto-calculate total prejuizo for the active sector
+    useEffect(() => {
+        if (!activeSector || !formData.data.setorial[activeSector]) return;
+
+        const currentSectorData = formData.data.setorial[activeSector];
+        let total = 0;
+
+        Object.entries(currentSectorData).forEach(([key, value]) => {
+            // Sum all currency fields except the total itself
+            if (key !== 'prejuizo_total' && (key.includes('valor') || key.includes('custo') || key.includes('prejuizo')) && typeof value === 'number') {
+                total += value;
+            }
+        });
+
+        if (total !== currentSectorData.prejuizo_total) {
+            updateSetorialField(activeSector, 'prejuizo_total', total);
+        }
+    }, [formData.data.setorial[activeSector]]);
+
     const updateSetorialField = (sector, field, value) => {
         if (activeSector && sector !== activeSector) return;
         setFormData(prev => ({
@@ -685,7 +704,7 @@ const S2idForm = () => {
                                                         ['pontes_danificadas', 'valor_pontes'],
                                                         ['bueiros_obstruidos', 'valor_bueiros'],
                                                         ['pavimentacao_m2', 'valor_pavimentacao'],
-                                                        ['maquinario_horas', 'valor_maquinario']
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     interior: [
                                                         ['ponte_madeira', 'valor_ponte_madeira'],
@@ -693,19 +712,20 @@ const S2idForm = () => {
                                                         ['bueiros', 'valor_bueiros'],
                                                         ['galerias', 'valor_galerias'],
                                                         ['estradas_vicinais', 'valor_estradas'],
-                                                        ['inst_danificadas', 'total_valor']
+                                                        ['inst_danificadas', 'prejuizo_total']
                                                     ],
                                                     social: [
                                                         ['cestas_basicas', 'custo_cestas'],
                                                         ['kits_higiene', 'custo_kits'],
                                                         ['colchoes_entregues', 'custo_colchoes'],
-                                                        ['familias_desabrigadas', 'familias_desalojadas']
+                                                        ['familias_desabrigadas', 'familias_desalojadas'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     servicos_urbanos: [
                                                         ['inst_prestadoras', 'valor_inst_prestadoras'],
                                                         ['inst_comunitarias', 'valor_inst_comunitarias'],
                                                         ['infra_urbana', 'valor_infra_urbana'],
-                                                        ['prejuizo_limpeza', null]
+                                                        ['prejuizo_limpeza', 'prejuizo_total']
                                                     ],
                                                     saude: [
                                                         ['mortos', 'feridos'],
@@ -713,43 +733,49 @@ const S2idForm = () => {
                                                         ['inst_danificadas', 'inst_destruidas'],
                                                         ['inst_valor', null],
                                                         ['prejuizo_medico', 'prejuizo_epidemiologica'],
-                                                        ['prejuizo_sanitaria', 'prejuizo_pragas']
+                                                        ['prejuizo_sanitaria', 'prejuizo_pragas'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     educacao: [
                                                         ['inst_danificadas', 'inst_destruidas'],
-                                                        ['inst_valor', 'prejuizo_ensino']
+                                                        ['inst_valor', 'prejuizo_ensino'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     agricultura: [
                                                         ['inst_danificadas', 'inst_destruidas'],
                                                         ['inst_valor', null],
-                                                        ['prejuizo_agricultura', 'prejuizo_pecuaria']
+                                                        ['prejuizo_agricultura', 'prejuizo_pecuaria'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     transportes: [
                                                         ['inst_danificadas', 'inst_destruidas'],
                                                         ['inst_valor', null],
-                                                        ['prejuizo_transportes', 'prejuizo_combustiveis']
+                                                        ['prejuizo_transportes', 'prejuizo_combustiveis'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     cesan: [
                                                         ['inst_danificadas', 'inst_destruidas'],
                                                         ['inst_valor', null],
-                                                        ['prejuizo_abastecimento', 'prejuizo_esgoto']
+                                                        ['prejuizo_abastecimento', 'prejuizo_esgoto'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     cdl: [
-                                                        ['prejuizo_comercio', 'prejuizo_servicos']
+                                                        ['prejuizo_comercio', 'prejuizo_servicos'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     administracao: [
                                                         ['inst_danificadas', 'inst_destruidas'],
-                                                        ['inst_valor', null]
+                                                        ['inst_valor', 'prejuizo_total']
                                                     ],
                                                     defesa_social: [
                                                         ['inst_danificadas', 'inst_destruidas'],
-                                                        ['inst_valor', 'prejuizo_seguranca']
+                                                        ['inst_valor', 'prejuizo_seguranca'],
+                                                        ['prejuizo_total', null]
                                                     ],
                                                     esporte_turismo: [
                                                         ['inst_danificadas', 'inst_destruidas'],
-                                                        ['inst_valor', null]
+                                                        ['inst_valor', 'prejuizo_total']
                                                     ]
-                                                    // Default layout logic for others can be handled by "remaining fields"
                                                 };
 
                                                 const layout = SECTOR_LAYOUTS[activeSector] || [];
@@ -766,10 +792,11 @@ const S2idForm = () => {
                                                     if (!fieldKey) return null; // Spacer
                                                     const isCurrency = ['valor', 'prejuizo', 'custo'].some(term => fieldKey.includes(term));
                                                     const isNumber = typeof formData.data.setorial[activeSector][fieldKey] === 'number';
+                                                    const isTotalField = fieldKey === 'prejuizo_total';
 
                                                     return (
-                                                        <div key={fieldKey} className="w-full">
-                                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1 truncate" title={fieldKey.replace(/_/g, ' ')}>
+                                                        <div key={fieldKey} className={`w-full ${isTotalField ? 'bg-amber-50 rounded-2xl p-3 border border-amber-200' : ''}`}>
+                                                            <label className={`block text-[8px] font-black uppercase mb-1 ml-1 truncate ${isTotalField ? 'text-amber-600' : 'text-slate-400'}`} title={fieldKey.replace(/_/g, ' ')}>
                                                                 {(() => {
                                                                     let label = fieldKey.replace(/_/g, ' ').toUpperCase();
                                                                     if (fieldKey.includes('ponte')) {
@@ -781,20 +808,23 @@ const S2idForm = () => {
                                                             </label>
                                                             {isCurrency ? (
                                                                 <CurrencyInput
-                                                                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    disabled={isTotalField}
+                                                                    className={`w-full px-3 py-3 rounded-xl text-xs font-bold outline-none border transition-all ${isTotalField ? 'bg-white border-amber-300 text-amber-900 cursor-not-allowed text-base' : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500'}`}
                                                                     value={formData.data.setorial[activeSector][fieldKey]}
                                                                     onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
                                                                 />
                                                             ) : isNumber ? (
                                                                 <NumberInput
-                                                                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    disabled={isTotalField}
+                                                                    className={`w-full px-3 py-3 rounded-xl text-xs font-bold outline-none border transition-all ${isTotalField ? 'bg-white border-amber-300 text-amber-900 cursor-not-allowed text-base' : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500'}`}
                                                                     value={formData.data.setorial[activeSector][fieldKey]}
                                                                     onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
                                                                 />
                                                             ) : (
                                                                 <input
                                                                     type="text"
-                                                                    className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                    disabled={isTotalField}
+                                                                    className={`w-full px-3 py-3 rounded-xl text-xs font-bold outline-none border transition-all ${isTotalField ? 'bg-white border-amber-300 text-amber-900 cursor-not-allowed text-base' : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500'}`}
                                                                     value={formData.data.setorial[activeSector][fieldKey]}
                                                                     onChange={(e) => updateSetorialField(activeSector, fieldKey, e.target.value)}
                                                                 />

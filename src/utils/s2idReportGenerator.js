@@ -166,7 +166,6 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
             'pontes_danificadas': 'valor_pontes',
             'bueiros_obstruidos': 'valor_bueiros',
             'pavimentacao_m2': 'valor_pavimentacao',
-            'maquinario_horas': 'valor_maquinario',
             'ponte_madeira': 'valor_ponte_madeira',
             'ponte_concreto': 'valor_ponte_concreto',
             'bueiros': 'valor_bueiros',
@@ -205,6 +204,11 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                 specificRows.push([label, value, '-', valorEstimado]);
             }
         });
+
+        // Adicionar Total de Prejuízos do Setor no final
+        if (sData.prejuizo_total > 0) {
+            specificRows.push(['<span style="color: #1e3a8a; font-weight: 900;">TOTAL DE PREJUÍZOS DO SETOR</span>', '-', '-', `<span style="color: #1e3a8a; font-weight: 900;">R$ ${sData.prejuizo_total.toLocaleString('pt-BR')}</span>`]);
+        }
 
         if (specificRows.length > 0) {
             contentHtml += renderTable(['Discriminação / Item', 'Qtd. Danificada / Valor', 'Qtd. Destruída', 'Estimativa (R$)'], specificRows, ['40%', '20%', '20%', '20%']);
@@ -247,7 +251,6 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                     'pontes_danificadas': 'valor_pontes',
                     'bueiros_obstruidos': 'valor_bueiros',
                     'pavimentacao_m2': 'valor_pavimentacao',
-                    'maquinario_horas': 'valor_maquinario',
                     'ponte_madeira': 'valor_ponte_madeira',
                     'ponte_concreto': 'valor_ponte_concreto',
                     'bueiros': 'valor_bueiros',
