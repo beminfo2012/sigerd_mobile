@@ -187,7 +187,7 @@ const Login = ({ onLogin }) => {
 
         const TEST_ACCOUNTS = {
             'saude@s2id.com': { role: 'S2id_Saude', name: 'Secretaria de Saúde' },
-            'obras@s2id.com': { role: 'S2id_Obras', name: 'Secretaria de Obras' },
+            'obras@s2id.com': { role: 'S2id_Obras', name: 'SECURB (Serviços Urbanos)' },
             'social@s2id.com': { role: 'S2id_Social', name: 'Secretaria de Assistência Social' },
             'educacao@s2id.com': { role: 'S2id_Educacao', name: 'Secretaria de Educação' },
             'agricultura@s2id.com': { role: 'S2id_Agricultura', name: 'Secretaria de Agricultura' },

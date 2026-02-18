@@ -10,7 +10,12 @@ import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 export const generateS2idReport = async (record, userProfile, activeSector = null) => {
     // Definir se é um relatório consolidado ou setorial
     const isSectoral = !!activeSector;
-    const sectorName = activeSector ? activeSector.toUpperCase().replace(/_/g, ' ') : '';
+    const sectorDisplay = {
+        'obras': 'SECURB',
+        'interior': 'INTERIOR (ÁREA RURAL)',
+        'servicos_urbanos': 'SECURB (ÁREA URBANA)'
+    };
+    const sectorName = activeSector ? (sectorDisplay[activeSector] || activeSector.toUpperCase().replace(/_/g, ' ')) : '';
     const urlToBase64 = (url) => {
         return new Promise((resolve) => {
             const img = new Image();
@@ -181,7 +186,13 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
             // Se for um item numérico, não estiver na lista de ignore, E NÃO FOR um campo de valor isolado
             if (!skipFields.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0 && !valueFields.includes(key) && !key.startsWith('valor_') && !key.startsWith('custo_')) {
 
-                const label = key.replace(/_/g, ' ').toUpperCase();
+                let label = key.replace(/_/g, ' ').toUpperCase();
+
+                // Distinção de Pontes Rural vs Urbana
+                if (key.includes('ponte')) {
+                    if (activeSector === 'interior') label += ' (ÁREA RURAL)';
+                    if (activeSector === 'obras' || activeSector === 'servicos_urbanos') label += ' (ÁREA URBANA)';
+                }
 
                 // Buscar valor correspondente no mapa ou por convenção
                 let valorEstimado = '-';
@@ -255,7 +266,16 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                 Object.entries(sData).forEach(([key, value]) => {
                     if (!skipFieldsGlobal.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0 && !valueFields.includes(key) && !key.startsWith('valor_') && !key.startsWith('custo_')) {
 
-                        const label = `${key.replace(/_/g, ' ').toUpperCase()} (${sectorName.toUpperCase()})`;
+                        let label = key.replace(/_/g, ' ').toUpperCase();
+
+                        // Distinção de Pontes Rural vs Urbana no Consolidado
+                        if (key.includes('ponte')) {
+                            if (sectorKey === 'interior') label += ' (ÁREA RURAL)';
+                            if (sectorKey === 'obras' || sectorKey === 'servicos_urbanos') label += ' (ÁREA URBANA)';
+                        }
+
+                        const displaySectorName = sectorKey === 'obras' ? 'SECURB' : sectorKey.toUpperCase();
+                        label = `${label} (${displaySectorName})`;
 
                         // Buscar valor correspondente
                         let valorEstimado = '-';

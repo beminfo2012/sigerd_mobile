@@ -109,7 +109,7 @@ const S2idDashboard = () => {
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sistema Nacional de Desastres</p>
                             {activeSector && (
                                 <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full uppercase border border-blue-100">
-                                    Setor: {activeSector.replace(/_/g, ' ')}
+                                    Setor: {activeSector === 'obras' ? 'SECURB' : activeSector.replace(/_/g, ' ')}
                                 </span>
                             )}
                         </div>
@@ -185,7 +185,7 @@ const S2idDashboard = () => {
                                                     .filter(([_, sub]) => sub.preenchido)
                                                     .map(([sec, _]) => (
                                                         <span key={sec} className="text-[7px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-tighter">
-                                                            {sec.replace(/_/g, ' ')}
+                                                            {sec === 'obras' ? 'SECURB' : sec.replace(/_/g, ' ')}
                                                         </span>
                                                     ))
                                                 }

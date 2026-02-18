@@ -34,7 +34,7 @@ const S2idForm = () => {
 
     const ROLE_MAP = {
         'S2id_Saude': 'saude',
-        'S2id_Obras': 'obras',
+        'S2id_Obras': 'obras', // Manteve key 'obras' mas exibição será SECURB
         'S2id_Social': 'social',
         'S2id_Educacao': 'educacao',
         'S2id_Agricultura': 'agricultura',
@@ -646,7 +646,7 @@ const S2idForm = () => {
                     <>
                         <SectionHeader
                             icon={Globe}
-                            title={`Relatório Setorial: ${user?.role.replace('S2id_', '') || 'Geral'}`}
+                            title={`Relatório Setorial: ${activeSector === 'obras' ? 'SECURB' : (user?.role.replace('S2id_', '') || 'Geral')}`}
                             isOpen={openSections.setorial}
                             onToggle={() => toggleSection('setorial')}
                             color="blue"
@@ -770,7 +770,14 @@ const S2idForm = () => {
                                                     return (
                                                         <div key={fieldKey} className="w-full">
                                                             <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 ml-1 truncate" title={fieldKey.replace(/_/g, ' ')}>
-                                                                {fieldKey.replace(/_/g, ' ').toUpperCase()}
+                                                                {(() => {
+                                                                    let label = fieldKey.replace(/_/g, ' ').toUpperCase();
+                                                                    if (fieldKey.includes('ponte')) {
+                                                                        if (activeSector === 'interior') label += ' (Área Rural)';
+                                                                        if (activeSector === 'obras' || activeSector === 'servicos_urbanos') label += ' (Área Urbana)';
+                                                                    }
+                                                                    return label;
+                                                                })()}
                                                             </label>
                                                             {isCurrency ? (
                                                                 <CurrencyInput
