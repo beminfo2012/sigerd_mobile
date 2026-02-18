@@ -273,11 +273,11 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
 
                         // Distinção de Pontes Rural vs Urbana no Consolidado
                         if (key.includes('ponte')) {
-                            if (sectorKey === 'interior') label += ' (ÁREA RURAL)';
-                            if (sectorKey === 'obras' || sectorKey === 'servicos_urbanos') label += ' (ÁREA URBANA)';
+                            if (sectorName === 'interior') label += ' (ÁREA RURAL)';
+                            if (sectorName === 'obras' || sectorName === 'servicos_urbanos') label += ' (ÁREA URBANA)';
                         }
 
-                        const displaySectorName = sectorKey === 'obras' ? 'SECURB' : sectorKey.toUpperCase();
+                        const displaySectorName = sectorName === 'obras' ? 'SECURB' : sectorName.toUpperCase();
                         label = `${label} (${displaySectorName})`;
 
                         // Buscar valor correspondente
