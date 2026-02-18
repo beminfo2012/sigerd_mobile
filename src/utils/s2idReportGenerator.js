@@ -291,6 +291,17 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                         infraRows.push([label, value, '-', valorEstimado]);
                     }
                 });
+
+                // Adicionar Subtotal do Setor no Consolidado (opcional mas melhora clareza)
+                if (sData.prejuizo_total > 0) {
+                    const displayName = sectorName === 'obras' ? 'SECURB' : sectorName.toUpperCase();
+                    infraRows.push([
+                        `<span style="color: #1e3a8a; font-weight: 900;">SUBTOTAL: ${displayName}</span>`,
+                        '-',
+                        '-',
+                        `<span style="color: #1e3a8a; font-weight: 900;">R$ ${sData.prejuizo_total.toLocaleString('pt-BR')}</span>`
+                    ]);
+                }
             });
 
         }
@@ -332,7 +343,7 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
         if (data.setorial) {
             Object.entries(data.setorial).forEach(([sectorName, sData]) => {
                 Object.entries(sData).forEach(([k, v]) => {
-                    if (k.startsWith('prejuizo_') && v > 0) {
+                    if (k.startsWith('prejuizo_') && k !== 'prejuizo_total' && v > 0) {
                         const label = `${k.replace('prejuizo_', '').replace(/_/g, ' ').toUpperCase()} (${sectorName.toUpperCase()})`;
                         prejuRows.push([label, `R$ ${v.toLocaleString('pt-BR')}`]);
                     }
