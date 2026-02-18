@@ -10,6 +10,7 @@ import { generateS2idReport } from '../../utils/s2idReportGenerator';
 import { refineReportText } from '../../services/ai';
 import S2idSignature from './components/S2idSignature';
 import S2idPhotoCapture from './components/S2idPhotoCapture';
+import S2idIntensityModal from './components/S2idIntensityModal';
 import { generateS2idDoc } from '../../utils/s2idDocTemplates';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle, color = "blue" }) => (
@@ -51,6 +52,8 @@ const S2idForm = () => {
     const [formData, setFormData] = useState(INITIAL_S2ID_STATE);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showDocs, setShowDocs] = useState(false);
+    const [showIntensity, setShowIntensity] = useState(false);
     const [openSections, setOpenSections] = useState({
         tipificacao: true,
         danos_humanos: false,
@@ -61,7 +64,8 @@ const S2idForm = () => {
         setorial: true,
         documentos: false,
         evidencias: false,
-        assinatura: false
+        assinatura: false,
+        metadata_oficial: false
     });
     const [showCamera, setShowCamera] = useState(false);
     const [showSignature, setShowSignature] = useState(false);
@@ -184,7 +188,8 @@ const S2idForm = () => {
             prejuizos_privados: false,
             setorial: true, // Only for their own sector (handled in rendering)
             evidencias: true,
-            assinatura: true
+            assinatura: true,
+            metadata_oficial: false // Only DC can edit
         };
 
         return permissions[section] || false;
@@ -902,6 +907,37 @@ const S2idForm = () => {
                     </>
                 )}
 
+                {/* METADADOS OFICIAIS (Only for Admin/Defesa Civil) */}
+                {(!activeSector || ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) && (
+                    <>
+                        <SectionHeader
+                            icon={FileText}
+                            title="Metadados Oficiais"
+                            isOpen={openSections.metadata_oficial}
+                            onToggle={() => toggleSection('metadata_oficial')}
+                            color="slate"
+                        />
+                        {openSections.metadata_oficial && (
+                            <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                <div className="p-4 bg-slate-900 rounded-2xl flex items-center justify-between gap-4 mb-4">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Intensidade (Portaria 260)</p>
+                                        <h4 className="text-xl font-black text-white italic">
+                                            {formData.data.metadata_oficial.intensidade || 'NÃO DEFINIDA'}
+                                        </h4>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowIntensity(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-colors"
+                                    >
+                                        Calcular
+                                    </button>
+                                </div>
+                                {/* Other metadata fields can go here */}
+                            </div>
+                        )}
+                    </>
+                )}
 
 
                 {/* EVIDÊNCIAS FOTOGRÁFICAS */}
@@ -1070,6 +1106,28 @@ const S2idForm = () => {
                             toast.success('Sucesso', 'Assinatura registrada.');
                         }}
                         onCancel={() => setShowSignature(false)}
+                    />
+                )
+            }
+            {
+                showIntensity && (
+                    <S2idIntensityModal
+                        isOpen={showIntensity}
+                        onClose={() => setShowIntensity(false)}
+                        formData={formData}
+                        onSave={(intensityData) => {
+                            setFormData(prev => ({
+                                ...prev,
+                                data: {
+                                    ...prev.data,
+                                    metadata_oficial: {
+                                        ...prev.data.metadata_oficial,
+                                        ...intensityData
+                                    }
+                                }
+                            }));
+                            toast.success('Sucesso', 'Intensidade e RCL atualizados no registro.');
+                        }}
                     />
                 )
             }

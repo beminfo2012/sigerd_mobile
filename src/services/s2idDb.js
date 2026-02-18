@@ -113,7 +113,11 @@ export const INITIAL_S2ID_STATE = {
             reconhecimento_reconsideracao: false,
             processo_anterior_numero: '',
             beneficios_pretendidos: '',
-            parecer_numero: ''
+            parecer_numero: '',
+            // Campos para Portaria 260/2022
+            rcl_anual: 0,
+            intensidade: '', // Nível I, II ou III
+            capacidade_resposta: '' // Local, Local+Estadual, etc
         },
         assinatura: { // Assinatura Global (Defesa Civil)
             responsavel: '',
