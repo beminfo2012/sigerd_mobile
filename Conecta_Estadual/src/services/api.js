@@ -74,9 +74,23 @@ const transformS2idRecord = (record) => {
     else if (desabrigados > 50 || afetados > 5000) gravidade = 'Alta';
     else if (desabrigados > 10 || afetados > 1000) gravidade = 'Média';
 
+    const plano = meta.plano_contingencia || false;
+    const decreto = !!meta.decreto_numero;
+    const apoio = meta.necessita_apoio || false;
+
+    // Visibility criteria for the State
+    const visivel_estado = (
+        gravidade === 'Alta' ||
+        gravidade === 'Crítica' ||
+        plano ||
+        apoio ||
+        decreto
+    );
+
     return {
         id: record.s2id_id || record.id,
         id_local: record.id_local,
+        tipo_registro: record.tipo_registro || 's2id',
         municipio: meta.nome_municipio || 'Santa Maria de Jetibá',
         tipo: d.tipificacao?.denominacao || d.tipificacao?.cobrade || 'Não classificado',
         cobrade: d.tipificacao?.cobrade || '',
@@ -85,6 +99,7 @@ const transformS2idRecord = (record) => {
         gravidade,
         data_evento: formatDate(d.data_ocorrencia),
         status: record.status || 'draft',
+        visivel_estado,
         synced: record.synced,
         created_at: record.created_at,
         updated_at: record.updated_at,

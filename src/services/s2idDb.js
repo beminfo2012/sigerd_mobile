@@ -9,6 +9,8 @@ import { supabase } from './supabase'
 // Initial state for a new S2id record
 export const INITIAL_S2ID_STATE = {
     status: 'draft',
+    tipo_registro: 's2id', // 's2id' ou 'ocorrencia'
+    id_ocorrencia: null, // ID amigável/sequencial se necessário
     s2id_id: null, // Global UUID for sync
     synced: false,
     created_at: new Date().toISOString(),

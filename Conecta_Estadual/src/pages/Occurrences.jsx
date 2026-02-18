@@ -28,10 +28,12 @@ const Occurrences = () => {
         }
     };
 
-    const filtered = data.filter(item =>
-        (item.municipio || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.tipo || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = data
+        .filter(item => item.tipo_registro === 'ocorrencia')
+        .filter(item =>
+            (item.municipio || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.tipo || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     return (
         <div className="space-y-6 anim-fade">
@@ -118,7 +120,7 @@ const Occurrences = () => {
                                             </td>
                                             <td className="text-center">
                                                 <span className={`pill ${row.status === 'draft' ? 'pill-warning' :
-                                                        row.status === 'synced' ? 'pill-success' : 'pill-info'
+                                                    row.status === 'synced' ? 'pill-success' : 'pill-info'
                                                     }`}>
                                                     {row.status === 'draft' ? 'RASCUNHO' : row.status?.toUpperCase()}
                                                 </span>

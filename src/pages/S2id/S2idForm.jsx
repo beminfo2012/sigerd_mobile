@@ -104,6 +104,7 @@ const S2idForm = () => {
                 // Deep merge setorial data to ensure new fields (values) appear
                 const mergedRecord = {
                     ...record,
+                    tipo_registro: record.tipo_registro || 's2id', // Ensure tipo_registro is 's2id'
                     data: {
                         ...record.data,
                         setorial: {

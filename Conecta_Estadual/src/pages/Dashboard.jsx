@@ -82,7 +82,9 @@ const Dashboard = () => {
         { label: 'Decretos Emitidos', value: kpis?.withDecree || 0, icon: '⚠️' },
     ];
 
-    const recentOccurrences = (kpis?.occurrences || []).slice(0, 6);
+    const recentOccurrences = (kpis?.occurrences || [])
+        .filter(o => o.tipo_registro === 'ocorrencia')
+        .slice(0, 6);
 
     return (
         <div className="space-y-6 anim-fade">

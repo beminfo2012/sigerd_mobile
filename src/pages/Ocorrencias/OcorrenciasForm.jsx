@@ -116,6 +116,7 @@ const OcorrenciasForm = () => {
             const finalData = {
                 ...formData,
                 status: 'finalized',
+                tipo_registro: 'ocorrencia',
                 updated_at: new Date().toISOString()
             };
             await saveS2idLocal(finalData);
