@@ -157,7 +157,7 @@ const VistoriaPrint = () => {
             pdf.save(`Relatório_Vistoria_${vistoriaId}_${solicitante}.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
-            alert('Falha ao gerar o PDF. Por favor, use a opção "Imprimir" do navegador.');
+            alert('Falha ao gerar o PDF. Por favor, use a option "Imprimir" do navegador.');
         } finally {
             // Restore original styles
             container.style.width = originalWidth;
@@ -280,45 +280,41 @@ const VistoriaPrint = () => {
                             <div className="w-1 h-5 bg-indigo-600 rounded-full"></div>
                             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">2. Dados da Solicitação e Local</h2>
                         </div>
-                        <div className="border border-slate-200 rounded-lg overflow-hidden text-xs">
-                            <div className="grid grid-cols-3 border-b border-slate-200">
-                                <div className="p-3 border-r border-slate-200 col-span-2">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Solicitante</p>
-                                    <p className="font-bold text-slate-800 capitalize">{data.solicitante || 'Não Identificado'}</p>
-                                </div>
-                                <div className="p-3">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Telefone</p>
-                                    <p className="font-bold text-slate-800">{data.telefone || '---'}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-3 border-b border-slate-200 bg-slate-50">
-                                <div className="p-3 border-r border-slate-200 col-span-2">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Endereço da Ocorrência</p>
-                                    <p className="font-bold text-slate-800">{data.endereco || '---'}</p>
-                                </div>
-                                <div className="p-3">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Bairro</p>
-                                    <p className="font-bold text-slate-800">{data.bairro || '---'}</p>
-                                </div>
-                            </div>
-                            <div className="p-3 bg-white">
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">CPF / Documento</p>
-                                <p className="font-bold text-slate-800">{data.cpf || '---'}</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* 3. Diagnóstico e Mapeamento */}
-                    <section className="mb-8 avoid-break">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-1 h-5 bg-orange-500 rounded-full"></div>
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">3. Diagnóstico de Risco</h2>
-                        </div>
 
                         <div className="flex flex-col md:flex-row print:flex-row gap-4">
+                            {/* Request Info Grid */}
+                            <div className="w-full md:w-7/12 print:w-7/12">
+                                <div className="border border-slate-200 rounded-lg overflow-hidden text-xs h-full">
+                                    <div className="grid grid-cols-3 border-b border-slate-200">
+                                        <div className="p-3 border-r border-slate-200 col-span-2">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Solicitante</p>
+                                            <p className="font-bold text-slate-800 capitalize">{data.solicitante || 'Não Identificado'}</p>
+                                        </div>
+                                        <div className="p-3">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Telefone</p>
+                                            <p className="font-bold text-slate-800">{data.telefone || '---'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 border-b border-slate-200 bg-slate-50">
+                                        <div className="p-3 border-r border-slate-200 col-span-2">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Endereço da Ocorrência</p>
+                                            <p className="font-bold text-slate-800">{data.endereco || '---'}</p>
+                                        </div>
+                                        <div className="p-3">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Bairro</p>
+                                            <p className="font-bold text-slate-800">{data.bairro || '---'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-white">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">CPF / Documento</p>
+                                        <p className="font-bold text-slate-800">{data.cpf || '---'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Map Column */}
                             <div className="w-full md:w-5/12 print:w-5/12">
-                                <div className="border border-slate-200 rounded-xl bg-slate-100 relative overflow-hidden print-map-wrapper h-[200px] shadow-sm w-full">
+                                <div className="border border-slate-200 rounded-xl bg-slate-100 relative overflow-hidden print-map-wrapper h-[185px] shadow-sm w-full">
                                     {hasMap ? (
                                         <MapContainer
                                             center={[lat, lng]}
@@ -347,41 +343,48 @@ const VistoriaPrint = () => {
                                     </p>
                                 </div>
                             </div>
+                        </div>
+                    </section>
 
-                            {/* Details Column */}
-                            <div className="w-full md:w-7/12 print:w-7/12 flex flex-col gap-2">
-                                <div className="p-3 border border-slate-200 rounded-lg bg-orange-50">
-                                    <p className="text-[9px] font-bold text-orange-800 uppercase mb-1">Categoria do Risco</p>
-                                    <p className="font-black text-slate-800 text-sm">{data.categoriaRisco || data.categoria_risco || 'Não Classificado'}</p>
+                    {/* 3. Diagnóstico de Risco */}
+                    <section className="mb-8 avoid-break">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1 h-5 bg-orange-500 rounded-full"></div>
+                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">3. Diagnóstico de Risco</h2>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <div className="p-3 border border-slate-200 rounded-lg bg-orange-50">
+                                <p className="text-[9px] font-bold text-orange-800 uppercase mb-1">Categoria do Risco</p>
+                                <p className="font-black text-slate-800 text-sm">{data.categoriaRisco || data.categoria_risco || 'Não Classificado'}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="p-3 border border-slate-200 rounded-lg">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Nível de Risco</p>
+                                    <span className={`text-xs font-black uppercase px-2 py-0.5 rounded border ${(data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente') ? 'bg-red-100 text-red-700 border-red-200' :
+                                        data.nivelRisco === 'Médio' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                            'bg-green-100 text-green-700 border-green-200'
+                                        }`}>
+                                        {data.nivelRisco || data.nivel_risco || 'BAIXO'}
+                                    </span>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="p-3 border border-slate-200 rounded-lg">
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Nível de Risco</p>
-                                        <span className={`text-xs font-black uppercase px-2 py-0.5 rounded border ${(data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente') ? 'bg-red-100 text-red-700 border-red-200' :
-                                            data.nivelRisco === 'Médio' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
-                                                'bg-green-100 text-green-700 border-green-200'
-                                            }`}>
-                                            {data.nivelRisco || data.nivel_risco || 'BAIXO'}
-                                        </span>
-                                    </div>
-                                    <div className="p-3 border border-slate-200 rounded-lg">
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Situação</p>
-                                        <p className="font-bold text-slate-800 text-xs">{data.situacaoObservada || data.situacao_observada || '---'}</p>
-                                    </div>
+                                <div className="p-3 border border-slate-200 rounded-lg">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Situação</p>
+                                    <p className="font-bold text-slate-800 text-xs">{data.situacaoObservada || data.situacao_observada || '---'}</p>
                                 </div>
+                            </div>
 
-                                <div className="p-3 border border-slate-200 rounded-lg flex-1">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-2">Alertas e Danos Secundários</p>
-                                    <div className="flex flex-wrap gap-1">
-                                        {(data.subtiposRisco || data.subtipos_risco || []).length > 0 ? (
-                                            (data.subtiposRisco || data.subtipos_risco).map((tag, i) => (
-                                                <span key={i} className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                                                    {tag}
-                                                </span>
-                                            ))
-                                        ) : <span className="text-[10px] text-slate-400 italic">Nenhum subtipo listado.</span>}
-                                    </div>
+                            <div className="p-3 border border-slate-200 rounded-lg flex-1">
+                                <p className="text-[9px] font-bold text-slate-400 uppercase mb-2">Alertas e Danos Secundários</p>
+                                <div className="flex flex-wrap gap-1">
+                                    {(data.subtiposRisco || data.subtipos_risco || []).length > 0 ? (
+                                        (data.subtiposRisco || data.subtipos_risco).map((tag, i) => (
+                                            <span key={i} className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                                                {tag}
+                                            </span>
+                                        ))
+                                    ) : <span className="text-[10px] text-slate-400 italic">Nenhum subtipo listado.</span>}
                                 </div>
                             </div>
                         </div>
@@ -523,7 +526,6 @@ const VistoriaPrint = () => {
                             <p className="text-[8px] text-slate-300 mt-1">Generated ID: {id}</p>
                         </div>
                     </footer>
-
                 </div>
             </main>
         </div>
