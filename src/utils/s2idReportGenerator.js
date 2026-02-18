@@ -46,82 +46,79 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     const data = record.data;
 
     const container = document.createElement('div');
-    // Using position: fixed with opacity: 0 is safer for rendering than extreme off-screen offsets
-    container.style.cssText = `position: fixed; top: 0; left: 0; width: 790px; z-index: -9999; background: white; font-family: 'Inter', Arial, sans-serif; color: #1a1a1a; padding: 20px; opacity: 0; pointer-events: none;`;
+    container.style.cssText = `position: absolute; left: -9999px; top: 0; width: 800px; background: white; font-family: 'Inter', Arial, sans-serif; color: #1a1a1a; padding: 0;`;
 
-    // Global Styles for PDF Paging
+    // Global Styles for PDF
     const styleHtml = `
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-            * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
-            .report-section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 25px; }
-            table { width: 100%; border-collapse: collapse; page-break-inside: auto; border: 1px solid #e2e8f0; }
-            tr { page-break-inside: avoid; break-inside: avoid; }
-            thead { display: table-header-group; }
-            .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; page-break-inside: auto; margin-top: 15px; }
-            .photo-card { page-break-inside: avoid; break-inside: avoid; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; }
-            .signature-block { page-break-inside: avoid; break-inside: avoid; margin-top: 40px; }
+            * { box-sizing: border-box; }
+            .pdf-page-container { width: 800px; background: white; padding: 40px; }
+            .report-section { margin-bottom: 25px; clear: both; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; border: 1px solid #e2e8f0; table-layout: fixed; }
+            th, td { border: 1px solid #e2e8f0; padding: 8px; overflow-wrap: break-word; }
+            thead { background: #f1f5f9; }
+            .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+            .photo-card { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; }
+            .signature-block { margin-top: 40px; }
             img { max-width: 100%; height: auto; display: block; }
         </style>
     `;
 
+    // Header remains the same...
     const headerHtml = `
-        <div style="background-color: #ffffff; border-bottom: 4px solid #1e3a8a; padding: 25px 20px 15px 20px; margin-bottom: 20px;">
+        <div style="border-bottom: 4px solid #1e3a8a; padding-bottom: 15px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <div style="width: 100px;"><img src="${logoDefesaCivilStr}" style="height: 70px; object-fit: contain;" /></div>
                 <div style="flex: 1; text-align: center; padding: 0 10px;">
-                    <h1 style="margin: 0; font-size: 18px; color: #000000; text-transform: uppercase; font-weight: 800; line-height: 1.2;">SISTEMA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</h1>
+                    <h1 style="margin: 0; font-size: 18px; text-transform: uppercase; font-weight: 800;">SISTEMA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</h1>
                     <h2 style="margin: 5px 0 0 0; font-size: 12px; color: #1e3a8a; font-weight: 700; text-transform: uppercase;">
                         ${isSectoral ? `LEVANTAMENTO SETORIAL: ${sectorName}` : 'FORMULÁRIO DE INFORMAÇÕES DO DESASTRE (FIDE)'}
                     </h2>
-                    <p style="margin: 3px 0 0 0; font-size: 9px; color: #64748b; font-weight: 600;">PORTARIA MDR Nº 2.601, DE 14 DE DEZEMBRO DE 2020</p>
                 </div>
                 <div style="width: 100px; text-align: right;"><img src="${logoSigerdStr}" style="height: 70px; object-fit: contain;" /></div>
             </div>
-            <div style="display: flex; justify-content: center; gap: 30px; margin-top: 5px;">
-                <div style="text-align: center;"><span style="font-size: 8px; color: #64748b; font-weight: 800; text-transform: uppercase;">Estado</span><br/><span style="font-size: 10px; font-weight: 700;">ESPIRITO SANTO</span></div>
-                <div style="text-align: center;"><span style="font-size: 8px; color: #64748b; font-weight: 800; text-transform: uppercase;">Município</span><br/><span style="font-size: 10px; font-weight: 700;">SANTA MARIA DE JETIBÁ</span></div>
+            <div style="display: flex; justify-content: center; gap: 30px; font-size: 10px; font-weight: 700;">
+                <div>Estado: ESPIRITO SANTO</div>
+                <div>Município: SANTA MARIA DE JETIBÁ</div>
             </div>
         </div>
     `;
 
     const sectionTitle = (num, title) => `
-        <div style="background-color: #f1f5f9; padding: 8px 12px; margin: 20px 0 10px 0; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+        <div style="background-color: #f1f5f9; padding: 8px 12px; margin: 20px 0 10px 0; border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; gap: 8px;">
             <div style="background: #1e3a8a; color: white; width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px;">${num}</div>
             <div style="font-weight: 800; color: #1e3a8a; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">${title}</div>
         </div>
     `;
 
     const renderTable = (headers, rows, widths) => `
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; border: 1px solid #e2e8f0;">
+        <table>
             <thead>
-                <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
-                    ${headers.map((h, i) => `<th style="padding: 8px; text-align: ${i === 0 ? 'left' : 'center'}; color: #1e3a8a; font-weight: 800; text-transform: uppercase; font-size: 8px; width: ${widths[i]}; border: 1px solid #e2e8f0;">${h}</th>`).join('')}
+                <tr>
+                    ${headers.map((h, i) => `<th style="width: ${widths[i]}; text-align: ${i === 0 ? 'left' : 'center'}; color: #1e3a8a; font-weight: 800; text-transform: uppercase; font-size: 8px;">${h}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
                 ${rows.map((row, idx) => `
-                    <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; border-bottom: 1px solid #e2e8f0;">
-                        ${row.map((cell, i) => `<td style="padding: 8px; text-align: ${i === 0 ? 'left' : 'center'}; font-weight: ${i === 0 ? '700' : '600'}; color: #334155; border: 1px solid #e2e8f0;">${cell}</td>`).join('')}
+                    <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                        ${row.map((cell, i) => `<td style="text-align: ${i === 0 ? 'left' : 'center'}; font-weight: ${i === 0 ? '700' : '600'}; color: #334155;">${cell}</td>`).join('')}
                     </tr>
                 `).join('')}
             </tbody>
         </table>
     `;
 
-    let contentHtml = `<div style="padding: 0 20px 20px 20px;">`;
+    // Reconstruct content with section markers
+    let contentHtml = `<div class="pdf-page-container">`;
+    contentHtml += headerHtml;
 
-    // 2. INTRODUÇÃO
+    // Introduction
     contentHtml += `<div class="report-section">${sectionTitle('2', 'Introdução')}`;
     const introText = isSectoral ? (data.setorial[activeSector].introducao || '') : '';
-    contentHtml += `
-            <div style="background: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10px; line-height: 1.6; color: #334155;">
-                ${introText || 'O presente relatório detalha os danos e prejuízos identificados em decorrência do evento adverso registrado.'}
-            </div>
-        </div>
-    `;
+    contentHtml += `<div style="background: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10px; line-height: 1.6; color: #334155;">${introText || 'O presente relatório detalha os danos e prejuízos identificados em decorrência do evento adverso registrado.'}</div></div>`;
 
-    // 3. DANOS (ESTIMATIVAS)
+    // Danos
     const danoPrefix = isSectoral ? '3' : '6';
     contentHtml += `<div class="report-section">${sectionTitle(danoPrefix, `Danos no Setor: ${isSectoral ? sectorName : 'Geral'}`)}`;
 
@@ -159,6 +156,7 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     // 3.2 Danos à Infraestrutura / Materiais / Levantamento Detalhado
     contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 25px 0 8px 0;">${danoPrefix}.2 Levantamento de Danos e Necessidades</div>`;
 
+    let infraRows = [];
     if (isSectoral) {
         const sData = data.setorial[activeSector];
         let specificRows = [];
@@ -226,13 +224,12 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
         }
 
         if (specificRows.length > 0) {
-            contentHtml += renderTable(['Discriminação / Item', 'Qtd. Danificada / Valor', 'Qtd. Destruída', 'Estimativa (R$)'], specificRows, ['40%', '20%', '20%', '20%']);
+            infraRows = specificRows;
         } else {
             contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic;">Não há registros de danos específicos.</p>`;
         }
     } else {
         // Consolidado
-        let infraRows = [];
 
         // 1. Danos Materiais Globais (FIDE Padrão)
         Object.keys(data.danos_materiais).forEach(key => {
@@ -321,11 +318,12 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
 
         }
 
-        if (infraRows.length > 0) {
-            contentHtml += renderTable(['Discriminação / Item Setorial', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor Estimado (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
-        } else {
+        if (infraRows.length === 0) {
             contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic;">Não há danos consolidados.</p>`;
         }
+    }
+    if (infraRows.length > 0) {
+        contentHtml += renderTable(['Discriminação / Item Setorial', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor Estimado (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
     }
     contentHtml += `</div>`; // Close Section 3
 
@@ -387,10 +385,10 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
 
     // 6. RELATÓRIO FOTOGRÁFICO (Apenas para Relatórios Setoriais)
     if (isSectoral) {
-        contentHtml += `<div class="report-section">${sectionTitle('6', 'Relatório Fotográfico')}`;
         const photosToRender = data.evidencias.filter(p => p.sector === activeSector);
 
         if (photosToRender.length > 0) {
+            contentHtml += `<div class="report-section">${sectionTitle('6', 'Relatório Fotográfico')}`;
             contentHtml += `<div class="photo-grid">`;
             for (const photo of photosToRender) {
                 contentHtml += `
@@ -403,11 +401,8 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                     </div>
                 `;
             }
-            contentHtml += `</div>`;
-        } else {
-            contentHtml += `<p style="text-align: center; color: #94a3b8; font-style: italic; font-size: 10px;">Nenhuma evidência anexada.</p>`;
+            contentHtml += `</div></div>`;
         }
-        contentHtml += `</div>`;
     }
 
     // Footer / Signature (Sectoral vs Global)
@@ -417,7 +412,7 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     const finalRole = isSectoral ? sectorSub?.cargo : 'Agente Municipal de Defesa Civil';
 
     contentHtml += `
-        <div class="signature-block">
+        <div class="report-section signature-block">
             <div style="text-align: center; padding: 25px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                 <div style="width: 250px; margin: 0 auto; border-bottom: 2px solid #1e3a8a; height: 60px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 15px;">
                     ${finalSignature ? `<img src="${finalSignature}" style="max-height: 55px; width: auto;" />` : ''}
@@ -430,64 +425,102 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
         </div>
     `;
 
-    contentHtml += `</div>`;
-    container.innerHTML = `<div id="pdf-content">${styleHtml}${headerHtml}${contentHtml}</div>`;
+    contentHtml += `</div>`; // Close page container
+
+    container.innerHTML = styleHtml + contentHtml;
     document.body.appendChild(container);
 
     try {
-        // Wait for fonts and images to potentially load
+        // Wait for all images/fonts to settle
         await new Promise(r => setTimeout(r, 2000));
 
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'mm',
-            format: 'a4',
-            compress: true,
-            putOnlyUsedFonts: true
+        const canvas = await html2canvas(container, {
+            scale: 2, // High resolution
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            windowWidth: 800,
+            logging: false
         });
 
-        await pdf.html(container, {
-            callback: function (doc) {
-                const totalPages = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    doc.setPage(i);
-                    doc.setFontSize(8);
-                    doc.setTextColor(150);
-                    doc.text(`Página ${i} de ${totalPages}`, doc.internal.pageSize.getWidth() - 30, doc.internal.pageSize.getHeight() - 10);
-                }
-                const blob = doc.output('blob');
-                const file = new File([blob], filename, { type: 'application/pdf' });
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
 
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    navigator.share({ files: [file], title: 'Relatório S2ID FIDE' }).catch(() => {
-                        const url = URL.createObjectURL(blob);
-                        window.open(url) || (location.href = url);
-                    });
-                } else {
-                    const url = URL.createObjectURL(blob);
-                    window.open(url) || (location.href = url);
+        // Convert to mm for PDF positioning
+        const pxToMm = pdfWidth / 800;
+        const pageHeightPx = pdfHeight / pxToMm;
+
+        // Find safe cut points (tops of sections)
+        const sections = container.querySelectorAll('.report-section');
+        const sectionTops = Array.from(sections).map(s => s.offsetTop);
+
+        let currentTopPx = 0;
+        const totalHeightPx = container.offsetHeight;
+        let pageNum = 1;
+
+        while (currentTopPx < totalHeightPx) {
+            let cutPointPx = currentTopPx + pageHeightPx;
+
+            // If not the last page, look for a safe boundary
+            if (cutPointPx < totalHeightPx) {
+                // Find the latest section start that fits in this page
+                // We want a boundary that is at least 60% down the page to avoid tiny pages
+                const minPageFill = pageHeightPx * 0.6;
+                const safeBoundary = sectionTops.filter(top =>
+                    top > (currentTopPx + minPageFill) &&
+                    top < cutPointPx
+                ).pop();
+
+                if (safeBoundary) {
+                    cutPointPx = safeBoundary;
                 }
-            },
-            x: 10,
-            y: 10,
-            width: 190,
-            windowWidth: 790,
-            autoPaging: 'text',
-            margin: [10, 10, 15, 10],
-            html2canvas: {
-                useCORS: true,
-                scale: 1, // High scale can cause memory issues/blank pages on mobile
-                backgroundColor: '#ffffff',
-                letterRendering: true,
-                allowTaint: false,
-                ignoreElements: (element) => element.classList.contains('no-pdf')
+            } else {
+                cutPointPx = totalHeightPx;
             }
-        });
+
+            const sliceHeightPx = cutPointPx - currentTopPx;
+            const sliceHeightMm = sliceHeightPx * pxToMm;
+
+            // Extract slice from master canvas
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = (sliceHeightPx / totalHeightPx) * canvas.height;
+            const ctx = sliceCanvas.getContext('2d');
+
+            ctx.drawImage(
+                canvas,
+                0, (currentTopPx / totalHeightPx) * canvas.height, canvas.width, (sliceHeightPx / totalHeightPx) * canvas.height,
+                0, 0, sliceCanvas.width, sliceCanvas.height
+            );
+
+            if (pageNum > 1) pdf.addPage();
+            pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfWidth, sliceHeightMm);
+
+            // Add page numbering
+            pdf.setFontSize(8);
+            pdf.setTextColor(150);
+            pdf.text(`Página ${pageNum}`, pdfWidth - 25, pdfHeight - 10);
+
+            currentTopPx = cutPointPx;
+            pageNum++;
+        }
+
+        const blob = pdf.output('blob');
+        const file = new File([blob], filename, { type: 'application/pdf' });
+
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Relatório S2ID FIDE' }).catch(() => {
+                const url = URL.createObjectURL(blob);
+                window.open(url) || (location.href = url);
+            });
+        } else {
+            const url = URL.createObjectURL(blob);
+            window.open(url) || (location.href = url);
+        }
     } catch (e) {
         console.error('Erro na geração do PDF:', e);
-        alert('Erro ao gerar PDF inteligente. Tente novamente.');
+        alert('Erro ao gerar relatório. Tente novamente.');
     } finally {
-        // Only remove if it was successfully added
         if (container.parentNode) {
             document.body.removeChild(container);
         }
