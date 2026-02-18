@@ -224,7 +224,7 @@ export const getPendingSyncCount = async () => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 's2id_records'];
     let syncedCount = 0
 
     for (const storeName of stores) {
@@ -424,6 +424,12 @@ const syncSingleItem = async (storeName, item, db) => {
                 assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
                 apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
+        } else if (storeName === 's2id_records') {
+            const { id, synced, id_local, supabase_id, ...recordPayload } = item;
+            payload = {
+                ...recordPayload,
+                id_local: item.id
+            };
         } else {
             // Generic payload for shelter module tables (they already match Supabase schema)
             payload = { ...item };
@@ -456,7 +462,8 @@ const syncSingleItem = async (storeName, item, db) => {
                             storeName === 'donations' ? 'donation_id' :
                                 storeName === 'inventory' ? 'inventory_id' :
                                     storeName === 'distributions' ? 'distribution_id' :
-                                        undefined
+                                        storeName === 's2id_records' ? 'id_local' :
+                                            undefined
         }).select()
 
         if (error) {
@@ -488,13 +495,87 @@ const syncSingleItem = async (storeName, item, db) => {
             await store.put(record)
         }
         await tx.done
-        console.log(`[Sync] Successfully synced ${storeName} item: ${officialId || item.id}`);
+        console.log(`[Sync] Successfully synced ${storeName} item: ${item.id}`);
         return true
     } catch (e) {
         console.error(`[Sync] Critical failure for ${storeName}:`, e)
         return false
     }
 }
+
+/**
+ * Pull All Data from Supabase to Local DB
+ * Essential for recovering data after cache clears.
+ */
+export const pullAllData = async () => {
+    if (!navigator.onLine) return { success: false, reason: 'offline' };
+
+    const db = await initDB();
+    const modules = [
+        { table: 'vistorias', store: 'vistorias', key: 'vistoria_id' },
+        { table: 'interdicoes', store: 'interdicoes', key: 'interdicao_id' },
+        { table: 's2id_records', store: 's2id_records', key: 'id_local' },
+        { table: 'shelters', store: 'shelters', key: 'shelter_id' },
+        { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
+        { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
+        { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
+        { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' }
+    ];
+
+    let totalPulled = 0;
+
+    for (const mod of modules) {
+        try {
+            console.log(`[Pull] Fetching ${mod.table}...`);
+            const { data, error } = await supabase.from(mod.table).select('*');
+
+            if (error) {
+                console.error(`[Pull] Error fetching ${mod.table}:`, error);
+                continue;
+            }
+
+            if (data && data.length > 0) {
+                const tx = db.transaction(mod.store, 'readwrite');
+                const store = tx.objectStore(mod.store);
+
+                for (const item of data) {
+                    // Check if item exists locally
+                    const existing = await store.getAll();
+                    const localMatch = existing.find(l =>
+                        (l.id === item.id_local) ||
+                        (mod.key && l[mod.key] === item[mod.key]) ||
+                        (l.supabase_id === item.id)
+                    );
+
+                    // Skip pull if local has unsynced changes
+                    if (localMatch && localMatch.synced === false) {
+                        continue;
+                    }
+
+                    // Map remote item to local format
+                    const toStore = {
+                        ...item,
+                        id: localMatch ? localMatch.id : undefined,
+                        supabase_id: item.id,
+                        synced: true
+                    };
+
+                    // Cleanup redundant fields if necessary
+                    if (mod.store === 's2id_records') delete toStore.id_local;
+
+                    await store.put(toStore);
+                    totalPulled++;
+                }
+                await tx.done;
+            }
+        } catch (e) {
+            console.error(`[Pull] Critical error in module ${mod.table}:`, e);
+        }
+    }
+
+    console.log(`[Pull] Total items restored: ${totalPulled}`);
+    return { success: true, count: totalPulled };
+};
 
 // Global sync trigger for immediate use (with Debounce to prevent overload)
 let syncTimeout = null;

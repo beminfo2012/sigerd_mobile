@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { syncPendingData, getPendingSyncCount } from '../services/db.js'
+import { syncPendingData, getPendingSyncCount, pullAllData } from '../services/db.js'
 import { supabase } from '../services/supabase'
 import { notificationService } from '../services/notificationService'
 
@@ -9,14 +9,20 @@ const SyncBackground = () => {
             if (!navigator.onLine) return
 
             try {
+                // 1. First, pull everything from Cloud to ensure local DB is fresh
+                // This is crucial for recovering after cache clears
+                console.log('[SyncBackground] Refreshing local database from cloud...')
+                await pullAllData()
+
+                // 2. Then, sync any pending local changes
                 const pendingCount = await getPendingSyncCount()
                 if (pendingCount.total > 0) {
-                    console.log(`[SyncBackground] Starting auto-sync for ${pendingCount} items...`)
+                    console.log(`[SyncBackground] Starting auto-sync for ${pendingCount.total} items...`)
                     const result = await syncPendingData()
                     if (result.success && result.count > 0) {
                         console.log(`[SyncBackground] Auto-sync complete: ${result.count} items synced.`)
 
-                        // [FIX] Force refresh the remote cache to ensure IDs stay in sync
+                        // [FIX] Force refresh the remote cache for vistorias
                         const { data: freshData, error: fetchErr } = await supabase
                             .from('vistorias')
                             .select('*')
@@ -27,7 +33,7 @@ const SyncBackground = () => {
                             await saveRemoteVistoriasCache(freshData).catch(() => { });
                         }
 
-                        // Dispatch custom event to notify components (like Dashboard) to refresh
+                        // Dispatch custom event to notify components
                         window.dispatchEvent(new CustomEvent('sync-complete', {
                             detail: { count: result.count }
                         }))
