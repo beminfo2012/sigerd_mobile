@@ -93,77 +93,99 @@ const VistoriaPrint = () => {
         const container = document.querySelector('.print-container');
         if (!container) return;
 
-        // Force scale(1) and fixed width for stable measurement
-        const originalWidth = container.style.width;
-        const originalTransform = container.style.transform;
-        const originalTransformOrigin = container.style.transformOrigin;
-
-        container.style.width = '210mm';
-        container.style.transform = 'none';
-        container.style.transformOrigin = 'unset';
-
-        window.dispatchEvent(new Event('trigger-map-print-resize'));
-
+        // Visual feedback
         const toast = document.createElement('div');
         toast.innerHTML = `
             <div style="position: fixed; top: 80px; right: 20px; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
                 <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                Gerando PDF Compacto...
+                Gerando PDF Inteligente...
             </div>
             <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
         `;
         document.body.appendChild(toast);
 
+        // Standardize container for capture
+        const originalStyle = container.style.cssText;
+        container.style.cssText = "width: 800px; background: white; padding: 40px; position: absolute; left: -9999px; top: 0;";
+        window.dispatchEvent(new Event('trigger-map-print-resize'));
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             const canvas = await html2canvas(container, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                windowWidth: 800
             });
 
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
 
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
+            const pxToMm = pdfWidth / 800; // 800px logic from S2ID
+            const pageHeightPx = pdfHeight / pxToMm;
 
-            // Calculate height in mm to fit width exactly
-            const ratio = pageWidth / imgWidth;
-            const finalHeight = imgHeight * ratio;
+            const sections = container.querySelectorAll('.report-section');
+            const sectionTops = Array.from(sections).map(s => s.offsetTop);
 
-            let heightLeft = finalHeight;
-            let position = 0;
+            let currentTopPx = 0;
+            const totalHeightPx = container.offsetHeight;
+            let pageNum = 1;
 
-            // Page 1
-            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-            heightLeft -= pageHeight;
+            while (currentTopPx < totalHeightPx) {
+                let cutPointPx = currentTopPx + pageHeightPx;
 
-            // Additional pages
-            while (heightLeft > 0) {
-                position -= pageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-                heightLeft -= pageHeight;
+                if (cutPointPx < totalHeightPx) {
+                    const minPageFill = pageHeightPx * 0.6;
+                    const safeBoundary = sectionTops.filter(top =>
+                        top > (currentTopPx + minPageFill) &&
+                        top < cutPointPx
+                    ).pop();
+
+                    if (safeBoundary) {
+                        cutPointPx = safeBoundary;
+                    }
+                } else {
+                    cutPointPx = totalHeightPx;
+                }
+
+                const sliceHeightPx = cutPointPx - currentTopPx;
+                const sliceHeightMm = sliceHeightPx * pxToMm;
+
+                const sliceCanvas = document.createElement('canvas');
+                sliceCanvas.width = canvas.width;
+                sliceCanvas.height = (sliceHeightPx / totalHeightPx) * canvas.height;
+                const ctx = sliceCanvas.getContext('2d');
+
+                ctx.drawImage(
+                    canvas,
+                    0, (currentTopPx / totalHeightPx) * canvas.height, canvas.width, (sliceHeightPx / totalHeightPx) * canvas.height,
+                    0, 0, sliceCanvas.width, sliceCanvas.height
+                );
+
+                if (pageNum > 1) pdf.addPage();
+                pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfWidth, sliceHeightMm);
+
+                // Footer
+                pdf.setFontSize(8);
+                pdf.setTextColor(150);
+                pdf.text(`Página ${pageNum}`, pdfWidth - 25, pdfHeight - 10);
+
+                currentTopPx = cutPointPx;
+                pageNum++;
             }
 
-            // Generated filename: ID + Solicitante
-            const vistoriaId = (data.vistoriaId || data.vistoria_id || id).toString().replace(/\//g, '-');
+            const vistoriaIdStr = (data.vistoriaId || data.vistoria_id || id).toString().replace(/\//g, '-');
             const solicitante = (data.solicitante || 'Sem_Nome').toString().replace(/\s+/g, '_').substring(0, 30);
-            pdf.save(`Relatório_Vistoria_${vistoriaId}_${solicitante}.pdf`);
+            pdf.save(`Relatório_Vistoria_${vistoriaIdStr}_${solicitante}.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
-            alert('Falha ao gerar o PDF. Por favor, use a opção "Imprimir" do navegador.');
+            alert('Falha ao gerar o PDF inteligente.');
         } finally {
-            // Restore original styles
-            container.style.width = originalWidth;
-            container.style.transform = originalTransform;
-            container.style.transformOrigin = originalTransformOrigin;
-            document.body.removeChild(toast);
+            container.style.cssText = originalStyle;
+            if (document.body.contains(toast)) document.body.removeChild(toast);
         }
     };
 
@@ -231,7 +253,7 @@ const VistoriaPrint = () => {
                 <div className="w-[210mm] bg-white print:shadow-none shadow-2xl min-h-[297mm] p-10 md:p-14 print:p-0 mb-10 print:mb-0 relative print-container">
 
                     {/* Header - Official Defesa Civil Style */}
-                    <header className="flex flex-col items-center mb-10 border-b-4 border-[#2a5299] pb-6">
+                    <header className="report-section flex flex-col items-center mb-10 border-b-4 border-[#2a5299] pb-6">
                         <div className="w-full flex justify-between items-center mb-6 px-4">
                             <div className="w-[100px] flex items-center justify-center">
                                 <img src={LOGO_DEFESA_CIVIL} alt="Defesa Civil" className="h-[85px] w-auto object-contain" />
@@ -253,7 +275,7 @@ const VistoriaPrint = () => {
                     </header>
 
                     {/* 1. Identificação do Responsável */}
-                    <section className="mb-8 avoid-break">
+                    <section className="report-section mb-8 avoid-break">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-1 h-5 bg-blue-600 rounded-full"></div>
                             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">1. Identificação do Responsável</h2>
@@ -275,7 +297,7 @@ const VistoriaPrint = () => {
                     </section>
 
                     {/* 2. Dados da Solicitação e Local */}
-                    <section className="mb-8 avoid-break">
+                    <section className="report-section mb-8 avoid-break">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-1 h-5 bg-indigo-600 rounded-full"></div>
                             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">2. Dados da Solicitação e Local</h2>
@@ -309,7 +331,7 @@ const VistoriaPrint = () => {
                     </section>
 
                     {/* 3. Diagnóstico e Mapeamento */}
-                    <section className="mb-8 avoid-break">
+                    <section className="report-section mb-8 avoid-break">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-1 h-5 bg-orange-500 rounded-full"></div>
                             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">3. Diagnóstico de Risco</h2>
@@ -388,7 +410,7 @@ const VistoriaPrint = () => {
                     </section>
 
                     {/* 4. Relatório Técnico */}
-                    <section className="mb-8 avoid-break">
+                    <section className="report-section mb-8 avoid-break">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-1 h-5 bg-slate-600 rounded-full"></div>
                             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Relatório Técnico Circunstanciado</h2>
@@ -399,7 +421,7 @@ const VistoriaPrint = () => {
                     </section>
 
                     {/* 5. Medidas e Encaminhamentos */}
-                    <section className="mb-8 avoid-break">
+                    <section className="report-section mb-8 avoid-break">
                         <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
@@ -436,7 +458,7 @@ const VistoriaPrint = () => {
 
                     {/* 7. Checklist (Optional) */}
                     {checklistItems.length > 0 && (
-                        <section className="mb-8 avoid-break">
+                        <section className="report-section mb-8 avoid-break">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="w-1 h-5 bg-teal-600 rounded-full"></div>
                                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">7. Checklist Técnico</h2>
@@ -458,7 +480,7 @@ const VistoriaPrint = () => {
 
                     {/* 8. Relatório Fotográfico */}
                     {photos.length > 0 && (
-                        <section className="mb-10">
+                        <section className="report-section mb-10">
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="w-1 h-5 bg-pink-500 rounded-full"></div>
                                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">8. Relatório Fotográfico</h2>
@@ -487,7 +509,7 @@ const VistoriaPrint = () => {
                     )}
 
                     {/* Footer / Signatures */}
-                    <footer className="mt-auto pt-10 border-t-2 border-dashed border-slate-200 break-inside-avoid w-full flex flex-col items-center avoid-break bg-slate-50/30 rounded-xl p-8">
+                    <footer className="report-section mt-auto pt-10 border-t-2 border-dashed border-slate-200 break-inside-avoid w-full flex flex-col items-center avoid-break bg-slate-50/30 rounded-xl p-8">
                         <div className="flex justify-center gap-20 w-full mb-8">
                             {/* Agente Signature */}
                             <div className="flex flex-col items-center text-center px-4">
