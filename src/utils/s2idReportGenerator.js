@@ -46,7 +46,8 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     const data = record.data;
 
     const container = document.createElement('div');
-    container.style.cssText = `position: absolute; left: -9999px; top: 0; width: 790px; background: white; font-family: 'Inter', Arial, sans-serif; color: #1a1a1a; padding: 20px;`;
+    // Using position: fixed with opacity: 0 is safer for rendering than extreme off-screen offsets
+    container.style.cssText = `position: fixed; top: 0; left: 0; width: 790px; z-index: -9999; background: white; font-family: 'Inter', Arial, sans-serif; color: #1a1a1a; padding: 20px; opacity: 0; pointer-events: none;`;
 
     // Global Styles for PDF Paging
     const styleHtml = `
@@ -54,12 +55,13 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
             * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
             .report-section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 25px; }
-            table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+            table { width: 100%; border-collapse: collapse; page-break-inside: auto; border: 1px solid #e2e8f0; }
             tr { page-break-inside: avoid; break-inside: avoid; }
             thead { display: table-header-group; }
-            .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; page-break-inside: auto; }
-            .photo-card { page-break-inside: avoid; break-inside: avoid; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+            .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; page-break-inside: auto; margin-top: 15px; }
+            .photo-card { page-break-inside: avoid; break-inside: avoid; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; }
             .signature-block { page-break-inside: avoid; break-inside: avoid; margin-top: 40px; }
+            img { max-width: 100%; height: auto; display: block; }
         </style>
     `;
 
@@ -433,39 +435,61 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     document.body.appendChild(container);
 
     try {
-        await new Promise(r => setTimeout(r, 1000));
-        const pdf = new jsPDF('p', 'mm', 'a4', true);
+        // Wait for fonts and images to potentially load
+        await new Promise(r => setTimeout(r, 2000));
+
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4',
+            compress: true,
+            putOnlyUsedFonts: true
+        });
 
         await pdf.html(container, {
-            callback: function (pdf) {
-                const totalPages = pdf.internal.getNumberOfPages();
+            callback: function (doc) {
+                const totalPages = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
-                    pdf.setFontSize(8);
-                    pdf.setTextColor(150);
-                    pdf.text(`Página ${i} de ${totalPages}`, pdf.internal.pageSize.getWidth() - 30, pdf.internal.pageSize.getHeight() - 10);
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text(`Página ${i} de ${totalPages}`, doc.internal.pageSize.getWidth() - 30, doc.internal.pageSize.getHeight() - 10);
                 }
-                const blob = pdf.output('blob');
+                const blob = doc.output('blob');
                 const file = new File([blob], filename, { type: 'application/pdf' });
 
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    navigator.share({ files: [file], title: 'Relatório S2ID FIDE' });
+                    navigator.share({ files: [file], title: 'Relatório S2ID FIDE' }).catch(() => {
+                        const url = URL.createObjectURL(blob);
+                        window.open(url) || (location.href = url);
+                    });
                 } else {
                     const url = URL.createObjectURL(blob);
                     window.open(url) || (location.href = url);
                 }
             },
-            x: 0,
-            y: 0,
-            width: 190, // target width in mm
-            windowWidth: 790, // match container width
+            x: 10,
+            y: 10,
+            width: 190,
+            windowWidth: 790,
             autoPaging: 'text',
-            margin: [10, 10, 15, 10] // [top, left, bottom, right]
+            margin: [10, 10, 15, 10],
+            html2canvas: {
+                useCORS: true,
+                scale: 1, // High scale can cause memory issues/blank pages on mobile
+                backgroundColor: '#ffffff',
+                letterRendering: true,
+                allowTaint: false,
+                ignoreElements: (element) => element.classList.contains('no-pdf')
+            }
         });
     } catch (e) {
-        console.error(e);
-        alert('Erro ao gerar PDF inteligente');
+        console.error('Erro na geração do PDF:', e);
+        alert('Erro ao gerar PDF inteligente. Tente novamente.');
     } finally {
-        document.body.removeChild(container);
+        // Only remove if it was successfully added
+        if (container.parentNode) {
+            document.body.removeChild(container);
+        }
     }
 };
