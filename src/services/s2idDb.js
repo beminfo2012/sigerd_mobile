@@ -9,6 +9,7 @@ import { supabase } from './supabase'
 // Initial state for a new S2id record
 export const INITIAL_S2ID_STATE = {
     status: 'draft',
+    s2id_id: null, // Global UUID for sync
     synced: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -147,6 +148,7 @@ export const saveS2idLocal = async (record) => {
     const db = await initDB();
     const toSave = {
         ...record,
+        s2id_id: record.s2id_id || crypto.randomUUID(),
         updated_at: new Date().toISOString(),
         synced: false
     };
@@ -208,12 +210,15 @@ export const triggerS2idSync = async (id) => {
             ...record,
             id_local: record.id
         };
+        // Ensure s2id_id is present for conflict resolution
+        if (!payload.s2id_id) payload.s2id_id = crypto.randomUUID();
+
         delete payload.id;
         delete payload.synced;
 
         const { data, error } = await supabase
             .from('s2id_records')
-            .upsert(payload, { onConflict: 'id_local' })
+            .upsert(payload, { onConflict: 's2id_id' })
             .select()
             .single();
 

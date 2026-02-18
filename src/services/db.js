@@ -428,6 +428,7 @@ const syncSingleItem = async (storeName, item, db) => {
             const { id, synced, id_local, supabase_id, ...recordPayload } = item;
             payload = {
                 ...recordPayload,
+                s2id_id: item.s2id_id || crypto.randomUUID(),
                 id_local: item.id
             };
         } else {
@@ -462,7 +463,7 @@ const syncSingleItem = async (storeName, item, db) => {
                             storeName === 'donations' ? 'donation_id' :
                                 storeName === 'inventory' ? 'inventory_id' :
                                     storeName === 'distributions' ? 'distribution_id' :
-                                        storeName === 's2id_records' ? 'id_local' :
+                                        storeName === 's2id_records' ? 's2id_id' :
                                             undefined
         }).select()
 
@@ -514,7 +515,7 @@ export const pullAllData = async () => {
     const modules = [
         { table: 'vistorias', store: 'vistorias', key: 'vistoria_id' },
         { table: 'interdicoes', store: 'interdicoes', key: 'interdicao_id' },
-        { table: 's2id_records', store: 's2id_records', key: 'id_local' },
+        { table: 's2id_records', store: 's2id_records', key: 's2id_id' },
         { table: 'shelters', store: 'shelters', key: 'shelter_id' },
         { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
         { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
@@ -542,9 +543,9 @@ export const pullAllData = async () => {
                     // Check if item exists locally
                     const existing = await store.getAll();
                     const localMatch = existing.find(l =>
-                        (l.id === item.id_local) ||
-                        (mod.key && l[mod.key] === item[mod.key]) ||
-                        (l.supabase_id === item.id)
+                        (l.supabase_id === item.id) ||
+                        (mod.key && item[mod.key] && l[mod.key] === item[mod.key]) ||
+                        (mod.store === 's2id_records' && l.id === item.id_local)
                     );
 
                     // Skip pull if local has unsynced changes
