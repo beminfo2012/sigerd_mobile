@@ -53,7 +53,7 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="width: 120px;"><img src="${logoDefesaCivilStr}" style="height: 85px; object-fit: contain;" /></div>
                 <div style="flex: 1; text-align: center; padding: 0 15px;">
-                    <h1 style="margin: 0; font-size: 20px; color: #000000; text-transform: uppercase; font-weight: 800; line-height: 1.2;">SISTEMA NACIONAL DE PROTEÇÃO E DEFESA CIVIL</h1>
+                    <h1 style="margin: 0; font-size: 20px; color: #000000; text-transform: uppercase; font-weight: 800; line-height: 1.2;">SISTEMA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</h1>
                     <h2 style="margin: 8px 0 0 0; font-size: 14px; color: #1e3a8a; font-weight: 700; text-transform: uppercase;">
                         ${isSectoral ? `LEVANTAMENTO SETORIAL: ${sectorName}` : 'FORMULÁRIO DE INFORMAÇÕES DO DESASTRE (FIDE)'}
                     </h2>
