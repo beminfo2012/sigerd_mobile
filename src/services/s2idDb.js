@@ -118,7 +118,9 @@ export const INITIAL_S2ID_STATE = {
             // Campos para Portaria 260/2022
             rcl_anual: 0,
             intensidade: '', // Nível I, II ou III
-            capacidade_resposta: '' // Local, Local+Estadual, etc
+            capacidade_resposta: '', // Local, Local+Estadual, etc
+            plano_acionado: false,
+            necessita_apoio: false
         },
         assinatura: { // Assinatura Global (Defesa Civil)
             responsavel: '',

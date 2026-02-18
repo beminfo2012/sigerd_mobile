@@ -969,6 +969,36 @@ const S2idForm = () => {
                                         Calcular
                                     </button>
                                 </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => updateMetadataOficial('plano_acionado', !formData.data.metadata_oficial.plano_acionado)}
+                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${formData.data.metadata_oficial.plano_acionado ? 'bg-blue-600 border-blue-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500'}`}
+                                    >
+                                        <div className="text-left">
+                                            <p className="text-[8px] font-black uppercase tracking-widest opacity-70">Plano Contingência</p>
+                                            <p className="text-xs font-bold leading-none">{formData.data.metadata_oficial.plano_acionado ? 'ACIONADO' : 'NÃO ACIONADO'}</p>
+                                        </div>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors ${formData.data.metadata_oficial.plano_acionado ? 'bg-white/30' : 'bg-slate-200'}`}>
+                                            <div className={`absolute top-1 w-2 h-2 rounded-full bg-white transition-all ${formData.data.metadata_oficial.plano_acionado ? 'right-1' : 'left-1'}`} />
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => updateMetadataOficial('necessita_apoio', !formData.data.metadata_oficial.necessita_apoio)}
+                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${formData.data.metadata_oficial.necessita_apoio ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500'}`}
+                                    >
+                                        <div className="text-left">
+                                            <p className="text-[8px] font-black uppercase tracking-widest opacity-70">Solicitar Apoio Estadual</p>
+                                            <p className="text-xs font-bold leading-none">{formData.data.metadata_oficial.necessita_apoio ? 'SIM (SOLICITADO)' : 'NÃO NECESSITA'}</p>
+                                        </div>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors ${formData.data.metadata_oficial.necessita_apoio ? 'bg-white/30' : 'bg-slate-200'}`}>
+                                            <div className={`absolute top-1 w-2 h-2 rounded-full bg-white transition-all ${formData.data.metadata_oficial.necessita_apoio ? 'right-1' : 'left-1'}`} />
+                                        </div>
+                                    </button>
+                                </div>
                                 {/* Other metadata fields can go here */}
                             </div>
                         )}
