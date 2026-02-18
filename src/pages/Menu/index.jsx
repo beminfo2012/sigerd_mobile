@@ -256,6 +256,25 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     )}
                 </div>
 
+                {/* Ocorrências Operacionais - NOVO! */}
+                <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <button
+                        onClick={() => window.location.href = '/ocorrencias'}
+                        className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+                    >
+                        <div className="flex items-center">
+                            <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-600 rounded-2xl mr-4">
+                                <ShieldAlert size={22} />
+                            </div>
+                            <div className="flex-1">
+                                <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Ocorrências Operacionais</span>
+                                <span className="text-[10px] font-black text-red-500 uppercase tracking-widest leading-tight">Registro Rápido em Campo</span>
+                            </div>
+                        </div>
+                        <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase animate-pulse">Emergencial</div>
+                    </button>
+                </div>
+
                 {/* S2ID Strategic Module - Access for S2id roles and Defesa Civil */}
                 {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role)) && (
                     <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">

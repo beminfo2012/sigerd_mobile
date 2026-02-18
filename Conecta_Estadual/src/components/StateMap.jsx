@@ -21,11 +21,7 @@ const StateMap = ({ occurrences = [] }) => {
     const position = [-19.1833, -40.3];
 
     // Default data for SMJ if occurrences are empty (mock)
-    const mapMarkers = occurrences.length > 0 ? occurrences : [
-        { id: 1, name: 'Santa Maria de Jetibá', lat: -19.98, lng: -40.69, gravity: 'Crítica', afetados: 2408 },
-        { id: 2, name: 'Mimoso do Sul', lat: -21.06, lng: -41.36, gravity: 'Alta', afetados: 1200 },
-        { id: 3, name: 'Afonso Cláudio', lat: -20.07, lng: -41.13, gravity: 'Média', afetados: 450 },
-    ];
+    const mapMarkers = occurrences;
 
     return (
         <div className="w-full h-full rounded-3xl overflow-hidden border border-slate-100 shadow-inner">

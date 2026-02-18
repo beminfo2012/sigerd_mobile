@@ -48,6 +48,10 @@ const UserManagement = lazy(() => import('./pages/UserManagement'))
 const S2idDashboard = lazy(() => import('./pages/S2id/S2idDashboard'))
 const S2idForm = lazy(() => import('./pages/S2id/S2idForm'))
 
+// Ocorrências Module (Lazy)
+const OcorrenciasDashboard = lazy(() => import('./pages/Ocorrencias/OcorrenciasDashboard'))
+const OcorrenciasForm = lazy(() => import('./pages/Ocorrencias/OcorrenciasForm'))
+
 // Create context for user profile
 export const UserContext = createContext(null)
 
@@ -323,6 +327,23 @@ const AppContent = ({
                         <Route path="/s2id/editar/:id" element={
                             <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
                                 <S2idForm />
+                            </ProtectedRoute>
+                        } />
+
+                        {/* Ocorrências Routes */}
+                        <Route path="/ocorrencias" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <OcorrenciasDashboard />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/ocorrencias/novo" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <OcorrenciasForm />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/ocorrencias/editar/:id" element={
+                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                <OcorrenciasForm />
                             </ProtectedRoute>
                         } />
 

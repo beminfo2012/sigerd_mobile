@@ -122,6 +122,12 @@ export const INITIAL_S2ID_STATE = {
             plano_acionado: false,
             necessita_apoio: false
         },
+        localizacao: {
+            lat: null,
+            lng: null,
+            accuracy: null,
+            timestamp: null
+        },
         assinatura: { // Assinatura Global (Defesa Civil)
             responsavel: '',
             cargo: '',
