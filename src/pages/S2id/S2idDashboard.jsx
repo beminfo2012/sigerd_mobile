@@ -199,15 +199,17 @@ const S2idDashboard = () => {
                                             >
                                                 <Edit3 size={18} />
                                             </button>
-                                            <button
-                                                onClick={() => {
-                                                    setRecordToDelete(record);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                                className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role) && (
+                                                <button
+                                                    onClick={() => {
+                                                        setRecordToDelete(record);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                    className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 

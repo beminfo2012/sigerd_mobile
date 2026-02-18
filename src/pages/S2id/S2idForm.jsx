@@ -849,14 +849,13 @@ const S2idForm = () => {
 
                                         <button
                                             onClick={() => finalizeSectoral(activeSector)}
-                                            disabled={formData.data.submissoes_setoriais[activeSector]?.preenchido}
                                             className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all ${formData.data.submissoes_setoriais[activeSector]?.preenchido
-                                                ? 'bg-green-100 text-green-600 cursor-not-allowed'
+                                                ? 'bg-amber-100 text-amber-700 shadow-sm'
                                                 : 'bg-blue-600 text-white shadow-lg shadow-blue-200 active:scale-95'
                                                 }`}
                                         >
                                             {formData.data.submissoes_setoriais[activeSector]?.preenchido ? (
-                                                <>Parte Finalizada <Shield size={16} /></>
+                                                <>Complementar Informações <CheckCircle2 size={16} /></>
                                             ) : (
                                                 <>Finalizar Minha Parte <Save size={16} /></>
                                             )}
@@ -1042,7 +1041,7 @@ const S2idForm = () => {
                             ) : (
                                 <button
                                     onClick={() => setShowSignature(true)}
-                                    disabled={(activeSector && formData.data.submissoes_setoriais[activeSector]?.preenchido) || isGlobalReadOnly}
+                                    disabled={isGlobalReadOnly}
                                     className="flex flex-col items-center gap-2 group disabled:opacity-40"
                                 >
                                     <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm group-active:scale-95 transition-all">
