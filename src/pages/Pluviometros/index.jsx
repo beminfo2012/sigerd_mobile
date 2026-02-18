@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity, Plus } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity, Plus, MapPin } from 'lucide-react'
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
 import html2canvas from 'html2canvas'
 import { saveManualReading, getManualReadings } from '../../services/db'
@@ -210,6 +210,16 @@ const Pluviometros = () => {
         link.click()
     }
 
+    const openInMaps = (e, station) => {
+        e.stopPropagation();
+        if (!station.lat || !station.lng) {
+            alert("Localização não disponível para esta estação.");
+            return;
+        }
+        const url = `https://www.google.com/maps/search/?api=1&query=${station.lat},${station.lng}`;
+        window.open(url, '_blank');
+    }
+
     const handleSaveManual = async () => {
         if (!manualVolume || isNaN(parseFloat(manualVolume))) {
             alert("Digite um volume válido")
@@ -320,6 +330,18 @@ const Pluviometros = () => {
                                         <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-black uppercase rounded-bl-xl ${risk.bg} ${risk.text}`}>
                                             {risk.label}
                                         </div>
+
+                                        {/* Map Link Action - Discreet Pin */}
+                                        {station.lat && station.lng && (
+                                            <button
+                                                onClick={(e) => openInMaps(e, station)}
+                                                className="absolute top-10 right-3 p-2 bg-slate-50 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-all"
+                                                title="Ver no Mapa"
+                                            >
+                                                <MapPin size={18} />
+                                            </button>
+                                        )}
+
                                         <h3 className="font-bold text-gray-800 text-lg mb-1 pr-20 truncate leading-relaxed py-1">{station.name}</h3>
                                         <div className="text-xs text-gray-400 mb-4">ID: {station.id}</div>
 
@@ -550,6 +572,16 @@ const Pluviometros = () => {
                                         : 'Dados recentes (Automático)'}
                                 </p>
                             </div>
+
+                            {selectedStation.lat && selectedStation.lng && (
+                                <button
+                                    onClick={(e) => openInMaps(e, selectedStation)}
+                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                >
+                                    <MapPin size={20} />
+                                    Abrir no Google Maps
+                                </button>
+                            )}
 
                             <button
                                 onClick={() => setSelectedStation(null)}

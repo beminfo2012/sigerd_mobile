@@ -223,6 +223,33 @@ export default async function handler(request, response) {
         return Promise.all(anaPromises);
     };
 
+    // --- COORDINATES MAPPING ---
+    const STATION_COORDINATES = {
+        // CEMADEN
+        '320455902A': { lat: -19.974, lng: -40.697 }, // Vila de Jetibá
+        '320455901A': { lat: -19.912, lng: -40.735 }, // Alto Rio Possmoser
+        '320455903A': { lat: -20.015, lng: -40.758 }, // São Luis
+        '407': { lat: -19.970, lng: -40.690 }, // Example mapping if id matches numeric
+
+        // ANA
+        '57118080': { lat: -20.033333, lng: -40.733333 }, // PCH RIO BONITO MONTANTE 1
+        '57090000': { lat: -20.100000, lng: -40.700000 }, // SÃO JOÃO DE GARRAFÃO (Approx)
+        '57117000': { lat: -20.050000, lng: -40.750000 }, // PCH RIO BONITO MONTANTE 2 (Approx)
+        '57119000': { lat: -20.050000, lng: -40.633333 }, // PCH RIO BONITO BARRAMENTO
+
+        // SEDE (Manual) - Optional helper if needed elsewhere
+        'SEDE_DEFESA_CIVIL': { lat: -20.030, lng: -40.740 }
+    };
+
+    const injectCoords = (station) => {
+        const coords = STATION_COORDINATES[station.id];
+        return {
+            ...station,
+            lat: coords?.lat || null,
+            lng: coords?.lng || null
+        };
+    };
+
     try {
         // Execute both fetches in parallel
         const [cemadenResult, anaResult] = await Promise.allSettled([
@@ -233,7 +260,7 @@ export default async function handler(request, response) {
         const cemadenData = cemadenResult.status === 'fulfilled' ? cemadenResult.value : [];
         const anaData = anaResult.status === 'fulfilled' ? anaResult.value : [];
 
-        const finalResult = [...cemadenData, ...anaData];
+        const finalResult = [...cemadenData, ...anaData].map(injectCoords);
 
         response.status(200).json(finalResult);
 
