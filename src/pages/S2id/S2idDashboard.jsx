@@ -486,6 +486,39 @@ const S2idDashboard = () => {
                         )}
                     </div>
                 )}
+
+                {/* DEBUG FOOTER - TEMPORARY */}
+                <div className="mt-8 p-4 bg-slate-900 text-slate-400 text-[10px] font-mono rounded-xl overflow-x-auto">
+                    <p className="font-bold text-slate-200 mb-2">DIAGNÓSTICO DE SINCRONIZAÇÃO</p>
+                    <p>Total Registros (Memória): {records.length}</p>
+                    <p>Status Online: {navigator.onLine ? 'Sim' : 'Não'}</p>
+                    <p>Última Atualização: {new Date().toLocaleTimeString()}</p>
+                    <button
+                        onClick={() => {
+                            toast('Forçando recarga completa...', 'info');
+                            window.location.reload();
+                        }}
+                        className="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-500"
+                    >
+                        Forçar Recarga (Hard Reload)
+                    </button>
+                    <button
+                        onClick={async () => {
+                            try {
+                                const { pullS2idFromCloud } = await import('../../services/s2idDb');
+                                toast('Iniciando Pull Cloud Manual...', 'info');
+                                const data = await pullS2idFromCloud();
+                                alert(`Resultado Pull: ${data ? data.length + ' registros encontrados' : 'Erro/Vazio'}`);
+                                loadRecords(true);
+                            } catch (e) {
+                                alert('Erro no Pull Manual: ' + e.message);
+                            }
+                        }}
+                        className="mt-2 ml-2 bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-500"
+                    >
+                        Testar Conexão Nuvem
+                    </button>
+                </div>
             </main>
 
             <ConfirmModal
