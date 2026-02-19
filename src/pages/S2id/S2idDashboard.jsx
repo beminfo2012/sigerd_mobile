@@ -492,6 +492,8 @@ const S2idDashboard = () => {
                     <p className="font-bold text-slate-200 mb-2">DIAGNÓSTICO DE SINCRONIZAÇÃO</p>
                     <p>Total Registros (Memória): {records.length}</p>
                     <p>Status Online: {navigator.onLine ? 'Sim' : 'Não'}</p>
+                    <p>Projeto ID: {import.meta.env.VITE_SUPABASE_URL ? import.meta.env.VITE_SUPABASE_URL.split('//')[1].split('.')[0] : 'N/A'}</p>
+                    <p>Projeto: {import.meta.env.VITE_SUPABASE_URL ? import.meta.env.VITE_SUPABASE_URL.split('//')[1].split('.')[0] : 'Indefinido'}</p>
                     <p>Última Atualização: {new Date().toLocaleTimeString()}</p>
                     <button
                         onClick={() => {
@@ -505,13 +507,19 @@ const S2idDashboard = () => {
                     <button
                         onClick={async () => {
                             try {
-                                const { pullS2idFromCloud } = await import('../../services/s2idDb');
-                                toast('Iniciando Pull Cloud Manual...', 'info');
-                                const data = await pullS2idFromCloud();
-                                alert(`Resultado Pull: ${data ? data.length + ' registros encontrados' : 'Erro/Vazio'}`);
-                                loadRecords(true);
+                                const { supabase } = await import('../../services/supabase');
+                                toast('Testando conexão crua...', 'info');
+                                const { count, error } = await supabase.from('s2id_records').select('*', { count: 'exact', head: true });
+                                if (error) {
+                                    alert(`ERRO CONEXÃO: ${error.message} (Code: ${error.code})`);
+                                } else {
+                                    alert(`SUCESSO: Conectado! Total na nuvem: ${count}`);
+                                    const { pullS2idFromCloud } = await import('../../services/s2idDb');
+                                    await pullS2idFromCloud();
+                                    loadRecords(true);
+                                }
                             } catch (e) {
-                                alert('Erro no Pull Manual: ' + e.message);
+                                alert('EXCEPTION: ' + e.message);
                             }
                         }}
                         className="mt-2 ml-2 bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-500"
