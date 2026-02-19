@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Ocorrências - SIGERD</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="icon" href="../assets/img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        .map-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        #map-ocorrencias {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-header">
+        <div class="system-name">
+            <img src="../assets/img/LOGO_DEFESA_CIVIL_2025.png" alt="Logo Defesa Civil" class="header-logo">
+            <h1>Mapa de Ocorrências</h1>
+        </div>
+        <div class="header-actions" style="display: flex; align-items: center; gap: 20px;">
+            <div class="user-info">
+                <img src="https://ui-avatars.com/api/?name=Operador&background=0D8ABC&color=fff" alt="User">
+                <div class="user-details">
+                    <span>Operador</span>
+                    <small>SIGERD</small>
+                </div>
+            </div>
+            <button id="closePanel" class="btn-secondary" style="border: none;"><i class="fas fa-times"></i>
+                Fechar</button>
+        </div>
+    </div>
+
+    <div class="map-container">
+        <main id="map-ocorrencias">
+            <!-- O mapa será renderizado aqui -->
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../js/mapa_ocorrencias.js"></script>
+</body>
+
+</html>

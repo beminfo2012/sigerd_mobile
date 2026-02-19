@@ -18,13 +18,43 @@ CREATE TABLE IF NOT EXISTS public.s2id_records (
 
 -- 2. Create State Control table (Conecta Estadual Data)
 -- This table stores state-level analysis for each municipal occurrence.
+-- Tabela para Controle Estadual de Solicitações (S2ID + Ocorrências)
 CREATE TABLE IF NOT EXISTS public.estado_controle (
-    s2id_id UUID PRIMARY KEY REFERENCES public.s2id_records(s2id_id) ON DELETE CASCADE,
-    status_estadual TEXT DEFAULT 'Em análise',
-    notas TEXT,
-    analista TEXT,
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    s2id_id text UNIQUE, -- Pode ser UUID do S2ID ou da Ocorrência
+    status_estadual text DEFAULT 'Em análise',
+    notas text,
+    analista text, -- Quem realizou o despacho
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+-- Tabela para Ocorrências Operacionais (Dados rápidos do campo)
+CREATE TABLE IF NOT EXISTS public.ocorrencias_operacionais (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    id_local integer,
+    ocorrencia_id text UNIQUE,
+    municipio text DEFAULT 'Santa Maria de Jetibá',
+    tipo text, -- Denominação COBRADE
+    cobrade text,
+    data_ocorrencia text,
+    horario_ocorrencia text,
+    lat double precision,
+    lng double precision,
+    accuracy double precision,
+    mortos integer DEFAULT 0,
+    feridos integer DEFAULT 0,
+    enfermos integer DEFAULT 0,
+    desalojados integer DEFAULT 0,
+    desabrigados integer DEFAULT 0,
+    desaparecidos integer DEFAULT 0,
+    outros_afetados integer DEFAULT 0,
+    descricao_danos text,
+    observacoes text,
+    status text DEFAULT 'finalized',
+    usuario text,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 -- 3. Enable Realtime for all tables
@@ -35,6 +65,7 @@ BEGIN
   IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.s2id_records;
     ALTER PUBLICATION supabase_realtime ADD TABLE public.estado_controle;
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.ocorrencias_operacionais;
   END IF;
 END $$;
 

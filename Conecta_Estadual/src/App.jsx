@@ -5,10 +5,16 @@ import Dashboard from './pages/Dashboard';
 import Occurrences from './pages/Occurrences';
 import SupportRequests from './pages/SupportRequests';
 import StrategicIndicators from './pages/StrategicIndicators';
+import Login from './pages/Login';
 import './index.css';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('painel');
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="app-shell">

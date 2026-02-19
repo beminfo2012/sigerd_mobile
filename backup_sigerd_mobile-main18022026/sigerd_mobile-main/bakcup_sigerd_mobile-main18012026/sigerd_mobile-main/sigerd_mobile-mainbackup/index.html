@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/pwa-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2a5299">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SIGERD Mobile</title>
+  <script>
+    window.onerror = function (msg, url, line, col, error) {
+      const errorMsg = "🛑 ERRO CRÍTICO: " + msg + "\nLinha: " + line + "\nArquivo: " + (url || '---');
+      console.error(errorMsg, error);
+      // We only alert once to avoid infinite loops if the alert itself triggers an error
+      if (!window._errorAlerted) {
+        window._errorAlerted = true;
+        alert(errorMsg + "\n\nPor favor, envie um print desta tela para o suporte.");
+      }
+    };
+    // Pre-emptively set L so plugins don't crash
+    if (!window.L) window.L = {};
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

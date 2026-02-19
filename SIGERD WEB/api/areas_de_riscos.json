@@ -1,0 +1,2250 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S1R3",
+                "setor": "Setor 01",
+                "localizacao": "Entre a Rod. Dr. Afonso Schuab",
+                "bairro": "Não especificado",
+                "tipo_risco": "Deslizamento de Solo, Inundação",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 21,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Área periurbana com cortes verticalizados na base da encosta (>4m), ocupação nas margens do canal suscetível a inundações. Marcas de água chegam a 1,4m nos domicílios.",
+                "sugestoes": [
+                    "Evitar cortes verticais",
+                    "Sistema de drenagem adequado",
+                    "Remoção de ocupações em área de inundação",
+                    "Painéis informativos"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7308783,
+                            -20.0385585,
+                            0.0
+                        ],
+                        [
+                            -40.7314835,
+                            -20.038402,
+                            0.0
+                        ],
+                        [
+                            -40.7318327,
+                            -20.038413,
+                            0.0
+                        ],
+                        [
+                            -40.7322422,
+                            -20.0383946,
+                            0.0
+                        ],
+                        [
+                            -40.7331166,
+                            -20.0385653,
+                            0.0
+                        ],
+                        [
+                            -40.7333379,
+                            -20.0386779,
+                            0.0
+                        ],
+                        [
+                            -40.7337884,
+                            -20.0389387,
+                            0.0
+                        ],
+                        [
+                            -40.7338575,
+                            -20.0390169,
+                            0.0
+                        ],
+                        [
+                            -40.7339654,
+                            -20.0391665,
+                            0.0
+                        ],
+                        [
+                            -40.7340413,
+                            -20.0391729,
+                            0.0
+                        ],
+                        [
+                            -40.734459,
+                            -20.0392118,
+                            0.0
+                        ],
+                        [
+                            -40.7345166,
+                            -20.03962,
+                            0.0
+                        ],
+                        [
+                            -40.734443,
+                            -20.0398214,
+                            0.0
+                        ],
+                        [
+                            -40.7342604,
+                            -20.0397802,
+                            0.0
+                        ],
+                        [
+                            -40.7340023,
+                            -20.0397684,
+                            0.0
+                        ],
+                        [
+                            -40.7338658,
+                            -20.0397697,
+                            0.0
+                        ],
+                        [
+                            -40.7336442,
+                            -20.0396285,
+                            0.0
+                        ],
+                        [
+                            -40.73365,
+                            -20.0394707,
+                            0.0
+                        ],
+                        [
+                            -40.7336862,
+                            -20.0393126,
+                            0.0
+                        ],
+                        [
+                            -40.7336544,
+                            -20.0391767,
+                            0.0
+                        ],
+                        [
+                            -40.7334407,
+                            -20.039064,
+                            0.0
+                        ],
+                        [
+                            -40.7331431,
+                            -20.0389092,
+                            0.0
+                        ],
+                        [
+                            -40.7326864,
+                            -20.0387703,
+                            0.0
+                        ],
+                        [
+                            -40.7322008,
+                            -20.0387679,
+                            0.0
+                        ],
+                        [
+                            -40.7312535,
+                            -20.0388704,
+                            0.0
+                        ],
+                        [
+                            -40.7306021,
+                            -20.0389699,
+                            0.0
+                        ],
+                        [
+                            -40.7305836,
+                            -20.038669,
+                            0.0
+                        ],
+                        [
+                            -40.7308783,
+                            -20.0385585,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S2R3",
+                "setor": "Setor 02",
+                "localizacao": "Entre a Rod. Dr. Afonso Schuab e R. do Imigrante",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 6,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Cortes verticalizados (>4m) sem estabilização adequada, solo exposto. Declividade entre 0-90º.",
+                "sugestoes": [
+                    "Obras de contenção",
+                    "Revegetação",
+                    "Monitoramento",
+                    "Drenagem de crista e base"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7382665,
+                            -20.035095,
+                            0.0
+                        ],
+                        [
+                            -40.7381904,
+                            -20.035526,
+                            0.0
+                        ],
+                        [
+                            -40.7380641,
+                            -20.0360052,
+                            0.0
+                        ],
+                        [
+                            -40.7378464,
+                            -20.0364472,
+                            0.0
+                        ],
+                        [
+                            -40.7372982,
+                            -20.0362709,
+                            0.0
+                        ],
+                        [
+                            -40.7375957,
+                            -20.035723,
+                            0.0
+                        ],
+                        [
+                            -40.7379321,
+                            -20.0350409,
+                            0.0
+                        ],
+                        [
+                            -40.7382665,
+                            -20.035095,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S3R3",
+                "setor": "Setor 03",
+                "localizacao": "R. Florêncio A. Berger",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 11,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Cortes verticalizados (>6m) nos fundos dos domicílios, via de acesso não pavimentada na crista. Declividade 0-85º.",
+                "sugestoes": [
+                    "Estabilização de taludes",
+                    "Pavimentação da via",
+                    "Sistema de drenagem",
+                    "Monitoramento de trincas"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7415752,
+                            -20.0250138,
+                            0.0
+                        ],
+                        [
+                            -40.741802,
+                            -20.0249399,
+                            0.0
+                        ],
+                        [
+                            -40.7423784,
+                            -20.024927,
+                            0.0
+                        ],
+                        [
+                            -40.7429397,
+                            -20.0249143,
+                            0.0
+                        ],
+                        [
+                            -40.7433198,
+                            -20.0249895,
+                            0.0
+                        ],
+                        [
+                            -40.7434495,
+                            -20.0250527,
+                            0.0
+                        ],
+                        [
+                            -40.7434443,
+                            -20.025275,
+                            0.0
+                        ],
+                        [
+                            -40.7433463,
+                            -20.0253262,
+                            0.0
+                        ],
+                        [
+                            -40.7432869,
+                            -20.0254415,
+                            0.0
+                        ],
+                        [
+                            -40.7431271,
+                            -20.0254001,
+                            0.0
+                        ],
+                        [
+                            -40.7430133,
+                            -20.0254012,
+                            0.0
+                        ],
+                        [
+                            -40.7426566,
+                            -20.0253904,
+                            0.0
+                        ],
+                        [
+                            -40.7426035,
+                            -20.0253909,
+                            0.0
+                        ],
+                        [
+                            -40.7425583,
+                            -20.02542,
+                            0.0
+                        ],
+                        [
+                            -40.7423157,
+                            -20.0254367,
+                            0.0
+                        ],
+                        [
+                            -40.7422624,
+                            -20.0254157,
+                            0.0
+                        ],
+                        [
+                            -40.7422245,
+                            -20.0254233,
+                            0.0
+                        ],
+                        [
+                            -40.7421494,
+                            -20.0254886,
+                            0.0
+                        ],
+                        [
+                            -40.74215,
+                            -20.0255459,
+                            0.0
+                        ],
+                        [
+                            -40.7419839,
+                            -20.0256193,
+                            0.0
+                        ],
+                        [
+                            -40.7419452,
+                            -20.0255479,
+                            0.0
+                        ],
+                        [
+                            -40.7418019,
+                            -20.025621,
+                            0.0
+                        ],
+                        [
+                            -40.7417396,
+                            -20.0254783,
+                            0.0
+                        ],
+                        [
+                            -40.7416865,
+                            -20.0254788,
+                            0.0
+                        ],
+                        [
+                            -40.7416148,
+                            -20.0251712,
+                            0.0
+                        ],
+                        [
+                            -40.7415752,
+                            -20.0250138,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S4R2",
+                "setor": "Setor 04",
+                "localizacao": "Rod. Dalmácio Espindula, R. Herman Roelke",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo, Erosão",
+                "nivel_risco": "Médio (R2)",
+                "imoveis_risco": 0,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Área do cemitério com indícios de instabilidade, cortes verticais (>2m). Declividade 5-35º.",
+                "sugestoes": [
+                    "Monitoramento da área",
+                    "Obras de contenção leve",
+                    "Manutenção preventiva",
+                    "Revegetação"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7442139,
+                            -20.0294728,
+                            0.0
+                        ],
+                        [
+                            -40.7442876,
+                            -20.0299597,
+                            0.0
+                        ],
+                        [
+                            -40.744356,
+                            -20.0306617,
+                            0.0
+                        ],
+                        [
+                            -40.7442516,
+                            -20.0308276,
+                            0.0
+                        ],
+                        [
+                            -40.7434781,
+                            -20.0308568,
+                            0.0
+                        ],
+                        [
+                            -40.743384,
+                            -20.0305781,
+                            0.0
+                        ],
+                        [
+                            -40.7438771,
+                            -20.0305804,
+                            0.0
+                        ],
+                        [
+                            -40.7439171,
+                            -20.0300781,
+                            0.0
+                        ],
+                        [
+                            -40.7436513,
+                            -20.030052,
+                            0.0
+                        ],
+                        [
+                            -40.7435987,
+                            -20.0294072,
+                            0.0
+                        ],
+                        [
+                            -40.743712,
+                            -20.029363,
+                            0.0
+                        ],
+                        [
+                            -40.7442139,
+                            -20.0294728,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S5R3",
+                "setor": "Setor 05",
+                "localizacao": "R. Florencio A. Berger / R. Nicolau Reinke",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 4,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Cortes verticalizados (>7m), avanço da ocupação em área inadequada. Declividade 0-65º.",
+                "sugestoes": [
+                    "Contenção de taludes",
+                    "Limitação de ocupação",
+                    "Monitoramento contínuo",
+                    "Sistema de alerta"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7435756,
+                            -20.0226052,
+                            0.0
+                        ],
+                        [
+                            -40.743362,
+                            -20.0227328,
+                            0.0
+                        ],
+                        [
+                            -40.7431473,
+                            -20.0227528,
+                            0.0
+                        ],
+                        [
+                            -40.7429782,
+                            -20.0228979,
+                            0.0
+                        ],
+                        [
+                            -40.742814,
+                            -20.0229115,
+                            0.0
+                        ],
+                        [
+                            -40.7427269,
+                            -20.0230438,
+                            0.0
+                        ],
+                        [
+                            -40.742626,
+                            -20.0230627,
+                            0.0
+                        ],
+                        [
+                            -40.7425672,
+                            -20.02289,
+                            0.0
+                        ],
+                        [
+                            -40.7424329,
+                            -20.0227539,
+                            0.0
+                        ],
+                        [
+                            -40.7425655,
+                            -20.0227347,
+                            0.0
+                        ],
+                        [
+                            -40.7426538,
+                            -20.0227159,
+                            0.0
+                        ],
+                        [
+                            -40.7427669,
+                            -20.022655,
+                            0.0
+                        ],
+                        [
+                            -40.7428044,
+                            -20.0226188,
+                            0.0
+                        ],
+                        [
+                            -40.7428798,
+                            -20.0225762,
+                            0.0
+                        ],
+                        [
+                            -40.7429554,
+                            -20.0225516,
+                            0.0
+                        ],
+                        [
+                            -40.7430558,
+                            -20.0224848,
+                            0.0
+                        ],
+                        [
+                            -40.7431567,
+                            -20.02246,
+                            0.0
+                        ],
+                        [
+                            -40.7433396,
+                            -20.0224223,
+                            0.0
+                        ],
+                        [
+                            -40.7435292,
+                            -20.0224145,
+                            0.0
+                        ],
+                        [
+                            -40.7435756,
+                            -20.0226052,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S6R3",
+                "setor": "Setor 06",
+                "localizacao": "R. Marli Ramlow",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 4,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Novas ocupações em trechos inadequados, cortes instáveis não contidos. Declividade 20-65º.",
+                "sugestoes": [
+                    "Paralisação de novas ocupações",
+                    "Obras de contenção",
+                    "Ordenamento urbano",
+                    "Monitoramento"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7405643,
+                            -20.0151523,
+                            0.0
+                        ],
+                        [
+                            -40.7405263,
+                            -20.0157144,
+                            0.0
+                        ],
+                        [
+                            -40.7398604,
+                            -20.0157508,
+                            0.0
+                        ],
+                        [
+                            -40.7393104,
+                            -20.0157562,
+                            0.0
+                        ],
+                        [
+                            -40.7390011,
+                            -20.0158011,
+                            0.0
+                        ],
+                        [
+                            -40.7384137,
+                            -20.0158487,
+                            0.0
+                        ],
+                        [
+                            -40.7379417,
+                            -20.0160385,
+                            0.0
+                        ],
+                        [
+                            -40.7375883,
+                            -20.0160958,
+                            0.0
+                        ],
+                        [
+                            -40.7374743,
+                            -20.016073,
+                            0.0
+                        ],
+                        [
+                            -40.7374284,
+                            -20.0159301,
+                            0.0
+                        ],
+                        [
+                            -40.7374268,
+                            -20.0157807,
+                            0.0
+                        ],
+                        [
+                            -40.7374257,
+                            -20.0156791,
+                            0.0
+                        ],
+                        [
+                            -40.737437,
+                            -20.0155535,
+                            0.0
+                        ],
+                        [
+                            -40.7374986,
+                            -20.0154095,
+                            0.0
+                        ],
+                        [
+                            -40.7376303,
+                            -20.0153186,
+                            0.0
+                        ],
+                        [
+                            -40.7377499,
+                            -20.0152696,
+                            0.0
+                        ],
+                        [
+                            -40.7380024,
+                            -20.0152373,
+                            0.0
+                        ],
+                        [
+                            -40.7383053,
+                            -20.0151865,
+                            0.0
+                        ],
+                        [
+                            -40.7392172,
+                            -20.0150999,
+                            0.0
+                        ],
+                        [
+                            -40.7405643,
+                            -20.0151523,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S7R3",
+                "setor": "Setor 07",
+                "localizacao": "R. Marli Ramlow",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 1,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Área comercial com cortes verticais (>5m), construções muito próximas aos taludes. Declividade 0-85º.",
+                "sugestoes": [
+                    "Afastamento das edificações",
+                    "Contenção de taludes",
+                    "Monitoramento",
+                    "Inspeções periódicas"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7420596,
+                            -20.0160279,
+                            0.0
+                        ],
+                        [
+                            -40.7414537,
+                            -20.0161235,
+                            0.0
+                        ],
+                        [
+                            -40.7409722,
+                            -20.0160267,
+                            0.0
+                        ],
+                        [
+                            -40.7408939,
+                            -20.0158064,
+                            0.0
+                        ],
+                        [
+                            -40.7406528,
+                            -20.0157251,
+                            0.0
+                        ],
+                        [
+                            -40.7406614,
+                            -20.0153545,
+                            0.0
+                        ],
+                        [
+                            -40.7419571,
+                            -20.0153358,
+                            0.0
+                        ],
+                        [
+                            -40.7420596,
+                            -20.0160279,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S8R3",
+                "setor": "Setor 08",
+                "localizacao": "Rod. Florêncio Germano Augusto Berger",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 6,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Taludes com alturas >20m, sistema de drenagem deficiente, área sendo retaludada. Declividade 0-75º.",
+                "sugestoes": [
+                    "Redimensionamento do sistema de drenagem",
+                    "Obras de contenção robustas",
+                    "Monitoramento contínuo",
+                    "Alertas à população"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7453622,
+                            -20.0130568,
+                            0.0
+                        ],
+                        [
+                            -40.7455611,
+                            -20.0133297,
+                            0.0
+                        ],
+                        [
+                            -40.7457913,
+                            -20.0135664,
+                            0.0
+                        ],
+                        [
+                            -40.7465917,
+                            -20.0139171,
+                            0.0
+                        ],
+                        [
+                            -40.7469414,
+                            -20.0140988,
+                            0.0
+                        ],
+                        [
+                            -40.7473237,
+                            -20.014364,
+                            0.0
+                        ],
+                        [
+                            -40.7474831,
+                            -20.0144938,
+                            0.0
+                        ],
+                        [
+                            -40.7472841,
+                            -20.0147886,
+                            0.0
+                        ],
+                        [
+                            -40.7471826,
+                            -20.0147537,
+                            0.0
+                        ],
+                        [
+                            -40.7471184,
+                            -20.0146707,
+                            0.0
+                        ],
+                        [
+                            -40.7469281,
+                            -20.0146069,
+                            0.0
+                        ],
+                        [
+                            -40.7467881,
+                            -20.0145306,
+                            0.0
+                        ],
+                        [
+                            -40.7462881,
+                            -20.0144698,
+                            0.0
+                        ],
+                        [
+                            -40.7459141,
+                            -20.0143838,
+                            0.0
+                        ],
+                        [
+                            -40.7457454,
+                            -20.0145648,
+                            0.0
+                        ],
+                        [
+                            -40.7451309,
+                            -20.0138717,
+                            0.0
+                        ],
+                        [
+                            -40.7448463,
+                            -20.013283,
+                            0.0
+                        ],
+                        [
+                            -40.744876,
+                            -20.0131094,
+                            0.0
+                        ],
+                        [
+                            -40.7453622,
+                            -20.0130568,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S9R3",
+                "setor": "Setor 09",
+                "localizacao": "R. Cinquenta e Sete",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 1,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Ocupação recente e precária, cortes verticais (>3m). Declividade 0-90º.",
+                "sugestoes": [
+                    "Remoção da ocupação",
+                    "Estabilização do talude",
+                    "Impedimento de nova ocupação",
+                    "Fiscalização"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7428449,
+                            -20.0151233,
+                            0.0
+                        ],
+                        [
+                            -40.7427577,
+                            -20.0154755,
+                            0.0
+                        ],
+                        [
+                            -40.742302,
+                            -20.0154227,
+                            0.0
+                        ],
+                        [
+                            -40.7425175,
+                            -20.0150118,
+                            0.0
+                        ],
+                        [
+                            -40.7428449,
+                            -20.0151233,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S10R3",
+                "setor": "Setor 10",
+                "localizacao": "R. Cinquenta e Quatro",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 2,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Área de uso comercial com cortes verticais (>5m), indícios de instabilidade. Declividade 0-65º.",
+                "sugestoes": [
+                    "Contenção de taludes",
+                    "Monitoramento da estabilidade",
+                    "Inspeções periódicas",
+                    "Plano de evacuação"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7413271,
+                            -20.0065674,
+                            0.0
+                        ],
+                        [
+                            -40.7415981,
+                            -20.0070666,
+                            0.0
+                        ],
+                        [
+                            -40.7417292,
+                            -20.0074956,
+                            0.0
+                        ],
+                        [
+                            -40.7418985,
+                            -20.007948,
+                            0.0
+                        ],
+                        [
+                            -40.7416091,
+                            -20.0080704,
+                            0.0
+                        ],
+                        [
+                            -40.7413689,
+                            -20.0080727,
+                            0.0
+                        ],
+                        [
+                            -40.741201,
+                            -20.0077517,
+                            0.0
+                        ],
+                        [
+                            -40.7413509,
+                            -20.0075829,
+                            0.0
+                        ],
+                        [
+                            -40.7412844,
+                            -20.0072848,
+                            0.0
+                        ],
+                        [
+                            -40.7411289,
+                            -20.0069398,
+                            0.0
+                        ],
+                        [
+                            -40.7408733,
+                            -20.0066913,
+                            0.0
+                        ],
+                        [
+                            -40.7413271,
+                            -20.0065674,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S11R3",
+                "setor": "Setor 11",
+                "localizacao": "R. Cinquenta e Quatro",
+                "bairro": "Centro",
+                "tipo_risco": "Solapamento",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 1,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Ocupação adjacente ao canal fluvial, erosão nas margens. Declividade 0º.",
+                "sugestoes": [
+                    "Proteção das margens",
+                    "Afastamento das edificações",
+                    "Monitoramento do canal",
+                    "Obras de contenção"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7412374,
+                            -20.0064655,
+                            0.0
+                        ],
+                        [
+                            -40.7408579,
+                            -20.0057522,
+                            0.0
+                        ],
+                        [
+                            -40.7405935,
+                            -20.0051596,
+                            0.0
+                        ],
+                        [
+                            -40.739936,
+                            -20.0040045,
+                            0.0
+                        ],
+                        [
+                            -40.739565,
+                            -20.0033786,
+                            0.0
+                        ],
+                        [
+                            -40.7397611,
+                            -20.0032763,
+                            0.0
+                        ],
+                        [
+                            -40.7406595,
+                            -20.0049597,
+                            0.0
+                        ],
+                        [
+                            -40.7414031,
+                            -20.0063506,
+                            0.0
+                        ],
+                        [
+                            -40.741426,
+                            -20.0063704,
+                            0.0
+                        ],
+                        [
+                            -40.7412374,
+                            -20.0064655,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S12R2",
+                "setor": "Setor 12",
+                "localizacao": "Rod. Florêncio Germano Augusto Berger",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Médio (R2)",
+                "imoveis_risco": 1,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Domicílio de bom padrão com cortes verticais no talude. Declividade 0-65º.",
+                "sugestoes": [
+                    "Estabilização do talude",
+                    "Monitoramento",
+                    "Manutenção preventiva",
+                    "Drenagem adequada"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7473284,
+                            -19.9926153,
+                            0.0
+                        ],
+                        [
+                            -40.747082,
+                            -19.9932009,
+                            0.0
+                        ],
+                        [
+                            -40.7469734,
+                            -19.993441,
+                            0.0
+                        ],
+                        [
+                            -40.7467303,
+                            -19.9934051,
+                            0.0
+                        ],
+                        [
+                            -40.7470839,
+                            -19.9924552,
+                            0.0
+                        ],
+                        [
+                            -40.7473284,
+                            -19.9926153,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S13R3",
+                "setor": "Setor 13",
+                "localizacao": "Rod. Florêncio Germano Augusto Berger com R. Sapucaia",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 4,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Ocupação da base do talvegue, cortes verticais (>10m), indícios de instabilidade. Declividade 0-60º.",
+                "sugestoes": [
+                    "Remoção de ocupações críticas",
+                    "Obras de contenção",
+                    "Sistema de drenagem",
+                    "Monitoramento de trincas"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7440655,
+                            -20.0083273,
+                            0.0
+                        ],
+                        [
+                            -40.7443671,
+                            -20.008157,
+                            0.0
+                        ],
+                        [
+                            -40.7444489,
+                            -20.0081263,
+                            0.0
+                        ],
+                        [
+                            -40.7444736,
+                            -20.0080723,
+                            0.0
+                        ],
+                        [
+                            -40.744421,
+                            -20.0078876,
+                            0.0
+                        ],
+                        [
+                            -40.7444321,
+                            -20.00775,
+                            0.0
+                        ],
+                        [
+                            -40.7444683,
+                            -20.0075943,
+                            0.0
+                        ],
+                        [
+                            -40.7445294,
+                            -20.0074025,
+                            0.0
+                        ],
+                        [
+                            -40.7447564,
+                            -20.0073465,
+                            0.0
+                        ],
+                        [
+                            -40.7451302,
+                            -20.0074265,
+                            0.0
+                        ],
+                        [
+                            -40.7452507,
+                            -20.0074611,
+                            0.0
+                        ],
+                        [
+                            -40.7453147,
+                            -20.0075322,
+                            0.0
+                        ],
+                        [
+                            -40.7453409,
+                            -20.0076156,
+                            0.0
+                        ],
+                        [
+                            -40.7453547,
+                            -20.007723,
+                            0.0
+                        ],
+                        [
+                            -40.7451615,
+                            -20.0079699,
+                            0.0
+                        ],
+                        [
+                            -40.7450611,
+                            -20.0080426,
+                            0.0
+                        ],
+                        [
+                            -40.7449547,
+                            -20.0081333,
+                            0.0
+                        ],
+                        [
+                            -40.7448359,
+                            -20.0082539,
+                            0.0
+                        ],
+                        [
+                            -40.7447614,
+                            -20.0083802,
+                            0.0
+                        ],
+                        [
+                            -40.7442771,
+                            -20.0086,
+                            0.0
+                        ],
+                        [
+                            -40.7440655,
+                            -20.0083273,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S14R3",
+                "setor": "Setor 14",
+                "localizacao": "Rod. Florêncio Germano Augusto Berger com R. Sapucaia",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 2,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Domicílios de baixo padrão com cortes verticais (>4m). Declividade 0-40º.",
+                "sugestoes": [
+                    "Melhoria habitacional",
+                    "Contenção de taludes",
+                    "Assistência técnica",
+                    "Programa de reassentamento"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7437797,
+                            -20.0105003,
+                            0.0
+                        ],
+                        [
+                            -40.7434029,
+                            -20.0101574,
+                            0.0
+                        ],
+                        [
+                            -40.743274,
+                            -20.0099257,
+                            0.0
+                        ],
+                        [
+                            -40.7431894,
+                            -20.0097114,
+                            0.0
+                        ],
+                        [
+                            -40.7429727,
+                            -20.0095462,
+                            0.0
+                        ],
+                        [
+                            -40.7429334,
+                            -20.0094211,
+                            0.0
+                        ],
+                        [
+                            -40.7428563,
+                            -20.0093143,
+                            0.0
+                        ],
+                        [
+                            -40.7428166,
+                            -20.0091534,
+                            0.0
+                        ],
+                        [
+                            -40.7428711,
+                            -20.0089318,
+                            0.0
+                        ],
+                        [
+                            -40.7430362,
+                            -20.0090018,
+                            0.0
+                        ],
+                        [
+                            -40.7436277,
+                            -20.0099043,
+                            0.0
+                        ],
+                        [
+                            -40.7437238,
+                            -20.0100168,
+                            0.0
+                        ],
+                        [
+                            -40.74384,
+                            -20.0102368,
+                            0.0
+                        ],
+                        [
+                            -40.7439817,
+                            -20.0104744,
+                            0.0
+                        ],
+                        [
+                            -40.7437797,
+                            -20.0105003,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S15R3",
+                "setor": "Setor 15",
+                "localizacao": "Rod. Florêncio Germano Augusto Berger",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo, Corrida de Massa",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 9,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Ampliação do loteamento com aterros instáveis, trincas no terreno. Declividade 0-55º.",
+                "sugestoes": [
+                    "Paralisação das obras",
+                    "Estabilização dos aterros",
+                    "Monitoramento geotécnico",
+                    "Sistema de alerta"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7470016,
+                            -20.0091659,
+                            0.0
+                        ],
+                        [
+                            -40.7480585,
+                            -20.009281,
+                            0.0
+                        ],
+                        [
+                            -40.7489088,
+                            -20.0095654,
+                            0.0
+                        ],
+                        [
+                            -40.7492616,
+                            -20.010028,
+                            0.0
+                        ],
+                        [
+                            -40.7492526,
+                            -20.0103627,
+                            0.0
+                        ],
+                        [
+                            -40.7489576,
+                            -20.0105508,
+                            0.0
+                        ],
+                        [
+                            -40.7478838,
+                            -20.0100595,
+                            0.0
+                        ],
+                        [
+                            -40.7472415,
+                            -20.0097133,
+                            0.0
+                        ],
+                        [
+                            -40.7468105,
+                            -20.009604,
+                            0.0
+                        ],
+                        [
+                            -40.7466395,
+                            -20.0095818,
+                            0.0
+                        ],
+                        [
+                            -40.746571,
+                            -20.0096721,
+                            0.0
+                        ],
+                        [
+                            -40.7464957,
+                            -20.0097206,
+                            0.0
+                        ],
+                        [
+                            -40.7464893,
+                            -20.0097147,
+                            0.0
+                        ],
+                        [
+                            -40.7464013,
+                            -20.0097634,
+                            0.0
+                        ],
+                        [
+                            -40.7463064,
+                            -20.0097584,
+                            0.0
+                        ],
+                        [
+                            -40.7462118,
+                            -20.0097712,
+                            0.0
+                        ],
+                        [
+                            -40.7461104,
+                            -20.0097543,
+                            0.0
+                        ],
+                        [
+                            -40.7459963,
+                            -20.0097196,
+                            0.0
+                        ],
+                        [
+                            -40.7459443,
+                            -20.0095946,
+                            0.0
+                        ],
+                        [
+                            -40.7458804,
+                            -20.0095355,
+                            0.0
+                        ],
+                        [
+                            -40.7458418,
+                            -20.0094702,
+                            0.0
+                        ],
+                        [
+                            -40.74581,
+                            -20.0094525,
+                            0.0
+                        ],
+                        [
+                            -40.7456709,
+                            -20.0094539,
+                            0.0
+                        ],
+                        [
+                            -40.7455067,
+                            -20.0094675,
+                            0.0
+                        ],
+                        [
+                            -40.745355,
+                            -20.009463,
+                            0.0
+                        ],
+                        [
+                            -40.7453162,
+                            -20.0093917,
+                            0.0
+                        ],
+                        [
+                            -40.745073,
+                            -20.0091132,
+                            0.0
+                        ],
+                        [
+                            -40.7452489,
+                            -20.0090219,
+                            0.0
+                        ],
+                        [
+                            -40.745318,
+                            -20.0089794,
+                            0.0
+                        ],
+                        [
+                            -40.7454126,
+                            -20.0089545,
+                            0.0
+                        ],
+                        [
+                            -40.7455328,
+                            -20.0089653,
+                            0.0
+                        ],
+                        [
+                            -40.7459505,
+                            -20.009009,
+                            0.0
+                        ],
+                        [
+                            -40.7461275,
+                            -20.0090132,
+                            0.0
+                        ],
+                        [
+                            -40.7468369,
+                            -20.0091377,
+                            0.0
+                        ],
+                        [
+                            -40.7470016,
+                            -20.0091659,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S16R3",
+                "setor": "Setor 16",
+                "localizacao": "Rod. Florencio Germano Augusto Berger",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 2,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Processos geodinâmicos ativos (lona preta instalada após deslizamento). Declividade 10-55º.",
+                "sugestoes": [
+                    "Monitoramento contínuo",
+                    "Obras de contenção",
+                    "Alertas à população",
+                    "Plano de emergência"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7459704,
+                            -20.0119606,
+                            0.0
+                        ],
+                        [
+                            -40.7456822,
+                            -20.0121905,
+                            0.0
+                        ],
+                        [
+                            -40.745512,
+                            -20.012234,
+                            0.0
+                        ],
+                        [
+                            -40.7451712,
+                            -20.0122851,
+                            0.0
+                        ],
+                        [
+                            -40.7452136,
+                            -20.0121174,
+                            0.0
+                        ],
+                        [
+                            -40.7455344,
+                            -20.0119768,
+                            0.0
+                        ],
+                        [
+                            -40.7457101,
+                            -20.0118615,
+                            0.0
+                        ],
+                        [
+                            -40.7457911,
+                            -20.0117532,
+                            0.0
+                        ],
+                        [
+                            -40.7459704,
+                            -20.0119606,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S17R3",
+                "setor": "Setor 17",
+                "localizacao": "Rod. Florencio Germano Augusto Berger",
+                "bairro": "Centro",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 5,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Cortes verticais (>5m), domicílios muito próximos à base dos taludes. Declividade 0-80º.",
+                "sugestoes": [
+                    "Afastamento das edificações",
+                    "Contenção de taludes",
+                    "Monitoramento",
+                    "Inspeções técnicas"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7537792,
+                            -20.0297009,
+                            0.0
+                        ],
+                        [
+                            -40.7533341,
+                            -20.0297053,
+                            0.0
+                        ],
+                        [
+                            -40.75306,
+                            -20.0296124,
+                            0.0
+                        ],
+                        [
+                            -40.7527406,
+                            -20.0295487,
+                            0.0
+                        ],
+                        [
+                            -40.7528038,
+                            -20.0293138,
+                            0.0
+                        ],
+                        [
+                            -40.7532605,
+                            -20.0294479,
+                            0.0
+                        ],
+                        [
+                            -40.7534834,
+                            -20.029484,
+                            0.0
+                        ],
+                        [
+                            -40.7536548,
+                            -20.0294345,
+                            0.0
+                        ],
+                        [
+                            -40.7537759,
+                            -20.0294094,
+                            0.0
+                        ],
+                        [
+                            -40.7537792,
+                            -20.0297009,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S18R3",
+                "setor": "Setor 18",
+                "localizacao": "Rod. Dalmácio Espíndula - Alto Possmousel",
+                "bairro": "Área rural - Alto Possmousel",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 4,
+                "pessoas_risco": "Não informado",
+                "zona": "Rural",
+                "descricao": "Cortes verticalizados (>12m) não estabilizados, área rural. Declividade 0-70º.",
+                "sugestoes": [
+                    "Obras de contenção",
+                    "Manutenção da cobertura vegetal",
+                    "Monitoramento",
+                    "Assistência técnica rural"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.8351799,
+                            -20.0662812,
+                            0.0
+                        ],
+                        [
+                            -40.8348261,
+                            -20.0663136,
+                            0.0
+                        ],
+                        [
+                            -40.834679,
+                            -20.0662816,
+                            0.0
+                        ],
+                        [
+                            -40.8345218,
+                            -20.0662498,
+                            0.0
+                        ],
+                        [
+                            -40.8341827,
+                            -20.0662294,
+                            0.0
+                        ],
+                        [
+                            -40.8338324,
+                            -20.0661279,
+                            0.0
+                        ],
+                        [
+                            -40.83367,
+                            -20.066077,
+                            0.0
+                        ],
+                        [
+                            -40.8336083,
+                            -20.0659916,
+                            0.0
+                        ],
+                        [
+                            -40.8336224,
+                            -20.0659007,
+                            0.0
+                        ],
+                        [
+                            -40.8337333,
+                            -20.065866,
+                            0.0
+                        ],
+                        [
+                            -40.8337988,
+                            -20.0658462,
+                            0.0
+                        ],
+                        [
+                            -40.8341335,
+                            -20.0659193,
+                            0.0
+                        ],
+                        [
+                            -40.8346051,
+                            -20.06601,
+                            0.0
+                        ],
+                        [
+                            -40.834696,
+                            -20.0659995,
+                            0.0
+                        ],
+                        [
+                            -40.8352126,
+                            -20.0660562,
+                            0.0
+                        ],
+                        [
+                            -40.8352136,
+                            -20.0661375,
+                            0.0
+                        ],
+                        [
+                            -40.8351799,
+                            -20.0662812,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S19R3",
+                "setor": "Setor 19",
+                "localizacao": "Rod. Dalmácio Espíndula",
+                "bairro": "Área rural",
+                "tipo_risco": "Deslizamento de Solo",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 8,
+                "pessoas_risco": "Não informado",
+                "zona": "Rural",
+                "descricao": "Substrato rochoso impermeável + solo residual instável, indícios de movimentação. Declividade 0-65º.",
+                "sugestoes": [
+                    "Monitoramento geotécnico",
+                    "Obras de contenção",
+                    "Melhoria habitacional",
+                    "Sistema de alerta"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7529873,
+                            -20.0401956,
+                            0.0
+                        ],
+                        [
+                            -40.752107,
+                            -20.0401829,
+                            0.0
+                        ],
+                        [
+                            -40.7514367,
+                            -20.0399385,
+                            0.0
+                        ],
+                        [
+                            -40.7502019,
+                            -20.0394345,
+                            0.0
+                        ],
+                        [
+                            -40.7500933,
+                            -20.0392133,
+                            0.0
+                        ],
+                        [
+                            -40.7495618,
+                            -20.0391755,
+                            0.0
+                        ],
+                        [
+                            -40.749575,
+                            -20.0390033,
+                            0.0
+                        ],
+                        [
+                            -40.7499313,
+                            -20.0389783,
+                            0.0
+                        ],
+                        [
+                            -40.7503191,
+                            -20.0390533,
+                            0.0
+                        ],
+                        [
+                            -40.750891,
+                            -20.0393058,
+                            0.0
+                        ],
+                        [
+                            -40.7515021,
+                            -20.0396798,
+                            0.0
+                        ],
+                        [
+                            -40.752255,
+                            -20.0398444,
+                            0.0
+                        ],
+                        [
+                            -40.7526957,
+                            -20.0398974,
+                            0.0
+                        ],
+                        [
+                            -40.7530149,
+                            -20.0399516,
+                            0.0
+                        ],
+                        [
+                            -40.7529873,
+                            -20.0401956,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "id": "S20R3",
+                "setor": "Setor 20",
+                "localizacao": "Rod. Dalmácio Espíndula",
+                "bairro": "Centro",
+                "tipo_risco": "Enxurrada, Solapamento",
+                "nivel_risco": "Alto (R3)",
+                "imoveis_risco": 46,
+                "pessoas_risco": "Não informado",
+                "zona": "Urbana",
+                "descricao": "Ocupação nas margens do canal suscetível a enxurradas, erosão nas margens. Declividade 0-3º.",
+                "sugestoes": [
+                    "Proteção das margens",
+                    "Sistema de alerta",
+                    "Remoção de ocupações críticas",
+                    "Plano de evacuação"
+                ]
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -40.7380314,
+                            -20.0345935,
+                            0.0
+                        ],
+                        [
+                            -40.7383825,
+                            -20.0343271,
+                            0.0
+                        ],
+                        [
+                            -40.738708,
+                            -20.0340311,
+                            0.0
+                        ],
+                        [
+                            -40.7392286,
+                            -20.0336496,
+                            0.0
+                        ],
+                        [
+                            -40.7393791,
+                            -20.0335406,
+                            0.0
+                        ],
+                        [
+                            -40.7395101,
+                            -20.0333779,
+                            0.0
+                        ],
+                        [
+                            -40.7395984,
+                            -20.0333591,
+                            0.0
+                        ],
+                        [
+                            -40.7397094,
+                            -20.0331023,
+                            0.0
+                        ],
+                        [
+                            -40.7397834,
+                            -20.0329283,
+                            0.0
+                        ],
+                        [
+                            -40.7401037,
+                            -20.0321663,
+                            0.0
+                        ],
+                        [
+                            -40.7402281,
+                            -20.0319751,
+                            0.0
+                        ],
+                        [
+                            -40.7403898,
+                            -20.0317345,
+                            0.0
+                        ],
+                        [
+                            -40.7404638,
+                            -20.0315605,
+                            0.0
+                        ],
+                        [
+                            -40.7405313,
+                            -20.0313746,
+                            0.0
+                        ],
+                        [
+                            -40.7406986,
+                            -20.0310682,
+                            0.0
+                        ],
+                        [
+                            -40.7408159,
+                            -20.0308161,
+                            0.0
+                        ],
+                        [
+                            -40.7410263,
+                            -20.0304017,
+                            0.0
+                        ],
+                        [
+                            -40.741218,
+                            -20.0300054,
+                            0.0
+                        ],
+                        [
+                            -40.7416372,
+                            -20.0301806,
+                            0.0
+                        ],
+                        [
+                            -40.7416139,
+                            -20.030366,
+                            0.0
+                        ],
+                        [
+                            -40.7415254,
+                            -20.0303669,
+                            0.0
+                        ],
+                        [
+                            -40.7414752,
+                            -20.0303973,
+                            0.0
+                        ],
+                        [
+                            -40.7414141,
+                            -20.0305891,
+                            0.0
+                        ],
+                        [
+                            -40.7411584,
+                            -20.0309083,
+                            0.0
+                        ],
+                        [
+                            -40.7408997,
+                            -20.0315323,
+                            0.0
+                        ],
+                        [
+                            -40.740609,
+                            -20.0321207,
+                            0.0
+                        ],
+                        [
+                            -40.7402734,
+                            -20.0326438,
+                            0.0
+                        ],
+                        [
+                            -40.7401007,
+                            -20.0330399,
+                            0.0
+                        ],
+                        [
+                            -40.7398704,
+                            -20.0333708,
+                            0.0
+                        ],
+                        [
+                            -40.7396666,
+                            -20.033809,
+                            0.0
+                        ],
+                        [
+                            -40.7394341,
+                            -20.0339368,
+                            0.0
+                        ],
+                        [
+                            -40.7391576,
+                            -20.0340889,
+                            0.0
+                        ],
+                        [
+                            -40.7388506,
+                            -20.0343488,
+                            0.0
+                        ],
+                        [
+                            -40.7387317,
+                            -20.0344575,
+                            0.0
+                        ],
+                        [
+                            -40.7385372,
+                            -20.0345909,
+                            0.0
+                        ],
+                        [
+                            -40.738241,
+                            -20.0346775,
+                            0.0
+                        ],
+                        [
+                            -40.7380653,
+                            -20.0347987,
+                            0.0
+                        ],
+                        [
+                            -40.7377346,
+                            -20.0352023,
+                            0.0
+                        ],
+                        [
+                            -40.7375625,
+                            -20.0350725,
+                            0.0
+                        ],
+                        [
+                            -40.7379814,
+                            -20.0346442,
+                            0.0
+                        ],
+                        [
+                            -40.7380314,
+                            -20.0345935,
+                            0.0
+                        ]
+                    ]
+                ]
+            }
+        }
+    ]
+}

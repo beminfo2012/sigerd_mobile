@@ -1,0 +1,146 @@
+﻿
+> defesa-civil-mobile@1.34.3 build
+> vite build
+
+[36mvite v6.4.1 [32mbuilding for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 2631 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mregisterSW.js                 [39m[1m[2m    0.13 kB[22m[1m[22m
+[2mdist/[22m[32mmanifest.webmanifest          [39m[1m[2m    0.75 kB[22m[1m[22m
+[2mdist/[22m[32mindex.html                    [39m[1m[2m    2.37 kB[22m[1m[22m[2m Ôöé gzip:   1.15 kB[22m
+[2mdist/[22m[35massets/index-COF4mISh.css     [39m[1m[2m   68.19 kB[22m[1m[22m[2m Ôöé gzip:  15.82 kB[22m
+[2mdist/[22m[36massets/purify.es-B9ZVCkUG.js  [39m[1m[2m   22.64 kB[22m[1m[22m[2m Ôöé gzip:   8.75 kB[22m
+[2mdist/[22m[36massets/index.es-DNeZiIwe.js   [39m[1m[2m  159.35 kB[22m[1m[22m[2m Ôöé gzip:  53.40 kB[22m
+[2mdist/[22m[36massets/index-BqUK_13x.js      [39m[1m[33m2,266.28 kB[39m[22m[2m Ôöé gzip: 781.96 kB[22m
+node.exe : [33m
+No linha:1 
+caractere:1
++ & "C:\Program Files
+\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ([33m:S   
+ tring) [], Remot    
+eException
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+(!) Some chunks are 
+larger than 500 kB 
+after minification. 
+Consider:
+- Using dynamic 
+import() to 
+code-split the 
+application
+- Use build.rollupOpt
+ions.output.manualChu
+nks to improve 
+chunking: https://rol
+lupjs.org/configurati
+on-options/#output-ma
+nualchunks
+- Adjust chunk size 
+limit for this 
+warning via build.chu
+nkSizeWarningLimit.[
+39m
+[32mÔ£ô built in 11.34s[39m
+[31merror during 
+build:
+Error: 
+  Configure "workbox.
+maximumFileSizeToCach
+eInBytes" to change 
+the limit: the 
+default value is 2 
+MiB.
+  Check https://vite-
+pwa-org.netlify.app/g
+uide/faq.html#missing
+-assets-from-sw-preca
+che-manifest for 
+more information.
+  Assets exceeding 
+the limit:
+  - assets/index-BqUK
+_13x.js is 2.27 MB, 
+and won't be 
+precached.
+
+    at 
+logWorkboxResult (fil
+e:///C:/Users/user/De
+sktop/DEFESA_CIVIL_MO
+BILE/node_modules/vit
+e-plugin-pwa/dist/chu
+nk-G4TAN34B.js:44:13)
+    at generateServic
+eWorker (file:///C:/U
+sers/user/Desktop/DEF
+ESA_CIVIL_MOBILE/node
+_modules/vite-plugin-
+pwa/dist/index.js:209
+:3)
+    at async 
+_generateSW (file:///
+C:/Users/user/Desktop
+/DEFESA_CIVIL_MOBILE/
+node_modules/vite-plu
+gin-pwa/dist/index.js
+:234:5)
+    at async 
+Object.handler (file:
+///C:/Users/user/Desk
+top/DEFESA_CIVIL_MOBI
+LE/node_modules/vite-
+plugin-pwa/dist/index
+.js:418:13)
+    at async PluginDr
+iver.hookParallel (fi
+le:///C:/Users/user/D
+esktop/DEFESA_CIVIL_M
+OBILE/node_modules/ro
+llup/dist/es/shared/n
+ode-entry.js:22426:17
+)
+    at async 
+Object.close (file://
+/C:/Users/user/Deskto
+p/DEFESA_CIVIL_MOBILE
+/node_modules/rollup/
+dist/es/shared/node-e
+ntry.js:23445:13)
+    at async 
+buildEnvironment (fil
+e:///C:/Users/user/De
+sktop/DEFESA_CIVIL_MO
+BILE/node_modules/vit
+e/dist/node/chunks/de
+p-D4NMHUTW.js:46258:1
+7)
+    at async Object.d
+efaultBuildApp [as 
+buildApp] (file:///C:
+/Users/user/Desktop/D
+EFESA_CIVIL_MOBILE/no
+de_modules/vite/dist/
+node/chunks/dep-D4NMH
+UTW.js:46713:5)
+    at async 
+CAC.<anonymous> (file
+:///C:/Users/user/Des
+ktop/DEFESA_CIVIL_MOB
+ILE/node_modules/vite
+/dist/node/cli.js:863
+:7)[39m

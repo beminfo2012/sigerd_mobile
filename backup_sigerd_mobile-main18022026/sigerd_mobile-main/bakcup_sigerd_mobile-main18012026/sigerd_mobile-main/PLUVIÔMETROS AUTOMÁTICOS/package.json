@@ -1,0 +1,14 @@
+{
+    "name": "pluviometros-automaticos",
+    "version": "1.0.0",
+    "description": "Monitoramento de pluviometros CEMADEN",
+    "main": "fetch_data.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "puppeteer": "^24.33.0"
+    }
+}

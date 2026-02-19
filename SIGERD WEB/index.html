@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SIGERD - Defesa Civil de Santa Maria de Jetibá</title>
+    <!-- CSS Externo -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS (para o mapa) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Favicon -->
+    <link rel="icon" href="assets/img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="overlay"></div>
+
+    <div class="top-header">
+        <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+        <div class="system-name">
+            <h1>SIGERD - <span>Defesa Civil de Santa Maria de Jetibá</span></h1>
+        </div>
+        <div class="user-info">
+            <img src="https://ui-avatars.com/api/?name=Usuario+Altvar&background=0D8ABC&color=fff" alt="User">
+            <div class="user-details">
+                <span>Operador</span>
+                <a href="#" id="logout-btn">Sair <i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar" role="navigation" aria-label="Menu principal">
+            <div class="logo">
+                <img src="assets/img/LOGO_DEFESA_CIVIL_2025.png" alt="Logo Defesa Civil">
+            </div>
+            <ul class="menu" aria-hidden="false">
+                <li class="menu-item active" data-target="dashboard"><i
+                        class="fas fa-chart-line"></i><span>Dashboard</span></li>
+                <li class="menu-item has-submenu">
+                    <div class="menu-item-content" data-target="monitoramento">
+                        <i class="fas fa-desktop"></i><span>Monitoramento</span><i
+                            class="fas fa-chevron-down submenu-icon" aria-hidden="true"></i>
+                    </div>
+                    <ul class="submenu" data-parent="monitoramento">
+                        <li class="submenu-item" data-target="monitoramento-integrado"><i
+                                class="fas fa-satellite-dish"></i><span>Monitoramento Integrado</span></li>
+                        <li class="submenu-item" data-target="alertas-sco"><i
+                                class="fas fa-exclamation-triangle"></i><span>Alertas e Avisos</span></li>
+                    </ul>
+                </li>
+                <li class="menu-item has-submenu">
+                    <div class="menu-item-content" data-target="areas-risco">
+                        <i class="fas fa-exclamation-triangle"></i><span>Áreas de Risco</span><i
+                            class="fas fa-chevron-down submenu-icon" aria-hidden="true"></i>
+                    </div>
+                    <ul class="submenu" data-parent="areas-risco">
+                        <li class="submenu-item" data-target="pessoas-risco"><i
+                                class="fas fa-users"></i><span>Pessoas</span></li>
+                    </ul>
+                </li>
+                <li class="menu-item has-submenu">
+                    <div class="menu-item-content" data-target="acoes">
+                        <i class="fas fa-tasks"></i><span>SCO</span><i class="fas fa-chevron-down submenu-icon"
+                            aria-hidden="true"></i>
+                    </div>
+                    <ul class="submenu" data-parent="acoes">
+                        <li class="submenu-item" data-target="ocorrencias"><i
+                                class="fas fa-bullhorn"></i><span>Ocorrências</span></li>
+                        <li class="submenu-item" data-target="integrantes"><i
+                                class="fas fa-users-cog"></i><span>Integrantes</span>
+                        </li>
+                    </ul>
+                </li>
+                <li class="menu-item has-submenu">
+                    <div class="menu-item-content" data-target="equipe-recursos">
+                        <i class="fas fa-users-cog"></i><span>Recursos</span><i class="fas fa-chevron-down submenu-icon"
+                            aria-hidden="true"></i>
+                    </div>
+                    <ul class="submenu" data-parent="equipe-recursos">
+                        <li class="submenu-item" data-target="frota-veiculos"><i class="fas fa-car"></i><span>Frota de
+                                Veículos</span>
+                        </li>
+                    </ul>
+                </li>
+                <li class="menu-item has-submenu">
+                    <div class="menu-item-content" data-target="assistencia-humanitaria">
+                        <i class="fas fa-hands-helping"></i><span>Assistência Humanitária</span><i
+                            class="fas fa-chevron-down submenu-icon" aria-hidden="true"></i>
+                    </div>
+                    <ul class="submenu" data-parent="assistencia-humanitaria">
+                        <li class="submenu-item" data-target="abrigos"><i class="fas fa-home"></i><span>Abrigos</span>
+                        </li>
+                        <li class="submenu-item" data-target="doacoes"><i class="fas fa-box-open"></i><span>Cadastro de
+                                Doações</span></li>
+                        <li class="submenu-item" data-target="distribuicao"><i
+                                class="fas fa-dolly"></i><span>Distribuição de Itens</span></li>
+                        <li class="submenu-item" data-target="relatorios-assistencia"><i
+                                class="fas fa-chart-pie"></i><span>Relatórios</span></li>
+                    </ul>
+                </li>
+
+
+                <li class="menu-item" data-target="comunicacao"><i class="fas fa-comments"></i><span>Comunicação</span>
+                </li>
+
+                <a href="pages/documentos.html" class="menu-item">
+                    <i class="fas fa-file-alt"></i><span>Documentos</span>
+                </a>
+            </ul>
+
+            <div id="activation-buttons-container"
+                style="padding:15px; text-align:center; margin-top:18px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                <button id="changeLevelButton" class="btn-primary" style="width:90%; display: none;"><i
+                        class="fas fa-exchange-alt"></i> Alterar Nível</button>
+                <button id="openActivationModal" class="btn-danger" style="width:90%;"><i class="fas fa-bell"></i>
+                    Ativar Plano</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div id="status-banner">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <i class="fas fa-exclamation-circle" style="font-size:20px;"></i>
+                    <div id="status-banner-text">
+                        <!-- O texto do status será inserido aqui via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard" class="section active">
+                <div class="welcome-message">
+                    <div class="monitor-header">
+                        <h3>Monitoramento em Tempo Real</h3>
+                        <div class="monitor-status">
+                            <span class="status-indicator status-online"></span>
+                            <span>Sistema Online</span>
+                        </div>
+                    </div>
+
+                    <div class="monitor-grid">
+                        <div class="monitor-card risk">
+                            <div class="monitor-label">Nível de Risco</div>
+                            <div class="monitor-value">Moderado</div>
+                            <div class="progress-bar" style="margin-top: 8px;">
+                                <div class="progress" style="width: 60%; background: #FFC107; height: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="monitor-card alerts">
+                            <div class="monitor-label">Alertas Ativos</div>
+                            <div class="monitor-value">3</div>
+                            <div style="font-size: 12px; color: #ff5722; margin-top: 5px;">
+                                <i class="fas fa-exclamation-triangle"></i> Requer atenção
+                            </div>
+                        </div>
+
+                        <div class="monitor-card teams">
+                            <div class="monitor-label">Equipes em Campo</div>
+                            <div class="monitor-value">12</div>
+                            <div style="font-size: 12px; color: #2196F3; margin-top: 5px;">
+                                <i class="fas fa-check-circle"></i> 8 ativas
+                            </div>
+                        </div>
+
+                        <div class="monitor-card impact">
+                            <div class="monitor-label">Pessoas Impactadas</div>
+                            <div class="monitor-value">1,250</div>
+                            <div style="font-size: 12px; color: #9C27B0; margin-top: 5px;">
+                                <i class="fas fa-users"></i> 320 famílias
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gauge-container">
+                        <div class="gauge">
+                            <div class="gauge-value" id="rainfall24h-dashboard">-- mm</div>
+                            <div class="gauge-label">Precipitação (24h)</div>
+                        </div>
+                        <div class="gauge">
+                            <div class="gauge-value" id="dashboard-humidity">--%</div>
+                            <div class="gauge-label">Umidade</div>
+                        </div>
+                        <div class="gauge">
+                            <div class="gauge-value" id="dashboard-temperature">--°C</div>
+                            <div class="gauge-label">Temperatura</div>
+                        </div>
+                    </div>
+
+                    <div class="monitor-update">
+                        <div>
+                            <i class="fas fa-info-circle" style="color: #2a5299;"></i>
+                            Última atualização: <strong id="last-update-time">há 2 minutos</strong>
+                        </div>
+                        <button id="refresh-monitor" class="btn-primary" style="padding: 5px 10px; font-size: 12px;">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="quick-actions" role="toolbar" aria-label="Ações rápidas">
+                    <button id="btn-open-report-modal"><i class="fas fa-download"></i> Relatório Situacional</button>
+                    <button id="btn-contatar"><i class="fas fa-phone-alt"></i> Contatar Regional</button>
+                    <button id="btn-enviar-alerta"><i class="fas fa-bullhorn"></i> Enviar Alerta</button>
+                    <button id="btn-verificar-equipes"><i class="fas fa-users"></i> Verificar Equipes</button>
+                    <button id="btn-open-tracking-panel" style="background-color: #ff9800;"><i
+                            class="fas fa-binoculars"></i> Painel de Acompanhamento</button>
+                </div>
+
+                <div class="header">
+                    <h2>Dashboard</h2>
+                    <div class="header-actions">
+                        <button id="btn-update" class="btn-primary"><i class="fas fa-sync-alt"></i> Atualizar
+                            Dados</button>
+                    </div>
+                </div>
+
+                <div class="dashboard">
+                    <div class="card" aria-labelledby="status-plano">
+                        <div class="card-header"><i class="fas fa-clipboard-list"></i>
+                            <h3 id="status-plano">Status do Plano</h3>
+                        </div>
+                        <div class="stat" id="statusPercent">25%</div>
+                        <p id="tasksSummary">4 de 16 tarefas concluídas</p>
+                        <div class="progress-bar">
+                            <div class="progress" style="width:25%; background:#FFC107; height:100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="card" aria-labelledby="alertas-ativos">
+                        <div class="card-header"><i class="fas fa-exclamation-circle"></i>
+                            <h3 id="alertas-ativos">Alertas Ativos</h3>
+                        </div>
+                        <div class="stat" id="activeAlerts">3</div>
+                        <p>Alertas não resolvidos</p>
+                        <ul class="card-list" id="activeAlertsList" style="max-height: 120px; overflow-y: auto;">
+                            <!-- Alertas serão inseridos aqui via JS -->
+                        </ul>
+                    </div>
+
+                    <div class="card" aria-labelledby="pessoas-impactadas">
+                        <div class="card-header"><i class="fas fa-users"></i>
+                            <h3 id="pessoas-impactadas">Pessoas Impactadas</h3>
+                        </div>
+                        <div class="stat" id="peopleImpacted">1,250</div>
+                        <p>Pessoas em áreas de risco</p>
+                        <ul class="card-list">
+                            <li>Famílias: <strong id="familiesCount">320</strong></li>
+                            <li>Comunidades: <strong id="communitiesCount">5</strong></li>
+                            <li>Escolas afetadas: <strong id="schoolsAffected">2</strong></li>
+                            <li>Desabrigados: <strong id="desabrigados">80</strong></li>
+                            <li>Desalojados: <strong id="desalojados">200</strong></li>
+                        </ul>
+                    </div>
+
+                    <div class="card" aria-labelledby="tarefas-prioritarias">
+                        <div class="card-header"><i class="fas fa-tasks"></i>
+                            <h3 id="tarefas-prioritarias">Tarefas Prioritárias</h3>
+                        </div>
+                        <ul class="card-list" id="actionsList">
+                            <li><i class="fas fa-check-circle completed"></i> Ativar centro de operações</li>
+                            <li><i class="fas fa-check-circle completed"></i> Contatar defesa civil</li>
+                            <li><i class="fas fa-circle pending"></i> Estabelecer rotas de evacuação</li>
+                            <li><i class="fas fa-circle pending"></i> Preparar abrigos temporários</li>
+                            <li><i class="fas fa-circle pending"></i> Testar sistemas de comunicação</li>
+                        </ul>
+                    </div>
+
+                    <div class="card" aria-labelledby="recursos-empregados">
+                        <div class="card-header"><i class="fas fa-tools"></i>
+                            <h3 id="recursos-empregados">Recursos Empregados</h3>
+                        </div>
+                        <div class="stat" id="teamsInField">12 equipes</div>
+                        <p>Equipes em campo</p>
+                        <ul class="card-list">
+                            <li>Abrigos abertos: <strong id="sheltersOpen">3</strong></li>
+                            <li>Materiais distribuídos: <strong id="materialsDistributed">150 cestas básicas</strong>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card" aria-labelledby="condicoes-climaticas">
+                        <div class="card-header"><i class="fas fa-cloud-rain"></i>
+                            <h3 id="condicoes-climaticas">Condições Climáticas</h3>
+                        </div>
+                        <div class="stat" id="rainfall24h">65 mm</div>
+                        <p id="rainfallLabel">Precipitação acumulada (24h)</p>
+                        <p><strong>Previsão:</strong> <span id="forecast">Chuva moderada nas próximas 6h</span></p>
+                    </div>
+
+                    <div class="card" aria-labelledby="nivel-risco">
+                        <div class="card-header"><i class="fas fa-shield-alt"></i>
+                            <h3 id="nivel-risco">Nível de Risco</h3>
+                        </div>
+                        <div class="stat" id="riskLevel">Moderado</div>
+                        <p>Requer atenção constante</p>
+                        <p>Última atualização: <span id="lastUpdate">2h</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="equipe-recursos" class="section" style="display:none;">
+                <h2>Recursos</h2>
+                <p>Por favor, selecione uma opção no menu lateral.</p>
+            </div>
+
+            <div id="frota-veiculos" class="section" style="display:none;">
+                <div class="header">
+                    <h2>Gestão de Recursos - Frota de Veículos</h2>
+                    <div class="header-actions">
+                        <button id="btn-refresh-vehicles" class="btn-primary"><i class="fas fa-sync-alt"></i>
+                            Atualizar</button>
+                    </div>
+                </div>
+
+                <div class="resource-filters">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="filter-search">Buscar</label>
+                            <input type="text" id="filter-search" placeholder="Modelo, placa, código...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-type">Tipo</label>
+                            <select id="filter-type">
+                                <option value="">Todos</option>
+                                <option value="Passageiros">Passageiros</option>
+                                <option value="Carga">Carga</option>
+                                <option value="Especial">Especial</option>
+                                <option value="Tração">Tração</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-status">Status</label>
+                            <select id="filter-status">
+                                <option value="">Todos</option>
+                                <option value="disponivel">Disponível</option>
+                                <option value="mobilizado">Mobilizado</option>
+                                <option value="manutencao">Em Manutenção</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="filter-marca">Marca</label>
+                            <select id="filter-marca">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-ano">Ano de Fabricação</label>
+                            <select id="filter-ano">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label style="color: transparent;">Ações</label>
+                            <button id="btn-apply-filters" class="btn-primary" style="width: 100%;">Aplicar
+                                Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-car"></i>
+                        <h3>Frota de Veículos</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Modelo</th>
+                                    <th>Marca</th>
+                                    <th>Placa</th>
+                                    <th>Ano</th>
+                                    <th>Tipo</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehicles-list">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer">
+                        <div class="summary-info">
+                            Mostrando <span id="current-items">0</span> de <span id="total-items">0</span> veículos
+                        </div>
+                        <div class="pagination" id="pagination">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="monitoramento-integrado" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-desktop"></i> Monitoramento Integrado</h2>
+                    <button id="refresh-monitoramento" class="btn-primary"><i class="fas fa-sync-alt"></i> Atualizar
+                        Dados</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-cloud-sun"></i>
+                        <h3>Estações Meteorológicas</h3>
+                    </div>
+                    <div class="monitor-grid" id="weather-stations-grid">
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-cloud-showers-heavy"></i>
+                        <h3>Pluviômetros Automáticos</h3>
+                    </div>
+                    <div class="monitor-grid" id="rain-gauges-grid" style="grid-template-columns: 1fr;">
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-satellite"></i>
+                        <h3>Mapa Interativo de Monitoramento</h3>
+                    </div>
+                    <div id="map-container">
+                        <div id="map"></div>
+                        <p style="font-size: 14px; color: #666;">Última atualização: <span
+                                id="last-satellite-update">--/--/---- --:--</span></p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Ferramentas de Gestão</h3>
+                    </div>
+                    <div class="quick-actions">
+                        <button id="btn-gerenciar-alertas"><i class="fas fa-bell"></i> Gerenciar Alertas</button>
+                        <button id="btn-mapa-risco"><i class="fas fa-map-marked-alt"></i> Mapa de Risco</button>
+                        <button id="btn-relatorios-impacto"><i class="fas fa-chart-bar"></i> Relatórios de
+                            Impacto</button>
+                        <button id="btn-status-equipes"><i class="fas fa-users-cog"></i> Status das Equipes</button>
+                    </div>
+                </div>
+            </div>
+            <div id="areas-risco" class="section" style="display:none;">
+                <h2>Áreas de Risco</h2>
+                <p>Por favor, selecione uma opção no menu lateral.</p>
+            </div>
+            <div id="pessoas-risco" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-users"></i> Pessoas em Áreas de Risco</h2>
+                    <div class="header-actions">
+                        <button id="btn-add-person" class="btn-primary"><i class="fas fa-plus"></i> Adicionar
+                            Pessoa</button>
+                    </div>
+                </div>
+
+                <div class="resource-filters" style="margin-top: 20px;">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="filter-person-search">Buscar Pessoa</label>
+                            <input type="text" id="filter-person-search" placeholder="Nome, CPF, endereço...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-risk-area">Área de Risco</label>
+                            <select id="filter-risk-area">
+                                <option value="">Todas</option>
+                                <option value="Encosta do Morro">Encosta do Morro</option>
+                                <option value="Margem do Rio">Margem do Rio</option>
+                                <option value="Área de Alagamento">Área de Alagamento</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-vulnerability">Vulnerabilidade</label>
+                            <select id="filter-vulnerability">
+                                <option value="">Todas</option>
+                                <option value="Idoso">Idoso</option>
+                                <option value="PCD">PCD</option>
+                                <option value="Criança">Criança</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group" style="flex:1;">
+                            <label style="color: transparent;">Ações</label>
+                            <button id="btn-apply-person-filters" class="btn-primary" style="width: 100%;">Aplicar
+                                Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h3>Lista de Pessoas Cadastradas</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Endereço</th>
+                                    <th>Área de Risco</th>
+                                    <th>Contato</th>
+                                    <th>Vulnerabilidades</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="risk-persons-list">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="ocorrencias" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-tasks"></i> Gerenciamento de Ocorrências (Ações SCO)</h2>
+                    <div class="header-actions" style="display: flex; gap: 10px;">
+                        <button id="btn-add-action" class="btn-primary"><i class="fas fa-plus"></i> Nova Ação</button>
+                        <button id="btn-mapa-ocorrencias" class="btn-primary" style="background-color: #17a2b8;"><i
+                                class="fas fa-map-marked-alt"></i> Mapa de Ocorrências</button>
+                    </div>
+                </div>
+
+                <div class="resource-filters" style="margin-top: 20px;">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="filter-action-search">Buscar Ação</label>
+                            <input type="text" id="filter-action-search" placeholder="Descrição, responsável...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-action-phase">Fase do SCO</label>
+                            <select id="filter-action-phase">
+                                <option value="">Todas</option>
+                                <option value="Notificação e Avaliação Inicial">Avaliação Inicial</option>
+                                <option value="Planejamento">Planejamento</option>
+                                <option value="Execução">Execução</option>
+                                <option value="Controle e Encerramento">Controle/Encerramento</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-action-status">Status</label>
+                            <select id="filter-action-status">
+                                <option value="">Todos</option>
+                                <option value="nao-iniciada">Não Iniciada</option>
+                                <option value="em-andamento">Em Andamento</option>
+                                <option value="concluida">Concluída</option>
+                                <option value="cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group" style="flex:1;">
+                            <label style="color: transparent;">Ações</label>
+                            <button id="btn-apply-action-filters" class="btn-primary" style="width: 100%;">Aplicar
+                                Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h3>Lista de Ações</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Ação</th>
+                                    <th>Fase do SCO</th>
+                                    <th>Responsável</th>
+                                    <th>Status</th>
+                                    <th>Última Atualização</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="actions-list">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="alertas-sco" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Gestão de Alertas e Avisos (SCO)</h2>
+                    <div class="header-actions" style="display: flex; gap: 10px;">
+                        <button id="btn-add-sco-alert" class="btn-primary"><i class="fas fa-plus"></i> Novo
+                            Alerta/Aviso</button>
+                        <button id="btn-add-automatic-alert" class="btn-primary" style="background-color: #17a2b8;"><i
+                                class="fas fa-robot"></i> Cadastro
+                            Alerta/Aviso</button>
+                        <button id="btn-open-alerts-panel" class="btn-primary" style="background-color: #ff9800;"><i
+                                class="fas fa-tachometer-alt"></i> Painel de Alertas</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h3>Lista de Alertas e Avisos Vigentes</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th>Tipo</th>
+                                    <th>Anexo</th>
+                                    <th>Região Afetada</th>
+                                    <th>Intensidade</th>
+                                    <th>Início da Vigência</th>
+                                    <th>Fim da Vigência / Ação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sco-alerts-list">
+                                <!-- Os alertas serão inseridos aqui via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h3>Instruções</h3>
+                    </div>
+                    <p>Cadastre aqui os alertas e avisos meteorológicos emitidos por órgãos oficiais como INMET,
+                        CEMADEN,
+                        etc. As informações inseridas nesta seção alimentarão o card "Alertas Ativos" no dashboard
+                        principal.</p>
+                </div>
+            </div>
+            <div id="integrantes" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-users-cog"></i> Gestão de Integrantes (SCO)</h2>
+                    <div class="header-actions">
+                        <button id="btn-add-member" class="btn-primary"><i class="fas fa-plus"></i> Adicionar
+                            Integrante</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h3>Lista de Integrantes</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Função no SCO</th>
+                                    <th>Secretaria</th>
+                                    <th>Contato</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="members-list">
+                                <!-- Os integrantes serão inseridos aqui via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h3>Instruções</h3>
+                    </div>
+                    <p>Cadastre e gerencie os integrantes que compõem o Sistema de Comando de Operações (SCO). Mantenha
+                        as informações de contato e status sempre atualizadas.</p>
+                </div>
+            </div>
+            <div id="abrigos" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-home"></i> Gestão de Abrigos e Assistência</h2>
+                    <div class="header-actions">
+                        <button id="btn-add-shelter" class="btn-primary"><i class="fas fa-plus"></i> Adicionar
+                            Abrigo</button>
+                    </div>
+                </div>
+
+                <div class="resource-filters" style="margin-top: 20px;">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="filter-shelter-search">Buscar Abrigo</label>
+                            <input type="text" id="filter-shelter-search" placeholder="Nome, endereço, responsável...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-shelter-status">Status</label>
+                            <select id="filter-shelter-status">
+                                <option value="">Todos</option>
+                                <option value="aberto">Aberto</option>
+                                <option value="lotado">Lotado</option>
+                                <option value="fechado">Fechado</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label style="color: transparent;">Ações</label>
+                            <button id="btn-apply-shelter-filters" class="btn-primary" style="width: 100%;">Aplicar
+                                Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h3>Lista de Abrigos</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Abrigo</th>
+                                    <th>Localização</th>
+                                    <th>Responsável</th>
+                                    <th>Capacidade</th>
+                                    <th>Acomodados</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shelters-list">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="assistencia-humanitaria" class="section" style="display:none;">
+                <h2>Assistência Humanitária</h2>
+                <p>Por favor, selecione uma opção no menu lateral.</p>
+            </div>
+            <div id="doacoes" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-box-open"></i> Cadastro de Doações</h2>
+                    <div class="header-actions">
+                        <button id="btn-add-donation" class="btn-primary"><i class="fas fa-plus"></i> Registrar
+                            Doação</button>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h3>Doações Recebidas</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantidade</th>
+                                    <th>Doador</th>
+                                    <th>Data</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="donations-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="distribuicao" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-dolly"></i> Distribuição de Itens</h2>
+                    <div class="header-actions">
+                        <button id="btn-add-distribution" class="btn-primary"><i class="fas fa-plus"></i> Nova
+                            Distribuição</button>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <i class="fas fa-history"></i>
+                        <h3>Histórico de Distribuição</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantidade</th>
+                                    <th>Destino (Abrigo/Comunidade)</th>
+                                    <th>Data</th>
+                                    <th>Responsável</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="distributions-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="relatorios-assistencia" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-chart-pie"></i> Relatórios de Assistência Humanitária</h2>
+                </div>
+                <div class="dashboard">
+                    <div class="card">
+                        <div class="card-header"><i class="fas fa-box-open"></i>
+                            <h3>Estoque Atual</h3>
+                        </div>
+                        <ul class="card-list" id="stock-report-list">
+                            <!-- O conteúdo será preenchido dinamicamente via JS -->
+                            <li>Carregando...</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><i class="fas fa-truck-loading"></i>
+                            <h3>Itens Distribuídos (Total)</h3>
+                        </div>
+                        <ul class="card-list" id="distribution-report-list">
+                            <!-- O conteúdo será preenchido dinamicamente via JS -->
+                            <li>Carregando...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div id="comunicacao" class="section" style="display:none;">
+                <div class="header">
+                    <h2><i class="fas fa-tower-broadcast"></i> Comunicação Integrada</h2>
+                </div>
+
+                <div class="comms-container">
+                    <div class="comms-sidebar">
+                        <div class="comms-section-title">
+                            <i class="fas fa-users"></i>
+                            <h2>Contatos</h2>
+                        </div>
+
+                        <ul class="contact-list">
+                            <li class="contact-item active" data-id="coord-central" data-name="Coordenação Central">
+                                <div class="contact-avatar">CS</div>
+                                <div class="contact-info">
+                                    <div class="contact-name">Coordenação Central</div>
+                                    <div class="contact-status status-online">Online - Disponível</div>
+                                </div>
+                                <div class="priority-indicator priority-high"></div>
+                            </li>
+                            <li class="contact-item" data-id="equipe-1" data-name="Equipe de Resgate 1">
+                                <div class="contact-avatar">E1</div>
+                                <div class="contact-info">
+                                    <div class="contact-name">Equipe de Resgate 1</div>
+                                    <div class="contact-status status-online">Online - Em campo</div>
+                                </div>
+                                <div class="priority-indicator priority-high"></div>
+                            </li>
+                            <li class="contact-item" data-id="equipe-2" data-name="Equipe de Resgate 2">
+                                <div class="contact-avatar">E2</div>
+                                <div class="contact-info">
+                                    <div class="contact-name">Equipe de Resgate 2</div>
+                                    <div class="contact-status status-busy">Online - Ocupado</div>
+                                </div>
+                                <div class="priority-indicator priority-medium"></div>
+                            </li>
+                            <li class="contact-item" data-id="hospital" data-name="Hospital Municipal">
+                                <div class="contact-avatar">HM</div>
+                                <div class="contact-info">
+                                    <div class="contact-name">Hospital Municipal</div>
+                                    <div class="contact-status status-online">Online - Disponível</div>
+                                </div>
+                                <div class="priority-indicator priority-high"></div>
+                            </li>
+                            <li class="contact-item" data-id="policia" data-name="Polícia Militar">
+                                <div class="contact-avatar">PM</div>
+                                <div class="contact-info">
+                                    <div class="contact-name">Polícia Militar</div>
+                                    <div class="contact-status status-online">Online - Disponível</div>
+                                </div>
+                                <div class="priority-indicator priority-high"></div>
+                            </li>
+                            <li class="contact-item" data-id="bombeiros" data-name="Corpo de Bombeiros">
+                                <div class="contact-avatar">CB</div>
+                                <div class="contact-info">
+                                    <div class="contact-name">Corpo de Bombeiros</div>
+                                    <div class="contact-status status-online">Online - Disponível</div>
+                                </div>
+                                <div class="priority-indicator priority-high"></div>
+                            </li>
+                        </ul>
+
+                        <button class="emergency-btn">
+                            <i class="fas fa-broadcast-tower"></i>
+                            ALERTA GERAL DE EMERGÊNCIA
+                        </button>
+                    </div>
+
+                    <div class="comms-main">
+                        <div class="comms-tabs">
+                            <div class="comms-tab active" data-tab="chat">Chat de Texto</div>
+                            <div class="comms-tab" data-tab="radio">Rádio Comunicação</div>
+                            <div class="comms-tab" data-tab="broadcast">Transmissão em Massa</div>
+                        </div>
+
+                        <div class="tab-content active" id="chat-tab">
+                            <div class="chat-header">
+                                <h3>Chat com Coordenação Central</h3>
+                                <p>Última atualização: <span id="current-time">--:--</span></p>
+                            </div>
+
+                            <div class="chat-messages">
+                                <!-- Mensagens serão adicionadas dinamicamente -->
+                            </div>
+
+                            <div class="message-input">
+                                <input type="text" placeholder="Digite sua mensagem...">
+                                <button><i class="fas fa-paper-plane"></i> Enviar</button>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="radio-tab">
+                            <div class="comms-section-title" style="padding: 15px 15px 0 15px; border: none;">
+                                <i class="fas fa-broadcast-tower"></i>
+                                <h2>Controle de Rádio</h2>
+                            </div>
+
+                            <div class="radio-controls">
+                                <div class="radio-control">
+                                    <i class="fas fa-microphone"></i>
+                                    <h3>Canal Principal</h3>
+                                    <p>Frequência: 156.800 MHz</p>
+                                    <button class="transmit-btn" data-channel="main">Transmitir</button>
+                                </div>
+                                <div class="radio-control">
+                                    <i class="fas fa-microphone"></i>
+                                    <h3>Canal de Resgate</h3>
+                                    <p>Frequência: 158.500 MHz</p>
+                                    <button class="transmit-btn" data-channel="rescue">Transmitir</button>
+                                </div>
+                                <div class="radio-control">
+                                    <i class="fas fa-microphone"></i>
+                                    <h3>Canal de Suporte</h3>
+                                    <p>Frequência: 159.300 MHz</p>
+                                    <button class="transmit-btn" data-channel="support">Transmitir</button>
+                                </div>
+                                <div class="radio-control">
+                                    <i class="fas fa-microphone"></i>
+                                    <h3>Canal de Emergência</h3>
+                                    <p>Frequência: 155.500 MHz</p>
+                                    <button class="transmit-btn" data-channel="emergency">Transmitir</button>
+                                </div>
+                            </div>
+
+                            <div class="radio-log">
+                                <div class="log-entry">
+                                    <div class="log-time">11:15:23</div>
+                                    <div class="log-message">[Canal Principal] Equipe 1: Chegando no Morro do Araponga.
+                                        Situação de visibilidade ruim.</div>
+                                </div>
+                            </div>
+
+                            <div class="radio-transmit">
+                                <input type="text" placeholder="Digite mensagem para transmissão por rádio...">
+                                <button><i class="fas fa-broadcast-tower"></i> Transmitir</button>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="broadcast-tab">
+                            <div class="comms-section-title" style="padding: 15px 15px 0 15px; border: none;">
+                                <i class="fas fa-bullhorn"></i>
+                                <h2>Transmissão em Massa</h2>
+                            </div>
+
+                            <p>Envie alertas e comunicados para todos os contatos simultaneamente.</p>
+
+                            <div class="broadcast-form-group">
+                                <label for="broadcast-type">Tipo de Mensagem:</label>
+                                <select id="broadcast-type">
+                                    <option value="alert">Alerta</option>
+                                    <option value="info">Informação</option>
+                                    <option value="emergency">Emergência</option>
+                                    <option value="update">Atualização</option>
+                                </select>
+                            </div>
+
+                            <div class="broadcast-form-group">
+                                <label for="broadcast-message">Mensagem:</label>
+                                <textarea id="broadcast-message"
+                                    placeholder="Digite a mensagem para transmissão em massa..." rows="6"></textarea>
+                            </div>
+
+                            <div class="broadcast-form-group">
+                                <label>Destinatários:</label>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="dest-equipes" checked><label
+                                            for="dest-equipes">Equipes de Campo</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="dest-parceiras" checked><label
+                                            for="dest-parceiras">Instituições Parceiras</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="dest-populacao"><label for="dest-populacao">População
+                                            (SMS/Alertas)</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="dest-coord" checked><label
+                                            for="dest-coord">Coordenação Central</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="emergency-btn" style="width: 100%; margin-top: 20px;">
+                                <i class="fas fa-bullhorn"></i>
+                                TRANSMITIR MENSAGEM EM MASSA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="documentos" class="section" style="display:none;">
+                <h2>Documentos</h2>
+                <p>Documentos relevantes.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="activationModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Ativar Plano de Contingência</div>
+            <div class="modal-body">
+                <form id="activationForm">
+                    <label for="modalRiskType">Tipo de Risco</label>
+                    <select id="modalRiskType" style="width:100%;padding:8px;margin-top:6px;">
+                        <option value="">Selecione</option>
+                        <option value="geologico">Geológico</option>
+                        <option value="hidrologico">Hidrológico</option>
+                    </select>
+
+                    <label for="modalAlertLevel" style="margin-top:10px;">Nível de Alerta</label>
+                    <select id="modalAlertLevel" style="width:100%;padding:8px;margin-top:6px;">
+                        <option value="">Selecione</option>
+                        <option value="atencao">Atenção</option>
+                        <option value="alerta">Alerta</option>
+                        <option value="maximo">Alerta Máximo</option>
+                    </select>
+
+                    <label for="modalAuth" style="margin-top:10px;">Senha de Autorização</label>
+                    <input id="modalAuth" type="password" style="width:100%;padding:8px;margin-top:6px;" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelActivation" class="btn-secondary">Cancelar</button>
+                <button id="confirmActivation" class="btn-danger">Confirmar Ativação</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deactivationModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Desativar Plano de Contingência</div>
+            <div class="modal-body">
+                <form id="deactivationForm">
+                    <p>Tem certeza que deseja desativar o plano? Esta ação registrará o fim da mobilização de
+                        emergência.
+                    </p>
+                    <p style="margin-top: 10px; font-weight: bold;">Apenas o Coordenador da Defesa Civil ou o Prefeito
+                        Municipal podem realizar esta ação.</p>
+
+                    <label for="modalDeauth" style="margin-top:10px;">Senha de Autorização</label>
+                    <input id="modalDeauth" type="password" style="width:100%;padding:8px;margin-top:6px;"
+                        placeholder="Insira a senha master" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeactivation" class="btn-secondary">Cancelar</button>
+                <button id="confirmDeactivation" class="btn-primary">Confirmar Desativação</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deactivationSuccessModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header" style="color: #1e3c72;">Plano Desativado</div>
+            <div class="modal-body">
+                <p>O Plano de Contingência foi desativado com sucesso.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="closeDeactivationSuccess" class="btn-primary">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="changeLevelModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Alterar Nível de Ativação</div>
+            <div class="modal-body" id="change-level-body">
+                <!-- Conteúdo será preenchido por JS -->
+            </div>
+        </div>
+    </div>
+
+    <div id="activationSuccessModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header" style="color: #2e7d32;">Plano Ativado com Sucesso</div>
+            <div class="modal-body">
+                <p>O Plano de Contingência foi ativado. Todos os integrantes foram notificados.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="closeActivationSuccess" class="btn-primary">Entendido</button>
+            </div>
+        </div>
+    </div>
+    <div id="vehicleDetailModal" class="modal" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 600px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Detalhes do Veículo</div>
+            <div class="modal-body" id="vehicle-detail-content">
+            </div>
+            <div class="modal-footer">
+                <button id="cancelVehicleDetail" class="btn-secondary">Cancelar</button>
+                <button id="saveVehicleDetail" type="submit" form="vehicleDetailForm"
+                    class="btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="shelterModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 1000px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Detalhes do Abrigo</div>
+            <div class="modal-body" id="shelter-modal-body">
+                <!-- O conteúdo (visualização ou formulário) será injetado aqui -->
+            </div>
+            <div class="modal-footer">
+                <button id="closeShelterModal" class="btn-secondary">Cancelar</button>
+                <button id="editShelterButton" class="btn-primary" style="display: none;">Editar</button>
+                <button id="saveShelterButton" type="submit" form="shelterForm" class="btn-primary"
+                    style="display: none;">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmDeleteModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Confirmar Exclusão</div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja remover este abrigo? Esta ação é irreversível.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDelete" class="btn-secondary">Cancelar</button>
+                <button id="confirmDelete" class="btn-danger">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="personDetailModal" class="modal" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 700px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Detalhes da Pessoa/Família</div>
+            <div class="modal-body" id="person-detail-content">
+                <!-- Conteúdo será preenchido dinamicamente via JS -->
+            </div>
+            <div class="modal-footer">
+                <button id="closePersonDetail" class="btn-primary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="actionModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 600px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Detalhes da Ação</div>
+            <div class="modal-body">
+                <form id="actionForm">
+                    <input type="hidden" id="action-id">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label for="action-description">Descrição da Ação</label>
+                            <textarea id="action-description" rows="3" required></textarea>
+                        </div>
+                        <div>
+                            <label for="action-responsible">Responsável</label>
+                            <input type="text" id="action-responsible" required>
+                        </div>
+                        <div>
+                            <label for="action-phase">Fase do SCO</label>
+                            <select id="action-phase" required>
+                                <option value="">Selecione a Fase</option>
+                                <option value="Notificação e Avaliação Inicial">Notificação e Avaliação Inicial</option>
+                                <option value="Planejamento">Planejamento</option>
+                                <option value="Execução">Execução</option>
+                                <option value="Controle e Encerramento">Controle e Encerramento</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="action-status">Status</label>
+                            <select id="action-status" required>
+                                <option value="nao-iniciada">Não Iniciada</option>
+                                <option value="em-andamento">Em Andamento</option>
+                                <option value="concluida">Concluída</option>
+                                <option value="cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Recursos
+                        Mobilizados</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                        <div class="resource-selection-group">
+                            <label for="action-vehicles">Veículos Disponíveis</label>
+                            <div style="display: flex; gap: 5px; align-items: flex-end;">
+                                <select id="action-vehicles" style="flex-grow: 1;">
+                                    <!-- Opções de veículos disponíveis serão preenchidas via JS -->
+                                </select>
+                                <button type="button" id="btn-add-vehicle-to-action" class="btn-primary"
+                                    style="padding: 8px 12px; font-size: 14px;">Adicionar</button>
+                            </div>
+                            <div class="mobilized-list-container">
+                                <strong>Veículos Mobilizados nesta Ação:</strong>
+                                <ul id="mobilized-vehicles-list" class="mobilized-list"></ul>
+                            </div>
+                        </div>
+                        <div class="resource-selection-group">
+                            <label for="action-members">Integrantes Disponíveis</label>
+                            <div style="display: flex; gap: 5px; align-items: flex-end;">
+                                <select id="action-members" style="flex-grow: 1;">
+                                    <!-- Opções de integrantes disponíveis serão preenchidas via JS -->
+                                </select>
+                                <button type="button" id="btn-add-member-to-action" class="btn-primary"
+                                    style="padding: 8px 12px; font-size: 14px;">Adicionar</button>
+                            </div>
+                            <div class="mobilized-list-container">
+                                <strong>Integrantes Mobilizados nesta Ação:</strong>
+                                <ul id="mobilized-members-list" class="mobilized-list"></ul>
+                            </div>
+                        </div>
+                        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label for="action-latitude">Latitude</label>
+                                <input type="text" id="action-latitude" placeholder="Ex: -20.033">
+                            </div>
+                            <div>
+                                <label for="action-longitude">Longitude</label>
+                                <input type="text" id="action-longitude" placeholder="Ex: -40.740">
+                            </div>
+                        </div>
+
+
+                        <div style="grid-column: 1 / -1;">
+                            <label for="action-equipments">Equipamentos</label>
+                            <textarea id="action-equipments" rows="3"
+                                placeholder="Liste os equipamentos mobilizados (ex: motosserras, barcos, etc.)"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="closeActionModal" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="actionForm" class="btn-primary">Salvar Ação</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scoAlertModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 700px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Cadastrar Alerta/Aviso</div>
+            <div class="modal-body">
+                <form id="scoAlertForm">
+                    <input type="hidden" id="sco-alert-id">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label for="sco-alert-category">Categoria</label>
+                            <select id="sco-alert-category" required>
+                                <option value="">Selecione a Categoria</option>
+                                <option value="Aviso">Aviso</option>
+                                <option value="Alerta">Alerta</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sco-alert-type">Descrição (Tipo)</label>
+                            <input type="text" id="sco-alert-type" placeholder="Ex: Chuvas Intensas, Vento Forte"
+                                required>
+                        </div>
+                        <div>
+                            <label for="sco-alert-intensity">Grau de Intensidade</label>
+                            <select id="sco-alert-intensity" required>
+                                <option value="">Selecione</option>
+                                <option value="Baixo">Baixo (Potencial Perigo)</option>
+                                <option value="Moderado">Moderado (Perigo)</option>
+                                <option value="Alto">Alto (Grande Perigo)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sco-alert-start">Início da Vigência</label>
+                            <input type="datetime-local" id="sco-alert-start" required>
+                        </div>
+                        <div>
+                            <label for="sco-alert-end">Fim da Vigência</label>
+                            <input type="datetime-local" id="sco-alert-end">
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label for="sco-alert-region">Região Afetada</label>
+                            <textarea id="sco-alert-region" rows="3"
+                                placeholder="Ex: Todo o município, Região Serrana, Bairros X, Y e Z"
+                                required></textarea>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label for="sco-alert-description">Descrição Detalhada do Alerta</label>
+                            <textarea id="sco-alert-description" rows="4"
+                                placeholder="Forneça detalhes sobre o alerta, áreas de maior risco, instruções para a população, etc."></textarea>
+                        </div>
+                        <div id="sco-alert-file-display"
+                            style="font-size: 14px; margin-top: 10px; color: #333; grid-column: 1 / -1;">
+                            <!-- Nome do arquivo selecionado será exibido aqui -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="closeScoAlertModal" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="scoAlertForm" class="btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmDeleteScoAlertModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Confirmar Exclusão</div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja remover este alerta? Esta ação é irreversível.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeleteScoAlert" class="btn-secondary">Cancelar</button>
+                <button id="confirmDeleteScoAlert" class="btn-danger">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmDeleteActionModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Confirmar Exclusão</div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja remover esta ação? Esta ação é irreversível.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeleteAction" class="btn-secondary">Cancelar</button>
+                <button id="confirmDeleteAction" class="btn-danger">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="memberModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 600px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Cadastrar Integrante</div>
+            <div class="modal-body">
+                <form id="memberForm">
+                    <input type="hidden" id="member-id">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label for="member-name">Nome Completo</label>
+                            <input type="text" id="member-name" placeholder="Nome do integrante" required>
+                        </div>
+                        <div>
+                            <label for="member-secretaria">Secretaria</label>
+                            <select id="member-secretaria" required>
+                                <option value="">Carregando...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="member-role">Função no SCO</label>
+                            <input type="text" id="member-role" placeholder="Ex: Chefe de Operações" required>
+                        </div>
+                        <div>
+                            <label for="member-contact">Contato (Telefone/Email)</label>
+                            <input type="text" id="member-contact" placeholder="(27) 99999-9999" required>
+                        </div>
+                        <div>
+                            <label for="member-status">Status</label>
+                            <select id="member-status" required>
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                                <option value="licenca">Em Licença</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="closeMemberModal" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="memberForm" class="btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmDeleteMemberModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Confirmar Exclusão</div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja remover este integrante? Esta ação é irreversível.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeleteMember" class="btn-secondary">Cancelar</button>
+                <button id="confirmDeleteMember" class="btn-danger">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="assignmentsModal" class="modal" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 650px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Atribuições por Fase</div>
+            <div class="modal-body">
+                <h4 id="assignments-member-name" style="margin-bottom: 15px; color: #1e3c72;"></h4>
+                <div id="assignments-content">
+                    <!-- Conteúdo será preenchido via JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeAssignmentsModal" class="btn-primary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="teamsModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Equipes em Campo</div>
+            <div class="modal-body">
+                <ul id="teamsList">
+                    <li>Equipe 1 - Busca e Resgate</li>
+                    <li>Equipe 2 - Logística</li>
+                    <li>Equipe 3 - Saúde</li>
+                    <li>Equipe 4 - Engenharia</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button id="closeTeams" class="btn-primary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="donationModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 600px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Registrar Doação</div>
+            <div class="modal-body">
+                <form id="donationForm">
+                    <input type="hidden" id="donation-id">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label for="donation-item-type">Tipo de Item</label>
+                            <select id="donation-item-type" required>
+                                <option value="">Selecione...</option>
+                                <option value="Cesta Básica">Cesta Básica</option>
+                                <option value="Água Mineral">Água Mineral</option>
+                                <option value="Colchão">Colchão</option>
+                                <option value="Kit de Higiene">Kit de Higiene</option>
+                                <option value="Roupas">Roupas</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="donation-item-description">Descrição (se 'Outro')</label>
+                            <input type="text" id="donation-item-description" placeholder="Especifique o item">
+                        </div>
+                        <div>
+                            <label for="donation-quantity">Quantidade</label>
+                            <input type="number" id="donation-quantity" min="1" placeholder="Apenas números" required>
+                        </div>
+                        <div>
+                            <label for="donation-unit">Unidade</label>
+                            <input type="text" id="donation-unit" placeholder="un, kg, L, pacote">
+                        </div>
+                        <div>
+                            <label for="donation-donor">Doador</label>
+                            <input type="text" id="donation-donor" placeholder="Nome do doador ou 'Anônimo'" required>
+                        </div>
+                        <div>
+                            <label for="donation-shelter">Armazenar no Abrigo</label>
+                            <select id="donation-shelter"></select>
+                        </div>
+                        <div>
+                            <label for="donation-date">Data de Recebimento</label>
+                            <input type="date" id="donation-date" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="closeDonationModal" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="donationForm" class="btn-primary">Salvar Doação</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="donationDetailModal" class="modal" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 700px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Detalhes da Doação</div>
+            <div class="modal-body" id="donation-detail-content">
+                <!-- Conteúdo será preenchido dinamicamente via JS -->
+            </div>
+            <div class="modal-footer">
+                <button id="closeDonationDetail" class="btn-primary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="distributionModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 600px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Registrar Distribuição de Itens</div>
+            <div class="modal-body">
+                <form id="distributionForm">
+                    <input type="hidden" id="distribution-id">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <label for="distribution-item">Item Distribuído</label>
+                            <select id="distribution-item" required></select>
+                        </div>
+                        <div>
+                            <label for="distribution-quantity">Quantidade</label>
+                            <input type="number" id="distribution-quantity" min="1" required>
+                        </div>
+                        <div>
+                            <label for="distribution-destination-type">Tipo de Destino</label>
+                            <select id="distribution-destination-type">
+                                <option value="shelter">Abrigo</option>
+                                <option value="person">Pessoa/Família</option>
+                                <option value="other">Outro (Comunidade/Local)</option>
+                            </select>
+                        </div>
+                        <div id="destination-shelter-group">
+                            <label for="distribution-destination-shelter">Selecione o Abrigo</label>
+                            <select id="distribution-destination-shelter"></select>
+                        </div>
+                        <div id="destination-person-group" style="display: none;">
+                            <label for="distribution-destination-person">Selecione a Pessoa/Família</label>
+                            <select id="distribution-destination-person"></select>
+                        </div>
+                        <div id="destination-other-group" style="display: none;">
+                            <label for="distribution-destination-other">Especifique o Destino</label>
+                            <input type="text" id="distribution-destination-other"
+                                placeholder="Ex: Família Silva, Comunidade X">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="closeDistributionModal" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="distributionForm" class="btn-primary">Salvar Distribuição</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="distributionDetailModal" class="modal" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 600px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Detalhes da Distribuição</div>
+            <div class="modal-body" id="distribution-detail-content">
+                <!-- Conteúdo será preenchido dinamicamente via JS -->
+            </div>
+            <div class="modal-footer">
+                <button id="closeDistributionDetail" class="btn-primary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobilizeVehicleModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 500px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Mobilizar Veículo</div>
+            <div class="modal-body">
+                <form id="mobilizeVehicleForm">
+                    <input type="hidden" id="mobilize-vehicle-id">
+                    <p>Selecione a ocorrência (SCO) em andamento para vincular este veículo:</p>
+                    <p><strong>Veículo:</strong> <span id="mobilize-vehicle-name"></span></p>
+                    <div style="margin-top: 15px;">
+                        <label for="mobilize-action-select">Ocorrências em Andamento</label>
+                        <select id="mobilize-action-select" required>
+                            <!-- Opções de ocorrências serão preenchidas via JS -->
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="closeMobilizeVehicleModal" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="mobilizeVehicleForm" class="btn-primary">Vincular e Mobilizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar FIDE (agora carrega o formulário completo) -->
+    <div id="fideModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 1200px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Cadastrar Novo FIDE</div>
+            <div class="modal-body" id="fide-modal-body">
+                <!-- O formulário completo será carregado aqui -->
+            </div>
+            <div class="modal-footer" id="fide-modal-footer">
+                <!-- Os botões de ação do formulário serão carregados junto com ele -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão FIDE -->
+    <div id="confirmDeleteFideModal" class="modal" aria-hidden="true">
+        <div class="modal-inner">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Confirmar Exclusão</div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja remover este registro FIDE? Esta ação é irreversível.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeleteFide" class="btn-secondary">Cancelar</button>
+                <button id="confirmDeleteFide" class="btn-danger">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cadastro Automático de Alerta -->
+    <div id="automaticAlertModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 800px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header" style="color: #17a2b8;">Cadastro Automático de Alerta</div>
+            <div class="modal-body">
+                <div class="alert-box">
+                    <p><strong>Atenção:</strong> Faça o upload do PDF do alerta emitido por um órgão oficial (ex:
+                        Cemaden) para preenchimento automático dos dados.</p>
+                </div>
+                <form id="automaticAlertForm">
+                    <div class="form-section">
+                        <h3>Upload do Alerta</h3>
+                        <div class="form-group">
+                            <div class="file-upload" id="autoAlertFileUploadArea">
+                                <p><i class="fas fa-cloud-upload-alt" style="font-size: 24px;"></i></p>
+                                <p>Clique aqui ou arraste o arquivo PDF do alerta</p>
+                                <p class="file-info">Formatos suportados: PDF</p>
+                                <input type="file" id="autoAlertPdfFile" accept=".pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="extracted-data" id="autoAlertExtractedData">
+                        <h4>Dados Extraídos do PDF (Simulação)</h4>
+                        <div class="data-item">
+                            <span class="data-label">Número do Alerta:</span>
+                            <span id="autoAlertNumber">-</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Data de Abertura:</span>
+                            <span id="autoAlertDate">-</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Hora de Abertura:</span>
+                            <span id="autoAlertTime">-</span>
+                        </div>
+                    </div>
+
+                    <p style="text-align: center; margin: 15px 0; font-weight: bold;">Após a extração, confirme ou
+                        ajuste os campos abaixo:</p>
+
+                    <!-- Reutilizando o formulário do modal de alerta manual -->
+                    <div id="auto-alert-form-fields">
+                        <!-- O conteúdo do formulário de alerta será injetado aqui via JS -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="closeAutoAlertModal" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="automaticAlertForm" class="btn-primary">Cadastrar Alerta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cessar Alerta -->
+    <div id="ceaseAlertModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 500px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Cessar Alerta</div>
+            <div class="modal-body">
+                <form id="ceaseAlertForm">
+                    <input type="hidden" id="cease-alert-id">
+                    <p>Confirme a data e a hora em que o alerta foi cessado. Por padrão, o horário atual é sugerido.</p>
+                    <div style="margin-top: 15px;">
+                        <label for="cease-alert-end-date">Data e Hora do Fim da Vigência</label>
+                        <input type="datetime-local" id="cease-alert-end-date" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelCeaseAlert" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="ceaseAlertForm" class="btn-primary">Confirmar e Cessar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Seleção de Período do Relatório -->
+    <div id="reportDateModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-inner" style="max-width: 500px;">
+            <button class="modal-close-btn" aria-label="Fechar">&times;</button>
+            <div class="modal-header">Gerar Relatório Situacional</div>
+            <div class="modal-body">
+                <form id="reportDateForm">
+                    <p>Selecione o período para a geração do relatório.</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <div>
+                            <label for="report-start-date">Data de Início</label>
+                            <input type="date" id="report-start-date" required>
+                        </div>
+                        <div>
+                            <label for="report-end-date">Data de Fim</label>
+                            <input type="date" id="report-end-date" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelReport" class="btn-secondary">Cancelar</button>
+                <button type="submit" form="reportDateForm" class="btn-primary">Gerar Relatório</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Externos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Leaflet JS (para o mapa) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/relatorio.js"></script>
+    <!-- O script do mapa de ocorrências será carregado na sua própria página -->
+    <script src="js/script.js" type="module"></script>
+</body>
+
+</html>

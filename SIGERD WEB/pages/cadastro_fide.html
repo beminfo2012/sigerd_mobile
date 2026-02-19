@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de FIDE - SIGERD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="../assets/img/favicon.png" type="image/png">
+    <link rel="stylesheet" href="../css/fide_form.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-shield-alt"></i> FIDE</h1>
+                <p class="subtitle">Formulário de Informações do Desastre<br>
+                    Coordenadoria Municipal de Proteção e Defesa Civil – COMPDEC/SMJ</p>
+            </div>
+        </div>
+
+        <div class="form-content">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <form id="fideForm">
+                <div class="form-section fade-in" data-section="1">
+                    <h2 data-icon="&#xf2bb;"><span class="section-counter">1 - </span>Identificação</h2>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="uf" class="required-field">UF</label>
+                            <input type="text" id="uf" name="uf" required maxlength="2" placeholder="Ex: ES" value="ES"
+                                disabled>
+                        </div>
+                        <div>
+                            <label for="municipio" class="required-field">Município</label>
+                            <input type="text" id="municipio" name="municipio" required placeholder="Nome do município"
+                                value="Santa Maria de Jetibá" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="populacao">População (Habitantes)</label>
+                            <input type="number" id="populacao" name="populacao" placeholder="Número de habitantes">
+                        </div>
+                        <div>
+                            <label for="pib_anual">PIB Anual (R$)</label>
+                            <input type="number" id="pib_anual" name="pib_anual" step="0.01" placeholder="0,00">
+                        </div>
+                    </div>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="orcamento_anual">Orçamento Anual (R$)</label>
+                            <input type="number" id="orcamento_anual" name="orcamento_anual" step="0.01"
+                                placeholder="0,00">
+                        </div>
+                        <div>
+                            <label for="arrecadacao_anual">Arrecadação Anual (R$)</label>
+                            <input type="number" id="arrecadacao_anual" name="arrecadacao_anual" step="0.01"
+                                placeholder="0,00">
+                        </div>
+                    </div>
+                    <h3>Receita Corrente Líquida – RCL</h3>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="rcl_total_anual">Total Anual (R$)</label>
+                            <input type="number" id="rcl_total_anual" name="rcl_total_anual" step="0.01"
+                                placeholder="0,00">
+                        </div>
+                        <div>
+                            <label for="rcl_media_mensal">Média Mensal (R$)</label>
+                            <input type="number" id="rcl_media_mensal" name="rcl_media_mensal" step="0.01"
+                                placeholder="0,00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="2">
+                    <h2 data-icon="&#xf02d;"><span class="section-counter">2 - </span>Tipificação</h2>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="cobrade" class="tooltip"
+                                data-tooltip="Código COBRADE do tipo de desastre">COBRADE</label>
+                            <input type="text" id="cobrade" name="cobrade" placeholder="Ex: 1.2.1.0.0">
+                        </div>
+                        <div>
+                            <label for="denominacao">Denominação (Tipo ou Subtipo)</label>
+                            <input type="text" id="denominacao" name="denominacao"
+                                placeholder="Descrição do tipo de desastre">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="3">
+                    <h2 data-icon="&#xf073;"><span class="section-counter">3 - </span>Data de Ocorrência</h2>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="data_ocorrencia" class="required-field">Data</label>
+                            <input type="date" id="data_ocorrencia" name="data_ocorrencia" required>
+                        </div>
+                        <div>
+                            <label for="horario_ocorrencia">Horário</label>
+                            <input type="time" id="horario_ocorrencia" name="horario_ocorrencia">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="4">
+                    <h2 data-icon="&#xf279;"><span class="section-counter">4 - </span>Área Afetada/Tipo de Ocupação</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo de Ocupação</th>
+                                    <th>Não Existe/Não Afetada</th>
+                                    <th>Urbana</th>
+                                    <th>Rural</th>
+                                    <th>Urbana e Rural</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Residencial</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_residencial" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_residencial" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_residencial" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_residencial" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Comercial</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_comercial" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_comercial" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_comercial" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_comercial" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Industrial</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_industrial" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_industrial" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_industrial" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_industrial" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Agrícola</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_agricola" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_agricola" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_agricola" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_agricola" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pecuária</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_pecuaria" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_pecuaria" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_pecuaria" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_pecuaria" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Extrativismo Vegetal</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_extrativismo" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_extrativismo" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_extrativismo" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_extrativismo" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reserva Florestal ou APA</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_reserva" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_reserva" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_reserva" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_reserva" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Mineração</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_mineracao" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_mineracao" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_mineracao" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_mineracao" value="urbana_rural"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Turismo e Outras</strong></td>
+                                    <td><input type="checkbox" name="ocupacao_turismo" value="nao_afetada"></td>
+                                    <td><input type="checkbox" name="ocupacao_turismo" value="urbana"></td>
+                                    <td><input type="checkbox" name="ocupacao_turismo" value="rural"></td>
+                                    <td><input type="checkbox" name="ocupacao_turismo" value="urbana_rural"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao_areas_afetadas">Descrição das Áreas Afetadas</label>
+                        <textarea id="descricao_areas_afetadas" name="descricao_areas_afetadas"
+                            placeholder="Especificar se Urbana e/ou Rural, incluindo detalhes sobre as áreas afetadas..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="5">
+                    <h2 data-icon="&#xf06a;"><span class="section-counter">5 - </span>Causas e Efeitos do Desastre</h2>
+                    <div class="form-group">
+                        <label for="causas_efeitos">Descrição do Evento e Suas Características</label>
+                        <textarea id="causas_efeitos" name="causas_efeitos"
+                            placeholder="Descreva detalhadamente as causas do desastre, como ele ocorreu e quais foram seus principais efeitos..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="6">
+                    <h2 data-icon="&#xf0fa;"><span class="section-counter">6 - </span>Danos Humanos, Materiais ou
+                        Ambientais</h2>
+
+                    <h3>6.1 – Danos Humanos</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Nº de Pessoas</th>
+                                    <th>População do Município Atingida</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Mortos</strong></td>
+                                    <td><input type="number" name="mortos" class="small-input" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="pop_atingida_mortos" value="0-5"> 0 a
+                                            5%</label>
+                                        <label><input type="radio" name="pop_atingida_mortos" value="5-10"> 5 a
+                                            10%</label>
+                                        <label><input type="radio" name="pop_atingida_mortos" value="10-20"> 10 a
+                                            20%</label>
+                                        <label><input type="radio" name="pop_atingida_mortos" value="mais_20"> Mais de
+                                            20%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Feridos</strong></td>
+                                    <td><input type="number" name="feridos" class="small-input" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="pop_atingida_feridos" value="0-5"> 0 a
+                                            5%</label>
+                                        <label><input type="radio" name="pop_atingida_feridos" value="5-10"> 5 a
+                                            10%</label>
+                                        <label><input type="radio" name="pop_atingida_feridos" value="10-20"> 10 a
+                                            20%</label>
+                                        <label><input type="radio" name="pop_atingida_feridos" value="mais_20"> Mais de
+                                            20%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Enfermos</strong></td>
+                                    <td><input type="number" name="enfermos" class="small-input" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="pop_atingida_enfermos" value="0-5"> 0 a
+                                            5%</label>
+                                        <label><input type="radio" name="pop_atingida_enfermos" value="5-10"> 5 a
+                                            10%</label>
+                                        <label><input type="radio" name="pop_atingida_enfermos" value="10-20"> 10 a
+                                            20%</label>
+                                        <label><input type="radio" name="pop_atingida_enfermos" value="mais_20"> Mais de
+                                            20%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Desabrigados</strong></td>
+                                    <td><input type="number" name="desabrigados" class="small-input" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="pop_atingida_desabrigados" value="0-5"> 0 a
+                                            5%</label>
+                                        <label><input type="radio" name="pop_atingida_desabrigados" value="5-10"> 5 a
+                                            10%</label>
+                                        <label><input type="radio" name="pop_atingida_desabrigados" value="10-20"> 10 a
+                                            20%</label>
+                                        <label><input type="radio" name="pop_atingida_desabrigados" value="mais_20">
+                                            Mais
+                                            de 20%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Desalojados</strong></td>
+                                    <td><input type="number" name="desalojados" class="small-input" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="pop_atingida_desalojados" value="0-5"> 0 a
+                                            5%</label>
+                                        <label><input type="radio" name="pop_atingida_desalojados" value="5-10"> 5 a
+                                            10%</label>
+                                        <label><input type="radio" name="pop_atingida_desalojados" value="10-20"> 10 a
+                                            20%</label>
+                                        <label><input type="radio" name="pop_atingida_desalojados" value="mais_20"> Mais
+                                            de 20%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Desaparecidos</strong></td>
+                                    <td><input type="number" name="desaparecidos" class="small-input" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="pop_atingida_desaparecidos" value="0-5"> 0 a
+                                            5%</label>
+                                        <label><input type="radio" name="pop_atingida_desaparecidos" value="5-10"> 5 a
+                                            10%</label>
+                                        <label><input type="radio" name="pop_atingida_desaparecidos" value="10-20"> 10 a
+                                            20%</label>
+                                        <label><input type="radio" name="pop_atingida_desaparecidos" value="mais_20">
+                                            Mais de 20%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Outros Afetados</strong></td>
+                                    <td><input type="number" name="outros_afetados" class="small-input" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="pop_atingida_outros" value="0-5"> 0 a
+                                            5%</label>
+                                        <label><input type="radio" name="pop_atingida_outros" value="5-10"> 5 a
+                                            10%</label>
+                                        <label><input type="radio" name="pop_atingida_outros" value="10-20"> 10 a
+                                            20%</label>
+                                        <label><input type="radio" name="pop_atingida_outros" value="mais_20"> Mais de
+                                            20%</label>
+                                    </td>
+                                </tr>
+                                <tr style="background: var(--light-gray);">
+                                    <td><strong>Total de Afetados</strong></td>
+                                    <td><input type="number" name="total_afetados" class="small-input calculated-field"
+                                            readonly></td>
+                                    <td><em>Calculado automaticamente</em></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao_danos_humanos">Descrição dos Danos Humanos</label>
+                        <textarea id="descricao_danos_humanos" name="descricao_danos_humanos"
+                            placeholder="Descreva detalhadamente os danos humanos causados pelo desastre..."></textarea>
+                    </div>
+
+                    <h3>6.2 – Danos Materiais</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Qtd. Destruídas</th>
+                                    <th>Qtd. Danificadas</th>
+                                    <th>Valor (R$)</th>
+                                    <th>Área Atingida</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Unidades Habitacionais</strong></td>
+                                    <td><input type="number" name="uh_destruidas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="uh_danificadas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="uh_valor" step="0.01" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="area_atingida_uh" value="ate_40"> Até
+                                            40%</label>
+                                        <label><input type="radio" name="area_atingida_uh" value="mais_40"> Mais de
+                                            40%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Instalações Públicas de Saúde</strong></td>
+                                    <td><input type="number" name="ips_destruidas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ips_danificadas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ips_valor" step="0.01" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="area_atingida_ips" value="ate_40"> Até
+                                            40%</label>
+                                        <label><input type="radio" name="area_atingida_ips" value="mais_40"> Mais de
+                                            40%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Instalações Públicas de Ensino</strong></td>
+                                    <td><input type="number" name="ipe_destruidas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ipe_danificadas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ipe_valor" step="0.01" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="area_atingida_ipe" value="ate_40"> Até
+                                            40%</label>
+                                        <label><input type="radio" name="area_atingida_ipe" value="mais_40"> Mais de
+                                            40%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Instalações Públicas Prestadoras de Outros Serviços</strong></td>
+                                    <td><input type="number" name="ippos_destruidas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ippos_danificadas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ippos_valor" step="0.01" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="area_atingida_ippos" value="ate_40"> Até
+                                            40%</label>
+                                        <label><input type="radio" name="area_atingida_ippos" value="mais_40"> Mais de
+                                            40%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Instalações Públicas de Uso Comunitário</strong></td>
+                                    <td><input type="number" name="ippuc_destruidas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ippuc_danificadas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="ippuc_valor" step="0.01" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="area_atingida_ippuc" value="ate_40"> Até
+                                            40%</label>
+                                        <label><input type="radio" name="area_atingida_ippuc" value="mais_40"> Mais de
+                                            40%</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Obras de Infraestrutura Pública</strong></td>
+                                    <td><input type="number" name="oip_destruidas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="oip_danificadas" class="small-input" min="0"></td>
+                                    <td><input type="number" name="oip_valor" step="0.01" min="0"></td>
+                                    <td class="percentage-options">
+                                        <label><input type="radio" name="area_atingida_oip" value="ate_40"> Até
+                                            40%</label>
+                                        <label><input type="radio" name="area_atingida_oip" value="mais_40"> Mais de
+                                            40%</label>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao_danos_materiais">Descrição dos Danos Materiais</label>
+                        <textarea id="descricao_danos_materiais" name="descricao_danos_materiais"
+                            placeholder="Descreva detalhadamente os danos materiais causados pelo desastre..."></textarea>
+                    </div>
+
+                    <h3>6.3 – Danos Ambientais</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Contaminação do Ar</strong></td>
+                                    <td><textarea name="contaminacao_ar"
+                                            placeholder="Descreva a contaminação do ar..."></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contaminação da Água</strong></td>
+                                    <td><textarea name="contaminacao_agua"
+                                            placeholder="Descreva a contaminação da água..."></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contaminação do Solo</strong></td>
+                                    <td><textarea name="contaminacao_solo"
+                                            placeholder="Descreva a contaminação do solo..."></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Diminuição ou Exaurimento Hídrico</strong></td>
+                                    <td><textarea name="diminuicao_hidrico"
+                                            placeholder="Descreva a diminuição ou exaurimento hídrico..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Incêndio em Parques, APA's ou APP's</strong></td>
+                                    <td><textarea name="incendio_parques"
+                                            placeholder="Descreva incêndios em áreas protegidas..."></textarea></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao_danos_ambientais">Descrição Geral dos Danos Ambientais</label>
+                        <textarea id="descricao_danos_ambientais" name="descricao_danos_ambientais"
+                            placeholder="Descreva de forma geral os danos ambientais causados pelo desastre..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="7">
+                    <h2 data-icon="&#xf155;"><span class="section-counter">7 - </span>Prejuízos Econômicos Públicos e
+                        Privados</h2>
+
+                    <h3>7.1 – Prejuízos Econômicos Públicos</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Serviços Essenciais Prejudicados</th>
+                                    <th>Valor Para Restabelecimento (R$)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Assistência Médica, Saúde Pública e Atendimento de Emergências Médicas</td>
+                                    <td><input type="number" name="valor_am_sp_ae" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Abastecimento de Água Potável</td>
+                                    <td><input type="number" name="valor_agua_potavel" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Esgoto de Águas Pluviais e Sistema de Esgotos Sanitários</td>
+                                    <td><input type="number" name="valor_esgoto" step="0.01" min="0" placeholder="0,00">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sistema de Limpeza Urbana e de Recolhimento e Destinação do Lixo</td>
+                                    <td><input type="number" name="valor_limpeza_urbana" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Sistema de Desinfestação/Desinfecção do Habitat/Controle de Pragas e Vetores
+                                    </td>
+                                    <td><input type="number" name="valor_desinfestacao" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Geração e Distribuição de Energia Elétrica</td>
+                                    <td><input type="number" name="valor_energia" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Telecomunicações</td>
+                                    <td><input type="number" name="valor_telecomunicacoes" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Transportes Locais, Regionais e de Longo Curso</td>
+                                    <td><input type="number" name="valor_transportes" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Distribuição de Combustíveis, Especialmente os de Uso Doméstico</td>
+                                    <td><input type="number" name="valor_combustiveis" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Segurança Pública</td>
+                                    <td><input type="number" name="valor_seguranca_publica" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Ensino</td>
+                                    <td><input type="number" name="valor_ensino" step="0.01" min="0" placeholder="0,00">
+                                    </td>
+                                </tr>
+                                <tr style="background: var(--light-gray);">
+                                    <td><strong>Valor Total dos Prejuízos Públicos</strong></td>
+                                    <td><input type="number" name="valor_total_prejuizos_publicos" step="0.01"
+                                            class="calculated-field" readonly></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao_prejuizos_publicos">Descrição dos Prejuízos Econômicos Públicos</label>
+                        <textarea id="descricao_prejuizos_publicos" name="descricao_prejuizos_publicos"
+                            placeholder="Descreva detalhadamente os prejuízos econômicos públicos..."></textarea>
+                    </div>
+
+                    <h3>7.2 – Prejuízos Econômicos Privados</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Setores da Economia</th>
+                                    <th>Valor (R$)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Agricultura</td>
+                                    <td><input type="number" name="valor_agricultura" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Pecuária</td>
+                                    <td><input type="number" name="valor_pecuaria" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Indústria</td>
+                                    <td><input type="number" name="valor_industria" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Comércio</td>
+                                    <td><input type="number" name="valor_comercio" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr>
+                                    <td>Serviços</td>
+                                    <td><input type="number" name="valor_servicos" step="0.01" min="0"
+                                            placeholder="0,00"></td>
+                                </tr>
+                                <tr style="background: var(--light-gray);">
+                                    <td><strong>Valor Total dos Prejuízos Privados</strong></td>
+                                    <td><input type="number" name="valor_total_prejuizos_privados" step="0.01"
+                                            class="calculated-field" readonly></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao_prejuizos_privados">Descrição dos Prejuízos Econômicos Privados</label>
+                        <textarea id="descricao_prejuizos_privados" name="descricao_prejuizos_privados"
+                            placeholder="Descreva detalhadamente os prejuízos econômicos privados..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="8">
+                    <h2 data-icon="&#xf19c;"><span class="section-counter">8 - </span>Instituição Informante</h2>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="nome_instituicao" class="required-field">Nome da Instituição</label>
+                            <input type="text" id="nome_instituicao" name="nome_instituicao" required
+                                placeholder="Nome completo da instituição">
+                        </div>
+                        <div>
+                            <label for="nome_responsavel" class="required-field">Nome do Responsável</label>
+                            <input type="text" id="nome_responsavel" name="nome_responsavel" required
+                                placeholder="Nome completo do responsável">
+                        </div>
+                    </div>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="cargo_responsavel" class="required-field">Cargo</label>
+                            <input type="text" id="cargo_responsavel" name="cargo_responsavel" required
+                                placeholder="Cargo do responsável">
+                        </div>
+                        <div>
+                            <label for="endereco_instituicao">Endereço</label>
+                            <input type="text" id="endereco_instituicao" name="endereco_instituicao"
+                                placeholder="Endereço completo">
+                        </div>
+                    </div>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="cep_instituicao">CEP</label>
+                            <input type="text" id="cep_instituicao" name="cep_instituicao" placeholder="00000-000">
+                        </div>
+                        <div>
+                            <label for="email_instituicao" class="required-field">E-mail</label>
+                            <input type="email" id="email_instituicao" name="email_instituicao" required
+                                placeholder="email@exemplo.com">
+                        </div>
+                    </div>
+                    <div class="form-group inline-fields">
+                        <div>
+                            <label for="telefone1_instituicao">Telefone 1</label>
+                            <input type="tel" id="telefone1_instituicao" name="telefone1_instituicao"
+                                placeholder="(00) 0000-0000">
+                        </div>
+                        <div>
+                            <label for="telefone2_instituicao">Telefone 2</label>
+                            <input type="tel" id="telefone2_instituicao" name="telefone2_instituicao"
+                                placeholder="(00) 0000-0000">
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <h4><i class="fas fa-info-circle"></i> Assinatura e Carimbo</h4>
+                        <p>Este espaço é destinado para assinatura física e carimbo oficial da instituição informante.
+                            Em sistemas digitais, pode ser implementado um sistema de assinatura eletrônica.</p>
+                    </div>
+                </div>
+
+                <div class="form-section fade-in" data-section="9">
+                    <h2 data-icon="&#xf0e0;"><span class="section-counter">9 - </span>Instituições Informadas</h2>
+                    <div class="form-group">
+                        <label>Órgão Estadual de Proteção e Defesa Civil foi informado?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="orgao_estadual_informado" value="sim" required> SIM</label>
+                            <label><input type="radio" name="orgao_estadual_informado" value="nao" required> NÃO</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Secretaria Nacional de Proteção e Defesa Civil - Sedec foi informada?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="sedec_informada" value="sim" required> SIM</label>
+                            <label><input type="radio" name="sedec_informada" value="nao" required> NÃO</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="data_informacao" class="required-field">Data da Informação</label>
+                        <input type="date" id="data_informacao" name="data_informacao" required>
+                    </div>
+                    <div class="info-box">
+                        <h4><i class="fas fa-building"></i> Contato da COMPDEC/SMJ</h4>
+                        <p><strong> Coordenadoria Municipal de Proteção e Defesa Civil - COMPDEC/SMJ</strong><br>
+                            Rua dos Imigrantes,95, Centro <br>
+                            CEP: 29645000 - Santa Maria de Jetibá/ES<br>
+                            <strong>Telefone Plantão:</strong> <a href="tel:27 99771-2022">99771-2022</a>
+                        </p>
+                    </div>
+                </div>
+
+            </form>
+
+            <div class="button-group" style="padding: 20px; text-align: right; border-top: 1px solid #eee;">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button type="submit" form="fideForm" class="btn-primary">Salvar FIDE</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../js/cadastro_fide.js"></script>
+</body>
+
+</html>

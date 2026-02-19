@@ -4,7 +4,7 @@ import {
     Plus, ArrowLeft, Search, Clock, CheckCircle,
     AlertTriangle, ShieldAlert, ChevronRight, MapPin, Trash2
 } from 'lucide-react';
-import { getS2idRecords, deleteS2idLocal } from '../../services/s2idDb';
+import { getOcorrenciasLocal, deleteOcorrenciaLocal } from '../../services/ocorrenciasDb';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
 
@@ -19,20 +19,17 @@ const OcorrenciasDashboard = () => {
 
     useEffect(() => {
         loadRecords();
-        // Subscribe to sync completion to refresh status
         window.addEventListener('sync-complete', loadRecords);
         return () => window.removeEventListener('sync-complete', loadRecords);
     }, []);
 
     const loadRecords = async () => {
         try {
-            const data = await getS2idRecords();
-            // We reuse s2id_records table but filter or show only those with location/basic data
-            // For now, show all but prioritize newer ones
-            setRecords(data.filter(r => r.status !== 'deleted'));
+            const data = await getOcorrenciasLocal();
+            setRecords(data);
         } catch (error) {
             console.error('Error loading records:', error);
-            toast('Erro ao carregar dados.', 'error');
+            toast.error('Erro ao carregar dados.');
         } finally {
             setLoading(false);
         }
@@ -41,7 +38,7 @@ const OcorrenciasDashboard = () => {
     const handleDelete = async () => {
         if (!recordToDelete) return;
         try {
-            await deleteS2idLocal(recordToDelete.id);
+            await deleteOcorrenciaLocal(recordToDelete.id);
             toast.success('Registro removido.');
             loadRecords();
         } catch (error) {
@@ -53,8 +50,8 @@ const OcorrenciasDashboard = () => {
     };
 
     const filtered = records.filter(r =>
-        (r.data?.tipificacao?.denominacao || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (r.data?.tipificacao?.cobrade || '').includes(searchTerm)
+        (r.denominacao || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.cobrade || '').includes(searchTerm)
     );
 
     if (loading) {
@@ -132,7 +129,7 @@ const OcorrenciasDashboard = () => {
                                     <div className="flex-1 space-y-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-[9px] font-black bg-blue-50 text-[#2a5299] px-2 py-0.5 rounded-lg uppercase border border-blue-100">
-                                                {record.data?.tipificacao?.cobrade || 'GERAL'}
+                                                {record.cobrade || 'GERAL'}
                                             </span>
                                             {record.synced ? (
                                                 <span className="text-[8px] font-black flex items-center gap-1 text-emerald-500 uppercase">
@@ -145,14 +142,14 @@ const OcorrenciasDashboard = () => {
                                             )}
                                         </div>
                                         <h3 className="font-black text-slate-800 text-base leading-tight group-hover:text-[#2a5299] transition-colors">
-                                            {record.data?.tipificacao?.denominacao || 'Ocorrência Pendente'}
+                                            {record.denominacao || 'Ocorrência Pendente'}
                                         </h3>
                                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
                                             <div className="flex items-center gap-1">
                                                 <Clock size={12} />
                                                 {new Date(record.created_at).toLocaleDateString()}
                                             </div>
-                                            {record.data?.localizacao?.lat && (
+                                            {record.lat && (
                                                 <div className="flex items-center gap-1 text-emerald-600">
                                                     <MapPin size={12} />
                                                     GPS Ativo

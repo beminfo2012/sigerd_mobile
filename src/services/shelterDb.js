@@ -1,8 +1,9 @@
 import { initDB, triggerSync } from './db';
+import { supabase } from './supabase';
 
 /**
  * Shelter Service Layer (IDB Version)
- * Replaces Dexie.js with native IDB from the main app.
+ * Cloud-First: When online, pulls from Supabase and merges with local data.
  */
 
 // --- HELPERS ---
@@ -13,23 +14,109 @@ const generateId = (prefix) => {
     return `${prefix}-${ts}-${rand}`;
 };
 
+// Cloud-first sync: debounced per session to avoid repeated pulls
+let _lastShelterPull = 0;
+const PULL_DEBOUNCE_MS = 30000; // 30s between pulls
+
+/**
+ * Pull all shelter-related data from Supabase and merge into local IndexedDB.
+ * Debounced to avoid excessive API calls.
+ */
+const pullShelterModuleFromCloud = async () => {
+    if (!navigator.onLine) return;
+
+    const now = Date.now();
+    if (now - _lastShelterPull < PULL_DEBOUNCE_MS) {
+        console.log('[Shelter] Skipping pull (debounce)');
+        return;
+    }
+    _lastShelterPull = now;
+
+    const modules = [
+        { table: 'shelters', store: 'shelters', key: 'shelter_id' },
+        { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
+        { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
+        { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
+        { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' }
+    ];
+
+    const db = await initDB();
+
+    for (const mod of modules) {
+        try {
+            const { data, error } = await supabase.from(mod.table).select('*');
+            if (error) {
+                console.error(`[Shelter] Error pulling ${mod.table}:`, error);
+                continue;
+            }
+            if (!data || data.length === 0) continue;
+
+            const tx = db.transaction(mod.store, 'readwrite');
+            const store = tx.objectStore(mod.store);
+            const allLocal = await store.getAll();
+
+            // Build lookup
+            const localBySupabaseId = new Map();
+            const localByKey = new Map();
+            for (const local of allLocal) {
+                if (local.supabase_id) localBySupabaseId.set(local.supabase_id, local);
+                if (mod.key && local[mod.key]) localByKey.set(local[mod.key], local);
+            }
+
+            for (const item of data) {
+                const localMatch =
+                    localBySupabaseId.get(item.id) ||
+                    (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
+
+                // Skip if local has unsynced changes
+                if (localMatch && localMatch.synced === false) continue;
+
+                const toStore = {
+                    ...item,
+                    id: localMatch ? localMatch.id : undefined,
+                    supabase_id: item.id,
+                    synced: true
+                };
+                await store.put(toStore);
+            }
+            await tx.done;
+        } catch (e) {
+            console.error(`[Shelter] Critical error pulling ${mod.table}:`, e);
+        }
+    }
+
+    console.log('[Shelter] Cloud pull complete.');
+};
+
 // --- SHELTERS ---
 
 export const getShelters = async () => {
+    await pullShelterModuleFromCloud();
     const db = await initDB();
     const all = await db.getAll('shelters');
     return all.filter(s => s.status !== 'deleted');
 };
 
 export const getShelterById = async (id) => {
+    if (!id) return null;
+    await pullShelterModuleFromCloud();
     const db = await initDB();
-    // Try to find by primary key (id) first
-    let shelter = await db.get('shelters', parseInt(id));
-    if (!shelter) {
-        // Fallback: try by search index if id is string or not found
-        shelter = await db.getFromIndex('shelters', 'shelter_id', id);
+
+    // 1. Try numeric local ID
+    if (!isNaN(parseInt(id)) && String(id).length < 5) {
+        const shelter = await db.get('shelters', parseInt(id));
+        if (shelter) return shelter;
     }
-    return shelter;
+
+    // 2. Try Business ID (ABR-...)
+    const shelterByBusId = await db.getFromIndex('shelters', 'shelter_id', String(id));
+    if (shelterByBusId) return shelterByBusId;
+
+    // 3. Try Supabase UUID
+    const shelterBySupId = await db.getFromIndex('shelters', 'supabase_id', String(id));
+    if (shelterBySupId) return shelterBySupId;
+
+    return null;
 };
 
 export const addShelter = async (shelterData) => {
@@ -77,29 +164,36 @@ export const deleteShelter = async (id) => {
 
 // --- OCCUPANTS ---
 
+// Helper to ensure we have a Business ID for relational lookups
+const resolveToBusinessShelterId = async (id) => {
+    if (!id) return null;
+    if (String(id).startsWith('ABR-')) return String(id);
+    const s = await getShelterById(id);
+    return s ? s.shelter_id : String(id);
+};
+
 export const getOccupants = async (shelterId) => {
+    await pullShelterModuleFromCloud();
     const db = await initDB();
-    // Assuming we want all occupants, potentially filtered by shelterId
     if (shelterId) {
-        return db.getAllFromIndex('occupants', 'shelter_id', String(shelterId));
+        const bid = await resolveToBusinessShelterId(shelterId);
+        return db.getAllFromIndex('occupants', 'shelter_id', bid);
     }
     return db.getAll('occupants');
 };
 
 export const addOccupant = async (occupantData) => {
     const db = await initDB();
+    const bid = await resolveToBusinessShelterId(occupantData.shelter_id);
     const newOccupant = {
         ...occupantData,
+        shelter_id: bid,
         occupant_id: generateId('OCP'),
         is_family_head: occupantData.is_family_head || false,
         entry_date: new Date().toISOString(),
         created_at: new Date().toISOString(),
         synced: false
     };
-
-    // Auto-update stats? 
-    // Ideally user calls this explicitly, but let's replicate Dexie logic if possible
-    // Dexie version didn't auto-update stats on Add, only on Exit found in 'exitOccupant'
 
     const id = await db.add('occupants', newOccupant);
     triggerSync();
@@ -154,10 +248,12 @@ export const exitOccupant = async (occupantId, shelterId) => {
 // --- INVENTORY & DONATIONS ---
 
 export const getDonations = async (shelterId) => {
+    await pullShelterModuleFromCloud();
     const db = await initDB();
     let items;
     if (shelterId && shelterId !== 'CENTRAL') {
-        items = await db.getAllFromIndex('donations', 'shelter_id', String(shelterId));
+        const bid = await resolveToBusinessShelterId(shelterId);
+        items = await db.getAllFromIndex('donations', 'shelter_id', bid);
     } else if (shelterId === 'CENTRAL') {
         const all = await db.getAll('donations');
         items = all.filter(d => d.shelter_id === 'CENTRAL');
@@ -178,11 +274,11 @@ export const addDonation = async (donationData) => {
     }
 
     const db = await initDB();
+    const bid = await resolveToBusinessShelterId(donationData.shelter_id || 'CENTRAL');
     const newDonation = {
         ...donationData,
         donation_id: generateId('DOA'),
-        // If no shelter selected, it goes to CENTRAL
-        shelter_id: donationData.shelter_id || 'CENTRAL',
+        shelter_id: bid,
         donation_date: new Date().toISOString(),
         created_at: new Date().toISOString(),
         synced: false
@@ -247,10 +343,12 @@ export const addDonation = async (donationData) => {
 };
 
 export const getInventory = async (shelterId) => {
+    await pullShelterModuleFromCloud();
     const db = await initDB();
     let items;
     if (shelterId && shelterId !== 'CENTRAL') {
-        items = await db.getAllFromIndex('inventory', 'shelter_id', String(shelterId));
+        const bid = await resolveToBusinessShelterId(shelterId);
+        items = await db.getAllFromIndex('inventory', 'shelter_id', bid);
     } else if (shelterId === 'CENTRAL') {
         const all = await db.getAll('inventory');
         items = all.filter(i => i.shelter_id === 'CENTRAL');

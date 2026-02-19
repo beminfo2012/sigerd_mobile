@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Alertas INMET</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Google Fonts - Oswald for condensed look -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <h1>Gerador de Alertas</h1>
+
+            <div class="control-group">
+                <label for="alert-source">Carregar Alerta do INMET</label>
+                <select id="alert-source">
+                    <option value="">Carregando alertas...</option>
+                </select>
+                <button id="refresh-alerts" title="Atualizar lista">↻</button>
+            </div>
+
+            <hr>
+
+            <div class="control-group">
+                <label for="alert-type">Aviso de:</label>
+                <input type="text" id="alert-type" placeholder="Ex: Acumulado de Chuva">
+            </div>
+
+            <div class="control-group">
+                <label for="severity">Grau de severidade:</label>
+                <select id="severity">
+                    <option value="Perigo Potencial">Perigo Potencial (Amarelo)</option>
+                    <option value="Perigo">Perigo (Laranja)</option>
+                    <option value="Grande Perigo">Grande Perigo (Vermelho)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="start-date">Início:</label>
+                <input type="text" id="start-date" placeholder="DD/MM/AAAA HH:mm">
+            </div>
+
+            <div class="control-group">
+                <label for="end-date">Fim:</label>
+                <input type="text" id="end-date" placeholder="DD/MM/AAAA HH:mm">
+            </div>
+
+            <div class="control-group">
+                <label for="risks">Riscos Potenciais:</label>
+                <textarea id="risks" rows="5" placeholder="Descrição dos riscos..."></textarea>
+            </div>
+
+            <div class="control-group">
+                <label for="alert-image">Imagem do Alerta (Upload):</label>
+                <input type="file" id="alert-image" accept="image/*">
+            </div>
+
+            <hr>
+
+            <div class="control-group">
+                <label for="instructions">Instruções:</label>
+                <textarea id="instructions" rows="6">
+- Desligue aparelhos elétricos, quadro geral de energia.
+- Observe alteração nas encostas.
+- Permaneça em local abrigado.
+- Em caso de situação de inundação, ou similar, proteja seus pertences da água envoltos em sacos plásticos.
+- Obtenha mais informações junto à Defesa Civil (telefone 199) e ao Corpo de Bombeiros (telefone 193).
+            </textarea>
+            </div>
+
+            <hr>
+
+            <div class="control-group">
+                <label>Formato da Imagem</label>
+                <div class="format-buttons">
+                    <button class="active" data-format="stories">Stories (9:16)</button>
+                    <button data-format="feed">Feed (1:1)</button>
+                </div>
+            </div>
+
+            <button id="download-btn" class="primary-btn">Baixar Imagem</button>
+        </aside>
+
+        <main class="preview-area">
+            <!-- The Capture Container is what gets turned into an image -->
+            <div id="capture-container" class="format-stories">
+                <!-- Red top bar -->
+                <div class="red-top-bar"></div>
+
+                <!-- Header with text -->
+                <div class="header-section" id="image-preview-area">
+                    <h1 class="header-title">DEFESA CIVIL</h1>
+                    <h2 class="header-subtitle">SANTA MARIA DE JETIBÁ</h2>
+                    <div class="severity-badge" id="severity-badge">
+                        <span id="display-severity-badge">GRANDE PERIGO</span>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-header">
+                        <p><strong>Aviso de:</strong> <span id="display-type">...</span></p>
+                        <p><strong>Grau de severidade:</strong> <span id="display-severity">...</span></p>
+                        <p><strong>Início:</strong> <span id="display-start">...</span></p>
+                        <p><strong>Fim:</strong> <span id="display-end">...</span></p>
+                    </div>
+
+                    <div class="info-body">
+                        <strong>Riscos Potenciais:</strong>
+                        <p id="display-risks">...</p>
+
+                        <div class="instructions-section">
+                            <strong>Instruções:</strong>
+                            <ul id="display-instructions">
+                                <!-- List items will be injected here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Watermark or Footer if needed -->
+                <div class="footer-branding">
+                    Fonte: INMET
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- html2canvas -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

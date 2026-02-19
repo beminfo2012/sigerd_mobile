@@ -47,3 +47,5 @@ workbox-*.js
 .vercel
   
 SKILLS/ 
+.vercel
+.env*.local

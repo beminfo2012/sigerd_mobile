@@ -140,9 +140,79 @@ export const INITIAL_S2ID_STATE = {
 };
 
 /**
+ * Pull S2ID records from Supabase and merge into local IndexedDB.
+ * Returns merged array of all records.
+ */
+const pullS2idFromCloud = async () => {
+    if (!navigator.onLine) return null;
+
+    try {
+        const { data, error } = await supabase
+            .from('s2id_records')
+            .select('*')
+            .order('updated_at', { ascending: false });
+
+        if (error) {
+            console.error('[S2ID] Cloud pull error:', error);
+            return null;
+        }
+
+        if (!data || data.length === 0) return [];
+
+        // Merge into local IndexedDB
+        const db = await initDB();
+        const tx = db.transaction('s2id_records', 'readwrite');
+        const store = tx.objectStore('s2id_records');
+        const allLocal = await store.getAll();
+
+        // Build lookup maps
+        const localByS2idId = new Map();
+        const localBySupabaseId = new Map();
+        for (const local of allLocal) {
+            if (local.s2id_id) localByS2idId.set(local.s2id_id, local);
+            if (local.supabase_id) localBySupabaseId.set(local.supabase_id, local);
+        }
+
+        for (const remote of data) {
+            // Find local match by s2id_id (Business UUID) or supabase_id (DB UUID)
+            const localMatch =
+                localByS2idId.get(remote.s2id_id) ||
+                localBySupabaseId.get(remote.id) ||
+                null;
+
+            // Skip if local has unsynced changes (local wins in conflict)
+            if (localMatch && localMatch.synced === false) {
+                continue;
+            }
+
+            const toStore = {
+                ...remote,
+                id: localMatch ? localMatch.id : undefined,
+                supabase_id: remote.id,
+                s2id_id: remote.s2id_id || localMatch?.s2id_id, // Ensure Business ID is preserved
+                synced: true
+            };
+            delete toStore.id_local;
+
+            await store.put(toStore);
+        }
+
+        await tx.done;
+        console.log(`[S2ID] Merged ${data.length} records from cloud.`);
+        return data;
+    } catch (err) {
+        console.error('[S2ID] Cloud pull failed:', err);
+        return null;
+    }
+};
+
+/**
  * Get the most recent draft S2id record
  */
 export const getLatestDraftS2id = async () => {
+    // Try cloud-first merge
+    await pullS2idFromCloud();
+
     const db = await initDB();
     const records = await db.getAll('s2id_records');
     const drafts = records
@@ -173,20 +243,31 @@ export const saveS2idLocal = async (record) => {
 };
 
 /**
- * Get all local S2id records
+ * Get all S2id records (Cloud-First: pulls from Supabase, merges, then returns local)
  */
 export const getS2idRecords = async () => {
+    // Pull from cloud and merge into local DB
+    await pullS2idFromCloud();
+
     const db = await initDB();
     const records = await db.getAll('s2id_records');
     return records.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 };
 
 /**
- * Get single S2id record by ID
+ * Get single S2id record by ID (with cloud fallback)
  */
 export const getS2idById = async (id) => {
     const db = await initDB();
-    return await db.get('s2id_records', parseInt(id));
+    let record = await db.get('s2id_records', parseInt(id));
+
+    // If not found locally, try pulling from cloud
+    if (!record && navigator.onLine) {
+        await pullS2idFromCloud();
+        record = await db.get('s2id_records', parseInt(id));
+    }
+
+    return record;
 };
 
 /**

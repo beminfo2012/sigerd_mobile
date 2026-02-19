@@ -4,7 +4,7 @@ import {
     ArrowLeft, Save, MapPin, Clock, AlertCircle,
     Navigation, Shield, Users, Info, Loader2
 } from 'lucide-react';
-import { getS2idById, saveS2idLocal, INITIAL_S2ID_STATE } from '../../services/s2idDb';
+import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
 import { useToast } from '../../components/ToastNotification';
 import { COBRADE_LIST } from '../../utils/cobradeData';
 
@@ -14,7 +14,7 @@ const OcorrenciasForm = () => {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [formData, setFormData] = useState(INITIAL_S2ID_STATE);
+    const [formData, setFormData] = useState(INITIAL_OCORRENCIA_STATE);
     const [gpsStatus, setGpsStatus] = useState('idle'); // idle, locating, success, error
 
     useEffect(() => {
@@ -42,7 +42,7 @@ const OcorrenciasForm = () => {
 
     const loadRecord = async (recordId) => {
         try {
-            const record = await getS2idById(recordId);
+            const record = await getOcorrenciaById(recordId);
             if (record) setFormData(record);
         } catch (error) {
             toast.error('Erro ao carregar registro.');
@@ -62,15 +62,10 @@ const OcorrenciasForm = () => {
             (pos) => {
                 setFormData(prev => ({
                     ...prev,
-                    data: {
-                        ...prev.data,
-                        localizacao: {
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                            accuracy: pos.coords.accuracy,
-                            timestamp: new Date().toISOString()
-                        }
-                    }
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy,
+                    gps_timestamp: new Date().toISOString() // Added gps_timestamp
                 }));
                 setGpsStatus('success');
             },
@@ -82,44 +77,45 @@ const OcorrenciasForm = () => {
         );
     };
 
-    const updateField = (section, field, value) => {
+    const updateField = (field, value) => { // Simplified updateField
         setFormData(prev => {
             const newState = {
                 ...prev,
-                data: {
-                    ...prev.data,
-                    [section]: {
-                        ...prev.data[section],
-                        [field]: value
-                    }
-                }
+                [field]: value
             };
 
             // Auto-update COBRADE if denomination changes
-            if (section === 'tipificacao' && field === 'denominacao') {
+            if (field === 'denominacao') {
                 const selected = COBRADE_LIST.find(c => c.name === value);
-                if (selected) newState.data.tipificacao.cobrade = selected.code;
+                if (selected) newState.cobrade = selected.code; // Updated to flat cobrade
             }
             return newState;
         });
     };
 
+    const handleDamageChange = (field, value) => { // New handler for damages
+        setFormData(prev => ({
+            ...prev,
+            [field]: parseInt(value) || 0
+        }));
+    };
+
     const handleSave = async () => {
-        if (!formData.data.tipificacao.denominacao) {
+        if (!formData.denominacao) { // Updated to flat denominacao
             toast.error('Informe o tipo de desastre.');
             return;
         }
 
         setSaving(true);
         try {
-            // Ensure status is finalized for the state dashboard to pick it up immediately
+            // Ensure status is finalized for the state dashboard
             const finalData = {
                 ...formData,
                 status: 'finalized',
                 tipo_registro: 'ocorrencia',
                 updated_at: new Date().toISOString()
             };
-            await saveS2idLocal(finalData);
+            await saveOcorrenciaLocal(finalData); // Changed to saveOcorrenciaLocal
             toast.success('Ocorrência registrada com sucesso!');
             navigate('/ocorrencias');
         } catch (error) {
@@ -185,14 +181,14 @@ const OcorrenciasForm = () => {
                             <div className="space-y-1">
                                 <div className="flex justify-between text-[11px] font-bold">
                                     <span className="text-slate-400">Latitude:</span>
-                                    <span className="text-slate-800">{formData.data.localizacao.lat?.toFixed(6)}</span>
+                                    <span className="text-slate-800">{formData.lat?.toFixed(6)}</span>
                                 </div>
                                 <div className="flex justify-between text-[11px] font-bold">
                                     <span className="text-slate-400">Longitude:</span>
-                                    <span className="text-slate-800">{formData.data.localizacao.lng?.toFixed(6)}</span>
+                                    <span className="text-slate-800">{formData.lng?.toFixed(6)}</span>
                                 </div>
                                 <div className="mt-2 pt-2 border-t border-slate-200/50 flex items-center gap-2 text-[9px] text-emerald-600 font-black uppercase">
-                                    <MapPin size={10} /> Precisão: {formData.data.localizacao.accuracy?.toFixed(1)}m
+                                    <MapPin size={10} /> Precisão: {formData.accuracy?.toFixed(1)}m
                                 </div>
                             </div>
                         ) : (
@@ -219,8 +215,8 @@ const OcorrenciasForm = () => {
                             type="text"
                             placeholder="Ex: 1.2.3.0.0"
                             className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/5 focus:border-[#2a5299] outline-none transition-all font-bold text-sm"
-                            value={formData.data.tipificacao.cobrade}
-                            onChange={(e) => updateField('tipificacao', 'cobrade', e.target.value)}
+                            value={formData.cobrade}
+                            onChange={(e) => updateField('cobrade', e.target.value)}
                         />
                     </div>
 
@@ -231,8 +227,8 @@ const OcorrenciasForm = () => {
                             list="cobrade-list"
                             placeholder="Selecione o tipo..."
                             className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/5 focus:border-[#2a5299] outline-none transition-all font-bold text-sm"
-                            value={formData.data.tipificacao.denominacao}
-                            onChange={(e) => updateField('tipificacao', 'denominacao', e.target.value)}
+                            value={formData.denominacao}
+                            onChange={(e) => updateField('denominacao', e.target.value)}
                         />
                         <datalist id="cobrade-list">
                             {COBRADE_LIST.map(c => <option key={c.code} value={c.name} />)}
@@ -262,17 +258,17 @@ const OcorrenciasForm = () => {
                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{item.label}</label>
                                 <div className="flex items-center">
                                     <button
-                                        onClick={() => updateField('danos_humanos', item.field, Math.max(0, (formData.data.danos_humanos[item.field] || 0) - 1))}
+                                        onClick={() => handleDamageChange(item.field, Math.max(0, (formData[item.field] || 0) - 1))}
                                         className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-l-xl active:bg-slate-200 transition-colors"
                                     >-</button>
                                     <input
                                         type="number"
                                         className={`w-full h-10 bg-slate-50 border-y border-slate-100 text-center font-bold text-slate-800 outline-none`}
-                                        value={formData.data.danos_humanos[item.field] || 0}
-                                        onChange={(e) => updateField('danos_humanos', item.field, parseInt(e.target.value) || 0)}
+                                        value={formData[item.field] || 0}
+                                        onChange={(e) => handleDamageChange(item.field, e.target.value)}
                                     />
                                     <button
-                                        onClick={() => updateField('danos_humanos', item.field, (formData.data.danos_humanos[item.field] || 0) + 1)}
+                                        onClick={() => handleDamageChange(item.field, (formData[item.field] || 0) + 1)}
                                         className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-r-xl active:bg-slate-200 transition-colors"
                                     >+</button>
                                 </div>

@@ -10,6 +10,7 @@ import { generateSituationalReport } from '../../utils/situationalReportGenerato
 import { cemadenService } from '../../services/cemaden'
 import { getShelters, getOccupants, getGlobalInventory } from '../../services/shelterDb'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
+import { useToast } from '../../components/ToastNotification'
 
 // Helper functions for Lightning Load
 const processBreakdown = (records) => {
@@ -94,6 +95,7 @@ const Dashboard = () => {
     const [showReportMenu, setShowReportMenu] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
     const [cemadenAlerts, setCemadenAlerts] = useState([])
+    const toast = useToast()
 
     useEffect(() => {
         console.log('[Dashboard] useEffect running - starting data load...');
@@ -238,9 +240,10 @@ const Dashboard = () => {
     }
 
     const handleSync = async () => {
-        // Sync all data types (including humanitarian), but UI only shows vistorias/interdicoes
         if (syncDetail.total === 0 || syncing) return
         setSyncing(true)
+        const toastId = toast.info('Iniciando sincronização...', 'Enviando vistorias e fotos para o servidor. Por favor, aguarde.');
+
         try {
             const result = await syncPendingData()
             if (result.success) {
@@ -250,11 +253,19 @@ const Dashboard = () => {
                 ])
                 setData(newData)
                 setSyncDetail(newDetail)
-                alert(`${result.count} registros sincronizados com sucesso!`)
+
+                if (result.count > 0) {
+                    toast.success('Sincronização Concluída', `${result.count} registros foram enviados com sucesso.`);
+                    // Alert is removed in favor of Toast
+                } else {
+                    toast.info('Nada para sincronizar', 'Todos os registros locais já estão na nuvem.');
+                }
+            } else {
+                toast.error('Erro Parcial', 'Alguns registros podem não ter sido sincronizados por falhas no upload de mídia. Tente novamente em alguns minutos.');
             }
         } catch (e) {
             console.error('Sync failed:', e)
-            alert('Erro ao sincronizar dados.')
+            toast.error('Falha Crítica', 'Não foi possível conectar ao servidor. Verifique sua conexão.');
         } finally {
             setSyncing(false)
         }
@@ -429,12 +440,19 @@ const Dashboard = () => {
                     </div>
                     <div className="text-xs font-bold text-slate-400 leading-tight">
                         {syncing ? 'Enviando...' : (
-                            (syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (
-                                <span>
-                                    {syncDetail.vistorias > 0 && `${syncDetail.vistorias} Vistoria${syncDetail.vistorias > 1 ? 's' : ''}`}
-                                    {syncDetail.vistorias > 0 && syncDetail.interdicoes > 0 && ', '}
-                                    {syncDetail.interdicoes > 0 && `${syncDetail.interdicoes} Interdição${syncDetail.interdicoes > 1 ? 'ões' : ''}`}
-                                </span>
+                            syncDetail.total > 0 ? (
+                                <div className="flex flex-col gap-0.5">
+                                    <span>
+                                        {syncDetail.vistorias > 0 && `${syncDetail.vistorias} Vistoria${syncDetail.vistorias > 1 ? 's' : ''}`}
+                                        {syncDetail.vistorias > 0 && syncDetail.interdicoes > 0 && ', '}
+                                        {syncDetail.interdicoes > 0 && `${syncDetail.interdicoes} Interdição${syncDetail.interdicoes > 1 ? 'ões' : ''}`}
+                                    </span>
+                                    {syncDetail.photosTotal > 0 && (
+                                        <span className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">
+                                            {syncDetail.photosTotal} foto{syncDetail.photosTotal > 1 ? 's' : ''} pendente{syncDetail.photosTotal > 1 ? 's' : ''}
+                                        </span>
+                                    )}
+                                </div>
                             ) : 'Sincronizado'
                         )}
                     </div>
@@ -700,6 +718,7 @@ const Dashboard = () => {
                         </div>
                         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Áreas de Risco</span>
                     </div>
+
                 </div>
             </div>
 

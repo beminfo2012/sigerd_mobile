@@ -194,7 +194,7 @@ const S2idDashboard = () => {
 
                                         <div className="flex flex-col gap-2">
                                             <button
-                                                onClick={() => navigate(`/s2id/editar/${record.id}`)}
+                                                onClick={() => navigate(`/s2id/editar/${record.s2id_id || record.id}`)}
                                                 className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                                             >
                                                 <Edit3 size={18} />
@@ -259,54 +259,196 @@ const S2idDashboard = () => {
                         </div>
                     </>
                 ) : (
-                    /* Monitoramento Grid */
+                    /* ═══ PAINEL DE PROGRESSO SETORIAL ═══ */
                     <div className="space-y-6 animate-in fade-in duration-500">
-                        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm overflow-x-auto">
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <Shield className="text-blue-600" size={18} /> Painel de Progresso Setorial
-                            </h2>
 
-                            <table className="w-full text-[10px] border-collapse min-w-[600px]">
-                                <thead>
-                                    <tr className="border-b border-slate-100">
-                                        <th className="text-left pb-4 font-black text-slate-400 uppercase tracking-widest">Relatório</th>
-                                        {secretariasOrder.map(sec => (
-                                            <th key={sec} className="px-2 pb-4 font-black text-slate-400 uppercase tracking-tighter text-center">
-                                                <div className="w-8 mx-auto truncate" title={sec}>{sec.substring(0, 3)}</div>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {records.map(r => (
-                                        <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-4 pr-4">
-                                                <p className="font-bold text-slate-700 capitalize text-xs">{r.data.tipificacao.denominacao}</p>
-                                                <p className="text-[8px] text-slate-400 font-black">{r.data.tipificacao.cobrade}</p>
-                                            </td>
-                                            {secretariasOrder.map(sec => {
-                                                const sub = r.data.submissoes_setoriais?.[sec];
-                                                return (
-                                                    <td key={sec} className="px-2 py-4 text-center">
-                                                        {sub?.preenchido ? (
+                        {/* Global Stats Bar */}
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-center">
+                                <p className="text-2xl font-black text-blue-600">{records.length}</p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">FIDEs Ativos</p>
+                            </div>
+                            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-center">
+                                <p className="text-2xl font-black text-emerald-600">
+                                    {records.length > 0
+                                        ? Math.round(records.reduce((acc, r) => {
+                                            const subs = r.data.submissoes_setoriais || {};
+                                            const filled = Object.values(subs).filter(s => s.preenchido).length;
+                                            return acc + (filled / secretariasOrder.length) * 100;
+                                        }, 0) / records.length)
+                                        : 0}%
+                                </p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Completude Média</p>
+                            </div>
+                            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-center">
+                                <p className="text-2xl font-black text-amber-600">
+                                    {records.filter(r => {
+                                        const subs = r.data.submissoes_setoriais || {};
+                                        return Object.values(subs).filter(s => s.preenchido).length === secretariasOrder.length;
+                                    }).length}
+                                </p>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">100% Completos</p>
+                            </div>
+                        </div>
+
+                        {/* Per-FIDE Progress Cards */}
+                        {records.map(r => {
+                            const subs = r.data.submissoes_setoriais || {};
+                            const filledCount = Object.values(subs).filter(s => s.preenchido).length;
+                            const totalSectors = secretariasOrder.length;
+                            const pct = Math.round((filledCount / totalSectors) * 100);
+                            const circumference = 2 * Math.PI * 40;
+                            const strokeDashoffset = circumference - (pct / 100) * circumference;
+
+                            const SECTOR_LABELS = {
+                                saude: { name: 'Saúde', icon: '🏥', color: 'rose' },
+                                obras: { name: 'SECURB', icon: '🏗️', color: 'orange' },
+                                social: { name: 'Social', icon: '🤝', color: 'pink' },
+                                educacao: { name: 'Educação', icon: '📚', color: 'indigo' },
+                                agricultura: { name: 'Agricultura', icon: '🌾', color: 'lime' },
+                                interior: { name: 'Interior', icon: '🏔️', color: 'teal' },
+                                administracao: { name: 'Administração', icon: '🏛️', color: 'slate' },
+                                cdl: { name: 'CDL', icon: '🏪', color: 'violet' },
+                                cesan: { name: 'CESAN', icon: '💧', color: 'cyan' },
+                                defesa_social: { name: 'Defesa Social', icon: '🛡️', color: 'red' },
+                                esporte_turismo: { name: 'Esporte/Turismo', icon: '⚽', color: 'emerald' },
+                                servicos_urbanos: { name: 'Serv. Urbanos', icon: '🏙️', color: 'amber' },
+                                transportes: { name: 'Transportes', icon: '🚛', color: 'blue' }
+                            };
+
+                            return (
+                                <div key={r.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                                    {/* FIDE Header with Progress Ring */}
+                                    <div className="p-5 flex items-center gap-4 border-b border-slate-50">
+                                        {/* SVG Progress Ring */}
+                                        <div className="relative flex-shrink-0">
+                                            <svg width="90" height="90" viewBox="0 0 90 90" className="-rotate-90">
+                                                <circle cx="45" cy="45" r="40" fill="none" stroke="#f1f5f9" strokeWidth="6" />
+                                                <circle
+                                                    cx="45" cy="45" r="40" fill="none"
+                                                    stroke={pct === 100 ? '#10b981' : pct > 50 ? '#3b82f6' : '#f59e0b'}
+                                                    strokeWidth="6"
+                                                    strokeLinecap="round"
+                                                    strokeDasharray={circumference}
+                                                    strokeDashoffset={strokeDashoffset}
+                                                    style={{ transition: 'stroke-dashoffset 1s ease-in-out' }}
+                                                />
+                                            </svg>
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                <span className="text-lg font-black text-slate-800">{pct}%</span>
+                                                <span className="text-[8px] font-bold text-slate-400">{filledCount}/{totalSectors}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* FIDE Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-[9px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                                    {r.data.tipificacao.cobrade || 'N/A'}
+                                                </span>
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${pct === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                    {pct === 100 ? 'Completo' : 'Em Andamento'}
+                                                </span>
+                                            </div>
+                                            <h3 className="font-black text-slate-800 text-sm leading-tight truncate">
+                                                {r.data.tipificacao.denominacao || 'FIDE Sem Título'}
+                                            </h3>
+                                            <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                                                <Clock size={11} />
+                                                {r.data.data_ocorrencia?.dia ? `${r.data.data_ocorrencia.dia}/${r.data.data_ocorrencia.mes}/${r.data.data_ocorrencia.ano}` : new Date(r.created_at).toLocaleDateString('pt-BR')}
+                                            </p>
+
+                                            {/* Mini progress bar */}
+                                            <div className="mt-2 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-1000 ease-out ${pct === 100 ? 'bg-emerald-500' : pct > 50 ? 'bg-blue-500' : 'bg-amber-500'}`}
+                                                    style={{ width: `${pct}%` }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <button
+                                            onClick={() => navigate(`/s2id/editar/${r.s2id_id || r.id}`)}
+                                            className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all flex-shrink-0"
+                                        >
+                                            <Edit3 size={16} />
+                                        </button>
+                                    </div>
+
+                                    {/* Sector Grid */}
+                                    <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                        {secretariasOrder.map(sec => {
+                                            const sub = subs[sec];
+                                            const info = SECTOR_LABELS[sec] || { name: sec, icon: '📋', color: 'slate' };
+                                            const done = sub?.preenchido;
+
+                                            return (
+                                                <div
+                                                    key={sec}
+                                                    className={`relative rounded-2xl p-3 border transition-all ${done
+                                                        ? 'bg-emerald-50/60 border-emerald-200 shadow-sm'
+                                                        : 'bg-slate-50/50 border-slate-100 border-dashed'
+                                                        }`}
+                                                >
+                                                    {/* Sector header */}
+                                                    <div className="flex items-center gap-1.5 mb-1">
+                                                        <span className="text-sm">{info.icon}</span>
+                                                        <span className={`text-[9px] font-black uppercase tracking-wider ${done ? 'text-emerald-700' : 'text-slate-400'}`}>
+                                                            {info.name}
+                                                        </span>
+                                                    </div>
+
+                                                    {done ? (
+                                                        <div className="space-y-0.5">
+                                                            <div className="flex items-center gap-1">
+                                                                <CheckCircle size={11} className="text-emerald-500" />
+                                                                <span className="text-[8px] font-black text-emerald-600 uppercase">Preenchido</span>
+                                                            </div>
+                                                            {sub.responsavel && (
+                                                                <p className="text-[8px] text-slate-500 truncate" title={sub.responsavel}>
+                                                                    👤 {sub.responsavel}
+                                                                </p>
+                                                            )}
+                                                            {sub.cargo && (
+                                                                <p className="text-[7px] text-slate-400 truncate" title={sub.cargo}>
+                                                                    {sub.cargo}
+                                                                </p>
+                                                            )}
+                                                            {sub.data && (
+                                                                <p className="text-[7px] text-slate-400">
+                                                                    📅 {new Date(sub.data).toLocaleDateString('pt-BR')} {new Date(sub.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                                </p>
+                                                            )}
                                                             <button
                                                                 onClick={() => generateS2idReport(r, user, sec)}
-                                                                className="w-7 h-7 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mx-auto shadow-sm hover:bg-green-600 hover:text-white transition-all active:scale-90"
-                                                                title={`Baixar Relatório Setorial: ${sec.toUpperCase()}\nFinalizado por ${sub.usuario}`}
+                                                                className="mt-1 w-full text-[7px] font-black text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg py-1 flex items-center justify-center gap-1 transition-all"
                                                             >
-                                                                <Download size={14} />
+                                                                <Download size={9} /> PDF
                                                             </button>
-                                                        ) : (
-                                                            <div className="w-6 h-6 border-2 border-dashed border-slate-200 rounded-full mx-auto"></div>
-                                                        )}
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1 mt-1">
+                                                            <Clock size={11} className="text-slate-300" />
+                                                            <span className="text-[8px] font-bold text-slate-300 uppercase">Aguardando</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {records.length === 0 && (
+                            <div className="p-12 text-center space-y-4 bg-white rounded-3xl border border-slate-100">
+                                <div className="bg-slate-100 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto text-slate-400">
+                                    <Shield size={32} />
+                                </div>
+                                <p className="text-slate-400 text-sm font-medium">Nenhum FIDE registrado para monitorar.</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>

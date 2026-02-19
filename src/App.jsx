@@ -11,7 +11,8 @@ import Login from './pages/Login'
 import Menu from './pages/Menu'
 import ProtectedRoute from './components/ProtectedRoute'
 import { supabase } from './services/supabase'
-import { getLatestDraftS2id } from './services/s2idDb'
+import { pullAllData } from './services/db'
+
 
 // Lazy loaded components
 const GeoRescue = lazy(() => import('./pages/GeoRescue'))
@@ -48,9 +49,6 @@ const UserManagement = lazy(() => import('./pages/UserManagement'))
 const S2idDashboard = lazy(() => import('./pages/S2id/S2idDashboard'))
 const S2idForm = lazy(() => import('./pages/S2id/S2idForm'))
 
-// Ocorrências Module (Lazy)
-const OcorrenciasDashboard = lazy(() => import('./pages/Ocorrencias/OcorrenciasDashboard'))
-const OcorrenciasForm = lazy(() => import('./pages/Ocorrencias/OcorrenciasForm'))
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -151,6 +149,7 @@ const AppContent = ({
     return (
         <div className={`app-container ${isDarkMode ? 'dark' : ''}`}>
             <SyncBackground />
+
 
             {/* Mobile Header - Hide on print */}
             {!isPrintPage && (
@@ -330,22 +329,6 @@ const AppContent = ({
                             </ProtectedRoute>
                         } />
 
-                        {/* Ocorrências Routes */}
-                        <Route path="/ocorrencias" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <OcorrenciasDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/ocorrencias/novo" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <OcorrenciasForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/ocorrencias/editar/:id" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <OcorrenciasForm />
-                            </ProtectedRoute>
-                        } />
 
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
@@ -353,7 +336,7 @@ const AppContent = ({
             </main>
 
             {/* Bottom Navigation - Hide on print */}
-            {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.email === 'bruno_pagel@hotmail.com') && (
+            {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
                 <nav className="bottom-nav">
                     <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
                         <Home size={24} />
@@ -494,7 +477,21 @@ function App() {
         localStorage.setItem('auth', 'true')
         setIsAuthenticated(true)
         await loadUserProfile()
+
+        // Restore all cloud data to local IndexedDB after login
+        if (navigator.onLine) {
+            console.log('[Login] Pulling all cloud data to local DB...')
+            try {
+                const result = await pullAllData();
+                console.log('[Login] Cloud data restored:', result);
+            } catch (err) {
+                console.warn('[Login] Cloud data pull failed (non-blocking):', err);
+            }
+        }
+
+        setIsLoading(false);
     }
+
 
 
     const handleLogout = () => {

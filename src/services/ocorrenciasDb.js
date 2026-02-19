@@ -1,0 +1,127 @@
+import { initDB } from './db'
+import { supabase } from './supabase'
+
+/**
+ * Operational Occurrences Database Service
+ * Handles CRUD and Sync for the dedicated 'ocorrencias_operacionais' table.
+ */
+
+export const INITIAL_OCORRENCIA_STATE = {
+    denominacao: '',
+    cobrade: '',
+    data_ocorrencia: new Date().toLocaleDateString('pt-BR'),
+    horario_ocorrencia: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    lat: null,
+    lng: null,
+    accuracy: null,
+    gps_timestamp: null,
+    mortos: 0,
+    feridos: 0,
+    enfermos: 0,
+    desalojados: 0,
+    desabrigados: 0,
+    desaparecidos: 0,
+    outros_afetados: 0,
+    descricao_danos: '',
+    observacoes: '',
+    status: 'finalized',
+    synced: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+};
+
+/**
+ * Delete Ocorrencia local (soft delete)
+ */
+export const deleteOcorrenciaLocal = async (id) => {
+    const db = await initDB();
+    const record = await db.get('ocorrencias_operacionais', parseInt(id));
+    if (record) {
+        // For simplicity in the operacional module, we'll do a hard delete locally
+        // but we could also do a soft delete if needed for sync purposes.
+        await db.delete('ocorrencias_operacionais', parseInt(id));
+    }
+};
+
+/**
+ * Save Ocorrencia locally (IndexedDB)
+ */
+export const saveOcorrenciaLocal = async (data) => {
+    const db = await initDB();
+    const toSave = {
+        ...data,
+        ocorrencia_id: data.ocorrencia_id || crypto.randomUUID(),
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+    const id = await db.put('ocorrencias_operacionais', toSave);
+
+    if (navigator.onLine) {
+        triggerOcorrenciaSync(id).catch(err => console.error('Sync failed:', err));
+    }
+    return id;
+};
+
+/**
+ * Get all local occurrences
+ */
+export const getOcorrenciasLocal = async () => {
+    const db = await initDB();
+    const records = await db.getAll('ocorrencias_operacionais');
+    return records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+};
+
+/**
+ * Get single occurrence
+ */
+export const getOcorrenciaById = async (id) => {
+    const db = await initDB();
+    return await db.get('ocorrencias_operacionais', parseInt(id));
+};
+
+/**
+ * Sync single occurrence to Supabase
+ */
+export const triggerOcorrenciaSync = async (id) => {
+    const db = await initDB();
+    const record = await db.get('ocorrencias_operacionais', parseInt(id));
+    if (!record) return;
+
+    try {
+        const payload = {
+            ...record,
+            id_local: record.id
+        };
+        delete payload.id;
+        delete payload.synced;
+
+        const { data, error } = await supabase
+            .from('ocorrencias_operacionais')
+            .upsert(payload, { onConflict: 'ocorrencia_id' })
+            .select()
+            .single();
+
+        if (!error) {
+            record.synced = true;
+            await db.put('ocorrencias_operacionais', record);
+            return true;
+        }
+        throw error;
+    } catch (err) {
+        console.error('Ocorrencia Sync Error:', err);
+        return false;
+    }
+};
+
+/**
+ * Sync all pending occurrences
+ */
+export const syncAllOcorrencias = async () => {
+    const db = await initDB();
+    const records = await db.getAll('ocorrencias_operacionais');
+    const pending = records.filter(r => !r.synced);
+
+    for (const r of pending) {
+        await triggerOcorrenciaSync(r.id);
+    }
+};

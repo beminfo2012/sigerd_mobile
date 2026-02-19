@@ -1,0 +1,160 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #eef2f7;
+    color: #333;
+    line-height: 1.6;
+    transition: background-color 0.5s ease;
+}
+
+/* Cores de fundo baseadas no nível de alerta */
+.bg-normalidade {
+    background-color: #e8f5e9;
+    /* Verde claro para normalidade */
+}
+
+.bg-atencao {
+    background-color: #ffecb3;
+    /* Amarelo mais vivo */
+}
+
+.bg-alerta {
+    background-color: #ffcdd2;
+    /* Vermelho mais vivo */
+}
+
+.bg-maximo {
+    background-color: #e1bee7;
+    /* Roxo/Vinho mais vivo */
+}
+
+.bg-alerta h1,
+.bg-maximo h1 {
+    color: #424242;
+    /* Cor mais escura para o título em fundos coloridos */
+}
+
+.tracking-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.tracking-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #dce4f0;
+}
+
+.tracking-panel-header h1 {
+    color: #1e3c72;
+    font-size: 24px;
+}
+
+.tracking-panel-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.tracking-panel-info span {
+    font-size: 14px;
+    color: #555;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.tracking-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    flex-grow: 1;
+}
+
+.tracking-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+}
+
+.tracking-card .card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    color: #2a5299;
+    font-size: 18px;
+}
+
+.tracking-card .card-header i {
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+.tracking-card .stat {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1e3c72;
+    margin-bottom: 8px;
+}
+
+.tracking-card .card-list {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 200px;
+}
+
+.tracking-card .card-list li {
+    font-size: 15px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f3f3;
+}
+
+/* Ajusta a cor do card para melhor contraste em fundos coloridos */
+.bg-atencao .tracking-card,
+.bg-alerta .tracking-card,
+.bg-maximo .tracking-card {
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Media Queries para Responsividade do Painel --- */
+
+@media (max-width: 768px) {
+    .tracking-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .tracking-panel-header h1 {
+        font-size: 20px;
+    }
+
+    .tracking-panel-grid {
+        grid-template-columns: 1fr;
+        /* Uma coluna em telas pequenas */
+    }
+}

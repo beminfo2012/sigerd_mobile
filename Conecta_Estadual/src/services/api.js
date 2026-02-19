@@ -13,9 +13,8 @@ import { supabase } from './supabase';
 
 /**
  * Fetch all S2ID occurrence records from the municipal system.
- * These are created by municipalities via SIGERD Mobile.
  */
-export const fetchMunicipalOccurrences = async () => {
+export const fetchS2idRecords = async () => {
     const { data, error } = await supabase
         .from('s2id_records')
         .select('*')
@@ -25,9 +24,14 @@ export const fetchMunicipalOccurrences = async () => {
         console.error('[Conecta] Error fetching s2id_records:', error);
         throw error;
     }
-
-    // Transform S2ID records into the format our Dashboard/Table expects
     return (data || []).map(transformS2idRecord);
+};
+
+/**
+ * Combined fetch for all types of occurrences.
+ */
+export const fetchAllOccurrences = async () => {
+    return fetchS2idRecords();
 };
 
 /**
@@ -142,6 +146,7 @@ const formatDate = (dateObj) => {
 };
 
 
+
 // ── STATE CONTROL (separate table: estado_controle) ──────────────
 
 /**
@@ -212,7 +217,7 @@ export const fetchAllStateControls = async () => {
 export const fetchDashboardKPIs = async () => {
     try {
         const [occurrences, controls] = await Promise.all([
-            fetchMunicipalOccurrences(),
+            fetchAllOccurrences(),
             fetchAllStateControls()
         ]);
 
@@ -263,18 +268,17 @@ export const fetchDashboardKPIs = async () => {
  */
 export const subscribeToOccurrences = (callback) => {
     const channel = supabase
-        .channel('s2id_realtime')
+        .channel('dashboard_realtime')
         .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 's2id_records' },
             (payload) => {
-                console.log('[Conecta] Real-time update:', payload.eventType);
+                console.log('[Conecta] S2ID update:', payload.eventType);
                 callback(payload);
             }
         )
         .subscribe();
 
-    // Return unsubscribe function
     return () => supabase.removeChannel(channel);
 };
 

@@ -1,0 +1,118 @@
+RELATÓRIO DO DESASTRE - CESAN
+
+
+
+DADOS GERAIS
+
+1.1 Identificação
+
+UF: ESMunicípio: Santa Maria de Jetibá
+
+1.2 Tipificação
+
+COBRADE: 13214Denominação: Tempestade Local/Convectiva – Chuvas Intensas
+
+1.3 Data da ocorrência do Desastre
+
+05/02/2026
+
+
+
+INTRODUÇÃO 
+
+Utilizar uma função de gerar com IA em que serão utilizados os dados que foram preenchidos no relatório como base para o preenchimento da “Introdução” deste relatório.
+
+
+
+DANOS À INFRAESTRUTURA
+
+
+
+Discriminação
+
+Quantidade
+
+Danificada
+
+Quantidade Destruída
+
+Valor R$
+
+Instalações públicas prestadoras de serviços
+
+
+
+
+
+
+
+
+
+Descrição: 
+
+
+
+Texto livre
+
+
+
+
+
+*Não esquecer de descrever as localidades atingidas
+
+
+
+
+
+PREJUÍZOS ECONÔMICOS PÚBLICOS
+
+
+
+Serviço essencial público prejudicado ou interrompido.
+
+Valor do Prejuízo (R$)
+
+Abastecimento de água potável
+
+
+
+Esgoto de águas pluviais e sistema de esgotos sanitários
+
+
+
+TOTAL R$
+
+
+
+
+
+Descrição: 
+
+
+
+Texto livre
+
+
+
+
+
+*Não esquecer de descrever as localidades atingidas
+
+
+
+
+
+CONSIDERAÇÕES FINAIS
+
+
+
+Utilizar uma função de gerar com IA em que serão utilizados os dados que foram preenchidos no relatório como base para o preenchimento da “Considerações Finais” deste relatório.
+
+
+
+
+
+
+
+RELATÓRIO FOTOGRÁFICO
+

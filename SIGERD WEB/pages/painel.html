@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Acompanhamento - SIGERD</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/painel.css">
+    <link rel="icon" href="../assets/img/favicon.png" type="image/png">
+</head>
+
+<body>
+    <div id="trackingPanel" class="tracking-panel">
+        <div class="tracking-panel-header">
+            <h1><i class="fas fa-binoculars"></i> Painel de Acompanhamento da Gestão de Desastre</h1>
+            <div class="tracking-panel-info">
+                <span>Última atualização: <strong id="tracking-panel-last-update">--:--:--</strong></span>
+                <button id="closePanel" class="btn-secondary"><i class="fas fa-times"></i> Fechar Aba</button>
+            </div>
+        </div>
+        <div class="tracking-panel-grid">
+            <div class="tracking-card" id="tracking-status-plano">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+            <div class="tracking-card" id="tracking-alertas-ativos">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+            <div class="tracking-card" id="tracking-pessoas-impactadas">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+            <div class="tracking-card" id="tracking-recursos-empregados">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+            <div class="tracking-card" id="tracking-tarefas-prioritarias">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+            <div class="tracking-card" id="tracking-condicoes-climaticas">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+            <div class="tracking-card" id="tracking-abrigos">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+            <div class="tracking-card" id="tracking-estoque">
+                <!-- Conteúdo preenchido via JS -->
+            </div>
+        </div>
+    </div>
+    <script src="../js/painel.js"></script>
+</body>
+
+</html>

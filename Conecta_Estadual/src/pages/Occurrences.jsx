@@ -3,7 +3,7 @@ import {
     Search, RefreshCw, ChevronRight, AlertCircle,
     Eye, Clock, Loader2
 } from 'lucide-react';
-import { fetchMunicipalOccurrences } from '../services/api';
+import { fetchAllOccurrences } from '../services/api';
 import OccurrenceDetail from '../components/OccurrenceDetail';
 
 const Occurrences = () => {
@@ -19,10 +19,10 @@ const Occurrences = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const occurrences = await fetchMunicipalOccurrences();
-            setData(occurrences);
-        } catch (err) {
-            console.error('[Occurrences] Load error:', err);
+            const data = await fetchAllOccurrences();
+            setOccurrences(data || []);
+        } catch (error) {
+            console.error('[Occurrences] Load error:', error);
         } finally {
             setLoading(false);
         }

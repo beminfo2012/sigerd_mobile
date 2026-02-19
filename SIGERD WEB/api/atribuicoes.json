@@ -1,0 +1,544 @@
+{
+    "updated_at": "2025-09-23",
+    "organizations": [
+        {
+            "name": "Gabinete do Prefeito",
+            "sections": {
+                "prevencao": [
+                    "Estreitar o contato entre as diversas Secretarias e Órgãos essenciais dos serviços de emergência, a fim de manter o Prefeito sempre informado da situação."
+                ],
+                "preparacao": [
+                    "Manter equipe em alerta para apoio nas ações de proteção e defesa civil."
+                ],
+                "resposta": [
+                    "Manter equipe em alerta e disponível quando da solicitação de apoio nas ações de proteção e defesa civil;",
+                    "Coordenar as ações em conjunto com a COMPDEC, ativando os fluxos de informações e comunicações, visando sua integração operacional, de acordo com a intensidade do desastre;",
+                    "Coordenar, junto às estruturas do governo municipal, as ações necessárias para o perfeito funcionamento do Plano Municipal de Proteção e Defesa Civil;",
+                    "Auxiliar toda a operação a partir das demandas que venham surgir para a COMPDEC advindas de um evento adverso;",
+                    "Manter o Prefeito sempre informado das ações desenvolvidas pelo Setor de Proteção e Defesa Civil Municipal."
+                ]
+            }
+        },
+        {
+            "name": "Coordenadoria Municipal de Proteção e Defesa Civil (COMPDEC)",
+            "sections": {
+                "prevencao": [
+                    "Ampliar e aperfeiçoar o sistema de monitoramento, alerta e alarme;",
+                    "Incentivar a estruturação do setor municipal de Proteção e Defesa Civil;",
+                    "Regulamentar o Programa Municipal de Redução de Riscos;",
+                    "Fomentar o mapeamento de áreas de risco de desastres;",
+                    "Fomentar a percepção de risco, principalmente nas comunidades em áreas de risco;",
+                    "Apoiar a criação de núcleos comunitários de voluntariado em defesa civil;",
+                    "Analisar e propor medidas estruturantes em áreas de risco;",
+                    "Apresentar análise comparativa de dados dos desastres ocorridos no Município para atualização do Plano Municipal de Proteção e Defesa Civil e outras finalidades;",
+                    "Apoiar ações educativas nas comunidades vulneráveis, com maior atenção ao grupo vulnerável (crianças e adolescentes, pessoas idosas e pessoas com deficiência);",
+                    "Manter-se atualizado quanto às mudanças do clima, acompanhando as previsões climáticas emitidas pelos órgãos específicos;",
+                    "Coordenar as ações desempenhadas pelos setores envolvidos neste Plano, em conjunto com o Gabinete do Prefeito Municipal, ativando os fluxos de informações e comunicações visando sua integração operacional, de acordo com a intensidade do desastre;",
+                    "Oferecer subsídios às Secretarias Municipais para o planejamento das ações municipais integradas às ações da comunidade;",
+                    "Ampliar a abrangência e fortalecer o plano municipal de contingência;",
+                    "Ampliar o programa de capacitação e treinamento de agentes municipais para controle e fiscalização de áreas de risco;",
+                    "Buscar garantia de recursos técnicos, humanos e financeiros para a elaboração e atualização de dados que subsidiem o conhecimento contínuo da situação de risco no Município, como elaboração de cartografia básica de todo o seu território, aquisição periódica de imagens de alta resolução, manutenção de sistema gerenciador de informações de risco;",
+                    "Criar indicadores de desempenho, como número de agentes capacitados, índice de redução de áreas de risco, número de pessoas orientadas, planos de metas, entre outros."
+                ],
+                "preparacao": [
+                    "Manter os representantes deste Plano informados quanto à possibilidade de ocorrer desastres em todo o território do Município;",
+                    "Manter atualizado o Plano de Contingências e os contatos dos Pontos Focais."
+                ],
+                "resposta": [
+                    "Deslocar-se ao local sinistrado para apoiar e coordenar o incidente, quando o caso exigir, além de montar e coordenar junto ao Prefeito Municipal o Gabinete de Gestão de Crise;",
+                    "Manter o levantamento de toda população desabrigada e de pessoas possivelmente atingidas, de danos materiais e ambientais, prejuízos sociais e econômicos. Os dados repassados pelos setores integrantes deste Plano servirão como referência para o levantamento;",
+                    "Manter o Secretário(a) de Gabinete informado de todos os dados alusivos aos desastres;",
+                    "Coordenar tecnicamente o envio e atuação das equipes em suporte aos locais atingidos pelas chuvas, conforme a evolução do desastre;",
+                    "Enviar à área atingida, após avaliação preliminar do nível do desastre, equipes de apoio;",
+                    "Apoiar tecnicamente na confecção da documentação de situação de anormalidade, para encaminhamento à Coordenadoria Estadual de Proteção e Defesa Civil (CEPDEC), bem como para mensurar os danos e prejuízos causados pelo desastre em relatório próprio da COMPDEC;",
+                    "Implementar o Comando Unificado na resposta a situações críticas, com o envolvimento de múltiplos setores;",
+                    "Manter o site da COMPDEC (www.pmsmj.es.gov.br/defesacivil) com informações atualizadas disponíveis aos munícipes sobre a decretação de anormalidade;",
+                    "Utilizar, nos desastres de maior vulto, o Posto de Comando Móvel, para facilitar a coordenação dos trabalhos;",
+                    "Estudar a necessidade da declaração de Situação de Emergência ou Estado de Calamidade Pública em nível municipal e emitir parecer;",
+                    "Durante a confecção dos planos de ação no local do desastre as equipes buscarão contemplar: socorro, assistência e reabilitação do cenário atingido; pronto atendimento às vítimas; assistência prioritária ao grupo de maior vulnerabilidade (crianças e adolescentes, pessoas idosas e pessoas com deficiência); evacuação de pessoas dos locais sinistrados; triagem e cadastramento das vítimas; assistência médica; fornecimento de roupas, agasalhos e alimentação; transporte de feridos e doentes; instalação de abrigos, com fornecimento de alimentação e medicamentos para as vítimas do evento calamitoso.",
+                    "A COMPDEC prestará assessoria técnica ao Setor Jurídico Municipal sobre as decretações e preparará os atos de homologação do processo para assinatura do Prefeito Municipal;",
+                    "Assessorar as secretarias responsáveis na elaboração de projetos que visem à captação de recursos para reconstrução;",
+                    "Avaliar áreas de obras de reconstrução a fim de que sejam implantadas em áreas seguras e adequadamente distanciadas das áreas de riscos."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Administração",
+            "sections": {
+                "prevencao": [
+                    "Planejar, coordenar e controlar as atividades inerentes aos recursos humanos, expediente, compras, almoxarifado, entre outros;",
+                    "Organizar e manter atualizado o cadastro de recursos humanos;",
+                    "Manter atualizados os registros funcionais dos servidores;",
+                    "Manter atualizado e organizado o cadastro e a documentação dos bens imóveis pertencentes ao patrimônio municipal;",
+                    "Prever no orçamento público municipal dotação orçamentária para a Coordenadoria Municipal de Proteção e Defesa Civil e para o Fundo Municipal de Proteção e Defesa Civil;",
+                    "Auxiliar a Defesa Civil nas captações de recurso para ações de prevenção;",
+                    "Estabelecer dotação orçamentária para o funcionamento do Setor e para a execução das ações de Proteção e Defesa Civil;",
+                    "Disponibilizar recursos para obras de prevenção em setores de risco;",
+                    "Manter banco de dados das indústrias e comércios."
+                ],
+                "preparacao": [
+                    "Orientar os órgãos da Prefeitura quanto à maneira de formular as solicitações de materiais e de solicitar dados e esclarecimentos nos processos de aquisição de materiais e equipamentos especializados;",
+                    "Estabelecer política de armazenamento e guarda de materiais para todas as unidades da Prefeitura;",
+                    "Coordenar, executar e controlar as atividades relacionadas à administração de patrimônio, manutenção e conservação de bens móveis e imóveis;",
+                    "Providenciar a elaboração dos contratos de prestação de serviços e fornecimentos de materiais;",
+                    "Organizar e atualizar o cadastro de fornecedores de bens e serviços;",
+                    "Manter as equipes de sobreaviso em caso de alerta;",
+                    "Priorizar as suplementações orçamentárias para atendimento às possíveis ocorrências de Defesa Civil;",
+                    "Disponibilizar recursos para execução de atividades emergenciais de resposta."
+                ],
+                "resposta": [
+                    "Coordenar atividades relativas à padronização, aquisição, armazenamento, distribuição e controle de material permanente e de consumo para a Prefeitura;",
+                    "Coordenar as atividades relativas às solicitações de compras de materiais e serviços, processos licitatórios e respectivas contratações, zelando pelo cumprimento das normas legais de licitação;",
+                    "Liberar com prioridade, se necessário, recursos que possam atender as necessidades emergenciais do município;",
+                    "Identificar, no cadastro de contribuintes, a identificação da situação cadastral dos imóveis a serem demolidos;",
+                    "Verificar a situação dos imóveis das famílias desabrigadas no cadastro municipal de contribuintes;",
+                    "Auxiliar a Defesa Civil nas captações de recursos e prestação de contas para as ações voltadas à resposta e à reconstrução;",
+                    "Priorizar as suplementações orçamentárias para atendimento às ações de resposta;",
+                    "Catalogar indústrias e comércios afetados direta ou indiretamente por eventos de desastre."
+                ]
+            }
+        },
+        {
+            "name": " Secretaria de Fazenda",
+            "sections": {
+                "prevencao": [
+                    "Planejar, coordenar e controlar as atividades inerentes aos recursos humanos, expediente, compras, almoxarifado, entre outros;",
+                    "Organizar e manter atualizado o cadastro de recursos humanos;",
+                    "Manter atualizados os registros funcionais dos servidores;",
+                    "Manter atualizado e organizado o cadastro e a documentação dos bens imóveis pertencentes ao patrimônio municipal;",
+                    "Prever no orçamento público municipal dotação orçamentária para a Coordenadoria Municipal de Proteção e Defesa Civil e para o Fundo Municipal de Proteção e Defesa Civil;",
+                    "Auxiliar a Defesa Civil nas captações de recurso para ações de prevenção;",
+                    "Estabelecer dotação orçamentária para o funcionamento do Setor e para a execução das ações de Proteção e Defesa Civil;",
+                    "Disponibilizar recursos para obras de prevenção em setores de risco;",
+                    "Manter banco de dados das indústrias e comércios."
+                ],
+                "preparacao": [
+                    "Orientar os órgãos da Prefeitura quanto à maneira de formular as solicitações de materiais e de solicitar dados e esclarecimentos nos processos de aquisição de materiais e equipamentos especializados;",
+                    "Estabelecer política de armazenamento e guarda de materiais para todas as unidades da Prefeitura;",
+                    "Coordenar, executar e controlar as atividades relacionadas à administração de patrimônio, manutenção e conservação de bens móveis e imóveis;",
+                    "Providenciar a elaboração dos contratos de prestação de serviços e fornecimentos de materiais;",
+                    "Organizar e atualizar o cadastro de fornecedores de bens e serviços;",
+                    "Manter as equipes de sobreaviso em caso de alerta;",
+                    "Priorizar as suplementações orçamentárias para atendimento às possíveis ocorrências de Defesa Civil;",
+                    "Disponibilizar recursos para execução de atividades emergenciais de resposta."
+                ],
+                "resposta": [
+                    "Coordenar atividades relativas à padronização, aquisição, armazenamento, distribuição e controle de material permanente e de consumo para a Prefeitura;",
+                    "Coordenar as atividades relativas às solicitações de compras de materiais e serviços, processos licitatórios e respectivas contratações, zelando pelo cumprimento das normas legais de licitação;",
+                    "Liberar com prioridade, se necessário, recursos que possam atender as necessidades emergenciais do município;",
+                    "Identificar, no cadastro de contribuintes, a identificação da situação cadastral dos imóveis a serem demolidos;",
+                    "Verificar a situação dos imóveis das famílias desabrigadas no cadastro municipal de contribuintes;",
+                    "Auxiliar a Defesa Civil nas captações de recursos e prestação de contas para as ações voltadas à resposta e à reconstrução;",
+                    "Priorizar as suplementações orçamentárias para atendimento às ações de resposta;",
+                    "Catalogar indústrias e comércios afetados direta ou indiretamente por eventos de desastre."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Planejamento e Projetos",
+            "sections": {
+                "prevencao": [
+                    "Planejar, coordenar e controlar as atividades inerentes aos recursos humanos, expediente, compras, almoxarifado, entre outros;",
+                    "Organizar e manter atualizado o cadastro de recursos humanos;",
+                    "Manter atualizados os registros funcionais dos servidores;",
+                    "Manter atualizado e organizado o cadastro e a documentação dos bens imóveis pertencentes ao patrimônio municipal;",
+                    "Prever no orçamento público municipal dotação orçamentária para a Coordenadoria Municipal de Proteção e Defesa Civil e para o Fundo Municipal de Proteção e Defesa Civil;",
+                    "Auxiliar a Defesa Civil nas captações de recurso para ações de prevenção;",
+                    "Estabelecer dotação orçamentária para o funcionamento do Setor e para a execução das ações de Proteção e Defesa Civil;",
+                    "Disponibilizar recursos para obras de prevenção em setores de risco;",
+                    "Manter banco de dados das indústrias e comércios."
+                ],
+                "preparacao": [
+                    "Orientar os órgãos da Prefeitura quanto à maneira de formular as solicitações de materiais e de solicitar dados e esclarecimentos nos processos de aquisição de materiais e equipamentos especializados;",
+                    "Estabelecer política de armazenamento e guarda de materiais para todas as unidades da Prefeitura;",
+                    "Coordenar, executar e controlar as atividades relacionadas à administração de patrimônio, manutenção e conservação de bens móveis e imóveis;",
+                    "Providenciar a elaboração dos contratos de prestação de serviços e fornecimentos de materiais;",
+                    "Organizar e atualizar o cadastro de fornecedores de bens e serviços;",
+                    "Manter as equipes de sobreaviso em caso de alerta;",
+                    "Priorizar as suplementações orçamentárias para atendimento às possíveis ocorrências de Defesa Civil;",
+                    "Disponibilizar recursos para execução de atividades emergenciais de resposta."
+                ],
+                "resposta": [
+                    "Coordenar atividades relativas à padronização, aquisição, armazenamento, distribuição e controle de material permanente e de consumo para a Prefeitura;",
+                    "Coordenar as atividades relativas às solicitações de compras de materiais e serviços, processos licitatórios e respectivas contratações, zelando pelo cumprimento das normas legais de licitação;",
+                    "Liberar com prioridade, se necessário, recursos que possam atender as necessidades emergenciais do município;",
+                    "Identificar, no cadastro de contribuintes, a identificação da situação cadastral dos imóveis a serem demolidos;",
+                    "Verificar a situação dos imóveis das famílias desabrigadas no cadastro municipal de contribuintes;",
+                    "Auxiliar a Defesa Civil nas captações de recursos e prestação de contas para as ações voltadas à resposta e à reconstrução;",
+                    "Priorizar as suplementações orçamentárias para atendimento às ações de resposta;",
+                    "Catalogar indústrias e comércios afetados direta ou indiretamente por eventos de desastre."
+                ]
+            }
+        },
+        {
+            "name": "Gerência de Comunicação ",
+            "sections": {
+                "prevencao": [
+                    "Autorizar a confecção de material educativo para campanha de redução de desastres elaborada pela Defesa Civil Municipal;",
+                    "Elaborar, produzir e veicular material informativo de utilidade pública a respeito dos cuidados que a população deve ter em caso de chuvas, raios, contaminação por água suja, doenças específicas do inverno e do verão, incêndios florestais (queimadas), lixo, entre outros;",
+                    "Elaborar e manter atualizado material de orientação para ser publicado em casos de emergência com orientações e telefones úteis."
+                ],
+                "preparacao": [
+                    "Reforçar a divulgação de alertas à população sobre as ações que devem ser evitadas e os cuidados necessários em casos de desastre;",
+                    "Divulgar junto aos meios de comunicação as medidas de segurança que a população deve adotar frente aos problemas com enchentes, enxurradas, inundação, deslizamentos com atenção à distribuição regionalizada de informações;",
+                    "Estreitar os laços com as Secretarias Municipais para reunir as informações que devem ser levadas ao conhecimento do Prefeito Municipal;",
+                    "Alinhamento para divulgação de informações à população;",
+                    "Designar um porta-voz para falar em nome do Município nos momentos de desastre;",
+                    "Alinhamento e distribuição de material para as redes sociais da Rede de Comunicação do Governo Municipal."
+                ],
+                "resposta": [
+                    "Dar suporte à COMPDEC com assessoria de imprensa/comunicação digital;",
+                    "Definir um assessor de imprensa para o local do sinistro;",
+                    "Apresentar o porta-voz à COMPDEC e ao Corpo de Bombeiros Militar para preparação das notas que devem ser divulgadas;",
+                    "Unificar o discurso do Governo Municipal durante a crise."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria Jurídica",
+            "sections": {
+                "prevencao": [
+                    "Priorizar os processos de contratação e compras de suprimentos e demais itens voltados à prevenção;",
+                    "Prestar assessoramento e apoio técnico em matéria de natureza legal e jurídica;",
+                    "Emitir pareceres nas consultas específicas que envolvem assuntos atinentes ao Sistema de Defesa Civil."
+                ],
+                "preparacao": [
+                    "Prestar assessoramento e apoio técnico em matéria de natureza legal e jurídica;",
+                    "Emitir pareceres nas consultas específicas que envolvem assuntos atinentes ao Sistema de Defesa Civil."
+                ],
+                "resposta": [
+                    "Priorizar os processos de contratação e compras de suprimentos e demais itens voltados à resposta;",
+                    "Prestar assessoramento e apoio técnico em matéria de natureza legal e jurídica;",
+                    "Emitir pareceres nas consultas específicas que envolvem assuntos atinentes ao Sistema de Defesa Civil;",
+                    "Analisar, nos casos cabíveis, as minutas de Declaração de Situação de Emergências ou de Decretação do Estado de Emergência e Calamidade Pública, com a colaboração da Coordenadoria Municipal de Proteção e Defesa Civil;",
+                    "Acionar o Poder Judiciário nos casos de processos relativos aos interesses da Coordenadoria Municipal de Proteção e Defesa Civil."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Educação",
+            "sections": {
+                "prevencao": [
+                    "Estabelecer programas especiais de ensino, visando ao pronto atendimento para os alunos afetados e que tiverem suas salas de aulas prejudicadas, para que não haja prejuízo na educação;",
+                    "Firmar parceria com a Defesa Civil Municipal para divulgação de Projetos de Proteção e Defesa Civil nas escolas."
+                ],
+                "preparacao": [
+                    "Fazer o levantamento das escolas que podem servir como abrigo temporário, tomando como base a sua proximidade com a comunidade vulnerável;",
+                    "Os gestores da unidade escolar utilizada como abrigo temporário, elaborarão um plano para pronto emprego da sua equipe de trabalho no intuito de ajudar na ocupação, apoio educacional e solidário das crianças e adolescentes, pessoas idosas e pessoas com deficiências abrigadas em sua unidade;",
+                    "Os gestores da unidade escolar utilizada como abrigo temporário em parceria com a Defesa Civil elaborarão uma escala de voluntários, para a feitura da alimentação oriunda de donativos e para manutenção, limpeza e higiene nos ambientes utilizados como abrigo."
+                ],
+                "resposta": [
+                    "Disponibilizar estrutura física e humana para operação de apoio às comunidades afetadas;",
+                    "Providenciar as medidas necessárias para liberação de escolas municipais para servir como abrigo temporário;",
+                    "Repassar para a Defesa Civil Municipal as relações de escolas e endereços, além de contatos da pessoa responsável pelo local;",
+                    "Disponibilizar a equipe escolar, não terceirizada, para ajudar na organização e gestão da ocupação, no apoio educacional e solidário das crianças e adolescentes, pessoas idosas e pessoas com deficiência abrigadas em sua unidade."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Saúde",
+            "sections": {
+                "Prevencao": [
+                    "Orientar as Unidades de Saúde para utilizarem os mapas de risco de deslizamento e inundação disponibilizados pela COMPDEC, direcionando suas ações de prevenção e garantindo os direitos das crianças e adolescentes, pessoas idosas e pessoas com deficiência."
+                ],
+                "Preparacao": [
+                    "Participar da comissão intersetorial de planejamento e redução de riscos de desastres.",
+                    "Acompanhar as ações previstas no Plano de Preparação e Resposta da COMPDEC, com atualização anual.",
+                    "Orientar as Unidades Municipais de Saúde a elaborarem Planos de Ação específicos para atuação em desastres naturais.",
+                    "Definir os meios e formas de comunicação em saúde a serem utilizados em situações de desastres.",
+                    "Capacitar os recursos humanos e prever recursos físicos, tecnológicos, materiais e financeiros para o atendimento em desastres.",
+                    "Acompanhar a divulgação de alertas preventivos.",
+                    "Identificar e cadastrar crianças e adolescentes, pessoas idosas e pessoas com deficiência que residam em áreas de risco, especialmente aquelas com doenças crônicas, visando reduzir vulnerabilidades e promover saúde e qualidade de vida.",
+                    "Estabelecer ações de atenção integral à saúde antes, durante e após desastres, contemplando acompanhamento pós-evento.",
+                    "Definir locais de referência, equipes e fluxos de atendimento ambulatorial e hospitalar, incluindo serviços de urgência e emergência.",
+                    "Identificar e capacitar profissionais para atenção psicossocial em situações críticas."
+                ],
+                "Resposta": [
+                    "Executar as ações previstas no Plano de Preparação e Resposta da COMPDEC frente a desastres.",
+                    "Assessorar as Unidades Municipais de Saúde nas ações de resposta em situações de emergência.",
+                    "Gerenciar, em conjunto com outros setores, as ações de saúde nos abrigos, com foco em prevenção e promoção da saúde.",
+                    "Desenvolver ações de vigilância de forma articulada com outros serviços, avaliando fatores de risco ambiental que impactem a saúde.",
+                    "Manter registros atualizados sobre danos humanos e materiais de interesse sanitário, para subsidiar autoridades competentes.",
+                    "Consolidar e atualizar as informações sobre as ações do setor de saúde durante o evento crítico.",
+                    "Disponibilizar informações oficiais à população e aos órgãos de comunicação por meio de pessoa autorizada.",
+                    "Atuar de forma oportuna e eficaz, mobilizando os recursos necessários para o atendimento à população afetada.",
+                    "Acompanhar e avaliar as ações das instituições públicas voltadas ao restabelecimento das condições de vida da comunidade e das unidades de saúde atingidas.",
+                    "Gerenciar ações de saúde ambiental.",
+                    "Promover vigilância de doenças, agravos e fatores condicionantes, em especial nos abrigos temporários, com atenção às crianças e adolescentes, pessoas idosas e pessoas com deficiência.",
+                    "Desenvolver ações de educação em saúde nos abrigos e acampamentos, incluindo cuidados preventivos, prevenção de acidentes e violências.",
+                    "Emitir declarações de nascidos vivos e de óbitos, conforme necessário."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria Trabalho, Desenvolvimento e Ação Social",
+            "sections": {
+                "Prevencao": [
+                    "Articular, em parceria com a Defesa Civil, oficinas, eventos e seminários com temas preventivos para o período de chuvas e estiagem, por meio da Gerência de Proteção Social Especial."
+                ],
+                "Preparacao": [
+                    "Designar técnico de referência como articulador das ações locais, responsável pela mobilização, articulação e atendimento às famílias e indivíduos atingidos, com prioridade para crianças e adolescentes, pessoas idosas e pessoas com deficiência.",
+                    "Manter em alerta a equipe da SETDAS para suporte técnico em situações de anormalidade junto à Defesa Civil.",
+                    "Acompanhar a divulgação de alertas preventivos.",
+                    "Identificar e capacitar profissionais com habilidades para atenção psicossocial em desastres.",
+                    "Orientar a estruturação de abrigos temporários, assegurando ambiente físico adequado, recursos materiais, recursos humanos e trabalho social."
+                ],
+                "Resposta": [
+                    "Realizar triagem socioeconômica e cadastramento das famílias afetadas (desabrigadas e desalojadas).",
+                    "Viabilizar e executar a distribuição de doações humanitárias de itens em estoque próprio ou recebidos por meio de doações.",
+                    "Disponibilizar equipe técnica quando comprovada pela Defesa Civil Municipal a necessidade de intervenção imediata.",
+                    "Gerenciar abrigos temporários, assegurando recursos materiais, humanos e trabalho social à população atingida.",
+                    "Elaborar relatórios sobre a situação dos desabrigados e das pessoas atingidas."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Serviços Urbanos",
+            "sections": {
+                "Prevencao": [
+                    "Apoiar a elaboração e atualização de Planos Municipais de Redução de Risco, Planos de Macrodrenagem/Águas Urbanas e de projetos para execução de obras de prevenção e de recuperação de danos causados por chuvas intensas.",
+                    "Manter limpos os sistemas de drenagem das vias, evitando alagamentos."
+                ],
+                "Preparacao": [
+                    "Apoiar a implantação das ações indicadas nos Planos de Redução de Riscos e Planos de Macrodrenagem/Águas Urbanas.",
+                    "Executar medidas estruturais e não estruturais identificadas nos Planos de Redução de Risco e Planos de Macrodrenagem/Águas Urbanas (como limpeza de rios).",
+                    "Organizar equipe para a sinalização e segurança física da via ou acesso danificados em área urbana.",
+                    "Aportar recursos para a execução de obras de prevenção às enxurradas, inundações e cheias identificadas nos Planos Municipais de Redução de Risco."
+                ],
+                "Resposta": [
+                    "Realizar a limpeza das vias definidas como estratégicas pela Defesa Civil Municipal.",
+                    "Disponibilizar recursos, pessoal e equipamentos para execução de obras emergenciais identificadas pela Defesa Civil Municipal."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Obras e Infraestrutura",
+            "sections": {
+                "Prevencao": [
+                    "Elaborar plano de ação para emprego de recursos humanos e logísticos em situação de emergência.",
+                    "Fiscalizar ocupação irregular de encostas, morros, margens de curso hídrico, bem como ocupações em loteamentos irregulares.",
+                    "Implementar obras de contenção nas áreas reconhecidamente de risco do Município.",
+                    "Apoiar a elaboração de Planos Municipais de Redução de Risco, Planos de Macrodrenagem/Águas Urbanas e de projetos para execução de obras de prevenção e de recuperação de danos causados por chuvas intensas."
+                ],
+                "Preparacao": [
+                    "Acionar a equipe para entrar de sobreaviso para o caso de intervenção imediata, vistoriando os acessos identificados como prioritários e sujeitos a risco.",
+                    "Realizar vistoria em estruturas quando solicitado pela Defesa Civil Municipal."
+                ],
+                "Resposta": [
+                    "Encaminhar grupo de especialistas ao local atingido para tomar as providências pertinentes a cada caso, a fim de reparar ou atenuar os danos, buscando soluções alternativas para os casos de impossibilidade legal ou técnica de uma intervenção definitiva.",
+                    "Disponibilizar recursos para execução de obras emergenciais identificadas pela Defesa Civil Municipal.",
+                    "Colocar pessoal e equipamentos à disposição da Defesa Civil Municipal para apoiar nas ações emergenciais."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Agropecuária",
+            "sections": {
+                "Prevencao": [
+                    "Propor, coordenar e executar ações preventivas no setor rural para minimizar os efeitos das adversidades climáticas.",
+                    "Propor, coordenar e executar ações estruturantes para o setor rural que melhorem a convivência da população rural santa-mariense com as adversidades climáticas."
+                ],
+                "Preparacao": [
+                    "Manter e disponibilizar informações e dados atualizados sobre o clima.",
+                    "Possuir planos e recursos para assistência aos munícipes em situação de anormalidade."
+                ],
+                "Resposta": [
+                    "Acompanhar a atividade de agricultura dos munícipes atingidos pelo desastre e avaliar possíveis danos e prejuízos no desenvolvimento do setor agrícola e granjeiro.",
+                    "Realizar o levantamento dos danos e prejuízos na agropecuária principalmente nos setores agrícola e granjeiro para subsidiar os relatórios da Defesa Civil.",
+                    "Coordenar a elaboração de planos a fim de regular o desenvolvimento das atividades agropecuárias, granjeiras, da pesca e da aquicultura em áreas afetadas."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Interior",
+            "sections": {
+                "Prevencao": [
+                    "Realizar abertura e limpeza de caixas secas em estradas vicinais.",
+                    "Verificar a necessidade de manutenção das vias municipais de acesso às comunidades, de modo que atenda aos objetivos da secretaria por meio de plano preventivo de manutenção, evitando sua obstrução em situação de desastre."
+                ],
+                "Preparacao": [
+                    "Realizar limpeza das caixas secas em estradas vicinais.",
+                    "Auxiliar a Secretaria de Serviços Urbanos na execução de medidas estruturais identificadas nos Planos de Redução de Risco e Planos de Macrodrenagem de Águas Urbanas (como limpeza de rios)."
+                ],
+                "Resposta": [
+                    "Recuperar as estradas vicinais e rodovias nos locais afetados pelo desastre, de forma que seja restaurado o tráfego de veículos nessas vias.",
+                    "Colocar pessoal e equipamentos à disposição da Defesa Civil Municipal para apoio às equipes de socorro e emergência nos locais de deslizamentos."
+                ]
+            }
+        },
+        {
+            "name": "Secretaria de Meio Ambiente",
+            "sections": {
+                "Prevencao": [
+                    "Instituir programa municipal de ampliação da cobertura florestal considerando em sua formulação a preocupação com a redução de riscos de desastres nas áreas degradadas e encostas.",
+                    "Ampliar medidas de recuperação de áreas degradadas.",
+                    "Instituir e coordenar a política de criação e demarcação de áreas protegidas, considerando em sua formulação o trato à questão de prevenção, mitigação e adaptação aos riscos decorrentes de eventos extremos.",
+                    "Formular os programas e projetos para gestão de cheias fluviais no âmbito da Política Municipal de Recursos Hídricos.",
+                    "Coordenar o debate junto ao Comitê Municipal de Recursos Hídricos no tema planejamento e prevenção a eventos extremos em corpos hídricos."
+                ],
+                "Preparacao": [
+                    "Manter canal aberto com a Defesa Civil Municipal quando solicitado.",
+                    "Contribuir com o Sistema Municipal de Proteção e Defesa Civil no intercâmbio de dados, informações e fiscalizações de sua competência.",
+                    "Promover o manejo técnico de árvores próximas às vias de grande circulação e encostas."
+                ],
+                "Resposta": [
+                    "Divulgar notas de orientação à população em sua área de atuação.",
+                    "Disponibilizar equipe técnica para realizar análises ambientais envolvendo situações de crise.",
+                    "Propor normas e regulamentos em sua área de atuação visando ao atendimento a ações de reconstrução.",
+                    "Disponibilizar à Defesa Civil equipamentos para auxiliar no corte de árvores e na desobstrução de vias."
+                ]
+            }
+        },
+        {
+            "name": "Radioamadores",
+            "sections": {
+                "Prevencao": [
+                    "Fomentar o radioamadorismo.",
+                    "Criar grupos de radioamadores voluntários no Município.",
+                    "Fortalecer o vínculo dos radioamadores com a COMPDEC.",
+                    "Realizar estudos para instalação de repetidoras nas regiões com maiores índices de ocorrências de acidentes naturais.",
+                    "Desenvolver ações de capacitação de Rádio Emergência.",
+                    "Promover articulações institucionais para estabelecer parcerias técnicas com outras entidades de radioamadorismo, instituições de pesquisa, instituições de ensino/universidades, empresas públicas e privadas.",
+                    "Estabelecer termo de cooperação técnica com o Município."
+                ],
+                "Preparacao": [
+                    "Participar da rede do GECRE/SCE informando quanto à possibilidade de ocorrências de desastres naturais relacionados com precipitações em todo território capixaba.",
+                    "Manter os integrantes do grupo de radioamadores atualizados com as melhores práticas de Rádio Emergência e Noções Básicas de Defesa Civil.",
+                    "Indicar um radioamador como ligação entre a COMPDEC e o Grupo de radioamadores.",
+                    "Organizar uma equipe para atuação imediata, após convocação pela COMPDEC.",
+                    "Deixar os membros voluntários do Grupo de radioamadores de sobreaviso para atuação em outras localidades.",
+                    "Preparar uma lista 'Go Kit' com equipamentos básicos para instalação e manutenção de uma estação base (HF e VHF/UHF).",
+                    "Participar das simulações e exercícios programados da COMPDEC."
+                ],
+                "Resposta": [
+                    "Disponibilizar radioamadores e equipamentos para atuar nas estações base e avançadas da COMPDEC, enquanto durar a mobilização.",
+                    "Atuar como provedor de comunicação via radioamador nas comunicações entre a COMPDEC e as demais entidades ligadas à Defesa Civil.",
+                    "Providenciar o registro de todas as mensagens (QSO) recebidas e emitidas em ordem cronológica.",
+                    "Manter o Oficial de Ligação do SCO informado de todos os comunicados registrados.",
+                    "Realizar um inventário com todos os radioamadores dos equipamentos que podem ser disponibilizados para emprego nas operações de instalação e manutenção das estações de rádio.",
+                    "Preparar uma escala de serviço para atender a demanda da COMPDEC enquanto durar a mobilização.",
+                    "Realizar a cada 12 horas (período diurno e noturno) um relatório com as atividades desenvolvidas e demanda recebida para posterior realização do relatório final sobre a mobilização."
+                ]
+            }
+        },
+        {
+            "name": "Corpo de Bombeiros Militar do Espírito Santo - CBMES",
+            "sections": {
+                "Prevencao": [
+                    "Apoiar a Defesa Civil Municipal na implantação e realização dos cursos de preparação das comunidades e das equipes de intervenção."
+                ],
+                "Preparacao": [
+                    "Manter as equipes de sobreaviso."
+                ],
+                "Resposta": [
+                    "Atuar em apoio à COMPDEC na resposta aos desastres, de forma descentralizada.",
+                    "Priorizar os socorros de urgência."
+                ]
+            }
+        },
+        {
+            "name": "Sociedade Civil de Bombeiros Voluntários",
+            "sections": {
+                "Prevencao": [
+                    "Ao realizar atendimentos em áreas suscetíveis a desastre, informar à COMPDEC, para conhecimento atual dos riscos que são apresentados, visando à análise de intervenções conforme a situação ou ameaças evidenciadas.",
+                    "Apoiar a Defesa Civil Municipal na implantação e realização dos cursos de preparação das comunidades e das equipes de intervenção."
+                ],
+                "Preparacao": [
+                    "Manter as equipes de sobreaviso."
+                ],
+                "Resposta": [
+                    "Atuar em apoio à COMPDEC e ao CBMES na resposta aos desastres, de forma descentralizada.",
+                    "Desobstrução de vias interditadas por queda de árvores.",
+                    "Priorizar os socorros de urgência."
+                ]
+            }
+        },
+        {
+            "name": "CESAN",
+            "sections": {
+                "Prevencao": [
+                    "Acompanhar os níveis de abastecimento no Município para que não entre em colapso.",
+                    "Fazer a manutenção primária com vistas à antecipação de problemas no abastecimento potável."
+                ],
+                "Preparacao": [
+                    "Intensificar o acompanhamento da situação de seus sistemas nos momentos de grandes precipitações no município.",
+                    "Manter canal aberto com a Defesa Civil Municipal.",
+                    "Orientar ações de controle da qualidade da água para consumo no município em situações de comprometimento da rede de abastecimento.",
+                    "Reparar as redes de abastecimento danificadas ou destruídas, assim como os sistemas de esgotamento sanitário, incluindo consertos de tubulação, desentupimento e limpeza de estações de tratamento, cloração e desinfecção de efluentes.",
+                    "Manter recursos disponíveis para abastecimento de água potável da população vitimada por desastres."
+                ],
+                "Resposta": [
+                    "Divulgar notas de orientação à população sobre o uso e cuidados com a água potável nos dias de emergência.",
+                    "Atender as chamadas de emergência para retorno de água potável nas comunidades atingidas.",
+                    "Disponibilizar carro pipa e distribuir água potável.",
+                    "Promover as manutenções nas redes de abastecimento danificadas ou destruídas, assim como nos sistemas de esgotamento sanitário, incluindo consertos de tubulação, desentupimento e limpeza de estações de tratamento, cloração e desinfecção de efluentes."
+                ]
+            }
+        },
+        {
+            "name": "Polícia Militar",
+            "sections": {
+                "Prevencao": [
+                    "Informar a percepção de irregularidades de terreno, de casas, edificações, mananciais dentre outros problemas observados e relatados pela comunidade durante o serviço de ronda, imediatamente ao CIODES, para que este repasse à Defesa Civil local, ou à Coordenadoria Estadual de Proteção e Defesa Civil.",
+                    "Manter o plano de chamada atualizado para pronto emprego da tropa em caso de desastres.",
+                    "Planejar a ação policial em situação de risco e desastres na identificação e localização de grupos vulneráveis."
+                ],
+                "Preparacao": [
+                    "No recebimento de alerta, manter equipes informadas e disponíveis para atuar em caso da necessidade de pronto emprego, quando solicitado.",
+                    "No recebimento de alerta, manter contato com outros órgãos da Segurança Pública e do Sistema Estadual de Proteção e Defesa Civil para o caso de apoio em ocorrência de desastre."
+                ],
+                "Resposta": [
+                    "Disponibilizar equipes para atuar, se houver necessidade, em caráter emergencial, enquanto durar a situação de anormalidade.",
+                    "Priorizar os socorros de urgência de desastres em massa.",
+                    "Atuar como órgão de apoio em informações e resposta aos desastres, de forma descentralizada.",
+                    "Intensificar o Policiamento Ostensivo nas áreas afetadas por desastres, visando à preservação da ordem pública e coibição de saques a comércios e residências.",
+                    "Disponibilizar botes e barcos para auxiliar os órgãos de Proteção e Defesa Civil, assim como o efetivo necessário para pilotar essas embarcações.",
+                    "As unidades policiais poderão servir como base operacional para apoiar as ações de coordenação da Defesa Civil.",
+                    "Apoiar na identificação e localização de cidadãos, dando prioridade ao grupo vulnerável (crianças e adolescentes, pessoas idosas e pessoas com deficiência) desaparecidos."
+                ]
+            }
+        },
+        {
+            "name": "Serviço móvel de Urgência – SAMU 192",
+            "sections": {
+                "Prevencao": [
+                    "Fazer o diagnóstico dos casos que atendeu em apoio à Defesa Civil Municipal, a fim de criar mecanismos para melhor assessorar o Coordenador Municipal de Proteção e Defesa Civil e o Prefeito na tomada de decisões.",
+                    "Atualizar o plano de chamadas de seu efetivo para necessidade de reforço em casos de desastres de grande vulto."
+                ],
+                "Preparacao": [
+                    "Deixar efetivo de folga em escala de sobreaviso.",
+                    "Fazer vistorias nos veículos para o caso de reforço ou emprego em jornada prolongada.",
+                    "Manter contato com o Coordenador Municipal de Defesa Civil informando suas condições para o serviço.",
+                    "Manter contato com os hospitais verificando suas disponibilidades de leitos e tipos de atendimentos para aquele dia ou jornada."
+                ],
+                "Resposta": [
+                    "Dar apoio à Defesa Civil Municipal nas ações de socorro.",
+                    "Dentro das competências constitucionais, integrar-se ao serviço de segurança pública municipal nas ações locais, quando o caso exigir.",
+                    "Utilizar, em parceria com a Casa Militar, o serviço próprio de transporte aeromédico para socorro de vítimas."
+                ]
+            }
+        },
+        {
+            "name": "Empresa Concessionária Fornecedora de Energia Elétrica",
+            "sections": {
+                "Prevencao": [
+                    "Monitoramento das instalações de fornecimento de energia elétrica.",
+                    "Acompanhar a capacidade dos níveis de abastecimento no Estado para que não entre em colapso, tomando as medidas pertinentes.",
+                    "Fazer a manutenção primária com vistas a antecipação de problemas no abastecimento."
+                ],
+                "Preparacao": [
+                    "Intensificar o serviço de plantão nos momentos de grandes precipitações ou no recebimento de alerta.",
+                    "Manter canal aberto com as Defesas Civis Municipais.",
+                    "Manter uma equipe de prontidão para monitoramento das instalações de fornecimento de energia elétrica que possam adicionar riscos à população em possíveis ameaças.",
+                    "Disponibilizar à COMPDEC contato direto dos gestores para possíveis demandas em casos de desastres."
+                ],
+                "Resposta": [
+                    "Divulgar notas de orientação à população sobre o uso e cuidados com a energia elétrica, em especial nos cenários de ocorrência de desastre.",
+                    "Atender às chamadas de emergência para retorno do fornecimento de energia elétrica na comunidade atingida.",
+                    "Manutenção nas redes de abastecimento de energia elétrica, danificadas ou destruídas, com a necessidade de consertos.",
+                    "Manter uma equipe em regime de prontidão para prestar o serviço."
+                ]
+            }
+        }
+    ]
+}

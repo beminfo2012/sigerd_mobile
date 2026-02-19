@@ -2,8 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 15
-
+const DB_VERSION = 19;
 
 let dbPromise = null;
 
@@ -12,32 +11,46 @@ export const initDB = async () => {
 
     dbPromise = openDB(DB_NAME, DB_VERSION, {
         async upgrade(db, oldVersion, newVersion, transaction) {
-            // Helper to ensure index exists safely during manual upgrades or version bumps
-            const ensureSyncedIndex = (storeName) => {
+            const ensureIndices = (storeName, indices = ['synced', 'supabase_id']) => {
                 if (db.objectStoreNames.contains(storeName)) {
                     const store = transaction.objectStore(storeName);
-                    if (!store.indexNames.contains('synced')) {
-                        store.createIndex('synced', 'synced', { unique: false });
-                    }
+                    indices.forEach(idx => {
+                        if (!store.indexNames.contains(idx)) {
+                            store.createIndex(idx, idx, { unique: false });
+                        }
+                    });
                 }
             };
 
-            // Core Stores
-            if (!db.objectStoreNames.contains('vistorias')) {
-                const store = db.createObjectStore('vistorias', { keyPath: 'id', autoIncrement: true });
-                store.createIndex('synced', 'synced', { unique: false });
-            } else {
-                ensureSyncedIndex('vistorias');
-            }
+            const storeConfigs = [
+                { name: 'vistorias', auto: true },
+                { name: 'interdicoes', auto: true },
+                { name: 'shelters', auto: true },
+                { name: 'occupants', auto: true, extra: ['shelter_id'] },
+                { name: 'donations', auto: true, extra: ['shelter_id'] },
+                { name: 'inventory', auto: true, extra: ['shelter_id', 'item_id'] },
+                { name: 'distributions', auto: true, extra: ['shelter_id'] },
+                { name: 'audit_log', auto: true, extra: ['entity_type', 'entity_id', 'timestamp'] },
+                { name: 'emergency_contracts', auto: true, extra: ['contract_id'] },
+                { name: 'manual_readings', auto: true, extra: ['date'] },
+                { name: 's2id_records', auto: true, extra: ['status', 'created_at'] },
+                { name: 'despachos', auto: true, extra: ['despacho_id', 'vistoria_id', 'created_at'] }
+            ];
 
-            if (!db.objectStoreNames.contains('interdicoes')) {
-                const store = db.createObjectStore('interdicoes', { keyPath: 'id', autoIncrement: true });
-                store.createIndex('synced', 'synced', { unique: false });
-            } else {
-                ensureSyncedIndex('interdicoes');
-            }
+            storeConfigs.forEach(cfg => {
+                if (!db.objectStoreNames.contains(cfg.name)) {
+                    const store = db.createObjectStore(cfg.name, { keyPath: 'id', autoIncrement: cfg.auto });
+                    store.createIndex('synced', 'synced', { unique: false });
+                    store.createIndex('supabase_id', 'supabase_id', { unique: false });
+                    if (cfg.extra) {
+                        cfg.extra.forEach(idx => store.createIndex(idx, idx, { unique: false }));
+                    }
+                } else {
+                    ensureIndices(cfg.name, ['synced', 'supabase_id', ...(cfg.extra || [])]);
+                }
+            });
 
-            // GeoRescue / Cache
+            // Special case for installations which doesn't have synced/supabase_id typically
             if (!db.objectStoreNames.contains('installations')) {
                 const installationStore = db.createObjectStore('installations', { keyPath: 'id' });
                 installationStore.createIndex('installation_number', 'installation_number', { unique: true });
@@ -46,81 +59,15 @@ export const initDB = async () => {
             if (!db.objectStoreNames.contains('remote_vistorias_cache')) {
                 db.createObjectStore('remote_vistorias_cache', { keyPath: 'id' });
             }
-
-            // Humanitarian / Shelter Module
-            const shelterStores = ['shelters', 'occupants', 'donations', 'inventory', 'distributions'];
-            shelterStores.forEach(name => {
-                if (!db.objectStoreNames.contains(name)) {
-                    const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
-                    store.createIndex('synced', 'synced', { unique: false });
-                    // Add shelter_id index for donations, inventory, distributions
-                    if (['donations', 'inventory', 'distributions'].includes(name)) {
-                        store.createIndex('shelter_id', 'shelter_id', { unique: false });
-                    }
-                } else {
-                    ensureSyncedIndex(name);
-                    // Ensure shelter_id index exists on humanitarian stores
-                    if (['donations', 'inventory', 'distributions'].includes(name)) {
-                        const store = transaction.objectStore(name);
-                        if (!store.indexNames.contains('shelter_id')) {
-                            store.createIndex('shelter_id', 'shelter_id', { unique: false });
-                        }
-                    }
-                }
-            });
-
-            // Audit Log Store (v13)
-            if (!db.objectStoreNames.contains('audit_log')) {
-                const auditStore = db.createObjectStore('audit_log', { keyPath: 'id', autoIncrement: true });
-                auditStore.createIndex('entity_type', 'entity_type', { unique: false });
-                auditStore.createIndex('entity_id', 'entity_id', { unique: false });
-                auditStore.createIndex('timestamp', 'timestamp', { unique: false });
-            }
-
-            // Emergency Contracts
-            if (!db.objectStoreNames.contains('emergency_contracts')) {
-                const contractStore = db.createObjectStore('emergency_contracts', { keyPath: 'id', autoIncrement: true });
-                contractStore.createIndex('contract_id', 'contract_id', { unique: true });
-                contractStore.createIndex('synced', 'synced', { unique: false });
-            } else {
-                ensureSyncedIndex('emergency_contracts');
-            }
-
-            // Manual Rain Readings
-            if (!db.objectStoreNames.contains('manual_readings')) {
-                const store = db.createObjectStore('manual_readings', { keyPath: 'id', autoIncrement: true });
-                store.createIndex('date', 'date', { unique: false });
-                store.createIndex('synced', 'synced', { unique: false });
-            } else {
-                ensureSyncedIndex('manual_readings');
-            }
-
-            // S2ID Records (v14)
-            if (!db.objectStoreNames.contains('s2id_records')) {
-                const s2idStore = db.createObjectStore('s2id_records', { keyPath: 'id', autoIncrement: true });
-                s2idStore.createIndex('synced', 'synced', { unique: false });
-                s2idStore.createIndex('status', 'status', { unique: false });
-                s2idStore.createIndex('created_at', 'created_at', { unique: false });
-            }
-
-            // Despachos (v15) - New Feature
-            if (!db.objectStoreNames.contains('despachos')) {
-                const despachoStore = db.createObjectStore('despachos', { keyPath: 'id', autoIncrement: true });
-                despachoStore.createIndex('despacho_id', 'despacho_id', { unique: true });
-                despachoStore.createIndex('vistoria_id', 'vistoria_id', { unique: false });
-                despachoStore.createIndex('created_at', 'created_at', { unique: false });
-                despachoStore.createIndex('synced', 'synced', { unique: false });
-            }
         },
     });
     return dbPromise;
 }
 
-
-// Helper to convert base64 to blob
 const base64ToBlob = (base64) => {
     try {
         const parts = base64.split(';base64,')
+        if (parts.length < 2) return null;
         const contentType = parts[0].split(':')[1]
         const raw = window.atob(parts[1])
         const rawLength = raw.length
@@ -141,27 +88,16 @@ export const saveManualReading = async (volume, date, period = '1h') => {
         station_id: 'MANUAL_SEDE',
         volume: parseFloat(volume),
         date: date || new Date().toISOString(),
-        period: period, // '1h', '24h', '48h', '96h'
+        period: period,
         created_at: new Date().toISOString(),
         synced: false
     }
-
-    // Save locally
     const id = await db.put('manual_readings', reading)
-
-    // Try sync if online (Basic Implementation)
-    if (navigator.onLine) {
-        // In a real scenario, we'd sync to a Supabase table 'manual_readings'
-        // For now, we keep it local-first and persistent.
-        // await syncManualReadings(); 
-    }
     return id
 }
 
 export const getManualReadings = async () => {
     const db = await initDB()
-    // Get all readings
-    // In a real app with many readings, we'd use a cursor or index range
     const all = await db.getAll('manual_readings')
     return all.sort((a, b) => new Date(b.date) - new Date(a.date))
 }
@@ -173,28 +109,24 @@ export const deleteManualReading = async (id) => {
 
 export const saveVistoriaOffline = async (data) => {
     const db = await initDB()
-
     const localId = await db.put('vistorias', {
         ...data,
         createdAt: data.createdAt || data.created_at || new Date().toISOString(),
         synced: false
     })
-
-    // 2. Try to sync with Supabase immediately if online
     if (navigator.onLine) {
         const item = await db.get('vistorias', localId)
         await syncSingleItem('vistorias', item, db)
     }
-
     return localId
 }
 
 export const getPendingSyncCount = async () => {
     const db = await initDB()
-
     const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions'];
     let detail = {
         total: 0,
+        photosTotal: 0,
         vistorias: 0,
         interdicoes: 0,
         shelters: 0,
@@ -206,32 +138,50 @@ export const getPendingSyncCount = async () => {
 
     for (const storeName of stores) {
         try {
-            // [FIX] Correctly count ALL unsynced items
-            // IndexedDB filtering can be tricky with mixed types (0 vs false), so we grab all and filter
-            // This is safer for ensuring the "Badge" is always correct
             const allItems = await db.getAll(storeName).catch(() => []);
-            const pending = allItems.filter(v => v.synced === false || v.synced === 0 || v.synced === undefined).length;
-
-            detail[storeName] = pending;
-            detail.total += pending;
+            const pendingItems = allItems.filter(v => v.synced === false || v.synced === undefined || v.synced === 0);
+            detail[storeName] = pendingItems.length;
+            detail.total += pendingItems.length;
+            pendingItems.forEach(item => {
+                if (item.fotos && Array.isArray(item.fotos)) {
+                    const pendingPhotos = item.fotos.filter(f => f.data && (f.data.startsWith('data:image') || f.data.length > 500)).length;
+                    detail.photosTotal += pendingPhotos;
+                }
+            });
         } catch (e) {
             console.warn(`Sync count failed for ${storeName}:`, e);
         }
     }
-
     return detail;
 }
+
+const resolveSupabaseId = async (storeName, id) => {
+    if (!id) return null;
+    const dbInstance = await initDB();
+    if (typeof id === 'string' && id.length === 36 && id.includes('-')) return id;
+    if (!isNaN(parseInt(id))) {
+        const record = await dbInstance.get(storeName, parseInt(id));
+        if (record && record.supabase_id) return record.supabase_id;
+    }
+    if (typeof id === 'string') {
+        const indexMap = { 'shelters': 'shelter_id', 'occupants': 'occupant_id', 'inventory': 'item_id', 's2id_records': 's2id_id' };
+        const indexName = indexMap[storeName];
+        if (indexName) {
+            const record = await dbInstance.getFromIndex(storeName, indexName, id);
+            if (record && record.supabase_id) return record.supabase_id;
+        }
+    }
+    return null;
+};
 
 export const syncPendingData = async () => {
     const db = await initDB()
     const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 's2id_records'];
     let syncedCount = 0
-
     for (const storeName of stores) {
         try {
             const allItems = await db.getAll(storeName)
             const pendingItems = allItems.filter(v => v.synced === false || v.synced === undefined || v.synced === 0)
-
             for (const item of pendingItems) {
                 const success = await syncSingleItem(storeName, item, db)
                 if (success) syncedCount++
@@ -240,81 +190,46 @@ export const syncPendingData = async () => {
             console.error(`Sync loop failed for ${storeName}:`, e);
         }
     }
-
     return { success: true, count: syncedCount }
 }
 
 const syncSingleItem = async (storeName, item, db) => {
     try {
         let processedPhotos = []
-        // Upload Photos
+        let signatureAgenteUrl = null
+        let processedApoio = null
+
         if (item.fotos && item.fotos.length > 0) {
-            console.log(`[Sync] Uploading ${item.fotos.length} photos for ${storeName}/${item.id}...`);
             processedPhotos = await Promise.all(item.fotos.map(async (foto) => {
-                if (foto.data && foto.data.startsWith('data:image')) {
-                    const blob = base64ToBlob(foto.data)
+                if (foto.data && (foto.data.startsWith('data:image') || foto.data.length > 500)) {
+                    const base64Data = foto.data.startsWith('data:image') ? foto.data : `data:image/jpeg;base64,${foto.data}`;
+                    const blob = base64ToBlob(base64Data)
                     if (blob) {
-                        // Correct folder mapping for different types
-                        const folderMap = {
-                            'vistorias': 'vistorias',
-                            'interdicoes': 'interdicoes',
-                            'shelters': 'shelters',
-                            'occupants': 'occupants',
-                            'donations': 'donations'
-                        };
+                        const folderMap = { 'vistorias': 'vistorias', 'interdicoes': 'interdicoes', 'shelters': 'shelters', 'occupants': 'occupants', 'donations': 'donations' };
                         const folder = folderMap[storeName] || 'general'
-
-                        const id = storeName === 'vistorias'
-                            ? (item.vistoriaId || item.vistoria_id || item.id)
-                            : (item.interdicaoId || item.interdicao_id || item.id || item.occupant_id || item.donation_id)
-                        const fileName = `${id}/${foto.id}.jpg`
-                        const { error: uploadError } = await supabase.storage
-                            .from(folder)
-                            .upload(fileName, blob, { upsert: true })
-
+                        const idValue = storeName === 'vistorias' ? (item.vistoriaId || item.vistoria_id || item.id) : (item.interdicaoId || item.interdicao_id || item.id || item.occupant_id || item.donation_id)
+                        const fileName = `${idValue}/${foto.id}.jpg`
+                        const { error: uploadError } = await supabase.storage.from(folder).upload(fileName, blob, { upsert: true })
                         if (!uploadError) {
-                            const { data: urlData } = supabase.storage
-                                .from(folder)
-                                .getPublicUrl(fileName)
+                            const { data: urlData } = supabase.storage.from(folder).getPublicUrl(fileName)
                             return { ...foto, data: urlData.publicUrl }
                         }
                     }
                 }
-                return foto
+                return (foto.data && foto.data.startsWith('http')) ? foto : { ...foto, data: null, error: 'Upload failed' };
             }))
         }
 
-        const tableMap = {
-            'shelters': 'shelters',
-            'occupants': 'shelter_occupants',
-            'donations': 'shelter_donations',
-            'inventory': 'shelter_inventory',
-            'distributions': 'shelter_distributions'
-        };
-
+        const tableMap = { 'shelters': 'shelters', 'occupants': 'shelter_occupants', 'donations': 'shelter_donations', 'inventory': 'shelter_inventory', 'distributions': 'shelter_distributions' };
         const table = tableMap[storeName] || storeName
         let payload = {}
 
         if (storeName === 'vistorias') {
             let officialId = item.vistoriaId || item.vistoria_id
             const currentYear = new Date().getFullYear();
-
-            // [FIX] Robust Numeric Max ID Fetching
-            // Fetch multiple records to find the TRUE numeric maximum, avoiding string sorting issues
-            const { data: recentData, error: maxError } = await supabase
-                .from('vistorias')
-                .select('vistoria_id')
-                .filter('vistoria_id', 'like', `%/${currentYear}`)
-                .order('created_at', { ascending: false })
-                .limit(50);
-
-            if (maxError) {
-                console.error(`[Sync] Error fetching max sequence for vistorias:`, maxError);
-            }
-
+            const { data: recentData } = await supabase.from('vistorias').select('vistoria_id').filter('vistoria_id', 'like', `%/${currentYear}`).order('created_at', { ascending: false }).limit(50);
             let maxNum = 0;
-            // Scan remote recent records
-            if (recentData && recentData.length > 0) {
+            if (recentData) {
                 recentData.forEach(r => {
                     if (r.vistoria_id && r.vistoria_id.includes('/')) {
                         const num = parseInt(r.vistoria_id.split('/')[0]);
@@ -322,8 +237,6 @@ const syncSingleItem = async (storeName, item, db) => {
                     }
                 });
             }
-
-            // [FIX] Safety check local data too (including unsynced and already synced)
             const localItems = await db.getAll('vistorias');
             localItems.forEach(vi => {
                 const vid = vi.vistoriaId || vi.vistoria_id;
@@ -332,144 +245,79 @@ const syncSingleItem = async (storeName, item, db) => {
                     if (!isNaN(n)) maxNum = Math.max(maxNum, n);
                 }
             });
+            if (!officialId) officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
 
-            // If we are assigning a NEW ID (was null), use max+1
-            if (!officialId) {
-                officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
-                console.log(`[Sync] Assigned NEW Vistoria ID: ${officialId} (Max found was ${maxNum})`);
-            } else {
-                console.log(`[Sync] Keeping existing Vistoria ID: ${officialId}`);
-            }
+            let signatureAgenteStr = item.assinatura_agente !== undefined ? item.assinatura_agente : (item.assinaturaAgente !== undefined ? item.assinaturaAgente : null);
+            let supportSignatureStr = item.apoio_tecnico?.assinatura !== undefined ? item.apoio_tecnico.assinatura : (item.apoioTecnico?.assinatura !== undefined ? item.apoioTecnico.assinatura : null);
+
+            const uploadSign = async (base64, type) => {
+                if (base64 && base64.startsWith('data:image')) {
+                    const blob = base64ToBlob(base64);
+                    if (blob) {
+                        const fileName = `${officialId}/signature_${type}.png`;
+                        const { error: uploadError } = await supabase.storage.from('vistorias').upload(fileName, blob, { upsert: true });
+                        if (!uploadError) {
+                            const { data: urlData } = supabase.storage.from('vistorias').getPublicUrl(fileName);
+                            return urlData.publicUrl;
+                        }
+                    }
+                }
+                return (base64 && base64.startsWith('http')) ? base64 : null;
+            };
+
+            signatureAgenteUrl = await uploadSign(signatureAgenteStr, 'agente');
+            const signatureApoioUrl = await uploadSign(supportSignatureStr, 'apoio');
+            let apoio = item.apoio_tecnico !== undefined ? item.apoio_tecnico : item.apoioTecnico;
+            if (typeof apoio === 'string') { try { apoio = JSON.parse(apoio); } catch (e) { } }
+            processedApoio = apoio ? { ...apoio, assinatura: signatureApoioUrl } : null;
 
             payload = {
-                vistoria_id: officialId,
-                processo: item.processo || '',
-                agente: item.agente || '',
-                matricula: item.matricula || '',
-                solicitante: item.solicitante || '',
-                cpf: item.cpf || '',
-                telefone: item.telefone || '',
-                endereco: item.endereco || '',
-                bairro: item.bairro || '',
-                latitude: item.latitude ? parseFloat(item.latitude) : null,
-                longitude: item.longitude ? parseFloat(item.longitude) : null,
-                coordenadas: item.coordenadas || (item.latitude && item.longitude ? `${item.latitude},${item.longitude}` : ''),
-                data_hora: item.dataHora || item.data_hora || new Date().toISOString(),
-                tipo_info: item.tipo_info || item.tipoInfo || item.categoriaRisco || 'Vistoria Geral',
-                categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
-                subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
-                nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
-                situacao_observada: item.situacaoObservada || item.situacao_observada || 'Estabilizado',
-                populacao_estimada: item.populacaoEstimada || item.populacao_estimada || '',
-                grupos_vulneraveis: Array.isArray(item.gruposVulneraveis) ? item.gruposVulneraveis : (Array.isArray(item.grupos_vulneraveis) ? item.grupos_vulneraveis : []),
-                observacoes: item.observacoes || '',
-                medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
-                encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (Array.isArray(item.encaminhamentos) ? item.encaminhamentos : []),
-                fotos: processedPhotos,
-                documentos: Array.isArray(item.documentos) ? item.documentos : (Array.isArray(item.documentos) ? item.documentos : []),
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente || null,
-                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
-                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null,
-                created_at: item.createdAt || item.created_at || new Date().toISOString()
+                vistoria_id: officialId, processo: item.processo || '', agente: item.agente || '', matricula: item.matricula || '', solicitante: item.solicitante || '', cpf: item.cpf || '', telefone: item.telefone || '', endereco: item.endereco || '', bairro: item.bairro || '',
+                latitude: item.latitude ? parseFloat(item.latitude) : null, longitude: item.longitude ? parseFloat(item.longitude) : null, coordenadas: item.coordenadas || (item.latitude && item.longitude ? `${item.latitude},${item.longitude}` : ''), data_hora: item.dataHora || item.data_hora || new Date().toISOString(),
+                tipo_info: item.tipo_info || item.tipoInfo || item.categoriaRisco || 'Vistoria Geral', categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros', subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
+                nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo', situacao_observada: item.situacaoObservada || item.situacao_observada || 'Estabilizado', populacao_estimada: item.populacaoEstimada || item.populacao_estimada || '', grupos_vulneraveis: Array.isArray(item.gruposVulneraveis) ? item.gruposVulneraveis : (Array.isArray(item.grupos_vulneraveis) ? item.grupos_vulneraveis : []),
+                observacoes: item.observacoes || '', medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []), encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (Array.isArray(item.encaminhamentos) ? item.encaminhamentos : []), fotos: processedPhotos, documentos: Array.isArray(item.documentos) ? item.documentos : (Array.isArray(item.documentos) ? item.documentos : []), assinatura_agente: signatureAgenteUrl, checklist_respostas: item.checklistRespostas || item.checklist_respostas || {}, apoio_tecnico: processedApoio, created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
         } else if (storeName === 'interdicoes') {
             let officialId = item.interdicaoId || item.interdicao_id
-
             if (!officialId) {
                 const currentYear = new Date().getFullYear();
-                const { data: maxData } = await supabase
-                    .from('interdicoes')
-                    .select('interdicao_id')
-                    .filter('interdicao_id', 'like', `%/${currentYear}`)
-                    .order('interdicao_id', { ascending: false })
-                    .limit(1);
-
+                const { data: maxData } = await supabase.from('interdicoes').select('interdicao_id').filter('interdicao_id', 'like', `%/${currentYear}`).order('interdicao_id', { ascending: false }).limit(1);
                 let maxNum = 0;
                 if (maxData && maxData.length > 0) {
-                    const lastId = maxData[0].interdicao_id;
-                    const num = parseInt(lastId.split('/')[0]);
+                    const num = parseInt(maxData[0].interdicao_id.split('/')[0]);
                     if (!isNaN(num)) maxNum = num;
                 }
                 officialId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`;
-                console.log(`[Sync] Assigned new Interdicao ID: ${officialId}`);
             }
-
             payload = {
-                interdicao_id: officialId,
-                data_hora: item.dataHora || item.data_hora,
-                tipo_info: item.tipo_info || item.tipoInfo || item.riscoTipo || 'Interdição',
-                municipio: item.municipio,
-                bairro: item.bairro,
-                endereco: item.endereco,
-                tipo_alvo: item.tipoAlvo,
-                tipo_alvo_especificar: item.tipoAlvoEspecificar,
-                latitude: item.latitude,
-                longitude: item.longitude,
-                coordenadas: item.coordenadas,
-                responsavel_nome: item.responsavelNome,
-                responsavel_cpf: item.responsavelCpf,
-                responsavel_telefone: item.responsavelTelefone,
-                responsavel_email: item.responsavelEmail,
-                risco_tipo: item.riscoTipo,
-                risco_grau: item.riscoGrau,
-                situacao_observada: item.situacaoObservada,
-                medida_tipo: item.medidaTipo,
-                medida_prazo: item.medidaPrazo,
-                medida_prazo_data: item.medidaPrazoData,
-                evacuacao_necessaria: item.evacuacaoNecessaria,
-                fotos: processedPhotos,
-                relatorio_tecnico: item.relatorioTecnico,
-                recomendacoes: item.recomendacoes,
-                orgaos_acionados: item.orgaosAcionados,
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
-                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
+                interdicao_id: officialId, data_hora: item.dataHora || item.data_hora, tipo_info: item.tipo_info || item.tipoInfo || item.riscoTipo || 'Interdição', municipio: item.municipio, bairro: item.bairro, endereco: item.endereco, tipo_alvo: item.tipoAlvo, tipo_alvo_especificar: item.tipoAlvoEspecificar,
+                latitude: item.latitude, longitude: item.longitude, coordenadas: item.coordenadas, responsavel_nome: item.responsavelNome, responsavel_cpf: item.responsavelCpf, responsavel_telefone: item.responsavelTelefone, responsavel_email: item.responsavelEmail, risco_tipo: item.riscoTipo, risco_grau: item.riscoGrau, situacao_observada: item.situacaoObservada,
+                medida_tipo: item.medidaTipo, medida_prazo: item.medidaPrazo, medida_prazo_data: item.medidaPrazoData, evacuacao_necessaria: item.evacuacaoNecessaria, fotos: processedPhotos, relatorio_tecnico: item.relatorioTecnico, recomendacoes: item.recomendacoes, orgaos_acionados: item.orgaosAcionados, assinatura_agente: item.assinaturaAgente || item.assinatura_agente, apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
         } else if (storeName === 's2id_records') {
             const { id, synced, id_local, supabase_id, ...recordPayload } = item;
-            payload = {
-                ...recordPayload,
-                s2id_id: item.s2id_id || crypto.randomUUID(),
-                id_local: item.id
-            };
+            payload = { ...recordPayload, s2id_id: item.s2id_id || crypto.randomUUID(), id_local: item.id };
         } else {
-            // Generic payload for shelter module tables (they already match Supabase schema)
             payload = { ...item };
-            delete payload.id; // Remove local IDBK key
-            delete payload.synced; // Remove sync flag
-            delete payload.supabase_id; // Clean up mapping field if any
-
-            // ID MAPPING: Fix foreign keys for humanitarian module
-            // We must map local integer shelter_id/inventory_id to Supabase UUIDs
-            if (payload.shelter_id && !isNaN(parseInt(payload.shelter_id))) {
-                const shelter = await db.get('shelters', parseInt(payload.shelter_id));
-                if (shelter && shelter.supabase_id) {
-                    payload.shelter_id = shelter.supabase_id;
-                }
+            delete payload.id; delete payload.synced; delete payload.supabase_id;
+            if (payload.shelter_id) {
+                const resolved = await resolveSupabaseId('shelters', payload.shelter_id);
+                if (resolved) payload.shelter_id = resolved;
             }
-            if (payload.inventory_id && !isNaN(parseInt(payload.inventory_id))) {
-                const inv = await db.get('inventory', parseInt(payload.inventory_id));
-                if (inv && inv.supabase_id) {
-                    payload.inventory_id = inv.supabase_id;
-                }
+            if (payload.inventory_id) {
+                const resolved = await resolveSupabaseId('shelter_inventory', payload.inventory_id);
+                if (resolved) payload.inventory_id = resolved;
             }
         }
 
-        console.log(`[Sync] Upserting to Supabase table '${table}'...`, payload);
         const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {
-            onConflict: storeName === 'vistorias' ? 'vistoria_id' :
-                storeName === 'interdicoes' ? 'interdicao_id' :
-                    storeName === 'shelters' ? 'shelter_id' :
-                        storeName === 'occupants' ? 'occupant_id' :
-                            storeName === 'donations' ? 'donation_id' :
-                                storeName === 'inventory' ? 'inventory_id' :
-                                    storeName === 'distributions' ? 'distribution_id' :
-                                        storeName === 's2id_records' ? 's2id_id' :
-                                            undefined
+            onConflict: storeName === 'vistorias' ? 'vistoria_id' : storeName === 'interdicoes' ? 'interdicao_id' : storeName === 'shelters' ? 'shelter_id' : storeName === 'occupants' ? 'occupant_id' : storeName === 'donations' ? 'donation_id' : storeName === 'inventory' ? 'item_id' : storeName === 'distributions' ? 'distribution_id' : storeName === 's2id_records' ? 's2id_id' : undefined
         }).select()
 
         if (error) {
-            console.error(`[Sync] Supabase Upsert Error (${table}):`, error)
-            return false
+            console.error(`[Sync] Upsert failed for ${storeName}:`, error);
+            return false;
         }
 
         const tx = db.transaction(storeName, 'readwrite')
@@ -477,26 +325,21 @@ const syncSingleItem = async (storeName, item, db) => {
         const record = await store.get(item.id)
         if (record) {
             record.synced = true
-
-            // Capture official Supabase UUID for relations
-            if (syncedItems && syncedItems[0]) {
-                record.supabase_id = syncedItems[0].id;
-            }
-
-            // Update the local record with the official ID assigned by the server if applicable
+            if (syncedItems && syncedItems[0]) record.supabase_id = syncedItems[0].id;
             if (storeName === 'vistorias') {
-                const officialId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
-                record.vistoriaId = officialId;
-                record.vistoria_id = officialId;
+                const offId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
+                record.vistoriaId = offId; record.vistoria_id = offId;
+                record.assinatura_agente = signatureAgenteUrl; record.apoio_tecnico = processedApoio;
             } else if (storeName === 'interdicoes') {
-                const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
-                record.interdicaoId = officialId;
-                record.interdicao_id = officialId;
+                const offId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
+                record.interdicaoId = offId; record.interdicao_id = offId;
+            } else if (storeName === 's2id_records') {
+                // Ensure s2id_id generated/prescreened is saved back
+                record.s2id_id = payload.s2id_id;
             }
             await store.put(record)
         }
         await tx.done
-        console.log(`[Sync] Successfully synced ${storeName} item: ${item.id}`);
         return true
     } catch (e) {
         console.error(`[Sync] Critical failure for ${storeName}:`, e)
@@ -504,13 +347,8 @@ const syncSingleItem = async (storeName, item, db) => {
     }
 }
 
-/**
- * Pull All Data from Supabase to Local DB
- * Essential for recovering data after cache clears.
- */
 export const pullAllData = async () => {
     if (!navigator.onLine) return { success: false, reason: 'offline' };
-
     const db = await initDB();
     const modules = [
         { table: 'vistorias', store: 'vistorias', key: 'vistoria_id' },
@@ -522,76 +360,63 @@ export const pullAllData = async () => {
         { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
         { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' }
     ];
-
     let totalPulled = 0;
-
     for (const mod of modules) {
         try {
-            console.log(`[Pull] Fetching ${mod.table}...`);
             const { data, error } = await supabase.from(mod.table).select('*');
-
-            if (error) {
-                console.error(`[Pull] Error fetching ${mod.table}:`, error);
-                continue;
-            }
-
-            if (data && data.length > 0) {
+            if (!error && data) {
                 const tx = db.transaction(mod.store, 'readwrite');
                 const store = tx.objectStore(mod.store);
+                const allLocal = await store.getAll();
+                const localBySupId = new Map(allLocal.filter(l => l.supabase_id).map(l => [l.supabase_id, l]));
+                const localByKey = new Map(mod.key ? allLocal.filter(l => l[mod.key]).map(l => [l[mod.key], l]) : []);
 
                 for (const item of data) {
-                    // Check if item exists locally
-                    const existing = await store.getAll();
-                    const localMatch = existing.find(l =>
-                        (l.supabase_id === item.id) ||
-                        (mod.key && item[mod.key] && l[mod.key] === item[mod.key]) ||
-                        (mod.store === 's2id_records' && l.id === item.id_local)
-                    );
+                    const localMatch = localBySupId.get(item.id) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
+                    if (localMatch && localMatch.synced === false) continue;
 
-                    // Skip pull if local has unsynced changes
-                    if (localMatch && localMatch.synced === false) {
-                        continue;
+                    // Deep copy to avoid mutating source
+                    const toStore = { ...item, id: localMatch ? localMatch.id : undefined, supabase_id: item.id, synced: true };
+
+                    // CRITICAL: Resolve foreign keys from Supabase UUIDs to Local Business IDs
+                    // This ensures that relations (e.g. occupant -> shelter) work across devices
+                    if (mod.store === 'occupants' || mod.store === 'donations' || mod.store === 'inventory' || mod.store === 'distributions') {
+                        if (item.shelter_id && item.shelter_id.length === 36) {
+                            // It's a Supabase UUID, try to find the local business ID (ABR-...)
+                            const sStore = db.transaction('shelters', 'readonly').objectStore('shelters');
+                            const shelterRecord = await sStore.index('supabase_id').get(item.shelter_id);
+                            if (shelterRecord && shelterRecord.shelter_id) {
+                                toStore.shelter_id = shelterRecord.shelter_id;
+                            }
+                        }
                     }
 
-                    // Map remote item to local format
-                    const toStore = {
-                        ...item,
-                        id: localMatch ? localMatch.id : undefined,
-                        supabase_id: item.id,
-                        synced: true
-                    };
-
-                    // Cleanup redundant fields if necessary
-                    if (mod.store === 's2id_records') delete toStore.id_local;
+                    if (mod.store === 'distributions' && item.inventory_id && item.inventory_id.length === 36) {
+                        const iStore = db.transaction('inventory', 'readonly').objectStore('inventory');
+                        const invRecord = await iStore.index('supabase_id').get(item.inventory_id);
+                        if (invRecord && invRecord.item_id) {
+                            toStore.inventory_id = invRecord.item_id;
+                        }
+                    }
 
                     await store.put(toStore);
                     totalPulled++;
                 }
                 await tx.done;
             }
-        } catch (e) {
-            console.error(`[Pull] Critical error in module ${mod.table}:`, e);
-        }
+        } catch (e) { }
     }
-
-    console.log(`[Pull] Total items restored: ${totalPulled}`);
     return { success: true, count: totalPulled };
 };
 
-// Global sync trigger for immediate use (with Debounce to prevent overload)
 let syncTimeout = null;
 export const triggerSync = async () => {
     if (syncTimeout) clearTimeout(syncTimeout);
-
     return new Promise((resolve) => {
         syncTimeout = setTimeout(async () => {
-            if (navigator.onLine) {
-                const result = await syncPendingData();
-                resolve(result);
-            } else {
-                resolve({ success: false, reason: 'offline' });
-            }
-        }, 2000); // 2 second debounce
+            if (navigator.onLine) resolve(await syncPendingData());
+            else resolve({ success: false, reason: 'offline' });
+        }, 2000);
     });
 }
 
@@ -602,358 +427,129 @@ export const getPendingVistorias = async () => {
 
 export const deleteVistoriaLocal = async (id) => {
     const db = await initDB()
-    // Find internal id if external id is provided
-    let localId = id
-    let vistoriaId = null
-
-    // Get all records to find the specific one to delete from cache too
     const all = await db.getAll('vistorias')
     const found = all.find(v => v.id === id || v.vistoria_id === id || v.supabase_id === id)
-
     if (found) {
-        localId = found.id
-        vistoriaId = found.vistoria_id || found.vistoriaId
-    }
-
-    // 1. Delete from primary store
-    await db.delete('vistorias', localId)
-
-    // 2. [FIX] Also delete from Remote Cache to prevent ID sequence "jumping"
-    if (vistoriaId) {
-        const cacheTx = db.transaction('remote_vistorias_cache', 'readwrite')
-        const cacheStore = cacheTx.objectStore('remote_vistorias_cache')
-        const cacheItems = await cacheStore.getAll()
-
-        // Match by any possible ID field (robust matching)
-        const cacheTarget = cacheItems.find(v =>
-            (v.vistoria_id || v.vistoriaId) === vistoriaId ||
-            v.id === localId ||
-            v.id === id ||
-            v.supabase_id === id
-        )
-
-        if (cacheTarget) {
-            await cacheStore.delete(cacheTarget.id)
+        await db.delete('vistorias', found.id)
+        if (found.vistoria_id || found.vistoriaId) {
+            const vid = found.vistoria_id || found.vistoriaId
+            const tx = db.transaction('remote_vistorias_cache', 'readwrite')
+            const store = tx.objectStore('remote_vistorias_cache')
+            const cacheItems = await store.getAll()
+            const target = cacheItems.find(v => (v.vistoria_id || v.vistoriaId) === vid)
+            if (target) await store.delete(target.id)
+            await tx.done
         }
-        await cacheTx.done
     }
 }
 
 export const deleteInterdicaoLocal = async (id) => {
     const db = await initDB()
-    let localId = id
-    if (typeof id === 'string') {
-        const all = await db.getAll('interdicoes')
-        const found = all.find(i => i.id === id || i.interdicao_id === id || i.supabase_id === id)
-        if (found) localId = found.id
-    }
-    await db.delete('interdicoes', localId)
+    const all = await db.getAll('interdicoes')
+    const found = all.find(i => i.id === id || i.interdicao_id === id || i.supabase_id === id)
+    if (found) await db.delete('interdicoes', found.id)
 }
 
 export const getAllVistoriasLocal = async () => {
-    const db = await initDB()
-    const all = await db.getAll('vistorias')
-    // Ensure normalization for display mapping
-    return all.map(v => ({
-        ...v,
-        tipo_info: v.tipo_info || v.tipoInfo || v.categoriaRisco || 'Vistoria Geral'
-    }))
+    const db = await initDB(); const all = await db.getAll('vistorias');
+    return all.map(v => ({ ...v, tipo_info: v.tipo_info || v.tipoInfo || v.categoriaRisco || 'Vistoria Geral' }));
 }
 
 export const getLightweightVistoriasLocal = async () => {
-    const db = await initDB()
-    const tx = db.transaction('vistorias', 'readonly')
-    const store = tx.objectStore('vistorias')
-    let cursor = await store.openCursor()
-    const items = []
-
+    const db = await initDB(); const tx = db.transaction('vistorias', 'readonly'); const store = tx.objectStore('vistorias');
+    let cursor = await store.openCursor(); const items = [];
     while (cursor) {
-        const v = cursor.value
-        // Only select lightweight fields needed for the list
-        items.push({
-            id: v.id,
-            vistoria_id: v.vistoria_id || v.vistoriaId,
-            supabase_id: v.supabase_id,
-            created_at: v.created_at || v.createdAt,
-            solicitante: v.solicitante,
-            endereco: v.endereco,
-            bairro: v.bairro,
-            nivelRisco: v.nivelRisco || v.nivel_risco,
-            categoriaRisco: v.categoriaRisco || v.categoria_risco,
-            tipo_info: v.tipo_info || v.tipoInfo || v.categoriaRisco || 'Vistoria Geral',
-            synced: v.synced,
-            // Exclude heavy fields: fotos, documentos, etc.
-        })
-        cursor = await cursor.continue()
+        const v = cursor.value;
+        items.push({ id: v.id, vistoria_id: v.vistoria_id || v.vistoriaId, supabase_id: v.supabase_id, created_at: v.created_at || v.createdAt, solicitante: v.solicitante, endereco: v.endereco, bairro: v.bairro, nivelRisco: v.nivelRisco || v.nivel_risco, categoriaRisco: v.categoriaRisco || v.categoria_risco, tipo_info: v.tipo_info || v.tipoInfo || v.categoriaRisco || 'Vistoria Geral', synced: v.synced });
+        cursor = await cursor.continue();
     }
-    return items
+    return items;
 }
 
 export const getVistoriaFull = async (id) => {
-    const db = await initDB()
-    const tx = db.transaction(['vistorias', 'remote_vistorias_cache'], 'readonly')
-
-    // 1. Try Local Store
-    const vStore = tx.objectStore('vistorias')
-    // Support finding by various ID types
-    let item = await vStore.get(id)
+    const db = await initDB(); const tx = db.transaction(['vistorias', 'remote_vistorias_cache'], 'readonly');
+    const vStore = tx.objectStore('vistorias'); let item = await vStore.get(id);
+    if (!item) { const all = await vStore.getAll(); item = all.find(v => v.id === id || v.vistoria_id === id || v.supabase_id === id); }
     if (!item) {
-        // Try scanning if ID is a string but key is auto-increment
-        // Or if ID is the vistoria_id string
-        const all = await vStore.getAll()
-        item = all.find(v => v.id === id || v.vistoria_id === id || v.supabase_id === id)
+        const cStore = tx.objectStore('remote_vistorias_cache'); item = await cStore.get(id);
+        if (!item) { const allCache = await cStore.getAll(); item = allCache.find(v => v.id === id || v.vistoria_id === id || v.id === parseInt(id)); }
     }
-
-    // 2. Try Cache if not in local
-    if (!item) {
-        const cStore = tx.objectStore('remote_vistorias_cache')
-        item = await cStore.get(id)
-        if (!item) {
-            const allCache = await cStore.getAll()
-            item = allCache.find(v => v.id === id || v.vistoria_id === id || v.id === parseInt(id))
-        }
-    }
-
-    await tx.done
-    return item
+    await tx.done; return item;
 }
 
 export const getAllInterdicoesLocal = async () => {
-    const db = await initDB()
-    const all = await db.getAll('interdicoes')
-    return all.map(i => ({
-        ...i,
-        tipo_info: i.tipo_info || i.tipoInfo || i.riscoTipo || 'Interdição'
-    }))
+    const db = await initDB(); const all = await db.getAll('interdicoes');
+    return all.map(i => ({ ...i, tipo_info: i.tipo_info || i.tipoInfo || i.riscoTipo || 'Interdição' }));
 }
 
 export const saveInterdicaoOffline = async (data) => {
-    const db = await initDB()
-    // Use .put instead of .add
-    const localId = await db.put('interdicoes', {
-        ...data,
-        createdAt: data.createdAt || new Date().toISOString(),
-        synced: false
-    })
-
-    if (navigator.onLine) {
-        const item = await db.get('interdicoes', localId)
-        await syncSingleItem('interdicoes', item, db)
-    }
-
-    return localId
+    const db = await initDB(); const localId = await db.put('interdicoes', { ...data, createdAt: data.createdAt || new Date().toISOString(), synced: false });
+    if (navigator.onLine) { const item = await db.get('interdicoes', localId); await syncSingleItem('interdicoes', item, db); }
+    return localId;
 }
 
 export const clearLocalData = async () => {
-    const db = await initDB()
-    const stores = []
-    if (db.objectStoreNames.contains('vistorias')) stores.push('vistorias')
-    if (db.objectStoreNames.contains('interdicoes')) stores.push('interdicoes')
-
-    if (stores.length > 0) {
-        const tx = db.transaction(stores, 'readwrite')
-        for (const s of stores) {
-            await tx.objectStore(s).clear()
-        }
-        await tx.done
-    }
+    const db = await initDB(); const stores = [];
+    if (db.objectStoreNames.contains('vistorias')) stores.push('vistorias');
+    if (db.objectStoreNames.contains('interdicoes')) stores.push('interdicoes');
+    if (stores.length > 0) { const tx = db.transaction(stores, 'readwrite'); for (const s of stores) await tx.objectStore(s).clear(); await tx.done; }
 }
 
 export const resetDatabase = async () => {
-    const db = await initDB()
-    db.close()
-
+    const db = await initDB(); db.close();
     return new Promise((resolve, reject) => {
-        const req = indexedDB.deleteDatabase(DB_NAME)
-        req.onsuccess = () => resolve()
-        req.onerror = () => reject()
-        req.onblocked = () => {
-            console.warn('DB delete blocked, reloading page...')
-            window.location.reload()
-            resolve()
-        }
-    })
+        const req = indexedDB.deleteDatabase(DB_NAME); req.onsuccess = () => resolve(); req.onerror = () => reject();
+        req.onblocked = () => { window.location.reload(); resolve(); }
+    });
 }
 
-// GeoRescue Logic
 export const importInstallations = async (data, onProgress) => {
-    const db = await initDB()
-
-    // 1. Clear existing store first (single transaction)
-    {
-        const tx = db.transaction('installations', 'readwrite')
-        await tx.objectStore('installations').clear()
-        await tx.done
-    }
-
-    // 2. Process in chunks to avoid blocking the main thread and crashing IDB
-    const CHUNK_SIZE = 1000
-    const total = data.length
-    let processed = 0
-
+    const db = await initDB(); { const tx = db.transaction('installations', 'readwrite'); await tx.objectStore('installations').clear(); await tx.done; }
+    const CHUNK_SIZE = 1000; const total = data.length; let processed = 0;
     for (let i = 0; i < total; i += CHUNK_SIZE) {
-        const chunk = data.slice(i, i + CHUNK_SIZE)
-        const tx = db.transaction('installations', 'readwrite')
-        const store = tx.objectStore('installations')
-
+        const chunk = data.slice(i, i + CHUNK_SIZE); const tx = db.transaction('installations', 'readwrite'); const store = tx.objectStore('installations');
         for (const item of chunk) {
-            // Fix: Case sensitivity for UC codes
-            const fullUC = item["Código Unidade Consumidora"] || item["CODIGO UNIDADE CONSUMIDORA"] || ""
-            let ucCore = ""
-
-            if (fullUC) {
-                const parts = fullUC.split('.')
-                if (parts.length >= 4) {
-                    ucCore = parts[2] + parts[3]
-                }
-            }
-
-            // Fix: Clean number for searching
-            // Remove . and - from full UC to allow searching "0002..."
-            const cleanFullUC = fullUC.replace(/\D/g, '')
-
-            const doc = {
-                ...item,
-                id: item.id || (item["Instalação"] || Math.random().toString(36).substr(2, 9)),
-                installation_number: item["Instalação"] ? String(item["Instalação"]) : String(item.installation_number || ''),
-                full_uc: fullUC,
-                clean_full_uc: cleanFullUC, // New field for search
-                uc_core: ucCore,
-                name: item.name || item.NOME || item.NOME_BAIRRO || '',
-                address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || '',
-                // Fix: Flexible Latitude/Longitude keys
-                lat: parseFloat(item.LATITUDE || item.Latitude || item.lat || item.pee_lat || item.client_lat || 0),
-                lng: parseFloat(item.LONGITUDE || item.Longitude || item.lng || item.pee_lng || item.client_lng || 0)
-            }
-            store.put(doc)
+            const fullUC = item["Código Unidade Consumidora"] || item["CODIGO UNIDADE CONSUMIDORA"] || "";
+            let ucCore = ""; if (fullUC) { const parts = fullUC.split('.'); if (parts.length >= 4) ucCore = parts[2] + parts[3]; }
+            const cleanFullUC = fullUC.replace(/\D/g, '');
+            const doc = { ...item, id: item.id || (item["Instalação"] || Math.random().toString(36).substr(2, 9)), installation_number: item["Instalação"] ? String(item["Instalação"]) : String(item.installation_number || ''), full_uc: fullUC, clean_full_uc: cleanFullUC, uc_core: ucCore, name: item.name || item.NOME || item.NOME_BAIRRO || '', address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || '', lat: parseFloat(item.LATITUDE || item.Latitude || item.lat || item.pee_lat || item.client_lat || 0), lng: parseFloat(item.LONGITUDE || item.Longitude || item.lng || item.pee_lng || item.client_lng || 0) };
+            store.put(doc);
         }
-        await tx.done
-        processed += chunk.length
-        if (onProgress) onProgress(processed, total)
-
-        // Small yield to UI
-        await new Promise(r => setTimeout(r, 10))
+        await tx.done; processed += chunk.length; if (onProgress) onProgress(processed, total);
+        await new Promise(r => setTimeout(r, 10));
     }
 }
 
 export const searchInstallations = async (query) => {
-    const db = await initDB()
-    if (!query) return []
-
-    const cleanQuery = query.replace(/\D/g, '') // Remove dots, dashes, etc.
-
-    // 1. If length is 6, search in uc_core index
-    if (cleanQuery.length === 6) {
-        const matches = await db.getAllFromIndex('installations', 'uc_core', cleanQuery)
-        if (matches && matches.length > 0) return matches
-    }
-
-    // 2. If length is large, try to extract core and search
-    if (cleanQuery.length >= 10) {
-        // Pattern: 000221764205414 (extracted digits from 0.002.217.642.054-14)
-        // Core digits: index 4 to 10 (217642)
-        const core = cleanQuery.substring(4, 10)
-        const matches = await db.getAllFromIndex('installations', 'uc_core', core)
-        if (matches && matches.length > 0) return matches
-    }
-
-    // 3. Exact index match for old installation number
-    const exactMatch = await db.getFromIndex('installations', 'installation_number', query)
-    if (exactMatch) return [exactMatch]
-
-    // 4. Exact index match for installation_number but as string if query is numeric
-    if (/^\d+$/.test(query)) {
-        const numMatch = await db.getFromIndex('installations', 'installation_number', query)
-        if (numMatch) return [numMatch]
-    }
-
-    // 5. Fallback search (names, addresses, full UC)
-    const all = await db.getAll('installations')
-    const lowerQuery = query.toLowerCase()
-
-    return all.filter(item => {
-        return (
-            (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
-            (item.address && item.address.toLowerCase().includes(lowerQuery)) ||
-            (item.full_uc && item.full_uc.includes(query)) ||
-            (item.clean_full_uc && item.clean_full_uc.includes(cleanQuery)) || // Search by raw numbers
-            (item.installation_number && String(item.installation_number).includes(query)) ||
-            (item.uc_core && item.uc_core === cleanQuery)
-        )
-    }).slice(0, 50)
+    const db = await initDB(); if (!query) return [];
+    const cleanQuery = query.replace(/\D/g, '');
+    if (cleanQuery.length === 6) { const m = await db.getAllFromIndex('installations', 'uc_core', cleanQuery); if (m?.length > 0) return m; }
+    if (cleanQuery.length >= 10) { const core = cleanQuery.substring(4, 10); const m = await db.getAllFromIndex('installations', 'uc_core', core); if (m?.length > 0) return m; }
+    const exact = await db.getFromIndex('installations', 'installation_number', query); if (exact) return [exact];
+    const all = await db.getAll('installations'); const lower = query.toLowerCase();
+    return all.filter(item => (item.name?.toLowerCase().includes(lower) || item.address?.toLowerCase().includes(lower) || item.full_uc?.includes(query) || item.clean_full_uc?.includes(cleanQuery) || String(item.installation_number).includes(query) || item.uc_core === cleanQuery)).slice(0, 50);
 }
 
-export const getInstallationsCount = async () => {
-    const db = await initDB()
-    return db.count('installations')
-}
-
-// Remote Vistorias Cache Helpers
-
-// --- Despacho Feature Functions ---
+export const getInstallationsCount = async () => { const db = await initDB(); return db.count('installations'); }
 
 export const saveDespachoOffline = async (data) => {
-    const db = await initDB()
-    const id = await db.put('despachos', {
-        ...data,
-        createdAt: new Date().toISOString(),
-        synced: false
-    })
-
-    // Try sync if online
-    if (navigator.onLine) {
-        // await syncSingleItem('despachos', item, db) // Future implementation
-    }
-    return id
+    const db = await initDB(); const id = await db.put('despachos', { ...data, createdAt: new Date().toISOString(), synced: false }); return id;
 }
 
 export const getNextDespachoId = async () => {
-    const db = await initDB()
-    const currentYear = new Date().getFullYear()
-
-    // 1. Get max from local
-    const all = await db.getAll('despachos')
-    let maxNum = 0
-
-    all.forEach(d => {
-        if (d.despacho_id && d.despacho_id.includes(`/${currentYear}`)) {
-            const num = parseInt(d.despacho_id.split('/')[0])
-            if (!isNaN(num) && num > maxNum) maxNum = num
-        }
-    })
-
-    // 2. Mock check for remote (In real app, we'd query Supabase count)
-    // For now, local consistency is enough for the requested scope
-
-    return `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`
+    const db = await initDB(); const currentYear = new Date().getFullYear(); const all = await db.getAll('despachos'); let maxNum = 0;
+    all.forEach(d => { if (d.despacho_id?.includes(`/${currentYear}`)) { const num = parseInt(d.despacho_id.split('/')[0]); if (!isNaN(num) && num > maxNum) maxNum = num; } });
+    return `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
 }
-export const getRemoteVistoriasCache = async () => {
-    const db = await initDB()
-    return db.getAll('remote_vistorias_cache')
-}
-
+export const getRemoteVistoriasCache = async () => { const db = await initDB(); return db.getAll('remote_vistorias_cache'); }
 export const saveRemoteVistoriasCache = async (data) => {
-    const db = await initDB()
-    const tx = db.transaction('remote_vistorias_cache', 'readwrite')
-    const store = tx.objectStore('remote_vistorias_cache')
-
-    // [DEFINITIVE FIX] Clear old cache completely to remove ghost records (deleted items)
-    await store.clear()
-
-    for (const item of data) {
-        await store.put(item)
-    }
-    await tx.done
+    const db = await initDB(); const tx = db.transaction('remote_vistorias_cache', 'readwrite'); const store = tx.objectStore('remote_vistorias_cache');
+    await store.clear(); for (const item of data) await store.put(item); await tx.done;
 }
-// --- EMERGENCY CONTRACTS ---
 
 export const getContracts = async () => {
-    const db = await initDB();
-    const all = await db.getAll('emergency_contracts');
-    const active = all.filter(c => c.status !== 'deleted');
-
-    // Fallback: Smart Seed (Check and add missing seed items)
-    const seedData = [
+    const db = await initDB(); const all = await db.getAll('emergency_contracts'); const active = all.filter(c => c.status !== 'deleted');
+    const seed = [
         { contract_id: 'CTR-SEED-001', contract_number: '2025-1V6400', object_description: 'Filtros', start_date: '2025-06-19', end_date: '2026-06-18', total_value: 18250.00, status: 'active', synced: true },
         { contract_id: 'CTR-SEED-002', contract_number: '2025-XVC15', object_description: 'Cestas Básicas', start_date: '2025-06-02', end_date: '2026-06-01', total_value: 210600.00, status: 'active', synced: true },
         { contract_id: 'CTR-SEED-003', contract_number: '2025-9J0PF', object_description: 'Cestas de Limpeza', start_date: '2025-06-02', end_date: '2026-06-01', total_value: 31122.00, status: 'active', synced: true },
@@ -962,92 +558,25 @@ export const getContracts = async () => {
         { contract_id: 'CTR-SEED-006', contract_number: '2025-LXSOQ', object_description: 'Higiene e Limpeza', start_date: '2025-08-15', end_date: '2026-08-15', total_value: 1138.00, status: 'active', synced: true },
         { contract_id: 'CTR-SEED-007', contract_number: '2025-L1F26', object_description: 'Marmitas', start_date: '2025-09-25', end_date: '2026-09-24', total_value: 2756.80, status: 'active', synced: true }
     ];
-
-    const missingItems = seedData.filter(seed =>
-        !active.some(existing => existing.contract_number === seed.contract_number)
-    );
-
-    // Data Fix: If Filtros (2025-1V6400) exists but has the wrong value (18.25), update it
-    const filtros = active.find(c => c.contract_number === '2025-1V6400');
-    if (filtros && (filtros.total_value === 18.25 || filtros.total_value < 100)) {
-        const tx = db.transaction('emergency_contracts', 'readwrite');
-        const updated = { ...filtros, total_value: 18250.00, synced: false };
-        await tx.store.put(updated);
-        await tx.done;
-        // Update local list for immediate return
-        const idx = active.findIndex(c => c.contract_number === '2025-1V6400');
-        active[idx] = updated;
-    }
-
-    if (missingItems.length > 0) {
-        const tx = db.transaction('emergency_contracts', 'readwrite');
-        for (const item of missingItems) {
-            await tx.store.put(item);
-            active.push(item); // Update local list for immediate return
-        }
-        await tx.done;
-    }
-
+    const missing = seed.filter(s => !active.some(e => e.contract_number === s.contract_number));
+    if (missing.length > 0) { const tx = db.transaction('emergency_contracts', 'readwrite'); for (const item of missing) { await tx.store.put(item); active.push(item); } await tx.done; }
     return active;
 }
 
-export const addContract = async (contractData) => {
-    const db = await initDB();
-    const newContract = {
-        ...contractData,
-        contract_id: contractData.contract_id || `CTR-${Date.now()}`,
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        synced: false
-    };
-    const id = await db.add('emergency_contracts', newContract);
-    triggerSync();
-    return id;
+export const addContract = async (data) => {
+    const db = await initDB(); const id = await db.add('emergency_contracts', { ...data, contract_id: data.contract_id || `CTR-${Date.now()}`, status: 'active', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), synced: false }); triggerSync(); return id;
 }
 
-export const getContract = async (id) => {
-    const db = await initDB();
-    // Support numeric ID (manual) or string ID (seeded/uuid)
-    return db.getAll('emergency_contracts').then(all =>
-        all.find(c => c.id == id || c.contract_id === id)
-    );
-}
+export const getContract = async (id) => { const db = await initDB(); return db.getAll('emergency_contracts').then(all => all.find(c => c.id == id || c.contract_id === id)); }
 
 export const updateContract = async (id, updates) => {
-    const db = await initDB();
-    const tx = db.transaction('emergency_contracts', 'readwrite');
-    const store = tx.objectStore('emergency_contracts');
-
-    // Find record by multiple possible IDs
-    const all = await store.getAll();
-    const record = all.find(c => c.id == id || c.contract_id === id);
-
-    if (record) {
-        const updatedRecord = { ...record, ...updates, synced: false, updated_at: new Date().toISOString() };
-        await store.put(updatedRecord);
-        await tx.done;
-        triggerSync();
-        return true;
-    }
+    const db = await initDB(); const tx = db.transaction('emergency_contracts', 'readwrite'); const store = tx.objectStore('emergency_contracts');
+    const all = await store.getAll(); const record = all.find(c => c.id == id || c.contract_id === id);
+    if (record) { await store.put({ ...record, ...updates, synced: false, updated_at: new Date().toISOString() }); await tx.done; triggerSync(); return true; }
     return false;
 }
 
 export const deleteContract = async (id) => {
-    const db = await initDB();
-    // Support both ID types
-    let contract = null;
-    if (typeof id === 'number') {
-        contract = await db.get('emergency_contracts', id);
-    } else {
-        const all = await db.getAll('emergency_contracts');
-        contract = all.find(c => c.contract_id === id);
-    }
-
-    if (contract) {
-        contract.status = 'deleted';
-        contract.synced = false;
-        await db.put('emergency_contracts', contract);
-        triggerSync();
-    }
+    const db = await initDB(); let c = null; if (typeof id === 'number') c = await db.get('emergency_contracts', id); else { const all = await db.getAll('emergency_contracts'); c = all.find(item => item.contract_id === id); }
+    if (c) { c.status = 'deleted'; c.synced = false; await db.put('emergency_contracts', c); triggerSync(); }
 }

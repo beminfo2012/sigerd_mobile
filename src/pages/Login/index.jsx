@@ -222,19 +222,11 @@ const Login = ({ onLogin }) => {
         console.log('Username:', username)
 
         try {
-            // timeout promise
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('TIMEOUT: O servidor não respondeu a tempo.')), 15000)
-            );
-
-            // auth promise
-            const authPromise = supabase.auth.signInWithPassword({
+            console.log('Starting Supabase Auth...')
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email: username,
                 password: password
             });
-
-            console.log('Starting Supabase Auth...')
-            const { data, error: authError } = await Promise.race([authPromise, timeoutPromise]);
             console.log('Auth result:', { data, error: authError });
 
             if (authError) {
@@ -255,6 +247,10 @@ const Login = ({ onLogin }) => {
                     console.warn('Biometric registration failed but continuing login:', bioErr)
                 }
             }
+
+            console.log('Login successful, pulling data from cloud...')
+            const dbModule = await import('../../services/db')
+            await dbModule.pullAllData().catch(e => console.error('Initial pull failed:', e))
 
             console.log('Proceeding to onLogin()...')
             onLogin()

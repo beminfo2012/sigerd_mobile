@@ -1,0 +1,352 @@
+<!-- Este arquivo agora contém apenas o formulário para ser carregado dinamicamente -->
+<div class="form-section" data-tab-id="basico">
+    <h3 class="section-title">📍 Informações Básicas do Abrigo</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="local">Local do Abrigo <span class="required">*</span></label>
+            <input type="text" id="local" name="local" required>
+        </div>
+        <div class="form-group">
+            <label for="capacidade">Capacidade Total do Abrigo <span class="required">*</span></label>
+            <input type="number" id="capacidade" name="capacidade" class="number-input" required>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="endereco_completo">Endereço Completo <span class="required">*</span></label>
+            <input type="text" id="endereco_completo" name="endereco_completo" required>
+        </div>
+        <div class="form-group">
+            <label for="coordenadas_gps">Coordenadas GPS (Latitude, Longitude)</label>
+            <input type="text" id="coordenadas_gps" name="coordenadas_gps" placeholder="Ex: -20.123456, -40.123456">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="tipo_abrigo">Tipo de Abrigo <span class="required">*</span></label>
+            <select id="tipo_abrigo" name="tipo_abrigo" required>
+                <option value="">Selecione...</option>
+                <option value="escola">Escola</option>
+                <option value="igreja">Igreja</option>
+                <option value="centro_comunitario">Centro Comunitário</option>
+                <option value="ginasio">Ginásio Esportivo</option>
+                <option value="outro">Outro</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="status_operacional">Status Operacional</label>
+            <select id="status_operacional" name="status_operacional">
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+                <option value="manutencao">Em Manutenção</option>
+                <option value="emergencia">Apenas Emergência</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="form-section emergency" data-tab-id="emergencia">
+    <h3 class="section-title emergency">🚨 Informações de Emergência</h3>
+    <div class="warning-box">
+        <strong>⚠️ Importante:</strong> Estas informações são críticas para situações de desastre e devem ser
+        mantidas sempre atualizadas.
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="tempo_ativacao">Tempo de Ativação (em horas) <span class="required">*</span></label>
+            <input type="number" id="tempo_ativacao" name="tempo_ativacao" class="number-input" required>
+        </div>
+        <div class="form-group">
+            <label for="capacidade_emergencia">Capacidade Máxima em Emergência</label>
+            <input type="number" id="capacidade_emergencia" name="capacidade_emergencia" class="number-input">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="tipos_desastre">Tipos de Desastre Atendidos</label>
+            <div style="margin-top: 10px;">
+                <div class="checkbox-group">
+                    <label for="enchente"><input type="checkbox" id="enchente" name="tipos_desastre[]" value="enchente">
+                        Enchentes</label>
+                </div>
+                <div class="checkbox-group">
+                    <label for="deslizamento"><input type="checkbox" id="deslizamento" name="tipos_desastre[]"
+                            value="deslizamento"> Deslizamentos</label>
+                </div>
+                <div class="checkbox-group">
+                    <label for="incendio"><input type="checkbox" id="incendio" name="tipos_desastre[]" value="incendio">
+                        Incêndios</label>
+                </div>
+                <div class="checkbox-group">
+                    <label for="vendaval"><input type="checkbox" id="vendaval" name="tipos_desastre[]" value="vendaval">
+                        Vendavais</label>
+                </div>
+                <div class="checkbox-group">
+                    <label for="seca"><input type="checkbox" id="seca" name="tipos_desastre[]" value="seca">
+                        Secas</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="restricoes_acesso">Restrições de Acesso</label>
+            <textarea id="restricoes_acesso" name="restricoes_acesso"
+                placeholder="Descreva limitações de acesso, horários especiais, etc."></textarea>
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="contatos">
+    <h3 class="section-title">👥 Dados da Instituição - Direção</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="direcao_nome">Nome do Diretor <span class="required">*</span></label>
+            <input type="text" id="direcao_nome" name="direcao_nome" required>
+        </div>
+        <div class="form-group">
+            <label for="direcao_telefone">Telefone <span class="required">*</span></label>
+            <input type="tel" id="direcao_telefone" name="direcao_telefone" required>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="direcao_endereco">Endereço</label>
+            <input type="text" id="direcao_endereco" name="direcao_endereco">
+        </div>
+        <div class="form-group">
+            <label for="direcao_email">E-mail</label>
+            <input type="email" id="direcao_email" name="direcao_email">
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="contatos">
+    <h3 class="section-title">🔑 Responsável pelas Chaves</h3>
+    <div class="info-box">
+        <span class="priority-indicator priority-high"></span>
+        <strong>Alta Prioridade:</strong> Esta pessoa deve estar disponível 24h em situações de emergência.
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="chaves_nome">Nome <span class="required">*</span></label>
+            <input type="text" id="chaves_nome" name="chaves_nome" required>
+        </div>
+        <div class="form-group">
+            <label for="chaves_telefone">Telefone <span class="required">*</span></label>
+            <input type="tel" id="chaves_telefone" name="chaves_telefone" required>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="chaves_endereco">Endereço</label>
+            <input type="text" id="chaves_endereco" name="chaves_endereco">
+        </div>
+        <div class="form-group">
+            <label for="chaves_telefone_alternativo">Telefone Alternativo</label>
+            <input type="tel" id="chaves_telefone_alternativo" name="chaves_telefone_alternativo">
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="contatos">
+    <h3 class="section-title">🍳 Responsável pela Cozinha</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="cozinha_nome">Nome</label>
+            <input type="text" id="cozinha_nome" name="cozinha_nome">
+        </div>
+        <div class="form-group">
+            <label for="cozinha_telefone">Telefone</label>
+            <input type="tel" id="cozinha_telefone" name="cozinha_telefone">
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="contatos">
+    <h3 class="section-title">🧹 Responsável pela Limpeza</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="limpeza_nome">Nome</label>
+            <input type="text" id="limpeza_nome" name="limpeza_nome">
+        </div>
+        <div class="form-group">
+            <label for="limpeza_telefone">Telefone</label>
+            <input type="tel" id="limpeza_telefone" name="limpeza_telefone">
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="infraestrutura">
+    <h3 class="section-title">🏢 Infraestrutura</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="salas_disponiveis">Quantidade de Salas Disponíveis</label>
+            <input type="number" id="salas_disponiveis" name="salas_disponiveis" class="number-input">
+        </div>
+        <div class="form-group">
+            <label for="banheiros">Quantidade de Banheiros</label>
+            <input type="number" id="banheiros" name="banheiros" class="number-input">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="banheiros_adaptados">Banheiros Adaptados (PCD)</label>
+            <input type="number" id="banheiros_adaptados" name="banheiros_adaptados" class="number-input">
+        </div>
+        <div class="form-group">
+            <label for="area_total">Área Total (m²)</label>
+            <input type="number" id="area_total" name="area_total" class="number-input">
+        </div>
+    </div>
+    <!-- Chuveiros -->
+    <div style="margin-bottom: 20px;">
+        <label class="section-subtitle">Possui Chuveiros?</label>
+        <div class="radio-group">
+            <input type="radio" id="chuveiros_sim" name="possui_chuveiro" value="sim">
+            <label for="chuveiros_sim">Sim</label>
+            <input type="radio" id="chuveiros_nao" name="possui_chuveiro" value="nao">
+            <label for="chuveiros_nao">Não</label>
+        </div>
+        <div id="chuveiros_quantidade_group" class="form-group conditional-group"
+            style="display: none; margin-left: 20px;">
+            <label for="chuveiros_quantidade">Quantos?</label>
+            <input type="number" id="chuveiros_quantidade" name="chuveiros_quantidade" class="number-input">
+        </div>
+        <div id="chuveiros_instalacao_group" class="conditional-group"
+            style="display: none; margin-left: 20px; margin-top: 10px;">
+            <label class="section-subtitle">Possui local para instalação?</label>
+            <div class="radio-group">
+                <input type="radio" id="chuveiros_local_sim" name="local_instalacao_chuveiro" value="sim">
+                <label for="chuveiros_local_sim">Sim</label>
+                <input type="radio" id="chuveiros_local_nao" name="local_instalacao_chuveiro" value="nao">
+                <label for="chuveiros_local_nao">Não</label>
+            </div>
+            <div id="chuveiros_local_quantidade_group" class="form-group conditional-group"
+                style="display: none; margin-left: 20px;">
+                <label for="chuveiros_local_quantidade">Quantos locais?</label>
+                <input type="number" id="chuveiros_local_quantidade" name="chuveiros_local_quantidade"
+                    class="number-input">
+            </div>
+        </div>
+    </div>
+
+    <!-- Refeitório -->
+    <div style="margin-bottom: 20px;">
+        <label class="section-subtitle">Possui Refeitório?</label>
+        <div class="radio-group">
+            <input type="radio" id="refeitorio_sim" name="possui_refeitorio" value="sim">
+            <label for="refeitorio_sim">Sim</label>
+            <input type="radio" id="refeitorio_nao" name="possui_refeitorio" value="nao">
+            <label for="refeitorio_nao">Não</label>
+        </div>
+        <div id="refeitorio_mesas_group" class="form-group conditional-group" style="display: none; margin-left: 20px;">
+            <label for="refeitorio_mesas">Quantidade de mesas</label>
+            <input type="number" id="refeitorio_mesas" name="refeitorio_mesas" class="number-input">
+        </div>
+    </div>
+
+</div>
+
+<div class="form-section" data-tab-id="infraestrutura">
+    <h3 class="section-title">♿ Acessibilidade e Necessidades Especiais</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="acessibilidade">Recursos de Acessibilidade</label>
+            <div style="margin-top: 10px;">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rampa_acesso" name="acessibilidade[]" value="rampa_acesso">
+                    <label for="rampa_acesso">Rampa de Acesso</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="elevador" name="acessibilidade[]" value="elevador">
+                    <label for="elevador">Elevador</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="banheiro_adaptado" name="acessibilidade[]" value="banheiro_adaptado">
+                    <label for="banheiro_adaptado">Banheiro Adaptado</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="piso_tatil" name="acessibilidade[]" value="piso_tatil">
+                    <label for="piso_tatil">Piso Tátil</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="capacidade_pcd">Capacidade para Pessoas com Deficiência</label>
+            <input type="number" id="capacidade_pcd" name="capacidade_pcd" class="number-input">
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="recursos">
+    <h3 class="section-title">⚙️ Equipamentos Existentes</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="fogao_quantidade">Fogão - Quantidade</label>
+            <input type="number" id="fogao_quantidade" name="fogao_quantidade" class="number-input">
+        </div>
+        <div class="form-group">
+            <label for="geladeira_quantidade">Geladeira - Quantidade</label>
+            <input type="number" id="geladeira_quantidade" name="geladeira_quantidade" class="number-input">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="microondas_quantidade">Microondas - Quantidade</label>
+            <input type="number" id="microondas_quantidade" name="microondas_quantidade" class="number-input">
+        </div>
+        <div class="form-group">
+            <label for="freezer_quantidade">Freezer - Quantidade</label>
+            <input type="number" id="freezer_quantidade" name="freezer_quantidade" class="number-input">
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="recursos">
+    <h3 class="section-title">📦 Material em Estoque</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="colchoes_quantidade">Colchões - Quantidade</label>
+            <input type="number" id="colchoes_quantidade" name="colchoes_quantidade" class="number-input">
+        </div>
+        <div class="form-group">
+            <label for="cobertores_quantidade">Cobertores - Quantidade</label>
+            <input type="number" id="cobertores_quantidade" name="cobertores_quantidade" class="number-input">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="travesseiros_quantidade">Travesseiros - Quantidade</label>
+            <input type="number" id="travesseiros_quantidade" name="travesseiros_quantidade" class="number-input">
+        </div>
+        <div class="form-group">
+            <label for="produtos_higiene">Produtos de Higiene Disponíveis?</label>
+            <select id="produtos_higiene" name="produtos_higiene">
+                <option value="">Selecione...</option>
+                <option value="sim">Sim</option>
+                <option value="nao">Não</option>
+                <option value="basico">Básico</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="form-section" data-tab-id="outros">
+    <h3 class="section-title">📝 Observações Gerais</h3>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="observacoes">Observações Importantes</label>
+            <textarea id="observacoes" name="observacoes"
+                placeholder="Inclua informações relevantes sobre o abrigo, limitações, pontos de atenção, etc."></textarea>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="data_ultima_inspecao">Data da Última Inspeção</label>
+            <input type="date" id="data_ultima_inspecao" name="data_ultima_inspecao">
+        </div>
+        <div class="form-group">
+            <label for="responsavel_cadastro">Responsável pelo Cadastro</label>
+            <input type="text" id="responsavel_cadastro" name="responsavel_cadastro">
+        </div>
+    </div>
+</div>

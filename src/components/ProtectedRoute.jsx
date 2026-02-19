@@ -20,8 +20,9 @@ const ProtectedRoute = ({ children, user, allowedRoles, fallbackPath }) => {
     const userRole = user.role || '';
     const userEmail = user.email || '';
 
-    // Authorization check: Allow if role matches OR if it's the specific admin email
-    const isAuthorized = allowedRoles.includes(userRole) || userEmail === 'bruno_pagel@hotmail.com';
+    // Authorization check: Allow if role matches OR if it's a whitelisted admin email
+    const whitelistedEmails = ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'];
+    const isAuthorized = allowedRoles.includes(userRole) || whitelistedEmails.includes(userEmail);
 
     if (!isAuthorized) {
         // If not authorized, redirect to the assigned fallback or a default safe zone

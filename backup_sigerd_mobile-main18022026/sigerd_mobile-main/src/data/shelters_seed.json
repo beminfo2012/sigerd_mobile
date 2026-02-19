@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Escola Estadual Graça Aranha",
+    "address": "",
+    "bairro": "Centro",
+    "contact_phone": "(27) 99825-5309",
+    "capacity": 50,
+    "status": "active",
+    "current_occupancy": 0,
+    "lat": -20.02928258595314,
+    "lng": -40.74289200666526
+  },
+  {
+    "name": "Escola Municipal de Ensino Fundamental Vila Jetibá",
+    "address": "",
+    "bairro": "Vila Jetibá",
+    "contact_phone": "(27) 99752-8762",
+    "capacity": 50,
+    "status": "active",
+    "current_occupancy": 0,
+    "lat": -20.018847015380764,
+    "lng": -40.76121647212258
+  },
+  {
+    "name": "Ginásio Poliesportivo Hermann Roelke",
+    "address": "",
+    "bairro": "Centro",
+    "contact_phone": "(27) 99978-5581",
+    "capacity": 50,
+    "status": "active",
+    "current_occupancy": 0,
+    "lat": -20.028875823788756,
+    "lng": -40.74294488425505
+  },
+  {
+    "name": "Quadra Eitel Küster",
+    "address": "",
+    "bairro": "São Luis",
+    "contact_phone": "(27) 99878-7784",
+    "capacity": 50,
+    "status": "active",
+    "current_occupancy": 0,
+    "lat": -20.003088768602552,
+    "lng": -40.739353674603926
+  },
+  {
+    "name": "Ginásio de Esportes Alberto Ricardo Raasch",
+    "address": "",
+    "bairro": "Belém",
+    "contact_phone": "(27) 99878-9434",
+    "capacity": 50,
+    "status": "active",
+    "current_occupancy": 0,
+    "lat": -20.048874495880852,
+    "lng": -40.703827047461814
+  }
+]

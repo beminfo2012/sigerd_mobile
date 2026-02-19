@@ -46,7 +46,13 @@ const normalizeData = (data, type) => {
                 });
             })(),
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
-            apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null,
+            apoioTecnico: (() => {
+                let apoio = data.apoioTecnico || data.apoio_tecnico || null;
+                if (typeof apoio === 'string') {
+                    try { apoio = JSON.parse(apoio); } catch (e) { console.warn('Apoio parsing failed:', e); }
+                }
+                return apoio;
+            })(),
             checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
         };
     } else {
@@ -227,7 +233,7 @@ export const generatePDF = async (rawData, type) => {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
                         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
-                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: cover; display: block;" crossorigin="anonymous" />
+                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
                             <div style="padding: 12px; background: white;">
                                 <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
                                 <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: ${data.latitude}, ${data.longitude}</div>
@@ -328,12 +334,26 @@ export const generatePDF = async (rawData, type) => {
 
         const blob = pdf.output('blob');
         const file = new File([blob], filename, { type: 'application/pdf' });
+
+        let shared = false;
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: title });
-        } else {
+            try {
+                await navigator.share({ files: [file], title: title });
+                shared = true;
+            } catch (shareErr) {
+                console.warn('Native share failed or cancelled:', shareErr);
+            }
+        }
+
+        if (!shared) {
             const url = URL.createObjectURL(blob);
             window.open(url) || (location.href = url);
         }
-    } catch (e) { console.error(e); alert('Erro ao gerar PDF'); }
+
+        return { success: true, file, blob, filename };
+    } catch (e) {
+        console.error(e);
+        return { success: false, error: e.message };
+    }
     finally { document.body.removeChild(container); }
 };

@@ -8,6 +8,7 @@ import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { compressImage } from '../../utils/imageOptimizer'
+import { useToast } from '../../components/ToastNotification'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { checkRiskArea } from '../../services/riskAreas'
@@ -93,6 +94,7 @@ const ENCAMINHAMENTOS_LIST = [
 const VistoriaForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
     const navigate = useNavigate()
+    const { toast } = useToast()
 
     const [formData, setFormData] = useState({
         vistoriaId: '',
@@ -155,7 +157,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [showDespachoModal, setShowDespachoModal] = useState(false)
 
     const [saving, setSaving] = useState(false)
-    const [generatingReport, setGeneratingReport] = useState(false)
+    const [generating, setGenerating] = useState(false)
     const [refining, setRefining] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
@@ -179,23 +181,37 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     useEffect(() => {
         if (initialData) {
+            const parseJSON = (val, fallback) => {
+                if (typeof val === 'string') {
+                    try { return JSON.parse(val); } catch (e) { return fallback; }
+                }
+                return val || fallback;
+            };
+
+            const apoio = parseJSON(initialData.apoio_tecnico || initialData.apoioTecnico, { nome: '', crea: '', matricula: '', assinatura: null });
+
             setFormData({
                 ...initialData,
                 // Map snake_case from DB to camelCase for form state
                 vistoriaId: initialData.vistoria_id || initialData.vistoriaId,
                 dataHora: initialData.data_hora || initialData.dataHora,
                 categoriaRisco: initialData.categoria_risco || initialData.categoriaRisco,
-                subtiposRisco: initialData.subtipos_risco || initialData.subtiposRisco || [],
+                subtiposRisco: Array.isArray(initialData.subtipos_risco || initialData.subtiposRisco) ? (initialData.subtipos_risco || initialData.subtiposRisco) : [],
                 nivelRisco: initialData.nivel_risco || initialData.nivelRisco || 'Baixo',
                 situacaoObservada: initialData.situacao_observada || initialData.situacaoObservada || 'Estabilizado',
                 populacaoEstimada: initialData.populacao_estimada || initialData.populacaoEstimada,
-                gruposVulneraveis: initialData.grupos_vulneraveis || initialData.gruposVulneraveis || [],
-                medidasTomadas: initialData.medidas_tomadas || initialData.medidasTomadas || [],
-                encaminhamentos: initialData.encaminhamentos || [],
+                gruposVulneraveis: Array.isArray(initialData.grupos_vulneraveis || initialData.gruposVulneraveis) ? (initialData.grupos_vulneraveis || initialData.gruposVulneraveis) : [],
+                medidasTomadas: Array.isArray(initialData.medidas_tomadas || initialData.medidasTomadas) ? (initialData.medidas_tomadas || initialData.medidasTomadas) : [],
+                encaminhamentos: Array.isArray(initialData.encaminhamentos) ? initialData.encaminhamentos : [],
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
-                apoioTecnico: initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null },
-                checklistRespostas: initialData.checklist_respostas || initialData.checklistRespostas || {},
-                fotos: (initialData.fotos || []).map((f, i) =>
+                apoioTecnico: {
+                    nome: apoio?.nome || '',
+                    crea: apoio?.crea || '',
+                    matricula: apoio?.matricula || '',
+                    assinatura: apoio?.assinatura || null
+                },
+                checklistRespostas: parseJSON(initialData.checklist_respostas || initialData.checklistRespostas, {}),
+                fotos: (parseJSON(initialData.fotos, [])).map((f, i) =>
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
                         : { ...f, id: f.id || `photo-${i}`, legenda: f.legenda || '' }
@@ -511,6 +527,26 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             fotos: prev.fotos.map(p => String(p.id) === String(id) ? { ...p, legenda: text } : p)
         }))
     }
+
+    const handleGeneratePDF = async () => {
+        if (generating) return;
+        setGenerating(true);
+        toast.info('Gerando PDF...', 'Por favor, aguarde enquanto processamos o relatório e as imagens.');
+
+        try {
+            const result = await generatePDF(formData, 'vistoria');
+            if (result.success) {
+                toast.success('Relatório Gerado!', 'O arquivo foi criado e está pronto para salvar ou compartilhar.');
+            } else {
+                toast.error('Erro ao gerar PDF', result.error || 'Ocorreu um erro inesperado.');
+            }
+        } catch (e) {
+            console.error('PDF Error:', e);
+            toast.error('Erro Crítico', 'Não foi possível gerar o PDF. Verifique sua conexão e tente novamente.');
+        } finally {
+            setGenerating(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -1122,7 +1158,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation()
-                                        setFormData({ ...formData, apoioTecnico: { ...formData.apoioTecnico, assinatura: null } })
+                                        // Respect explicit null for clearing to avoid sync fallbacks
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            apoio_tecnico: { ...prev.apoioTecnico, assinatura: null },
+                                            apoioTecnico: { ...prev.apoioTecnico, assinatura: null }
+                                        }))
+                                        toast.info('Assinatura removida', 'A assinatura do apoio técnico foi apagada localmente.');
                                     }}
                                     className="text-[10px] text-red-500 font-bold mt-1 uppercase"
                                 >
@@ -1165,7 +1207,15 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <Save size={24} /> {saving ? 'Salvando...' : 'Salvar Vistoria'}
                     </button>
                     <div className="grid grid-cols-2 gap-4">
-                        <button type="button" onClick={() => generatePDF(formData, 'vistoria')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 shadow-sm"><Share size={20} /> Relatório PDF</button>
+                        <button
+                            type="button"
+                            disabled={generating}
+                            onClick={handleGeneratePDF}
+                            className={`flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 shadow-sm transition-all ${generating ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                        >
+                            <Share size={20} className={generating ? 'animate-pulse' : ''} />
+                            {generating ? 'Aguarde...' : 'Relatório PDF'}
+                        </button>
                         <button
                             type="button"
                             onClick={() => initialData ? setShowDeleteModal(true) : onBack()}

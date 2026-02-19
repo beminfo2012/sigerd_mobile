@@ -1,0 +1,28 @@
+{
+    "coord-central": [
+        {
+            "sender": "Coordenação Central",
+            "time": "10:15",
+            "body": "Situação atual: Chuvas intensas na região norte. Equipes direcionadas para áreas de risco.",
+            "type": "received"
+        },
+        {
+            "sender": "Operador",
+            "time": "10:20",
+            "body": "Confirmado. Equipe 1 a caminho do Morro do Araponga.",
+            "type": "sent"
+        }
+    ],
+    "equipe-1": [
+        {
+            "sender": "Equipe de Resgate 1",
+            "time": "11:05",
+            "body": "Chegamos ao Morro do Araponga. Visibilidade baixa. Iniciando avaliação.",
+            "type": "received"
+        }
+    ],
+    "equipe-2": [],
+    "hospital": [],
+    "policia": [],
+    "bombeiros": []
+}
