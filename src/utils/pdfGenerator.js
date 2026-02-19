@@ -91,7 +91,13 @@ const normalizeData = (data, type) => {
                 });
             })(),
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
-            apoioTecnico: data.apoioTecnico || data.apoio_tecnico || null
+            apoioTecnico: (() => {
+                let apoio = data.apoioTecnico || data.apoio_tecnico || null;
+                if (typeof apoio === 'string') {
+                    try { apoio = JSON.parse(apoio); } catch (e) { console.warn('Apoio parsing failed:', e); }
+                }
+                return apoio;
+            })()
         };
     }
 };

@@ -246,6 +246,26 @@ export const syncPendingData = async () => {
 
 const syncSingleItem = async (storeName, item, db) => {
     try {
+        const uploadSignature = async (base64, folder, fileName) => {
+            if (base64 && base64.startsWith('data:image')) {
+                const blob = base64ToBlob(base64);
+                if (blob) {
+                    const { error: uploadError } = await supabase.storage
+                        .from(folder)
+                        .upload(fileName, blob, { upsert: true });
+                    if (!uploadError) {
+                        const { data: urlData } = supabase.storage
+                            .from(folder)
+                            .getPublicUrl(fileName);
+                        return urlData.publicUrl;
+                    } else {
+                        console.error(`[Sync] Signature upload error for ${fileName}:`, uploadError);
+                    }
+                }
+            }
+            return base64;
+        };
+
         let processedPhotos = []
         // Upload Photos
         if (item.fotos && item.fotos.length > 0) {
@@ -299,6 +319,23 @@ const syncSingleItem = async (storeName, item, db) => {
         if (storeName === 'vistorias') {
             let officialId = item.vistoriaId || item.vistoria_id
             const currentYear = new Date().getFullYear();
+
+            // [NEW] Upload Signatures to Storage
+            let signatureAgenteUrl = item.assinaturaAgente || item.assinatura_agente || null;
+            let signatureApoioUrl = item.apoioTecnico?.assinatura || item.apoio_tecnico?.assinatura || null;
+
+            const folder = 'vistorias';
+            const vid = officialId || item.id;
+
+            if (signatureAgenteUrl && signatureAgenteUrl.startsWith('data:image')) {
+                console.log(`[Sync] Uploading Agent signature for ${vid}...`);
+                signatureAgenteUrl = await uploadSignature(signatureAgenteUrl, folder, `${vid}/signature_agente.png`);
+            }
+
+            if (signatureApoioUrl && signatureApoioUrl.startsWith('data:image')) {
+                console.log(`[Sync] Uploading Tech Support signature for ${vid}...`);
+                signatureApoioUrl = await uploadSignature(signatureApoioUrl, folder, `${vid}/signature_apoio.png`);
+            }
 
             // [FIX] Robust Numeric Max ID Fetching
             // Fetch multiple records to find the TRUE numeric maximum, avoiding string sorting issues
@@ -368,9 +405,12 @@ const syncSingleItem = async (storeName, item, db) => {
                 encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (Array.isArray(item.encaminhamentos) ? item.encaminhamentos : []),
                 fotos: processedPhotos,
                 documentos: Array.isArray(item.documentos) ? item.documentos : (Array.isArray(item.documentos) ? item.documentos : []),
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente || null,
+                assinatura_agente: signatureAgenteUrl,
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
-                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null,
+                apoio_tecnico: {
+                    ...(item.apoioTecnico || item.apoio_tecnico || {}),
+                    assinatura: signatureApoioUrl
+                },
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
         } else if (storeName === 'interdicoes') {
@@ -393,6 +433,23 @@ const syncSingleItem = async (storeName, item, db) => {
                 }
                 officialId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`;
                 console.log(`[Sync] Assigned new Interdicao ID: ${officialId}`);
+            }
+
+            // [NEW] Upload Signatures to Storage for Interdicoes
+            let signatureAgenteUrl = item.assinaturaAgente || item.assinatura_agente || null;
+            let signatureApoioUrl = item.apoioTecnico?.assinatura || item.apoio_tecnico?.assinatura || null;
+
+            const folder = 'interdicoes';
+            const iid = officialId || item.id;
+
+            if (signatureAgenteUrl && signatureAgenteUrl.startsWith('data:image')) {
+                console.log(`[Sync] Uploading Agent signature for Interdicao ${iid}...`);
+                signatureAgenteUrl = await uploadSignature(signatureAgenteUrl, folder, `${iid}/signature_agente.png`);
+            }
+
+            if (signatureApoioUrl && signatureApoioUrl.startsWith('data:image')) {
+                console.log(`[Sync] Uploading Tech Support signature for Interdicao ${iid}...`);
+                signatureApoioUrl = await uploadSignature(signatureApoioUrl, folder, `${iid}/signature_apoio.png`);
             }
 
             payload = {
@@ -422,8 +479,11 @@ const syncSingleItem = async (storeName, item, db) => {
                 relatorio_tecnico: item.relatorioTecnico,
                 recomendacoes: item.recomendacoes,
                 orgaos_acionados: item.orgaosAcionados,
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente,
-                apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
+                assinatura_agente: signatureAgenteUrl,
+                apoio_tecnico: {
+                    ...(item.apoioTecnico || item.apoio_tecnico || {}),
+                    assinatura: signatureApoioUrl
+                }
             }
         } else if (storeName === 's2id_records') {
             // S2ID: Clean payload to avoid schema errors

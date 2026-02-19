@@ -189,6 +189,15 @@ const VistoriaPrint = () => {
         return Array.isArray(p) ? p : [];
     })();
 
+    // Normalize Apoio Tecnico
+    const apoioTecnico = (() => {
+        let a = data.apoioTecnico || data.apoio_tecnico || null;
+        if (typeof a === 'string') {
+            try { a = JSON.parse(a); } catch (e) { a = null; }
+        }
+        return a;
+    })();
+
     // Helper for Checklist Items
     const checklistItems = Object.entries(data.checklist_respostas || data.checklistRespostas || {})
         .filter(([_, val]) => val === true)
@@ -506,15 +515,15 @@ const VistoriaPrint = () => {
                             </div>
 
                             {/* Apoio Signature (if exists) */}
-                            {(data.apoioTecnico || data.apoio_tecnico) && (data.apoioTecnico?.assinatura || data.apoio_tecnico?.assinatura) && (
+                            {apoioTecnico && apoioTecnico.assinatura && (
                                 <div className="flex flex-col items-center text-center px-4">
                                     <div className="h-20 flex items-end justify-center mb-2">
-                                        <img src={data.apoioTecnico?.assinatura || data.apoio_tecnico?.assinatura} alt="Assinatura" className="max-h-full max-w-[200px]" />
+                                        <img src={apoioTecnico.assinatura} alt="Assinatura" className="max-h-full max-w-[200px]" />
                                     </div>
                                     <div className="w-64 border-b border-slate-800 mb-2"></div>
-                                    <p className="text-[11px] uppercase font-black text-slate-900">{data.apoioTecnico?.nome || data.apoio_tecnico?.nome}</p>
+                                    <p className="text-[11px] uppercase font-black text-slate-900">{apoioTecnico.nome}</p>
                                     <p className="text-[9px] uppercase font-bold text-slate-500">Apoio Técnico Esp.</p>
-                                    <p className="text-[9px] uppercase text-slate-400">Registro: {data.apoioTecnico?.crea || data.apoio_tecnico?.crea}</p>
+                                    <p className="text-[9px] uppercase text-slate-400">Registro: {apoioTecnico.crea}</p>
                                 </div>
                             )}
                         </div>

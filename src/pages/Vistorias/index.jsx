@@ -72,8 +72,10 @@ const Vistorias = () => {
                 tipoInfo: vistoria.tipo_info,
                 vistoriaId: vistoria.vistoria_id,
                 dataHora: vistoria.data_hora || new Date().toISOString().slice(0, 16),
-                fotos: vistoria.fotos || [], // If JSONB is array of objects
-                documentos: vistoria.documentos || []
+                fotos: vistoria.fotos || [],
+                documentos: vistoria.documentos || [],
+                assinaturaAgente: vistoria.assinatura_agente || vistoria.assinaturaAgente,
+                apoioTecnico: vistoria.apoio_tecnico || vistoria.apoioTecnico
             }
 
             setSelectedVistoria(mappedData)

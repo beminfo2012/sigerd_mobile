@@ -94,7 +94,13 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 agente: initialData.agente || initialData.agente || '',
                 matricula: initialData.matricula || initialData.matricula || '',
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
-                apoioTecnico: initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null },
+                apoioTecnico: (() => {
+                    let a = initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null };
+                    if (typeof a === 'string') {
+                        try { a = JSON.parse(a); } catch (e) { a = { nome: '', crea: '', matricula: '', assinatura: null }; }
+                    }
+                    return a;
+                })(),
                 fotos: (initialData.fotos || []).map((f, i) =>
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
