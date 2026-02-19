@@ -4,10 +4,11 @@ import {
     Plus, FileText, Trash2, Edit3,
     ArrowLeft, Search, AlertCircle,
     Download, Clock, CheckCircle,
-    ChevronRight, Globe, Shield, FileStack
+    ChevronRight, Globe, Shield, FileStack, RefreshCw
 } from 'lucide-react';
 import S2idDocsModal from './components/S2idDocsModal';
 import { getS2idRecords, deleteS2idLocal } from '../../services/s2idDb';
+import { syncPendingData } from '../../services/db';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
 import { UserContext } from '../../App';
@@ -25,6 +26,7 @@ const S2idDashboard = () => {
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [showDocsModal, setShowDocsModal] = useState(false);
     const [selectedRecordForDocs, setSelectedRecordForDocs] = useState(null);
+    const [syncing, setSyncing] = useState(false);
 
     const ROLE_MAP = {
         'S2id_Saude': 'saude',
@@ -48,15 +50,38 @@ const S2idDashboard = () => {
         loadRecords();
     }, []);
 
-    const loadRecords = async () => {
+    const loadRecords = async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
             const data = await getS2idRecords();
             setRecords(data.filter(r => r.status !== 'deleted'));
         } catch (error) {
             console.error('Error loading records:', error);
-            toast('Falha ao carregar registros S2id.', 'error');
+            if (!silent) toast('Falha ao carregar registros S2id.', 'error');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
+        }
+    };
+
+    const handleManualSync = async () => {
+        if (syncing) return;
+        setSyncing(true);
+        toast('Sincronizando registros...', 'info');
+        try {
+            const result = await syncPendingData();
+            if (result.success) {
+                if (result.count > 0) {
+                    toast.success(`${result.count} registros sincronizados!`);
+                } else {
+                    toast.success('Tudo atualizado.');
+                }
+                await loadRecords(true);
+            }
+        } catch (error) {
+            console.error('Manual sync failed:', error);
+            toast.error('Falha na sincronização.');
+        } finally {
+            setSyncing(false);
         }
     };
 
@@ -115,15 +140,25 @@ const S2idDashboard = () => {
                         </div>
                     </div>
                 </div>
-                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role) && (
+                <div className="flex items-center gap-2">
                     <button
-                        onClick={() => navigate('/s2id/novo')}
-                        className="bg-blue-600 text-white p-2.5 rounded-xl shadow-md active:scale-95 transition-all hover:bg-blue-700 flex items-center gap-2"
+                        onClick={handleManualSync}
+                        disabled={syncing}
+                        className={`p-2.5 rounded-xl transition-all ${syncing ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 active:scale-95'}`}
+                        title="Sincronizar Agora"
                     >
-                        <Plus size={20} />
-                        <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo Registro</span>
+                        <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
                     </button>
-                )}
+                    {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role) && (
+                        <button
+                            onClick={() => navigate('/s2id/novo')}
+                            className="bg-blue-600 text-white p-2.5 rounded-xl shadow-md active:scale-95 transition-all hover:bg-blue-700 flex items-center gap-2"
+                        >
+                            <Plus size={20} />
+                            <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo Registro</span>
+                        </button>
+                    )}
+                </div>
             </header>
 
             <main className="p-4 max-w-5xl mx-auto space-y-4">

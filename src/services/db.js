@@ -123,7 +123,7 @@ export const saveVistoriaOffline = async (data) => {
 
 export const getPendingSyncCount = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 's2id_records', 'emergency_contracts', 'manual_readings', 'despachos'];
     let detail = {
         total: 0,
         photosTotal: 0,
@@ -133,7 +133,11 @@ export const getPendingSyncCount = async () => {
         occupants: 0,
         donations: 0,
         inventory: 0,
-        distributions: 0
+        distributions: 0,
+        s2id_records: 0,
+        emergency_contracts: 0,
+        manual_readings: 0,
+        despachos: 0
     };
 
     for (const storeName of stores) {
@@ -176,7 +180,7 @@ const resolveSupabaseId = async (storeName, id) => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 's2id_records'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 's2id_records', 'emergency_contracts', 'manual_readings', 'despachos'];
     let syncedCount = 0
     for (const storeName of stores) {
         try {
@@ -241,7 +245,7 @@ const syncSingleItem = async (storeName, item, db) => {
             item.data.evidencias = processedEvidencias;
         }
 
-        const tableMap = { 'shelters': 'shelters', 'occupants': 'shelter_occupants', 'donations': 'shelter_donations', 'inventory': 'shelter_inventory', 'distributions': 'shelter_distributions' };
+        const tableMap = { 'shelters': 'shelters', 'occupants': 'shelter_occupants', 'donations': 'shelter_donations', 'inventory': 'shelter_inventory', 'distributions': 'shelter_distributions', 's2id_records': 's2id_records' };
         const table = tableMap[storeName] || storeName
         let payload = {}
 
@@ -317,19 +321,45 @@ const syncSingleItem = async (storeName, item, db) => {
                 medida_tipo: item.medidaTipo, medida_prazo: item.medidaPrazo, medida_prazo_data: item.medidaPrazoData, evacuacao_necessaria: item.evacuacaoNecessaria, fotos: processedPhotos, relatorio_tecnico: item.relatorioTecnico, recomendacoes: item.recomendacoes, orgaos_acionados: item.orgaosAcionados, assinatura_agente: item.assinaturaAgente || item.assinatura_agente, apoio_tecnico: item.apoioTecnico || item.apoio_tecnico || null
             }
         } else if (storeName === 's2id_records') {
-            const { id, synced, id_local, supabase_id, ...recordPayload } = item;
-            payload = { ...recordPayload, s2id_id: item.s2id_id || crypto.randomUUID(), id_local: item.id };
+            // STRICT CLEANING for s2id_records to avoid schema errors
+            payload = {
+                s2id_id: item.s2id_id || crypto.randomUUID(),
+                id_local: item.id,
+                status: item.status,
+                data: item.data,
+                created_at: item.created_at,
+                updated_at: item.updated_at
+            };
+        } else if (storeName === 'shelters') {
+            payload = {
+                shelter_id: item.shelter_id,
+                name: item.name,
+                address: item.address,
+                capacity: item.capacity,
+                status: item.status,
+                contact_info: item.contact_info,
+                latitude: item.latitude,
+                longitude: item.longitude,
+                id_local: item.id
+            };
+        } else if (storeName === 'occupants') {
+            payload = {
+                occupant_id: item.occupant_id,
+                shelter_id: await resolveToSupabaseShelterId(item.shelter_id),
+                name: item.name,
+                document: item.document,
+                age: item.age,
+                entry_date: item.entry_date,
+                exit_date: item.exit_date,
+                status: item.status,
+                id_local: item.id
+            };
+        } else if (storeName === 'donations') {
+            payload = { ...item, shelter_id: await resolveToSupabaseShelterId(item.shelter_id), id_local: item.id };
+            delete payload.id; delete payload.synced;
         } else {
-            payload = { ...item };
-            delete payload.id; delete payload.synced; delete payload.supabase_id;
-            if (payload.shelter_id) {
-                const resolved = await resolveSupabaseId('shelters', payload.shelter_id);
-                if (resolved) payload.shelter_id = resolved;
-            }
-            if (payload.inventory_id) {
-                const resolved = await resolveSupabaseId('shelter_inventory', payload.inventory_id);
-                if (resolved) payload.inventory_id = resolved;
-            }
+            const { id, synced, id_local, supabase_id, ...recordPayload } = item;
+            payload = { ...recordPayload, id_local: item.id };
         }
 
         const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {
@@ -338,6 +368,7 @@ const syncSingleItem = async (storeName, item, db) => {
 
         if (error) {
             console.error(`[Sync] Upsert failed for ${storeName}:`, error);
+            console.error(`[Sync] Payload suspected for ${storeName}:`, JSON.stringify(payload).length, "bytes");
             return false;
         }
 
@@ -379,7 +410,10 @@ export const pullAllData = async () => {
         { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
         { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
         { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
-        { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' }
+        { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' },
+        { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
+        { table: 'manual_readings', store: 'manual_readings', key: null },
+        { table: 'despachos', store: 'despachos', key: 'despacho_id' }
     ];
     let totalPulled = 0;
     for (const mod of modules) {
