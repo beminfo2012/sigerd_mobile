@@ -1,4 +1,4 @@
-import { initDB } from './db'
+import { initDB, triggerSync, syncPendingData } from './db'
 import { supabase } from './supabase'
 
 /**
@@ -236,7 +236,7 @@ export const saveS2idLocal = async (record) => {
 
     // Trigger background sync if online
     if (navigator.onLine) {
-        triggerS2idSync(id).catch(err => console.error('Auto-sync failed:', err));
+        triggerSync().catch(err => console.error('Auto-sync failed:', err));
     }
 
     return id;
@@ -289,52 +289,10 @@ export const deleteS2idLocal = async (id) => {
 };
 
 /**
- * Sync single S2id record to Supabase
- */
-export const triggerS2idSync = async (id) => {
-    const db = await initDB();
-    const record = await db.get('s2id_records', parseInt(id));
-    if (!record) return;
-
-    try {
-        const payload = {
-            ...record,
-            id_local: record.id
-        };
-        // Ensure s2id_id is present for conflict resolution
-        if (!payload.s2id_id) payload.s2id_id = crypto.randomUUID();
-
-        delete payload.id;
-        delete payload.synced;
-
-        const { data, error } = await supabase
-            .from('s2id_records')
-            .upsert(payload, { onConflict: 's2id_id' })
-            .select()
-            .single();
-
-        if (!error) {
-            record.synced = true;
-            record.supabase_id = data.id;
-            await db.put('s2id_records', record);
-            return true;
-        }
-        throw error;
-    } catch (err) {
-        console.error('S2id Sync Error:', err);
-        return false;
-    }
-};
-
-/**
  * Sync all pending S2id records
  */
 export const syncAllS2id = async () => {
-    const db = await initDB();
-    const records = await db.getAll('s2id_records');
-    const pending = records.filter(r => !r.synced);
-
-    for (const r of pending) {
-        await triggerS2idSync(r.id);
+    if (navigator.onLine) {
+        await syncPendingData();
     }
 };

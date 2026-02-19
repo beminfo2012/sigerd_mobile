@@ -205,10 +205,10 @@ const syncSingleItem = async (storeName, item, db) => {
                     const base64Data = foto.data.startsWith('data:image') ? foto.data : `data:image/jpeg;base64,${foto.data}`;
                     const blob = base64ToBlob(base64Data)
                     if (blob) {
-                        const folderMap = { 'vistorias': 'vistorias', 'interdicoes': 'interdicoes', 'shelters': 'shelters', 'occupants': 'occupants', 'donations': 'donations' };
+                        const folderMap = { 'vistorias': 'vistorias', 'interdicoes': 'interdicoes', 'shelters': 'shelters', 'occupants': 'occupants', 'donations': 'donations', 's2id_records': 's2id_evidencias' };
                         const folder = folderMap[storeName] || 'general'
-                        const idValue = storeName === 'vistorias' ? (item.vistoriaId || item.vistoria_id || item.id) : (item.interdicaoId || item.interdicao_id || item.id || item.occupant_id || item.donation_id)
-                        const fileName = `${idValue}/${foto.id}.jpg`
+                        const idValue = storeName === 'vistorias' ? (item.vistoriaId || item.vistoria_id || item.id) : (item.interdicaoId || item.interdicao_id || item.id || item.occupant_id || item.donation_id || item.s2id_id)
+                        const fileName = `${idValue}/${foto.id || Date.now()}.jpg`
                         const { error: uploadError } = await supabase.storage.from(folder).upload(fileName, blob, { upsert: true })
                         if (!uploadError) {
                             const { data: urlData } = supabase.storage.from(folder).getPublicUrl(fileName)
@@ -218,6 +218,27 @@ const syncSingleItem = async (storeName, item, db) => {
                 }
                 return (foto.data && foto.data.startsWith('http')) ? foto : { ...foto, data: null, error: 'Upload failed' };
             }))
+        }
+
+        // Handle S2ID evidence photos (different structure)
+        if (storeName === 's2id_records' && item.data?.evidencias && Array.isArray(item.data.evidencias)) {
+            const processedEvidencias = await Promise.all(item.data.evidencias.map(async (ev, index) => {
+                if (ev.url && (ev.url.startsWith('data:image') || ev.url.length > 500)) {
+                    const blob = base64ToBlob(ev.url);
+                    if (blob) {
+                        const folder = 's2id_evidencias';
+                        const idValue = item.s2id_id || item.id;
+                        const fileName = `${idValue}/evidence_${index}_${Date.now()}.jpg`;
+                        const { error: uploadError } = await supabase.storage.from(folder).upload(fileName, blob, { upsert: true });
+                        if (!uploadError) {
+                            const { data: urlData } = supabase.storage.from(folder).getPublicUrl(fileName);
+                            return { ...ev, url: urlData.publicUrl };
+                        }
+                    }
+                }
+                return ev;
+            }));
+            item.data.evidencias = processedEvidencias;
         }
 
         const tableMap = { 'shelters': 'shelters', 'occupants': 'shelter_occupants', 'donations': 'shelter_donations', 'inventory': 'shelter_inventory', 'distributions': 'shelter_distributions' };
