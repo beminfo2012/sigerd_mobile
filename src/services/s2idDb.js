@@ -143,7 +143,7 @@ export const INITIAL_S2ID_STATE = {
  * Pull S2ID records from Supabase and merge into local IndexedDB.
  * Returns merged array of all records.
  */
-const pullS2idFromCloud = async () => {
+export const pullS2idFromCloud = async () => {
     if (!navigator.onLine) return null;
 
     try {
