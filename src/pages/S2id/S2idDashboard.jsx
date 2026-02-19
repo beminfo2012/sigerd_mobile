@@ -526,6 +526,52 @@ const S2idDashboard = () => {
                     >
                         Testar Conexão Nuvem
                     </button>
+                    <button
+                        onClick={async () => {
+                            if (!window.confirm("Isso vai apagar os registros locais SINCRONIZADOS e baixar tudo de novo. Seus dados pendentes serão mantidos. Continuar?")) return;
+
+                            try {
+                                toast('Redefinindo banco local...', 'info');
+                                const { initDB } = await import('../../services/db');
+                                const { pullS2idFromCloud } = await import('../../services/s2idDb');
+                                const db = await initDB();
+
+                                // 1. Backup unsynced
+                                const all = await db.getAll('s2id_records');
+                                const pending = all.filter(r => r.synced === false || r.synced === 0);
+                                console.log('Preserving pending:', pending);
+
+                                // 2. Clear store
+                                const tx = db.transaction('s2id_records', 'readwrite');
+                                await tx.objectStore('s2id_records').clear();
+                                await tx.done;
+
+                                // 3. Restore pending
+                                if (pending.length > 0) {
+                                    const tx2 = db.transaction('s2id_records', 'readwrite');
+                                    const store = tx2.objectStore('s2id_records');
+                                    for (const p of pending) {
+                                        // Ensure we don't carry over bad IDs if that was the issue, 
+                                        // but safely re-add.
+                                        await store.put(p);
+                                    }
+                                    await tx2.done;
+                                    toast(`Restaurados ${pending.length} registros pendentes.`);
+                                }
+
+                                // 4. Pull fresh
+                                toast('Baixando dados da nuvem...');
+                                const fresh = await pullS2idFromCloud();
+                                alert(`Banco redefinido! Baixados: ${fresh ? fresh.length : 0} registros.`);
+                                window.location.reload();
+                            } catch (e) {
+                                alert('Erro ao redefinir: ' + e.message);
+                            }
+                        }}
+                        className="mt-2 ml-2 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-500"
+                    >
+                        Redefinir Banco Local
+                    </button>
                 </div>
             </main>
 
