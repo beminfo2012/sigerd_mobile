@@ -378,16 +378,28 @@ const syncSingleItem = async (storeName, item, db) => {
         if (record) {
             record.synced = true
             if (syncedItems && syncedItems[0]) record.supabase_id = syncedItems[0].id;
+
+            // Save processed images and signatures back to local DB to prevent redundant uploads or data loss
+            if (processedPhotos && processedPhotos.length > 0) {
+                record.fotos = processedPhotos;
+            }
+
             if (storeName === 'vistorias') {
                 const offId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
                 record.vistoriaId = offId; record.vistoria_id = offId;
-                record.assinatura_agente = signatureAgenteUrl; record.apoio_tecnico = processedApoio;
+                record.assinatura_agente = signatureAgenteUrl;
+                record.apoio_tecnico = processedApoio;
+                // Also update old keys for compatibility
+                record.assinaturaAgente = signatureAgenteUrl;
+                record.apoioTecnico = processedApoio;
             } else if (storeName === 'interdicoes') {
                 const offId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
                 record.interdicaoId = offId; record.interdicao_id = offId;
+                record.assinaturaAgente = item.assinaturaAgente || item.assinatura_agente;
+                record.apoioTecnico = item.apoioTecnico || item.apoio_tecnico;
             } else if (storeName === 's2id_records') {
-                // Ensure s2id_id generated/prescreened is saved back
                 record.s2id_id = payload.s2id_id;
+                record.data = payload.data; // Save back the processed evidence URLs
             }
             await store.put(record)
         }
