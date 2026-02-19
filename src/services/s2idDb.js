@@ -176,7 +176,7 @@ const pullS2idFromCloud = async () => {
         for (const remote of data) {
             // Find local match by s2id_id (Business UUID) or supabase_id (DB UUID)
             const localMatch =
-                localByS2idId.get(remote.s2id_id) ||
+                (remote.s2id_id ? localByS2idId.get(remote.s2id_id) : null) ||
                 localBySupabaseId.get(remote.id) ||
                 null;
 
@@ -259,12 +259,29 @@ export const getS2idRecords = async () => {
  */
 export const getS2idById = async (id) => {
     const db = await initDB();
-    let record = await db.get('s2id_records', parseInt(id));
+
+    // Support both numeric local ID and UUID s2id_id
+    let record = null;
+    if (!isNaN(parseInt(id))) {
+        record = await db.get('s2id_records', parseInt(id));
+    }
+
+    if (!record) {
+        const all = await db.getAll('s2id_records');
+        record = all.find(r => r.s2id_id === id || r.supabase_id === id);
+    }
 
     // If not found locally, try pulling from cloud
     if (!record && navigator.onLine) {
         await pullS2idFromCloud();
-        record = await db.get('s2id_records', parseInt(id));
+        // Retry search
+        if (!isNaN(parseInt(id))) {
+            record = await db.get('s2id_records', parseInt(id));
+        }
+        if (!record) {
+            const all = await db.getAll('s2id_records');
+            record = all.find(r => r.s2id_id === id || r.supabase_id === id);
+        }
     }
 
     return record;

@@ -1,0 +1,4352 @@
+[
+  {
+    "id": 1,
+    "s2id_id": "e334a95e-efd4-40f5-9330-a1b3c0efa396",
+    "id_local": "2",
+    "status": "submitted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 3000000,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 3000000,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 15,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "tipificacao": {
+        "cobrade": "1.2.2.0.0",
+        "denominacao": "Naturais - Hidrológicos - Enxurradas"
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "18",
+        "mes": "02",
+        "horario": "18:56"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-18T21:56:49.541+00:00",
+    "updated_at": "2026-02-18T23:43:25.489+00:00"
+  },
+  {
+    "id": 5,
+    "s2id_id": "7d65a0d0-8c49-4f13-a32c-ee310e9524ca",
+    "id_local": "1",
+    "status": "draft",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "",
+        "denominacao": ""
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "12:27"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T15:27:04.524+00:00",
+    "updated_at": "2026-02-19T15:27:09.272+00:00"
+  },
+  {
+    "id": 6,
+    "s2id_id": "afb662f8-8500-4f40-9329-84242c7dac2c",
+    "id_local": "1",
+    "status": "submitted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "1.2.2.0.0",
+        "denominacao": "Naturais - Hidrológicos - Enxurradas"
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "12:27"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T15:27:04.524+00:00",
+    "updated_at": "2026-02-19T15:27:17.638+00:00"
+  },
+  {
+    "id": 7,
+    "s2id_id": "85eb9b3e-21dd-43c8-909d-564fd6e7c891",
+    "id_local": "1",
+    "status": "submitted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "1.2.2.0.0",
+        "denominacao": "Naturais - Hidrológicos - Enxurradas"
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "12:27"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T15:27:04.524+00:00",
+    "updated_at": "2026-02-19T15:27:19.696+00:00"
+  },
+  {
+    "id": 8,
+    "s2id_id": "45e72a4c-5df7-4e5d-bf7c-6290bd62c1f3",
+    "id_local": "1",
+    "status": "deleted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "",
+        "denominacao": ""
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "12:11"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T15:10:15.258+00:00",
+    "updated_at": "2026-02-19T15:11:33.418+00:00"
+  },
+  {
+    "id": 38,
+    "s2id_id": "56b4ebf2-1e59-49a4-a975-21d1f17286e4",
+    "id_local": "2",
+    "status": "submitted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "1.3.2.1.4",
+        "denominacao": "Naturais - Meteorológicos - Tempestades - Chuvas Intensas"
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "12:30"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T15:30:00.804+00:00",
+    "updated_at": "2026-02-19T15:30:09.902+00:00"
+  },
+  {
+    "id": 39,
+    "s2id_id": "e09e8d80-efa2-457b-a352-34c9ac7e4393",
+    "id_local": "1",
+    "status": "deleted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "",
+        "denominacao": ""
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "10:56"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T13:56:09.934+00:00",
+    "updated_at": "2026-02-19T13:56:45.918+00:00"
+  },
+  {
+    "id": 40,
+    "s2id_id": "b26ce7c2-9f21-44c1-ab2c-490373552157",
+    "id_local": "1",
+    "status": "draft",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "",
+        "denominacao": ""
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "15:23"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T18:23:42.737+00:00",
+    "updated_at": "2026-02-19T18:23:45.787+00:00"
+  },
+  {
+    "id": 41,
+    "s2id_id": "400b40f6-4d03-4820-832a-e762f0453bb6",
+    "id_local": "1",
+    "status": "draft",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "1.1.1.1.0",
+        "denominacao": "Naturais - Geológicos - Terremoto - Tremor de terra"
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "15:23"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T18:23:42.737+00:00",
+    "updated_at": "2026-02-19T18:23:50.966+00:00"
+  },
+  {
+    "id": 42,
+    "s2id_id": "fab2bfe3-dd6c-469b-94ed-354406a66c7a",
+    "id_local": "1",
+    "status": "submitted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "1.1.1.1.0",
+        "denominacao": "Naturais - Geológicos - Terremoto - Tremor de terra"
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "15:23"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T18:23:42.737+00:00",
+    "updated_at": "2026-02-19T18:23:55.457+00:00"
+  },
+  {
+    "id": 43,
+    "s2id_id": "dea9d046-4932-4c35-b26c-b7f1a93e2bf0",
+    "id_local": "1",
+    "status": "submitted",
+    "data": {
+      "setorial": {
+        "cdl": {
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "prejuizo_comercio": 0,
+          "prejuizo_servicos": 0
+        },
+        "cesan": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_esgoto": 0,
+          "inst_danificadas": 0,
+          "prejuizo_abastecimento": 0
+        },
+        "obras": {
+          "introducao": "",
+          "observacoes": "",
+          "valor_pontes": 0,
+          "consideracoes": "",
+          "valor_bueiros": 0,
+          "prejuizo_total": 0,
+          "pavimentacao_m2": 0,
+          "bueiros_obstruidos": 0,
+          "pontes_danificadas": 0,
+          "valor_pavimentacao": 0
+        },
+        "saude": {
+          "mortos": 0,
+          "feridos": 0,
+          "enfermos": 0,
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_medico": 0,
+          "prejuizo_pragas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_sanitaria": 0,
+          "prejuizo_epidemiologica": 0
+        },
+        "social": {
+          "custo_kits": 0,
+          "introducao": "",
+          "observacoes": "",
+          "custo_cestas": 0,
+          "kits_higiene": 0,
+          "consideracoes": "",
+          "cestas_basicas": 0,
+          "custo_colchoes": 0,
+          "prejuizo_total": 0,
+          "colchoes_entregues": 0,
+          "familias_desalojadas": 0,
+          "familias_desabrigadas": 0
+        },
+        "educacao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "prejuizo_ensino": 0,
+          "inst_danificadas": 0
+        },
+        "interior": {
+          "bueiros": 0,
+          "galerias": 0,
+          "introducao": "",
+          "observacoes": "",
+          "total_valor": 0,
+          "consideracoes": "",
+          "ponte_madeira": 0,
+          "valor_bueiros": 0,
+          "ponte_concreto": 0,
+          "prejuizo_total": 0,
+          "valor_estradas": 0,
+          "valor_galerias": 0,
+          "inst_danificadas": 0,
+          "estradas_vicinais": 0,
+          "valor_ponte_madeira": 0,
+          "valor_ponte_concreto": 0
+        },
+        "agricultura": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_pecuaria": 0,
+          "prejuizo_agricultura": 0
+        },
+        "transportes": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_transportes": 0,
+          "prejuizo_combustiveis": 0
+        },
+        "administracao": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "defesa_social": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0,
+          "prejuizo_seguranca": 0
+        },
+        "esporte_turismo": {
+          "inst_valor": 0,
+          "introducao": "",
+          "observacoes": "",
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_destruidas": 0,
+          "inst_danificadas": 0
+        },
+        "servicos_urbanos": {
+          "introducao": "",
+          "observacoes": "",
+          "infra_urbana": 0,
+          "consideracoes": "",
+          "prejuizo_total": 0,
+          "inst_prestadoras": 0,
+          "prejuizo_limpeza": 0,
+          "inst_comunitarias": 0,
+          "valor_infra_urbana": 0,
+          "valor_inst_prestadoras": 0,
+          "valor_inst_comunitarias": 0
+        }
+      },
+      "assinatura": {
+        "cargo": "",
+        "data_url": null,
+        "responsavel": "",
+        "data_assinatura": null
+      },
+      "evidencias": [],
+      "localizacao": {
+        "lat": null,
+        "lng": null,
+        "accuracy": null,
+        "timestamp": null
+      },
+      "tipificacao": {
+        "cobrade": "1.1.1.1.0",
+        "denominacao": "Naturais - Geológicos - Terremoto - Tremor de terra"
+      },
+      "danos_humanos": {
+        "mortos": 0,
+        "feridos": 0,
+        "enfermos": 0,
+        "descricao": "",
+        "desalojados": 0,
+        "desabrigados": 0,
+        "desaparecidos": 0,
+        "outros_afetados": 0
+      },
+      "danos_materiais": {
+        "uso_comunitario": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_saude": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "instalacoes_ensino": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "prestadoras_servicos": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "infraestrutura_publica": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        },
+        "unidades_habitacionais": {
+          "valor": 0,
+          "destruidas": 0,
+          "danificadas": 0
+        }
+      },
+      "data_ocorrencia": {
+        "ano": "2026",
+        "dia": "19",
+        "mes": "02",
+        "horario": "15:23"
+      },
+      "danos_ambientais": {
+        "descricao": "",
+        "incendios": {
+          "sim": false,
+          "area": ""
+        },
+        "contaminacao_ar": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_agua": {
+          "sim": false,
+          "populacao": ""
+        },
+        "contaminacao_solo": {
+          "sim": false,
+          "populacao": ""
+        },
+        "exaurimento_hidrico": {
+          "sim": false,
+          "populacao": ""
+        }
+      },
+      "metadata_oficial": {
+        "rcl_anual": 0,
+        "intensidade": "",
+        "decreto_data": "",
+        "nome_prefeito": "Kleber Medici Costa",
+        "decreto_numero": "",
+        "parecer_numero": "",
+        "plano_acionado": false,
+        "protocolo_s2id": "",
+        "necessita_apoio": false,
+        "decreto_vigencia": "180",
+        "capacidade_resposta": "",
+        "diario_oficial_info": "",
+        "justificativa_federal": "",
+        "beneficios_pretendidos": "",
+        "processo_anterior_numero": "",
+        "reconhecimento_reconsideracao": false
+      },
+      "prejuizos_privados": {
+        "comercio": 0,
+        "pecuaria": 0,
+        "servicos": 0,
+        "industria": 0,
+        "agricultura": 0
+      },
+      "prejuizos_publicos": {
+        "ensino": 0,
+        "transportes": 0,
+        "combustiveis": 0,
+        "desinfestacao": 0,
+        "limpeza_urbana": 0,
+        "energia_eletrica": 0,
+        "esgoto_sanitario": 0,
+        "telecomunicacoes": 0,
+        "seguranca_publica": 0,
+        "abastecimento_agua": 0,
+        "assistencia_medica": 0
+      },
+      "submissoes_setoriais": {
+        "cdl": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "cesan": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "obras": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "saude": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "educacao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "interior": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "agricultura": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "transportes": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "administracao": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "defesa_social": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "esporte_turismo": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        },
+        "servicos_urbanos": {
+          "data": null,
+          "cargo": "",
+          "usuario": "",
+          "preenchido": false,
+          "responsavel": "",
+          "assinatura_url": null
+        }
+      }
+    },
+    "created_at": "2026-02-19T18:23:42.737+00:00",
+    "updated_at": "2026-02-19T18:23:59.55+00:00"
+  }
+]

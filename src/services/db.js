@@ -268,26 +268,27 @@ const syncSingleItem = async (storeName, item, db) => {
 
         let processedPhotos = []
         // Upload Photos
-        if (item.fotos && item.fotos.length > 0) {
-            console.log(`[Sync] Uploading ${item.fotos.length} photos for ${storeName}/${item.id}...`);
-            processedPhotos = await Promise.all(item.fotos.map(async (foto) => {
-                if (foto.data && foto.data.startsWith('data:image')) {
-                    const blob = base64ToBlob(foto.data)
+        const fotosToUpload = item.fotos || (item.data && item.data.evidencias) || [];
+        if (fotosToUpload.length > 0) {
+            console.log(`[Sync] Uploading ${fotosToUpload.length} photos for ${storeName}/${item.id}...`);
+            const processed = await Promise.all(fotosToUpload.map(async (foto) => {
+                const imageData = foto.data || foto.url; // 'evidencias' uses url
+                if (imageData && imageData.startsWith('data:image')) {
+                    const blob = base64ToBlob(imageData)
                     if (blob) {
-                        // Correct folder mapping for different types
+                        // Correct folder mapping
                         const folderMap = {
                             'vistorias': 'vistorias',
                             'interdicoes': 'interdicoes',
                             'shelters': 'shelters',
                             'occupants': 'occupants',
-                            'donations': 'donations'
+                            'donations': 'donations',
+                            's2id_records': 's2id'
                         };
                         const folder = folderMap[storeName] || 'general'
 
-                        const id = storeName === 'vistorias'
-                            ? (item.vistoriaId || item.vistoria_id || item.id)
-                            : (item.interdicaoId || item.interdicao_id || item.id || item.occupant_id || item.donation_id)
-                        const fileName = `${id}/${foto.id}.jpg`
+                        const entityId = (item.vistoria_id || item.interdicao_id || item.s2id_id || item.id)
+                        const fileName = `${entityId}/${foto.id || crypto.randomUUID()}.jpg`
                         const { error: uploadError } = await supabase.storage
                             .from(folder)
                             .upload(fileName, blob, { upsert: true })
@@ -296,12 +297,15 @@ const syncSingleItem = async (storeName, item, db) => {
                             const { data: urlData } = supabase.storage
                                 .from(folder)
                                 .getPublicUrl(fileName)
-                            return { ...foto, data: urlData.publicUrl }
+                            return { ...foto, [foto.data ? 'data' : 'url']: urlData.publicUrl }
                         }
                     }
                 }
                 return foto
             }))
+
+            if (item.fotos) processedPhotos = processed;
+            if (item.data && item.data.evidencias) item.data.evidencias = processed;
         }
 
         const tableMap = {
@@ -486,10 +490,33 @@ const syncSingleItem = async (storeName, item, db) => {
                 }
             }
         } else if (storeName === 's2id_records') {
-            // S2ID: Clean payload to avoid schema errors
+            // S2ID Signatures: Handle main signature and sector-specific signatures
+            const s2idId = item.s2id_id || crypto.randomUUID();
+            const folder = 's2id';
+
+            // 1. Process Main Signature
+            if (item.data?.assinatura?.data_url?.startsWith('data:image')) {
+                console.log(`[Sync] Uploading Main S2ID signature for ${s2idId}...`);
+                const url = await uploadSignature(item.data.assinatura.data_url, folder, `${s2idId}/signature_main.png`);
+                if (url) item.data.assinatura.data_url = url;
+            }
+
+            // 2. Process Sectoral Signatures
+            if (item.data?.submissoes_setoriais) {
+                for (const sector in item.data.submissoes_setoriais) {
+                    const sub = item.data.submissoes_setoriais[sector];
+                    if (sub.assinatura_url?.startsWith('data:image')) {
+                        console.log(`[Sync] Uploading Sectoral S2ID signature (${sector}) for ${s2idId}...`);
+                        const url = await uploadSignature(sub.assinatura_url, folder, `${s2idId}/signature_${sector}.png`);
+                        if (url) sub.assinatura_url = url;
+                    }
+                }
+            }
+
+            // Clean payload to avoid schema errors
             payload = {
-                s2id_id: item.s2id_id || crypto.randomUUID(),
-                id_local: item.id,
+                s2id_id: s2idId,
+                id_local: item.id.toString(),
                 status: item.status,
                 data: item.data,
                 created_at: item.created_at,

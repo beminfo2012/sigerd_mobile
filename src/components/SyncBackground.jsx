@@ -66,9 +66,9 @@ const SyncBackground = () => {
                     console.log('[SyncBackground] New Vistoria detected:', payload);
                     notificationService.notifyNewRecord('vistoria', payload.new);
                 })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'emergency_contracts' }, payload => {
-                    console.log('[SyncBackground] New Contract detected:', payload);
-                    notificationService.notifyNewRecord('emergency_contracts', payload.new);
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 's2id_records' }, payload => {
+                    console.log('[SyncBackground] New S2ID record detected:', payload);
+                    notificationService.notifyNewRecord('s2id', payload.new);
                 })
                 .subscribe();
 

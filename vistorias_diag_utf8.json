@@ -1,0 +1,87 @@
+﻿Fetching vistorias 018 and 019...
+Results: [
+  {
+    "id": "d1a41dc7-4f66-412f-a0c7-e45b8cf9f3d5",
+    "vistoria_id": "019/2026",
+    "fotos": [
+      {
+        "id": 1771435912385.2998,
+        "data": null,
+        "name": "17714358814737324399280209521183.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      },
+      {
+        "id": 1771435921030.3342,
+        "data": null,
+        "name": "17714359129752957368738104853094.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      },
+      {
+        "id": 1771435947658.6436,
+        "data": null,
+        "name": "17714359369258967744692861303219.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      },
+      {
+        "id": 1771435971362.4277,
+        "data": null,
+        "name": "1771435964396686904495343281997.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      },
+      {
+        "id": 1771435992018.125,
+        "data": null,
+        "name": "17714359850618161982491957451967.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      },
+      {
+        "id": 1771436013076.244,
+        "data": null,
+        "name": "17714360035693137403999441765522.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      },
+      {
+        "id": 1771436876728.655,
+        "data": null,
+        "name": "17714368639597797500741315383112.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      },
+      {
+        "id": 1771437279841.2334,
+        "data": null,
+        "name": "17714372607758225654825331640263.jpg",
+        "error": "Upload failed",
+        "legenda": ""
+      }
+    ],
+    "created_at": "2026-02-18T16:17:49.213+00:00"
+  },
+  {
+    "id": "c0e58d02-e8a4-4a39-a594-d83113b6bf3b",
+    "vistoria_id": "018/2026",
+    "fotos": [
+      {
+        "id": 1771000543262.8943,
+        "data": null,
+        "name": "17710004871821592513386295464535.jpg",
+        "error": "Upload failed",
+        "legenda": "N├úo h├í ind├¡cios e deteriora├º├úo da estrutura met├ílica de sustenta├º├úo do telhado"
+      },
+      {
+        "id": 1771000602568.564,
+        "data": null,
+        "name": "17710005890959000664613795765507.jpg",
+        "error": "Upload failed",
+        "legenda": "N├úo h├í ind├¡cios e deteriora├º├úo da estrutura met├ílica de sustenta├º├úo do telhado"
+      }
+    ],
+    "created_at": "2026-02-13T16:37:51.585+00:00"
+  }
+]
