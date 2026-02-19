@@ -508,23 +508,37 @@ const S2idDashboard = () => {
                         onClick={async () => {
                             try {
                                 const { supabase } = await import('../../services/supabase');
-                                toast('Testando conexão crua...', 'info');
-                                const { count, error } = await supabase.from('s2id_records').select('*', { count: 'exact', head: true });
-                                if (error) {
-                                    alert(`ERRO CONEXÃO: ${error.message} (Code: ${error.code})`);
-                                } else {
-                                    alert(`SUCESSO: Conectado! Total na nuvem: ${count}`);
-                                    const { pullS2idFromCloud } = await import('../../services/s2idDb');
-                                    await pullS2idFromCloud();
-                                    loadRecords(true);
+                                toast('Etapa 1: Verificando contagem...', 'info');
+                                // 1. Check Count (Head)
+                                const { count, error: countError } = await supabase.from('s2id_records').select('*', { count: 'exact', head: true });
+
+                                if (countError) {
+                                    alert(`ERRO CONTAGEM: ${countError.message}`);
+                                    return;
                                 }
+
+                                toast('Etapa 2: Baixando amostra...', 'info');
+                                // 2. Check Data Download (Body) - Limit 1
+                                const { data, error: dataError } = await supabase.from('s2id_records').select('*').limit(1);
+
+                                if (dataError) {
+                                    alert(`ERRO DOWNLOAD: ${dataError.message} (Code: ${dataError.code})`);
+                                    return;
+                                }
+
+                                if (!data || data.length === 0) {
+                                    alert(`ALERTA: Contagem é ${count}, mas download retornou vazio! Tabela pode estar corrompida.`);
+                                } else {
+                                    alert(`DIAGNÓSTICO COMPLETO: \n\n1. Contagem Nuvem: ${count} (OK)\n2. Download Amostra: ${data.length} item (OK)\n\nO problema parece ser no "Download Completo". Tente Redefinir agora.`);
+                                }
+
                             } catch (e) {
                                 alert('EXCEPTION: ' + e.message);
                             }
                         }}
                         className="mt-2 ml-2 bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-500"
                     >
-                        Testar Conexão Nuvem
+                        Diagnóstico Profundo
                     </button>
                     <button
                         onClick={async () => {
