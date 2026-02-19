@@ -506,88 +506,99 @@ const S2idDashboard = () => {
                     </button>
                     <button
                         onClick={async () => {
-                            try {
-                                const { supabase } = await import('../../services/supabase');
-                                toast('Etapa 1: Verificando contagem...', 'info');
-                                // 1. Check Count (Head)
-                                const { count, error: countError } = await supabase.from('s2id_records').select('*', { count: 'exact', head: true });
-
-                                if (countError) {
-                                    alert(`ERRO CONTAGEM: ${countError.message}`);
-                                    return;
-                                }
-
-                                toast('Etapa 2: Baixando amostra...', 'info');
-                                // 2. Check Data Download (Body) - Limit 1
-                                const { data, error: dataError } = await supabase.from('s2id_records').select('*').limit(1);
-
-                                if (dataError) {
-                                    alert(`ERRO DOWNLOAD: ${dataError.message} (Code: ${dataError.code})`);
-                                    return;
-                                }
-
-                                if (!data || data.length === 0) {
-                                    alert(`ALERTA: Contagem é ${count}, mas download retornou vazio! Tabela pode estar corrompida.`);
-                                } else {
-                                    alert(`DIAGNÓSTICO COMPLETO: \n\n1. Contagem Nuvem: ${count} (OK)\n2. Download Amostra: ${data.length} item (OK)\n\nO problema parece ser no "Download Completo". Tente Redefinir agora.`);
-                                }
-
-                            } catch (e) {
-                                alert('EXCEPTION: ' + e.message);
-                            }
-                        }}
-                        className="mt-2 ml-2 bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-500"
-                    >
-                        Diagnóstico Profundo
-                    </button>
-                    <button
-                        onClick={async () => {
-                            if (!window.confirm("Isso vai apagar os registros locais SINCRONIZADOS e baixar tudo de novo. Seus dados pendentes serão mantidos. Continuar?")) return;
+                            if (!window.confirm("ATENÇÃO: Isso vai apagar o banco local do S2ID e baixar TUDO novamente da nuvem. Seus dados pendentes (não salvos) serão preservados. Deseja continuar?")) return;
 
                             try {
-                                toast('Redefinindo banco local...', 'info');
-                                const { initDB } = await import('../../services/db');
-                                const { pullS2idFromCloud } = await import('../../services/s2idDb');
-                                const db = await initDB();
+                                const { rebuildS2idStorage } = await import('../../services/s2idDb');
+                                toast('Iniciando reconstrução do módulo...', 'info');
 
-                                // 1. Backup unsynced
-                                const all = await db.getAll('s2id_records');
-                                const pending = all.filter(r => r.synced === false || r.synced === 0);
-                                console.log('Preserving pending:', pending);
+                                const count = await rebuildS2idStorage();
 
-                                // 2. Clear store
-                                const tx = db.transaction('s2id_records', 'readwrite');
-                                await tx.objectStore('s2id_records').clear();
-                                await tx.done;
-
-                                // 3. Restore pending
-                                if (pending.length > 0) {
-                                    const tx2 = db.transaction('s2id_records', 'readwrite');
-                                    const store = tx2.objectStore('s2id_records');
-                                    for (const p of pending) {
-                                        // Ensure we don't carry over bad IDs if that was the issue, 
-                                        // but safely re-add.
-                                        await store.put(p);
-                                    }
-                                    await tx2.done;
-                                    toast(`Restaurados ${pending.length} registros pendentes.`);
-                                }
-
-                                // 4. Pull fresh
-                                toast('Baixando dados da nuvem...');
-                                const fresh = await pullS2idFromCloud();
-                                alert(`Banco redefinido! Baixados: ${fresh ? fresh.length : 0} registros.`);
+                                alert(`SUCESSO: Módulo reconstruído! ${count} registros baixados e sincronizados.`);
                                 window.location.reload();
                             } catch (e) {
-                                alert('Erro ao redefinir: ' + e.message);
+                                alert('ERRO CRÍTICO NA RECONSTRUÇÃO: ' + e.message);
                             }
                         }}
-                        className="mt-2 ml-2 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-500"
+                        className="mt-2 ml-2 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-500 font-bold"
                     >
-                        Redefinir Banco Local
+                        RECONSTRUIR MÓDULO (Sincronizar Tudo)
                     </button>
                 </div>
-            </main>
+                try {
+                                const {supabase} = await import('../../services/supabase');
+                toast('Etapa 1: Verificando contagem...', 'info');
+                // 1. Check Count (Head)
+                const {count, error: countError } = await supabase.from('s2id_records').select('*', {count: 'exact', head: true });
+
+                if (countError) {
+                    alert(`ERRO CONTAGEM: ${countError.message}`);
+                return;
+                                }
+
+                toast('Etapa 2: Baixando amostra...', 'info');
+                // 2. Check Data Download (Body) - Limit 1
+                const {data, error: dataError } = await supabase.from('s2id_records').select('*').limit(1);
+
+                if (dataError) {
+                    alert(`ERRO DOWNLOAD: ${dataError.message} (Code: ${dataError.code})`);
+                return;
+                                }
+
+                if (!data || data.length === 0) {
+                    alert(`ALERTA: Contagem é ${count}, mas download retornou vazio! Tabela pode estar corrompida.`);
+                                } else {
+                    alert(`DIAGNÓSTICO COMPLETO: \n\n1. Contagem Nuvem: ${count} (OK)\n2. Download Amostra: ${data.length} item (OK)\n\nO problema parece ser no "Download Completo". Tente Redefinir agora.`);
+                                }
+
+                            } catch (e) {
+                    alert('EXCEPTION: ' + e.message);
+                            }
+                        }}
+                className="mt-2 ml-2 bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-500"
+                    >
+                Diagnóstico Profundo
+            </button>
+            <button
+                onClick={async () => {
+                    if (!window.confirm("Isso vai apagar os registros locais SINCRONIZADOS e baixar tudo de novo. Seus dados pendentes serão mantidos. Continuar?")) return;
+
+                    try {
+                        toast('Redefinindo banco local...', 'info');
+                        const { initDB } = await import('../../services/db');
+                        const { pullS2idFromCloud } = await import('../../services/s2idDb');
+                        const db = await initDB();
+
+                        // 1. Backup unsynced
+                        const all = await db.getAll('s2id_records');
+                        const pending = all.filter(r => r.synced === false || r.synced === 0);
+                        console.log('Preserving pending:', pending);
+
+                        // 2. Clear store
+                        const tx = db.transaction('s2id_records', 'readwrite');
+                        await tx.objectStore('s2id_records').clear();
+                        await tx.done;
+
+                        // 3. Restore pending
+                        if (pending.length > 0) {
+                            const tx2 = db.transaction('s2id_records', 'readwrite');
+                            const store = tx2.objectStore('s2id_records');
+                            for (const p of pending) {
+                                // Ensure we don't carry over bad IDs if that was the issue, 
+                                // but safely re-add.
+                                await store.put(p);
+                            }
+                            await tx2.done;
+                            toast(`Restaurados ${pending.length} registros pendentes.`);
+                        }
+
+                        // 4. Pull fresh
+                        toast('Baixando dados da nuvem...');
+                        const fresh = await pullS2idFromCloud();
+                        alert(`Banco redefinido! Baixados: ${fresh ? fresh.length : 0} registros.`);
+        
+                </div>
+            </main >
 
             <ConfirmModal
                 isOpen={showDeleteModal}
@@ -607,7 +618,7 @@ const S2idDashboard = () => {
                 record={selectedRecordForDocs}
                 onUpdate={loadRecords}
             />
-        </div>
+        </div >
     );
 };
 

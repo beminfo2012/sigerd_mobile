@@ -147,10 +147,10 @@ export const pullS2idFromCloud = async () => {
     if (!navigator.onLine) return null;
 
     try {
+        // SIMPLIFIED: Removed .order() to avoid potential indexing issues
         const { data, error } = await supabase
             .from('s2id_records')
-            .select('*')
-            .order('updated_at', { ascending: false });
+            .select('*');
 
         if (error) {
             console.error('[S2ID] Cloud pull error:', error);
@@ -159,13 +159,11 @@ export const pullS2idFromCloud = async () => {
 
         if (!data || data.length === 0) return [];
 
-        // Merge into local IndexedDB
         const db = await initDB();
         const tx = db.transaction('s2id_records', 'readwrite');
         const store = tx.objectStore('s2id_records');
         const allLocal = await store.getAll();
 
-        // Build lookup maps
         const localByS2idId = new Map();
         const localBySupabaseId = new Map();
         for (const local of allLocal) {
@@ -174,13 +172,11 @@ export const pullS2idFromCloud = async () => {
         }
 
         for (const remote of data) {
-            // Find local match by s2id_id (Business UUID) or supabase_id (DB UUID)
             const localMatch =
                 (remote.s2id_id ? localByS2idId.get(remote.s2id_id) : null) ||
                 localBySupabaseId.get(remote.id) ||
                 null;
 
-            // Skip if local has unsynced changes (local wins in conflict)
             if (localMatch && localMatch.synced === false) {
                 continue;
             }
@@ -189,21 +185,84 @@ export const pullS2idFromCloud = async () => {
                 ...remote,
                 id: localMatch ? localMatch.id : undefined,
                 supabase_id: remote.id,
-                s2id_id: remote.s2id_id || localMatch?.s2id_id, // Ensure Business ID is preserved
+                s2id_id: remote.s2id_id || localMatch?.s2id_id,
                 synced: true
             };
+            // Ensure we don't accidentally overwrite with a string if our schema expects int (though S2ID is loose)
             delete toStore.id_local;
 
             await store.put(toStore);
         }
 
         await tx.done;
-        console.log(`[S2ID] Merged ${data.length} records from cloud.`);
         return data;
     } catch (err) {
         console.error('[S2ID] Cloud pull failed:', err);
         return null;
     }
+};
+
+/**
+ * NUCLEAR OPTION: Rebuilds S2ID storage from scratch.
+ * 1. Backs up DRAFTS.
+ * 2. WIPES the store.
+ * 3. Downloads ALL from Supabase (Raw).
+ * 4. Restores DRAFTS.
+ * 5. Inserts ALL downloaded.
+ */
+export const rebuildS2idStorage = async () => {
+    console.log('[S2ID] Starting REBUILD...');
+    if (!navigator.onLine) throw new Error("Offline: Cannot rebuild.");
+
+    const db = await initDB();
+
+    // 1. Backup Drafts
+    const all = await db.getAll('s2id_records');
+    const drafts = all.filter(r => r.synced === false || r.status === 'draft');
+    console.log(`[S2ID] Backing up ${drafts.length} drafts.`);
+
+    // 2. Clear Store
+    const txClear = db.transaction('s2id_records', 'readwrite');
+    await txClear.objectStore('s2id_records').clear();
+    await txClear.done;
+    console.log('[S2ID] Store cleared.');
+
+    // 3. Download RAW (No ordering, just data)
+    const { data: remoteData, error } = await supabase.from('s2id_records').select('*');
+    if (error) throw error;
+    if (!remoteData) throw new Error("Supabase returned null data");
+
+    console.log(`[S2ID] Downloaded ${remoteData.length} records.`);
+
+    // 4. Insert Everything
+    const txInsert = db.transaction('s2id_records', 'readwrite');
+    const store = txInsert.objectStore('s2id_records');
+
+    // Restore drafts first
+    for (const draft of drafts) {
+        // Keep their IDs to maintain state? Yes.
+        await store.put(draft);
+    }
+
+    // Insert Remote
+    for (const remote of remoteData) {
+        // If draft already exists with this ID (unlikely if UUIDs are unique, but check collision)
+        // Actually, we just wiped. Drafts are back.
+        // We match by s2id_id to avoid duplication if the draft IS the remote record but modified?
+        // Simpler: If remote ID matches a draft ID, SKIP remote (Draft wins)
+        const isDraft = drafts.some(d => d.s2id_id === remote.s2id_id || d.supabase_id === remote.id);
+        if (isDraft) continue;
+
+        const toStore = {
+            ...remote,
+            supabase_id: remote.id,
+            synced: true
+        };
+        await store.put(toStore);
+    }
+
+    await txInsert.done;
+    return remoteData.length;
 };
 
 /**
