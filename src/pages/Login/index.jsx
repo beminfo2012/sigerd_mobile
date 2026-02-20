@@ -7,6 +7,8 @@ const Login = ({ onLogin }) => {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [techError, setTechError] = useState(null)
+    const [showTech, setShowTech] = useState(false)
 
     // Helper to decode base64/base64url to Uint8Array
     const base64ToUint8Array = (base64) => {
@@ -230,249 +232,276 @@ const Login = ({ onLogin }) => {
             console.log('Auth result:', { data, error: authError });
 
             if (authError) {
-                setError('Usuário ou senha inválidos')
-                setLoading(false)
-                return
+                console.error('Login error detail:', authError);
+                setError('Usuário ou senha inválidos');
+                setTechError(authError.message + (authError.status ? ` (Status: ${authError.status})` : ''));
+                setLoading(false);
+                return;
             }
 
             console.log('Login successful, entering system...')
             onLogin()
-
-            // Biometrics registration - after entering the app (non-blocking)
-            if (!localStorage.getItem('biometric_email')) {
-                setTimeout(() => {
-                    try {
-                        if (window.confirm('Deseja ativar o login por biometria para este dispositivo?')) {
-                            handleRegisterBiometrics().catch(e => console.warn('Bio registration failed:', e));
-                        }
-                    } catch (e) { /* ignore */ }
-                }, 2000);
-            }
         } catch (err) {
             console.error('Login technical error:', err)
-            setError(err.message || 'Erro ao conectar. Verifique sua conexão.')
+            setError('Erro ao conectar. Verifique sua conexão.')
+            setTechError(err.message || String(err))
             setLoading(false)
         }
     }
 
 
     return (
-        <div style={{
-            background: 'linear-gradient(180deg, #0f3470 0%, #162d50 100%)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100vh',
-            width: '100vw',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            padding: '20px',
-            fontFamily: "'Inter', sans-serif",
-            overflow: 'hidden'
-        }}>
+        <>
             <div style={{
-                width: '100%',
-                maxWidth: '400px',
-                textAlign: 'center',
+                background: 'linear-gradient(180deg, #0f3470 0%, #162d50 100%)',
                 display: 'flex',
-                flexDirection: 'column',
+                justifyContent: 'center',
                 alignItems: 'center',
-                gap: '16px'
+                minHeight: '100vh',
+                width: '100vw',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                padding: '20px',
+                fontFamily: "'Inter', sans-serif",
+                overflow: 'hidden'
             }}>
-
-                {/* Logo Section */}
                 <div style={{
-                    marginTop: '10px',
-                    marginBottom: '4px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}>
-                    <img
-                        src="/logo_sigerd_new.png"
-                        alt="Logo SIGERD"
-                        style={{
-                            width: '140px',
-                            height: '140px',
-                            objectFit: 'contain',
-                            filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.3))'
-                        }}
-                    />
-                </div>
-
-                {/* Title Section */}
-                <div style={{ marginBottom: '4px' }}>
-                    <h1 style={{
-                        color: 'white',
-                        fontSize: '34px',
-                        fontWeight: '800',
-                        margin: '0',
-                        letterSpacing: '3px'
-                    }}>SIGERD</h1>
-
-                    <p style={{
-                        color: 'rgba(255, 255, 255, 0.65)',
-                        fontSize: '13px',
-                        margin: '6px auto 0',
-                        maxWidth: '260px',
-                        lineHeight: '1.5',
-                        fontWeight: '500'
-                    }}>Sistema Integrado de Gerenciamento de Riscos e Desastres</p>
-                </div>
-
-                {/* Biometric Button */}
-                <button
-                    type="button"
-                    onClick={handleBiometricLogin}
-                    disabled={loading}
-                    style={{
-                        width: '100%',
-                        background: 'white',
-                        color: '#0f3470',
-                        border: 'none',
-                        padding: '13px',
-                        borderRadius: '50px',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        fontSize: '16px',
-                        fontWeight: '700',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                        transition: 'transform 0.2s'
-                    }}
-                >
-                    <Fingerprint size={24} strokeWidth={2.5} />
-                    Entrar com a Digital
-                </button>
-
-                {/* Divider */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
                     width: '100%',
-                    margin: '4px 0',
-                    gap: '14px'
+                    maxWidth: '400px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px'
                 }}>
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
-                    <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
-                        ou use sua conta
-                    </span>
-                    <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
-                </div>
 
-                {/* Login Form */}
-                <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-
-                    {/* Email Input */}
-                    <div style={{ position: 'relative' }}>
-                        <i className="fas fa-user" style={{
-                            position: 'absolute',
-                            left: '20px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: 'rgba(255, 255, 255, 0.6)'
-                        }}></i>
-                        <input
-                            type="text"
-                            placeholder="E-mail"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
+                    {/* Logo Section */}
+                    <div style={{
+                        marginTop: '10px',
+                        marginBottom: '4px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}>
+                        <img
+                            src="/logo_sigerd_new.png"
+                            alt="Logo SIGERD"
                             style={{
-                                width: '100%',
-                                padding: '16px 16px 16px 55px',
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                border: '1px solid rgba(255, 255, 255, 0.3)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                fontSize: '16px',
-                                outline: 'none',
-                                transition: 'all 0.3s'
+                                width: '140px',
+                                height: '140px',
+                                objectFit: 'contain',
+                                filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.3))'
                             }}
                         />
                     </div>
 
-                    {/* Password Input */}
-                    <div style={{ position: 'relative' }}>
-                        <i className="fas fa-lock" style={{
-                            position: 'absolute',
-                            left: '20px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: 'rgba(255, 255, 255, 0.6)'
-                        }}></i>
-                        <input
-                            type="password"
-                            placeholder="Senha"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            style={{
-                                width: '100%',
-                                padding: '16px 16px 16px 55px',
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                border: '1px solid rgba(255, 255, 255, 0.3)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                fontSize: '16px',
-                                outline: 'none',
-                                transition: 'all 0.3s'
-                            }}
-                        />
+                    {/* Title Section */}
+                    <div style={{ marginBottom: '4px' }}>
+                        <h1 style={{
+                            color: 'white',
+                            fontSize: '34px',
+                            fontWeight: '800',
+                            margin: '0',
+                            letterSpacing: '3px'
+                        }}>SIGERD</h1>
+
+                        <p style={{
+                            color: 'rgba(255, 255, 255, 0.65)',
+                            fontSize: '13px',
+                            margin: '6px auto 0',
+                            maxWidth: '260px',
+                            lineHeight: '1.5',
+                            fontWeight: '500'
+                        }}>Sistema Integrado de Gerenciamento de Riscos e Desastres</p>
                     </div>
 
-                    {/* Error Message */}
-                    {error && (
-                        <div style={{
-                            color: '#ff4d4d',
-                            fontSize: '14px',
-                            textAlign: 'center',
-                            marginTop: '5px'
-                        }}>
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Submit Button */}
+                    {/* Biometric Button */}
                     <button
-                        type="submit"
+                        type="button"
+                        onClick={handleBiometricLogin}
                         disabled={loading}
                         style={{
                             width: '100%',
-                            background: 'linear-gradient(135deg, #ff6d3a 0%, #ff5722 100%)',
-                            color: 'white',
+                            background: 'white',
+                            color: '#0f3470',
                             border: 'none',
-                            padding: '14px',
+                            padding: '13px',
                             borderRadius: '50px',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             fontSize: '16px',
                             fontWeight: '700',
-                            marginTop: '6px',
-                            boxShadow: '0 4px 20px rgba(255, 87, 34, 0.35)',
-                            transition: 'all 0.3s',
-                            letterSpacing: '0.5px'
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '10px',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                            transition: 'transform 0.2s'
                         }}
                     >
-                        {loading ? 'Entrando...' : 'Entrar no App'}
+                        <Fingerprint size={24} strokeWidth={2.5} />
+                        Entrar com a Digital
                     </button>
-                </form>
 
-                {/* Footer */}
-                <div style={{
-                    marginTop: 'auto',
-                    paddingTop: '24px',
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    textAlign: 'center',
-                    lineHeight: '1.6',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                    width: '60%'
-                }}>
-                    <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px', marginTop: '12px' }}>Defesa Civil de Santa Maria de Jetibá</p>
-                    <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.25</p>
+                    {/* Divider */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        margin: '4px 0',
+                        gap: '14px'
+                    }}>
+                        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
+                        <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+                            ou use sua conta
+                        </span>
+                        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
+                    </div>
+
+                    {/* Login Form */}
+                    <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+                        {/* Email Input */}
+                        <div style={{ position: 'relative' }}>
+                            <i className="fas fa-user" style={{
+                                position: 'absolute',
+                                left: '20px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: 'rgba(255, 255, 255, 0.6)'
+                            }}></i>
+                            <input
+                                type="text"
+                                placeholder="E-mail"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 16px 16px 55px',
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                                    borderRadius: '12px',
+                                    color: 'white',
+                                    fontSize: '16px',
+                                    outline: 'none',
+                                    transition: 'all 0.3s'
+                                }}
+                            />
+                        </div>
+
+                        {/* Password Input */}
+                        <div style={{ position: 'relative' }}>
+                            <i className="fas fa-lock" style={{
+                                position: 'absolute',
+                                left: '20px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: 'rgba(255, 255, 255, 0.6)'
+                            }}></i>
+                            <input
+                                type="password"
+                                placeholder="Senha"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 16px 16px 55px',
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                                    borderRadius: '12px',
+                                    color: 'white',
+                                    fontSize: '16px',
+                                    outline: 'none',
+                                    transition: 'all 0.3s'
+                                }}
+                            />
+                        </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div style={{
+                                color: '#ff4d4d',
+                                fontSize: '14px',
+                                textAlign: 'center',
+                                marginTop: '5px'
+                            }}>
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #ff6d3a 0%, #ff5722 100%)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '14px',
+                                borderRadius: '50px',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                fontSize: '16px',
+                                fontWeight: '700',
+                                marginTop: '6px',
+                                boxShadow: '0 4px 20px rgba(255, 87, 34, 0.35)',
+                                transition: 'all 0.3s',
+                                letterSpacing: '0.5px'
+                            }}
+                        >
+                            {loading ? 'Entrando...' : 'Entrar no App'}
+                        </button>
+                    </form>
+
+                    {/* Footer */}
+                    <div style={{
+                        marginTop: 'auto',
+                        paddingTop: '24px',
+                        fontSize: '11px',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        textAlign: 'center',
+                        lineHeight: '1.6',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center'
+                    }}>
+                        <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px', marginTop: '12px' }}>
+                            Defesa Civil de Santa Maria de Jetibá
+                        </p>
+                        <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.25</p>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowTech(!showTech)}
+                            className="mt-4 text-[9px] text-white/50 underline hover:text-white/80 transition-opacity"
+                        >
+                            {showTech ? 'Ocultar Diagnóstico' : 'Diagnóstico Técnico'}
+                        </button>
+
+                        {showTech && (
+                            <div className="mt-4 p-4 bg-white/10 backdrop-blur-md rounded-2xl text-left border border-white/10 animate-in fade-in slide-in-from-bottom-2 w-full max-w-[320px]">
+                                <h4 className="text-[10px] font-black text-white/80 uppercase mb-2">Painel de Diagnóstico</h4>
+                                <div className="space-y-1 text-[9px] font-mono text-white/60 break-all">
+                                    <div><span className="font-bold text-white/80">URL:</span> {import.meta.env.VITE_SUPABASE_URL}</div>
+                                    <div><span className="font-bold text-white/80">Online:</span> {navigator.onLine ? 'SIM' : 'NÃO'}</div>
+                                    {techError && (
+                                        <div className="mt-2 p-2 bg-red-500/20 text-red-200 rounded border border-red-500/30">
+                                            <span className="font-bold">Erro:</span> {techError}
+                                        </div>
+                                    )}
+                                    {!techError && error && (
+                                        <div className="mt-2 p-2 bg-amber-500/20 text-amber-200 rounded border border-amber-500/30">
+                                            <span className="font-bold">Alerta:</span> {error}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -480,7 +509,7 @@ const Login = ({ onLogin }) => {
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             {/* Google Fonts */}
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-        </div>
+        </>
     )
 }
 

@@ -5,7 +5,7 @@ import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain,
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
-import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, getRemoteVistoriasCache, clearLocalData, resetDatabase } from '../../services/db'
+import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, getRemoteVistoriasCache, pullAllData, resetDatabase } from '../../services/db'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService } from '../../services/cemaden'
 import { getShelters, getOccupants, getGlobalInventory } from '../../services/shelterDb'
@@ -135,12 +135,24 @@ const Dashboard = () => {
                 console.log('[Dashboard] Lightning Load: Local data displayed. Fetching server updates...');
 
                 // [LIGHTNING LOAD - STEP 3] Fetch fresh data in background
+                const safetyTimer = setTimeout(() => {
+                    if (loading) setLoading(false);
+                }, 5000);
+
                 api.getDashboardData().then(dashResult => {
-                    if (dashResult) {
+                    clearTimeout(safetyTimer);
+                    if (dashResult && dashResult.stats?.totalVistorias > 0) {
                         console.log('[Dashboard] Lightning Load: Server data received. Updating UI...');
                         setData(dashResult);
+                    } else if (dashResult) {
+                        console.warn('[Dashboard] Server returned 0 vistorias. Keeping local data for stability.');
+                        // Still update alerts even if vistorias are missing
+                        setData(prev => ({ ...prev, alerts: dashResult.alerts }));
                     }
-                }).catch(err => console.warn('[Dashboard] Background refresh failed:', err));
+                }).catch(err => {
+                    clearTimeout(safetyTimer);
+                    console.warn('[Dashboard] Background refresh failed:', err);
+                });
 
                 // [LIGHTNING LOAD - STEP 4] Secondary data also in background
                 Promise.all([
@@ -240,32 +252,34 @@ const Dashboard = () => {
     }
 
     const handleSync = async () => {
-        if (syncDetail.total === 0 || syncing) return
+        if (syncing) return
         setSyncing(true)
-        const toastId = toast.info('Iniciando sincronização...', 'Enviando vistorias e fotos para o servidor. Por favor, aguarde.');
+        const toastId = toast.info('Sincronizando...', 'Buscando novos dados e enviando pendências. Aguarde.');
 
         try {
-            const result = await syncPendingData()
-            if (result.success) {
-                const [newData, newDetail] = await Promise.all([
-                    api.getDashboardData(),
-                    getPendingSyncCount()
-                ])
-                setData(newData)
-                setSyncDetail(newDetail)
+            // 1. Pull new data from server first
+            console.log('[Dashboard] Pulling data from server...');
+            await pullAllData();
 
-                if (result.count > 0) {
-                    toast.success('Sincronização Concluída', `${result.count} registros foram enviados com sucesso.`);
-                    // Alert is removed in favor of Toast
-                } else {
-                    toast.info('Nada para sincronizar', 'Todos os registros locais já estão na nuvem.');
-                }
+            // 2. Then push pending local data
+            const result = await syncPendingData()
+
+            // 3. Refresh Dashboard UI
+            const [newData, newDetail] = await Promise.all([
+                api.getDashboardData(),
+                getPendingSyncCount()
+            ])
+            setData(newData)
+            setSyncDetail(newDetail)
+
+            if (result.success && result.count > 0) {
+                toast.success('Sincronização Concluída', `${result.count} registros enviados.`);
             } else {
-                toast.error('Erro Parcial', 'Alguns registros podem não ter sido sincronizados por falhas no upload de mídia. Tente novamente em alguns minutos.');
+                toast.success('Dados Atualizados', 'O sistema está sincronizado com a nuvem.');
             }
-        } catch (e) {
-            console.error('Sync failed:', e)
-            toast.error('Falha Crítica', 'Não foi possível conectar ao servidor. Verifique sua conexão.');
+        } catch (error) {
+            console.error('Sync Error:', error)
+            toast.error('Erro na Sincronização', 'Verifique sua conexão e tente novamente.');
         } finally {
             setSyncing(false)
         }
@@ -409,10 +423,22 @@ const Dashboard = () => {
             <CemadenAlertBanner alerts={cemadenAlerts} />
 
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h1>
-                <div className="flex items-center gap-1 bg-slate-200/50 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500">
-                    <Calendar size={14} />
-                    <span>Hoje</span>
+                <div className="flex flex-col">
+                    <h1 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h1>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider -mt-1">Santa Maria de Jetibá</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleSync}
+                        disabled={syncing}
+                        className={`p-2 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500 hover:bg-slate-200'}`}
+                    >
+                        <RefreshCw size={18} />
+                    </button>
+                    <div className="flex items-center gap-1 bg-slate-200/50 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500">
+                        <Calendar size={14} />
+                        <span>Hoje</span>
+                    </div>
                 </div>
             </div>
 

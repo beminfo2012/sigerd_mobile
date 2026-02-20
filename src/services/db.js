@@ -623,10 +623,16 @@ export const pullAllData = async () => {
             { table: 'despachos', store: 'despachos', key: 'despacho_id' }
         ];
 
-        // Fetch ALL tables in parallel
-        const results = await Promise.allSettled(
+        // Fetch ALL tables in parallel with a 10s timeout
+        const fetchPromise = Promise.allSettled(
             modules.map(mod => supabase.from(mod.table).select('*'))
         );
+
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 10000)
+        );
+
+        const results = await Promise.race([fetchPromise, timeoutPromise]);
 
         let totalPulled = 0;
         for (let i = 0; i < modules.length; i++) {
