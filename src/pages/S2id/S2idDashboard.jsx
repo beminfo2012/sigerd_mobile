@@ -48,13 +48,28 @@ const S2idDashboard = () => {
 
     useEffect(() => {
         loadRecords();
+
+        // Safety timer: force end loading after 15s to prevent infinite spinner
+        const timer = setTimeout(() => {
+            setLoading(current => {
+                if (current) {
+                    console.warn('[Dashboard] Loading exceeded 15s, forcing UI activation.');
+                    return false;
+                }
+                return current;
+            });
+        }, 15000);
+
+        return () => clearTimeout(timer);
     }, []);
 
     const loadRecords = async (silent = false) => {
         if (!silent) setLoading(true);
         try {
             const data = await getS2idRecords();
-            setRecords(data.filter(r => r.status !== 'deleted'));
+            if (data) {
+                setRecords(data.filter(r => r.status !== 'deleted'));
+            }
         } catch (error) {
             console.error('Error loading records:', error);
             if (!silent) toast('Falha ao carregar registros S2id.', 'error');

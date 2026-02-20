@@ -146,7 +146,7 @@ export const INITIAL_S2ID_STATE = {
 /**
  * Merges two S2ID data objects, prioritizing non-empty values and merging sectoral data.
  */
-const mergeS2idData = (local, remote) => {
+export const mergeS2idData = (local, remote) => {
     if (!local) return remote;
     if (!remote) return local;
 
@@ -158,7 +158,9 @@ const mergeS2idData = (local, remote) => {
         if (typeof l === 'number' && typeof r === 'number') {
             return Math.max(l || 0, r || 0);
         }
+        // Fallback: prioritize non-null/non-empty
         if (l === null || l === undefined || l === '') return r;
+        if (r === null || r === undefined || r === '') return l;
         return l;
     };
 
@@ -302,61 +304,88 @@ export const forceRescueAllOrphanData = async () => {
 export const pullS2idFromCloud = async () => {
     if (!navigator.onLine) return null;
 
+    console.log('[S2ID] Starting cloud pull...');
+    const startTime = Date.now();
+
     try {
-        const { data, error } = await supabase
-            .from('s2id_records')
-            .select('*');
+        // 1. Fetch from Supabase with a timeout
+        const fetchPromise = supabase.from('s2id_records').select('*');
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Supabase timeout after 10s')), 10000)
+        );
+
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
         if (error) {
             console.error('[S2ID] Cloud pull error:', error);
             return null;
         }
 
-        if (!data || data.length === 0) return [];
-
-        const db = await initDB();
-        const tx = db.transaction('s2id_records', 'readwrite');
-        const store = tx.objectStore('s2id_records');
-        const allLocal = await store.getAll();
-
-        const localByS2idId = new Map();
-        const localBySupabaseId = new Map();
-        for (const local of allLocal) {
-            if (local.s2id_id) localByS2idId.set(local.s2id_id, local);
-            if (local.supabase_id) localBySupabaseId.set(local.supabase_id, local);
+        if (!data || data.length === 0) {
+            console.log('[S2ID] No remote records found.');
+            return [];
         }
 
+        console.log(`[S2ID] Downloaded ${data.length} records in ${Date.now() - startTime}ms. Syncing to IndexedDB...`);
+
+        // 2. Map local records for fast lookup
+        const db = await initDB();
+        const allLocal = await db.getAll('s2id_records');
+        const localByS2idId = new Map();
+        const localBySupabaseId = new Map();
+
+        allLocal.forEach(l => {
+            if (l.s2id_id) localByS2idId.set(l.s2id_id, l);
+            if (l.supabase_id) localBySupabaseId.set(l.supabase_id, l);
+        });
+
+        // 3. Batch updates in a single transaction
+        const tx = db.transaction('s2id_records', 'readwrite');
+        const store = tx.objectStore('s2id_records');
+
+        let updatedCount = 0;
         for (const remote of data) {
             const localMatch =
                 (remote.s2id_id ? localByS2idId.get(remote.s2id_id) : null) ||
                 localBySupabaseId.get(remote.id) ||
                 null;
 
-            // NEW: If local is dirty (unsynced), we MERGE instead of skipping.
-            // This ensures sectoral updates from other devices get in.
             let toStore;
-            if (localMatch && localMatch.synced === false) {
-                console.log(`[S2ID] Merging local unsynced record ${remote.s2id_id}`);
-                toStore = mergeS2idData(localMatch, remote);
-                toStore.synced = false; // Keep it dirty so it pushes the merged version back up
+            if (localMatch) {
+                // If local is dirty (unsynced), we MERGE to preserve work
+                if (localMatch.synced === false) {
+                    toStore = mergeS2idData(localMatch, remote);
+                    toStore.synced = false;
+                } else {
+                    // Just update with remote data
+                    toStore = {
+                        ...remote,
+                        id: localMatch.id,
+                        supabase_id: remote.id,
+                        s2id_id: remote.s2id_id || localMatch.s2id_id,
+                        synced: true
+                    };
+                }
             } else {
+                // New record from cloud
                 toStore = {
                     ...remote,
-                    id: localMatch ? localMatch.id : undefined,
                     supabase_id: remote.id,
-                    s2id_id: remote.s2id_id || localMatch?.s2id_id,
                     synced: true
                 };
             }
 
+            // Cleanup
             delete toStore.id_local;
-            await store.put(toStore);
+            store.put(toStore);
+            updatedCount++;
         }
 
         await tx.done;
+        console.log(`[S2ID] Cloud pull complete. Processed ${updatedCount} records in ${Date.now() - startTime}ms.`);
         return data;
     } catch (err) {
-        console.error('[S2ID] Cloud pull failed:', err);
+        console.error('[S2ID] Cloud pull failed CRITICALLY:', err);
         return null;
     }
 };
