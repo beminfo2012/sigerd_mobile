@@ -524,6 +524,25 @@ const S2idDashboard = () => {
                     >
                         RECONSTRUIR MÓDULO (Sincronizar Tudo)
                     </button>
+                    <button
+                        onClick={async () => {
+                            const { getS2idRecords } = await import('../../services/s2idDb');
+                            const all = await getS2idRecords();
+                            const summary = all.map(r => ({
+                                id: r.s2id_id,
+                                tipificacao: r.data.tipificacao.denominacao,
+                                submissoes: Object.entries(r.data.submissoes_setoriais || {})
+                                    .map(([s, v]) => `${s}: ${v.preenchido ? '✅' : '❌'}`).join(', ')
+                            }));
+                            console.table(summary);
+                            alert("DADOS BRUTOS (Sincronização):\n\n" +
+                                summary.map(s => `• ${s.tipificacao.slice(0, 15)}...: ${s.submissoes}`).join('\n') +
+                                "\n\n(Detalhes completos no Console do Navegador)");
+                        }}
+                        className="mt-2 ml-2 bg-slate-700 text-white px-3 py-1 rounded hover:bg-slate-600"
+                    >
+                        Ver Dados Brutos (Diagnóstico)
+                    </button>
                 </div>
 
             </main >

@@ -143,11 +143,46 @@ export const INITIAL_S2ID_STATE = {
  * Pull S2ID records from Supabase and merge into local IndexedDB.
  * Returns merged array of all records.
  */
+/**
+ * Merges two S2ID data objects, prioritizing non-empty values and merging sectoral data.
+ */
+const mergeS2idData = (local, remote) => {
+    if (!local) return remote;
+    if (!remote) return local;
+
+    return {
+        ...remote,
+        ...local,
+        data: {
+            ...remote.data,
+            ...local.data,
+            // Sectoral data needs careful merging because different users edit different sectors
+            setorial: {
+                ...(remote.data?.setorial || {}),
+                ...(local.data?.setorial || {})
+            },
+            submissoes_setoriais: {
+                ...(remote.data?.submissoes_setoriais || {}),
+                ...(local.data?.submissoes_setoriais || {})
+            },
+            // Metadata oficial (usually only one person edits this, but let's be safe)
+            metadata_oficial: {
+                ...(remote.data?.metadata_oficial || {}),
+                ...(local.data?.metadata_oficial || {})
+            },
+            // evidences (merge arrays and deduplicate by URL)
+            evidencias: [
+                ...(remote.data?.evidencias || []),
+                ...(local.data?.evidencias || [])
+            ].filter((v, i, a) => a.findIndex(t => t.url === v.url) === i)
+        }
+    };
+};
+
 export const pullS2idFromCloud = async () => {
     if (!navigator.onLine) return null;
 
     try {
-        // SIMPLIFIED: Removed .order() to avoid potential indexing issues
         const { data, error } = await supabase
             .from('s2id_records')
             .select('*');
@@ -177,20 +212,24 @@ export const pullS2idFromCloud = async () => {
                 localBySupabaseId.get(remote.id) ||
                 null;
 
+            // NEW: If local is dirty (unsynced), we MERGE instead of skipping.
+            // This ensures sectoral updates from other devices get in.
+            let toStore;
             if (localMatch && localMatch.synced === false) {
-                continue;
+                console.log(`[S2ID] Merging local unsynced record ${remote.s2id_id}`);
+                toStore = mergeS2idData(localMatch, remote);
+                toStore.synced = false; // Keep it dirty so it pushes the merged version back up
+            } else {
+                toStore = {
+                    ...remote,
+                    id: localMatch ? localMatch.id : undefined,
+                    supabase_id: remote.id,
+                    s2id_id: remote.s2id_id || localMatch?.s2id_id,
+                    synced: true
+                };
             }
 
-            const toStore = {
-                ...remote,
-                id: localMatch ? localMatch.id : undefined,
-                supabase_id: remote.id,
-                s2id_id: remote.s2id_id || localMatch?.s2id_id,
-                synced: true
-            };
-            // Ensure we don't accidentally overwrite with a string if our schema expects int (though S2ID is loose)
             delete toStore.id_local;
-
             await store.put(toStore);
         }
 
@@ -246,18 +285,20 @@ export const rebuildS2idStorage = async () => {
 
     // Insert Remote
     for (const remote of remoteData) {
-        // If draft already exists with this ID (unlikely if UUIDs are unique, but check collision)
-        // Actually, we just wiped. Drafts are back.
-        // We match by s2id_id to avoid duplication if the draft IS the remote record but modified?
-        // Simpler: If remote ID matches a draft ID, SKIP remote (Draft wins)
-        const isDraft = drafts.some(d => d.s2id_id === remote.s2id_id || d.supabase_id === remote.id);
-        if (isDraft) continue;
+        const draftMatch = drafts.find(d => d.s2id_id === remote.s2id_id || d.supabase_id === remote.id);
 
-        const toStore = {
-            ...remote,
-            supabase_id: remote.id,
-            synced: true
-        };
+        let toStore;
+        if (draftMatch) {
+            console.log(`[S2ID] Rebuild: Merging draft ${remote.s2id_id}`);
+            toStore = mergeS2idData(draftMatch, remote);
+            toStore.synced = false; // Keep it as a draft so it can sync back
+        } else {
+            toStore = {
+                ...remote,
+                supabase_id: remote.id,
+                synced: true
+            };
+        }
         await store.put(toStore);
     }
 
