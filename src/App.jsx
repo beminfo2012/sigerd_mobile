@@ -399,6 +399,17 @@ function App() {
     }, [isDarkMode])
 
     useEffect(() => {
+        // Safety timer: force end loading after 20s to prevent infinite spinner at app start
+        const safetyTimer = setTimeout(() => {
+            setIsLoading(current => {
+                if (current) {
+                    console.warn('[App] Loading exceeded 20s, forcing app activation.');
+                    return false;
+                }
+                return current;
+            });
+        }, 20000);
+
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
             setIsAuthenticated(true)
@@ -407,6 +418,8 @@ function App() {
         } else {
             setIsLoading(false)
         }
+
+        return () => clearTimeout(safetyTimer);
     }, [])
 
     const loadUserProfile = async () => {
@@ -436,16 +449,19 @@ function App() {
 
         try {
             console.log('Fetching user from Supabase auth...')
-            const { data: { user } } = await supabase.auth.getUser()
+            // Timeout after 8s for auth fetch
+            const authPromise = supabase.auth.getUser()
+            const authTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 8000));
+
+            const { data: { user } } = await Promise.race([authPromise, authTimeout]);
             console.log('Auth User:', user?.id)
 
             if (user) {
                 console.log('Fetching profile data...')
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single()
+                const profilePromise = supabase.from('profiles').select('*').eq('id', user.id).single();
+                const profileTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Profile timeout')), 8000));
+
+                const { data: profile } = await Promise.race([profilePromise, profileTimeout]);
 
                 console.log('Profile found:', profile?.full_name)
                 if (profile) {
@@ -464,7 +480,13 @@ function App() {
                 }
             }
         } catch (error) {
-            console.error('Error loading profile:', error)
+            console.error('CRITICAL: Error loading profile or timeout:', error)
+            // If offline or timeout, try to use cached profile anyway to allow app entry
+            const saved = localStorage.getItem('userProfile');
+            if (saved) {
+                console.log('Fallback: Using cached profile due to error/timeout');
+                setUserProfile(JSON.parse(saved));
+            }
         } finally {
             console.log('Profile loading finished.')
             setIsLoading(false)
@@ -482,10 +504,15 @@ function App() {
         if (navigator.onLine) {
             console.log('[Login] Pulling all cloud data to local DB...')
             try {
-                const result = await pullAllData();
-                console.log('[Login] Cloud data restored:', result);
+                // Background pull with timeout so it doesn't block the UI entry
+                const pullPromise = pullAllData();
+                const pullTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Initial pull timeout')), 10000));
+
+                Promise.race([pullPromise, pullTimeout])
+                    .then(result => console.log('[Login] Cloud data restored:', result))
+                    .catch(err => console.warn('[Login] Background data pull slow/failed:', err));
             } catch (err) {
-                console.warn('[Login] Cloud data pull failed (non-blocking):', err);
+                console.warn('[Login] Cloud data pull setup failed:', err);
             }
         }
 
