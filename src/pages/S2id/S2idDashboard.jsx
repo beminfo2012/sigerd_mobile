@@ -546,24 +546,24 @@ const S2idDashboard = () => {
                     </button>
                     <button
                         onClick={async () => {
-                            if (!window.confirm("Isso vai procurar registros EXCLUÍDOS que tenham dados e movê-los para o registro ATIVO. Deseja prosseguir?")) return;
+                            if (!window.confirm("ISO VAI UNIFICAR REGISTROS DUPLICADOS: O sistema vai procurar FIDEs com o mesmo nome e juntá-los em um só, recuperando dados de Saúde, Agricultura, etc. Deseja prosseguir?")) return;
                             try {
-                                toast('Resgatando dados...', 'info');
-                                const { rescueDeletedS2idData } = await import('../../services/s2idDb');
-                                const count = await rescueDeletedS2idData();
+                                toast('Iniciando limpeza e unificação...', 'info');
+                                const { deepRepairS2idDuplicates } = await import('../../services/s2idDb');
+                                const count = await deepRepairS2idDuplicates();
                                 if (count > 0) {
-                                    alert(`${count} registros órfãos encontrados e mesclados no FIDE ativo!`);
+                                    alert(`SUCESSO: ${count} grupos de registros foram unificados! Agora tudo deve estar aparecendo no lugar certo.`);
                                     window.location.reload();
                                 } else {
-                                    alert("Nenhum dado órfão encontrado em registros excluídos.");
+                                    alert("Nenhum registro duplicado ou dado órfão encontrado para unificar.");
                                 }
                             } catch (e) {
-                                alert('ERRO NO RESGATE: ' + e.message);
+                                alert('ERRO NO CONSERTO: ' + e.message);
                             }
                         }}
-                        className="mt-2 ml-2 bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-500 font-bold"
+                        className="mt-2 ml-2 bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-500 font-bold border-2 border-emerald-400"
                     >
-                        Resgatar Dados de Excluídos
+                        CONSERTO PROFUNDO (Unificar Registros)
                     </button>
                 </div>
 

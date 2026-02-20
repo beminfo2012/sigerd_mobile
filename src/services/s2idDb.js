@@ -150,33 +150,114 @@ const mergeS2idData = (local, remote) => {
     if (!local) return remote;
     if (!remote) return local;
 
+    // Deep merge helper for submissoes_setoriais (True wins)
+    const mergeSubmissoes = (locSub = {}, remSub = {}) => {
+        const merged = { ...remSub, ...locSub };
+        const allKeys = new Set([...Object.keys(locSub), ...Object.keys(remSub)]);
+
+        allKeys.forEach(key => {
+            const l = locSub[key] || {};
+            const r = remSub[key] || {};
+            merged[key] = {
+                ...r,
+                ...l,
+                preenchido: l.preenchido || r.preenchido, // TRUE WINS
+                data: l.data || r.data,
+                usuario: l.usuario || r.usuario
+            };
+        });
+        return merged;
+    };
+
+    // Deep merge helper for numeric setorial fields (Highest value/Non-zero wins)
+    const mergeSetorial = (locSet = {}, remSet = {}) => {
+        const merged = { ...remSet, ...locSet };
+        const sectors = new Set([...Object.keys(locSet), ...Object.keys(remSet)]);
+
+        sectors.forEach(s => {
+            const l = locSet[s] || {};
+            const r = remSet[s] || {};
+            merged[s] = { ...r, ...l };
+
+            // Merge numeric fields: if one is non-zero and other is 0, take non-zero
+            Object.keys(merged[s]).forEach(field => {
+                if (typeof l[field] === 'number' && typeof r[field] === 'number') {
+                    merged[s][field] = l[field] > 0 ? l[field] : r[field];
+                }
+            });
+        });
+        return merged;
+    };
+
     return {
         ...remote,
         ...local,
         data: {
             ...remote.data,
             ...local.data,
-            // Sectoral data needs careful merging because different users edit different sectors
-            setorial: {
-                ...(remote.data?.setorial || {}),
-                ...(local.data?.setorial || {})
-            },
-            submissoes_setoriais: {
-                ...(remote.data?.submissoes_setoriais || {}),
-                ...(local.data?.submissoes_setoriais || {})
-            },
-            // Metadata oficial (usually only one person edits this, but let's be safe)
+            setorial: mergeSetorial(local.data?.setorial, remote.data?.setorial),
+            submissoes_setoriais: mergeSubmissoes(local.data?.submissoes_setoriais, remote.data?.submissoes_setoriais),
             metadata_oficial: {
                 ...(remote.data?.metadata_oficial || {}),
                 ...(local.data?.metadata_oficial || {})
             },
-            // evidences (merge arrays and deduplicate by URL)
             evidencias: [
                 ...(remote.data?.evidencias || []),
                 ...(local.data?.evidencias || [])
             ].filter((v, i, a) => a.findIndex(t => t.url === v.url) === i)
         }
     };
+};
+
+/**
+ * DEEP REPAIR: Merges and unifies duplicate records.
+ */
+export const deepRepairS2idDuplicates = async () => {
+    const db = await initDB();
+    const all = await db.getAll('s2id_records');
+
+    // Group records by their "Identity" (Title + COBRADE)
+    const groups = {};
+    all.forEach(r => {
+        if (r.status === 'deleted' && !Object.values(r.data.submissoes_setoriais || {}).some(s => s.preenchido)) return;
+
+        const identity = `${r.data.tipificacao.cobrade}_${r.data.tipificacao.denominacao}`.toLowerCase().trim();
+        if (!groups[identity]) groups[identity] = [];
+        groups[identity].push(r);
+    });
+
+    let repairCount = 0;
+    for (const identity in groups) {
+        const records = groups[identity];
+        if (records.length <= 1) continue;
+
+        console.log(`[S2ID] Repairing duplicate group: ${identity} (${records.length} records)`);
+
+        // Take the first active record as target, or the most recent if none are active
+        const target = records.find(r => r.status !== 'deleted') || records[0];
+        let master = target;
+
+        for (const r of records) {
+            if (r.id === target.id) continue;
+            master = mergeS2idData(master, r);
+
+            // Mark the duplicate for deletion
+            if (r.id !== target.id) {
+                const toDel = { ...r, status: 'deleted', synced: false, updated_at: new Date().toISOString() };
+                await db.put('s2id_records', toDel);
+            }
+        }
+
+        // Save master 
+        master.status = 'submitted'; // Force active
+        master.synced = false;
+        master.updated_at = new Date().toISOString();
+        await db.put('s2id_records', master);
+        repairCount++;
+    }
+
+    if (navigator.onLine) triggerSync();
+    return repairCount;
 };
 
 export const pullS2idFromCloud = async () => {
