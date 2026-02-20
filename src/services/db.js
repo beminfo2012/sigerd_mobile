@@ -598,44 +598,76 @@ const syncSingleItem = async (storeName, item, db) => {
 }
 
 // Pull all data from Supabase to local IndexedDB (for multi-device sync)
+// Uses parallel fetches and a lock to prevent duplicate calls
+let _pullLock = false;
 export const pullAllData = async () => {
     if (!navigator.onLine) return { success: false, reason: 'offline' };
-    const db = await initDB();
-    const modules = [
-        { table: 'vistorias', store: 'vistorias', key: 'vistoria_id' },
-        { table: 'interdicoes', store: 'interdicoes', key: 'interdicao_id' },
-        { table: 's2id_records', store: 's2id_records', key: 's2id_id' },
-        { table: 'shelters', store: 'shelters', key: 'shelter_id' },
-        { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
-        { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
-        { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
-        { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' },
-        { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
-        { table: 'despachos', store: 'despachos', key: 'despacho_id' }
-    ];
-    let totalPulled = 0;
-    for (const mod of modules) {
-        try {
-            const { data, error } = await supabase.from(mod.table).select('*');
-            if (!error && data) {
+    if (_pullLock) {
+        console.log('[Pull] Already in progress, skipping.');
+        return { success: true, count: 0, skipped: true };
+    }
+    _pullLock = true;
+
+    try {
+        const db = await initDB();
+        const modules = [
+            { table: 'vistorias', store: 'vistorias', key: 'vistoria_id' },
+            { table: 'interdicoes', store: 'interdicoes', key: 'interdicao_id' },
+            { table: 's2id_records', store: 's2id_records', key: 's2id_id' },
+            { table: 'shelters', store: 'shelters', key: 'shelter_id' },
+            { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
+            { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
+            { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
+            { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' },
+            { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
+            { table: 'despachos', store: 'despachos', key: 'despacho_id' }
+        ];
+
+        // Fetch ALL tables in parallel
+        const results = await Promise.allSettled(
+            modules.map(mod => supabase.from(mod.table).select('*'))
+        );
+
+        let totalPulled = 0;
+        for (let i = 0; i < modules.length; i++) {
+            const mod = modules[i];
+            const result = results[i];
+
+            if (result.status !== 'fulfilled') {
+                console.warn(`[Pull] Failed to fetch ${mod.table}:`, result.reason);
+                continue;
+            }
+
+            const { data, error } = result.value;
+            if (error || !data || data.length === 0) continue;
+
+            try {
                 const tx = db.transaction(mod.store, 'readwrite');
                 const store = tx.objectStore(mod.store);
                 const allLocal = await store.getAll();
                 const localBySupId = new Map(allLocal.filter(l => l.supabase_id).map(l => [l.supabase_id, l]));
                 const localByKey = new Map(mod.key ? allLocal.filter(l => l[mod.key]).map(l => [l[mod.key], l]) : []);
+
                 for (const item of data) {
                     const localMatch = localBySupId.get(item.id) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
                     if (localMatch && localMatch.synced === false) continue;
                     const toStore = { ...item, id: localMatch ? localMatch.id : undefined, supabase_id: item.id, synced: true };
-                    await store.put(toStore);
+                    store.put(toStore); // No await — batched in transaction
                     totalPulled++;
                 }
                 await tx.done;
+            } catch (e) {
+                console.warn(`[Pull] Write failed for ${mod.table}:`, e);
             }
-        } catch (e) { console.warn(`[Pull] Failed for ${mod.table}:`, e); }
+        }
+
+        console.log(`[Pull] Complete: ${totalPulled} records from ${modules.length} tables.`);
+        return { success: true, count: totalPulled };
+    } finally {
+        _pullLock = false;
     }
-    return { success: true, count: totalPulled };
 };
+
 
 // Global sync trigger for immediate use (with Debounce to prevent overload)
 let syncTimeout = null;

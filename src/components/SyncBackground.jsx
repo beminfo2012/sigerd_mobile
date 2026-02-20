@@ -5,24 +5,32 @@ import { notificationService } from '../services/notificationService'
 
 const SyncBackground = () => {
     useEffect(() => {
-        const performSync = async () => {
+        // Full sync: pull from cloud + push pending changes
+        const performFullSync = async () => {
             if (!navigator.onLine) return
 
             try {
-                // 1. First, pull everything from Cloud to ensure local DB is fresh
-                // This is crucial for recovering after cache clears
-                console.log('[SyncBackground] Refreshing local database from cloud...')
+                console.log('[SyncBackground] Full sync starting...')
                 await pullAllData()
+                await pushPendingChanges()
+            } catch (error) {
+                console.error('[SyncBackground] Full sync failed:', error)
+            }
+        }
 
-                // 2. Then, sync any pending local changes
+        // Light sync: only push pending local changes (fast)
+        const pushPendingChanges = async () => {
+            if (!navigator.onLine) return
+
+            try {
                 const pendingCount = await getPendingSyncCount()
                 if (pendingCount.total > 0) {
-                    console.log(`[SyncBackground] Starting auto-sync for ${pendingCount.total} items...`)
+                    console.log(`[SyncBackground] Syncing ${pendingCount.total} pending items...`)
                     const result = await syncPendingData()
                     if (result.success && result.count > 0) {
-                        console.log(`[SyncBackground] Auto-sync complete: ${result.count} items synced.`)
+                        console.log(`[SyncBackground] Synced ${result.count} items.`)
 
-                        // [FIX] Force refresh the remote cache for vistorias
+                        // Refresh vistorias cache after sync
                         const { data: freshData, error: fetchErr } = await supabase
                             .from('vistorias')
                             .select('*')
@@ -33,41 +41,38 @@ const SyncBackground = () => {
                             await saveRemoteVistoriasCache(freshData).catch(() => { });
                         }
 
-                        // Dispatch custom event to notify components
                         window.dispatchEvent(new CustomEvent('sync-complete', {
                             detail: { count: result.count }
                         }))
                     }
                 }
             } catch (error) {
-                console.error('[SyncBackground] Sync failed:', error)
+                console.error('[SyncBackground] Push sync failed:', error)
             }
         }
 
-        // 1. Check on mount
-        performSync()
+        // Delay initial full sync by 5s so it doesn't fight with login loading
+        const initialTimer = setTimeout(() => {
+            performFullSync()
+        }, 5000)
 
-        // 2. Listen for online event
+        // Online event: do full sync
         const handleOnline = () => {
-            console.log('[SyncBackground] Device is back online. Triggering sync...')
-            performSync()
+            console.log('[SyncBackground] Back online. Triggering full sync...')
+            performFullSync()
         }
-
         window.addEventListener('online', handleOnline)
 
-        // 3. Set up Realtime Subscriptions
+        // Realtime Subscriptions
         const setupRealtime = () => {
             if (!navigator.onLine) return null;
 
-            console.log('[SyncBackground] Setting up Realtime subscriptions...');
             const channel = supabase
                 .channel('public:realtime_notifications')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vistorias' }, payload => {
-                    console.log('[SyncBackground] New Vistoria detected:', payload);
                     notificationService.notifyNewRecord('vistoria', payload.new);
                 })
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 's2id_records' }, payload => {
-                    console.log('[SyncBackground] New S2ID record detected:', payload);
                     notificationService.notifyNewRecord('s2id', payload.new);
                 })
                 .subscribe();
@@ -77,13 +82,13 @@ const SyncBackground = () => {
 
         const realtimeChannel = setupRealtime();
 
-        // 4. Periodic check (every 30 seconds) as fallback for auto-sync
+        // Heartbeat every 5 minutes — only push pending, don't pull everything
         const interval = setInterval(() => {
-            console.log('[SyncBackground] Background heartbeat: Checking for sync tasks...');
-            performSync();
-        }, 30 * 1000)
+            pushPendingChanges();
+        }, 5 * 60 * 1000)
 
         return () => {
+            clearTimeout(initialTimer)
             window.removeEventListener('online', handleOnline)
             if (realtimeChannel) {
                 supabase.removeChannel(realtimeChannel);
@@ -92,7 +97,8 @@ const SyncBackground = () => {
         }
     }, [])
 
-    return null // Non-visual component
+    return null
 }
 
 export default SyncBackground
+
