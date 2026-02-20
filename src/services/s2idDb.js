@@ -150,7 +150,19 @@ const mergeS2idData = (local, remote) => {
     if (!local) return remote;
     if (!remote) return local;
 
-    // Deep merge helper for submissoes_setoriais (True wins)
+    // Helper: Best value wins (Non-empty string wins, Non-zero or larger number wins)
+    const bestValue = (l, r) => {
+        if (typeof l === 'string' && typeof r === 'string') {
+            return (l.trim().length > 0) ? l : r;
+        }
+        if (typeof l === 'number' && typeof r === 'number') {
+            return Math.max(l || 0, r || 0);
+        }
+        if (l === null || l === undefined || l === '') return r;
+        return l;
+    };
+
+    // Deep merge helper for submissoes_setoriais (True wins, Data wins)
     const mergeSubmissoes = (locSub = {}, remSub = {}) => {
         const merged = { ...remSub, ...locSub };
         const allKeys = new Set([...Object.keys(locSub), ...Object.keys(remSub)]);
@@ -162,14 +174,17 @@ const mergeS2idData = (local, remote) => {
                 ...r,
                 ...l,
                 preenchido: l.preenchido || r.preenchido, // TRUE WINS
-                data: l.data || r.data,
-                usuario: l.usuario || r.usuario
+                data: bestValue(l.data, r.data),
+                usuario: bestValue(l.usuario, r.usuario),
+                responsavel: bestValue(l.responsavel, r.responsavel),
+                cargo: bestValue(l.cargo, r.cargo),
+                assinatura_url: bestValue(l.assinatura_url, r.assinatura_url)
             };
         });
         return merged;
     };
 
-    // Deep merge helper for numeric setorial fields (Highest value/Non-zero wins)
+    // Deep merge helper for numeric setorial fields (Highest value wins)
     const mergeSetorial = (locSet = {}, remSet = {}) => {
         const merged = { ...remSet, ...locSet };
         const sectors = new Set([...Object.keys(locSet), ...Object.keys(remSet)]);
@@ -177,13 +192,11 @@ const mergeS2idData = (local, remote) => {
         sectors.forEach(s => {
             const l = locSet[s] || {};
             const r = remSet[s] || {};
+            const keys = new Set([...Object.keys(l), ...Object.keys(r)]);
             merged[s] = { ...r, ...l };
 
-            // Merge numeric fields: if one is non-zero and other is 0, take non-zero
-            Object.keys(merged[s]).forEach(field => {
-                if (typeof l[field] === 'number' && typeof r[field] === 'number') {
-                    merged[s][field] = l[field] > 0 ? l[field] : r[field];
-                }
+            keys.forEach(field => {
+                merged[s][field] = bestValue(l[field], r[field]);
             });
         });
         return merged;
@@ -192,6 +205,7 @@ const mergeS2idData = (local, remote) => {
     return {
         ...remote,
         ...local,
+        status: (local.status === 'submitted' || remote.status === 'submitted') ? 'submitted' : bestValue(local.status, remote.status),
         data: {
             ...remote.data,
             ...local.data,
@@ -216,11 +230,9 @@ export const deepRepairS2idDuplicates = async () => {
     const db = await initDB();
     const all = await db.getAll('s2id_records');
 
-    // Group records by their "Identity" (Title + COBRADE)
     const groups = {};
     all.forEach(r => {
         if (r.status === 'deleted' && !Object.values(r.data.submissoes_setoriais || {}).some(s => s.preenchido)) return;
-
         const identity = `${r.data.tipificacao.cobrade}_${r.data.tipificacao.denominacao}`.toLowerCase().trim();
         if (!groups[identity]) groups[identity] = [];
         groups[identity].push(r);
@@ -231,25 +243,19 @@ export const deepRepairS2idDuplicates = async () => {
         const records = groups[identity];
         if (records.length <= 1) continue;
 
-        console.log(`[S2ID] Repairing duplicate group: ${identity} (${records.length} records)`);
-
-        // Take the first active record as target, or the most recent if none are active
         const target = records.find(r => r.status !== 'deleted') || records[0];
         let master = target;
 
         for (const r of records) {
             if (r.id === target.id) continue;
             master = mergeS2idData(master, r);
-
-            // Mark the duplicate for deletion
             if (r.id !== target.id) {
                 const toDel = { ...r, status: 'deleted', synced: false, updated_at: new Date().toISOString() };
                 await db.put('s2id_records', toDel);
             }
         }
 
-        // Save master 
-        master.status = 'submitted'; // Force active
+        master.status = 'submitted';
         master.synced = false;
         master.updated_at = new Date().toISOString();
         await db.put('s2id_records', master);
@@ -262,39 +268,29 @@ export const deepRepairS2idDuplicates = async () => {
 
 /**
  * GLOBAL FORCE RESCUE: Merges ALL records containing data into the first active one.
- * Title-agnostic: Useful for when titles are different or missing.
  */
 export const forceRescueAllOrphanData = async () => {
     const db = await initDB();
     const all = await db.getAll('s2id_records');
 
-    // 1. Find the one and only active FIDE (if exists)
     const activeRecords = all.filter(r => r.status !== 'deleted');
-    if (activeRecords.length === 0) throw new Error("Nenhum registro ativo encontrado para receber os dados.");
+    if (activeRecords.length === 0) throw new Error("Nenhum registro ativo encontrado.");
 
-    // Target is the most recently updated active record
     const target = activeRecords.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
-
-    // 2. Find ALL other records (active or deleted) that have sectoral data
     const sources = all.filter(r => {
         if (r.id === target.id) return false;
-        const subs = Object.values(r.data?.submissoes_setoriais || {});
-        return subs.some(s => s.preenchido);
+        return Object.values(r.data?.submissoes_setoriais || {}).some(s => s.preenchido);
     });
 
     if (sources.length === 0) return 0;
 
     let master = target;
     for (const src of sources) {
-        console.log(`[S2ID] Global Rescue: Merging ${src.s2id_id} into ${target.s2id_id}`);
         master = mergeS2idData(master, src);
-
-        // Mark source as deleted to avoid future duplicates
         const toDel = { ...src, status: 'deleted', synced: false, updated_at: new Date().toISOString() };
         await db.put('s2id_records', toDel);
     }
 
-    // Save final master
     master.synced = false;
     master.updated_at = new Date().toISOString();
     await db.put('s2id_records', master);
@@ -538,44 +534,3 @@ export const syncAllS2id = async () => {
     }
 };
 
-/**
- * RESCUE: Finds deleted records with data and merges them into the active one.
- */
-export const rescueDeletedS2idData = async () => {
-    const db = await initDB();
-    const all = await db.getAll('s2id_records');
-
-    // 1. Find orphans (deleted but filled)
-    const orphans = all.filter(r => r.status === 'deleted' && Object.values(r.data.submissoes_setoriais || {}).some(s => s.preenchido));
-    if (orphans.length === 0) return 0;
-
-    // 2. Find target (most recent active)
-    const active = all
-        .filter(r => r.status !== 'deleted')
-        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-
-    if (active.length === 0) throw new Error("Nenhum registro ativo encontrado para receber os dados.");
-
-    const target = active[0];
-    let merged = target;
-
-    for (const orphan of orphans) {
-        console.log(`[S2ID] Rescuing data from orphan ${orphan.s2id_id} into ${target.s2id_id}`);
-        merged = mergeS2idData(merged, orphan);
-    }
-
-    // Preserve target's core identity but update with rescued data
-    merged.status = target.status;
-    merged.id = target.id;
-    merged.s2id_id = target.s2id_id;
-    merged.supabase_id = target.supabase_id;
-    merged.synced = false;
-    merged.updated_at = new Date().toISOString();
-
-    await db.put('s2id_records', merged);
-
-    // Background sync
-    if (navigator.onLine) triggerSync();
-
-    return orphans.length;
-};
