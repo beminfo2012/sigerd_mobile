@@ -413,3 +413,45 @@ export const syncAllS2id = async () => {
         await syncPendingData();
     }
 };
+
+/**
+ * RESCUE: Finds deleted records with data and merges them into the active one.
+ */
+export const rescueDeletedS2idData = async () => {
+    const db = await initDB();
+    const all = await db.getAll('s2id_records');
+
+    // 1. Find orphans (deleted but filled)
+    const orphans = all.filter(r => r.status === 'deleted' && Object.values(r.data.submissoes_setoriais || {}).some(s => s.preenchido));
+    if (orphans.length === 0) return 0;
+
+    // 2. Find target (most recent active)
+    const active = all
+        .filter(r => r.status !== 'deleted')
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+    if (active.length === 0) throw new Error("Nenhum registro ativo encontrado para receber os dados.");
+
+    const target = active[0];
+    let merged = target;
+
+    for (const orphan of orphans) {
+        console.log(`[S2ID] Rescuing data from orphan ${orphan.s2id_id} into ${target.s2id_id}`);
+        merged = mergeS2idData(merged, orphan);
+    }
+
+    // Preserve target's core identity but update with rescued data
+    merged.status = target.status;
+    merged.id = target.id;
+    merged.s2id_id = target.s2id_id;
+    merged.supabase_id = target.supabase_id;
+    merged.synced = false;
+    merged.updated_at = new Date().toISOString();
+
+    await db.put('s2id_records', merged);
+
+    // Background sync
+    if (navigator.onLine) triggerSync();
+
+    return orphans.length;
+};
