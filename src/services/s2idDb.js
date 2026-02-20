@@ -260,6 +260,49 @@ export const deepRepairS2idDuplicates = async () => {
     return repairCount;
 };
 
+/**
+ * GLOBAL FORCE RESCUE: Merges ALL records containing data into the first active one.
+ * Title-agnostic: Useful for when titles are different or missing.
+ */
+export const forceRescueAllOrphanData = async () => {
+    const db = await initDB();
+    const all = await db.getAll('s2id_records');
+
+    // 1. Find the one and only active FIDE (if exists)
+    const activeRecords = all.filter(r => r.status !== 'deleted');
+    if (activeRecords.length === 0) throw new Error("Nenhum registro ativo encontrado para receber os dados.");
+
+    // Target is the most recently updated active record
+    const target = activeRecords.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0];
+
+    // 2. Find ALL other records (active or deleted) that have sectoral data
+    const sources = all.filter(r => {
+        if (r.id === target.id) return false;
+        const subs = Object.values(r.data?.submissoes_setoriais || {});
+        return subs.some(s => s.preenchido);
+    });
+
+    if (sources.length === 0) return 0;
+
+    let master = target;
+    for (const src of sources) {
+        console.log(`[S2ID] Global Rescue: Merging ${src.s2id_id} into ${target.s2id_id}`);
+        master = mergeS2idData(master, src);
+
+        // Mark source as deleted to avoid future duplicates
+        const toDel = { ...src, status: 'deleted', synced: false, updated_at: new Date().toISOString() };
+        await db.put('s2id_records', toDel);
+    }
+
+    // Save final master
+    master.synced = false;
+    master.updated_at = new Date().toISOString();
+    await db.put('s2id_records', master);
+
+    if (navigator.onLine) triggerSync();
+    return sources.length;
+};
+
 export const pullS2idFromCloud = async () => {
     if (!navigator.onLine) return null;
 

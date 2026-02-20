@@ -546,6 +546,27 @@ const S2idDashboard = () => {
                     </button>
                     <button
                         onClick={async () => {
+                            if (!window.confirm("RESGATE GLOBAL: Isso vai procurar QUALQUER registro que tenha dados (como saúde ou agricultura) e mover tudo para o seu FIDE ativo principal, mesmo que os nomes sejam um pouco diferentes. Deseja prosseguir?")) return;
+                            try {
+                                toast('Iniciando resgate global...', 'info');
+                                const { forceRescueAllOrphanData } = await import('../../services/s2idDb');
+                                const count = await forceRescueAllOrphanData();
+                                if (count > 0) {
+                                    alert(`SUCESSO: Dados de ${count} registros foram resgatados e movidos para o FIDE ativo!`);
+                                    window.location.reload();
+                                } else {
+                                    alert("Nenhum dado órfão foi encontrado para resgatar.");
+                                }
+                            } catch (e) {
+                                alert('ERRO NO RESGATE: ' + e.message);
+                            }
+                        }}
+                        className="mt-2 ml-2 bg-indigo-700 text-white px-3 py-1 rounded hover:bg-indigo-600 font-bold border-2 border-indigo-400 shadow-lg animate-pulse"
+                    >
+                        🚀 RESGATE GLOBAL (Forçar Unificação)
+                    </button>
+                    <button
+                        onClick={async () => {
                             if (!window.confirm("ISO VAI UNIFICAR REGISTROS DUPLICADOS: O sistema vai procurar FIDEs com o mesmo nome e juntá-los em um só, recuperando dados de Saúde, Agricultura, etc. Deseja prosseguir?")) return;
                             try {
                                 toast('Iniciando limpeza e unificação...', 'info');
