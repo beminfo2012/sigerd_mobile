@@ -248,11 +248,7 @@ const Login = ({ onLogin }) => {
                 }
             }
 
-            console.log('Login successful, pulling data from cloud...')
-            const dbModule = await import('../../services/db')
-            await dbModule.pullAllData().catch(e => console.error('Initial pull failed:', e))
-
-            console.log('Proceeding to onLogin()...')
+            console.log('Login successful, proceeding...')
             onLogin()
         } catch (err) {
             console.error('Login technical error:', err)
