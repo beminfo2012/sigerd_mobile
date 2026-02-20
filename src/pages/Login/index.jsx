@@ -235,21 +235,19 @@ const Login = ({ onLogin }) => {
                 return
             }
 
-            console.log('Login successful, checking biometrics configuration...')
-            if (!localStorage.getItem('biometric_email')) {
-                // Non-blocking biometrics check
-                try {
-                    if (window.confirm('Deseja ativar o login por biometria para este dispositivo?')) {
-                        console.log('User opted for biometrics, registering...')
-                        await handleRegisterBiometrics()
-                    }
-                } catch (bioErr) {
-                    console.warn('Biometric registration failed but continuing login:', bioErr)
-                }
-            }
-
-            console.log('Login successful, proceeding...')
+            console.log('Login successful, entering system...')
             onLogin()
+
+            // Biometrics registration - after entering the app (non-blocking)
+            if (!localStorage.getItem('biometric_email')) {
+                setTimeout(() => {
+                    try {
+                        if (window.confirm('Deseja ativar o login por biometria para este dispositivo?')) {
+                            handleRegisterBiometrics().catch(e => console.warn('Bio registration failed:', e));
+                        }
+                    } catch (e) { /* ignore */ }
+                }, 2000);
+            }
         } catch (err) {
             console.error('Login technical error:', err)
             setError(err.message || 'Erro ao conectar. Verifique sua conexão.')

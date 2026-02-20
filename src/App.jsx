@@ -414,8 +414,17 @@ function App() {
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
             setIsAuthenticated(true)
-            loadUserProfile()
+
+            // Load cached profile instantly
+            try {
+                const saved = localStorage.getItem('userProfile');
+                if (saved) setUserProfile(JSON.parse(saved));
+            } catch (e) { /* ignore */ }
+
+            setIsLoading(false) // Release UI immediately
             notificationService.requestPermission();
+
+            // Background refresh happens via SyncBackground component
         } else {
             setIsLoading(false)
         }
@@ -423,74 +432,49 @@ function App() {
         return () => clearTimeout(safetyTimer);
     }, [])
 
-    const loadUserProfile = async () => {
-        console.log('--- LOADING USER PROFILE ---')
 
-        // INSTANT LOAD: Use cached profile to show UI immediately
+    // Background-only: refreshes profile from Supabase (never blocks UI)
+    const refreshProfileFromServer = () => {
+        if (!navigator.onLine) return;
+        supabase.auth.getUser().then(({ data }) => {
+            if (!data?.user) return;
+            return supabase.from('profiles').select('*').eq('id', data.user.id).single();
+        }).then(result => {
+            if (result?.data) {
+                const fresh = { ...result.data, role: result.data.role || 'Agente de Defesa Civil' };
+                setUserProfile(fresh);
+                localStorage.setItem('userProfile', JSON.stringify(fresh));
+                console.log('[Profile] Refreshed from server:', fresh.full_name);
+            }
+        }).catch(err => console.warn('[Profile] Background refresh failed:', err));
+    }
+
+    const handleLogin = () => {
+        console.log('--- handleLogin: Entering system ---')
+
+        // 1. Set auth state IMMEDIATELY (synchronous, no awaits)
+        localStorage.setItem('auth', 'true')
+        setIsAuthenticated(true)
+
+        // 2. Load cached profile to populate UI
         try {
             const saved = localStorage.getItem('userProfile');
             if (saved) {
-                const cachedProfile = JSON.parse(saved);
-                console.log('Instant load: Using cached profile:', cachedProfile.full_name || cachedProfile.role);
-                setUserProfile(cachedProfile);
-                setIsLoading(false); // Release UI immediately!
-
-                // If mock profile, no need to refresh from server
-                if (cachedProfile.is_mock) return;
+                setUserProfile(JSON.parse(saved));
+                console.log('[Login] Using cached profile for instant entry.');
             }
-        } catch (e) {
-            console.warn('Error loading cached profile:', e);
-        }
+        } catch (e) { /* ignore */ }
 
-        // BACKGROUND REFRESH: Update profile from Supabase without blocking UI
-        if (navigator.onLine) {
-            try {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (user) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', user.id)
-                        .single()
-
-                    if (profile) {
-                        const standardizedProfile = {
-                            ...profile,
-                            role: profile.role || 'Agente de Defesa Civil'
-                        };
-                        setUserProfile(standardizedProfile)
-                        localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
-                        console.log('Background refresh: Profile updated from server.')
-                    }
-                } else {
-                    console.warn('No user session found.')
-                    setIsAuthenticated(false);
-                }
-            } catch (error) {
-                console.error('Background profile refresh failed (non-blocking):', error)
-            }
-        }
-
-        // If no cached profile existed, we need to release loading here
+        // 3. Release loading screen
         setIsLoading(false)
-    }
 
-
-    const handleLogin = async () => {
-        console.log('Handling login event from component...')
-        setIsLoading(true)
-        localStorage.setItem('auth', 'true')
-        setIsAuthenticated(true)
-        await loadUserProfile()
-
-        // Pull cloud data in the BACKGROUND — never block login
+        // 4. Background tasks (fire-and-forget, never block)
+        refreshProfileFromServer();
         if (navigator.onLine) {
             pullAllData()
-                .then(result => console.log('[Login] Cloud data restored:', result))
-                .catch(err => console.warn('[Login] Cloud data pull failed (non-blocking):', err));
+                .then(r => console.log('[Login] Cloud data restored:', r))
+                .catch(e => console.warn('[Login] Cloud pull failed:', e));
         }
-
-        setIsLoading(false);
     }
 
 
