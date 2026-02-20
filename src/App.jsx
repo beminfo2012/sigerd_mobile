@@ -12,6 +12,7 @@ import Menu from './pages/Menu'
 import ProtectedRoute from './components/ProtectedRoute'
 import { supabase } from './services/supabase'
 import { pullAllData } from './services/db'
+import { getLatestDraftS2id } from './services/s2idDb'
 
 
 // Lazy loaded components
@@ -399,16 +400,16 @@ function App() {
     }, [isDarkMode])
 
     useEffect(() => {
-        // Safety timer: force end loading after 20s to prevent infinite spinner at app start
+        // Safety: force end loading after 10s to prevent infinite spinner
         const safetyTimer = setTimeout(() => {
             setIsLoading(current => {
                 if (current) {
-                    console.warn('[App] Loading exceeded 20s, forcing app activation.');
+                    console.warn('[App] Loading exceeded 10s, forcing app activation.');
                     return false;
                 }
                 return current;
             });
-        }, 20000);
+        }, 10000);
 
         const auth = localStorage.getItem('auth')
         if (auth === 'true') {
@@ -443,25 +444,27 @@ function App() {
 
         if (!navigator.onLine) {
             console.warn('Network offline during profile load')
+            // Use cached profile if available
+            try {
+                const saved = localStorage.getItem('userProfile');
+                if (saved) setUserProfile(JSON.parse(saved));
+            } catch (e) { /* ignore */ }
             setIsLoading(false);
             return;
         }
 
         try {
             console.log('Fetching user from Supabase auth...')
-            // Timeout after 8s for auth fetch
-            const authPromise = supabase.auth.getUser()
-            const authTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 8000));
-
-            const { data: { user } } = await Promise.race([authPromise, authTimeout]);
+            const { data: { user } } = await supabase.auth.getUser()
             console.log('Auth User:', user?.id)
 
             if (user) {
                 console.log('Fetching profile data...')
-                const profilePromise = supabase.from('profiles').select('*').eq('id', user.id).single();
-                const profileTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Profile timeout')), 8000));
-
-                const { data: profile } = await Promise.race([profilePromise, profileTimeout]);
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
 
                 console.log('Profile found:', profile?.full_name)
                 if (profile) {
@@ -480,13 +483,15 @@ function App() {
                 }
             }
         } catch (error) {
-            console.error('CRITICAL: Error loading profile or timeout:', error)
-            // If offline or timeout, try to use cached profile anyway to allow app entry
-            const saved = localStorage.getItem('userProfile');
-            if (saved) {
-                console.log('Fallback: Using cached profile due to error/timeout');
-                setUserProfile(JSON.parse(saved));
-            }
+            console.error('Error loading profile:', error)
+            // Fallback to cached profile
+            try {
+                const saved = localStorage.getItem('userProfile');
+                if (saved) {
+                    console.log('Fallback: Using cached profile');
+                    setUserProfile(JSON.parse(saved));
+                }
+            } catch (e) { /* ignore */ }
         } finally {
             console.log('Profile loading finished.')
             setIsLoading(false)
@@ -500,20 +505,11 @@ function App() {
         setIsAuthenticated(true)
         await loadUserProfile()
 
-        // Restore all cloud data to local IndexedDB after login
+        // Pull cloud data in the BACKGROUND — never block login
         if (navigator.onLine) {
-            console.log('[Login] Pulling all cloud data to local DB...')
-            try {
-                // Background pull with timeout so it doesn't block the UI entry
-                const pullPromise = pullAllData();
-                const pullTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Initial pull timeout')), 10000));
-
-                Promise.race([pullPromise, pullTimeout])
-                    .then(result => console.log('[Login] Cloud data restored:', result))
-                    .catch(err => console.warn('[Login] Background data pull slow/failed:', err));
-            } catch (err) {
-                console.warn('[Login] Cloud data pull setup failed:', err);
-            }
+            pullAllData()
+                .then(result => console.log('[Login] Cloud data restored:', result))
+                .catch(err => console.warn('[Login] Cloud data pull failed (non-blocking):', err));
         }
 
         setIsLoading(false);

@@ -305,16 +305,11 @@ export const pullS2idFromCloud = async () => {
     if (!navigator.onLine) return null;
 
     console.log('[S2ID] Starting cloud pull...');
-    const startTime = Date.now();
 
     try {
-        // 1. Fetch from Supabase with a timeout
-        const fetchPromise = supabase.from('s2id_records').select('*');
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Supabase timeout after 10s')), 10000)
-        );
-
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+        const { data, error } = await supabase
+            .from('s2id_records')
+            .select('*');
 
         if (error) {
             console.error('[S2ID] Cloud pull error:', error);
@@ -326,9 +321,8 @@ export const pullS2idFromCloud = async () => {
             return [];
         }
 
-        console.log(`[S2ID] Downloaded ${data.length} records in ${Date.now() - startTime}ms. Syncing to IndexedDB...`);
+        console.log(`[S2ID] Downloaded ${data.length} records. Syncing to IndexedDB...`);
 
-        // 2. Map local records for fast lookup
         const db = await initDB();
         const allLocal = await db.getAll('s2id_records');
         const localByS2idId = new Map();
@@ -339,11 +333,9 @@ export const pullS2idFromCloud = async () => {
             if (l.supabase_id) localBySupabaseId.set(l.supabase_id, l);
         });
 
-        // 3. Batch updates in a single transaction
         const tx = db.transaction('s2id_records', 'readwrite');
         const store = tx.objectStore('s2id_records');
 
-        let updatedCount = 0;
         for (const remote of data) {
             const localMatch =
                 (remote.s2id_id ? localByS2idId.get(remote.s2id_id) : null) ||
@@ -352,12 +344,10 @@ export const pullS2idFromCloud = async () => {
 
             let toStore;
             if (localMatch) {
-                // If local is dirty (unsynced), we MERGE to preserve work
                 if (localMatch.synced === false) {
                     toStore = mergeS2idData(localMatch, remote);
                     toStore.synced = false;
                 } else {
-                    // Just update with remote data
                     toStore = {
                         ...remote,
                         id: localMatch.id,
@@ -367,7 +357,6 @@ export const pullS2idFromCloud = async () => {
                     };
                 }
             } else {
-                // New record from cloud
                 toStore = {
                     ...remote,
                     supabase_id: remote.id,
@@ -375,20 +364,19 @@ export const pullS2idFromCloud = async () => {
                 };
             }
 
-            // Cleanup
             delete toStore.id_local;
             store.put(toStore);
-            updatedCount++;
         }
 
         await tx.done;
-        console.log(`[S2ID] Cloud pull complete. Processed ${updatedCount} records in ${Date.now() - startTime}ms.`);
+        console.log(`[S2ID] Cloud pull complete. Processed ${data.length} records.`);
         return data;
     } catch (err) {
-        console.error('[S2ID] Cloud pull failed CRITICALLY:', err);
+        console.error('[S2ID] Cloud pull failed:', err);
         return null;
     }
 };
+
 
 /**
  * NUCLEAR OPTION: Rebuilds S2ID storage from scratch.
