@@ -529,15 +529,16 @@ const S2idDashboard = () => {
                             const { getS2idRecords } = await import('../../services/s2idDb');
                             const all = await getS2idRecords();
                             const summary = all.map(r => ({
-                                id: r.s2id_id,
-                                tipificacao: r.data.tipificacao.denominacao,
+                                id: r.s2id_id ? r.s2id_id.slice(0, 8) : '?',
+                                status: r.status,
+                                tipificacao: r.data.tipificacao.denominacao || '(Sem Título)',
                                 submissoes: Object.entries(r.data.submissoes_setoriais || {})
                                     .map(([s, v]) => `${s}: ${v.preenchido ? '✅' : '❌'}`).join(', ')
                             }));
                             console.table(summary);
                             alert("DADOS BRUTOS (Sincronização):\n\n" +
-                                summary.map(s => `• ${s.tipificacao.slice(0, 15)}...: ${s.submissoes}`).join('\n') +
-                                "\n\n(Detalhes completos no Console do Navegador)");
+                                summary.map(s => `[${s.status}] ID:${s.id} - ${s.tipificacao.slice(0, 10)}...: ${s.submissoes}`).join('\n') +
+                                "\n\n(Dica: Compare o ID do registro que você preencheu com o que aparece na tela)");
                         }}
                         className="mt-2 ml-2 bg-slate-700 text-white px-3 py-1 rounded hover:bg-slate-600"
                     >
