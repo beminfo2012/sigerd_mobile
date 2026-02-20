@@ -426,77 +426,55 @@ function App() {
     const loadUserProfile = async () => {
         console.log('--- LOADING USER PROFILE ---')
 
-        // Check for mock profile first
+        // INSTANT LOAD: Use cached profile to show UI immediately
         try {
             const saved = localStorage.getItem('userProfile');
             if (saved) {
-                const profile = JSON.parse(saved);
-                if (profile.is_mock) {
-                    console.log('Using mock profile for testing:', profile.role);
-                    setUserProfile(profile);
-                    setIsLoading(false);
-                    return;
-                }
+                const cachedProfile = JSON.parse(saved);
+                console.log('Instant load: Using cached profile:', cachedProfile.full_name || cachedProfile.role);
+                setUserProfile(cachedProfile);
+                setIsLoading(false); // Release UI immediately!
+
+                // If mock profile, no need to refresh from server
+                if (cachedProfile.is_mock) return;
             }
         } catch (e) {
-            console.warn('Error checking for mock profile:', e);
+            console.warn('Error loading cached profile:', e);
         }
 
-        if (!navigator.onLine) {
-            console.warn('Network offline during profile load')
-            // Use cached profile if available
+        // BACKGROUND REFRESH: Update profile from Supabase without blocking UI
+        if (navigator.onLine) {
             try {
-                const saved = localStorage.getItem('userProfile');
-                if (saved) setUserProfile(JSON.parse(saved));
-            } catch (e) { /* ignore */ }
-            setIsLoading(false);
-            return;
-        }
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', user.id)
+                        .single()
 
-        try {
-            console.log('Fetching user from Supabase auth...')
-            const { data: { user } } = await supabase.auth.getUser()
-            console.log('Auth User:', user?.id)
-
-            if (user) {
-                console.log('Fetching profile data...')
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single()
-
-                console.log('Profile found:', profile?.full_name)
-                if (profile) {
-                    const standardizedProfile = {
-                        ...profile,
-                        role: profile.role || 'Agente de Defesa Civil'
-                    };
-                    setUserProfile(standardizedProfile)
-                    localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
-                    console.log('Profile standardized and saved.')
-                }
-            } else {
-                console.warn('No user session found.')
-                if (navigator.onLine) {
+                    if (profile) {
+                        const standardizedProfile = {
+                            ...profile,
+                            role: profile.role || 'Agente de Defesa Civil'
+                        };
+                        setUserProfile(standardizedProfile)
+                        localStorage.setItem('userProfile', JSON.stringify(standardizedProfile))
+                        console.log('Background refresh: Profile updated from server.')
+                    }
+                } else {
+                    console.warn('No user session found.')
                     setIsAuthenticated(false);
                 }
+            } catch (error) {
+                console.error('Background profile refresh failed (non-blocking):', error)
             }
-        } catch (error) {
-            console.error('Error loading profile:', error)
-            // Fallback to cached profile
-            try {
-                const saved = localStorage.getItem('userProfile');
-                if (saved) {
-                    console.log('Fallback: Using cached profile');
-                    setUserProfile(JSON.parse(saved));
-                }
-            } catch (e) { /* ignore */ }
-        } finally {
-            console.log('Profile loading finished.')
-            setIsLoading(false)
         }
+
+        // If no cached profile existed, we need to release loading here
+        setIsLoading(false)
     }
+
 
     const handleLogin = async () => {
         console.log('Handling login event from component...')
