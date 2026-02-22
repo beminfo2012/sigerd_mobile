@@ -132,14 +132,14 @@ const AppContent = ({
                     const draft = await getLatestDraftS2id();
                     // Só redireciona se for um rascunho válido (com COBRADE definido pela DC)
                     if (draft && draft.data.tipificacao.cobrade) {
-                        navigate(`/s2id/editar/${draft.id}`);
+                        navigate(`/s2id/editar/${draft.id}`, { replace: true });
                     } else {
                         // Se não houver rascunho com COBRADE, vai para o dashboard monitorar
-                        navigate('/s2id');
+                        navigate('/s2id', { replace: true });
                     }
                 } catch (error) {
                     console.error('Redirection error:', error);
-                    navigate('/s2id');
+                    navigate('/s2id', { replace: true });
                 }
             }
         };

@@ -644,8 +644,18 @@ export const pullAllData = async () => {
                 continue;
             }
 
-            const { data, error } = result.value;
-            if (error || !data || data.length === 0) continue;
+            const { data, error, status } = result.value;
+
+            // Handle 404 gracefully (Table might not exist yet)
+            if (status === 404) {
+                console.warn(`[Pull] Table ${mod.table} not found (404). Skipping.`);
+                continue;
+            }
+
+            if (error || !data || data.length === 0) {
+                if (error) console.warn(`[Pull] Error fetching ${mod.table}:`, error);
+                continue;
+            }
 
             try {
                 const tx = db.transaction(mod.store, 'readwrite');
@@ -655,10 +665,21 @@ export const pullAllData = async () => {
                 const localByKey = new Map(mod.key ? allLocal.filter(l => l[mod.key]).map(l => [l[mod.key], l]) : []);
 
                 for (const item of data) {
-                    const localMatch = localBySupId.get(item.id) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
+                    const { id: supabaseId, ...rest } = item;
+                    const localMatch = localBySupId.get(supabaseId) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
+
                     if (localMatch && localMatch.synced === false) continue;
-                    const toStore = { ...item, id: localMatch ? localMatch.id : undefined, supabase_id: item.id, synced: true };
-                    store.put(toStore); // No await — batched in transaction
+
+                    const toStore = {
+                        ...rest,
+                        id: localMatch ? localMatch.id : undefined,
+                        supabase_id: supabaseId,
+                        synced: true
+                    };
+
+                    if (!localMatch) delete toStore.id; // Ensure auto-increment works by completely removing 'id' if null/undefined
+
+                    store.put(toStore);
                     totalPulled++;
                 }
                 await tx.done;

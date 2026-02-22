@@ -70,6 +70,7 @@ const S2idForm = () => {
     const [showCamera, setShowCamera] = useState(false);
     const [showSignature, setShowSignature] = useState(false);
     const [generatingIA, setGeneratingIA] = useState({ introducao: false, consideracoes: false });
+    const isDirty = React.useRef(false); // Track if there are actual unsaved changes
 
     // Load record if editing
     useEffect(() => {
@@ -145,29 +146,30 @@ const S2idForm = () => {
 
     // Auto-save logic (Debounced)
     useEffect(() => {
-        if (loading) return;
+        if (loading || !isDirty.current) return;
 
         const timer = setTimeout(() => {
             handleAutoSave();
         }, 2000); // 2 seconds of inactivity
 
         return () => clearTimeout(timer);
-    }, [formData]);
+    }, [formData, loading]);
 
     const handleAutoSave = async () => {
         if (loading || saving) return;
         setSaving(true);
         try {
             const savedId = await saveS2idLocal(formData);
-            if (!id || id === 'novo') {
-                // If new, update URL without reloading
-                window.history.replaceState(null, '', `/s2id/editar/${savedId}`);
+            if ((!id || id === 'novo') && savedId) {
+                isDirty.current = false; // Prevent immediate re-save
+                navigate(`/s2id/editar/${savedId}`, { replace: true });
                 setFormData(prev => ({ ...prev, id: savedId }));
             }
         } catch (error) {
             console.warn('Auto-save failed:', error);
         } finally {
             setSaving(false);
+            isDirty.current = false;
         }
     };
 
@@ -237,6 +239,7 @@ const S2idForm = () => {
 
     const updateData = (section, field, value) => {
         if (!canEditSection(section)) return;
+        isDirty.current = true;
         setFormData(prev => {
             const newState = {
                 ...prev,
@@ -284,6 +287,7 @@ const S2idForm = () => {
 
     const updateSetorialField = (sector, field, value) => {
         if (activeSector && sector !== activeSector) return;
+        isDirty.current = true;
         setFormData(prev => ({
             ...prev,
             data: {
