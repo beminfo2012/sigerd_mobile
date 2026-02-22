@@ -102,7 +102,7 @@ export function Dashboard() {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-base font-black text-slate-800 leading-tight">Assistência Humanitária</h1>
+                        <h1 className="text-base font-black text-slate-800 leading-tight">ASSIST. HUMANITÁRIA</h1>
                         <div className="flex items-center gap-1.5 overflow-hidden">
                             <span className={`w-1 h-1 rounded-full ${syncPercentage === 100 ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'} flex-shrink-0`} />
                             <p className={`text-[10px] font-bold uppercase tracking-wider truncate ${syncPercentage === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
@@ -284,7 +284,7 @@ export function Dashboard() {
                                         <div className="flex items-center gap-3">
                                             {/* Status Dot */}
                                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${shelter.status === 'active' ? 'bg-emerald-500' :
-                                                    shelter.status === 'full' ? 'bg-amber-500' : 'bg-slate-300'
+                                                shelter.status === 'full' ? 'bg-amber-500' : 'bg-slate-300'
                                                 }`} />
 
                                             <div className="flex-1 min-w-0">

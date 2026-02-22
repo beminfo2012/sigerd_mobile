@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home, Share2, RefreshCw } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home, Share2, RefreshCw, Plus, Users, X } from 'lucide-react'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
@@ -385,537 +387,323 @@ const Dashboard = () => {
 
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen p-5 pb-24 font-sans">
-            {/* Weather Widget */}
-            {weather?.current && (
-                <div
-                    onClick={() => setShowForecast(true)}
-                    className="mb-8 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all"
-                >
-                    <div className="flex items-center gap-6">
-                        <div className="text-5xl">{getWeatherIcon(weather.current.code)}</div>
-                        <div>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
-                                <span className="text-xl font-bold text-slate-400">°C</span>
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen font-sans">
+            <div className="max-w-7xl mx-auto p-5 pb-24 lg:p-8">
+
+                {/* 1. Weather Widget (Responsive) */}
+                {weather?.current && (
+                    <div
+                        onClick={() => setShowForecast(true)}
+                        className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all hover:bg-white/60 dark:hover:bg-slate-800/60 mb-6 lg:mb-8"
+                    >
+                        <div className="flex items-center gap-6">
+                            <div className="text-5xl lg:text-6xl">{getWeatherIcon(weather.current.code)}</div>
+                            <div>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
+                                    <span className="text-xl font-bold text-slate-400">°C</span>
+                                </div>
+                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
                             </div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
+                        </div>
+                        <div className="hidden sm:flex flex-col sm:flex-row gap-4 lg:gap-8 items-end sm:items-center">
+                            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
+                                <CloudRain size={16} className="text-blue-500" />
+                                <span>{weather.daily?.[0]?.rainProb || 0}%</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
+                                <Timer size={16} className="text-blue-400" />
+                                <span>{weather.current.humidity || 0}%</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
+                                <Activity size={16} className="text-orange-400" />
+                                <span>{Math.round(weather.current.wind || 0)} km/h</span>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-2 items-end">
-                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
-                            <CloudRain size={14} className="text-blue-500" />
-                            <span>Chuva: {weather.daily?.[0]?.rainProb || 0}%</span>
+                )}
+
+                <CemadenAlertBanner alerts={cemadenAlerts} />
+
+                {/* 2. Main Layout (Mobile: Stacked | Desktop: Grid) */}
+                <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+
+                    {/* Left Column (Main Content on Desktop | Full Width on Mobile) */}
+                    <div className="lg:col-span-8 xl:col-span-9 space-y-8">
+
+                        {/* Indicators Grid (Mobile layout restored) */}
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="flex flex-col">
+                                    <h2 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider -mt-1">Santa Maria de Jetibá</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleSync}
+                                        disabled={syncing}
+                                        className={`p-2.5 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'}`}
+                                    >
+                                        <RefreshCw size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                                {/* Sync Card */}
+                                <div
+                                    onClick={handleSync}
+                                    className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 relative transition-all cursor-pointer active:scale-95 group"
+                                >
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                                        {syncing ? <CloudUpload size={20} className="animate-bounce" /> : <CloudUpload size={20} />}
+                                    </div>
+                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
+                                        {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Sincronização</div>
+                                    {((syncDetail.total > 0) || (data.stats.totalVistorias > 0)) && !syncing && (
+                                        <button onClick={(e) => { e.stopPropagation(); handleClearCache(); }} className="mt-4 text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Trash2 size={10} /> Limpar Cache
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* INMET Alerts */}
+                                <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer active:scale-95 transition-all">
+                                    <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
+                                        <Zap size={20} />
+                                    </div>
+                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 leading-none tabular-nums">
+                                        {data.stats.inmetAlertsCount || 0}
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</div>
+                                </div>
+
+                                {/* Total Inspections - Hidden on Mobile */}
+                                <div className="hidden md:block bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700">
+                                    <div className="bg-blue-50 text-blue-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
+                                        <ClipboardList size={20} />
+                                    </div>
+                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
+                                        {data.stats.totalVistorias}
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Vistorias Totais</div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
-                            <Timer size={14} className="text-slate-400" />
-                            <span>Umidade: {weather.current.humidity || 0}%</span>
+
+                        {/* Circular Icons - Mobile Only Section */}
+                        <div className="lg:hidden mb-12">
+                            <h2 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-6 px-1 uppercase tracking-widest">Acesso Rápido</h2>
+                            <div className="grid grid-cols-4 gap-2 px-1 justify-items-center">
+                                {/* Monitoramento */}
+                                <div onClick={() => navigate('/monitoramento')} className="flex flex-col items-center gap-2.5 cursor-pointer group">
+                                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all">
+                                        <Activity size={28} strokeWidth={2.2} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Monitorar</span>
+                                </div>
+
+                                {/* ASSIST. HUMANITÁRIA */}
+                                <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer group">
+                                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all">
+                                        <Home size={28} strokeWidth={2.2} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Assist. Humanitária</span>
+                                </div>
+
+                                {/* Ocorrências */}
+                                <div onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center gap-2.5 cursor-pointer group">
+                                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all">
+                                        <ClipboardList size={28} strokeWidth={2.2} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Ocorrências</span>
+                                </div>
+
+                                {/* Relatórios */}
+                                <div className="flex flex-col items-center gap-2.5 relative">
+                                    <div onClick={() => setShowReportMenu(!showReportMenu)} className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all cursor-pointer">
+                                        <FileText size={28} strokeWidth={2.2} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Relatórios</span>
+                                    {showReportMenu && (
+                                        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {[24, 48, 96, 0].map(h => (
+                                                <button key={h} className="w-full text-left px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700" onClick={() => setShowReportMenu(false)}>
+                                                    {h === 0 ? 'Todo o Período' : `Últimas ${h}h`}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold">
-                            <Activity size={14} className="text-slate-400" />
-                            <span>Vento: {Math.round(weather.current.wind || 0)} km/h</span>
+
+                        {/* Breakdown Panel (Mobile: Visible | Desktop: Hidden, handled by sidebar) */}
+                        <div className="lg:hidden bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Resumo Situacional</h3>
+                            <div className="space-y-6">
+                                {data?.breakdown?.map((item, idx) => (
+                                    <div key={idx}>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
+                                            <span className="text-xs font-black text-slate-800 dark:text-slate-100">{item.count}</span>
+                                        </div>
+                                        <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden">
+                                            <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`} style={{ width: `${item.percentage}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Map Section (Responsive) */}
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-100">Mapa Situacional</h3>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Distribuição Geográfica</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => navigate('/monitoramento')} className="bg-orange-50 text-orange-600 p-2 rounded-xl transition-colors" title="Mapa de Calor">
+                                        <Flame size={16} />
+                                    </button>
+                                    <button onClick={handleExportKML} className="bg-slate-100 text-slate-600 p-2 rounded-xl" title="Exportar KML">
+                                        <Download size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="h-96 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100">
+                                <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                                    <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                    {data?.locations?.map((loc, idx) => (
+                                        <CircleMarker
+                                            key={idx}
+                                            center={[loc.lat, loc.lng]}
+                                            radius={6}
+                                            pathOptions={{
+                                                color: '#ffffff',
+                                                weight: 1.5,
+                                                fillColor: String(loc.risk).includes('Alto') ? '#ef4444' : '#f97316',
+                                                fillOpacity: 0.8
+                                            }}
+                                        />
+                                    ))}
+                                </MapContainer>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column (Sidebar - Desktop Only) */}
+                    <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 space-y-8">
+
+                        {/* Quick Access (Desktop Card Style) */}
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Ações do Sistema</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={() => navigate('/monitoramento')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
+                                    <Activity className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Monitorar</span>
+                                </button>
+                                <button onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
+                                    <ClipboardList className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Ocorrências</span>
+                                </button>
+                                <button onClick={() => navigate('/abrigos')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
+                                    <Home className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Assist. Humanitária</span>
+                                </button>
+                                <div className="relative">
+                                    <button onClick={() => setShowReportMenu(!showReportMenu)} className="w-full flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
+                                        <FileText className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase">Relatórios</span>
+                                    </button>
+                                    {showReportMenu && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden py-1">
+                                            {[24, 48, 96, 0].map(h => (
+                                                <button key={h} className="w-full text-left px-4 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 uppercase" onClick={() => setShowReportMenu(false)}>
+                                                    {h === 0 ? 'Tudo' : `${h}h`}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Breakdown Panel (Desktop Sidebar) */}
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Resumo Situacional</h3>
+                            <div className="space-y-6">
+                                {data?.breakdown?.map((item, idx) => (
+                                    <div key={idx}>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
+                                            <span className="text-xs font-black text-slate-800 dark:text-slate-100">{item.count}</span>
+                                        </div>
+                                        <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden">
+                                            <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`} style={{ width: `${item.percentage}%` }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-16 mb-8 flex flex-col items-center">
+                    <div className="h-px w-24 bg-slate-200 dark:bg-slate-800 mb-8" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD WEB V1.2.0</span>
+                </div>
+            </div>
+
+            {/* Global Modals */}
+            {showForecast && weather && (
+                <div onClick={() => setShowForecast(false)} className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Previsão 7 Dias</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</p>
+                            </div>
+                            <button onClick={() => setShowForecast(false)} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                            {weather.daily?.map((day, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-slate-100 transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-2xl">{getWeatherIcon(day.code)}</div>
+                                        <div>
+                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                                {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}
+                                            </div>
+                                            <div className="text-[10px] font-bold text-slate-400">{day.rainProb}% chuva</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm font-black text-slate-800 dark:text-slate-100">{Math.round(day.tempMax)}°</div>
+                                        <div className="text-[10px] font-bold text-slate-300">{Math.round(day.tempMin)}°</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Cemaden Alert Banner - Shows only when active */}
-            <CemadenAlertBanner alerts={cemadenAlerts} />
-
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex flex-col">
-                    <h1 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h1>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider -mt-1">Santa Maria de Jetibá</span>
+            {generatingReport && (
+                <div className="fixed inset-0 z-[200] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center gap-4">
+                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">Gerando Relatório Situacional...</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleSync}
-                        disabled={syncing}
-                        className={`p-2 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500 hover:bg-slate-200'}`}
-                    >
-                        <RefreshCw size={18} />
-                    </button>
-                    <div className="flex items-center gap-1 bg-slate-200/50 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500">
-                        <Calendar size={14} />
-                        <span>Hoje</span>
-                    </div>
-                </div>
-            </div>
+            )}
+        </div>
+    );
+};
 
-            <div className="grid grid-cols-2 gap-4 mb-5">
-                <div
-                    onClick={handleSync}
-                    className={`bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative transition-all ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'cursor-pointer active:scale-95 hover:bg-orange-50/30' : ''}`}
-                >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
-                        {syncing ? (
-                            <CloudUpload size={20} strokeWidth={2.5} className="animate-bounce" />
-                        ) : (
-                            (syncDetail.vistorias + syncDetail.interdicoes) > 0 ? <CloudUpload size={20} strokeWidth={2.5} /> : <CheckCircle size={20} strokeWidth={2.5} />
-                        )}
-                    </div>
-                    {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (
-                        <div className={`absolute top-5 right-5 bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 ${syncing ? 'animate-pulse' : ''}`}>
-                            {syncing ? 'Sincronizando...' : 'Pendente'}
-                        </div>
-                    ) : (
-                        <div className="absolute top-5 right-5 bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-green-100">OK</div>
-                    )}
-                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 leading-none tabular-nums">
-                        {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
-                    </div>
-                    <div className="text-xs font-bold text-slate-400 leading-tight">
-                        {syncing ? 'Enviando...' : (
-                            syncDetail.total > 0 ? (
-                                <div className="flex flex-col gap-0.5">
-                                    <span>
-                                        {syncDetail.vistorias > 0 && `${syncDetail.vistorias} Vistoria${syncDetail.vistorias > 1 ? 's' : ''}`}
-                                        {syncDetail.vistorias > 0 && syncDetail.interdicoes > 0 && ', '}
-                                        {syncDetail.interdicoes > 0 && `${syncDetail.interdicoes} Interdição${syncDetail.interdicoes > 1 ? 'ões' : ''}`}
-                                    </span>
-                                    {syncDetail.photosTotal > 0 && (
-                                        <span className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">
-                                            {syncDetail.photosTotal} foto{syncDetail.photosTotal > 1 ? 's' : ''} pendente{syncDetail.photosTotal > 1 ? 's' : ''}
-                                        </span>
-                                    )}
-                                </div>
-                            ) : 'Sincronizado'
-                        )}
-                    </div>
-                    {/* Reset Button - Always available if something exists locally */}
-                    {((syncDetail.total > 0) || (data.stats.totalVistorias > 0) || (data.breakdown.length > 0)) && !syncing && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handleClearCache(); }}
-                            className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors flex items-center gap-1 active:opacity-50"
-                        >
-                            <Trash2 size={10} />
-                            Limpar Dados Locais
-                        </button>
-                    )}
-                </div>
-
-                <div
-                    onClick={() => navigate('/alerts')}
-                    className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-[0_4px_25px_-4px_rgba(0,0,0,0.05)] border border-slate-100 relative cursor-pointer active:scale-95 transition-all hover:bg-slate-50 dark:bg-slate-900"
-                >
-                    <div className="bg-red-50 w-10 h-10 rounded-xl flex items-center justify-center text-red-600 mb-3">
-                        <AlertTriangle size={20} strokeWidth={2.5} />
-                    </div>
-                    {data.stats.inmetAlertsCount > 0 && (
-                        <div className="absolute top-5 right-5 bg-red-50 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-100 animate-pulse">
-                            {data.stats.inmetAlertsCount} Alertas
-                        </div>
-                    )}
-                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 leading-none tabular-nums">{data.stats.activeOccurrences}</div>
-                    <div className="text-xs font-bold text-slate-400 leading-tight">Avisos</div>
-                </div>
-            </div>
-
-            {/* Quick Access - Circular Icons */}
-            <div className="mb-6">
-                <h2 className="text-sm font-bold text-slate-600 mb-4 px-1">Acesso Rápido</h2>
-                <div className="grid grid-cols-4 gap-2 px-1 justify-items-center">
-                    {/* Pluviômetros */}
-                    <div
-                        onClick={() => navigate('/pluviometros')}
-                        className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
-                    >
-                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
-                            <CloudRain size={28} strokeWidth={2.2} />
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Pluviômetros</span>
-                    </div>
-
-                    {/* Abrigos */}
-                    <div
-                        onClick={() => navigate('/abrigos')}
-                        className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
-                    >
-                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
-                            <Home size={28} strokeWidth={2.2} />
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Assist. Humanitária</span>
-                    </div>
-
-                    {/* Relatórios */}
-                    <div className="flex flex-col items-center gap-2.5 flex-shrink-0 relative">
-                        <div
-                            onClick={() => setShowReportMenu(!showReportMenu)}
-                            className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)] cursor-pointer"
-                        >
-                            <FileText size={28} strokeWidth={2.2} />
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Relatórios</span>
-
-                        {/* Dropdown Menu */}
-                        {showReportMenu && (
-                            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {[
-                                    { label: 'Últimas 24h', hours: 24 },
-                                    { label: 'Últimas 48h', hours: 48 },
-                                    { label: 'Últimas 96h', hours: 96 },
-                                    { label: 'Todo o Período', hours: 0 }
-                                ].map((opt) => (
-                                    <div key={opt.hours} className="border-b border-slate-50 last:border-0">
-                                        <div className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">{opt.label}</div>
-                                        <div className="flex px-2 pb-2 gap-1">
-                                            <button
-                                                onClick={async () => {
-                                                    setShowReportMenu(false);
-                                                    setGeneratingReport(true);
-                                                    try {
-                                                        // 1. Filter Data by timeframe
-                                                        const filteredData = { ...data };
-                                                        let timeframeLabel = opt.label;
-
-                                                        if (opt.hours > 0) {
-                                                            const threshold = new Date();
-                                                            threshold.setHours(threshold.getHours() - opt.hours);
-
-                                                            // Update locations
-                                                            filteredData.locations = data.locations.filter(l => {
-                                                                const d = new Date(l.date);
-                                                                return d >= threshold;
-                                                            });
-
-                                                            // Recalculate breakdown for the selected timeframe
-                                                            const counts = {};
-                                                            filteredData.locations.forEach(l => {
-                                                                const cat = l.risk || 'Outros';
-                                                                counts[cat] = (counts[cat] || 0) + 1;
-                                                            });
-
-                                                            const total = filteredData.locations.length;
-                                                            filteredData.breakdown = Object.keys(counts).map((label) => ({
-                                                                label,
-                                                                count: counts[label],
-                                                                percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
-                                                            })).sort((a, b) => b.count - a.count);
-
-                                                            // Update stats for report
-                                                            filteredData.stats = {
-                                                                ...data.stats,
-                                                                totalVistorias: total,
-                                                            };
-                                                        }
-
-                                                        // 2. Fetch fresh Pluviometer data
-                                                        let pluvioData = [];
-                                                        try {
-                                                            const res = await fetch('/api/pluviometros');
-                                                            if (res.ok) pluvioData = await res.json();
-                                                        } catch (e) {
-                                                            console.warn("Failed to fetch pluvio for report", e);
-                                                        }
-
-                                                        // 3. Fetch Humanitarian Data (New)
-                                                        let humanitarianData = {
-                                                            shelters: [],
-                                                            occupants: [],
-                                                            inventory: []
-                                                        };
-                                                        try {
-                                                            const [shelters, occupants, inventory] = await Promise.all([
-                                                                getShelters().catch(() => []),
-                                                                getOccupants().catch(() => []),
-                                                                getGlobalInventory().catch(() => [])
-                                                            ]);
-                                                            humanitarianData = { shelters, occupants, inventory };
-                                                        } catch (e) {
-                                                            console.warn("Failed to fetch humanitarian data for report", e);
-                                                        }
-
-                                                        // 4. Capture Map Element
-                                                        const mapElement = document.querySelector('.leaflet-container');
-
-                                                        // 5. Generate PDF
-                                                        await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel, humanitarianData, false);
-
-                                                    } catch (e) {
-                                                        console.error(e);
-                                                        alert("Erro ao gerar relatório.");
-                                                    } finally {
-                                                        setGeneratingReport(false);
-                                                    }
-                                                }}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 text-blue-600 py-2 rounded-xl transition-all active:scale-95"
-                                            >
-                                                <FileText size={14} />
-                                                <span className="text-[10px] font-bold uppercase">Abrir</span>
-                                            </button>
-                                            <button
-                                                onClick={async () => {
-                                                    setShowReportMenu(false);
-                                                    setGeneratingReport(true);
-                                                    try {
-                                                        // 1. Filter Data by timeframe
-                                                        const filteredData = { ...data };
-                                                        let timeframeLabel = opt.label;
-
-                                                        if (opt.hours > 0) {
-                                                            const threshold = new Date();
-                                                            threshold.setHours(threshold.getHours() - opt.hours);
-
-                                                            // Update locations
-                                                            filteredData.locations = data.locations.filter(l => {
-                                                                const d = new Date(l.date);
-                                                                return d >= threshold;
-                                                            });
-
-                                                            // Recalculate breakdown for the selected timeframe
-                                                            const counts = {};
-                                                            filteredData.locations.forEach(l => {
-                                                                const cat = l.risk || 'Outros';
-                                                                counts[cat] = (counts[cat] || 0) + 1;
-                                                            });
-
-                                                            const total = filteredData.locations.length;
-                                                            filteredData.breakdown = Object.keys(counts).map((label) => ({
-                                                                label,
-                                                                count: counts[label],
-                                                                percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
-                                                            })).sort((a, b) => b.count - a.count);
-
-                                                            // Update stats for report
-                                                            filteredData.stats = {
-                                                                ...data.stats,
-                                                                totalVistorias: total,
-                                                            };
-                                                        }
-
-                                                        // 2. Fetch fresh Pluviometer data
-                                                        let pluvioData = [];
-                                                        try {
-                                                            const res = await fetch('/api/pluviometros');
-                                                            if (res.ok) pluvioData = await res.json();
-                                                        } catch (e) {
-                                                            console.warn("Failed to fetch pluvio for report", e);
-                                                        }
-
-                                                        // 3. Fetch Humanitarian Data (New)
-                                                        let humanitarianData = {
-                                                            shelters: [],
-                                                            occupants: [],
-                                                            inventory: []
-                                                        };
-                                                        try {
-                                                            const [shelters, occupants, inventory] = await Promise.all([
-                                                                getShelters().catch(() => []),
-                                                                getOccupants().catch(() => []),
-                                                                getGlobalInventory().catch(() => [])
-                                                            ]);
-                                                            humanitarianData = { shelters, occupants, inventory };
-                                                        } catch (e) {
-                                                            console.warn("Failed to fetch humanitarian data for report", e);
-                                                        }
-
-                                                        // 4. Capture Map Element
-                                                        const mapElement = document.querySelector('.leaflet-container');
-
-                                                        // 5. Generate PDF
-                                                        await generateSituationalReport(filteredData, weather, pluvioData, mapElement, timeframeLabel, humanitarianData, true);
-
-                                                    } catch (e) {
-                                                        console.error(e);
-                                                        alert("Erro ao compartilhar.");
-                                                    } finally {
-                                                        setGeneratingReport(false);
-                                                    }
-                                                }}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900 hover:bg-orange-50 text-orange-600 py-2 rounded-xl transition-all active:scale-95"
-                                            >
-                                                <Share2 size={14} />
-                                                <span className="text-[10px] font-bold uppercase">Enviar</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Áreas de Risco */}
-                    <div
-                        onClick={() => navigate('/monitoramento/riscos')}
-                        className="flex flex-col items-center gap-2.5 cursor-pointer flex-shrink-0"
-                    >
-                        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_20px_rgba(42,82,153,0.12)] flex items-center justify-center text-[#2a5299] active:scale-95 transition-all hover:shadow-[0_6px_25px_rgba(42,82,153,0.18)]">
-                            <ShieldAlert size={28} strokeWidth={2.2} />
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight max-w-[80px]">Áreas de Risco</span>
-                    </div>
-
-                </div>
-            </div>
-
-
-
-
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 mb-6 relative">
-                <div className="flex justify-between items-center mb-6 px-1">
-                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Vistorias por Tipologia</h3>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Tempo Real</span>
-                        <button
-                            onClick={() => {
-                                const csvContent = "data:text/csv;charset=utf-8,"
-                                    + "Tipologia;Quantidade;Porcentagem\n"
-                                    + data.breakdown.map(e => `${e.label};${e.count};${e.percentage}%`).join("\n");
-                                const encodedUri = encodeURI(csvContent);
-                                const link = document.createElement("a");
-                                link.setAttribute("href", encodedUri);
-                                link.setAttribute("download", `sigerd_stats_${new Date().toISOString().split('T')[0]}.csv`);
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                            }}
-                            className="p-1.5 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                            title="Exportar CSV"
-                        >
-                            <Download size={14} />
-                        </button>
-                    </div>
-                </div>
-
-                <div className="space-y-6">
-                    {data?.breakdown?.map((item, idx) => (
-                        <div key={idx}>
-                            <div className="flex justify-between items-baseline mb-2 px-1">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${item.color || 'bg-slate-300'}`} />
-                                    <span className="text-xs font-bold text-slate-500">{item.label || 'Outros'}</span>
-                                </div>
-                                <div className="text-xs font-black text-slate-800 dark:text-slate-100 tabular-nums">
-                                    {item.percentage || 0}% <span className="text-slate-300 font-bold ml-1">{item.count || 0}</span>
-                                </div>
-                            </div>
-                            <div className="w-full bg-slate-50 dark:bg-slate-900 rounded-full h-3 p-0.5 border border-slate-100 shadow-inner">
-                                <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-slate-300'}`} style={{ width: `${item.percentage || 0}%` }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden mb-6">
-                <div className="flex justify-between items-center mb-4 px-1">
-                    <div>
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Mapa de Concentração</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Ocorrências Atuais</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => navigate('/monitoramento')}
-                            className="bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 p-2 rounded-xl transition-colors flex items-center gap-2"
-                        >
-                            <Flame size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-tighter">MAPA DE CALOR</span>
-                        </button>
-                        <button
-                            onClick={handleExportKML}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-xl transition-colors flex items-center gap-2"
-                        >
-                            <Download size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-tighter">KML</span>
-                        </button>
-                    </div>
-                </div>
-                <div className="h-72 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100 shadow-inner">
-                    <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-                        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                        <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
-                        {data?.locations?.map((loc, idx) => {
-                            const isHighRisk = String(loc.risk || '').includes('Alto');
-                            return (
-                                <CircleMarker
-                                    key={idx}
-                                    center={[loc.lat, loc.lng]}
-                                    radius={8}
-                                    pathOptions={{
-                                        color: '#ffffff',
-                                        weight: 2,
-                                        fillColor: isHighRisk ? '#ef4444' : '#f97316',
-                                        fillOpacity: 1,
-                                        stroke: true
-                                    }}
-                                >
-                                    <Popup>
-                                        <div className="text-center">
-                                            <div className="font-bold text-slate-800 dark:text-slate-100 mb-1">{loc.risk || 'Local'}</div>
-                                            <div className="text-sm text-slate-600">{loc.details || ''}</div>
-                                        </div>
-                                    </Popup>
-                                </CircleMarker>
-                            );
-                        })}
-                    </MapContainer>
-                </div>
-            </div>
-
-
-
-            {
-                showForecast && weather && (
-                    <div
-                        onClick={() => setShowForecast(false)}
-                        className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-                    >
-                        <div
-                            onClick={e => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200"
-                        >
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Previsão 7 Dias</h3>
-                                    <div className="text-xs font-bold text-slate-400">Santa Maria de Jetibá</div>
-                                </div>
-                                <button
-                                    onClick={() => setShowForecast(false)}
-                                    className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors"
-                                >
-                                    <ArrowLeft size={18} />
-                                </button>
-                            </div>
-
-                            <div className="space-y-4">
-                                {weather.daily.map((day, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:bg-slate-900 transition-colors border border-transparent hover:border-slate-100">
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-2xl">{getWeatherIcon(day.code || day.weatherCode)}</div>
-                                            <div>
-                                                <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                                                    {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}
-                                                </div>
-                                                <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                    <CloudRain size={10} className="text-blue-500" />
-                                                    {day.rainProb}% chance
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-right">
-                                                <div className="text-sm font-black text-slate-800 dark:text-slate-100">{Math.round(day.tempMax)}°</div>
-                                                <div className="text-[10px] font-bold text-slate-400">Max</div>
-                                            </div>
-                                            <div className="h-8 w-px bg-slate-100" />
-                                            <div className="text-right">
-                                                <div className="text-sm font-black text-slate-400">{Math.round(day.tempMin)}°</div>
-                                                <div className="text-[10px] font-bold text-slate-300">Min</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            <div className="flex flex-col items-center w-full mt-12 mb-4">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD MOBILE V1.2.0</span>
-            </div>
-        </div >
-    )
-}
-
-export default Dashboard
+export default Dashboard;

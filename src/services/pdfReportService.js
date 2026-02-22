@@ -37,7 +37,7 @@ export const generateShelterReport = async (shelters, donations, occupants) => {
                     <img src="${LOGO_BASE64}" style="height: 60px; display: block;" />
                     <div>
                         <h1 style="margin: 0; font-size: 24px; color: #2a5299; text-transform: uppercase; font-weight: 900;">Relatório de Abrigos</h1>
-                        <p style="margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: bold;">Gestão de Assistência Humanitária</p>
+                        <p style="margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: bold;">Gestão de ASSIST. HUMANITÁRIA</p>
                         <p style="margin: 2px 0 0; font-size: 12px; color: #94a3b8;">Defesa Civil de Santa Maria de Jetibá - ES</p>
                     </div>
                 </div>
