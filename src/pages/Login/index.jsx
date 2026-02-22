@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../../services/supabase'
 import { Fingerprint, User, Lock, Info, ShieldCheck, ShieldAlert, LogIn, Loader2 } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('')
@@ -12,56 +10,33 @@ const Login = ({ onLogin }) => {
     const [techError, setTechError] = useState(null)
     const [showTech, setShowTech] = useState(false)
 
-    // Helper to decode base64/base64url to Uint8Array
     const base64ToUint8Array = (base64) => {
         const binaryString = window.atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
         const len = binaryString.length;
         const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
+        for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
         return bytes;
     }
 
-    // Helper to encode Uint8Array to base64url
     const uint8ArrayToBase64Url = (uint8Array) => {
-        const binaryString = String.fromCharCode(...uint8Array);
-        return window.btoa(binaryString)
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
+        return window.btoa(String.fromCharCode(...uint8Array))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     }
 
     const handleBiometricLogin = async () => {
         setError('')
         const savedEmail = localStorage.getItem('biometric_email')
-        if (!savedEmail) {
-            setError('Faça login com senha primeiro para ativar a biometria.')
-            return
-        }
-
+        if (!savedEmail) { setError('Faça login com senha primeiro para ativar a biometria.'); return }
         setLoading(true)
         try {
             const { data: options, error: optError } = await supabase.functions.invoke('webauthn', {
-                body: {
-                    action: 'generate-authentication-options',
-                    email: savedEmail,
-                    origin: window.location.origin
-                }
+                body: { action: 'generate-authentication-options', email: savedEmail, origin: window.location.origin }
             })
-
             if (optError) throw optError
-
-            options.allowCredentials = options.allowCredentials.map(c => ({
-                ...c,
-                id: base64ToUint8Array(c.id)
-            }))
+            options.allowCredentials = options.allowCredentials.map(c => ({ ...c, id: base64ToUint8Array(c.id) }))
             options.challenge = base64ToUint8Array(options.challenge)
-
             const credential = await navigator.credentials.get({ publicKey: options })
-
             if (!credential) throw new Error('Falha ao obter credencial')
-
             const authResponse = {
                 id: credential.id,
                 rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
@@ -74,39 +49,19 @@ const Login = ({ onLogin }) => {
                 },
                 clientExtensionResults: credential.getClientExtensionResults(),
             }
-
             const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('webauthn', {
-                body: {
-                    action: 'verify-authentication',
-                    email: savedEmail,
-                    authenticationResponse: authResponse,
-                    origin: window.location.origin
-                }
+                body: { action: 'verify-authentication', email: savedEmail, authenticationResponse: authResponse, origin: window.location.origin }
             })
-
             if (verifyError) {
-                let errorMessage = verifyError.message;
-                try {
-                    const errorData = await verifyError.response?.json();
-                    if (errorData?.error) errorMessage = errorData.error;
-                } catch (e) {
-                    console.error('Error parsing error response:', e);
-                }
-                throw new Error(errorMessage);
+                let msg = verifyError.message;
+                try { const d = await verifyError.response?.json(); if (d?.error) msg = d.error; } catch (_) { }
+                throw new Error(msg);
             }
-
-            if (verifyResult.verified && verifyResult.loginUrl) {
-                onLogin()
-            } else {
-                setError('Falha na verificação biométrica')
-            }
-
+            if (verifyResult.verified && verifyResult.loginUrl) onLogin()
+            else setError('Falha na verificação biométrica')
         } catch (err) {
-            console.error('Biometric error:', err)
             setError('Erro na biometria: ' + (err.message || 'Tente novamente'))
-        } finally {
-            setLoading(false)
-        }
+        } finally { setLoading(false) }
     }
 
     const handleSubmit = async (e) => {
@@ -152,16 +107,12 @@ const Login = ({ onLogin }) => {
 
         setLoading(true)
         try {
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email: username,
-                password: password
-            });
-
+            const { data, error: authError } = await supabase.auth.signInWithPassword({ email: username, password })
             if (authError) {
-                setError('Usuário ou senha inválidos');
-                setTechError(authError.message + (authError.status ? ` (Status: ${authError.status})` : ''));
-                setLoading(false);
-                return;
+                setError('Usuário ou senha inválidos')
+                setTechError(authError.message + (authError.status ? ` (Status: ${authError.status})` : ''))
+                setLoading(false)
+                return
             }
             onLogin()
         } catch (err) {
@@ -172,151 +123,193 @@ const Login = ({ onLogin }) => {
     }
 
     return (
-        <div className="fixed inset-0 min-h-screen w-screen bg-slate-950 flex justify-center items-center p-6 overflow-hidden">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-0 -left-1/4 w-full h-full bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"></div>
-            <div className="absolute bottom-0 -right-1/4 w-full h-full bg-orange-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div
+            className="fixed inset-0 w-screen h-screen flex flex-col justify-center items-center overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, #0f3470 0%, #162d50 100%)' }}
+        >
+            {/* Glow decorativo */}
+            <div className="absolute top-[-20%] left-[-15%] w-[60%] h-[60%] rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)' }} />
+            <div className="absolute bottom-[-20%] right-[-15%] w-[60%] h-[60%] rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)' }} />
 
-            <div className="w-full max-w-[420px] flex flex-col items-center gap-8 relative z-10">
+            {/* Container principal — sem scroll, se encaixa na tela */}
+            <div className="w-full max-w-sm flex flex-col items-center gap-5 relative z-10 px-6">
 
                 {/* Logo & Brand */}
-                <div className="flex flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-primary/20 blur-2xl group-hover:bg-primary/40 transition-all duration-500 rounded-full"></div>
-                        <img
-                            src="/logo_sigerd_new.png"
-                            alt="Logo SIGERD"
-                            className="w-28 h-28 object-contain drop-shadow-2xl relative z-10"
-                        />
-                    </div>
+                <div className="flex flex-col items-center gap-3 text-center">
+                    <img
+                        src="/logo_sigerd_new.png"
+                        alt="Logo SIGERD"
+                        className="w-24 h-24 object-contain drop-shadow-2xl"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                    />
                     <div>
-                        <h1 className="text-4xl font-black text-white tracking-[4px] m-0">SIGERD</h1>
-                        <p className="text-[12px] text-white/50 font-medium tracking-wide uppercase mt-2 max-w-[280px]">
-                            Sistema Integrado de Gerenciamento de Riscos e Desastres
+                        <h1 className="text-4xl font-black text-white tracking-[5px] m-0 leading-none">SIGERD</h1>
+                        <p className="text-[11px] text-white/60 font-semibold tracking-widest uppercase mt-2">
+                            Sistema Integrado de Gerenciamento<br />de Riscos e Desastres
                         </p>
                     </div>
                 </div>
 
-                <Card className="w-full bg-white/5 backdrop-blur-xl border-white/10 p-8 shadow-2xl flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+                {/* Card de autenticação */}
+                <div className="w-full rounded-3xl p-6 flex flex-col gap-4"
+                    style={{ background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.12)' }}>
 
-                    {/* Biometric Option */}
-                    <Button
+                    {/* Botão biometria — touch target 56px (>44px conforme skill) */}
+                    <button
+                        type="button"
                         onClick={handleBiometricLogin}
                         disabled={loading}
-                        variant="secondary"
-                        size="lg"
-                        className="w-full bg-white text-slate-900 hover:bg-slate-50 border-none h-14"
+                        aria-label="Entrar com Digital"
+                        className="w-full flex items-center justify-center gap-3 rounded-2xl font-bold text-slate-900 bg-white transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50 hover:bg-slate-50"
+                        style={{ minHeight: '56px', fontSize: '15px' }}
                     >
-                        <Fingerprint className="mr-3" size={24} />
+                        <Fingerprint size={22} />
                         Entrar com Digital
-                    </Button>
+                    </button>
 
-                    <div className="flex items-center gap-4 py-2">
-                        <div className="h-px flex-1 bg-white/10"></div>
-                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest whitespace-nowrap">ou use sua conta</span>
-                        <div className="h-px flex-1 bg-white/10"></div>
+                    {/* Divisor */}
+                    <div className="flex items-center gap-3">
+                        <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.12)' }} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                            ou use sua conta
+                        </span>
+                        <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.12)' }} />
                     </div>
 
-                    {/* Login Form */}
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    {/* Formulário */}
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+
+                        {/* Input E-mail */}
                         <div className="relative group">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-primary transition-colors" size={20} />
+                            <User
+                                className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                                size={18}
+                                style={{ color: 'rgba(255,255,255,0.45)' }}
+                            />
                             <input
                                 type="text"
                                 placeholder="E-mail"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
-                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/30 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-base"
+                                autoComplete="username"
+                                style={{
+                                    minHeight: '52px',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: '1.5px solid rgba(255,255,255,0.18)',
+                                    fontSize: '15px'
+                                }}
+                                className="w-full pl-11 pr-4 rounded-xl text-white placeholder:text-white/35 outline-none focus:ring-2 focus:ring-white/30 transition-all duration-200"
                             />
                         </div>
 
+                        {/* Input Senha */}
                         <div className="relative group">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-primary transition-colors" size={20} />
+                            <Lock
+                                className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                                size={18}
+                                style={{ color: 'rgba(255,255,255,0.45)' }}
+                            />
                             <input
                                 type="password"
                                 placeholder="Senha"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/30 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-base"
+                                autoComplete="current-password"
+                                style={{
+                                    minHeight: '52px',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: '1.5px solid rgba(255,255,255,0.18)',
+                                    fontSize: '15px'
+                                }}
+                                className="w-full pl-11 pr-4 rounded-xl text-white placeholder:text-white/35 outline-none focus:ring-2 focus:ring-white/30 transition-all duration-200"
                             />
                         </div>
 
+                        {/* Erro */}
                         {error && (
-                            <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs font-bold animate-in fade-in zoom-in duration-200">
-                                <ShieldAlert size={16} />
+                            <div className="flex items-center gap-2 p-3 rounded-xl text-xs font-bold"
+                                style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', color: '#fca5a5' }}>
+                                <ShieldAlert size={14} className="shrink-0" />
                                 {error}
                             </div>
                         )}
 
-                        <Button
+                        {/* Botão submit — laranja vibrante, touch target 56px */}
+                        <button
                             type="submit"
                             disabled={loading}
-                            variant="primary"
-                            size="lg"
-                            className="w-full h-14 bg-blue-600 hover:bg-blue-500 border-none mt-2 shadow-lg shadow-blue-600/20"
+                            aria-label="Entrar no SIGERD"
+                            className="w-full flex items-center justify-center gap-2.5 rounded-2xl font-black text-white transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60"
+                            style={{
+                                minHeight: '56px',
+                                fontSize: '16px',
+                                letterSpacing: '0.02em',
+                                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                                boxShadow: '0 6px 24px rgba(249, 115, 22, 0.45)',
+                            }}
                         >
                             {loading ? (
-                                <>
-                                    <Loader2 className="mr-2 animate-spin" size={20} />
-                                    Entrando...
-                                </>
+                                <><Loader2 className="animate-spin" size={20} /> Entrando...</>
                             ) : (
-                                <>
-                                    <LogIn className="mr-2" size={20} />
-                                    Entrar no SIGERD
-                                </>
+                                <><LogIn size={20} /> Entrar no SIGERD</>
                             )}
-                        </Button>
-                    </form>
-                </Card>
-
-                {/* Footer Info */}
-                <div className="flex flex-col items-center gap-6 w-full text-center">
-                    <div className="flex flex-col items-center gap-1 opacity-50">
-                        <p className="text-[11px] font-black text-white uppercase tracking-widest px-4">
-                            Defesa Civil de Santa Maria de Jetibá
-                        </p>
-                        <p className="text-[10px] text-white font-medium">© 2024-2026 SIGERD Mobile • v1.46.25</p>
-                    </div>
-
-                    <div className="w-full">
-                        <button
-                            type="button"
-                            onClick={() => setShowTech(!showTech)}
-                            className="text-[10px] font-bold text-white/30 uppercase tracking-widest hover:text-white/60 transition-colors flex items-center gap-2 mx-auto"
-                        >
-                            <Info size={12} />
-                            {showTech ? 'Ocultar Diagnóstico' : 'Diagnóstico Técnico'}
                         </button>
+                    </form>
+                </div>
 
-                        {showTech && (
-                            <div className="mt-4 p-5 bg-white/5 backdrop-blur-md rounded-2xl text-left border border-white/10 animate-in fade-in slide-in-from-bottom-2 w-full max-w-[340px] mx-auto overflow-hidden">
-                                <h4 className="text-[10px] font-black text-primary uppercase mb-3 flex items-center gap-2">
-                                    <ShieldCheck size={14} />
-                                    Security Status
-                                </h4>
-                                <div className="space-y-2 text-[10px] font-mono text-white/50 break-all leading-relaxed">
-                                    <div className="flex justify-between">
-                                        <span className="font-bold text-white/70">ENVIRONMENT:</span>
-                                        <span>PRODUCTION</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-bold text-white/70">CONNECTION:</span>
-                                        <span className={navigator.onLine ? 'text-green-500' : 'text-red-500'}>
-                                            {navigator.onLine ? 'ESTABLISHED' : 'OFFLINE'}
-                                        </span>
-                                    </div>
-                                    {techError && (
-                                        <div className="mt-2 p-2 bg-red-500/10 text-red-400 rounded border border-red-500/20 font-sans">
-                                            <span className="font-bold">DEBUG:</span> {techError}
-                                        </div>
-                                    )}
+                {/* Rodapé */}
+                <div className="flex flex-col items-center gap-1 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        Defesa Civil de Santa Maria de Jetibá
+                    </p>
+                    <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        © 2024-2026 SIGERD Mobile • v1.46.25
+                    </p>
+                </div>
+
+                {/* Diagnóstico técnico */}
+                <div className="text-center w-full">
+                    <button
+                        type="button"
+                        onClick={() => setShowTech(!showTech)}
+                        className="flex items-center gap-1.5 mx-auto transition-colors duration-200 cursor-pointer"
+                        style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.2)' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+                    >
+                        <Info size={11} />
+                        {showTech ? 'Ocultar Diagnóstico' : 'Diagnóstico Técnico'}
+                    </button>
+
+                    {showTech && (
+                        <div className="mt-3 p-4 rounded-2xl text-left"
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <h4 className="text-[9px] font-black uppercase mb-2 flex items-center gap-1.5" style={{ color: '#93c5fd' }}>
+                                <ShieldCheck size={11} /> Security Status
+                            </h4>
+                            <div className="space-y-1 font-mono" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.45)' }}>
+                                <div className="flex justify-between">
+                                    <span className="font-bold" style={{ color: 'rgba(255,255,255,0.65)' }}>ENVIRONMENT:</span>
+                                    <span>PRODUCTION</span>
                                 </div>
+                                <div className="flex justify-between">
+                                    <span className="font-bold" style={{ color: 'rgba(255,255,255,0.65)' }}>CONNECTION:</span>
+                                    <span style={{ color: navigator.onLine ? '#4ade80' : '#f87171' }}>
+                                        {navigator.onLine ? 'ESTABLISHED' : 'OFFLINE'}
+                                    </span>
+                                </div>
+                                {techError && (
+                                    <div className="mt-2 p-2 rounded font-sans" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)', fontSize: '9px' }}>
+                                        <span className="font-bold">DEBUG:</span> {techError}
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -324,4 +317,3 @@ const Login = ({ onLogin }) => {
 }
 
 export default Login
-
