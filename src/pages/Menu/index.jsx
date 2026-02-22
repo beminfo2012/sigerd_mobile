@@ -269,8 +269,8 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                     <Globe size={22} />
                                 </div>
                                 <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo S2id</span>
-                                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-tight">Preenchimento Setorial de Danos</span>
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo REDAP</span>
+                                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-tight">Relatório de Danos e Prejuízos</span>
                                 </div>
                             </div>
                             <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Nacional</div>

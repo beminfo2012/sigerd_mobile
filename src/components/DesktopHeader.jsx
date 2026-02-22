@@ -17,6 +17,7 @@ const DesktopHeader = ({ userProfile }) => {
             'abrigos': 'Assist. Humanitária',
             'interdicao': 'Interdição',
             'georescue': 'GeoRescue',
+            's2id': 'REDAP',
             'settings': 'Configurações',
             'reports': 'Relatórios'
         };

@@ -135,7 +135,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, S2ID_
             roles: HUMANITARIAN_ROLES
         },
         {
-            label: 'S2ID',
+            label: 'REDAP',
             icon: Navigation,
             path: '/s2id',
             roles: S2ID_ROLES
