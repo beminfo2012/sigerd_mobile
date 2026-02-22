@@ -83,7 +83,7 @@ const MiniSparkline = ({ station, riskColor }) => {
     )
 }
 
-const Pluviometros = () => {
+const Pluviometros = ({ hideHeader = false }) => {
     const navigate = useNavigate()
     const [stations, setStations] = useState([])
     const [loading, setLoading] = useState(true)
@@ -263,27 +263,47 @@ const Pluviometros = () => {
     }
 
     return (
-        <div className="bg-slate-50 min-h-screen pb-10">
+        <div className={hideHeader ? "" : "bg-slate-50 min-h-screen pb-10"}>
             {/* Header */}
-            <div className="bg-white px-5 py-4 shadow-sm sticky top-0 z-10 border-b border-gray-100 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/')} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full">
-                        <ArrowLeft size={24} />
-                    </button>
-                    <h1 className="text-xl font-black text-gray-800 tracking-tight">Pluviômetros</h1>
+            {!hideHeader && (
+                <div className="bg-white px-5 py-4 shadow-sm sticky top-0 z-10 border-b border-gray-100 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full">
+                            <ArrowLeft size={24} />
+                        </button>
+                        <h1 className="text-xl font-black text-gray-800 tracking-tight">Pluviômetros</h1>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setManualModalOpen(true)} className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-full">
+                            <Plus size={24} />
+                        </button>
+                        <button onClick={fetchData} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full">
+                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                        </button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setManualModalOpen(true)} className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-full">
-                        <Plus size={24} />
-                    </button>
-                    <button onClick={fetchData} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full">
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                    </button>
-                </div>
-            </div>
+            )}
 
             {/* Content to Capture */}
-            <div ref={reportRef} className="p-5 bg-slate-50 pb-20">
+            <div ref={reportRef} className={hideHeader ? "p-5 bg-transparent pb-20" : "p-5 bg-slate-50 pb-20"}>
+                {hideHeader && (
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setManualModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-800"
+                            >
+                                <Plus size={14} /> Entrada Manual
+                            </button>
+                            <button
+                                onClick={fetchData}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl transition-all active:scale-95 border border-slate-200 dark:border-slate-700"
+                            >
+                                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                            </button>
+                        </div>
+                    </div>
+                )}
                 <div className="bg-[#2a5299] text-white p-6 rounded-2xl shadow-lg mb-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <CloudRain size={120} />

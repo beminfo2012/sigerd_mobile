@@ -80,10 +80,10 @@ export function OccupantForm() {
                 gender: result.gender || prev.gender
             }));
 
-            alert('Documento lido com sucesso! Verifique os dados preenchidos.');
+            toast.success('Documento lido!', 'Dados preenchidos automaticamente. Verifique se estão corretos.');
         } catch (error) {
             console.error('Scan Error:', error);
-            alert('Não foi possível ler os dados do documento. Tente uma foto mais clara ou preencha manualmente.');
+            toast.error('Erro na leitura', 'Não foi possível ler os dados do documento. Tente uma foto mais clara ou preencha manualmente.');
         } finally {
             setIsScanning(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -111,11 +111,11 @@ export function OccupantForm() {
                 });
             }
 
-            alert('Abrigado cadastrado com sucesso!');
+            toast.success('Cadastrado!', 'Abrigado cadastrado com sucesso!');
             navigate(`/abrigos/${shelterId}`);
         } catch (error) {
             console.error('Error saving occupant:', error);
-            alert('Erro ao cadastrar abrigado. Tente novamente.');
+            toast.error('Erro ao cadastrar', 'Tente novamente.');
         } finally {
             setIsSubmitting(false);
         }
@@ -269,32 +269,38 @@ export function OccupantForm() {
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     onFocus={() => setShowFamilySuggestions(true)}
+                                    onBlur={() => setTimeout(() => setShowFamilySuggestions(false), 200)}
                                     icon={UsersIcon}
                                     placeholder="Ex: Família Silva"
                                     autoComplete="off"
                                 />
 
-                                {showFamilySuggestions && (
+                                {showFamilySuggestions && familyGroups.length > 0 && (
                                     <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-40 overflow-y-auto">
                                         <div className="p-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
                                             Grupos Existentes
                                         </div>
-                                        {familyGroups.map((group) => (
-                                            <button
-                                                key={group}
-                                                type="button"
-                                                onClick={() => {
-                                                    setFormData({ ...formData, family_group: group });
-                                                    setShowFamilySuggestions(false);
-                                                }}
-                                                className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
-                                            >
-                                                {group}
-                                            </button>
-                                        ))}
+                                        {familyGroups
+                                            .filter(g => g.toLowerCase().includes(formData.family_group.toLowerCase()))
+                                            .map((group) => (
+                                                <button
+                                                    key={group}
+                                                    type="button"
+                                                    onMouseDown={(e) => {
+                                                        // Use onMouseDown to trigger before onBlur
+                                                        e.preventDefault();
+                                                        setFormData({ ...formData, family_group: group });
+                                                        setShowFamilySuggestions(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+                                                >
+                                                    {group}
+                                                </button>
+                                            ))}
                                         <button
                                             type="button"
-                                            onClick={() => {
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
                                                 const newId = `FAM-${Math.floor(Math.random() * 900) + 100}`;
                                                 setFormData({ ...formData, family_group: newId, is_family_head: true });
                                                 setShowFamilySuggestions(false);

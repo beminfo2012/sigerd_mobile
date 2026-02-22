@@ -36,33 +36,30 @@ const ConfirmModal = ({
     const Icon = requireTypedConfirmation ? ShieldAlert : AlertCircle;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-5 z-[100] animate-in fade-in duration-200" onClick={handleClose}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 z-[100] animate-in fade-in duration-300" onClick={handleClose}>
             <div
-                className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-slate-800"
+                className="bg-white dark:bg-slate-900 rounded-[32px] p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 border border-white/20 dark:border-slate-800"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="flex justify-between items-start mb-4">
-                    <div className={`p-3 rounded-2xl ${type === 'danger' ? 'bg-red-50 dark:bg-red-500/10' : 'bg-blue-50 dark:bg-blue-500/10'}`}>
-                        <Icon className={type === 'danger' ? 'text-red-600 dark:text-red-500' : 'text-blue-600 dark:text-blue-500'} size={28} />
+                <div className="flex justify-center mb-6">
+                    <div className={`p-5 rounded-3xl ${type === 'danger' ? 'bg-red-50 dark:bg-red-500/10' : 'bg-blue-50 dark:bg-blue-500/10'} ring-8 ${type === 'danger' ? 'ring-red-50/50 dark:ring-red-500/5' : 'ring-blue-50/50 dark:ring-blue-500/5'}`}>
+                        <Icon className={type === 'danger' ? 'text-red-600 dark:text-red-500' : 'text-blue-600 dark:text-blue-500'} size={32} />
                     </div>
-                    <button onClick={handleClose} className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                        <X size={20} />
-                    </button>
                 </div>
 
-                <div className="space-y-2 mb-5">
-                    <h3 className="text-xl font-black text-slate-800 dark:text-white leading-tight">
+                <div className="text-center space-y-3 mb-8">
+                    <h3 className="text-2xl font-black text-slate-800 dark:text-white leading-tight tracking-tight">
                         {title}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed px-2">
                         {message}
                     </p>
                 </div>
 
                 {requireTypedConfirmation && (
-                    <div className="mb-5">
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
-                            Digite <span className="text-red-600 dark:text-red-400 font-black">{typedConfirmationWord}</span> para confirmar:
+                    <div className="mb-8">
+                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 text-center">
+                            Digite <span className="text-red-600 dark:text-red-400">{typedConfirmationWord}</span> para confirmar
                         </label>
                         <input
                             type="text"
@@ -70,7 +67,7 @@ const ConfirmModal = ({
                             onChange={e => setTypedValue(e.target.value)}
                             placeholder={typedConfirmationWord}
                             autoFocus
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-slate-800 dark:text-white font-mono text-center text-lg tracking-widest focus:outline-none focus:border-red-400 dark:focus:border-red-500 transition-colors"
+                            className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-white font-mono text-center text-lg tracking-[0.2em] focus:outline-none focus:border-red-400 dark:focus:border-red-500/50 transition-all placeholder:opacity-30"
                         />
                     </div>
                 )}
@@ -79,18 +76,18 @@ const ConfirmModal = ({
                     <button
                         onClick={handleConfirm}
                         disabled={!canConfirm}
-                        className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg transition-all
+                        className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg
                             ${canConfirm
                                 ? (type === 'danger'
-                                    ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20 active:scale-[0.98]'
-                                    : 'bg-[#2a5299] hover:bg-[#1e3c72] shadow-blue-500/20 active:scale-[0.98]')
-                                : 'bg-gray-300 dark:bg-slate-700 cursor-not-allowed shadow-none'}`}
+                                    ? 'bg-red-600 hover:bg-red-700 shadow-red-500/30 active:scale-[0.98]'
+                                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30 active:scale-[0.98]')
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none'}`}
                     >
                         {confirmText}
                     </button>
                     <button
                         onClick={handleClose}
-                        className="w-full py-4 rounded-2xl font-bold text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        className="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:text-slate-600 dark:hover:text-slate-300"
                     >
                         {cancelText}
                     </button>

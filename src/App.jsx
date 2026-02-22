@@ -13,6 +13,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { supabase } from './services/supabase'
 import { pullAllData } from './services/db'
 import { getLatestDraftS2id } from './services/s2idDb'
+import Sidebar from './components/Sidebar'
+import DesktopHeader from './components/DesktopHeader'
 
 
 // Lazy loaded components
@@ -26,6 +28,11 @@ const RiskDashboard = lazy(() => import('./pages/Monitoramento/RiskDashboard'))
 const ChecklistSaida = lazy(() => import('./pages/Checklist/ChecklistSaida'))
 const VistoriaPrint = lazy(() => import('./pages/Vistorias/VistoriaPrint'))
 const ManagementDashboard = lazy(() => import('./pages/Monitoramento/ManagementDashboard'))
+const MonitoramentoMenu = lazy(() => import('./pages/Monitoramento/MonitoramentoMenu'))
+
+// Ocorrencias Module (Lazy)
+const OcorrenciasDashboard = lazy(() => import('./pages/Ocorrencias/OcorrenciasDashboard'))
+const OcorrenciasForm = lazy(() => import('./pages/Ocorrencias/OcorrenciasForm'))
 
 // Shelter Module (Lazy)
 const ShelterMenu = lazy(() => import('./pages/Abrigos/Menu'))
@@ -151,217 +158,254 @@ const AppContent = ({
         <div className={`app-container ${isDarkMode ? 'dark' : ''}`}>
             <SyncBackground />
 
-
-            {/* Mobile Header - Hide on print */}
-            {!isPrintPage && (
-                <header className="mobile-header">
-                    <div className="header-logo-area">
-                        <img src="/logo_header.png" alt="Logo" className="header-logo" onError={(e) => e.target.style.display = 'none'} />
-                        <h1>SIGERD <span>Mobile</span></h1>
-                    </div>
-                    <div className="header-user" onClick={handleLogout}>
-                        <div className="user-avatar cursor-pointer hover:bg-white/20 transition-colors">
-                            {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-                        </div>
-                    </div>
-                </header>
-            )}
-
-            {/* Main Content Area */}
-            <main className={isPrintPage ? "" : "main-content"}>
-                <Suspense fallback={
-                    <div className="flex flex-col items-center justify-center p-20 gap-3">
-                        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Abrindo módulo...</p>
-                    </div>
-                }>
-                    <Routes>
-                        <Route path="/" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <Dashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/georescue" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <GeoRescue />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/vistorias" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <Vistorias />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/vistorias/imprimir/:id" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <VistoriaPrint />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/pluviometros" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <Pluviometros onBack={() => setActiveTab('dashboard')} />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/interdicao" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <Interdicao />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/alerts" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <Alerts />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/monitoramento" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <GeoDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/monitoramento/riscos" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <RiskDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/monitoramento/gestao" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <ManagementDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/checklist-saida" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                <ChecklistSaida />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
-                        <Route path="/abrigos" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                <ShelterMenu />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/lista" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ShelterList />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/estoque" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                <StockHub />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/doacoes-central" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                <DonationHub />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/logistica" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                <LogisticsHub />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/novo" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ShelterForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/:id" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ShelterDetail />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/editar/:id" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ShelterForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/:shelterId/abrigados/novo" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <OccupantForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/:shelterId/doacoes/novo" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                <DonationForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
-                                <DistributionForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/relatorios" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ShelterReports />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/residentes" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ShelterResidents />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/contratos" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ContractList />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/contratos/novo" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ContractForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/abrigos/contratos/editar/:id" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
-                                <ContractForm />
-                            </ProtectedRoute>
-                        } />
-
-                        {/* S2ID Routes */}
-                        <Route path="/s2id" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
-                                <S2idDashboard />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/s2id/novo" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
-                                <S2idForm />
-                            </ProtectedRoute>
-                        } />
-                        <Route path="/s2id/editar/:id" element={
-                            <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
-                                <S2idForm />
-                            </ProtectedRoute>
-                        } />
+            <div className="flex flex-1 overflow-hidden">
+                {/* Sidebar - Desktop Only */}
+                {!isPrintPage && (
+                    <Sidebar
+                        userProfile={userProfile}
+                        setUserProfile={setUserProfile}
+                        onLogout={handleLogout}
+                        isDarkMode={isDarkMode}
+                        setIsDarkMode={setIsDarkMode}
+                        AGENT_ROLES={AGENT_ROLES}
+                        HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
+                        S2ID_ROLES={S2ID_ROLES}
+                    />
+                )}
 
 
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                </Suspense>
-            </main>
 
-            {/* Bottom Navigation - Hide on print */}
-            {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
-                <nav className="bottom-nav">
-                    <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                        <Home size={24} />
-                        <span>Início</span>
-                    </Link>
-                    <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
-                        <Map size={24} />
-                        <span>GeoRescue</span>
-                    </Link>
-                    <div className="nav-item fab-container">
-                        <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
-                            <FileText size={24} />
-                        </Link>
-                    </div>
-                    <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
-                        <AlertOctagon size={24} />
-                        <span>Interdição</span>
-                    </Link>
-                    <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
-                        <MenuIcon size={24} />
-                        <span>Menu</span>
-                    </Link>
-                </nav>
-            )}
+                <div className="flex flex-col flex-1 overflow-hidden relative">
+                    {/* Mobile Header - Hide on print and desktop */}
+                    {!isPrintPage && (
+                        <header className="mobile-header md:hidden px-4">
+                            <div className="flex items-center gap-2">
+                                <img src="/logo_header.png" alt="Logo" className="h-8 w-auto object-contain" onError={(e) => e.target.style.display = 'none'} />
+                                <h1 className="text-lg font-black tracking-tight">SIGERD <span className="text-[10px] uppercase opacity-70 font-bold ml-1">Mobile</span></h1>
+                            </div>
+                            <Link to="/menu" className="user-avatar text-sm">
+                                {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
+                            </Link>
+                        </header>
+                    )}
+
+                    {/* Desktop Header - Hide on print and mobile */}
+
+
+                    {/* Main Content Area */}
+                    <main className={isPrintPage ? "" : "main-content"}>
+                        <Suspense fallback={
+                            <div className="flex flex-col items-center justify-center p-20 gap-3">
+                                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Abrindo módulo...</p>
+                            </div>
+                        }>
+                            <Routes>
+                                <Route path="/" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Dashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/georescue" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <GeoRescue />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/vistorias" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Vistorias />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/vistorias/imprimir/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <VistoriaPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/pluviometros" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Pluviometros onBack={() => setActiveTab('dashboard')} />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/interdicao" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Interdicao />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/alerts" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Alerts />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/monitoramento" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <MonitoramentoMenu />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/monitoramento/riscos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <RiskDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/monitoramento/gestao" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <ManagementDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/checklist-saida" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <ChecklistSaida />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Ocorrencias Routes */}
+                                <Route path="/ocorrencias" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <OcorrenciasDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/ocorrencias/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <OcorrenciasForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/ocorrencias/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <OcorrenciasForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
+                                <Route path="/abrigos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <ShelterMenu />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/lista" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/estoque" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <StockHub />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/doacoes-central" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <DonationHub />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/logistica" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <LogisticsHub />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterDetail />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:shelterId/abrigados/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <OccupantForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:shelterId/doacoes/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <DonationForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <DistributionForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/relatorios" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterReports />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/residentes" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterResidents />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/contratos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ContractList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/contratos/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ContractForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/contratos/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ContractForm />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* S2ID Routes */}
+                                <Route path="/s2id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
+                                        <S2idDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/s2id/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
+                                        <S2idForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/s2id/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
+                                        <S2idForm />
+                                    </ProtectedRoute>
+                                } />
+
+
+                                <Route path="*" element={<Navigate to="/" replace />} />
+                            </Routes>
+                        </Suspense>
+                    </main>
+
+                    {/* Bottom Navigation - Hide on print and desktop */}
+                    {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
+                        <nav className="bottom-nav md:hidden">
+                            <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                                <Home size={24} />
+                                <span>Início</span>
+                            </Link>
+                            <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
+                                <Map size={24} />
+                                <span>GeoRescue</span>
+                            </Link>
+                            <div className="nav-item fab-container">
+                                <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
+                                    <FileText size={24} />
+                                </Link>
+                            </div>
+                            <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
+                                <AlertOctagon size={24} />
+                                <span>Interdição</span>
+                            </Link>
+                            <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
+                                <MenuIcon size={24} />
+                                <span>Menu</span>
+                            </Link>
+                        </nav>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }

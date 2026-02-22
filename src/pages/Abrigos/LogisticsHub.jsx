@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Package, ArrowRight, ArrowLeft, Building2, CheckCircle2, User, FileText, Trash2 } from 'lucide-react';
+import { Truck, Package, ArrowRight, ArrowLeft, Building2, CheckCircle2, User, FileText, Trash2, Search, Loader2 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { getInventory, getShelters, transferStock, addDistribution } from '../../services/shelterDb.js';
+import { toast } from '../../components/ToastNotification';
 
 export default function LogisticsHub() {
     const navigate = useNavigate();
@@ -26,12 +27,21 @@ export default function LogisticsHub() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+
     useEffect(() => {
         const loadData = async () => {
-            const stock = await getInventory('CENTRAL');
-            const s = await getShelters();
-            setCentralStock(stock || []);
-            setShelters(s || []);
+            setIsLoadingInitial(true);
+            try {
+                const stock = await getInventory('CENTRAL');
+                const s = await getShelters();
+                setCentralStock(stock || []);
+                setShelters(s || []);
+            } catch (e) {
+                toast.error('Erro de carregamento', 'Não foi possível carregar os dados de estoque.');
+            } finally {
+                setIsLoadingInitial(false);
+            }
         };
         loadData();
     }, []);
@@ -64,7 +74,7 @@ export default function LogisticsHub() {
             if ((validShelter || validPerson) && allQuantitiesValid) {
                 setStep(3);
             } else {
-                alert('Verifique se todos os itens possuem quantidades válidas e se o destino foi preenchido.');
+                toast.error('Atenção', 'Verifique se todos os itens possuem quantidades válidas e se o destino foi preenchido.');
             }
         }
     };
@@ -94,11 +104,11 @@ export default function LogisticsHub() {
                 }
             }
 
-            alert('Distribuição realizada com sucesso!');
+            toast.success('Sucesso!', 'Distribuição realizada com sucesso.');
             navigate('/abrigos');
         } catch (error) {
             console.error(error);
-            alert('Erro parcial ou total na operação: ' + error.message);
+            toast.error('Erro na operação', error.message);
             setIsSubmitting(false);
         }
     };
@@ -108,21 +118,21 @@ export default function LogisticsHub() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-12">
             <div className="max-w-3xl mx-auto px-4 py-6">
 
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
                         onClick={() => navigate('/abrigos')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
+                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
                     </button>
                     <div>
-                        <h1 className="text-2xl font-black text-slate-800">Logística e Distribuição</h1>
-                        <p className="text-sm text-slate-500 mt-1">
+                        <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">Logística e Distribuição</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                             Envio de materiais do Estoque Municipal para Abrigos ou Famílias.
                         </p>
                     </div>
@@ -148,12 +158,15 @@ export default function LogisticsHub() {
                 {/* Step 1: Select Items */}
                 {step === 1 && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <Input
-                            placeholder="Buscar itens no estoque..."
-                            className="bg-white shadow-sm"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                            <Input
+                                placeholder="Buscar itens no estoque..."
+                                className="bg-white shadow-sm pl-10"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
 
                         {/* Selected Count Badge */}
                         {selectedItems.length > 0 && (
@@ -163,41 +176,57 @@ export default function LogisticsHub() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 gap-3">
-                            {centralStock.length === 0 ? (
-                                <p className="text-center text-slate-400 py-8">Nenhum item no estoque municipal.</p>
-                            ) : (
-                                filteredStock.map(item => {
-                                    const isSelected = selectedItems.find(i => (i.id || i.item_id) === (item.id || item.item_id));
-                                    return (
-                                        <div
-                                            key={item.id || item.item_id}
-                                            onClick={() => toggleItemSelection(item)}
-                                            className={`p-4 bg-white rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${isSelected
-                                                ? 'border-[#2a5299] shadow-md bg-blue-50/50'
-                                                : 'border-transparent hover:border-slate-200 shadow-sm'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-[#2a5299] text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                                    {isSelected ? <CheckCircle2 size={20} /> : <Package size={20} />}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-slate-800">{item.item_name}</h3>
-                                                    <p className="text-xs text-slate-500">Disponível: {item.quantity} {item.unit}</p>
+                        {isLoadingInitial ? (
+                            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+                                <p className="text-slate-500 font-medium text-sm">Carregando estoque...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {centralStock.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
+                                        <Package className="w-12 h-12 text-slate-200 mb-3" />
+                                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Estoque Vazio</p>
+                                    </div>
+                                ) : (
+                                    filteredStock.map(item => {
+                                        const isSelected = selectedItems.find(i => (i.id || i.item_id) === (item.id || item.item_id));
+                                        return (
+                                            <div
+                                                key={item.id || item.item_id}
+                                                onClick={() => toggleItemSelection(item)}
+                                                className={`p-4 bg-white rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between group ${isSelected
+                                                    ? 'border-[#2a5299] shadow-md bg-blue-50/20'
+                                                    : 'border-slate-100 hover:border-slate-300 shadow-sm'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-[#2a5299] text-white rotate-6' : 'bg-slate-50 text-slate-400 group-hover:bg-white'}`}>
+                                                        {isSelected ? <CheckCircle2 size={24} /> : <Package size={24} />}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-slate-800 leading-tight">{item.item_name}</h3>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs font-bold text-slate-500">{item.category}</span>
+                                                            <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                                            <p className="text-xs font-black text-blue-600 uppercase tracking-tighter">
+                                                                {item.quantity} {item.unit} disponíveis
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        )}
                         <Button
-                            className="w-full mt-4"
-                            disabled={selectedItems.length === 0}
+                            className="w-full mt-4 h-14 text-base font-black uppercase tracking-widest shadow-xl shadow-blue-500/20"
+                            disabled={selectedItems.length === 0 || isLoadingInitial}
                             onClick={handleNextStep}
                         >
-                            Próximo: Definir Quantidades
+                            Próximo: Definir Detalhes
                         </Button>
                     </div>
                 )}

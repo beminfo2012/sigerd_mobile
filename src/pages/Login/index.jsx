@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { supabase } from '../../services/supabase'
-import { Fingerprint } from 'lucide-react'
+import { Fingerprint, User, Lock, Info, ShieldCheck, ShieldAlert, LogIn, Loader2 } from 'lucide-react'
+import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('')
@@ -40,7 +42,6 @@ const Login = ({ onLogin }) => {
 
         setLoading(true)
         try {
-            // 1. Get authentication options from Edge Function
             const { data: options, error: optError } = await supabase.functions.invoke('webauthn', {
                 body: {
                     action: 'generate-authentication-options',
@@ -51,19 +52,16 @@ const Login = ({ onLogin }) => {
 
             if (optError) throw optError
 
-            // 2. Convert options for navigator.credentials.get
             options.allowCredentials = options.allowCredentials.map(c => ({
                 ...c,
                 id: base64ToUint8Array(c.id)
             }))
             options.challenge = base64ToUint8Array(options.challenge)
 
-            // 3. Get credential from browser
             const credential = await navigator.credentials.get({ publicKey: options })
 
             if (!credential) throw new Error('Falha ao obter credencial')
 
-            // 4. Verify with Edge Function
             const authResponse = {
                 id: credential.id,
                 rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
@@ -111,73 +109,6 @@ const Login = ({ onLogin }) => {
         }
     }
 
-    const handleRegisterBiometrics = async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) return
-
-            const { data: options, error: optError } = await supabase.functions.invoke('webauthn', {
-                body: {
-                    action: 'generate-registration-options',
-                    origin: window.location.origin
-                }
-            })
-
-            if (optError) throw optError
-
-            // Convert options
-            options.user.id = base64ToUint8Array(options.user.id)
-            options.challenge = base64ToUint8Array(options.challenge)
-            if (options.excludeCredentials) {
-                options.excludeCredentials = options.excludeCredentials.map(c => ({
-                    ...c,
-                    id: base64ToUint8Array(c.id)
-                }))
-            }
-
-            const credential = await navigator.credentials.create({ publicKey: options })
-
-            const registrationResponse = {
-                id: credential.id,
-                rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
-                type: credential.type,
-                response: {
-                    attestationObject: uint8ArrayToBase64Url(new Uint8Array(credential.response.attestationObject)),
-                    clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
-                    transports: credential.response.getTransports ? credential.response.getTransports() : [],
-                },
-                clientExtensionResults: credential.getClientExtensionResults(),
-            }
-
-            const { data: verifyResult, error: verifyError } = await supabase.functions.invoke('webauthn', {
-                body: {
-                    action: 'verify-registration',
-                    registrationResponse,
-                    origin: window.location.origin
-                }
-            })
-
-            if (verifyError) {
-                let errorMessage = verifyError.message;
-                try {
-                    const errorData = await verifyError.response?.json();
-                    if (errorData?.error) errorMessage = errorData.error;
-                } catch (e) {
-                    console.error('Error parsing error response:', e);
-                }
-                throw new Error(errorMessage);
-            }
-
-            if (verifyResult.verified) {
-                localStorage.setItem('biometric_email', session.user.email)
-                alert('Biometria ativada com sucesso!')
-            }
-        } catch (err) {
-            console.error('Registration error:', err)
-            alert('Erro ao ativar biometria: ' + err.message)
-        }
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
@@ -220,282 +151,166 @@ const Login = ({ onLogin }) => {
         }
 
         setLoading(true)
-        console.log('--- LOGIN ATTEMPT ---')
-        console.log('Username:', username)
-
         try {
-            console.log('Starting Supabase Auth...')
             const { data, error: authError } = await supabase.auth.signInWithPassword({
                 email: username,
                 password: password
             });
-            console.log('Auth result:', { data, error: authError });
 
             if (authError) {
-                console.error('Login error detail:', authError);
                 setError('Usuário ou senha inválidos');
                 setTechError(authError.message + (authError.status ? ` (Status: ${authError.status})` : ''));
                 setLoading(false);
                 return;
             }
-
-            console.log('Login successful, entering system...')
             onLogin()
         } catch (err) {
-            console.error('Login technical error:', err)
             setError('Erro ao conectar. Verifique sua conexão.')
             setTechError(err.message || String(err))
             setLoading(false)
         }
     }
 
-
     return (
-        <>
-            <div style={{
-                background: 'linear-gradient(180deg, #0f3470 0%, #162d50 100%)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '100vh',
-                width: '100vw',
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                padding: '20px',
-                fontFamily: "'Inter', sans-serif",
-                overflow: 'hidden'
-            }}>
-                <div style={{
-                    width: '100%',
-                    maxWidth: '400px',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '16px'
-                }}>
+        <div className="fixed inset-0 min-h-screen w-screen bg-slate-950 flex justify-center items-center p-6 overflow-hidden">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-0 -left-1/4 w-full h-full bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"></div>
+            <div className="absolute bottom-0 -right-1/4 w-full h-full bg-orange-900/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-                    {/* Logo Section */}
-                    <div style={{
-                        marginTop: '10px',
-                        marginBottom: '4px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}>
+            <div className="w-full max-w-[420px] flex flex-col items-center gap-8 relative z-10">
+
+                {/* Logo & Brand */}
+                <div className="flex flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-top-4 duration-700">
+                    <div className="relative group">
+                        <div className="absolute inset-0 bg-primary/20 blur-2xl group-hover:bg-primary/40 transition-all duration-500 rounded-full"></div>
                         <img
                             src="/logo_sigerd_new.png"
                             alt="Logo SIGERD"
-                            style={{
-                                width: '140px',
-                                height: '140px',
-                                objectFit: 'contain',
-                                filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.3))'
-                            }}
+                            className="w-28 h-28 object-contain drop-shadow-2xl relative z-10"
                         />
                     </div>
-
-                    {/* Title Section */}
-                    <div style={{ marginBottom: '4px' }}>
-                        <h1 style={{
-                            color: 'white',
-                            fontSize: '34px',
-                            fontWeight: '800',
-                            margin: '0',
-                            letterSpacing: '3px'
-                        }}>SIGERD</h1>
-
-                        <p style={{
-                            color: 'rgba(255, 255, 255, 0.65)',
-                            fontSize: '13px',
-                            margin: '6px auto 0',
-                            maxWidth: '260px',
-                            lineHeight: '1.5',
-                            fontWeight: '500'
-                        }}>Sistema Integrado de Gerenciamento de Riscos e Desastres</p>
+                    <div>
+                        <h1 className="text-4xl font-black text-white tracking-[4px] m-0">SIGERD</h1>
+                        <p className="text-[12px] text-white/50 font-medium tracking-wide uppercase mt-2 max-w-[280px]">
+                            Sistema Integrado de Gerenciamento de Riscos e Desastres
+                        </p>
                     </div>
+                </div>
 
-                    {/* Biometric Button */}
-                    <button
-                        type="button"
+                <Card className="w-full bg-white/5 backdrop-blur-xl border-white/10 p-8 shadow-2xl flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+
+                    {/* Biometric Option */}
+                    <Button
                         onClick={handleBiometricLogin}
                         disabled={loading}
-                        style={{
-                            width: '100%',
-                            background: 'white',
-                            color: '#0f3470',
-                            border: 'none',
-                            padding: '13px',
-                            borderRadius: '50px',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: '16px',
-                            fontWeight: '700',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '10px',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                            transition: 'transform 0.2s'
-                        }}
+                        variant="secondary"
+                        size="lg"
+                        className="w-full bg-white text-slate-900 hover:bg-slate-50 border-none h-14"
                     >
-                        <Fingerprint size={24} strokeWidth={2.5} />
-                        Entrar com a Digital
-                    </button>
+                        <Fingerprint className="mr-3" size={24} />
+                        Entrar com Digital
+                    </Button>
 
-                    {/* Divider */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        margin: '4px 0',
-                        gap: '14px'
-                    }}>
-                        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
-                        <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
-                            ou use sua conta
-                        </span>
-                        <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.15)' }}></div>
+                    <div className="flex items-center gap-4 py-2">
+                        <div className="h-px flex-1 bg-white/10"></div>
+                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest whitespace-nowrap">ou use sua conta</span>
+                        <div className="h-px flex-1 bg-white/10"></div>
                     </div>
 
                     {/* Login Form */}
-                    <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-
-                        {/* Email Input */}
-                        <div style={{ position: 'relative' }}>
-                            <i className="fas fa-user" style={{
-                                position: 'absolute',
-                                left: '20px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                color: 'rgba(255, 255, 255, 0.6)'
-                            }}></i>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                        <div className="relative group">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-primary transition-colors" size={20} />
                             <input
                                 type="text"
                                 placeholder="E-mail"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
-                                style={{
-                                    width: '100%',
-                                    padding: '16px 16px 16px 55px',
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    fontSize: '16px',
-                                    outline: 'none',
-                                    transition: 'all 0.3s'
-                                }}
+                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/30 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-base"
                             />
                         </div>
 
-                        {/* Password Input */}
-                        <div style={{ position: 'relative' }}>
-                            <i className="fas fa-lock" style={{
-                                position: 'absolute',
-                                left: '20px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                color: 'rgba(255, 255, 255, 0.6)'
-                            }}></i>
+                        <div className="relative group">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-primary transition-colors" size={20} />
                             <input
                                 type="password"
                                 placeholder="Senha"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                style={{
-                                    width: '100%',
-                                    padding: '16px 16px 16px 55px',
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    fontSize: '16px',
-                                    outline: 'none',
-                                    transition: 'all 0.3s'
-                                }}
+                                className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/30 outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-base"
                             />
                         </div>
 
-                        {/* Error Message */}
                         {error && (
-                            <div style={{
-                                color: '#ff4d4d',
-                                fontSize: '14px',
-                                textAlign: 'center',
-                                marginTop: '5px'
-                            }}>
+                            <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs font-bold animate-in fade-in zoom-in duration-200">
+                                <ShieldAlert size={16} />
                                 {error}
                             </div>
                         )}
 
-                        {/* Submit Button */}
-                        <button
+                        <Button
                             type="submit"
                             disabled={loading}
-                            style={{
-                                width: '100%',
-                                background: 'linear-gradient(135deg, #ff6d3a 0%, #ff5722 100%)',
-                                color: 'white',
-                                border: 'none',
-                                padding: '14px',
-                                borderRadius: '50px',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                fontSize: '16px',
-                                fontWeight: '700',
-                                marginTop: '6px',
-                                boxShadow: '0 4px 20px rgba(255, 87, 34, 0.35)',
-                                transition: 'all 0.3s',
-                                letterSpacing: '0.5px'
-                            }}
+                            variant="primary"
+                            size="lg"
+                            className="w-full h-14 bg-orange-600 hover:bg-orange-500 border-none mt-2 shadow-lg shadow-orange-600/20"
                         >
-                            {loading ? 'Entrando...' : 'Entrar no App'}
-                        </button>
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 animate-spin" size={20} />
+                                    Entrando...
+                                </>
+                            ) : (
+                                <>
+                                    <LogIn className="mr-2" size={20} />
+                                    Entrar no SIGERD
+                                </>
+                            )}
+                        </Button>
                     </form>
+                </Card>
 
-                    {/* Footer */}
-                    <div style={{
-                        marginTop: 'auto',
-                        paddingTop: '24px',
-                        fontSize: '11px',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        textAlign: 'center',
-                        lineHeight: '1.6',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                        width: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                    }}>
-                        <p style={{ fontWeight: '700', fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', marginBottom: '2px', marginTop: '12px' }}>
+                {/* Footer Info */}
+                <div className="flex flex-col items-center gap-6 w-full text-center">
+                    <div className="flex flex-col items-center gap-1 opacity-50">
+                        <p className="text-[11px] font-black text-white uppercase tracking-widest px-4">
                             Defesa Civil de Santa Maria de Jetibá
                         </p>
-                        <p style={{ fontSize: '10px' }}>© 2024-2026 SIGERD Mobile - v1.46.25</p>
+                        <p className="text-[10px] text-white font-medium">© 2024-2026 SIGERD Mobile • v1.46.25</p>
+                    </div>
 
+                    <div className="w-full">
                         <button
                             type="button"
                             onClick={() => setShowTech(!showTech)}
-                            className="mt-4 text-[9px] text-white/50 underline hover:text-white/80 transition-opacity"
+                            className="text-[10px] font-bold text-white/30 uppercase tracking-widest hover:text-white/60 transition-colors flex items-center gap-2 mx-auto"
                         >
+                            <Info size={12} />
                             {showTech ? 'Ocultar Diagnóstico' : 'Diagnóstico Técnico'}
                         </button>
 
                         {showTech && (
-                            <div className="mt-4 p-4 bg-white/10 backdrop-blur-md rounded-2xl text-left border border-white/10 animate-in fade-in slide-in-from-bottom-2 w-full max-w-[320px]">
-                                <h4 className="text-[10px] font-black text-white/80 uppercase mb-2">Painel de Diagnóstico</h4>
-                                <div className="space-y-1 text-[9px] font-mono text-white/60 break-all">
-                                    <div><span className="font-bold text-white/80">URL:</span> {import.meta.env.VITE_SUPABASE_URL}</div>
-                                    <div><span className="font-bold text-white/80">Online:</span> {navigator.onLine ? 'SIM' : 'NÃO'}</div>
+                            <div className="mt-4 p-5 bg-white/5 backdrop-blur-md rounded-2xl text-left border border-white/10 animate-in fade-in slide-in-from-bottom-2 w-full max-w-[340px] mx-auto overflow-hidden">
+                                <h4 className="text-[10px] font-black text-primary uppercase mb-3 flex items-center gap-2">
+                                    <ShieldCheck size={14} />
+                                    Security Status
+                                </h4>
+                                <div className="space-y-2 text-[10px] font-mono text-white/50 break-all leading-relaxed">
+                                    <div className="flex justify-between">
+                                        <span className="font-bold text-white/70">ENVIRONMENT:</span>
+                                        <span>PRODUCTION</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-bold text-white/70">CONNECTION:</span>
+                                        <span className={navigator.onLine ? 'text-green-500' : 'text-red-500'}>
+                                            {navigator.onLine ? 'ESTABLISHED' : 'OFFLINE'}
+                                        </span>
+                                    </div>
                                     {techError && (
-                                        <div className="mt-2 p-2 bg-red-500/20 text-red-200 rounded border border-red-500/30">
-                                            <span className="font-bold">Erro:</span> {techError}
-                                        </div>
-                                    )}
-                                    {!techError && error && (
-                                        <div className="mt-2 p-2 bg-amber-500/20 text-amber-200 rounded border border-amber-500/30">
-                                            <span className="font-bold">Alerta:</span> {error}
+                                        <div className="mt-2 p-2 bg-red-500/10 text-red-400 rounded border border-red-500/20 font-sans">
+                                            <span className="font-bold">DEBUG:</span> {techError}
                                         </div>
                                     )}
                                 </div>
@@ -504,13 +319,9 @@ const Login = ({ onLogin }) => {
                     </div>
                 </div>
             </div>
-
-            {/* FontAwesome CDN */}
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-            {/* Google Fonts */}
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-        </>
+        </div>
     )
 }
 
 export default Login
+

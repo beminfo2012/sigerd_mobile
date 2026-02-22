@@ -96,33 +96,33 @@ export function ShelterForm() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-[#2a5299] border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Carregando dados...</p>
+                    <div className="w-12 h-12 border-4 border-[#2a5299] dark:border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando dados...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-6">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-6">
             <div className="max-w-3xl mx-auto px-4 py-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
                         onClick={() => navigate(id ? `/abrigos/${id}` : '/abrigos')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
+                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800">
+                            <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">
                                 {id ? 'Editar Abrigo' : 'Cadastrar Novo Abrigo'}
                             </h1>
-                            <p className="text-sm text-slate-500 mt-1">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 {id ? 'Atualize as informações do abrigo' : 'Preencha os dados do abrigo'}
                             </p>
                         </div>
@@ -133,8 +133,8 @@ export function ShelterForm() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Basic Information */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Building2 size={20} className="text-[#2a5299]" />
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                            <Building2 size={20} className="text-[#2a5299] dark:text-blue-400" />
                             Informações Básicas
                         </h2>
 

@@ -69,9 +69,9 @@ export function ShelterDetail() {
 
     if (!shelter) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
                 <div className="text-center">
-                    <h1 className="text-xl font-bold text-slate-800 mb-2">Abrigo não encontrado</h1>
+                    <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Abrigo não encontrado</h1>
                     <Button onClick={() => navigate('/abrigos')}>Voltar ao Dashboard</Button>
                 </div>
             </div>

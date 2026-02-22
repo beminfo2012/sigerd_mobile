@@ -1,8 +1,8 @@
 export function Badge({ status, children, className = '' }) {
     const statusStyles = {
-        active: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-        inactive: 'bg-slate-100 border-slate-200 text-slate-600',
-        full: 'bg-orange-50 border-orange-200 text-orange-700',
+        active: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400',
+        inactive: 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400',
+        full: 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400',
     };
 
     const dotColors = {

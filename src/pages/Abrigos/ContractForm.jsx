@@ -77,7 +77,21 @@ const ContractForm = () => {
 
         try {
             // Convert "18.250,00" -> 18250.00
-            const cleanValue = parseFloat(formData.total_value.replace(/\./g, '').replace(',', '.'));
+            const cleanString = String(formData.total_value).replace(/[^\d,]/g, '').replace(',', '.');
+            const cleanValue = parseFloat(cleanString);
+
+            if (isNaN(cleanValue) || cleanValue <= 0) {
+                toast.error('Valor total inválido');
+                setLoading(false);
+                return;
+            }
+
+            // Simple date check
+            if (new Date(formData.end_date) < new Date(formData.start_date)) {
+                toast.error('A data de término deve ser posterior à data de início');
+                setLoading(false);
+                return;
+            }
 
             const payload = {
                 ...formData,
@@ -130,14 +144,14 @@ const ContractForm = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Objeto *</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Objeto *</label>
                         <input
                             type="text"
                             name="object_description"
                             value={formData.object_description}
                             onChange={handleChange}
-                            placeholder="Ex: Cestas Básicas"
-                            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                            placeholder="Ex: Cestas Básicas, Marmitas, Colchões..."
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
                             required
                         />
                     </div>
@@ -168,9 +182,9 @@ const ContractForm = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Valor Total (R$) *</label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">R$</span>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Valor Total *</label>
+                        <div className="relative group">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold group-focus-within:text-blue-500 transition-colors">R$</span>
                             <input
                                 type="text"
                                 name="total_value"
@@ -184,7 +198,7 @@ const ContractForm = () => {
                                     setFormData(prev => ({ ...prev, total_value: val }));
                                 }}
                                 placeholder="0,00"
-                                className="w-full pl-12 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-bold text-slate-800"
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-black text-slate-800 text-lg shadow-sm"
                                 required
                             />
                         </div>

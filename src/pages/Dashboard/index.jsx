@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home, Share2, RefreshCw, Plus, Users, X } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, BarChart3, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home, Share2, RefreshCw, Plus, Users, X } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
@@ -416,7 +416,7 @@ const Dashboard = () => {
                                 <span>{weather.current.humidity || 0}%</span>
                             </div>
                             <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
-                                <Activity size={16} className="text-orange-400" />
+                                <BarChart3 size={16} className="text-orange-400" />
                                 <span>{Math.round(weather.current.wind || 0)} km/h</span>
                             </div>
                         </div>
@@ -500,9 +500,9 @@ const Dashboard = () => {
                                 {/* Monitoramento */}
                                 <div onClick={() => navigate('/monitoramento')} className="flex flex-col items-center gap-2.5 cursor-pointer group">
                                     <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all">
-                                        <Activity size={28} strokeWidth={2.2} />
+                                        <BarChart3 size={28} strokeWidth={2.2} />
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Monitorar</span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Monitoramento</span>
                                 </div>
 
                                 {/* ASSIST. HUMANITÁRIA */}
@@ -604,8 +604,8 @@ const Dashboard = () => {
                             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Ações do Sistema</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <button onClick={() => navigate('/monitoramento')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
-                                    <Activity className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Monitorar</span>
+                                    <BarChart3 className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Monitoramento</span>
                                 </button>
                                 <button onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
                                     <ClipboardList className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
