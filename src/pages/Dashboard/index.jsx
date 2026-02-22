@@ -423,18 +423,18 @@ const Dashboard = () => {
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-4 lg:gap-8 items-center">
-                            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
-                                <CloudRain size={16} className="text-blue-500" />
-                                <span>{weather.daily?.[0]?.rainProb || 0}%</span>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
+                                <CloudRain size={15} className="text-blue-500 shrink-0" />
+                                <span className="text-slate-600 dark:text-slate-300">Chuva: <span className="font-bold">{weather.daily?.[0]?.rainProb || 0}%</span></span>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
-                                <Timer size={16} className="text-blue-400" />
-                                <span>{weather.current.humidity || 0}%</span>
+                            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
+                                <Timer size={15} className="text-blue-400 shrink-0" />
+                                <span className="text-slate-600 dark:text-slate-300">Umidade: <span className="font-bold">{weather.current.humidity || 0}%</span></span>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
-                                <BarChart3 size={16} className="text-orange-400" />
-                                <span>{Math.round(weather.current.wind || 0)} km/h</span>
+                            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
+                                <BarChart3 size={15} className="text-orange-400 shrink-0" />
+                                <span className="text-slate-600 dark:text-slate-300">Vento: <span className="font-bold">{Math.round(weather.current.wind || 0)} km/h</span></span>
                             </div>
                         </div>
                     </div>
