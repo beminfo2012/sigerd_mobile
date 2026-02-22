@@ -158,7 +158,24 @@ const Dashboard = () => {
 
                 // [LIGHTNING LOAD - STEP 4] Secondary data also in background
                 Promise.all([
-                    fetch('/api/weather').then(r => r.ok ? r.json() : null).catch(() => null),
+                    (async () => {
+                        try {
+                            const r = await fetch('/api/weather');
+                            if (r.ok) return r.json();
+                        } catch (_) { /* proxy not available */ }
+                        // Fallback: fetch directly from Open-Meteo (works anywhere)
+                        try {
+                            const lat = -20.0246, lon = -40.7464;
+                            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
+                            const r2 = await fetch(url);
+                            if (!r2.ok) return null;
+                            const d = await r2.json();
+                            return {
+                                current: { temp: d.current.temperature_2m, humidity: d.current.relative_humidity_2m, rain: d.current.precipitation, wind: d.current.wind_speed_10m, code: d.current.weather_code },
+                                daily: d.daily.time.map((t, i) => ({ date: t, tempMax: d.daily.temperature_2m_max[i], tempMin: d.daily.temperature_2m_min[i], rainProb: d.daily.precipitation_probability_max[i], code: d.daily.weather_code[i] }))
+                            };
+                        } catch (_) { return null; }
+                    })(),
                     cemadenService.getActiveAlerts().catch(() => [])
                 ]).then(([weatherRes, cemadenRes]) => {
                     if (weatherRes) setWeather(weatherRes)
@@ -406,7 +423,7 @@ const Dashboard = () => {
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
                             </div>
                         </div>
-                        <div className="hidden sm:flex flex-col sm:flex-row gap-4 lg:gap-8 items-end sm:items-center">
+                        <div className="flex flex-wrap gap-4 lg:gap-8 items-center">
                             <div className="flex items-center gap-2 text-slate-500 text-xs font-bold bg-white/50 dark:bg-slate-700/50 px-3 py-2 rounded-2xl">
                                 <CloudRain size={16} className="text-blue-500" />
                                 <span>{weather.daily?.[0]?.rainProb || 0}%</span>

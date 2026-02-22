@@ -255,7 +255,7 @@ const Login = ({ onLogin }) => {
                             disabled={loading}
                             variant="primary"
                             size="lg"
-                            className="w-full h-14 bg-orange-600 hover:bg-orange-500 border-none mt-2 shadow-lg shadow-orange-600/20"
+                            className="w-full h-14 bg-blue-600 hover:bg-blue-500 border-none mt-2 shadow-lg shadow-blue-600/20"
                         >
                             {loading ? (
                                 <>
