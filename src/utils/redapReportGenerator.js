@@ -3,11 +3,11 @@ import html2canvas from 'html2canvas';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 
 /**
- * S2ID REPORT GENERATOR - HIGH FIDELITY FIDE MODEL
- * Generates a professional PDF report from S2id record data.
+ * REDAP REPORT GENERATOR - HIGH FIDELITY FIDE MODEL
+ * Generates a professional PDF report from REDAP record data.
  */
 
-export const generateS2idReport = async (record, userProfile, activeSector = null) => {
+export const generateRedapReport = async (record, userProfile, activeSector = null) => {
     // Definir se é um relatório consolidado ou setorial
     const isSectoral = !!activeSector;
     const sectorDisplay = {
@@ -41,8 +41,8 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
     ]);
 
     const filename = isSectoral
-        ? `S2ID_SETORIAL_${activeSector.toUpperCase()}_${record.data.tipificacao.cobrade.replace(/\./g, '_')}.pdf`
-        : `S2ID_FIDE_${record.data.tipificacao.cobrade.replace(/\./g, '_')}_${new Date().getTime()}.pdf`;
+        ? `REDAP_SETORIAL_${activeSector.toUpperCase()}_${record.data.tipificacao.cobrade.replace(/\./g, '_')}.pdf`
+        : `REDAP_FIDE_${record.data.tipificacao.cobrade.replace(/\./g, '_')}_${new Date().getTime()}.pdf`;
     const data = record.data;
 
     const container = document.createElement('div');
@@ -420,7 +420,7 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
                 <p style="margin: 0; font-size: 13px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${finalName || 'Responsável'}</p>
                 <p style="margin: 4px 0; font-size: 9px; color: #475569; font-weight: 700; text-transform: uppercase;">${finalRole}</p>
                 <p style="margin: 0; font-size: 8px; color: #94a3b8; font-weight: 600;">Defesa Civil Municipal de Santa Maria de Jetibá/ES</p>
-                <p style="margin-top: 25px; font-size: 8px; color: #94a3b8; font-weight: 500;">Gerado em ${new Date().toLocaleString('pt-BR')} via SIGERD MOBILE S2ID.</p>
+                <p style="margin-top: 25px; font-size: 8px; color: #94a3b8; font-weight: 500;">Gerado em ${new Date().toLocaleString('pt-BR')} via SIGERD MOBILE REDAP.</p>
             </div>
         </div>
     `;
@@ -509,7 +509,7 @@ export const generateS2idReport = async (record, userProfile, activeSector = nul
         const file = new File([blob], filename, { type: 'application/pdf' });
 
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Relatório S2ID FIDE' }).catch(() => {
+            await navigator.share({ files: [file], title: 'Relatório REDAP FIDE' }).catch(() => {
                 const url = URL.createObjectURL(blob);
                 window.open(url) || (location.href = url);
             });

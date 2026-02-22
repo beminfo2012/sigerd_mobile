@@ -6,15 +6,15 @@ import {
     Download, Clock, CheckCircle,
     ChevronRight, Globe, Shield, FileStack, RefreshCw
 } from 'lucide-react';
-import S2idDocsModal from './components/S2idDocsModal';
-import { getS2idRecords, deleteS2idLocal } from '../../services/s2idDb';
+import RedapDocsModal from './components/RedapDocsModal';
+import { getRedapRecords, deleteRedapLocal } from '../../services/redapDb';
 import { syncPendingData } from '../../services/db';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
 import { UserContext } from '../../App';
-import { generateS2idReport } from '../../utils/s2idReportGenerator';
+import { generateRedapReport } from '../../utils/redapReportGenerator';
 
-const S2idDashboard = () => {
+const RedapDashboard = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const user = React.useContext(UserContext);
@@ -29,6 +29,20 @@ const S2idDashboard = () => {
     const [syncing, setSyncing] = useState(false);
 
     const ROLE_MAP = {
+        'Redap_Saude': 'saude',
+        'Redap_Obras': 'obras',
+        'Redap_Social': 'social',
+        'Redap_Educacao': 'educacao',
+        'Redap_Agricultura': 'agricultura',
+        'Redap_Interior': 'interior',
+        'Redap_Administracao': 'administracao',
+        'Redap_CDL': 'cdl',
+        'Redap_Cesan': 'cesan',
+        'Redap_DefesaSocial': 'defesa_social',
+        'Redap_EsporteTurismo': 'esporte_turismo',
+        'Redap_ServicosUrbanos': 'servicos_urbanos',
+        'Redap_Transportes': 'transportes',
+        // Backward compatibility for S2id roles
         'S2id_Saude': 'saude',
         'S2id_Obras': 'obras',
         'S2id_Social': 'social',
@@ -44,7 +58,9 @@ const S2idDashboard = () => {
         'S2id_Transportes': 'transportes'
     };
 
-    const activeSector = ROLE_MAP[user?.role] || (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null);
+    const activeSector = ROLE_MAP[user?.role] ||
+        (user?.role?.startsWith('Redap_') ? user.role.replace('Redap_', '').toLowerCase() :
+            (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null));
 
     useEffect(() => {
         loadRecords();
@@ -66,13 +82,13 @@ const S2idDashboard = () => {
     const loadRecords = async (silent = false) => {
         if (!silent) setLoading(true);
         try {
-            const data = await getS2idRecords();
+            const data = await getRedapRecords();
             if (data) {
                 setRecords(data.filter(r => r.status !== 'deleted'));
             }
         } catch (error) {
             console.error('Error loading records:', error);
-            if (!silent) toast('Falha ao carregar registros S2id.', 'error');
+            if (!silent) toast('Falha ao carregar registros REDAP.', 'error');
         } finally {
             if (!silent) setLoading(false);
         }
@@ -103,7 +119,7 @@ const S2idDashboard = () => {
     const handleDelete = async () => {
         if (!recordToDelete) return;
         try {
-            await deleteS2idLocal(recordToDelete.id);
+            await deleteRedapLocal(recordToDelete.id);
             toast.success('Registro removido com sucesso.');
             loadRecords();
         } catch (error) {
@@ -115,8 +131,8 @@ const S2idDashboard = () => {
     };
 
     const filteredRecords = records.filter(r =>
-        r.data.tipificacao.denominacao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.data.tipificacao.cobrade.includes(searchTerm)
+        r.data?.tipificacao?.denominacao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.data?.tipificacao?.cobrade?.includes(searchTerm)
     );
 
     if (loading) {
@@ -164,9 +180,9 @@ const S2idDashboard = () => {
                     >
                         <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
                     </button>
-                    {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role) && (
+                    {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role) && (
                         <button
-                            onClick={() => navigate('/s2id/novo')}
+                            onClick={() => navigate('/redap/novo')}
                             className="bg-blue-600 text-white p-2.5 rounded-xl shadow-md active:scale-95 transition-all hover:bg-blue-700 flex items-center gap-2"
                         >
                             <Plus size={20} />
@@ -244,7 +260,7 @@ const S2idDashboard = () => {
 
                                         <div className="flex flex-col gap-2">
                                             <button
-                                                onClick={() => navigate(`/s2id/editar/${record.s2id_id || record.id}`)}
+                                                onClick={() => navigate(`/redap/editar/${record.redap_id || record.id}`)}
                                                 className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                                             >
                                                 <Edit3 size={18} />
@@ -277,7 +293,7 @@ const S2idDashboard = () => {
                                             )}
                                         </div>
                                         <button
-                                            onClick={() => generateS2idReport(record, user, activeSector)}
+                                            onClick={() => generateRedapReport(record, user, activeSector)}
                                             className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:bg-blue-50 px-3 py-1.5 rounded-xl transition-all"
                                         >
                                             <Download size={14} /> {activeSector ? 'Relatório Setorial' : 'Gerar PDF'}
@@ -419,7 +435,7 @@ const S2idDashboard = () => {
 
                                         {/* Actions */}
                                         <button
-                                            onClick={() => navigate(`/s2id/editar/${r.s2id_id || r.id}`)}
+                                            onClick={() => navigate(`/redap/editar/${r.redap_id || r.id}`)}
                                             className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all flex-shrink-0"
                                         >
                                             <Edit3 size={16} />
@@ -471,7 +487,7 @@ const S2idDashboard = () => {
                                                                 </p>
                                                             )}
                                                             <button
-                                                                onClick={() => generateS2idReport(r, user, sec)}
+                                                                onClick={() => generateRedapReport(r, user, sec)}
                                                                 className="mt-1 w-full text-[7px] font-black text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg py-1 flex items-center justify-center gap-1 transition-all"
                                                             >
                                                                 <Download size={9} /> PDF
@@ -521,13 +537,13 @@ const S2idDashboard = () => {
                     </button>
                     <button
                         onClick={async () => {
-                            if (!window.confirm("ATENÇÃO: Isso vai apagar o banco local do S2ID e baixar TUDO novamente da nuvem. Seus dados pendentes (não salvos) serão preservados. Deseja continuar?")) return;
+                            if (!window.confirm("ATENÇÃO: Isso vai apagar o banco local do REDAP e baixar TUDO novamente da nuvem. Seus dados pendentes (não salvos) serão preservados. Deseja continuar?")) return;
 
                             try {
-                                const { rebuildS2idStorage } = await import('../../services/s2idDb');
+                                const { rebuildRedapStorage } = await import('../../services/redapDb');
                                 toast('Iniciando reconstrução do módulo...', 'info');
 
-                                const count = await rebuildS2idStorage();
+                                const count = await rebuildRedapStorage();
 
                                 alert(`SUCESSO: Módulo reconstruído! ${count} registros baixados e sincronizados.`);
                                 window.location.reload();
@@ -541,10 +557,10 @@ const S2idDashboard = () => {
                     </button>
                     <button
                         onClick={async () => {
-                            const { getS2idRecords } = await import('../../services/s2idDb');
-                            const all = await getS2idRecords();
+                            const { getRedapRecords } = await import('../../services/redapDb');
+                            const all = await getRedapRecords();
                             const summary = all.map(r => ({
-                                id: r.s2id_id ? r.s2id_id.slice(0, 8) : '?',
+                                id: r.redap_id ? r.redap_id.slice(0, 8) : '?',
                                 status: r.status,
                                 tipificacao: r.data.tipificacao.denominacao || '(Sem Título)',
                                 submissoes: Object.entries(r.data.submissoes_setoriais || {})
@@ -564,7 +580,7 @@ const S2idDashboard = () => {
                             if (!window.confirm("RESGATE GLOBAL: Isso vai procurar QUALQUER registro que tenha dados (como saúde ou agricultura) e mover tudo para o seu FIDE ativo principal, mesmo que os nomes sejam um pouco diferentes. Deseja prosseguir?")) return;
                             try {
                                 toast('Iniciando resgate global...', 'info');
-                                const { forceRescueAllOrphanData } = await import('../../services/s2idDb');
+                                const { forceRescueAllOrphanData } = await import('../../services/redapDb');
                                 const count = await forceRescueAllOrphanData();
                                 if (count > 0) {
                                     alert(`SUCESSO: Dados de ${count} registros foram resgatados e movidos para o FIDE ativo!`);
@@ -585,8 +601,8 @@ const S2idDashboard = () => {
                             if (!window.confirm("ISO VAI UNIFICAR REGISTROS DUPLICADOS: O sistema vai procurar FIDEs com o mesmo nome e juntá-los em um só, recuperando dados de Saúde, Agricultura, etc. Deseja prosseguir?")) return;
                             try {
                                 toast('Iniciando limpeza e unificação...', 'info');
-                                const { deepRepairS2idDuplicates } = await import('../../services/s2idDb');
-                                const count = await deepRepairS2idDuplicates();
+                                const { deepRepairRedapDuplicates } = await import('../../services/redapDb');
+                                const count = await deepRepairRedapDuplicates();
                                 if (count > 0) {
                                     alert(`SUCESSO: ${count} grupos de registros foram unificados! Agora tudo deve estar aparecendo no lugar certo.`);
                                     window.location.reload();
@@ -614,7 +630,7 @@ const S2idDashboard = () => {
                 type="danger"
             />
 
-            <S2idDocsModal
+            <RedapDocsModal
                 isOpen={showDocsModal}
                 onClose={() => {
                     setShowDocsModal(false);
@@ -627,4 +643,4 @@ const S2idDashboard = () => {
     );
 };
 
-export default S2idDashboard;
+export default RedapDashboard;

@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Clock as ClockIcon, Calendar, Info, FileText, CheckCircle2, AlertTriangle, X, Camera, Save, Trash2, Home, Users, Leaf, Globe, Shield, Search, ChevronDown, ChevronUp, AlertCircle, Calculator, Sparkles, ArrowLeft, PenTool, Image as ImageIcon, FileStack } from 'lucide-react';
-import { CurrencyInput, NumberInput } from '../../components/S2idInputs';
-import { getS2idById, saveS2idLocal, INITIAL_S2ID_STATE } from '../../services/s2idDb';
+import { CurrencyInput, NumberInput } from '../../components/RedapInputs';
+import { getRedapById, saveRedapLocal, INITIAL_REDAP_STATE } from '../../services/redapDb';
 import { useToast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
 import { COBRADE_LIST } from '../../utils/cobradeData';
-import { generateS2idReport } from '../../utils/s2idReportGenerator';
+import { generateRedapReport } from '../../utils/redapReportGenerator';
 import { refineReportText } from '../../services/ai';
-import S2idSignature from './components/S2idSignature';
-import S2idPhotoCapture from './components/S2idPhotoCapture';
-import S2idIntensityModal from './components/S2idIntensityModal';
-import { generateS2idDoc } from '../../utils/s2idDocTemplates';
+import RedapSignature from './components/RedapSignature';
+import RedapPhotoCapture from './components/RedapPhotoCapture';
+import RedapIntensityModal from './components/RedapIntensityModal';
+import { generateRedapDoc } from '../../utils/redapDocTemplates';
 
 const SectionHeader = ({ icon: Icon, title, isOpen, onToggle, color = "blue" }) => (
     <div
@@ -26,15 +26,29 @@ const SectionHeader = ({ icon: Icon, title, isOpen, onToggle, color = "blue" }) 
     </div>
 );
 
-const S2idForm = () => {
+const RedapForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { toast } = useToast();
     const user = React.useContext(UserContext);
 
     const ROLE_MAP = {
+        'Redap_Saude': 'saude',
+        'Redap_Obras': 'obras',
+        'Redap_Social': 'social',
+        'Redap_Educacao': 'educacao',
+        'Redap_Agricultura': 'agricultura',
+        'Redap_Interior': 'interior',
+        'Redap_Administracao': 'administracao',
+        'Redap_CDL': 'cdl',
+        'Redap_Cesan': 'cesan',
+        'Redap_DefesaSocial': 'defesa_social',
+        'Redap_EsporteTurismo': 'esporte_turismo',
+        'Redap_ServicosUrbanos': 'servicos_urbanos',
+        'Redap_Transportes': 'transportes',
+        // Backward compatibility
         'S2id_Saude': 'saude',
-        'S2id_Obras': 'obras', // Manteve key 'obras' mas exibição será SECURB
+        'S2id_Obras': 'obras',
         'S2id_Social': 'social',
         'S2id_Educacao': 'educacao',
         'S2id_Agricultura': 'agricultura',
@@ -48,8 +62,10 @@ const S2idForm = () => {
         'S2id_Transportes': 'transportes'
     };
 
-    const activeSector = ROLE_MAP[user?.role] || (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null);
-    const [formData, setFormData] = useState(INITIAL_S2ID_STATE);
+    const activeSector = ROLE_MAP[user?.role] ||
+        (user?.role?.startsWith('Redap_') ? user.role.replace('Redap_', '').toLowerCase() :
+            (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null));
+    const [formData, setFormData] = useState(INITIAL_REDAP_STATE);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showDocs, setShowDocs] = useState(false);
@@ -97,24 +113,26 @@ const S2idForm = () => {
 
     const loadRecord = async (recordId) => {
         try {
-            const record = await getS2idById(recordId);
+            const record = await getRedapById(recordId);
             if (record) {
                 // Determine active sector for this user or record
-                const targetSector = ROLE_MAP[user?.role] || (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null);
+                const targetSector = ROLE_MAP[user?.role] ||
+                    (user?.role?.startsWith('Redap_') ? user.role.replace('Redap_', '').toLowerCase() :
+                        (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null));
 
                 // Deep merge setorial data to ensure new fields (values) appear
                 const mergedRecord = {
                     ...record,
-                    tipo_registro: record.tipo_registro || 's2id', // Ensure tipo_registro is 's2id'
+                    tipo_registro: record.tipo_registro || 'redap', // Ensure tipo_registro is 'redap'
                     data: {
                         ...record.data,
                         setorial: {
-                            ...INITIAL_S2ID_STATE.data.setorial, // Base structure
+                            ...INITIAL_REDAP_STATE.data.setorial, // Base structure
                             ...record.data.setorial, // Overwrite with saved data
                             // Ensure specific sector object is also merged deeply if it exists
                             ...(targetSector && record.data.setorial && record.data.setorial[targetSector] ? {
                                 [targetSector]: {
-                                    ...INITIAL_S2ID_STATE.data.setorial[targetSector],
+                                    ...INITIAL_REDAP_STATE.data.setorial[targetSector],
                                     ...record.data.setorial[targetSector]
                                 }
                             } : {})
@@ -124,10 +142,10 @@ const S2idForm = () => {
 
                 // Also merge deeply for all sectors if user is Admin/Coordinator (viewing all)
                 if (['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) {
-                    Object.keys(INITIAL_S2ID_STATE.data.setorial).forEach(sector => {
+                    Object.keys(INITIAL_REDAP_STATE.data.setorial).forEach(sector => {
                         if (record.data.setorial && record.data.setorial[sector]) {
                             mergedRecord.data.setorial[sector] = {
-                                ...INITIAL_S2ID_STATE.data.setorial[sector],
+                                ...INITIAL_REDAP_STATE.data.setorial[sector],
                                 ...record.data.setorial[sector]
                             };
                         }
@@ -159,10 +177,10 @@ const S2idForm = () => {
         if (loading || saving) return;
         setSaving(true);
         try {
-            const savedId = await saveS2idLocal(formData);
+            const savedId = await saveRedapLocal(formData);
             if ((!id || id === 'novo') && savedId) {
                 isDirty.current = false; // Prevent immediate re-save
-                navigate(`/s2id/editar/${savedId}`, { replace: true });
+                navigate(`/redap/editar/${savedId}`, { replace: true });
                 setFormData(prev => ({ ...prev, id: savedId }));
             }
         } catch (error) {
@@ -198,7 +216,7 @@ const S2idForm = () => {
         return permissions[section] || false;
     };
 
-    const isGlobalReadOnly = !(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role) || user?.role?.startsWith('S2id_'));
+    const isGlobalReadOnly = !(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role) || user?.role?.startsWith('Redap_'));
 
     // AI Generation Logic
     const handleGenerateIA = async (field) => {
@@ -361,7 +379,7 @@ const S2idForm = () => {
             }
         };
         setFormData(newFormData);
-        await saveS2idLocal(newFormData);
+        await saveRedapLocal(newFormData);
         toast('✅ Seção setorial finalizada com sucesso! A Defesa Civil foi notificada.', 'success');
     };
 
@@ -399,7 +417,7 @@ const S2idForm = () => {
             {/* Header */}
             <header className="bg-white border-b border-slate-200 px-4 h-16 flex items-center justify-between sticky top-0 z-20 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/s2id')} className="p-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95 text-slate-600">
+                    <button onClick={() => navigate('/redap')} className="p-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95 text-slate-600">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
@@ -414,7 +432,7 @@ const S2idForm = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => generateS2idReport(formData, user)}
+                        onClick={() => generateRedapReport(formData, user)}
                         className="bg-slate-100 text-slate-700 p-2.5 rounded-xl active:scale-95 transition-all hover:bg-slate-200 flex items-center gap-2"
                         title="Gerar Relatório PDF"
                     >
@@ -666,11 +684,11 @@ const S2idForm = () => {
                 )}
 
                 {/* EXPANSÃO SETORIAL ESPECÍFICA */}
-                {(user?.role.startsWith('S2id_') || ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role)) && (
+                {(user?.role.startsWith('Redap_') || user?.role.startsWith('S2id_') || ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) && (
                     <>
                         <SectionHeader
                             icon={Globe}
-                            title={`Relatório Setorial: ${activeSector === 'obras' ? 'SECURB' : (user?.role.replace('S2id_', '') || 'Geral')}`}
+                            title={`Relatório Setorial: ${activeSector === 'obras' ? 'SECURB' : (user?.role.replace('Redap_', '').replace('S2id_', '') || 'Geral')}`}
                             isOpen={openSections.setorial}
                             onToggle={() => toggleSection('setorial')}
                             color="blue"
@@ -1142,7 +1160,7 @@ const S2idForm = () => {
             {/* MODALS */}
             {
                 showCamera && (
-                    <S2idPhotoCapture
+                    <RedapPhotoCapture
                         onSave={(photo) => {
                             const photoWithSector = { ...photo, sector: activeSector || 'defesa_civil' };
                             setFormData(prev => ({ ...prev, data: { ...prev.data, evidencias: [...prev.data.evidencias, photoWithSector] } }));
@@ -1156,7 +1174,7 @@ const S2idForm = () => {
 
             {
                 showSignature && (
-                    <S2idSignature
+                    <RedapSignature
                         onSave={(dataUrl) => {
                             if (activeSector) {
                                 updateSectoralSubmission(activeSector, 'assinatura_url', dataUrl);
@@ -1182,7 +1200,7 @@ const S2idForm = () => {
             }
             {
                 showIntensity && (
-                    <S2idIntensityModal
+                    <RedapIntensityModal
                         isOpen={showIntensity}
                         onClose={() => setShowIntensity(false)}
                         formData={formData}
@@ -1206,4 +1224,4 @@ const S2idForm = () => {
     );
 };
 
-export default S2idForm;
+export default RedapForm;

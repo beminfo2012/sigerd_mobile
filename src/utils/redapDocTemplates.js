@@ -3,7 +3,7 @@ import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
 
 /**
- * Utility to generate S2ID Official Documents
+ * Utility to generate REDAP Official Documents
  */
 
 const fetchTemplate = async (path) => {
@@ -20,7 +20,7 @@ const getMonthExtenso = (mes) => {
     return meses[parseInt(mes) - 1] || mes;
 };
 
-export const generateS2idDoc = async (type, data) => {
+export const generateRedapDoc = async (type, data) => {
     try {
         let templatePath = "";
         let filename = "";
@@ -32,7 +32,7 @@ export const generateS2idDoc = async (type, data) => {
                 break;
             case "oficio":
                 templatePath = "/templates/Modelo de oficio requerimento reconhecimento Federal.docx";
-                filename = `Oficio_Reconhecimento_${data.protocolo_s2id || "SEM_PROTOCOLO"}.docx`;
+                filename = `Oficio_Reconhecimento_${data.protocolo_redap || "SEM_PROTOCOLO"}.docx`;
                 break;
             case "parecer":
                 templatePath = "/templates/Modelo de Parecer Técnico.docx";

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { X, Check, RotateCcw } from 'lucide-react';
 
-const S2idSignature = ({ onSave, onCancel, title = "Assinatura do Responsável" }) => {
+const RedapSignature = ({ onSave, onCancel, title = "Assinatura do Responsável" }) => {
     const canvasRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [isEmpty, setIsEmpty] = useState(true);
@@ -115,4 +115,4 @@ const S2idSignature = ({ onSave, onCancel, title = "Assinatura do Responsável" 
     );
 };
 
-export default S2idSignature;
+export default RedapSignature;

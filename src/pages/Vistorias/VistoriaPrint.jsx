@@ -207,8 +207,20 @@ const VistoriaPrint = () => {
         <div className="bg-slate-100 min-h-screen font-sans text-slate-800 print:bg-white print:p-0 p-8 flex justify-center">
             <style>{`
                 @media screen and (max-width: 768px) {
-                    .print-preview-wrapper { overflow-x: auto; padding: 10px; display: block; }
-                    .print-container { min-width: 210mm; transform: scale(0.9); transform-origin: top left; }
+                    .print-preview-wrapper { 
+                        overflow-x: auto; 
+                        overflow-y: visible;
+                        padding: 10px; 
+                        display: block; 
+                        width: 100%;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                    .print-container { 
+                        min-width: 210mm; 
+                        transform: scale(0.45); 
+                        transform-origin: top center; 
+                        margin-bottom: -150mm; /* Compensate for scale gap */
+                    }
                 }
                 @media print {
                     @page { margin: 10mm; size: A4; }

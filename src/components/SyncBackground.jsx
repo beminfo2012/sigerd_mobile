@@ -72,8 +72,8 @@ const SyncBackground = () => {
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'vistorias' }, payload => {
                     notificationService.notifyNewRecord('vistoria', payload.new);
                 })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 's2id_records' }, payload => {
-                    notificationService.notifyNewRecord('s2id', payload.new);
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'redap_records' }, payload => {
+                    notificationService.notifyNewRecord('redap', payload.new);
                 })
                 .subscribe();
 

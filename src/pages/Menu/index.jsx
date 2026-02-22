@@ -26,21 +26,21 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
     // [FIX] Ensure saude@s2id.com has correct role if it was accidentally promoted
     useEffect(() => {
         const fixRole = async () => {
-            if (userProfile?.email === 'saude@s2id.com' && userProfile?.role !== 'S2id_Saude') {
-                console.log('Correcting saude role to S2id_Saude...')
+            if (userProfile?.email === 'saude@s2id.com' && userProfile?.role !== 'Redap_Saude') {
+                console.log('Correcting saude role to Redap_Saude...')
                 const { data: { user } } = await supabase.auth.getUser()
 
                 if (user) {
                     const { error } = await supabase
                         .from('profiles')
                         .update({
-                            role: 'S2id_Saude',
+                            role: 'Redap_Saude',
                             updated_at: new Date().toISOString()
                         })
                         .eq('id', user.id)
 
                     if (!error) {
-                        const newProfile = { ...userProfile, role: 'S2id_Saude' }
+                        const newProfile = { ...userProfile, role: 'Redap_Saude' }
                         setUserProfile(newProfile)
                         localStorage.setItem('userProfile', JSON.stringify(newProfile))
                         alert('Perfil corrigido automaticamente para Secretaria de Saúde.')
@@ -257,26 +257,33 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 </div>
 
 
-                {/* S2ID Strategic Module - Access for S2id roles and Defesa Civil */}
-                {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role)) && (
-                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <button
-                            onClick={() => window.location.href = '/s2id'}
-                            className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-2xl mr-4">
-                                    <Globe size={22} />
+                {/* REDAP Strategic Module - Access for Redap/S2id roles and Defesa Civil */}
+                {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin',
+                    'Redap_Geral', 'Redap_Setorial', 'Redap_Saude', 'Redap_Educacao', 'Redap_Obras', 'Redap_Agricultura',
+                    'Redap_Social', 'Redap_Interior', 'Redap_Administracao', 'Redap_CDL', 'Redap_Cesan', 'Redap_DefesaSocial',
+                    'Redap_EsporteTurismo', 'Redap_ServicosUrbanos', 'Redap_Transportes',
+                    'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura',
+                    'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
+                    'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
+                ].includes(userProfile?.role)) && (
+                        <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                            <button
+                                onClick={() => window.location.href = '/redap'}
+                                className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-2xl mr-4">
+                                        <Globe size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo REDAP</span>
+                                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-tight">Relatório de Danos e Prejuízos</span>
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo REDAP</span>
-                                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-tight">Relatório de Danos e Prejuízos</span>
-                                </div>
-                            </div>
-                            <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Nacional</div>
-                        </button>
-                    </div>
-                )}
+                                <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Nacional</div>
+                            </button>
+                        </div>
+                    )}
 
                 {/* Management Section (Strategic) - FOR COORDINATORS AND ADMINS */}
                 {['Admin', 'Coordenador', 'Secretário', 'admin'].includes(userProfile?.role) && (

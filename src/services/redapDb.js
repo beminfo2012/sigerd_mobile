@@ -2,16 +2,16 @@ import { initDB, triggerSync, syncPendingData } from './db'
 import { supabase } from './supabase'
 
 /**
- * S2ID Database Service
- * Handles CRUD for S2id records with auto-save and sync support.
+ * REDAP Database Service
+ * Handles CRUD for REDAP records with auto-save and sync support.
  */
 
-// Initial state for a new S2id record
-export const INITIAL_S2ID_STATE = {
+// Initial state for a new REDAP record
+export const INITIAL_REDAP_STATE = {
     status: 'draft',
-    tipo_registro: 's2id', // 's2id' ou 'ocorrencia'
+    tipo_registro: 'redap', // 'redap' ou 'ocorrencia'
     id_ocorrencia: null, // ID amigável/sequencial se necessário
-    s2id_id: null, // Global UUID for sync
+    redap_id: null, // Global UUID for sync
     synced: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -110,7 +110,7 @@ export const INITIAL_S2ID_STATE = {
             decreto_numero: '',
             decreto_data: '',
             decreto_vigencia: '180',
-            protocolo_s2id: '',
+            protocolo_redap: '',
             diario_oficial_info: '',
             justificativa_federal: '',
             reconhecimento_reconsideracao: false,
@@ -146,7 +146,7 @@ export const INITIAL_S2ID_STATE = {
 /**
  * Merges two S2ID data objects, prioritizing non-empty values and merging sectoral data.
  */
-export const mergeS2idData = (local, remote) => {
+export const mergeRedapData = (local, remote) => {
     if (!local) return remote;
     if (!remote) return local;
 
@@ -228,9 +228,9 @@ export const mergeS2idData = (local, remote) => {
 /**
  * DEEP REPAIR: Merges and unifies duplicate records.
  */
-export const deepRepairS2idDuplicates = async () => {
+export const deepRepairRedapDuplicates = async () => {
     const db = await initDB();
-    const all = await db.getAll('s2id_records');
+    const all = await db.getAll('redap_records');
 
     const groups = {};
     all.forEach(r => {
@@ -250,17 +250,17 @@ export const deepRepairS2idDuplicates = async () => {
 
         for (const r of records) {
             if (r.id === target.id) continue;
-            master = mergeS2idData(master, r);
+            master = mergeRedapData(master, r);
             if (r.id !== target.id) {
                 const toDel = { ...r, status: 'deleted', synced: false, updated_at: new Date().toISOString() };
-                await db.put('s2id_records', toDel);
+                await db.put('redap_records', toDel);
             }
         }
 
         master.status = 'submitted';
         master.synced = false;
         master.updated_at = new Date().toISOString();
-        await db.put('s2id_records', master);
+        await db.put('redap_records', master);
         repairCount++;
     }
 
@@ -273,7 +273,7 @@ export const deepRepairS2idDuplicates = async () => {
  */
 export const forceRescueAllOrphanData = async () => {
     const db = await initDB();
-    const all = await db.getAll('s2id_records');
+    const all = await db.getAll('redap_records');
 
     const activeRecords = all.filter(r => r.status !== 'deleted');
     if (activeRecords.length === 0) throw new Error("Nenhum registro ativo encontrado.");
@@ -288,27 +288,27 @@ export const forceRescueAllOrphanData = async () => {
 
     let master = target;
     for (const src of sources) {
-        master = mergeS2idData(master, src);
+        master = mergeRedapData(master, src);
         const toDel = { ...src, status: 'deleted', synced: false, updated_at: new Date().toISOString() };
-        await db.put('s2id_records', toDel);
+        await db.put('redap_records', toDel);
     }
 
     master.synced = false;
     master.updated_at = new Date().toISOString();
-    await db.put('s2id_records', master);
+    await db.put('redap_records', master);
 
     if (navigator.onLine) triggerSync();
     return sources.length;
 };
 
-export const pullS2idFromCloud = async () => {
+export const pullRedapFromCloud = async () => {
     if (!navigator.onLine) return null;
 
     console.log('[S2ID] Starting cloud pull...');
 
     try {
         const { data, error } = await supabase
-            .from('s2id_records')
+            .from('redap_records')
             .select('*');
 
         if (error) {
@@ -324,7 +324,7 @@ export const pullS2idFromCloud = async () => {
         console.log(`[S2ID] Downloaded ${data.length} records. Syncing to IndexedDB...`);
 
         const db = await initDB();
-        const allLocal = await db.getAll('s2id_records');
+        const allLocal = await db.getAll('redap_records');
         const localByS2idId = new Map();
         const localBySupabaseId = new Map();
 
@@ -333,8 +333,8 @@ export const pullS2idFromCloud = async () => {
             if (l.supabase_id) localBySupabaseId.set(l.supabase_id, l);
         });
 
-        const tx = db.transaction('s2id_records', 'readwrite');
-        const store = tx.objectStore('s2id_records');
+        const tx = db.transaction('redap_records', 'readwrite');
+        const store = tx.objectStore('redap_records');
 
         for (const remote of data) {
             const localMatch =
@@ -372,47 +372,47 @@ export const pullS2idFromCloud = async () => {
         console.log(`[S2ID] Cloud pull complete. Processed ${data.length} records.`);
         return data;
     } catch (err) {
-        console.error('[S2ID] Cloud pull failed:', err);
+        console.error('[REDAP] Cloud pull failed:', err);
         return null;
     }
 };
 
 
 /**
- * NUCLEAR OPTION: Rebuilds S2ID storage from scratch.
+ * NUCLEAR OPTION: Rebuilds REDAP storage from scratch.
  * 1. Backs up DRAFTS.
  * 2. WIPES the store.
  * 3. Downloads ALL from Supabase (Raw).
  * 4. Restores DRAFTS.
  * 5. Inserts ALL downloaded.
  */
-export const rebuildS2idStorage = async () => {
-    console.log('[S2ID] Starting REBUILD...');
+export const rebuildRedapStorage = async () => {
+    console.log('[REDAP] Starting REBUILD...');
     if (!navigator.onLine) throw new Error("Offline: Cannot rebuild.");
 
     const db = await initDB();
 
     // 1. Backup Drafts
-    const all = await db.getAll('s2id_records');
+    const all = await db.getAll('redap_records');
     const drafts = all.filter(r => r.synced === false || r.status === 'draft');
-    console.log(`[S2ID] Backing up ${drafts.length} drafts.`);
+    console.log(`[REDAP] Backing up ${drafts.length} drafts.`);
 
     // 2. Clear Store
-    const txClear = db.transaction('s2id_records', 'readwrite');
-    await txClear.objectStore('s2id_records').clear();
+    const txClear = db.transaction('redap_records', 'readwrite');
+    await txClear.objectStore('redap_records').clear();
     await txClear.done;
-    console.log('[S2ID] Store cleared.');
+    console.log('[REDAP] Store cleared.');
 
     // 3. Download RAW (No ordering, just data)
-    const { data: remoteData, error } = await supabase.from('s2id_records').select('*');
+    const { data: remoteData, error } = await supabase.from('redap_records').select('*');
     if (error) throw error;
     if (!remoteData) throw new Error("Supabase returned null data");
 
-    console.log(`[S2ID] Downloaded ${remoteData.length} records.`);
+    console.log(`[REDAP] Downloaded ${remoteData.length} records.`);
 
     // 4. Insert Everything
-    const txInsert = db.transaction('s2id_records', 'readwrite');
-    const store = txInsert.objectStore('s2id_records');
+    const txInsert = db.transaction('redap_records', 'readwrite');
+    const store = txInsert.objectStore('redap_records');
 
     // Restore drafts first
     for (const draft of drafts) {
@@ -422,12 +422,12 @@ export const rebuildS2idStorage = async () => {
 
     // Insert Remote
     for (const remote of remoteData) {
-        const draftMatch = drafts.find(d => d.s2id_id === remote.s2id_id || d.supabase_id === remote.id);
+        const draftMatch = drafts.find(d => d.redap_id === remote.redap_id || d.supabase_id === remote.id);
 
         let toStore;
         if (draftMatch) {
-            console.log(`[S2ID] Rebuild: Merging draft ${remote.s2id_id}`);
-            toStore = mergeS2idData(draftMatch, remote);
+            console.log(`[REDAP] Rebuild: Merging draft ${remote.redap_id}`);
+            toStore = mergeRedapData(draftMatch, remote);
             toStore.synced = false; // Keep it as a draft so it can sync back
         } else {
             toStore = {
@@ -444,14 +444,14 @@ export const rebuildS2idStorage = async () => {
 };
 
 /**
- * Get the most recent draft S2id record
+ * Get the most recent draft REDAP record
  */
-export const getLatestDraftS2id = async () => {
+export const getLatestDraftRedap = async () => {
     // Try cloud-first merge
-    await pullS2idFromCloud();
+    await pullRedapFromCloud();
 
     const db = await initDB();
-    const records = await db.getAll('s2id_records');
+    const records = await db.getAll('redap_records');
     const drafts = records
         .filter(r => r.status === 'draft')
         .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
@@ -459,17 +459,17 @@ export const getLatestDraftS2id = async () => {
 };
 
 /**
- * Save or Update a S2id record locally (IndexedDB)
+ * Save or Update a REDAP record locally (IndexedDB)
  */
-export const saveS2idLocal = async (record) => {
+export const saveRedapLocal = async (record) => {
     const db = await initDB();
     const toSave = {
         ...record,
-        s2id_id: record.s2id_id || crypto.randomUUID(),
+        redap_id: record.redap_id || crypto.randomUUID(),
         updated_at: new Date().toISOString(),
         synced: false
     };
-    const id = await db.put('s2id_records', toSave);
+    const id = await db.put('redap_records', toSave);
 
     // Trigger background sync if online
     if (navigator.onLine) {
@@ -480,44 +480,44 @@ export const saveS2idLocal = async (record) => {
 };
 
 /**
- * Get all S2id records (Cloud-First: pulls from Supabase, merges, then returns local)
+ * Get all REDAP records (Cloud-First: pulls from Supabase, merges, then returns local)
  */
-export const getS2idRecords = async () => {
+export const getRedapRecords = async () => {
     // Pull from cloud and merge into local DB
-    await pullS2idFromCloud();
+    await pullRedapFromCloud();
 
     const db = await initDB();
-    const records = await db.getAll('s2id_records');
+    const records = await db.getAll('redap_records');
     return records.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 };
 
 /**
- * Get single S2id record by ID (with cloud fallback)
+ * Get single REDAP record by ID (with cloud fallback)
  */
-export const getS2idById = async (id) => {
+export const getRedapById = async (id) => {
     const db = await initDB();
 
-    // Support both numeric local ID and UUID s2id_id
+    // Support both numeric local ID and UUID redap_id
     let record = null;
     if (!isNaN(parseInt(id))) {
-        record = await db.get('s2id_records', parseInt(id));
+        record = await db.get('redap_records', parseInt(id));
     }
 
     if (!record) {
-        const all = await db.getAll('s2id_records');
-        record = all.find(r => r.s2id_id === id || r.supabase_id === id);
+        const all = await db.getAll('redap_records');
+        record = all.find(r => r.redap_id === id || r.supabase_id === id);
     }
 
     // If not found locally, try pulling from cloud
     if (!record && navigator.onLine) {
-        await pullS2idFromCloud();
+        await pullRedapFromCloud();
         // Retry search
         if (!isNaN(parseInt(id))) {
-            record = await db.get('s2id_records', parseInt(id));
+            record = await db.get('redap_records', parseInt(id));
         }
         if (!record) {
-            const all = await db.getAll('s2id_records');
-            record = all.find(r => r.s2id_id === id || r.supabase_id === id);
+            const all = await db.getAll('redap_records');
+            record = all.find(r => r.redap_id === id || r.supabase_id === id);
         }
     }
 
@@ -525,29 +525,28 @@ export const getS2idById = async (id) => {
 };
 
 /**
- * Delete S2id record (soft delete)
+ * Delete REDAP record (soft delete)
  */
-export const deleteS2idLocal = async (id) => {
+export const deleteRedapLocal = async (id) => {
     const db = await initDB();
-    const record = await db.get('s2id_records', parseInt(id));
+    const record = await db.get('redap_records', parseInt(id));
     if (record) {
         record.status = 'deleted';
         record.deleted_at = new Date().toISOString();
         record.synced = false;
-        await db.put('s2id_records', record);
+        await db.put('redap_records', record);
 
         if (navigator.onLine) {
-            triggerS2idSync(id);
+            triggerSync();
         }
     }
 };
 
 /**
- * Sync all pending S2id records
+ * Sync all pending REDAP records
  */
-export const syncAllS2id = async () => {
+export const syncAllRedap = async () => {
     if (navigator.onLine) {
         await syncPendingData();
     }
 };
-

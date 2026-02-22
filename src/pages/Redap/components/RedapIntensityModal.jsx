@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Calculator, Info, AlertTriangle, CheckCircle2, TrendingUp, Users, Home, BarChart3, ShieldAlert } from 'lucide-react';
-import { CurrencyInput } from '../../../components/S2idInputs';
+import { CurrencyInput } from '../../../components/RedapInputs';
 
-const S2idIntensityModal = ({ isOpen, onClose, formData, onSave }) => {
+const RedapIntensityModal = ({ isOpen, onClose, formData, onSave }) => {
     const [rcl, setRcl] = useState(formData.data.metadata_oficial.rcl_anual || 0);
     const [capacidade, setCapacidade] = useState(formData.data.metadata_oficial.capacidade_resposta || '');
 
@@ -226,4 +226,4 @@ const S2idIntensityModal = ({ isOpen, onClose, formData, onSave }) => {
     );
 };
 
-export default S2idIntensityModal;
+export default RedapIntensityModal;

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileStack, ChevronDown, ChevronUp, Download, Info } from 'lucide-react';
-import { generateS2idDoc } from '../../../utils/s2idDocTemplates';
-import { saveS2idLocal } from '../../../services/s2idDb';
+import { generateRedapDoc } from '../../../utils/redapDocTemplates';
+import { saveRedapLocal } from '../../../services/redapDb';
 
-const S2idDocsModal = ({ isOpen, onClose, record, onUpdate }) => {
+const RedapDocsModal = ({ isOpen, onClose, record, onUpdate }) => {
     const [metadata, setMetadata] = useState(record?.data?.metadata_oficial || {});
     const [saving, setSaving] = useState(false);
 
@@ -31,11 +31,11 @@ const S2idDocsModal = ({ isOpen, onClose, record, onUpdate }) => {
             };
 
             // Save metadata first
-            await saveS2idLocal(updatedRecord);
+            await saveRedapLocal(updatedRecord);
             if (onUpdate) onUpdate();
 
             // Generate document
-            await generateS2idDoc(type, { ...record.data, ...metadata });
+            await generateRedapDoc(type, { ...record.data, ...metadata });
         } catch (error) {
             console.error('Error:', error);
         } finally {
@@ -84,13 +84,13 @@ const S2idDocsModal = ({ isOpen, onClose, record, onUpdate }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1.5 ml-1">Cód. Protocolo S2ID</label>
+                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1.5 ml-1">Cód. Protocolo REDAP</label>
                                 <input
                                     type="text"
                                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 outline-none transition-all"
                                     placeholder="UF-F-0000000-00000-00000000"
-                                    value={metadata.protocolo_s2id || ''}
-                                    onChange={(e) => updateMetadata('protocolo_s2id', e.target.value)}
+                                    value={metadata.protocolo_redap || ''}
+                                    onChange={(e) => updateMetadata('protocolo_redap', e.target.value)}
                                 />
                             </div>
                         </div>
@@ -197,4 +197,4 @@ const S2idDocsModal = ({ isOpen, onClose, record, onUpdate }) => {
     );
 };
 
-export default S2idDocsModal;
+export default RedapDocsModal;

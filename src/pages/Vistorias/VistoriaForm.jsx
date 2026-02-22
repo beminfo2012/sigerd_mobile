@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2 } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
@@ -148,7 +148,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             matricula: '',
             assinatura: null
         },
-        checklistRespostas: {} // { "pergunta": true/false }
+        checklistRespostas: {}, // { "pergunta": true/false }
+        temApoioTecnico: false
     })
 
     const [docType, setDocType] = useState('CPF')
@@ -163,6 +164,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [refining, setRefining] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
+    const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null)
 
     // Update agent info when user profile loads (if fields are empty)
     useEffect(() => {
@@ -213,6 +215,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     assinatura: apoio?.assinatura || null
                 },
                 checklistRespostas: parseJSON(initialData.checklist_respostas || initialData.checklistRespostas, {}),
+                temApoioTecnico: !!(apoio?.nome || apoio?.assinatura),
                 fotos: (parseJSON(initialData.fotos, [])).map((f, i) =>
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
@@ -530,6 +533,25 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         }))
     }
 
+    const downloadPhoto = (dataUrl, filename) => {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename || `foto-vistoria-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const nextPhoto = () => {
+        if (selectedPhotoIndex === null) return;
+        setSelectedPhotoIndex((prev) => (prev + 1) % formData.fotos.length);
+    };
+
+    const prevPhoto = () => {
+        if (selectedPhotoIndex === null) return;
+        setSelectedPhotoIndex((prev) => (prev - 1 + formData.fotos.length) % formData.fotos.length);
+    };
+
     const handleGeneratePDF = async () => {
         if (generating) return;
         setGenerating(true);
@@ -669,6 +691,219 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
                     </Card>
 
+                    {/* 2. SEÇÃO: Responsável Técnico */}
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">2. Responsável Técnico</h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Agente</label>
+                                <input
+                                    type="text"
+                                    className={inputClasses}
+                                    value={formData.agente}
+                                    onChange={e => setFormData({ ...formData, agente: e.target.value })}
+                                    placeholder="Nome do Agente"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Matrícula</label>
+                                <input
+                                    type="text"
+                                    className={inputClasses}
+                                    value={formData.matricula}
+                                    onChange={e => setFormData({ ...formData, matricula: e.target.value })}
+                                    placeholder="Matrícula"
+                                />
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* 3. SEÇÃO: Solicitante */}
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">3. Solicitante</h2>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Nome Completo</label>
+                                <input
+                                    type="text"
+                                    className={inputClasses}
+                                    value={formData.solicitante}
+                                    onChange={e => setFormData({ ...formData, solicitante: e.target.value })}
+                                    placeholder="Nome completo do solicitante/morador"
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center px-1">
+                                        <label className={labelClasses}>{docType}</label>
+                                        <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDocType('CPF')
+                                                    setFormData(prev => ({ ...prev, cpf: '' }))
+                                                }}
+                                                className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CPF' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                            >
+                                                CPF
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDocType('CNPJ')
+                                                    setFormData(prev => ({ ...prev, cpf: '' }))
+                                                }}
+                                                className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CNPJ' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                            >
+                                                CNPJ
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="tel"
+                                        className={inputClasses}
+                                        placeholder={docType === 'CPF' ? "000.000.000-00" : "00.000.000/0000-00"}
+                                        value={formData.cpf}
+                                        onChange={e => {
+                                            let v = e.target.value.replace(/\D/g, '');
+                                            if (docType === 'CPF') {
+                                                if (v.length > 11) v = v.slice(0, 11);
+                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                            } else {
+                                                if (v.length > 14) v = v.slice(0, 14);
+                                                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                                                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                                                v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                                                v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                                            }
+                                            setFormData({ ...formData, cpf: v });
+                                        }}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>Telefone</label>
+                                    <div className="relative group">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none pointer-events-none group-focus-within:text-blue-500 transition-colors">(27)</span>
+                                        <input
+                                            type="tel"
+                                            className={`${inputClasses} pl-12`}
+                                            placeholder="90000-0000"
+                                            value={formData.telefone.replace(/^\(27\) /, '')}
+                                            onChange={e => {
+                                                let v = e.target.value.replace(/\D/g, '');
+                                                if (v.length > 9) v = v.slice(0, 9);
+                                                v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+                                                setFormData({ ...formData, telefone: `(27) ${v}` });
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* 4. SEÇÃO: Local da Ocorrência */}
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">4. Local da Ocorrência</h2>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Endereço da Ocorrência</label>
+                                <div className="relative group">
+                                    <MapPin size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />
+                                    <input
+                                        type="text"
+                                        list="logradouros-list"
+                                        className={`${inputClasses} pl-12`}
+                                        value={formData.endereco}
+                                        onChange={e => {
+                                            const streetName = e.target.value;
+                                            const found = logradourosData.find(l => l.nome.toLowerCase() === streetName.toLowerCase());
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                endereco: streetName,
+                                                bairro: found ? found.bairro : prev.bairro
+                                            }));
+                                        }}
+                                        placeholder="Nome da rua, avenida..."
+                                    />
+                                    <datalist id="logradouros-list">
+                                        {logradourosData
+                                            .filter(l => !formData.bairro || l.bairro === formData.bairro)
+                                            .map(l => l.nome)
+                                            .sort()
+                                            .map(nome => (
+                                                <option key={nome} value={nome} />
+                                            ))}
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>Bairro</label>
+                                    <input
+                                        type="text"
+                                        list="bairros-list"
+                                        className={inputClasses}
+                                        value={formData.bairro}
+                                        onChange={e => setFormData({ ...formData, bairro: e.target.value })}
+                                        placeholder="Selecione o bairro..."
+                                    />
+                                    <datalist id="bairros-list">
+                                        {bairrosData.map(b => b.nome).sort().map(nome => (
+                                            <option key={nome} value={nome} />
+                                        ))}
+                                    </datalist>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>Coordenadas (Lat, Lng)</label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <input
+                                                type="text"
+                                                className={inputClasses}
+                                                value={formData.coordenadas}
+                                                placeholder="-20.1234, -40.1234"
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    const parts = val.split(',');
+                                                    let updates = { coordenadas: val };
+                                                    if (parts.length >= 2) {
+                                                        const lat = parseFloat(parts[0].trim());
+                                                        const lng = parseFloat(parts[1].trim());
+                                                        if (!isNaN(lat) && !isNaN(lng)) {
+                                                            updates.latitude = parts[0].trim();
+                                                            updates.longitude = parts[1].trim();
+                                                        }
+                                                    }
+                                                    setFormData(prev => ({ ...prev, ...updates }));
+                                                }}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={getLocation}
+                                            disabled={gettingLoc}
+                                            className="p-3.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700 disabled:opacity-50"
+                                        >
+                                            <Crosshair size={20} className={gettingLoc ? 'animate-spin' : ''} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+
                     {/* 5. SEÇÃO: Risco e Detalhes */}
                     <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
@@ -717,6 +952,40 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                             </div>
                                         ))}
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const simAnswers = Object.keys(formData.checklistRespostas).filter(k => formData.checklistRespostas[k]);
+                                            if (simAnswers.length === 0) return alert("Marque pelo menos um item para consolidar.");
+                                            const text = `CONSTATAÇÕES TÉCNICAS:\n${simAnswers.map(a => `[SIM] ${a}`).join('\n')}\n\n`;
+                                            setFormData(prev => ({ ...prev, observacoes: text + prev.observacoes }));
+                                        }}
+                                        className="w-full p-4 bg-white dark:bg-slate-900 border-2 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-[10px] uppercase tracking-[2px] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all shadow-sm active:scale-[0.98]"
+                                    >
+                                        Consolidar em Observações
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Subtipos de Risco Dinâmicos */}
+                            {formData.categoriaRisco && RISK_DATA[formData.categoriaRisco] && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <label className={labelClasses}>Subtipos de Risco</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {RISK_DATA[formData.categoriaRisco].map(sub => (
+                                            <button
+                                                key={sub}
+                                                type="button"
+                                                onClick={() => toggleArrayItem('subtiposRisco', sub)}
+                                                className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.subtiposRisco.includes(sub) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
+                                            >
+                                                {sub}
+                                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${formData.subtiposRisco.includes(sub) ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                                    {formData.subtiposRisco.includes(sub) && <CheckCircle2 size={14} />}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
@@ -741,6 +1010,66 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                             {nivel.id}
                                         </button>
                                     ))}
+                                </div>
+                                {formData.nivelRisco === 'Iminente' && (
+                                    <div className="p-4 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-2xl border border-red-100 dark:border-red-900/30 flex items-start gap-3 animate-pulse">
+                                        <AlertTriangle size={20} className="shrink-0" />
+                                        <p className="text-xs font-bold leading-tight uppercase tracking-tight">Risco Iminente exige registro fotográfico obrigatório e recomendações técnicas imediatas.</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                <label className={labelClasses}>Situação Observada</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    {['Ativo', 'Em evolução', 'Estabilizado', 'Recorrente'].map(s => (
+                                        <button
+                                            key={s}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, situacaoObservada: s })}
+                                            className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-wider border-2 transition-all ${formData.situacaoObservada === s
+                                                ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 border-slate-800 dark:border-slate-200 shadow-md scale-105'
+                                                : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-700 hover:border-slate-200'
+                                                }`}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700/50 space-y-6">
+                                <div className="flex items-center gap-3">
+                                    <Users size={20} className="text-blue-600" />
+                                    <h3 className="font-black text-slate-800 dark:text-slate-200 text-[10px] uppercase tracking-[2px]">População Exposta</h3>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Nº Estimado de Pessoas</label>
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            placeholder="Ex: 5"
+                                            className={inputClasses}
+                                            value={formData.populacaoEstimada}
+                                            onChange={e => setFormData({ ...formData, populacaoEstimada: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {['Crianças', 'Idosos', 'PCD'].map(g => (
+                                            <button
+                                                key={g}
+                                                type="button"
+                                                onClick={() => toggleArrayItem('gruposVulneraveis', g)}
+                                                className={`p-3 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${formData.gruposVulneraveis.includes(g)
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-md'
+                                                    : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700'
+                                                    }`}
+                                            >
+                                                {g}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 
@@ -767,6 +1096,67 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     value={formData.observacoes}
                                     onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
                                 />
+                            </div>
+
+                            {/* Checklist Medidas */}
+                            <div className="space-y-4">
+                                <label className={labelClasses}>Medidas e Recomendações</label>
+                                <div className="grid grid-cols-1 gap-2 mt-2">
+                                    {['Monitoramento', 'Isolamento da área', 'Interdição Parcial', 'Interdição Total', 'Acionamento de outro órgão', 'Orientação ao morador'].map(m => (
+                                        <button
+                                            key={m}
+                                            type="button"
+                                            onClick={() => toggleArrayItem('medidasTomadas', m)}
+                                            className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.medidasTomadas.includes(m) ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
+                                        >
+                                            {m}
+                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${formData.medidasTomadas.includes(m) ? 'bg-white border-white text-blue-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                                {formData.medidasTomadas.includes(m) && <CheckCircle size={16} />}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 8. Encaminhamentos */}
+                            <div className="space-y-4">
+                                <label className={labelClasses}>Encaminhamentos</label>
+                                <select
+                                    className={inputClasses}
+                                    value=""
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val && !formData.encaminhamentos.includes(val)) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                encaminhamentos: [...(prev.encaminhamentos || []), val]
+                                            }));
+                                        }
+                                    }}
+                                >
+                                    <option value="">Selecione para adicionar...</option>
+                                    {ENCAMINHAMENTOS_LIST.map(enc => (
+                                        <option key={enc} value={enc} disabled={formData.encaminhamentos.includes(enc)}>
+                                            {enc}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {formData.encaminhamentos.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {formData.encaminhamentos.map(enc => (
+                                            <button
+                                                key={enc}
+                                                type="button"
+                                                onClick={() => toggleArrayItem('encaminhamentos', enc)}
+                                                className="px-4 py-2 rounded-xl text-xs font-black bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900 transition-colors group"
+                                            >
+                                                {enc}
+                                                <Trash2 size={12} className="text-blue-400 group-hover:text-red-500" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </Card>
@@ -813,6 +1203,96 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Toggle de Apoio Técnico */}
+                        <div className="flex justify-center pt-4">
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, temApoioTecnico: !prev.temApoioTecnico }))}
+                                className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[2px] transition-all border-2 shadow-sm ${formData.temApoioTecnico
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200 dark:shadow-indigo-900/20'
+                                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-400'
+                                    }`}
+                            >
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${formData.temApoioTecnico ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                    {formData.temApoioTecnico && <CheckCircle size={12} />}
+                                </div>
+                                Houve Apoio Técnico nesta Vistoria?
+                            </button>
+                        </div>
+
+                        {/* Bloco de Apoio Técnico */}
+                        {formData.temApoioTecnico && (
+                            <div className="border-t border-slate-50 dark:border-slate-700/50 pt-8 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="bg-slate-50/50 dark:bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700/50">
+                                    <h3 className="font-black text-slate-800 dark:text-slate-100 text-[10px] uppercase tracking-[2px] mb-6 flex items-center gap-2">
+                                        <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
+                                        Apoio Técnico (Obras/Engenharia)
+                                    </h3>
+
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Nome do Técnico</label>
+                                                <input
+                                                    type="text"
+                                                    className={inputClasses}
+                                                    value={formData.apoioTecnico.nome}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        apoioTecnico: { ...prev.apoioTecnico, nome: e.target.value }
+                                                    }))}
+                                                    placeholder="Nome completo"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">CREA/CAU</label>
+                                                <input
+                                                    type="text"
+                                                    className={inputClasses}
+                                                    value={formData.apoioTecnico.crea}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        apoioTecnico: { ...prev.apoioTecnico, crea: e.target.value }
+                                                    }))}
+                                                    placeholder="000.000-0"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Matrícula</label>
+                                                <input
+                                                    type="text"
+                                                    className={inputClasses}
+                                                    value={formData.apoioTecnico.matricula}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        apoioTecnico: { ...prev.apoioTecnico, matricula: e.target.value }
+                                                    }))}
+                                                    placeholder="Matrícula"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Assinatura do Apoio</label>
+                                            <div
+                                                onClick={() => { setActiveSignatureType('apoio'); setShowSignaturePad(true); }}
+                                                className="h-32 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-indigo-500/50 transition-all shadow-inner"
+                                            >
+                                                {formData.apoioTecnico.assinatura ? (
+                                                    <img src={formData.apoioTecnico.assinatura} className="h-full w-auto p-2" alt="Assinatura Apoio" />
+                                                ) : (
+                                                    <div className="text-center space-y-1">
+                                                        <Edit2 size={24} className="mx-auto text-slate-300" />
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tocar para Assinar</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </Card>
 
                     {/* 7. SEÇÃO: Registro Fotográfico */}
@@ -827,17 +1307,26 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <FileInput onFileSelect={handlePhotoSelect} className="h-32" />
-                            {formData.fotos.map(foto => (
-                                <div key={foto.id} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 group shadow-sm">
-                                    <img src={foto.data || foto} className="w-full h-full object-cover" />
+                            {formData.fotos.map((foto, idx) => (
+                                <div key={foto.id} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 group shadow-sm bg-slate-50 dark:bg-slate-900">
+                                    <img
+                                        src={foto.data || foto}
+                                        className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
+                                        onClick={() => setSelectedPhotoIndex(idx)}
+                                    />
+                                    <div
+                                        className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none flex items-center justify-center"
+                                    >
+                                        <Maximize2 size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => removePhoto(foto.id)}
-                                        className="absolute top-2 right-2 bg-red-600/80 backdrop-blur-md text-white p-1.5 rounded-xl shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100"
+                                        className="absolute top-2 right-2 z-10 bg-red-600/80 backdrop-blur-md text-white p-1.5 rounded-xl shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100"
                                     >
                                         <Trash2 size={16} />
                                     </button>
-                                    <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-2">
+                                    <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-2 z-10">
                                         <input
                                             className="w-full bg-transparent border-none text-[10px] text-white placeholder-white/70 focus:ring-0 p-0 font-bold"
                                             placeholder="Legenda..."
@@ -968,11 +1457,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             {
                 showSignaturePad && (
                     <SignaturePadComp
-                        title={activeSignatureType === 'agente' ? "Assinatura do Agente" : "Assinatura do Apoio Técnico"}
+                        title={
+                            activeSignatureType === 'agente' ? "Assinatura do Agente" :
+                                activeSignatureType === 'assistido' ? "Assinatura do Assistido" :
+                                    "Assinatura do Apoio Técnico"
+                        }
                         onCancel={() => setShowSignaturePad(false)}
                         onSave={(dataUrl) => {
                             if (activeSignatureType === 'agente') {
                                 setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }))
+                            } else if (activeSignatureType === 'assistido') {
+                                setFormData(prev => ({ ...prev, assinaturaAssistido: dataUrl }))
                             } else {
                                 setFormData(prev => ({
                                     ...prev,
@@ -995,6 +1490,87 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 confirmText="Sim, Excluir Agora"
                 cancelText="Não, Voltar"
             />
+
+            {/* Foto Lightbox / Popup */}
+            {selectedPhotoIndex !== null && (
+                <div
+                    className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
+                    onClick={() => setSelectedPhotoIndex(null)}
+                >
+                    {/* Toolbar Superior */}
+                    <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-50">
+                        <div className="flex flex-col">
+                            <span className="text-white font-black text-sm uppercase tracking-widest drop-shadow-lg">
+                                Foto {selectedPhotoIndex + 1} de {formData.fotos.length}
+                            </span>
+                            {formData.fotos[selectedPhotoIndex]?.legenda && (
+                                <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider drop-shadow-md">
+                                    {formData.fotos[selectedPhotoIndex].legenda}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const foto = formData.fotos[selectedPhotoIndex];
+                                    downloadPhoto(foto.data || foto, `vistoria-${formData.vistoriaId}-foto-${selectedPhotoIndex + 1}.jpg`);
+                                }}
+                                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl backdrop-blur-md transition-all border border-white/10 shadow-xl active:scale-95"
+                                title="Baixar esta foto"
+                            >
+                                <Download size={22} />
+                            </button>
+                            <button
+                                onClick={() => setSelectedPhotoIndex(null)}
+                                className="p-3 bg-red-600/20 hover:bg-red-600/40 text-red-100 rounded-2xl backdrop-blur-md transition-all border border-red-500/20 shadow-xl active:scale-95"
+                            >
+                                <X size={22} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Botões de Navegação */}
+                    {formData.fotos.length > 1 && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
+                            >
+                                <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
+                            >
+                                <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </>
+                    )}
+
+                    {/* Imagem Central */}
+                    <div className="relative w-full max-w-4xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={formData.fotos[selectedPhotoIndex]?.data || formData.fotos[selectedPhotoIndex]}
+                            className="w-full h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
+                            alt="Visualização em tela cheia"
+                        />
+                    </div>
+
+                    {/* Miniaturas Inferiores */}
+                    <div className="absolute bottom-10 flex gap-2 overflow-x-auto p-4 max-w-full no-scrollbar" onClick={e => e.stopPropagation()}>
+                        {formData.fotos.map((f, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setSelectedPhotoIndex(i)}
+                                className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${selectedPhotoIndex === i ? 'border-white scale-110 shadow-lg' : 'border-white/20 opacity-50 hover:opacity-100'}`}
+                            >
+                                <img src={f.data || f} className="w-full h-full object-cover" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div >
     )
 }

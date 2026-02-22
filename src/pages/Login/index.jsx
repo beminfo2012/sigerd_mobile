@@ -74,18 +74,18 @@ const Login = ({ onLogin }) => {
         }
 
         const TEST_ACCOUNTS = {
-            'saude@s2id.com': { role: 'S2id_Saude', name: 'Secretaria de Saúde' },
-            'securb@s2id.com': { role: 'S2id_Obras', name: 'Secretaria de Serviços Urbanos' },
-            'social@s2id.com': { role: 'S2id_Social', name: 'Secretaria de Assistência Social' },
-            'educacao@s2id.com': { role: 'S2id_Educacao', name: 'Secretaria de Educação' },
-            'agricultura@s2id.com': { role: 'S2id_Agricultura', name: 'Secretaria de Agricultura' },
-            'interior@s2id.com': { role: 'S2id_Interior', name: 'Secretaria de Interior' },
-            'administracao@s2id.com': { role: 'S2id_Administracao', name: 'Secretaria de Administração' },
-            'cdl@s2id.com': { role: 'S2id_CDL', name: 'CDL - Comércio e Serviços' },
-            'cesan@s2id.com': { role: 'S2id_Cesan', name: 'CESAN - Água e Esgoto' },
-            'defesasocial@s2id.com': { role: 'S2id_DefesaSocial', name: 'Secretaria de Defesa Social' },
-            'esporte@s2id.com': { role: 'S2id_EsporteTurismo', name: 'Secretaria de Esporte e Turismo' },
-            'transportes@s2id.com': { role: 'S2id_Transportes', name: 'Secretaria de Transportes' },
+            'saude@s2id.com': { role: 'Redap_Saude', name: 'Secretaria de Saúde' },
+            'securb@s2id.com': { role: 'Redap_Obras', name: 'Secretaria de Serviços Urbanos' },
+            'social@s2id.com': { role: 'Redap_Social', name: 'Secretaria de Assistência Social' },
+            'educacao@s2id.com': { role: 'Redap_Educacao', name: 'Secretaria de Educação' },
+            'agricultura@s2id.com': { role: 'Redap_Agricultura', name: 'Secretaria de Agricultura' },
+            'interior@s2id.com': { role: 'Redap_Interior', name: 'Secretaria de Interior' },
+            'administracao@s2id.com': { role: 'Redap_Administracao', name: 'Secretaria de Administração' },
+            'cdl@s2id.com': { role: 'Redap_CDL', name: 'CDL - Comércio e Serviços' },
+            'cesan@s2id.com': { role: 'Redap_Cesan', name: 'CESAN - Água e Esgoto' },
+            'defesasocial@s2id.com': { role: 'Redap_DefesaSocial', name: 'Secretaria de Defesa Social' },
+            'esporte@s2id.com': { role: 'Redap_EsporteTurismo', name: 'Secretaria de Esporte e Turismo' },
+            'transportes@s2id.com': { role: 'Redap_Transportes', name: 'Secretaria de Transportes' },
             'defesa@s2id.com': { role: 'Agente de Defesa Civil', name: 'Agente de Teste' },
             'admin@s2id.com': { role: 'Admin', name: 'Administrador de Teste' }
         };

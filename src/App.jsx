@@ -12,7 +12,7 @@ import Menu from './pages/Menu'
 import ProtectedRoute from './components/ProtectedRoute'
 import { supabase } from './services/supabase'
 import { pullAllData } from './services/db'
-import { getLatestDraftS2id } from './services/s2idDb'
+import { getLatestDraftRedap } from './services/redapDb'
 import Sidebar from './components/Sidebar'
 import DesktopHeader from './components/DesktopHeader'
 
@@ -53,9 +53,9 @@ const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
 
-// S2id Module (Lazy)
-const S2idDashboard = lazy(() => import('./pages/S2id/S2idDashboard'))
-const S2idForm = lazy(() => import('./pages/S2id/S2idForm'))
+// Redap Module (Lazy)
+const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
+const RedapForm = lazy(() => import('./pages/Redap/RedapForm'))
 
 
 // Create context for user profile
@@ -119,7 +119,7 @@ class ErrorBoundary extends React.Component {
 
 const AppContent = ({
     isAuthenticated, userProfile, setUserProfile, activeTab, setActiveTab, handleLogout,
-    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES, S2ID_ROLES, isDarkMode, setIsDarkMode
+    handleLogin, AGENT_ROLES, HUMANITARIAN_ROLES, HUMANITARIAN_FULL_ROLES, REDAP_ROLES, isDarkMode, setIsDarkMode
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -127,19 +127,19 @@ const AppContent = ({
 
     useEffect(() => {
         const checkRedirect = async () => {
-            if (isAuthenticated && userProfile?.email?.endsWith('@s2id.com') && location.pathname === '/') {
+            if (isAuthenticated && userProfile?.email?.endsWith('@redap.com') && location.pathname === '/') {
                 try {
-                    const draft = await getLatestDraftS2id();
+                    const draft = await getLatestDraftRedap();
                     // Só redireciona se for um rascunho válido (com COBRADE definido pela DC)
                     if (draft && draft.data.tipificacao.cobrade) {
-                        navigate(`/s2id/editar/${draft.id}`, { replace: true });
+                        navigate(`/redap/editar/${draft.id}`, { replace: true });
                     } else {
                         // Se não houver rascunho com COBRADE, vai para o dashboard monitorar
-                        navigate('/s2id', { replace: true });
+                        navigate('/redap', { replace: true });
                     }
                 } catch (error) {
                     console.error('Redirection error:', error);
-                    navigate('/s2id', { replace: true });
+                    navigate('/redap', { replace: true });
                 }
             }
         };
@@ -155,10 +155,10 @@ const AppContent = ({
     }
 
     return (
-        <div className={`app-container ${isDarkMode ? 'dark' : ''}`}>
+        <div className={`app-container ${isDarkMode ? 'dark' : ''} ${isPrintPage ? '!h-auto !overflow-visible' : ''}`}>
             <SyncBackground />
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className={`flex flex-1 ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
                 {/* Sidebar - Desktop Only */}
                 {!isPrintPage && (
                     <Sidebar
@@ -169,13 +169,13 @@ const AppContent = ({
                         setIsDarkMode={setIsDarkMode}
                         AGENT_ROLES={AGENT_ROLES}
                         HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
-                        S2ID_ROLES={S2ID_ROLES}
+                        REDAP_ROLES={REDAP_ROLES}
                     />
                 )}
 
 
 
-                <div className="flex flex-col flex-1 overflow-hidden relative">
+                <div className={`flex flex-col flex-1 relative ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
                     {/* Mobile Header - Hide on print and desktop */}
                     {!isPrintPage && (
                         <header className="mobile-header md:hidden px-4">
@@ -355,20 +355,20 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
 
-                                {/* S2ID Routes */}
-                                <Route path="/s2id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
-                                        <S2idDashboard />
+                                {/* REDAP Routes */}
+                                <Route path="/redap" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapDashboard />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/s2id/novo" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
-                                        <S2idForm />
+                                <Route path="/redap/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/s2id/editar/:id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={S2ID_ROLES}>
-                                        <S2idForm />
+                                <Route path="/redap/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapForm />
                                     </ProtectedRoute>
                                 } />
 
@@ -431,7 +431,27 @@ function App() {
     const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'Técnico em Edificações']
     const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
     const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
-    const S2ID_ROLES = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura', 'S2id_Social', 'Agente de Defesa Civil']
+    const REDAP_ROLES = [
+        'Admin',
+        'Coordenador',
+        'Coordenador de Proteção e Defesa Civil',
+        'Agente de Defesa Civil',
+        'Redap_Geral',
+        'Redap_Setorial',
+        'Redap_Saude',
+        'Redap_Educacao',
+        'Redap_Obras',
+        'Redap_Agricultura',
+        'Redap_Social',
+        'Redap_Interior',
+        'Redap_Administracao',
+        'Redap_CDL',
+        'Redap_Cesan',
+        'Redap_DefesaSocial',
+        'Redap_EsporteTurismo',
+        'Redap_ServicosUrbanos',
+        'Redap_Transportes',
+    ]
 
     useEffect(() => {
         if (isDarkMode) {
@@ -562,7 +582,7 @@ function App() {
                         AGENT_ROLES={AGENT_ROLES}
                         HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
                         HUMANITARIAN_FULL_ROLES={HUMANITARIAN_FULL_ROLES}
-                        S2ID_ROLES={S2ID_ROLES}
+                        REDAP_ROLES={REDAP_ROLES}
                         isDarkMode={isDarkMode}
                         setIsDarkMode={setIsDarkMode}
                     />

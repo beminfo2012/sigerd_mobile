@@ -28,7 +28,7 @@ import {
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
 import ProfileModal from './ProfileModal';
 
-const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, S2ID_ROLES, isDarkMode, setIsDarkMode, setUserProfile }) => {
+const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP_ROLES, isDarkMode, setIsDarkMode, setUserProfile }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(true);
@@ -137,8 +137,8 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, S2ID_
         {
             label: 'REDAP',
             icon: Navigation,
-            path: '/s2id',
-            roles: S2ID_ROLES
+            path: '/redap',
+            roles: REDAP_ROLES
         },
         {
             label: 'Configurações',

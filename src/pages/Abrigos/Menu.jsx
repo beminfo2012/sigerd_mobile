@@ -304,20 +304,20 @@ export default function ShelterMenu() {
             </header>
 
             <main className="p-4 space-y-6 max-w-4xl mx-auto">
-                {/* Tabs Switcher */}
-                <div className="flex p-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-2xl w-full max-w-sm mx-auto">
+                {/* Tabs Switcher - estilo REDAP */}
+                <div className="flex p-1 bg-slate-200/50 rounded-2xl w-fit mx-auto">
                     <button
                         onClick={() => setActiveTab('dashboard')}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        <BarChart3 size={14} />
+                        <BarChart3 size={13} />
                         Painel de Dados
                     </button>
                     <button
                         onClick={() => setActiveTab('operacoes')}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'operacoes' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'operacoes' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        <LayoutDashboard size={14} />
+                        <LayoutDashboard size={13} />
                         Gestão Operacional
                     </button>
                 </div>

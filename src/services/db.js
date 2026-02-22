@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 19
+const DB_VERSION = 20
 
 
 let dbPromise = null;
@@ -95,12 +95,37 @@ export const initDB = async () => {
                 ensureSyncedIndex('manual_readings');
             }
 
-            // S2ID Records (v14)
-            if (!db.objectStoreNames.contains('s2id_records')) {
-                const s2idStore = db.createObjectStore('s2id_records', { keyPath: 'id', autoIncrement: true });
-                s2idStore.createIndex('synced', 'synced', { unique: false });
-                s2idStore.createIndex('status', 'status', { unique: false });
-                s2idStore.createIndex('created_at', 'created_at', { unique: false });
+            // REDAP Records (v14)
+            if (!db.objectStoreNames.contains('redap_records')) {
+                const redapStore = db.createObjectStore('redap_records', { keyPath: 'id', autoIncrement: true });
+                redapStore.createIndex('synced', 'synced', { unique: false });
+                redapStore.createIndex('status', 'status', { unique: false });
+                redapStore.createIndex('created_at', 'created_at', { unique: false });
+            }
+
+            // [MIGRATION] S2ID to REDAP data rescue
+            if (db.objectStoreNames.contains('s2id_records')) {
+                try {
+                    console.log('[Migration] Migrating S2ID records to REDAP...');
+                    const oldStore = transaction.objectStore('s2id_records');
+                    const newStore = transaction.objectStore('redap_records');
+                    const allOld = await oldStore.getAll();
+
+                    for (const item of allOld) {
+                        // Adapt record to Redap format if needed
+                        const adapted = {
+                            ...item,
+                            redap_id: item.redap_id || item.s2id_id
+                        };
+                        delete adapted.s2id_id;
+                        await newStore.put(adapted);
+                    }
+
+                    db.deleteObjectStore('s2id_records');
+                    console.log('[Migration] Redap migration complete, s2id_records deleted.');
+                } catch (e) {
+                    console.error('[Migration] Redap migration failed:', e);
+                }
             }
 
             // Despachos (v15) - New Feature
@@ -192,7 +217,7 @@ export const saveVistoriaOffline = async (data) => {
 export const getPendingSyncCount = async () => {
     const db = await initDB()
 
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records'];
     let detail = {
         total: 0,
         vistorias: 0,
@@ -201,7 +226,8 @@ export const getPendingSyncCount = async () => {
         occupants: 0,
         donations: 0,
         inventory: 0,
-        distributions: 0
+        distributions: 0,
+        redap_records: 0
     };
 
     for (const storeName of stores) {
@@ -224,7 +250,7 @@ export const getPendingSyncCount = async () => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 's2id_records', 'emergency_contracts', 'manual_readings', 'despachos'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'manual_readings', 'despachos'];
     let syncedCount = 0
 
     for (const storeName of stores) {
@@ -283,11 +309,11 @@ const syncSingleItem = async (storeName, item, db) => {
                             'shelters': 'shelters',
                             'occupants': 'occupants',
                             'donations': 'donations',
-                            's2id_records': 's2id'
+                            'redap_records': 'redap'
                         };
                         const folder = folderMap[storeName] || 'general'
 
-                        const entityId = (item.vistoria_id || item.interdicao_id || item.s2id_id || item.id)
+                        const entityId = (item.vistoria_id || item.interdicao_id || item.redap_id || item.id)
                         const fileName = `${entityId}/${foto.id || crypto.randomUUID()}.jpg`
                         const { error: uploadError } = await supabase.storage
                             .from(folder)
@@ -314,7 +340,7 @@ const syncSingleItem = async (storeName, item, db) => {
             'donations': 'shelter_donations',
             'inventory': 'shelter_inventory',
             'distributions': 'shelter_distributions',
-            's2id_records': 's2id_records'
+            'redap_records': 'redap_records'
         };
 
         const table = tableMap[storeName] || storeName
@@ -489,15 +515,15 @@ const syncSingleItem = async (storeName, item, db) => {
                     assinatura: signatureApoioUrl
                 }
             }
-        } else if (storeName === 's2id_records') {
-            // S2ID Signatures: Handle main signature and sector-specific signatures
-            const s2idId = item.s2id_id || crypto.randomUUID();
-            const folder = 's2id';
+        } else if (storeName === 'redap_records') {
+            // REDAP Signatures: Handle main signature and sector-specific signatures
+            const redapId = item.redap_id || crypto.randomUUID();
+            const folder = 'redap';
 
             // 1. Process Main Signature
             if (item.data?.assinatura?.data_url?.startsWith('data:image')) {
-                console.log(`[Sync] Uploading Main S2ID signature for ${s2idId}...`);
-                const url = await uploadSignature(item.data.assinatura.data_url, folder, `${s2idId}/signature_main.png`);
+                console.log(`[Sync] Uploading Main REDAP signature for ${redapId}...`);
+                const url = await uploadSignature(item.data.assinatura.data_url, folder, `${redapId}/signature_main.png`);
                 if (url) item.data.assinatura.data_url = url;
             }
 
@@ -506,8 +532,8 @@ const syncSingleItem = async (storeName, item, db) => {
                 for (const sector in item.data.submissoes_setoriais) {
                     const sub = item.data.submissoes_setoriais[sector];
                     if (sub.assinatura_url?.startsWith('data:image')) {
-                        console.log(`[Sync] Uploading Sectoral S2ID signature (${sector}) for ${s2idId}...`);
-                        const url = await uploadSignature(sub.assinatura_url, folder, `${s2idId}/signature_${sector}.png`);
+                        console.log(`[Sync] Uploading Sectoral REDAP signature (${sector}) for ${redapId}...`);
+                        const url = await uploadSignature(sub.assinatura_url, folder, `${redapId}/signature_${sector}.png`);
                         if (url) sub.assinatura_url = url;
                     }
                 }
@@ -515,7 +541,7 @@ const syncSingleItem = async (storeName, item, db) => {
 
             // Clean payload to avoid schema errors
             payload = {
-                s2id_id: s2idId,
+                redap_id: redapId,
                 id_local: item.id.toString(),
                 status: item.status,
                 data: item.data,
@@ -554,7 +580,7 @@ const syncSingleItem = async (storeName, item, db) => {
                             storeName === 'donations' ? 'donation_id' :
                                 storeName === 'inventory' ? 'inventory_id' :
                                     storeName === 'distributions' ? 'distribution_id' :
-                                        storeName === 's2id_records' ? 's2id_id' :
+                                        storeName === 'redap_records' ? 'redap_id' :
                                             undefined
         }).select()
 
@@ -583,13 +609,13 @@ const syncSingleItem = async (storeName, item, db) => {
                 const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
                 record.interdicaoId = officialId;
                 record.interdicao_id = officialId;
-            } else if (storeName === 's2id_records') {
-                record.s2id_id = payload.s2id_id;
+            } else if (storeName === 'redap_records') {
+                record.redap_id = payload.redap_id;
             }
             await store.put(record)
         }
         await tx.done
-        console.log(`[Sync] Successfully synced ${storeName} item: ${officialId || item.id}`);
+        console.log(`[Sync] Successfully synced ${storeName} item: ${item.id}`);
         return true
     } catch (e) {
         console.error(`[Sync] Critical failure for ${storeName}:`, e)
@@ -613,7 +639,7 @@ export const pullAllData = async () => {
         const modules = [
             { table: 'vistorias', store: 'vistorias', key: 'vistoria_id' },
             { table: 'interdicoes', store: 'interdicoes', key: 'interdicao_id' },
-            { table: 's2id_records', store: 's2id_records', key: 's2id_id' },
+            { table: 'redap_records', store: 'redap_records', key: 'redap_id' },
             { table: 'shelters', store: 'shelters', key: 'shelter_id' },
             { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
             { table: 'shelter_donations', store: 'donations', key: 'donation_id' },

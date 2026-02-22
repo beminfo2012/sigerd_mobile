@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Camera, RefreshCw, Check, X, MapPin, Calendar, Clock } from 'lucide-react';
 
-const S2idPhotoCapture = ({ onSave, onCancel }) => {
+const RedapPhotoCapture = ({ onSave, onCancel }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const [stream, setStream] = useState(null);
@@ -183,4 +183,4 @@ const S2idPhotoCapture = ({ onSave, onCancel }) => {
     );
 };
 
-export default S2idPhotoCapture;
+export default RedapPhotoCapture;
