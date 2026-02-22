@@ -38,11 +38,22 @@ export default function ShelterMenu() {
     const [chartData, setChartData] = useState({ inventory: [], occupancy: [] });
     const [syncPercentage, setSyncPercentage] = useState(100);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'operacoes'
     const [consistency, setConsistency] = useState(null);
 
-    // Master bypass for admin email
-    const isAdminEmail = userEmail === 'bruno_pagel@hotmail.com';
-    const AGENT_ROLES = ['agente de defesa civil', 'técnico em edificações', 'admin', 'agente', 'tecnico'];
+    const ADMIN_EMAIL = 'bruno_pagel@hotmail.com';
+    const AGENT_ROLES = [
+        'agente de defesa civil',
+        'técnico em edificações',
+        'admin',
+        'agente',
+        'tecnico',
+        'coordenador',
+        'coordenador de proteção e defesa civil',
+        'secretário',
+        'assistente social'
+    ];
+    const HUMANITARIAN_READ_ONLY = ['humanitario_leitura'];
 
     useEffect(() => {
         loadDashboardData();
@@ -199,7 +210,7 @@ export default function ShelterMenu() {
             icon: Building2,
             path: '/abrigos/lista',
             color: 'bg-blue-50 text-[#2a5299]',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
             title: 'Estoque Municipal',
@@ -207,7 +218,7 @@ export default function ShelterMenu() {
             icon: Package,
             path: '/abrigos/estoque',
             color: 'bg-emerald-50 text-emerald-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
         {
             title: 'Receber Doações',
@@ -215,7 +226,7 @@ export default function ShelterMenu() {
             icon: Gift,
             path: '/abrigos/doacoes-central',
             color: 'bg-amber-50 text-amber-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
             title: 'Logística & Distribuição',
@@ -223,7 +234,7 @@ export default function ShelterMenu() {
             icon: Truck,
             path: '/abrigos/logistica',
             color: 'bg-purple-50 text-purple-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
             title: 'Relatórios Gerais',
@@ -231,7 +242,7 @@ export default function ShelterMenu() {
             icon: FileText,
             path: '/abrigos/relatorios',
             color: 'bg-slate-50 text-slate-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
 
         {
@@ -240,15 +251,15 @@ export default function ShelterMenu() {
             icon: FileText,
             path: '/abrigos/contratos',
             color: 'bg-amber-50 text-amber-700',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         }
     ];
 
 
     const filteredItems = menuItems.filter(item =>
-        isAdminEmail || item.allowedRoles.includes(userRole)
+        userEmail === ADMIN_EMAIL || item.allowedRoles.includes(userRole)
     );
-    const isAgent = isAdminEmail || AGENT_ROLES.includes(userRole);
+    const isAgent = userEmail === ADMIN_EMAIL || AGENT_ROLES.includes(userRole);
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -264,15 +275,15 @@ export default function ShelterMenu() {
     }
 
     return (
-        <div className="bg-slate-50 min-h-screen pb-24 font-sans text-slate-800">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100">
             {/* Header Sticky Glass */}
-            <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-4 h-16 flex items-center justify-between shadow-sm transition-all">
+            <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between shadow-sm transition-all">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95 text-slate-600">
+                    <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors active:scale-95 text-slate-600 dark:text-slate-400">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-base font-black text-slate-800 leading-tight">Assistência Humanitária</h1>
+                        <h1 className="text-base font-black text-slate-800 dark:text-slate-100 leading-tight">ASSIST. HUMANITÁRIA</h1>
                         <div className="flex items-center gap-1.5 overflow-hidden">
                             <span className={`w-1.5 h-1.5 rounded-full ${syncPercentage === 100 ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'} flex-shrink-0`} />
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">
@@ -285,7 +296,7 @@ export default function ShelterMenu() {
                     <button
                         onClick={handleForceSync}
                         disabled={isSyncing}
-                        className={`p-2 bg-slate-100 rounded-xl text-slate-500 active:rotate-180 transition-all ${isSyncing ? 'animate-spin text-blue-500' : ''}`}
+                        className={`p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 active:rotate-180 transition-all ${isSyncing ? 'animate-spin text-blue-500' : ''}`}
                     >
                         {isSyncing ? <RefreshCcw className="w-5 h-5" /> : <Cloud className="w-5 h-5" />}
                     </button>
@@ -293,14 +304,30 @@ export default function ShelterMenu() {
             </header>
 
             <main className="p-4 space-y-6 max-w-4xl mx-auto">
+                {/* Tabs Switcher */}
+                <div className="flex p-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-2xl w-full max-w-sm mx-auto">
+                    <button
+                        onClick={() => setActiveTab('dashboard')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                    >
+                        <BarChart3 size={14} />
+                        Painel de Dados
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('operacoes')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'operacoes' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                    >
+                        <LayoutDashboard size={14} />
+                        Gestão Operacional
+                    </button>
+                </div>
 
-                {/* ═══ ENHANCED KPI DASHBOARD ═══ */}
-                {isAgent && (
+                {activeTab === 'dashboard' && isAgent && (
                     <>
                         {/* Summary KPI Cards */}
                         <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
                             {/* Gradient Card - Total Shelters */}
-                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-[28px] shadow-lg border border-blue-400/20 relative overflow-hidden group">
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-[28px] shadow-lg border border-blue-400/20 dark:border-blue-500/30 relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2 relative z-10">
                                     <Building2 className="text-white/60" size={20} />
                                     {stats.activeShelters > 0 && (
@@ -315,83 +342,83 @@ export default function ShelterMenu() {
                             </div>
 
                             {/* Families vs Capacity */}
-                            <div className="bg-white p-4 rounded-[28px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                            <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2">
                                     <Heart className="text-rose-500" size={20} />
-                                    <div className={`text-[10px] font-black ${stats.occupancyRate > 90 ? 'text-red-500' : 'text-slate-400'}`}>
+                                    <div className={`text-[10px] font-black ${stats.occupancyRate > 90 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>
                                         {stats.occupancyRate}% LOTAÇÃO
                                     </div>
                                 </div>
-                                <div className="text-3xl font-black text-slate-800">{stats.totalFamilies}</div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{stats.totalFamilies}</div>
+                                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
                                     Famílias • {stats.totalOccupants} pessoas
                                 </div>
                                 {/* Capacity mini bar */}
-                                <div className="mt-2 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div className="mt-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all duration-1000 ${stats.occupancyRate > 90 ? 'bg-red-500' : stats.occupancyRate > 70 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                                         style={{ width: `${Math.min(stats.occupancyRate, 100)}%` }}
                                     />
                                 </div>
                                 <div className="flex justify-between mt-1">
-                                    <span className="text-[8px] text-slate-400 font-bold">{stats.totalOccupants} atual</span>
-                                    <span className="text-[8px] text-slate-400 font-bold">{stats.totalCapacity} máx</span>
+                                    <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold">{stats.totalOccupants} atual</span>
+                                    <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold">{stats.totalCapacity} máx</span>
                                 </div>
                             </div>
 
                             {/* Donations */}
-                            <div className="bg-white p-4 rounded-[28px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                            <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2">
                                     <Gift className="text-amber-500" size={20} />
-                                    <div className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                    <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
                                         +{stats.totalDistributions} distribuídos
                                     </div>
                                 </div>
-                                <div className="text-3xl font-black text-slate-800">{stats.totalDonations}</div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Doações Recebidas</div>
+                                <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{stats.totalDonations}</div>
+                                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Doações Recebidas</div>
                             </div>
 
                             {/* Stock with Consistency */}
-                            <div className="bg-white p-4 rounded-[28px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                            <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2">
                                     <Package className="text-purple-500" size={20} />
                                     {lowStockAlerts.length > 0 ? (
-                                        <div className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-50 text-red-600 flex items-center gap-1 animate-pulse">
+                                        <div className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center gap-1 animate-pulse">
                                             <AlertTriangle size={10} /> {lowStockAlerts.length} ALERTA{lowStockAlerts.length > 1 ? 'S' : ''}
                                         </div>
                                     ) : consistency && (
-                                        <div className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${consistency.isConsistent ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                        <div className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${consistency.isConsistent ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
                                             {consistency.isConsistent ? '✓ OK' : '⚠ DIVERGÊNCIA'}
                                         </div>
                                     )}
                                 </div>
-                                <div className="text-3xl font-black text-slate-800">{(stats.totalItemsQty || 0).toLocaleString('pt-BR')}</div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{stats.itemsCount} tipos em estoque</div>
+                                <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{(stats.totalItemsQty || 0).toLocaleString('pt-BR')}</div>
+                                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{stats.itemsCount} tipos em estoque</div>
                             </div>
                         </div>
 
                         {/* ═══ PER-SHELTER OCCUPANCY BARS ═══ */}
                         {shelterOccupancy.length > 0 && (
-                            <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm animate-in fade-in duration-700">
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-blue-50 rounded-lg">
+                                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                         <Users className="text-blue-500" size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800 text-sm">Taxa de Ocupação por Abrigo</h3>
-                                        <p className="text-[10px] text-slate-400 font-medium">Capacidade utilizada em cada unidade</p>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Taxa de Ocupação por Abrigo</h3>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Capacidade utilizada em cada unidade</p>
                                     </div>
                                 </div>
                                 <div className="space-y-3">
                                     {shelterOccupancy.map((s, i) => (
                                         <div key={s.shelter_id || i}>
                                             <div className="flex items-center justify-between mb-1">
-                                                <span className="text-[11px] font-bold text-slate-700 truncate max-w-[60%]">{s.name}</span>
-                                                <span className={`text-[10px] font-black ${s.percent >= 90 ? 'text-red-600' : s.percent >= 70 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[60%]">{s.name}</span>
+                                                <span className={`text-[10px] font-black ${s.percent >= 90 ? 'text-red-600' : s.percent >= 70 ? 'text-amber-600' : 'text-emerald-600 dark:text-emerald-400'}`}>
                                                     {s.occupancy}/{s.capacity} ({s.percent}%)
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden relative">
+                                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden relative">
                                                 <div
                                                     className={`h-full rounded-full transition-all duration-1000 ease-out relative
                                                     ${s.percent >= 90 ? 'bg-gradient-to-r from-red-400 to-red-600' :
@@ -400,7 +427,7 @@ export default function ShelterMenu() {
                                                     style={{ width: `${s.percent}%` }}
                                                 >
                                                     {s.percent >= 30 && (
-                                                        <div className="absolute inset-0 bg-white/20 animate-pulse rounded-full" style={{ animationDuration: '3s' }}></div>
+                                                        <div className="absolute inset-0 bg-white/20 dark:bg-black/20 animate-pulse rounded-full" style={{ animationDuration: '3s' }}></div>
                                                     )}
                                                 </div>
                                             </div>
@@ -412,29 +439,29 @@ export default function ShelterMenu() {
 
                         {/* ═══ LOW STOCK ALERTS ═══ */}
                         {lowStockAlerts.length > 0 && (
-                            <div className="bg-gradient-to-br from-red-50 to-orange-50 p-5 rounded-[32px] border border-red-100 shadow-sm animate-in fade-in duration-700">
+                            <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 rounded-[32px] border border-red-100 dark:border-red-800 shadow-sm animate-in fade-in duration-700">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-red-100 rounded-lg">
+                                    <div className="p-2 bg-red-100 dark:bg-red-800 rounded-lg">
                                         <AlertTriangle className="text-red-500" size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-red-800 text-sm">Alertas de Estoque Baixo</h3>
-                                        <p className="text-[10px] text-red-400 font-medium">Itens abaixo do nível mínimo</p>
+                                        <h3 className="font-bold text-red-800 dark:text-red-100 text-sm">Alertas de Estoque Baixo</h3>
+                                        <p className="text-[10px] text-red-400 dark:text-red-500 font-medium">Itens abaixo do nível mínimo</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {lowStockAlerts.map((item, i) => (
-                                        <div key={i} className="bg-white/80 backdrop-blur-sm rounded-2xl p-3 border border-red-100 flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <div key={i} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 border border-red-100 dark:border-red-800/30 flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
                                                 <span className="text-lg">📦</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[11px] font-bold text-slate-800 truncate">{item.name}</p>
+                                                <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 truncate">{item.name}</p>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-black text-red-600">
+                                                    <span className="text-[10px] font-black text-red-600 dark:text-red-400">
                                                         {item.quantity} {item.unit}
                                                     </span>
-                                                    <span className="text-[9px] text-slate-400">/ mín. {item.min_quantity}</span>
+                                                    <span className="text-[9px] text-slate-400 dark:text-slate-500">/ mín. {item.min_quantity}</span>
                                                 </div>
                                                 <div className="w-full bg-red-100 rounded-full h-1 mt-1 overflow-hidden">
                                                     <div
@@ -450,23 +477,23 @@ export default function ShelterMenu() {
                         )}
 
                         {/* ═══ TIMELINE: DOAÇÕES vs DISTRIBUIÇÕES ═══ */}
-                        <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm animate-in fade-in duration-700">
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="p-2 bg-violet-50 rounded-lg">
+                                <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
                                     <TrendingUp className="text-violet-500" size={18} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-slate-800 text-sm">Doações vs Distribuições</h3>
-                                    <p className="text-[10px] text-slate-400 font-medium">Últimos 30 dias</p>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Doações vs Distribuições</h3>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Últimos 30 dias</p>
                                 </div>
                                 <div className="flex gap-3">
                                     <div className="flex items-center gap-1">
                                         <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-                                        <span className="text-[9px] font-bold text-slate-400">Doações</span>
+                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">Doações</span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                                        <span className="text-[9px] font-bold text-slate-400">Distribuições</span>
+                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">Distribuições</span>
                                     </div>
                                 </div>
                             </div>
@@ -483,7 +510,7 @@ export default function ShelterMenu() {
                                                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" opacity={0.1} />
                                         <XAxis
                                             dataKey="day"
                                             tick={{ fontSize: 8, fill: '#94a3b8', fontWeight: 700 }}
@@ -514,14 +541,14 @@ export default function ShelterMenu() {
                         {/* ═══ ORIGINAL CHARTS (Top Items) ═══ */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Stock Chart */}
-                            <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm">
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-emerald-50 rounded-lg">
+                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
                                         <Package className="text-emerald-500" size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800 text-sm">Top Itens em Estoque</h3>
-                                        <p className="text-[10px] text-slate-400 font-medium">Categorias com maior volume</p>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Top Itens em Estoque</h3>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Categorias com maior volume</p>
                                     </div>
                                 </div>
                                 <div className="h-40 w-full">
@@ -541,14 +568,14 @@ export default function ShelterMenu() {
                             </div>
 
                             {/* Occupancy Bar Chart */}
-                            <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm">
+                            <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-blue-50 rounded-lg">
+                                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                         <BarChart3 className="text-blue-500" size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800 text-sm">Ocupação por Abrigo</h3>
-                                        <p className="text-[10px] text-slate-400 font-medium">Unidades com maior lotação</p>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Ocupação por Abrigo</h3>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Unidades com maior lotação</p>
                                     </div>
                                 </div>
                                 <div className="h-40 w-full">
@@ -566,42 +593,43 @@ export default function ShelterMenu() {
                     </>
                 )}
 
-                {/* Operations Menu Grid */}
-                <div>
-                    <div className="flex items-center gap-2 mb-4 px-2">
-                        <LayoutDashboard size={16} className="text-slate-400" />
-                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Módulos Operacionais</h2>
-                    </div>
+                {activeTab === 'operacoes' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center gap-2 mb-4 px-2">
+                            <LayoutDashboard size={16} className="text-slate-400 dark:text-slate-500" />
+                            <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Módulos Operacionais</h2>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {filteredItems.map((item, index) => (
-                            <div
-                                key={index}
-                                onClick={() => navigate(item.path)}
-                                className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex items-center gap-4"
-                            >
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.color} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                                    <item.icon size={24} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {filteredItems.map((item, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => navigate(item.path)}
+                                    className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex items-center gap-4"
+                                >
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.color} dark:bg-opacity-20 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                                        <item.icon size={24} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-base text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                                            {item.title}
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-1 line-clamp-2">
+                                            {item.description}
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors" size={18} />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-base text-slate-800 group-hover:text-blue-600 transition-colors truncate">
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500 leading-tight mt-1 line-clamp-2">
-                                        {item.description}
-                                    </p>
-                                </div>
-                                <ChevronRight className="text-slate-300 group-hover:text-blue-500 transition-colors" size={18} />
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Footer Info */}
-                <div className="text-center pt-8 border-t border-slate-100 mt-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full">
-                        <Info size={12} className="text-slate-400" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SIGERD Mobile v1.40.0</span>
+                <div className="text-center pt-8 border-t border-slate-100 dark:border-slate-800 mt-8">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">
+                        <Info size={12} className="text-slate-400 dark:text-slate-500" />
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">SIGERD Mobile v1.40.0</span>
                     </div>
                 </div>
 

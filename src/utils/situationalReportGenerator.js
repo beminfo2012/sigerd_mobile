@@ -197,7 +197,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             <!-- 6. Humanitarian Assistance (New Integration) -->
             ${humanitarianData ? `
                 <div style="margin-top: 35px; page-break-inside: avoid;">
-                    <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 20px;">6. Assistência Humanitária</h2>
+                    <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 20px;">6. ASSIST. HUMANITÁRIA</h2>
                     
                     <!-- KPIs Section -->
                     <div style="display: flex; gap: 20px; margin-bottom: 25px;">

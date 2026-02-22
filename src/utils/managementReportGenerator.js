@@ -41,7 +41,7 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(11);
-        const summaryText = `Este documento consolida as atividades operacionais, impactos sociais e medidas preventivas da Defesa Civil no período: ${timeframe.toUpperCase()}. \n\nA análise foca na severidade dos riscos mapeados, na eficácia das medidas de interdição e na assistência humanitária prestada para garantir a segurança da população em áreas de vulnerabilidade.`;
+        const summaryText = `Este documento consolida as atividades operacionais, impactos sociais e medidas preventivas da Defesa Civil no período: ${timeframe.toUpperCase()}. \n\nA análise foca na severidade dos riscos mapeados, na eficácia das medidas de interdição e na ASSIST. HUMANITÁRIA prestada para garantir a segurança da população em áreas de vulnerabilidade.`;
         const splitSummary = doc.splitTextToSize(summaryText, 170);
         doc.text(splitSummary, 20, 70);
 
