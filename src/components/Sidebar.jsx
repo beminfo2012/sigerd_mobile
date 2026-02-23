@@ -153,19 +153,22 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     );
 
     return (
-        <aside className={`hidden md:flex flex-col h-screen bg-card border-r border-border shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-72'}`}>
+        <aside
+            className={`hidden md:flex flex-col h-screen shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-72'} border-r border-white/10`}
+            style={{ backgroundColor: '#10346E' }}
+        >
             {/* Header / Logo */}
-            <div className={`p-4 h-20 flex items-center border-b border-border bg-primary/5 relative ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+            <div className={`p-4 h-20 flex items-center border-b border-white/10 bg-white/5 relative ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
                 <Link
                     to="/"
                     className="flex items-center gap-3 active:scale-95 transition-transform"
                     onAuxClick={(e) => { if (e.button === 1) window.open('/', '_blank') }}
                 >
-                    <img src="/logo_header.png" alt="Logo" className="h-10 w-auto object-contain shrink-0" onError={(e) => e.target.style.display = 'none'} />
+                    <img src="/logo_header.png" alt="Logo" className="h-10 w-auto object-contain shrink-0 brightness-0 invert" onError={(e) => e.target.style.display = 'none'} />
                     {!isCollapsed && (
                         <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                            <h2 className="text-sm font-bold text-primary m-0 leading-none tracking-tight">SIGERD</h2>
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Defesa Civil</span>
+                            <h2 className="text-sm font-bold text-white m-0 leading-none tracking-tight">SIGERD</h2>
+                            <span className="text-[10px] text-white/60 uppercase tracking-widest font-semibold">Defesa Civil</span>
                         </div>
                     )}
                 </Link>
@@ -173,7 +176,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                 {/* Toggle Button */}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-800 border border-border rounded-full flex items-center justify-center text-primary shadow-sm hover:bg-primary hover:text-white transition-all z-10"
+                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-[#10346E] shadow-sm hover:bg-white/90 transition-all z-10"
                 >
                     {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </button>
@@ -182,7 +185,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             {/* Navigation */}
             <nav className={`flex-1 overflow-y-auto space-y-1 py-6 ${isCollapsed ? 'px-2' : 'p-4'}`}>
                 {!isCollapsed && (
-                    <p className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4 animate-in fade-in duration-500">
+                    <p className="px-3 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-4 animate-in fade-in duration-500">
                         Navegação Principal
                     </p>
                 )}
@@ -193,8 +196,8 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                             to={item.path}
                             title={isCollapsed ? item.label : ''}
                             className={`flex items-center rounded-lg transition-all duration-200 group relative ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'} ${isActive(item.path)
-                                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
-                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                ? 'bg-white text-[#10346E] shadow-lg shadow-black/10'
+                                : 'text-white/70 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             <item.icon size={20} className={`${isActive(item.path) ? '' : 'group-hover:scale-110 transition-transform'} shrink-0`} />
@@ -212,7 +215,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             </nav>
 
             {/* Footer / User Profile */}
-            <div className={`p-4 border-t border-border bg-muted/30 relative`} ref={userMenuRef}>
+            <div className={`p-4 border-t border-white/10 bg-black/10 relative`} ref={userMenuRef}>
                 {/* User Dropdown Menu */}
                 {showUserMenu && (
                     <div className={`absolute bottom-20 left-4 ${isCollapsed ? 'w-64' : 'w-[calc(100%-32px)]'} bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-2 z-[60] animate-in slide-in-from-bottom-2 duration-200`}>
@@ -259,15 +262,15 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
 
                 <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className={`w-full flex items-center rounded-xl bg-card border border-border/50 shadow-sm transition-all hover:border-primary/50 hover:bg-primary/5 p-2 ${isCollapsed ? 'justify-center' : 'gap-3'}`}
+                    className={`w-full flex items-center rounded-xl bg-white/10 border border-white/10 shadow-sm transition-all hover:bg-white/20 p-2 ${isCollapsed ? 'justify-center' : 'gap-3'}`}
                 >
-                    <div className="user-avatar !w-10 !h-10 !bg-primary !text-white !border-primary/20 shrink-0 shadow-sm shadow-primary/20 transition-transform active:scale-90">
+                    <div className="user-avatar !w-10 !h-10 !bg-white !text-[#10346E] !border-white/20 shrink-0 shadow-sm shadow-black/10 transition-transform active:scale-90">
                         {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
                     </div>
                     {!isCollapsed && (
                         <div className="flex-1 min-w-0 text-left">
-                            <p className="text-sm font-bold truncate text-foreground leading-none">{userProfile?.full_name || 'Usuário'}</p>
-                            <p className="text-[10px] text-muted-foreground truncate uppercase font-semibold mt-1">Ver Opções</p>
+                            <p className="text-sm font-bold truncate text-white leading-none">{userProfile?.full_name || 'Usuário'}</p>
+                            <p className="text-[10px] text-white/50 truncate uppercase font-semibold mt-1">Ver Opções</p>
                         </div>
                     )}
                 </button>

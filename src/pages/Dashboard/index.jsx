@@ -559,7 +559,7 @@ const Dashboard = () => {
 
                         {/* Breakdown Panel (Mobile: Visible | Desktop: Hidden, handled by sidebar) */}
                         <div className="lg:hidden bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Resumo Situacional</h3>
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Vistorias por Tipologia</h3>
                             <div className="space-y-6">
                                 {data?.breakdown?.map((item, idx) => (
                                     <div key={idx}>
@@ -583,7 +583,7 @@ const Dashboard = () => {
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Distribuição Geográfica</p>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => navigate('/monitoramento')} className="bg-orange-50 text-orange-600 p-2 rounded-xl transition-colors" title="Mapa de Calor">
+                                    <button onClick={() => window.open('/monitoramento/mapa-calor?fullscreen=true', '_blank')} className="bg-orange-50 text-orange-600 p-2 rounded-xl transition-colors" title="Mapa de Calor">
                                         <Flame size={16} />
                                     </button>
                                     <button onClick={handleExportKML} className="bg-slate-100 text-slate-600 p-2 rounded-xl" title="Exportar KML">

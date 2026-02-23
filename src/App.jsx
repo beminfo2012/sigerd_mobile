@@ -123,7 +123,7 @@ const AppContent = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const isPrintPage = location.pathname.includes('/imprimir/');
+    const isPrintPage = location.pathname.includes('/imprimir/') || location.search.includes('fullscreen=true');
 
     useEffect(() => {
         const checkRedirect = async () => {
@@ -236,6 +236,11 @@ const AppContent = ({
                                         <Alerts />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/monitoramento/mapa-calor" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <GeoDashboard />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/monitoramento" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <MonitoramentoMenu />
@@ -243,7 +248,7 @@ const AppContent = ({
                                 } />
                                 <Route path="/monitoramento/riscos" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <RiskDashboard />
+                                        <RiskDashboard hideHeader={location.search.includes('fullscreen=true')} />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/monitoramento/gestao" element={

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, Filter, Flame, Map as MapIcon, Layers, Calendar, AlertTriangle, Car, ExternalLink } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap, Polyline, Marker } from 'react-leaflet'
 import { wazeService } from '../../services/wazeService'
@@ -14,6 +14,8 @@ window.L = L;
 
 const GeoDashboard = () => {
     const navigate = useNavigate()
+    const location = useLocation()
+    const isFullscreen = location.search.includes('fullscreen=true')
     const [vistorias, setVistorias] = useState([])
     const [loading, setLoading] = useState(true)
     const [viewMode, setViewMode] = useState('heat') // 'heat' or 'points'
@@ -106,9 +108,11 @@ const GeoDashboard = () => {
                 <div className="flex flex-col gap-2.5">
                     <div className="flex justify-between items-center bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-xl pointer-events-auto border border-white">
                         <div className="flex items-center gap-2 min-w-0">
-                            <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-600 flex-shrink-0">
-                                <ArrowLeft size={20} />
-                            </button>
+                            {!isFullscreen && (
+                                <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-600 flex-shrink-0">
+                                    <ArrowLeft size={20} />
+                                </button>
+                            )}
                             <div className="min-w-0 truncate">
                                 <h1 className="text-[11px] sm:text-sm font-black text-slate-800 uppercase tracking-tight truncate">Monitoramento Estratégico</h1>
                                 <div className="hidden sm:block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Mapa de Calor em Tempo Real</div>

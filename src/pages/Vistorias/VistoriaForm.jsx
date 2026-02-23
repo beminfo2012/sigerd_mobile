@@ -1170,7 +1170,18 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
-                                <label className={labelClasses}>Assinatura do Agente</label>
+                                <div className="flex justify-between items-center px-1">
+                                    <label className={labelClasses}>Assinatura do Agente</label>
+                                    {userProfile?.signature && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
+                                            className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
+                                        >
+                                            <Sparkles size={12} /> Auto-assinar
+                                        </button>
+                                    )}
+                                </div>
                                 <div
                                     onClick={() => { setActiveSignatureType('agente'); setShowSignaturePad(true); }}
                                     className="h-40 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500/50 hover:bg-blue-50/30 transition-all border-image-none"

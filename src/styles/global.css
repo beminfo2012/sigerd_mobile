@@ -142,8 +142,8 @@
 
   /* Navigation Components */
   .mobile-header {
-    @apply h-16 px-4 flex items-center justify-between bg-primary text-primary-foreground shadow-md z-50 shrink-0;
-    background: var(--primary-gradient);
+    @apply h-16 px-4 flex items-center justify-between text-primary-foreground shadow-md z-50 shrink-0;
+    background-color: #10346E;
   }
 
   .bottom-nav {
