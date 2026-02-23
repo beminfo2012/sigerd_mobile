@@ -626,8 +626,18 @@ const syncSingleItem = async (storeName, item, db) => {
 // Pull all data from Supabase to local IndexedDB (for multi-device sync)
 // Uses parallel fetches and a lock to prevent duplicate calls
 let _pullLock = false;
-export const pullAllData = async () => {
+let _lastPullTime = 0;
+const PULL_COOLDOWN = 60 * 1000; // 1 minute cooldown
+
+export const pullAllData = async (force = false) => {
     if (!navigator.onLine) return { success: false, reason: 'offline' };
+
+    const now = Date.now();
+    if (!force && (now - _lastPullTime < PULL_COOLDOWN)) {
+        console.log(`[Pull] Cooldown active (${Math.round((PULL_COOLDOWN - (now - _lastPullTime)) / 1000)}s left). Skipping full pull.`);
+        return { success: true, count: 0, skipped: true };
+    }
+
     if (_pullLock) {
         console.log('[Pull] Already in progress, skipping.');
         return { success: true, count: 0, skipped: true };
@@ -715,6 +725,7 @@ export const pullAllData = async () => {
         }
 
         console.log(`[Pull] Complete: ${totalPulled} records from ${modules.length} tables.`);
+        _lastPullTime = Date.now();
         return { success: true, count: totalPulled };
     } finally {
         _pullLock = false;

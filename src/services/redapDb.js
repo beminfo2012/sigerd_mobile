@@ -301,15 +301,37 @@ export const forceRescueAllOrphanData = async () => {
     return sources.length;
 };
 
-export const pullRedapFromCloud = async () => {
+let _pullLock = false;
+let _lastRedapPull = 0;
+const REDAP_COOLDOWN = 30 * 1000; // 30 seconds cooldown
+
+export const pullRedapFromCloud = async (force = false) => {
     if (!navigator.onLine) return null;
 
-    console.log('[S2ID] Starting cloud pull...');
+    const now = Date.now();
+    if (!force && (now - _lastRedapPull < REDAP_COOLDOWN)) {
+        console.log('[REDAP] Pull cooldown active. Skipping.');
+        return null;
+    }
+
+    if (_pullLock) {
+        console.log('[REDAP] Pull already in progress. Skipping.');
+        return null;
+    }
+    _pullLock = true;
+
+    console.log('[REDAP] Starting cloud pull...');
+    const lastSync = localStorage.getItem('last_redap_sync');
 
     try {
-        const { data, error } = await supabase
-            .from('redap_records')
-            .select('*');
+        let query = supabase.from('redap_records').select('*');
+
+        if (lastSync && !force) {
+            console.log(`[REDAP] Incremental pull since ${lastSync}`);
+            query = query.gt('updated_at', lastSync);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             console.error('[S2ID] Cloud pull error:', error);
@@ -317,11 +339,12 @@ export const pullRedapFromCloud = async () => {
         }
 
         if (!data || data.length === 0) {
-            console.log('[S2ID] No remote records found.');
+            console.log('[REDAP] No new or updated records found.');
+            _lastRedapPull = Date.now();
             return [];
         }
 
-        console.log(`[S2ID] Downloaded ${data.length} records. Syncing to IndexedDB...`);
+        console.log(`[REDAP] Downloaded ${data.length} records. Syncing to IndexedDB...`);
 
         const db = await initDB();
         const allLocal = await db.getAll('redap_records');
@@ -345,7 +368,7 @@ export const pullRedapFromCloud = async () => {
             let toStore;
             if (localMatch) {
                 if (localMatch.synced === false) {
-                    toStore = mergeS2idData(localMatch, remote);
+                    toStore = mergeRedapData(localMatch, remote);
                     toStore.synced = false;
                 } else {
                     toStore = {
@@ -369,11 +392,15 @@ export const pullRedapFromCloud = async () => {
         }
 
         await tx.done;
-        console.log(`[S2ID] Cloud pull complete. Processed ${data.length} records.`);
+        console.log(`[REDAP] Cloud pull complete. Processed ${data.length} records.`);
+        _lastRedapPull = Date.now();
+        localStorage.setItem('last_redap_sync', new Date().toISOString());
         return data;
     } catch (err) {
         console.error('[REDAP] Cloud pull failed:', err);
         return null;
+    } finally {
+        _pullLock = false;
     }
 };
 

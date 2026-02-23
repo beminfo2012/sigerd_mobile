@@ -28,18 +28,10 @@ const SyncBackground = () => {
                     console.log(`[SyncBackground] Syncing ${pendingCount.total} pending items...`)
                     const result = await syncPendingData()
                     if (result.success && result.count > 0) {
-                        console.log(`[SyncBackground] Synced ${result.count} items.`)
+                        console.log(`[SyncBackground] Synced ${result.count} items. Refreshing local state...`)
 
-                        // Refresh vistorias cache after sync
-                        const { data: freshData, error: fetchErr } = await supabase
-                            .from('vistorias')
-                            .select('*')
-                            .order('created_at', { ascending: false });
-
-                        if (!fetchErr && freshData) {
-                            const { saveRemoteVistoriasCache } = await import('../services/db.js');
-                            await saveRemoteVistoriasCache(freshData).catch(() => { });
-                        }
+                        // Instead of a manual select(*), trigger a forced but cooldown-aware pull
+                        await pullAllData(true);
 
                         window.dispatchEvent(new CustomEvent('sync-complete', {
                             detail: { count: result.count }

@@ -99,95 +99,95 @@ const Dashboard = () => {
     const [cemadenAlerts, setCemadenAlerts] = useState([])
     const toast = useToast()
 
+    const load = async () => {
+        try {
+            // [LIGHTNING LOAD - STEP 1] Load Local/Cached data immediately to show UI
+            console.log('[Dashboard] Lightning Load: Fetching local/cached data...');
+            const [pendingDetail, localVistorias, cachedVistorias] = await Promise.all([
+                getPendingSyncCount().catch(() => ({ total: 0 })),
+                getAllVistoriasLocal().catch(() => []),
+                getRemoteVistoriasCache().catch(() => [])
+            ]);
+
+            setSyncDetail(pendingDetail);
+
+            // Initial processing with what we have
+            const initialAll = [...cachedVistorias, ...localVistorias];
+            const initialStats = {
+                totalVistorias: initialAll.length,
+                activeOccurrences: 0,
+                inmetAlertsCount: 0
+            };
+
+            // Process initial breakdown and locations...
+            const initialBreakdown = processBreakdown(initialAll);
+            const initialLocations = processLocations(initialAll);
+
+            setData({
+                stats: initialStats,
+                breakdown: initialBreakdown,
+                locations: initialLocations,
+                alerts: []
+            });
+
+            // [LIGHTNING LOAD - STEP 2] Release loading screen NOW
+            setLoading(false);
+            console.log('[Dashboard] Lightning Load: Local data displayed. Fetching server updates...');
+
+            // [LIGHTNING LOAD - STEP 3] Fetch fresh data in background
+            const safetyTimer = setTimeout(() => {
+                if (loading) setLoading(false);
+            }, 5000);
+
+            api.getDashboardData().then(dashResult => {
+                clearTimeout(safetyTimer);
+                if (dashResult && dashResult.stats?.totalVistorias > 0) {
+                    console.log('[Dashboard] Lightning Load: Server data received. Updating UI...');
+                    setData(dashResult);
+                } else if (dashResult) {
+                    // Still update alerts even if vistorias are missing
+                    setData(prev => ({ ...prev, alerts: dashResult.alerts }));
+                }
+            }).catch(err => {
+                clearTimeout(safetyTimer);
+                console.warn('[Dashboard] Background refresh failed:', err);
+            });
+
+            // [LIGHTNING LOAD - STEP 4] Secondary data also in background
+            Promise.all([
+                (async () => {
+                    try {
+                        const r = await fetch('/api/weather');
+                        if (r.ok) return r.json();
+                    } catch (_) { /* proxy not available */ }
+                    // Fallback: fetch directly from Open-Meteo (works anywhere)
+                    try {
+                        const lat = -20.0246, lon = -40.7464;
+                        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
+                        const r2 = await fetch(url);
+                        if (!r2.ok) return null;
+                        const d = await r2.json();
+                        return {
+                            current: { temp: d.current.temperature_2m, humidity: d.current.relative_humidity_2m, rain: d.current.precipitation, wind: d.current.wind_speed_10m, code: d.current.weather_code },
+                            daily: d.daily.time.map((t, i) => ({ date: t, tempMax: d.daily.temperature_2m_max[i], tempMin: d.daily.temperature_2m_min[i], rainProb: d.daily.precipitation_probability_max[i], code: d.daily.weather_code[i] }))
+                        };
+                    } catch (_) { return null; }
+                })(),
+                cemadenService.getActiveAlerts().catch(() => [])
+            ]).then(([weatherRes, cemadenRes]) => {
+                if (weatherRes) setWeather(weatherRes)
+                if (cemadenRes) setCemadenAlerts(cemadenRes || [])
+            });
+
+            return; // Stop here, background promises handle the rest
+        } catch (error) {
+            console.error('Load Error:', error)
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         console.log('[Dashboard] useEffect running - starting data load...');
-        const load = async () => {
-            try {
-                // [LIGHTNING LOAD - STEP 1] Load Local/Cached data immediately to show UI
-                console.log('[Dashboard] Lightning Load: Fetching local/cached data...');
-                const [pendingDetail, localVistorias, cachedVistorias] = await Promise.all([
-                    getPendingSyncCount().catch(() => ({ total: 0 })),
-                    getAllVistoriasLocal().catch(() => []),
-                    getRemoteVistoriasCache().catch(() => [])
-                ]);
-
-                setSyncDetail(pendingDetail);
-
-                // Initial processing with what we have
-                const initialAll = [...cachedVistorias, ...localVistorias];
-                const initialStats = {
-                    totalVistorias: initialAll.length,
-                    activeOccurrences: 0,
-                    inmetAlertsCount: 0
-                };
-
-                // Process initial breakdown and locations...
-                const initialBreakdown = processBreakdown(initialAll);
-                const initialLocations = processLocations(initialAll);
-
-                setData({
-                    stats: initialStats,
-                    breakdown: initialBreakdown,
-                    locations: initialLocations,
-                    alerts: []
-                });
-
-                // [LIGHTNING LOAD - STEP 2] Release loading screen NOW
-                setLoading(false);
-                console.log('[Dashboard] Lightning Load: Local data displayed. Fetching server updates...');
-
-                // [LIGHTNING LOAD - STEP 3] Fetch fresh data in background
-                const safetyTimer = setTimeout(() => {
-                    if (loading) setLoading(false);
-                }, 5000);
-
-                api.getDashboardData().then(dashResult => {
-                    clearTimeout(safetyTimer);
-                    if (dashResult && dashResult.stats?.totalVistorias > 0) {
-                        console.log('[Dashboard] Lightning Load: Server data received. Updating UI...');
-                        setData(dashResult);
-                    } else if (dashResult) {
-                        console.warn('[Dashboard] Server returned 0 vistorias. Keeping local data for stability.');
-                        // Still update alerts even if vistorias are missing
-                        setData(prev => ({ ...prev, alerts: dashResult.alerts }));
-                    }
-                }).catch(err => {
-                    clearTimeout(safetyTimer);
-                    console.warn('[Dashboard] Background refresh failed:', err);
-                });
-
-                // [LIGHTNING LOAD - STEP 4] Secondary data also in background
-                Promise.all([
-                    (async () => {
-                        try {
-                            const r = await fetch('/api/weather');
-                            if (r.ok) return r.json();
-                        } catch (_) { /* proxy not available */ }
-                        // Fallback: fetch directly from Open-Meteo (works anywhere)
-                        try {
-                            const lat = -20.0246, lon = -40.7464;
-                            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
-                            const r2 = await fetch(url);
-                            if (!r2.ok) return null;
-                            const d = await r2.json();
-                            return {
-                                current: { temp: d.current.temperature_2m, humidity: d.current.relative_humidity_2m, rain: d.current.precipitation, wind: d.current.wind_speed_10m, code: d.current.weather_code },
-                                daily: d.daily.time.map((t, i) => ({ date: t, tempMax: d.daily.temperature_2m_max[i], tempMin: d.daily.temperature_2m_min[i], rainProb: d.daily.precipitation_probability_max[i], code: d.daily.weather_code[i] }))
-                            };
-                        } catch (_) { return null; }
-                    })(),
-                    cemadenService.getActiveAlerts().catch(() => [])
-                ]).then(([weatherRes, cemadenRes]) => {
-                    if (weatherRes) setWeather(weatherRes)
-                    if (cemadenRes) setCemadenAlerts(cemadenRes || [])
-                });
-
-                return; // Stop here, background promises handle the rest
-            } catch (error) {
-                console.error('Load Error:', error)
-                setLoading(false)
-            }
-        }
         load()
     }, [])
 
@@ -247,8 +247,8 @@ const Dashboard = () => {
 
     useEffect(() => {
         const handleSyncComplete = () => {
-            console.log('[Dashboard] Sync complete detected, reloading data...')
-            window.location.reload()
+            console.log('[Dashboard] Sync complete detected, refreshing data internally...')
+            load()
         }
 
         window.addEventListener('sync-complete', handleSyncComplete)
