@@ -41,12 +41,17 @@ const VistoriaList = ({ onNew, onEdit }) => {
         setLoading(true)
         try {
             // 1. Fetch from Supabase (Optimized Select)
-            const { data: cloudData, error } = await supabase
+            const { data: rawCloudData, error } = await supabase
                 .from('vistorias')
-                .select('id, vistoria_id, created_at, solicitante, endereco, bairro, nivel_risco, categoria_risco, tipo_info, fotos') // Keeping fotos for now if needed for thumbnails, but maybe removing strictly? List doesn't show thumbs.
-                // Wait, list DOES NOT show thumbs. Let's remove fotos.
                 .select('id, vistoria_id, created_at, solicitante, endereco, bairro, nivel_risco, categoria_risco, tipo_info, synced')
                 .order('created_at', { ascending: false })
+
+            // Map cloud data to match local camelCase structure
+            const cloudData = (rawCloudData || []).map(item => ({
+                ...item,
+                nivelRisco: item.nivel_risco,
+                categoriaRisco: item.categoria_risco
+            }))
 
             // 2. Fetch from Local (Lightweight)
             const localData = await getLightweightVistoriasLocal().catch(() => [])

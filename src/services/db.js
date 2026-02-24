@@ -260,7 +260,7 @@ export const getPendingSyncCount = async () => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'manual_readings', 'despachos'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'manual_readings', 'despachos', 'ocorrencias_operacionais'];
     let syncedCount = 0
 
     for (const storeName of stores) {
@@ -319,7 +319,8 @@ const syncSingleItem = async (storeName, item, db) => {
                             'shelters': 'shelters',
                             'occupants': 'occupants',
                             'donations': 'donations',
-                            'redap_records': 'redap'
+                            'redap_records': 'redap',
+                            'ocorrencias_operacionais': 'ocorrencias'
                         };
                         const folder = folderMap[storeName] || 'general'
 
@@ -565,6 +566,54 @@ const syncSingleItem = async (storeName, item, db) => {
                 created_at: item.created_at,
                 updated_at: item.updated_at
             };
+        } else if (storeName === 'ocorrencias_operacionais') {
+            const folder = 'ocorrencias';
+            const oid = item.ocorrencia_id || crypto.randomUUID();
+
+            let signatureAgenteUrl = item.assinaturaAgente || item.assinatura_agente || null;
+            let signatureAssistidoUrl = item.assinaturaAssistido || item.assinatura_assistido || null;
+            let signatureApoioUrl = item.apoioTecnico?.assinatura || item.apoio_tecnico?.assinatura || null;
+
+            if (signatureAgenteUrl && signatureAgenteUrl.startsWith('data:image')) {
+                signatureAgenteUrl = await uploadSignature(signatureAgenteUrl, folder, `${oid}/signature_agente.png`);
+            }
+            if (signatureAssistidoUrl && signatureAssistidoUrl.startsWith('data:image')) {
+                signatureAssistidoUrl = await uploadSignature(signatureAssistidoUrl, folder, `${oid}/signature_assistido.png`);
+            }
+            if (signatureApoioUrl && signatureApoioUrl.startsWith('data:image')) {
+                signatureApoioUrl = await uploadSignature(signatureApoioUrl, folder, `${oid}/signature_apoio.png`);
+            }
+
+            payload = {
+                ...item,
+                ocorrencia_id: oid,
+                id_local: item.id,
+                categoria_risco: item.categoriaRisco || item.categoria_risco,
+                nivel_risco: item.nivelRisco || item.nivel_risco,
+                subtipos_risco: item.subtiposRisco || item.subtipos_risco,
+                tem_solicitante_especifico: item.temSolicitanteEspecifico || item.tem_solicitante_especifico,
+                tem_apoio_tecnico: item.temApoioTecnico || item.tem_apoio_tecnico,
+                apoio_tecnico: {
+                    ...(item.apoioTecnico || item.apoio_tecnico || {}),
+                    assinatura: signatureApoioUrl
+                },
+                assinatura_agente: signatureAgenteUrl,
+                assinatura_assistido: signatureAssistidoUrl,
+                fotos: processedPhotos,
+            };
+
+            // Remove camelCase fields to keep Supabase clean
+            delete payload.id;
+            delete payload.synced;
+            delete payload.categoriaRisco;
+            delete payload.nivelRisco;
+            delete payload.subtiposRisco;
+            delete payload.temSolicitanteEspecifico;
+            delete payload.temApoioTecnico;
+            delete payload.assinaturaAgente;
+            delete payload.assinaturaAssistido;
+            delete payload.apoioTecnico; // Replaced by snake_case version
+
         } else {
             // Generic payload for shelter module tables (they already match Supabase schema)
             payload = { ...item };
@@ -598,7 +647,10 @@ const syncSingleItem = async (storeName, item, db) => {
                                 storeName === 'inventory' ? 'inventory_id' :
                                     storeName === 'distributions' ? 'distribution_id' :
                                         storeName === 'redap_records' ? 'redap_id' :
-                                            undefined
+                                            storeName === 'emergency_contracts' ? 'contract_id' :
+                                                storeName === 'despachos' ? 'despacho_id' :
+                                                    storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
+                                                        undefined
         }).select()
 
         if (error) {
@@ -673,7 +725,8 @@ export const pullAllData = async (force = false) => {
             { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
             { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' },
             { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
-            { table: 'despachos', store: 'despachos', key: 'despacho_id' }
+            { table: 'despachos', store: 'despachos', key: 'despacho_id' },
+            { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' }
         ];
 
         // Fetch ALL tables in parallel with a 10s timeout

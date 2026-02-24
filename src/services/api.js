@@ -52,15 +52,15 @@ export const api = {
 
                     if (isNaN(lat) || isNaN(lng)) return null
 
-                    const subtypes = v.subtipos_risco || []
-                    const category = v.categoria_risco || 'Outros'
+                    const subtypes = v.subtipos_risco || v.subtiposRisco || []
+                    const category = v.categoria_risco || v.categoriaRisco || 'Outros'
 
                     return {
                         lat,
                         lng,
                         risk: category,
-                        details: subtypes.length > 0 ? subtypes.join(', ') : category,
-                        date: v.created_at || v.data_hora || new Date().toISOString()
+                        details: subtypes.length > 0 ? Array.isArray(subtypes) ? subtypes.join(', ') : subtypes : category,
+                        date: v.created_at || v.data_hora || v.dataHora || new Date().toISOString()
                     }
                 })
                 .filter(loc => loc !== null) || []

@@ -1,11 +1,11 @@
-import { initDB } from './db'
+import { initDB, syncSingleItem } from './db'
 import { supabase } from './supabase'
 
 /**
  * Operational Occurrences Database Service
  * Handles CRUD and Sync for the dedicated 'ocorrencias_operacionais' table.
  */
-
+// ... (Initial state remains same)
 export const INITIAL_OCORRENCIA_STATE = {
     ocorrencia_id_format: '', // format: 001/2026
     denominacao: '',
@@ -61,8 +61,6 @@ export const deleteOcorrenciaLocal = async (id) => {
     const db = await initDB();
     const record = await db.get('ocorrencias_operacionais', parseInt(id));
     if (record) {
-        // For simplicity in the operacional module, we'll do a hard delete locally
-        // but we could also do a soft delete if needed for sync purposes.
         await db.delete('ocorrencias_operacionais', parseInt(id));
     }
 };
@@ -104,33 +102,16 @@ export const getOcorrenciaById = async (id) => {
 };
 
 /**
- * Sync single occurrence to Supabase
+ * Sync single occurrence to Supabase using centralized syncSingleItem
  */
 export const triggerOcorrenciaSync = async (id) => {
     const db = await initDB();
     const record = await db.get('ocorrencias_operacionais', parseInt(id));
-    if (!record) return;
+    if (!record) return false;
 
     try {
-        const payload = {
-            ...record,
-            id_local: record.id
-        };
-        delete payload.id;
-        delete payload.synced;
-
-        const { data, error } = await supabase
-            .from('ocorrencias_operacionais')
-            .upsert(payload, { onConflict: 'ocorrencia_id' })
-            .select()
-            .single();
-
-        if (!error) {
-            record.synced = true;
-            await db.put('ocorrencias_operacionais', record);
-            return true;
-        }
-        throw error;
+        const success = await syncSingleItem('ocorrencias_operacionais', record, db);
+        return success;
     } catch (err) {
         console.error('Ocorrencia Sync Error:', err);
         return false;
