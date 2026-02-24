@@ -434,19 +434,26 @@ const syncSingleItem = async (storeName, item, db) => {
                 coordenadas: item.coordenadas || (item.latitude && item.longitude ? `${item.latitude},${item.longitude}` : ''),
                 data_hora: item.dataHora || item.data_hora || new Date().toISOString(),
                 tipo_info: item.tipo_info || item.tipoInfo || item.categoriaRisco || 'Vistoria Geral',
+
+                // Bloco 5 - Riscos e Detalhes (Strict Mapping)
                 categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
                 subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
                 nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
                 situacao_observada: item.situacaoObservada || item.situacao_observada || 'Estabilizado',
+
+                // Bloco 5.5 - População
                 populacao_estimada: item.populacaoEstimada || item.populacao_estimada || '',
                 grupos_vulneraveis: Array.isArray(item.gruposVulneraveis) ? item.gruposVulneraveis : (Array.isArray(item.grupos_vulneraveis) ? item.grupos_vulneraveis : []),
+
+                // Observações e Medidas
                 observacoes: item.observacoes || '',
                 medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
                 encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (Array.isArray(item.encaminhamentos) ? item.encaminhamentos : []),
+                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
+
                 fotos: processedPhotos,
                 documentos: Array.isArray(item.documentos) ? item.documentos : (Array.isArray(item.documentos) ? item.documentos : []),
                 assinatura_agente: signatureAgenteUrl,
-                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
                 apoio_tecnico: {
                     ...(item.apoioTecnico || item.apoio_tecnico || {}),
                     assinatura: signatureApoioUrl
