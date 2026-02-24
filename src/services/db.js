@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 20
+const DB_VERSION = 21
 
 
 let dbPromise = null;
@@ -135,6 +135,16 @@ export const initDB = async () => {
                 despachoStore.createIndex('vistoria_id', 'vistoria_id', { unique: false });
                 despachoStore.createIndex('created_at', 'created_at', { unique: false });
                 despachoStore.createIndex('synced', 'synced', { unique: false });
+            }
+
+            // Ocorrencias Operacionais (v21)
+            if (!db.objectStoreNames.contains('ocorrencias_operacionais')) {
+                const store = db.createObjectStore('ocorrencias_operacionais', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('ocorrencia_id', 'ocorrencia_id', { unique: true });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('created_at', 'created_at', { unique: false });
+            } else {
+                ensureSyncedIndex('ocorrencias_operacionais');
             }
         },
     });
@@ -627,7 +637,7 @@ const syncSingleItem = async (storeName, item, db) => {
 // Uses parallel fetches and a lock to prevent duplicate calls
 let _pullLock = false;
 let _lastPullTime = 0;
-const PULL_COOLDOWN = 60 * 1000; // 1 minute cooldown
+const PULL_COOLDOWN = 5 * 1000; // 5 seconds cooldown (Faster sync)
 
 export const pullAllData = async (force = false) => {
     if (!navigator.onLine) return { success: false, reason: 'offline' };
@@ -704,7 +714,16 @@ export const pullAllData = async (force = false) => {
                     const { id: supabaseId, ...rest } = item;
                     const localMatch = localBySupId.get(supabaseId) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
 
-                    if (localMatch && localMatch.synced === false) continue;
+                    if (localMatch) {
+                        // [FIX] Always update if the remote data has a newer 'updated_at' 
+                        // or if we are forcing a refresh.
+                        const remoteDate = new Date(item.updated_at || item.created_at || 0).getTime();
+                        const localDate = new Date(localMatch.updated_at || localMatch.created_at || 0).getTime();
+
+                        if (localMatch.synced === false) continue; // Don't overwrite pending local changes
+
+                        if (!force && remoteDate <= localDate) continue; // No newer data
+                    }
 
                     const toStore = {
                         ...rest,
@@ -713,7 +732,7 @@ export const pullAllData = async (force = false) => {
                         synced: true
                     };
 
-                    if (!localMatch) delete toStore.id; // Ensure auto-increment works by completely removing 'id' if null/undefined
+                    if (!localMatch) delete toStore.id;
 
                     store.put(toStore);
                     totalPulled++;

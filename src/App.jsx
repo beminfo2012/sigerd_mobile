@@ -146,7 +146,7 @@ const AppContent = ({
         checkRedirect();
     }, [isAuthenticated, userProfile, location.pathname, navigate]);
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userProfile) {
         return (
             <ErrorBoundary>
                 <Login onLogin={handleLogin} />

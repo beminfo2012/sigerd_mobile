@@ -7,8 +7,16 @@ import { supabase } from './supabase'
  */
 
 export const INITIAL_OCORRENCIA_STATE = {
+    ocorrencia_id_format: '', // format: 001/2026
     denominacao: '',
     cobrade: '',
+    agente: '',              // Responsável Técnico
+    matricula: '',
+    solicitante: '',
+    cpf: '',
+    telefone: '',
+    endereco: '',
+    bairro: '',
     data_ocorrencia: new Date().toLocaleDateString('pt-BR'),
     horario_ocorrencia: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     lat: null,
@@ -22,8 +30,23 @@ export const INITIAL_OCORRENCIA_STATE = {
     desabrigados: 0,
     desaparecidos: 0,
     outros_afetados: 0,
+    tem_danos_humanos: false,
+    categoriaRisco: '',
+    nivelRisco: '',
+    subtiposRisco: [],
+    checklistRespostas: {},
     descricao_danos: '',
     observacoes: '',
+    fotos: [],               // Photos array [ { id, data, legenda } ]
+    assinaturaAgente: null,
+    assinaturaAssistido: null,
+    temApoioTecnico: false,
+    apoioTecnico: {
+        nome: '',
+        crea: '',
+        matricula: '',
+        assinatura: null
+    },
     status: 'finalized',
     synced: false,
     created_at: new Date().toISOString(),
