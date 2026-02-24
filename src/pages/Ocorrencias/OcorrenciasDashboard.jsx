@@ -52,10 +52,18 @@ const OcorrenciasDashboard = () => {
         }
     };
 
-    const filtered = records.filter(r =>
-        (r.denominacao || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (r.cobrade || '').includes(searchTerm)
-    );
+    const filtered = records.filter(r => {
+        const search = searchTerm.toLowerCase();
+        return (
+            (r.denominacao || '').toLowerCase().includes(search) ||
+            (r.cobrade || '').toLowerCase().includes(search) ||
+            (r.bairro || '').toLowerCase().includes(search) ||
+            (r.endereco || '').toLowerCase().includes(search) ||
+            (r.solicitante || '').toLowerCase().includes(search) ||
+            (r.ocorrencia_id_format || '').toLowerCase().includes(search)
+        );
+    });
+
 
     if (loading) {
         return (
@@ -121,14 +129,15 @@ const OcorrenciasDashboard = () => {
 
                 {/* Search */}
                 <div className="relative group max-w-2xl mx-auto">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-colors" size={20} />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                     <input
                         type="text"
-                        placeholder="Buscar por denominação ou COBRADE..."
-                        className="w-full pl-14 pr-6 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-red-500/5 focus:border-red-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
+                        placeholder="Buscar por nome, logradouro, bairro ou ID..."
+                        className="w-full pl-14 pr-6 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+
                 </div>
 
                 {/* List */}
@@ -152,9 +161,17 @@ const OcorrenciasDashboard = () => {
                                     <div className="flex flex-col h-full justify-between gap-4">
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-xl uppercase border border-blue-100 dark:border-blue-800/50">
-                                                    {record.cobrade || 'GERAL'}
-                                                </span>
+                                                <div className="flex gap-2">
+                                                    <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-xl uppercase border border-blue-100 dark:border-blue-800/50">
+                                                        {record.cobrade || 'GERAL'}
+                                                    </span>
+                                                    {record.ocorrencia_id_format && (
+                                                        <span className="text-[10px] font-black bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-xl uppercase">
+                                                            ID: {record.ocorrencia_id_format}
+                                                        </span>
+                                                    )}
+                                                </div>
+
                                                 {record.synced ? (
                                                     <div className="flex items-center gap-1.5 text-emerald-500">
                                                         <CheckCircle size={14} />

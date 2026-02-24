@@ -194,16 +194,26 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
             const apoio = parseJSON(initialData.apoio_tecnico || initialData.apoioTecnico, { nome: '', crea: '', matricula: '', assinatura: null });
 
+            const formatDateTime = (val) => {
+                if (!val) return '';
+                try {
+                    const d = new Date(val);
+                    if (isNaN(d.getTime())) return val;
+                    // Format to YYYY-MM-DDTHH:mm
+                    return d.toISOString().slice(0, 16);
+                } catch (e) { return val; }
+            };
+
             setFormData({
                 ...initialData,
                 // Map snake_case from DB to camelCase for form state
                 vistoriaId: initialData.vistoria_id || initialData.vistoriaId,
-                dataHora: initialData.data_hora || initialData.dataHora,
-                categoriaRisco: initialData.categoria_risco || initialData.categoriaRisco,
+                dataHora: formatDateTime(initialData.data_hora || initialData.dataHora),
+                categoriaRisco: initialData.categoria_risco || initialData.categoriaRisco || '',
                 subtiposRisco: Array.isArray(initialData.subtipos_risco || initialData.subtiposRisco) ? (initialData.subtipos_risco || initialData.subtiposRisco) : [],
                 nivelRisco: initialData.nivel_risco || initialData.nivelRisco || 'Baixo',
                 situacaoObservada: initialData.situacao_observada || initialData.situacaoObservada || 'Estabilizado',
-                populacaoEstimada: initialData.populacao_estimada || initialData.populacaoEstimada,
+                populacaoEstimada: initialData.populacao_estimada || initialData.populacaoEstimada || '',
                 gruposVulneraveis: Array.isArray(initialData.grupos_vulneraveis || initialData.gruposVulneraveis) ? (initialData.grupos_vulneraveis || initialData.gruposVulneraveis) : [],
                 medidasTomadas: Array.isArray(initialData.medidas_tomadas || initialData.medidasTomadas) ? (initialData.medidas_tomadas || initialData.medidasTomadas) : [],
                 encaminhamentos: Array.isArray(initialData.encaminhamentos) ? initialData.encaminhamentos : [],

@@ -60,18 +60,24 @@ const Vistorias = () => {
                 }
             }
 
-            // Fallback to partial if absolutely nothing found (prevents crash, but warns)
+            // Fallback to partial if absolutely nothing found
             const vistoria = fullData || vistoriaPartial;
 
             // Need to map DB fields to Form fields if they differ
-            // For now passing raw, assuming Form handles it or we map here
-            // DB: tipo_info, etc. Form: tipoInfo
-            // Simplest mapping:
+            // For now passing raw, but the Form expects camelCase mostly.
+            // Explicitly mapping critical fields to avoid missing sections (like Block 5)
             const mappedData = {
                 ...vistoria,
-                tipoInfo: vistoria.tipo_info,
-                vistoriaId: vistoria.vistoria_id,
-                dataHora: vistoria.data_hora || new Date().toISOString().slice(0, 16),
+                tipoInfo: vistoria.tipo_info || vistoria.tipoInfo,
+                vistoriaId: vistoria.vistoria_id || vistoria.vistoriaId,
+                dataHora: vistoria.data_hora || vistoria.dataHora || new Date().toISOString(),
+                categoriaRisco: vistoria.categoria_risco || vistoria.categoriaRisco,
+                subtiposRisco: vistoria.subtipos_risco || vistoria.subtiposRisco || [],
+                nivelRisco: vistoria.nivel_risco || vistoria.nivelRisco,
+                situacaoObservada: vistoria.situacao_observada || vistoria.situacaoObservada,
+                populacaoEstimada: vistoria.populacao_estimada || vistoria.populacaoEstimada,
+                gruposVulneraveis: vistoria.grupos_vulneraveis || vistoria.gruposVulneraveis || [],
+                checklistRespostas: vistoria.checklist_respostas || vistoria.checklistRespostas || {},
                 fotos: vistoria.fotos || [],
                 documentos: vistoria.documentos || [],
                 assinaturaAgente: vistoria.assinatura_agente || vistoria.assinaturaAgente,
@@ -79,6 +85,7 @@ const Vistorias = () => {
             }
 
             setSelectedVistoria(mappedData)
+
             setView('form')
         } catch (e) {
             console.error("Edit load failed:", e)

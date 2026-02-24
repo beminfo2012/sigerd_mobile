@@ -19,6 +19,93 @@ import VoiceInput from '../../components/VoiceInput';
 import SignaturePadComp from '../../components/SignaturePad';
 import FileInput from '../../components/FileInput';
 import { refineReportText } from '../../services/ai';
+import { generatePDF } from '../../utils/pdfGenerator';
+
+const SearchableInput = ({
+    label,
+    value,
+    onChange,
+    options,
+    placeholder,
+    icon: IconComponent,
+    labelClasses,
+    inputClasses
+}) => {
+    const [search, setSearch] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    const filteredOptions = options.filter(opt =>
+        opt.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <div className="relative">
+            <label className={labelClasses}>{label}</label>
+            <div className="relative group">
+                {IconComponent && <IconComponent size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />}
+                <div
+                    onClick={() => setIsOpen(true)}
+                    className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[56px] flex items-center justify-between pr-4`}
+                >
+                    <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-300'}>
+                        {value || placeholder}
+                    </span>
+                    <Search size={16} className="text-slate-300" />
+                </div>
+            </div>
+
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
+                                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                    <X size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    autoFocus
+                                    className={`${inputClasses} pl-12`}
+                                    placeholder="Comece a digitar para filtrar..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto p-2 pb-20">
+                            {filteredOptions.length > 0 ? (
+                                filteredOptions.map((opt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={`w-full text-left p-4 rounded-2xl font-bold transition-all flex items-center justify-between group mb-1 ${value === opt ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        <span className="flex-1">{opt}</span>
+                                        {value === opt && <CheckCircle size={18} className="ml-2" />}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-10 text-center space-y-2 opacity-50">
+                                    <Search size={32} className="mx-auto text-slate-300" />
+                                    <p className="font-bold text-sm">Nenhum resultado encontrado</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white dark:from-slate-800 to-transparent pointer-events-none h-20"></div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 // Address Data Imports
 import logradourosDataRaw from '../../../nomesderuas.json';
@@ -45,6 +132,8 @@ const OcorrenciasForm = () => {
     const [refining, setRefining] = useState(false);
     const [formData, setFormData] = useState(INITIAL_OCORRENCIA_STATE);
     const [gpsStatus, setGpsStatus] = useState('idle');
+    const [generating, setGenerating] = useState(false);
+
 
     // UI States
     const [docType, setDocType] = useState('CPF');
@@ -236,6 +325,55 @@ const OcorrenciasForm = () => {
         });
     };
 
+    const handleGeneratePDF = async () => {
+        if (generating) return;
+        setGenerating(true);
+        toast.info('Gerando PDF...', 'Por favor, aguarde enquanto processamos o relatório e as imagens.');
+
+        try {
+            // Consolidar danos humanos para o PDF
+            let danosHumanosText = '';
+            if (formData.tem_danos_humanos) {
+                const parts = [];
+                if (formData.mortos > 0) parts.push(`Mortos: ${formData.mortos}`);
+                if (formData.feridos > 0) parts.push(`Feridos: ${formData.feridos}`);
+                if (formData.enfermos > 0) parts.push(`Enfermos: ${formData.enfermos}`);
+                if (formData.desalojados > 0) parts.push(`Desalojados: ${formData.desalojados}`);
+                if (formData.desabrigados > 0) parts.push(`Desabrigados: ${formData.desabrigados}`);
+                if (formData.desaparecidos > 0) parts.push(`Desaparecidos: ${formData.desaparecidos}`);
+                if (formData.outros_afetados > 0) parts.push(`Outros afetados: ${formData.outros_afetados}`);
+
+                if (parts.length > 0) {
+                    danosHumanosText = `\n\nDANOS HUMANOS:\n${parts.join(', ')}`;
+                }
+            }
+
+            // Se não houver solicitante específico, preencher com o padrão para o PDF
+            const pdfData = {
+                ...formData,
+                solicitante: formData.temSolicitanteEspecifico ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil",
+                vistoriaId: formData.ocorrencia_id_format, // Mapping for generator compatibility
+                categoria_risco: formData.categoriaRisco,
+                subtipos_risco: formData.subtiposRisco,
+                nivel_risco: formData.nivelRisco,
+                observacoes: `${formData.denominacao} (${formData.cobrade})\n\n${formData.observacoes}${danosHumanosText}`
+            };
+
+            const result = await generatePDF(pdfData, 'vistoria');
+            if (result.success) {
+                toast.success('Relatório Gerado!', 'O arquivo foi criado e está pronto para salvar ou compartilhar.');
+            } else {
+                toast.error('Erro ao gerar PDF', result.error || 'Ocorreu um erro inesperado.');
+            }
+        } catch (e) {
+            console.error('PDF Error:', e);
+            toast.error('Erro Crítico', 'Não foi possível gerar o PDF. Verifique sua conexão e tente novamente.');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+
     const handleSave = async () => {
         if (!formData.denominacao) {
             toast.error('Informe o tipo de desastre.');
@@ -246,6 +384,7 @@ const OcorrenciasForm = () => {
         try {
             const finalData = {
                 ...formData,
+                solicitante: formData.temSolicitanteEspecifico ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil",
                 status: 'finalized',
                 updated_at: new Date().toISOString()
             };
@@ -258,6 +397,7 @@ const OcorrenciasForm = () => {
             setSaving(false);
         }
     };
+
 
     const inputClasses = "w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-red-500/5 focus:border-red-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
     const labelClasses = "block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1 text-left"
@@ -386,95 +526,119 @@ const OcorrenciasForm = () => {
                     </div>
                 </Card>
 
-                {/* 3. SEÇÃO: Solicitante */}
                 <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">3. Solicitante</h2>
+                    <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-700/50 pb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">3. Solicitante</h2>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                                ...prev,
+                                temSolicitanteEspecifico: !prev.temSolicitanteEspecifico,
+                                solicitante: !prev.temSolicitanteEspecifico ? prev.solicitante : ''
+                            }))}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${formData.temSolicitanteEspecifico
+                                ? 'bg-blue-600 border-blue-600 text-white'
+                                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-400'
+                                }`}
+                        >
+                            {formData.temSolicitanteEspecifico ? <CheckCircle size={14} /> : <Circle size={14} />}
+                            {formData.temSolicitanteEspecifico ? 'REMOVER ESPECÍFICO' : 'REGISTRAR ESPECÍFICO'}
+                        </button>
                     </div>
 
-                    <div className="space-y-6">
-                        <div>
-                            <label className={labelClasses}>Nome Completo</label>
-                            <input
-                                type="text"
-                                className={inputClasses}
-                                value={formData.solicitante}
-                                onChange={(e) => setFormData({ ...formData, solicitante: e.target.value })}
-                                placeholder="Nome completo do solicitante/morador"
-                            />
+                    {!formData.temSolicitanteEspecifico ? (
+                        <div className="py-6 px-4 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800 text-center space-y-1">
+                            <p className="text-[11px] font-bold text-slate-500 uppercase">Solicitante automático:</p>
+                            <p className="text-sm font-black text-blue-600 dark:text-blue-400">Coordenadoria Municipal de Proteção e Defesa Civil</p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center px-1">
-                                    <label className={labelClasses}>{docType}</label>
-                                    <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setDocType('CPF')
-                                                setFormData(prev => ({ ...prev, cpf: '' }))
-                                            }}
-                                            className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CPF' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                                        >
-                                            CPF
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setDocType('CNPJ')
-                                                setFormData(prev => ({ ...prev, cpf: '' }))
-                                            }}
-                                            className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CNPJ' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                                        >
-                                            CNPJ
-                                        </button>
-                                    </div>
-                                </div>
+                    ) : (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                                <label className={labelClasses}>Nome Completo</label>
                                 <input
-                                    type="tel"
+                                    type="text"
                                     className={inputClasses}
-                                    placeholder={docType === 'CPF' ? "000.000.000-00" : "00.000.000/0000-00"}
-                                    value={formData.cpf}
-                                    onChange={e => {
-                                        let v = e.target.value.replace(/\D/g, '');
-                                        if (docType === 'CPF') {
-                                            if (v.length > 11) v = v.slice(0, 11);
-                                            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                                            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                                            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-                                        } else {
-                                            if (v.length > 14) v = v.slice(0, 14);
-                                            v = v.replace(/^(\d{2})(\d)/, '$1.$2');
-                                            v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-                                            v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
-                                            v = v.replace(/(\d{4})(\d)/, '$1-$2');
-                                        }
-                                        setFormData({ ...formData, cpf: v });
-                                    }}
+                                    value={formData.solicitante}
+                                    onChange={(e) => setFormData({ ...formData, solicitante: e.target.value })}
+                                    placeholder="Nome completo do solicitante/morador"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className={labelClasses}>Telefone</label>
-                                <div className="relative group">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none pointer-events-none group-focus-within:text-blue-500 transition-colors">(27)</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center px-1">
+                                        <label className={labelClasses}>{docType}</label>
+                                        <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDocType('CPF')
+                                                    setFormData(prev => ({ ...prev, cpf: '' }))
+                                                }}
+                                                className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CPF' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                            >
+                                                CPF
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDocType('CNPJ')
+                                                    setFormData(prev => ({ ...prev, cpf: '' }))
+                                                }}
+                                                className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CNPJ' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                            >
+                                                CNPJ
+                                            </button>
+                                        </div>
+                                    </div>
                                     <input
                                         type="tel"
-                                        className={`${inputClasses} pl-12`}
-                                        placeholder="90000-0000"
-                                        value={formData.telefone?.replace(/^\(27\) /, '')}
+                                        className={inputClasses}
+                                        placeholder={docType === 'CPF' ? "000.000.000-00" : "00.000.000/0000-00"}
+                                        value={formData.cpf}
                                         onChange={e => {
                                             let v = e.target.value.replace(/\D/g, '');
-                                            if (v.length > 9) v = v.slice(0, 9);
-                                            v = v.replace(/^(\d{5})(\d)/, '$1-$2');
-                                            setFormData({ ...formData, telefone: `(27) ${v}` });
+                                            if (docType === 'CPF') {
+                                                if (v.length > 11) v = v.slice(0, 11);
+                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                            } else {
+                                                if (v.length > 14) v = v.slice(0, 14);
+                                                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                                                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                                                v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                                                v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                                            }
+                                            setFormData({ ...formData, cpf: v });
                                         }}
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <label className={labelClasses}>Telefone</label>
+                                    <div className="relative group">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none pointer-events-none group-focus-within:text-blue-500 transition-colors">(27)</span>
+                                        <input
+                                            type="tel"
+                                            className={`${inputClasses} pl-12`}
+                                            placeholder="90000-0000"
+                                            value={formData.telefone?.replace(/^\(27\) /, '')}
+                                            onChange={e => {
+                                                let v = e.target.value.replace(/\D/g, '');
+                                                if (v.length > 9) v = v.slice(0, 9);
+                                                v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+                                                setFormData({ ...formData, telefone: `(27) ${v}` });
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </Card>
+
 
                 {/* 4. SEÇÃO: Localização (Refresh Coords e Accuracy) */}
                 <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
@@ -495,36 +659,28 @@ const OcorrenciasForm = () => {
 
                     <div className="space-y-6">
                         <div className="space-y-2">
-                            <label className={labelClasses}>Endereço da Ocorrência</label>
-                            <div className="relative group">
-                                <MapPin size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />
-                                <input
-                                    type="text"
-                                    list="logradouros-list"
-                                    className={`${inputClasses} pl-12`}
-                                    value={formData.endereco}
-                                    onChange={e => {
-                                        const streetName = e.target.value;
-                                        const found = logradourosData.find(l => l.nome.toLowerCase() === streetName.toLowerCase());
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            endereco: streetName,
-                                            bairro: found ? found.bairro : prev.bairro
-                                        }));
-                                    }}
-                                    placeholder="Nome da rua, avenida..."
-                                />
-                                <datalist id="logradouros-list">
-                                    {logradourosData
-                                        .filter(l => !formData.bairro || l.bairro === formData.bairro)
-                                        .map(l => l.nome)
-                                        .sort()
-                                        .map(nome => (
-                                            <option key={nome} value={nome} />
-                                        ))}
-                                </datalist>
-                            </div>
+                            <SearchableInput
+                                label="Endereço da Ocorrência"
+                                placeholder="Selecione ou digite o logradouro..."
+                                value={formData.endereco}
+                                options={logradourosData
+                                    .filter(l => !formData.bairro || l.bairro === formData.bairro)
+                                    .map(l => l.nome)
+                                    .sort()}
+                                onChange={streetName => {
+                                    const found = logradourosData.find(l => l.nome.toLowerCase() === streetName.toLowerCase());
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        endereco: streetName,
+                                        bairro: found ? found.bairro : prev.bairro
+                                    }));
+                                }}
+                                icon={MapPin}
+                                labelClasses={labelClasses}
+                                inputClasses={inputClasses}
+                            />
                         </div>
+
 
                         <div className="space-y-2">
                             <label className={labelClasses}>Bairro</label>
@@ -584,30 +740,25 @@ const OcorrenciasForm = () => {
 
                     <div className="space-y-6">
                         <div>
-                            <label className={labelClasses}>Evento / Desastre (COBRADE)</label>
-                            <div className="relative">
-                                <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500/50" size={18} />
-                                <input
-                                    type="text"
-                                    list="cobrade-list"
-                                    placeholder="Ex: Enxurrada, Deslizamento..."
-                                    className={`${inputClasses} pl-12`}
-                                    value={formData.denominacao}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        const selected = COBRADE_LIST.find(c => c.name === val);
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            denominacao: val,
-                                            cobrade: selected ? selected.code : prev.cobrade
-                                        }));
-                                    }}
-                                />
-                                <datalist id="cobrade-list">
-                                    {COBRADE_LIST.map(c => <option key={c.code} value={c.name} />)}
-                                </datalist>
-                            </div>
+                            <SearchableInput
+                                label="Evento / Desastre (COBRADE)"
+                                placeholder="Ex: Enxurrada, Deslizamento..."
+                                value={formData.denominacao}
+                                options={COBRADE_LIST.map(c => c.name).sort()}
+                                onChange={val => {
+                                    const selected = COBRADE_LIST.find(c => c.name === val);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        denominacao: val,
+                                        cobrade: selected ? selected.code : prev.cobrade
+                                    }));
+                                }}
+                                icon={Shield}
+                                labelClasses={labelClasses}
+                                inputClasses={inputClasses}
+                            />
                         </div>
+
 
                         <div>
                             <label className={labelClasses}>Categoria de Risco</label>
@@ -977,7 +1128,7 @@ const OcorrenciasForm = () => {
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="pt-8 space-y-4">
+                <div className="pt-8 space-y-4 pb-20">
                     <Button
                         onClick={handleSave}
                         disabled={saving}
@@ -986,9 +1137,30 @@ const OcorrenciasForm = () => {
                         <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-500 transition-transform group-hover:scale-105 duration-500"></div>
                         <div className="relative flex items-center gap-3">
                             {saving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} />}
-                            <span className="font-black tracking-widest">FINALIZAR REGISTRO</span>
+                            <span className="font-black tracking-widest uppercase">Finalizar e Salvar</span>
                         </div>
                     </Button>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleGeneratePDF}
+                            disabled={generating}
+                            className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm"
+                        >
+                            {generating ? <Loader2 size={18} className="animate-spin mr-2" /> : <Share size={18} className="mr-2" />}
+                            RELATÓRIO PDF
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => navigate('/ocorrencias')}
+                            className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500"
+                        >
+                            <ArrowLeft size={18} className="mr-2" /> VOLTAR
+                        </Button>
+                    </div>
                 </div>
             </main>
 
@@ -1006,26 +1178,25 @@ const OcorrenciasForm = () => {
                 />
             )}
 
-            {/* Image Viewer Overlay */}
+            {/* Photo Zoom Modal */}
             {selectedPhotoIndex !== null && (
-                <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex flex-col p-4 animate-in fade-in duration-300">
-                    <div className="flex justify-between items-center py-4">
-                        <span className="text-[10px] font-black text-white/50 uppercase tracking-[4px]">Visualização</span>
-                        <button onClick={() => setSelectedPhotoIndex(null)} className="p-3 bg-white/10 hover:bg-red-500 rounded-2xl text-white transition-all">
-                            <X size={24} />
-                        </button>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center overflow-hidden">
-                        <img
-                            src={formData.fotos[selectedPhotoIndex].data}
-                            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
-                            alt="Visualização"
-                        />
-                    </div>
-                    <div className="py-8 max-w-lg mx-auto w-full">
-                        <label className="text-[9px] font-black text-white/40 uppercase mb-2 block ml-1 tracking-widest text-center">Editar Legenda da Foto</label>
+                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
+                    <button
+                        onClick={() => setSelectedPhotoIndex(null)}
+                        className="absolute top-6 right-6 p-4 text-white hover:bg-white/10 rounded-full transition-all active:scale-95"
+                    >
+                        <X size={32} />
+                    </button>
+                    <img
+                        src={formData.fotos[selectedPhotoIndex].data}
+                        className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
+                        alt="Zoom"
+                    />
+                    <div className="mt-8 text-center space-y-4 max-w-md w-full px-6">
+                        <p className="text-white font-black text-xs uppercase tracking-widest opacity-50">Legenda da Imagem</p>
                         <input
                             type="text"
+                            placeholder="Adicione uma legenda..."
                             className="w-full bg-white/10 border-2 border-white/10 rounded-2xl px-6 py-4 text-white font-bold text-center outline-none focus:border-white/30"
                             value={formData.fotos[selectedPhotoIndex].legenda || ''}
                             onChange={(e) => updatePhotoCaption(formData.fotos[selectedPhotoIndex].id, e.target.value)}

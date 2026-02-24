@@ -15,6 +15,7 @@ export const INITIAL_OCORRENCIA_STATE = {
     solicitante: '',
     cpf: '',
     telefone: '',
+    temSolicitanteEspecifico: false,
     endereco: '',
     bairro: '',
     data_ocorrencia: new Date().toLocaleDateString('pt-BR'),
