@@ -26,7 +26,7 @@ export default defineConfig({
         short_name: 'DefesaCivil',
         description: 'Aplicativo de uso em campo para Defesa Civil',
         theme_color: '#2a5299',
-        version: '1.46.23',
+        version: '1.46.24',
         icons: [
           {
             src: 'pwa-192x192.png',

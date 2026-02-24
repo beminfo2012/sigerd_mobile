@@ -13,6 +13,7 @@ import { cemadenService } from '../../services/cemaden'
 import { getShelters, getOccupants, getGlobalInventory } from '../../services/shelterDb'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 import { useToast } from '../../components/ToastNotification'
+import { APP_VERSION } from '../../version'
 
 // Helper functions for Lightning Load
 const processBreakdown = (records) => {
@@ -673,7 +674,7 @@ const Dashboard = () => {
                 {/* Footer */}
                 <div className="mt-16 mb-8 flex flex-col items-center">
                     <div className="h-px w-24 bg-slate-200 dark:bg-slate-800 mb-8" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD WEB V1.2.0</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD WEB V{APP_VERSION}</span>
                 </div>
             </div>
 

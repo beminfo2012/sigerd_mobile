@@ -4,6 +4,7 @@ import { Home, Map, FileText, AlertOctagon, Menu as MenuIcon } from 'lucide-reac
 import SyncBackground from './components/SyncBackground'
 import { notificationService } from './services/notificationService'
 import { ToastContainer } from './components/ToastNotification'
+import PWAUpdater from './components/PWAUpdater'
 
 // Core Components (Always loaded)
 import Dashboard from './pages/Dashboard'
@@ -157,6 +158,7 @@ const AppContent = ({
     return (
         <div className={`app-container ${isDarkMode ? 'dark' : ''} ${isPrintPage ? '!h-auto !overflow-visible' : ''}`}>
             <SyncBackground />
+            <PWAUpdater />
 
             <div className={`flex flex-1 ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
                 {/* Sidebar - Desktop Only */}
