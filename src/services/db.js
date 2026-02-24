@@ -280,7 +280,7 @@ export const syncPendingData = async () => {
     return { success: true, count: syncedCount }
 }
 
-const syncSingleItem = async (storeName, item, db) => {
+export const syncSingleItem = async (storeName, item, db) => {
     try {
         const uploadSignature = async (base64, folder, fileName) => {
             if (base64 && base64.startsWith('data:image')) {
