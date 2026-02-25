@@ -385,8 +385,8 @@ const OcorrenciasForm = () => {
 
 
     const handleSave = async () => {
-        if (!formData.denominacao) {
-            toast.error('Informe o tipo de desastre.');
+        if (!formData.categoriaRisco) {
+            toast.error('Informe a categoria de risco (Bloco 5).');
             return;
         }
 
@@ -395,6 +395,7 @@ const OcorrenciasForm = () => {
             const finalData = {
                 ...formData,
                 solicitante: formData.temSolicitanteEspecifico ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil",
+                denominacao: formData.categoriaRisco || 'Ocorrência Geral',
                 status: 'finalized',
                 updated_at: new Date().toISOString()
             };
@@ -749,17 +750,6 @@ const OcorrenciasForm = () => {
                     </div>
 
                     <div className="space-y-6">
-                        <div>
-                            <label className={labelClasses}>Denominação da Ocorrência</label>
-                            <input
-                                className={inputClasses}
-                                value={formData.denominacao}
-                                onChange={e => setFormData({ ...formData, denominacao: e.target.value })}
-                                placeholder="Descreva brevemente a ocorrência..."
-                            />
-                        </div>
-
-
                         <div>
                             <label className={labelClasses}>Categoria de Risco</label>
                             <select

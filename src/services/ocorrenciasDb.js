@@ -60,6 +60,17 @@ export const deleteOcorrenciaLocal = async (id) => {
     const db = await initDB();
     const record = await db.get('ocorrencias_operacionais', parseInt(id));
     if (record) {
+        if (navigator.onLine && record.synced && record.ocorrencia_id) {
+            try {
+                const { error } = await supabase
+                    .from('ocorrencias_operacionais')
+                    .delete()
+                    .eq('ocorrencia_id', record.ocorrencia_id);
+                if (error) console.error('Error deleting from supabase:', error);
+            } catch (err) {
+                console.error('Failed to delete occurrence remotely:', err);
+            }
+        }
         await db.delete('ocorrencias_operacionais', parseInt(id));
     }
 };
