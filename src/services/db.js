@@ -1,5 +1,6 @@
 import { openDB } from 'idb'
 import { supabase } from './supabase'
+import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
 const DB_VERSION = 23
@@ -631,18 +632,28 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.supabase_id; // Clean up mapping field if any
 
             // ID MAPPING: Fix foreign keys for humanitarian module
-            // We must map local integer shelter_id/inventory_id to Supabase UUIDs
-            if (payload.shelter_id && !isNaN(parseInt(payload.shelter_id))) {
-                const shelter = await db.get('shelters', parseInt(payload.shelter_id));
-                if (shelter && shelter.supabase_id) {
-                    payload.shelter_id = shelter.supabase_id;
+            if (payload.shelter_id) {
+                let shelterSupabaseId = null;
+                if (!isNaN(parseInt(payload.shelter_id)) && String(payload.shelter_id).length < 8) {
+                    const shelter = await db.get('shelters', parseInt(payload.shelter_id));
+                    if (shelter && shelter.supabase_id) shelterSupabaseId = shelter.supabase_id;
+                } else if (String(payload.shelter_id).startsWith('ABR-')) {
+                    const shelter = await db.getFromIndex('shelters', 'shelter_id', payload.shelter_id);
+                    if (shelter && shelter.supabase_id) shelterSupabaseId = shelter.supabase_id;
                 }
+                // If we found the real UUID, swap it out before sending to Supabase
+                if (shelterSupabaseId) payload.shelter_id = shelterSupabaseId;
             }
-            if (payload.inventory_id && !isNaN(parseInt(payload.inventory_id))) {
-                const inv = await db.get('inventory', parseInt(payload.inventory_id));
-                if (inv && inv.supabase_id) {
-                    payload.inventory_id = inv.supabase_id;
+            if (payload.inventory_id) {
+                let invSupabaseId = null;
+                if (!isNaN(parseInt(payload.inventory_id)) && String(payload.inventory_id).length < 8) {
+                    const inv = await db.get('inventory', parseInt(payload.inventory_id));
+                    if (inv && inv.supabase_id) invSupabaseId = inv.supabase_id;
+                } else if (String(payload.inventory_id).startsWith('INV-')) {
+                    const inv = await db.getFromIndex('inventory', 'item_id', payload.inventory_id);
+                    if (inv && inv.supabase_id) invSupabaseId = inv.supabase_id;
                 }
+                if (invSupabaseId) payload.inventory_id = invSupabaseId;
             }
         }
 
@@ -653,7 +664,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     storeName === 'shelters' ? 'shelter_id' :
                         storeName === 'occupants' ? 'occupant_id' :
                             storeName === 'donations' ? 'donation_id' :
-                                storeName === 'inventory' ? 'inventory_id' :
+                                storeName === 'inventory' ? 'item_id' :
                                     storeName === 'distributions' ? 'distribution_id' :
                                         storeName === 'redap_records' ? 'redap_id' :
                                             storeName === 'emergency_contracts' ? 'contract_id' :
@@ -664,6 +675,7 @@ export const syncSingleItem = async (storeName, item, db) => {
 
         if (error) {
             console.error(`[Sync] Supabase Upsert Error (${table}):`, error)
+            toast.error(`Erro de Sincronização: ${table}`, error.message || 'Falha ao sincronizar item.');
             return false
         }
 
