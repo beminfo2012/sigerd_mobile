@@ -624,8 +624,23 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.assinaturaAssistido;
             delete payload.apoioTecnico; // Replaced by snake_case version
 
+        } else if (storeName === 'shelters') {
+            payload = {
+                shelter_id: item.shelter_id || generateId('ABR'),
+                name: item.name || '',
+                address: item.address || '',
+                bairro: item.bairro || '',
+                current_occupancy: parseInt(item.current_occupancy) || 0,
+                capacity: parseInt(item.capacity) || 0,
+                responsible_name: item.responsible_name || item.contact_name || '',
+                responsible_phone: item.responsible_phone || item.contact_phone || '',
+                status: item.status || 'active',
+                observations: item.observations || '',
+                created_at: item.created_at || new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
         } else {
-            // Generic payload for shelter module tables (they already match Supabase schema)
+            // Generic payload for other tables
             payload = { ...item };
             delete payload.id; // Remove local IDBK key
             delete payload.synced; // Remove sync flag
@@ -641,7 +656,6 @@ export const syncSingleItem = async (storeName, item, db) => {
                     const shelter = await db.getFromIndex('shelters', 'shelter_id', payload.shelter_id);
                     if (shelter && shelter.supabase_id) shelterSupabaseId = shelter.supabase_id;
                 }
-                // If we found the real UUID, swap it out before sending to Supabase
                 if (shelterSupabaseId) payload.shelter_id = shelterSupabaseId;
             }
             if (payload.inventory_id) {
@@ -671,26 +685,22 @@ export const syncSingleItem = async (storeName, item, db) => {
                                                 storeName === 'despachos' ? 'despacho_id' :
                                                     storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
                                                         undefined
-        }).select()
+        }).select();
 
         if (error) {
-            console.error(`[Sync] Supabase Upsert Error (${table}):`, error)
+            console.error(`[Sync] Supabase Upsert Error (${table}):`, error);
             toast.error(`Erro de Sincronização: ${table}`, error.message || 'Falha ao sincronizar item.');
-            return false
+            return false;
         }
 
-        const tx = db.transaction(storeName, 'readwrite')
-        const store = tx.objectStore(storeName)
-        const record = await store.get(item.id)
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const record = await store.get(item.id);
         if (record) {
-            record.synced = true
-
-            // Capture official Supabase UUID for relations
+            record.synced = true;
             if (syncedItems && syncedItems[0]) {
                 record.supabase_id = syncedItems[0].id;
             }
-
-            // Update the local record with the official ID assigned by the server if applicable
             if (storeName === 'vistorias') {
                 const officialId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
                 record.vistoriaId = officialId;
@@ -702,14 +712,14 @@ export const syncSingleItem = async (storeName, item, db) => {
             } else if (storeName === 'redap_records') {
                 record.redap_id = payload.redap_id;
             }
-            await store.put(record)
+            await store.put(record);
         }
-        await tx.done
+        await tx.done;
         console.log(`[Sync] Successfully synced ${storeName} item: ${item.id}`);
-        return true
+        return true;
     } catch (e) {
-        console.error(`[Sync] Critical failure for ${storeName}:`, e)
-        return false
+        console.error(`[Sync] Critical failure for ${storeName}:`, e);
+        return false;
     }
 }
 
