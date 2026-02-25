@@ -69,10 +69,11 @@ export const cemadenService = {
 
             // Filter alerts for our municipality
             // CEMADEN alerts usually have a 'municipio' property
-            return allAlerts.filter(alert =>
-                alert.municipio?.toLowerCase().includes('santa maria de jetiba') ||
-                alert.cod_ibge === MUNICIPIO_IBGE
-            );
+            return allAlerts.filter(alert => {
+                const muni = (alert.municipio || '').toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                return muni.includes('santa maria de jetiba') || alert.cod_ibge === MUNICIPIO_IBGE;
+            });
         } catch (error) {
             console.error('[Cemaden] Error fetching alerts:', error);
             return [];

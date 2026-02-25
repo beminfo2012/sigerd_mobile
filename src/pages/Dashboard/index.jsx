@@ -88,7 +88,7 @@ const processLocations = (records) => {
 
 // --- SUB-COMPONENT: MOBILE VIEW ---
 const MobileDashboardView = ({
-    data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
+    data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
     handleClearCache, handleExportKML, navigate, setShowForecast,
     showReportMenu, setShowReportMenu, getWeatherIcon, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
@@ -99,31 +99,49 @@ const MobileDashboardView = ({
     return (
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans">
             <div className="p-5 space-y-8">
-                {/* 1. Weather Widget */}
-                {weather?.current && (
+                {/* 1. Weather Widget (Image 1 Style) */}
+                {weather?.current ? (
                     <div
                         onClick={() => setShowForecast(true)}
-                        className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all mb-4"
+                        className="bg-white dark:bg-slate-800 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer active:scale-95 transition-all mb-4"
                     >
                         <div className="flex items-center gap-6">
-                            <div className="text-5xl">{getWeatherIcon(weather.current.code)}</div>
+                            <div className="text-6xl drop-shadow-sm">{getWeatherIcon(weather.current.code)}</div>
                             <div>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
-                                    <span className="text-xl font-bold text-slate-400">°C</span>
+                                    <span className="text-5xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
+                                    <span className="text-2xl font-bold text-slate-400">°C</span>
                                 </div>
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
+                                <div className="text-[11px] font-black text-slate-400 uppercase tracking-[2px] mt-1">SANTA MARIA DE JETIBÁ</div>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-                                <CloudRain size={15} className="text-blue-500 shrink-0" />
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
+                                <CloudRain size={16} className="text-blue-500 shrink-0" />
                                 <span className="text-slate-600 dark:text-slate-300">Chuva: <span className="font-bold">{weather.daily?.[0]?.rainProb || 0}%</span></span>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-                                <Timer size={15} className="text-blue-400 shrink-0" />
+                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
+                                <Timer size={16} className="text-blue-400 shrink-0" />
                                 <span className="text-slate-600 dark:text-slate-300">Umidade: <span className="font-bold">{weather.current.humidity || 0}%</span></span>
                             </div>
+                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
+                                <Activity size={16} className="text-slate-400 shrink-0" />
+                                <span className="text-slate-600 dark:text-slate-300">Vento: <span className="font-bold">{Math.round(weather.current.wind || 6)} km/h</span></span>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="bg-white/50 dark:bg-slate-800/50 rounded-[32px] p-8 border border-white dark:border-slate-700 shadow-sm animate-pulse mb-4 flex justify-between items-center">
+                        <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                            <div className="space-y-2">
+                                <div className="w-20 h-8 bg-slate-200 dark:bg-slate-700 rounded" />
+                                <div className="w-32 h-3 bg-slate-200 dark:bg-slate-700 rounded" />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="w-24 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                            <div className="w-24 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
                         </div>
                     </div>
                 )}
@@ -307,7 +325,7 @@ const MobileDashboardView = ({
 
 // --- SUB-COMPONENT: WEB VIEW ---
 const WebViewDashboardView = ({
-    data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
+    data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
     handleClearCache, handleExportKML, navigate, setShowForecast,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
@@ -322,25 +340,18 @@ const WebViewDashboardView = ({
                 {/* --- 🏁 1. HEADER & TOP CARDS CONTAINER --- */}
                 <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-6">
 
-                    {/* Header: Title & Weather */}
+                    {/* Header: Title */}
                     <div className="flex justify-between items-center px-2">
                         <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                             Monitoramento em Tempo Real
                         </h2>
-                        {weather?.current && (
-                            <div className="flex items-center gap-4 py-1">
-                                <div className="text-2xl">{getWeatherIcon(weather.current.code)}</div>
-                                <div className="text-2xl font-black text-slate-900 dark:text-slate-100">{Math.round(weather.current.temp || 0)}°C</div>
-                                <div className="hidden xl:flex flex-col border-l border-slate-200 dark:border-slate-700 pl-4 ml-2">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase leading-none italic">Localização</span>
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Santa Maria de Jetibá</span>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
-                    {/* Top 4 Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <CemadenAlertBanner alerts={cemadenAlerts} />
+
+
+                    {/* Top 5 Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {/* Card 1: Risk Level */}
                         <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden group shadow-sm">
                             <div className={`absolute top-0 left-0 w-1.5 h-full ${statusInfo.color}`} />
@@ -373,7 +384,7 @@ const WebViewDashboardView = ({
                                 <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
                                     <Zap size={20} />
                                 </div>
-                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.inmetAlertsCount || 0}</span>
+                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
                         </div>
@@ -388,6 +399,47 @@ const WebViewDashboardView = ({
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Vistorias Totais</span>
                         </div>
+
+                        {/* Card 5: Weather Card (Final Position) */}
+                        {weather?.current ? (
+                            <div onClick={() => setShowForecast(true)} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                                <div className="flex justify-between items-start">
+                                    <div className="text-4xl">{getWeatherIcon(weather.current.code)}</div>
+                                    <div className="text-right">
+                                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}°C</div>
+                                        <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">SANTA MARIA DE JETIBÁ</div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-50 dark:border-slate-700/50">
+                                    <div className="flex items-center gap-1.5 overflow-hidden">
+                                        <CloudRain size={12} className="text-blue-500 shrink-0" />
+                                        <span className="text-[9px] font-bold text-slate-500 truncate">{weather.daily?.[0]?.rainProb || 0}% <span className="text-slate-300 font-normal">Chuva</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 overflow-hidden">
+                                        <Timer size={12} className="text-blue-400 shrink-0" />
+                                        <span className="text-[9px] font-bold text-slate-500 truncate">{weather.current.humidity || 0}% <span className="text-slate-300 font-normal">Umid</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 overflow-hidden">
+                                        <Activity size={12} className="text-slate-400 shrink-0" />
+                                        <span className="text-[9px] font-bold text-slate-500 truncate">{Math.round(weather.current.wind || 6)} km/h <span className="text-slate-300 font-normal">Vento</span></span>
+                                    </div>
+                                    {rainfall && rainfall[0] && (
+                                        <div className="flex items-center gap-1.5 overflow-hidden">
+                                            <Gauge size={12} className="text-indigo-500 shrink-0" />
+                                            <span className="text-[9px] font-bold text-slate-500 truncate">{rainfall[0].rain} <span className="text-slate-300 font-normal">Pluv</span></span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl animate-pulse shadow-sm flex flex-col justify-between">
+                                <div className="flex justify-between">
+                                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-full" />
+                                    <div className="w-16 h-8 bg-slate-100 dark:bg-slate-700 rounded" />
+                                </div>
+                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-full mt-4" />
+                            </div>
+                        )}
                     </div>
 
                     {/* Blue Horizontal Nav Bar */}
@@ -545,7 +597,7 @@ const WebViewDashboardView = ({
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</span>
                         </div>
-                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{data.stats.inmetAlertsCount || 0}</div>
+                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{((data.alerts || []).length + (cemadenAlerts || []).length)}</div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Alertas Ativos</span>
                     </div>
 
@@ -587,6 +639,7 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState(null)
     const [weather, setWeather] = useState(null)
+    const [rainfall, setRainfall] = useState(null)
     const [syncDetail, setSyncDetail] = useState({ total: 0, vistorias: 0, interdicoes: 0 })
     const [syncing, setSyncing] = useState(false)
     const [showForecast, setShowForecast] = useState(false)
@@ -596,10 +649,23 @@ const Dashboard = () => {
     const [viewMode, setViewMode] = useState('vistorias')
     const [mapFilter, setMapFilter] = useState('Todas')
     const [mapStyle, setMapStyle] = useState('street')
+    const [climateLoading, setClimateLoading] = useState(true)
 
     const statusInfo = useMemo(() => {
+        if (climateLoading) {
+            return {
+                label: 'CONSULTANDO...',
+                color: 'bg-slate-400',
+                text: 'text-slate-500',
+                bg: 'bg-slate-50',
+                dot: 'bg-slate-400 animate-pulse',
+                loading: true
+            }
+        }
+
         const inmet = data?.alerts || []
         const cemaden = cemadenAlerts || []
+        const allAlerts = [...inmet, ...cemaden]
 
         // Default: Normal State
         let highest = 'NORMAL'
@@ -608,7 +674,7 @@ const Dashboard = () => {
         let bg = 'bg-emerald-50'
         let dot = 'bg-emerald-500'
 
-        if (inmet.length > 0 || cemaden.length > 0) {
+        if (allAlerts.length > 0) {
             // Base Alert State
             highest = 'ATENÇÃO'
             color = 'bg-amber-500'
@@ -616,15 +682,15 @@ const Dashboard = () => {
             bg = 'bg-amber-50'
             dot = 'bg-amber-500'
 
-            const severities = inmet.map(a => String(a.severidade || '').toLowerCase())
+            const severities = allAlerts.map(a => String(a.severidade || a.nivel || '').toLowerCase())
 
-            if (severities.some(s => s.includes('grande'))) {
+            if (severities.some(s => s.includes('grande') || s.includes('extremo') || s.includes('vermelho'))) {
                 highest = 'G. PERIGO'
                 color = 'bg-red-600'
                 text = 'text-red-700'
                 bg = 'bg-red-50'
                 dot = 'bg-red-600'
-            } else if (severities.some(s => s.includes('perigo')) || cemaden.length > 0) {
+            } else if (severities.some(s => s.includes('perigo') || s.includes('laranja') || s.includes('alerta'))) {
                 highest = 'PERIGO'
                 color = 'bg-orange-500'
                 text = 'text-orange-600'
@@ -669,31 +735,77 @@ const Dashboard = () => {
             });
             setLoading(false);
 
-            // Refetch in background
+            // Refetch in background - IMPORTANT: Merge with existing states
             api.getDashboardData().then(dashResult => {
-                if (dashResult) setData(dashResult);
+                if (dashResult) {
+                    setData(prev => {
+                        const merged = {
+                            ...dashResult,
+                            // Ensure local sync counts are preserved if API doesn't return them
+                            syncDetail: prev?.syncDetail || pendingDetail
+                        };
+                        // Explicitly sync the count if it's missing or inconsistent
+                        if (merged.alerts && (!merged.stats.inmetAlertsCount || merged.stats.inmetAlertsCount === 0)) {
+                            merged.stats.inmetAlertsCount = merged.alerts.length;
+                        }
+                        return merged;
+                    });
+                }
             }).catch(() => { });
 
-            // Fetch Weather & Cemaden
-            Promise.all([
-                (async () => {
-                    try {
-                        const lat = -20.0246, lon = -40.7464;
-                        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_height_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
-                        const r = await fetch(url);
-                        if (!r.ok) return null;
+            // 4. Fetch Weather, Cemaden Rainfall & Alerts (Parallel & Persistent)
+            const fetchClimate = async () => {
+                setClimateLoading(true);
+                try {
+                    const lat = -20.0246, lon = -40.7464;
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
+                    const r = await fetch(url);
+                    if (r.ok) {
                         const d = await r.json();
-                        return {
-                            current: { temp: d.current.temperature_2m, humidity: d.current.relative_humidity_2m, rain: d.current.precipitation || 0, code: d.current.weather_code },
-                            daily: d.daily.time.map((t, i) => ({ date: t, tempMax: d.daily.temperature_2m_max[i], tempMin: d.daily.temperature_2m_min[i], rainProb: d.daily.precipitation_probability_max[i], code: d.daily.weather_code[i] }))
-                        };
-                    } catch (_) { return null; }
-                })(),
-                cemadenService.getActiveAlerts().catch(() => [])
-            ]).then(([w, c]) => {
-                if (w) setWeather(w)
-                if (c) setCemadenAlerts(c)
-            });
+                        setWeather({
+                            current: {
+                                temp: d.current.temperature_2m,
+                                humidity: d.current.relative_humidity_2m,
+                                rain: d.current.precipitation || 0,
+                                code: d.current.weather_code,
+                                wind: d.current.wind_speed_10m || 6
+                            },
+                            daily: d.daily.time.map((t, i) => ({
+                                date: t,
+                                tempMax: d.daily.temperature_2m_max[i],
+                                tempMin: d.daily.temperature_2m_min[i],
+                                rainProb: d.daily.precipitation_probability_max[i],
+                                code: d.daily.weather_code[i]
+                            }))
+                        });
+                    }
+                } catch (e) { console.warn('[Weather] Fetch failed:', e); }
+
+                try {
+                    const alerts = await cemadenService.getActiveAlerts();
+                    setCemadenAlerts(alerts || []);
+                } catch (e) { console.warn('[Cemaden] Alerts failed:', e); }
+
+                try {
+                    const rain = await cemadenService.getRainfallData();
+                    setRainfall(rain || []);
+                } catch (e) { console.warn('[Cemaden] Rainfall failed:', e); }
+
+                // Fallback direct INMET fetch if data.alerts is empty
+                try {
+                    const inmetResp = await fetch('https://apiprevmet3.inmet.gov.br/avisos/municipio/3204559');
+                    if (inmetResp.ok) {
+                        const inmetData = await inmetResp.json();
+                        if (Array.isArray(inmetData) && inmetData.length > 0) {
+                            setData(prev => ({ ...prev, alerts: inmetData }));
+                        }
+                    }
+                } catch (e) { console.warn('[INMET] Direct catch failed:', e); }
+
+                setClimateLoading(false);
+            };
+
+            fetchClimate();
 
         } catch (error) {
             setLoading(false)
@@ -773,7 +885,7 @@ const Dashboard = () => {
 
     // Sub-component Props
     const commonProps = {
-        data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
+        data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
         handleClearCache, handleExportKML, navigate, setShowForecast,
         showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
         viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
