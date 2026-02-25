@@ -56,7 +56,6 @@ const OcorrenciasDashboard = () => {
         const search = searchTerm.toLowerCase();
         return (
             (r.denominacao || '').toLowerCase().includes(search) ||
-            (r.cobrade || '').toLowerCase().includes(search) ||
             (r.bairro || '').toLowerCase().includes(search) ||
             (r.endereco || '').toLowerCase().includes(search) ||
             (r.solicitante || '').toLowerCase().includes(search) ||
@@ -101,32 +100,6 @@ const OcorrenciasDashboard = () => {
             </div>
 
             <main className="max-w-4xl mx-auto p-5 sm:p-8 space-y-8">
-                {/* Stats Summary */}
-                <div className="grid grid-cols-2 gap-4">
-                    <Card className="p-6 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400">
-                                <Clock size={20} />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registros</p>
-                                <p className="text-2xl font-black text-slate-800 dark:text-white leading-none mt-1">{records.length}</p>
-                            </div>
-                        </div>
-                    </Card>
-                    <Card className="p-6 bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500">
-                                <AlertTriangle size={20} />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest">Pendentes</p>
-                                <p className="text-2xl font-black text-orange-600 dark:text-orange-400 leading-none mt-1">{records.filter(r => !r.synced).length}</p>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-
                 {/* Search */}
                 <div className="relative group max-w-2xl mx-auto">
                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
@@ -162,9 +135,6 @@ const OcorrenciasDashboard = () => {
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex gap-2">
-                                                    <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-xl uppercase border border-blue-100 dark:border-blue-800/50">
-                                                        {record.cobrade || 'GERAL'}
-                                                    </span>
                                                     {record.ocorrencia_id_format && (
                                                         <span className="text-[10px] font-black bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-xl uppercase">
                                                             ID: {record.ocorrencia_id_format}

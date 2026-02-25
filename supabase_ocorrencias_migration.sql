@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS ocorrencias_operacionais (
     ocorrencia_id UUID UNIQUE NOT NULL,
     ocorrencia_id_format TEXT NOT NULL, -- e.g. 001/2026
     denominacao TEXT NOT NULL,
-    cobrade TEXT,
     agente TEXT,
     matricula TEXT,
     solicitante TEXT,

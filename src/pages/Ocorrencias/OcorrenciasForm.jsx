@@ -10,7 +10,6 @@ import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from
 import { initDB } from '../../services/db';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/ToastNotification';
-import { COBRADE_LIST } from '../../utils/cobradeData';
 import { CHECKLIST_DATA } from '../../data/checklists';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -367,7 +366,7 @@ const OcorrenciasForm = () => {
                 categoria_risco: formData.categoriaRisco,
                 subtipos_risco: formData.subtiposRisco,
                 nivel_risco: formData.nivelRisco,
-                observacoes: `${formData.denominacao} (${formData.cobrade})\n\n${formData.observacoes}${danosHumanosText}`
+                observacoes: `${formData.denominacao}\n\n${formData.observacoes}${danosHumanosText}`
             };
 
             const result = await generatePDF(pdfData, 'vistoria');
@@ -751,22 +750,12 @@ const OcorrenciasForm = () => {
 
                     <div className="space-y-6">
                         <div>
-                            <SearchableInput
-                                label="Evento / Desastre (COBRADE)"
-                                placeholder="Ex: Enxurrada, Deslizamento..."
+                            <label className={labelClasses}>Denominação da Ocorrência</label>
+                            <input
+                                className={inputClasses}
                                 value={formData.denominacao}
-                                options={COBRADE_LIST.map(c => c.name).sort()}
-                                onChange={val => {
-                                    const selected = COBRADE_LIST.find(c => c.name === val);
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        denominacao: val,
-                                        cobrade: selected ? selected.code : prev.cobrade
-                                    }));
-                                }}
-                                icon={Shield}
-                                labelClasses={labelClasses}
-                                inputClasses={inputClasses}
+                                onChange={e => setFormData({ ...formData, denominacao: e.target.value })}
+                                placeholder="Descreva brevemente a ocorrência..."
                             />
                         </div>
 

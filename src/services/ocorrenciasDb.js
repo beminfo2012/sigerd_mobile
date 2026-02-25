@@ -9,7 +9,6 @@ import { supabase } from './supabase'
 export const INITIAL_OCORRENCIA_STATE = {
     ocorrencia_id_format: '', // format: 001/2026
     denominacao: '',
-    cobrade: '',
     agente: '',              // Responsável Técnico
     matricula: '',
     solicitante: '',
