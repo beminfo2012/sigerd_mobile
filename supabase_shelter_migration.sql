@@ -3,17 +3,7 @@
 -- Database Migration Script
 -- ============================================
 
--- 1. Add role column to profiles table
-ALTER TABLE profiles 
-ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'defesa_civil' 
-CHECK (role IN ('defesa_civil', 'assistencia_social', 'admin'));
-
--- Update existing users to defesa_civil
-UPDATE profiles SET role = 'defesa_civil' WHERE role IS NULL;
-
-COMMENT ON COLUMN profiles.role IS 'User role: defesa_civil (full access), assistencia_social (shelter management only), admin (full access + admin features)';
-
--- 2. Create shelters table
+-- 1. Create shelters table
 CREATE TABLE IF NOT EXISTS shelters (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     shelter_id TEXT UNIQUE NOT NULL,
@@ -179,7 +169,7 @@ CREATE POLICY "Allow shelter managers to insert shelters"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total')
         )
     );
 
@@ -191,7 +181,7 @@ CREATE POLICY "Allow shelter managers to update shelters"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total')
         )
     );
 
@@ -203,7 +193,7 @@ CREATE POLICY "Allow shelter managers to insert occupants"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total')
         )
     );
 
@@ -215,7 +205,7 @@ CREATE POLICY "Allow shelter managers to update occupants"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total')
         )
     );
 
@@ -227,7 +217,7 @@ CREATE POLICY "Allow shelter managers to insert donations"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
         )
     );
 
@@ -239,7 +229,7 @@ CREATE POLICY "Allow shelter managers to insert inventory"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
         )
     );
 
@@ -251,7 +241,7 @@ CREATE POLICY "Allow shelter managers to update inventory"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
         )
     );
 
@@ -263,7 +253,7 @@ CREATE POLICY "Allow shelter managers to insert distributions"
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
-            AND role IN ('assistencia_social', 'defesa_civil', 'admin')
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
         )
     );
 

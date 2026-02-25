@@ -68,12 +68,24 @@ DROP POLICY IF EXISTS "Allow authenticated to insert occurrences" ON ocorrencias
 CREATE POLICY "Allow authenticated to insert occurrences"
     ON ocorrencias_operacionais FOR INSERT
     TO authenticated
-    WITH CHECK (true);
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Técnico em Edificações')
+        )
+    );
 
 DROP POLICY IF EXISTS "Allow authenticated to update occurrences" ON ocorrencias_operacionais;
 CREATE POLICY "Allow authenticated to update occurrences"
     ON ocorrencias_operacionais FOR UPDATE
     TO authenticated
-    USING (true);
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Técnico em Edificações')
+        )
+    );
 
 COMMENT ON TABLE ocorrencias_operacionais IS 'Operational occurrences registered by civil defense agents';
