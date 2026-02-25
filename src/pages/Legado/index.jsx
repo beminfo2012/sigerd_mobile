@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, History, Filter, Map as MapIcon, BarChart3, Search, Calendar, User, Info } from 'lucide-react'
+import { ArrowLeft, History, Filter, Map as MapIcon, BarChart3, Search, Calendar, User, Info, ShieldAlert } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import 'leaflet/dist/leaflet.css'
