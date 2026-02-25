@@ -625,6 +625,8 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.apoioTecnico; // Replaced by snake_case version
             delete payload.checklistRespostas; // Cleaned camelCase
             delete payload.cobrade; // Cleaned removed field
+            delete payload.denominacao; // Cleaned removed field
+            delete payload.supabase_id; // Cleaned unused field
 
         } else if (storeName === 'shelters') {
             payload = {

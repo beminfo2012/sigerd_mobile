@@ -289,7 +289,7 @@ const OcorrenciasForm = () => {
         try {
             const result = await refineReportText(
                 formData.observacoes,
-                formData.denominacao,
+                formData.categoriaRisco || 'Ocorrência Geral',
                 `Local: ${formData.endereco}, ${formData.bairro}.`
             );
             if (result && !result.startsWith('ERROR:')) {
@@ -305,13 +305,20 @@ const OcorrenciasForm = () => {
         }
     };
 
-    const handlePhotoSelect = (file, base64) => {
-        const newPhoto = {
-            id: crypto.randomUUID(),
-            data: base64,
-            legenda: ''
-        };
-        setFormData(prev => ({ ...prev, fotos: [...prev.fotos, newPhoto] }));
+    const handlePhotoSelect = (files) => {
+        if (!files || !Array.isArray(files)) return;
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const newPhoto = {
+                    id: crypto.randomUUID(),
+                    data: reader.result, // Ensures it's Base64
+                    legenda: ''
+                };
+                setFormData(prev => ({ ...prev, fotos: [...(prev.fotos || []), newPhoto] }));
+            };
+            if (file) reader.readAsDataURL(file);
+        });
     };
 
     const removePhoto = (id) => {
@@ -366,7 +373,7 @@ const OcorrenciasForm = () => {
                 categoria_risco: formData.categoriaRisco,
                 subtipos_risco: formData.subtiposRisco,
                 nivel_risco: formData.nivelRisco,
-                observacoes: `${formData.denominacao}\n\n${formData.observacoes}${danosHumanosText}`
+                observacoes: `${formData.categoriaRisco || 'Ocorrência'}\n\n${formData.observacoes}${danosHumanosText}`
             };
 
             const result = await generatePDF(pdfData, 'vistoria');
@@ -395,7 +402,6 @@ const OcorrenciasForm = () => {
             const finalData = {
                 ...formData,
                 solicitante: formData.temSolicitanteEspecifico ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil",
-                denominacao: formData.categoriaRisco || 'Ocorrência Geral',
                 status: 'finalized',
                 updated_at: new Date().toISOString()
             };
