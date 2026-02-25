@@ -142,31 +142,42 @@ const OcorrenciasForm = () => {
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
 
     const RISK_DATA = {
-        'Geológico / Geotécnico': [
-            'Deslizamento de Terra', 'Movimento de Massa', 'Erosão do Solo', 'Ravina', 'Voçoroca',
-            'Queda de Blocos Rochosos', 'Recalque do Solo', 'Subsidência', 'Instabilidade de Encosta',
-            'Soterramento', 'Colapso de Talude', 'Trinca no Terreno', 'Afloramento de Água'
+        'Incêndios': [
+            'Incêndio em residência', 'Incêndio em estabelecimento comercial', 'Incêndio industrial',
+            'Incêndio em veículo', 'Incêndio florestal / em vegetação', 'Incêndio em terreno baldio',
+            'Incêndio em área de preservação'
         ],
-        'Hidrológico': [
-            'Alagamento', 'Inundação', 'Enxurrada', 'Transbordamento de Rio', 'Transbordamento de Córrego',
-            'Assoreamento', 'Obstrução de Drenagem', 'Rompimento de Galeria Pluvial', 'Erosão Marginal',
-            'Retorno de Esgoto', 'Enchente Repentina', 'Rompimento de Barragem / Açude', 'Elevação do Lençol Frático'
+        'Acidentes de Trânsito': [
+            'Colisão entre veículos', 'Capotamento', 'Atropelamento', 'Acidente com motocicleta',
+            'Acidente com vítima presa nas ferragens', 'Tombamento de caminhão', 'Derramamento de carga perigosa'
         ],
-        'Estrutural': [
-            'Risco de Desabamento', 'Colapso Parcial', 'Colapso Total', 'Fissuras Estruturais',
-            'Trincas', 'Rachaduras', 'Muro de Arrimo com Risco', 'Laje com Risco', 'Marquise com Risco',
-            'Edificação Abandonada', 'Estrutura Pós-Incêndio', 'Estrutura Comprometida por Infiltração',
-            'Instabilidade de Fachada', 'Afundamento de Piso', 'Estrutura de Madeira com Cupim/Podridão'
+        'Quedas e Desabamentos': [
+            'Queda de árvore', 'Queda de galhos sobre via', 'Queda de poste', 'Desabamento de muro',
+            'Desabamento parcial de residência', 'Colapso estrutural de edificação', 'Risco estrutural em imóvel'
         ],
-        'Ambiental': [
-            'Queda de Árvore', 'Risco de Queda de Árvore', 'Contaminação de Água', 'Incêndio em Vegetação',
-            'Descarte de Resíduos Perigosos', 'Erosão Biológica'
+        'Eventos Naturais / Climáticos': [
+            'Alagamento', 'Enchente', 'Inundação', 'Enxurrada', 'Deslizamento de terra',
+            'Erosão', 'Vendaval', 'Granizo', 'Raios com danos estruturais'
         ],
-        'Tecnológico': [
-            'Risco Elétrico', 'Vazamento de Gás', 'Produtos Perigosos', 'Rompimento de Adutora',
-            'Explosão', 'Acidente de Trânsito com Vítima'
+        'Salvamentos': [
+            'Resgate de vítima em altura', 'Resgate veicular', 'Resgate aquático', 'Busca por desaparecido',
+            'Resgate em mata', 'Retirada de animal em situação de risco', 'Pessoa presa em elevador'
         ],
-        'Outros': ['Não listado']
+        'Produtos Perigosos': [
+            'Vazamento de gás', 'Vazamento de produto químico', 'Explosão', 'Risco de explosão',
+            'Derramamento de combustível', 'Contaminação ambiental'
+        ],
+        'Apoio Humanitário': [
+            'Distribuição de donativos', 'Abrigamento temporário', 'Cadastro de famílias atingidas',
+            'Avaliação de danos e prejuízos', 'Apoio em decretação de situação de emergência'
+        ],
+        'Atendimento Pré-Hospitalar': [
+            'Mal súbito', 'Parada cardiorrespiratória', 'Trauma', 'Queda da própria altura', 'Afogamento'
+        ],
+        'Ocorrências Urbanas Diversas': [
+            'Fiação elétrica caída', 'Obstrução de via', 'Rompimento de adutora', 'Pane em elevador',
+            'Abertura de residência (emergencial)', 'Ameaça de suicídio'
+        ]
     };
 
     useEffect(() => {
