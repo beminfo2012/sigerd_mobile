@@ -630,6 +630,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 name: item.name || '',
                 address: item.address || '',
                 bairro: item.bairro || '',
+                coordenadas: item.coordenadas || '',
                 current_occupancy: parseInt(item.current_occupancy) || 0,
                 capacity: parseInt(item.capacity) || 0,
                 responsible_name: item.responsible_name || item.contact_name || '',
