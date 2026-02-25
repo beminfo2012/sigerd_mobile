@@ -23,7 +23,8 @@ import {
     Moon,
     Settings,
     CheckCircle,
-    RefreshCcw
+    RefreshCcw,
+    History
 } from 'lucide-react';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
 import ProfileModal from './ProfileModal';
@@ -102,6 +103,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'Monitoramento',
             icon: BarChart3,
             path: '/monitoramento',
+            roles: AGENT_ROLES
+        },
+        {
+            label: 'Legado',
+            icon: History,
+            path: '/monitoramento/legado',
             roles: AGENT_ROLES
         },
         {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
@@ -302,6 +302,26 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                 </div>
                             </div>
                             <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Novo</div>
+                        </button>
+                    </div>
+                )}
+
+                {/* Legado Section */}
+                {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
+                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <button
+                            onClick={() => window.location.href = '/monitoramento/legado'}
+                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+                        >
+                            <div className="flex items-center">
+                                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-600 rounded-2xl mr-4">
+                                    <History size={22} />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Legado COMPDEC</span>
+                                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Histórico de Vistorias</span>
+                                </div>
+                            </div>
                         </button>
                     </div>
                 )}

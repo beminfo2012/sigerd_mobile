@@ -1,0 +1,4907 @@
+[
+  {
+    "id": 0,
+    "number": "001",
+    "year": "2015",
+    "requester": "Maria Lucia de Souza Fujusawa",
+    "lat": -20.04882018842214,
+    "lon": -40.65867983803509,
+    "fullTitle": "Laudo Vistoria 001 - Maria Lucia de Souza Fujusawa"
+  },
+  {
+    "id": 1,
+    "number": "002",
+    "year": "2015",
+    "requester": "Sidney Hoffmann",
+    "lat": -20.007847453547,
+    "lon": -40.74559857597782,
+    "fullTitle": "Laudo Vistoria 002 - Sidney Hoffmann"
+  },
+  {
+    "id": 2,
+    "number": "003",
+    "year": "2015",
+    "requester": "David Littig",
+    "lat": -20.066514194580957,
+    "lon": -40.841605073476295,
+    "fullTitle": "Laudo Vistoria 003 - David Littig"
+  },
+  {
+    "id": 3,
+    "number": "004",
+    "year": "2015",
+    "requester": "Joanir Braz Zanotti",
+    "lat": -20.02512642088606,
+    "lon": -40.75981109055776,
+    "fullTitle": "Laudo Vistoria 004 - Joanir Braz Zanotti"
+  },
+  {
+    "id": 4,
+    "number": "005",
+    "year": "2015",
+    "requester": "Charles Wilton Almeida Assis",
+    "lat": -20.049497913614992,
+    "lon": -40.74706741716111,
+    "fullTitle": "Laudo Vistoria 005 - Charles Wilton Almeida Assis"
+  },
+  {
+    "id": 5,
+    "number": "02",
+    "year": "2015",
+    "requester": "006 - Maria Rita dos Santos Fernandes 11",
+    "lat": -19.996187368670796,
+    "lon": -40.74242971866223,
+    "fullTitle": "Laudo Vistoria 006 - Maria Rita dos Santos Fernandes 11-02-2015"
+  },
+  {
+    "id": 6,
+    "number": "02",
+    "year": "2015",
+    "requester": "007 - Elsa Maria da Silva 12",
+    "lat": -20.03927489970225,
+    "lon": -40.75172507033893,
+    "fullTitle": "Laudo Vistoria 007 - Elsa Maria da Silva 12-02-2015"
+  },
+  {
+    "id": 7,
+    "number": "02",
+    "year": "2015",
+    "requester": "008 - CRAS 19",
+    "lat": -20.134826280781617,
+    "lon": -40.93232358556859,
+    "fullTitle": "Laudo Vistoria 008 - CRAS 19-02-2015"
+  },
+  {
+    "id": 8,
+    "number": "02",
+    "year": "2015",
+    "requester": "009 - Rosimere Rodrigues Neves Holz 12",
+    "lat": -20.02736522862063,
+    "lon": -40.75439133336878,
+    "fullTitle": "Laudo Vistoria 009 - Rosimere Rodrigues Neves Holz 12-02-2015"
+  },
+  {
+    "id": 9,
+    "number": "03",
+    "year": "2015",
+    "requester": "010 - Luiza Loretto 03",
+    "lat": -20.01565172581465,
+    "lon": -40.738417994029305,
+    "fullTitle": "Laudo Vistoria 010 - Luiza Loretto 03-03-2015"
+  },
+  {
+    "id": 10,
+    "number": "03",
+    "year": "2015",
+    "requester": "011 - Erich Holz 03",
+    "lat": -20.026866328758516,
+    "lon": -40.74228381334005,
+    "fullTitle": "Laudo Vistoria 011 - Erich Holz 03-03-2015"
+  },
+  {
+    "id": 11,
+    "number": "03",
+    "year": "2015",
+    "requester": "014 - Lourival Tragel 20",
+    "lat": -20.03958849646252,
+    "lon": -40.73620038702188,
+    "fullTitle": "Laudo Vistoria 014 - Lourival Tragel 20-03-2015"
+  },
+  {
+    "id": 12,
+    "number": "03",
+    "year": "2015",
+    "requester": "015 - Edgar Antônio Formentini 20",
+    "lat": -20.033950740223105,
+    "lon": -40.73950863479315,
+    "fullTitle": "Laudo Vistoria 015 - Edgar Antônio Formentini 20-03-2015"
+  },
+  {
+    "id": 13,
+    "number": "04",
+    "year": "2015",
+    "requester": "019 - Siliano Loretto 07",
+    "lat": -20.01565172581465,
+    "lon": -40.738417994029305,
+    "fullTitle": "Laudo Vistoria 019 - Siliano Loretto 07-04-2015"
+  },
+  {
+    "id": 14,
+    "number": "05",
+    "year": "2015",
+    "requester": "027 - Pedro D Bromerchenkel 07",
+    "lat": -20.03895221906936,
+    "lon": -40.75147956234855,
+    "fullTitle": "Laudo vistoria 027 - Pedro D Bromerchenkel 07-05-2015"
+  },
+  {
+    "id": 15,
+    "number": "05",
+    "year": "2015",
+    "requester": "028 - COMDECSMJ - Passarela centro 08",
+    "lat": -20.029728201679486,
+    "lon": -40.74172523954252,
+    "fullTitle": "Laudo vistoria 028 - COMDECSMJ - Passarela centro 08 -05-2015"
+  },
+  {
+    "id": 16,
+    "number": "05",
+    "year": "2015",
+    "requester": "030 - Olaf Reinke 25",
+    "lat": -20.024228204187892,
+    "lon": -40.743870390068736,
+    "fullTitle": "Laudo vistoria 030 - Olaf Reinke 25 -05-2015"
+  },
+  {
+    "id": 17,
+    "number": "05",
+    "year": "2015",
+    "requester": "031 - Sigrid Reinke 25",
+    "lat": -20.024228204187892,
+    "lon": -40.743870390068736,
+    "fullTitle": "Laudo vistoria 031 - Sigrid Reinke 25 -05-2015"
+  },
+  {
+    "id": 18,
+    "number": "05",
+    "year": "2015",
+    "requester": "032 - Leandra Kuster 27",
+    "lat": -19.994342123631817,
+    "lon": -40.76699468156594,
+    "fullTitle": "Laudo vistoria 032 - Leandra Kuster 27 -05-2015"
+  },
+  {
+    "id": 19,
+    "number": "06",
+    "year": "2015",
+    "requester": "033 - Jacimar Tesch 02",
+    "lat": -20.017195923740715,
+    "lon": -40.75975666420262,
+    "fullTitle": "Laudo Vistoria 033 - Jacimar Tesch 02 -06-2015"
+  },
+  {
+    "id": 20,
+    "number": "06",
+    "year": "2015",
+    "requester": "034 - Belmiro Ponath 02",
+    "lat": -20.01565172581465,
+    "lon": -40.738417994029305,
+    "fullTitle": "Laudo Vistoria 034 - Belmiro Ponath 02-06-2015"
+  },
+  {
+    "id": 21,
+    "number": "001",
+    "year": "2018",
+    "requester": "JUVERCILI",
+    "lat": -20.070872267643757,
+    "lon": -40.844799367676885,
+    "fullTitle": "001-2018 JUVERCILI"
+  },
+  {
+    "id": 22,
+    "number": "002",
+    "year": "2018",
+    "requester": "DANIELA WOLFGRAM",
+    "lat": -19.99560104038549,
+    "lon": -40.75130533703638,
+    "fullTitle": "002-2018 DANIELA WOLFGRAM"
+  },
+  {
+    "id": 23,
+    "number": "009",
+    "year": "2018",
+    "requester": "Libert Kuster Junior",
+    "lat": -20.011429494825226,
+    "lon": -40.74426838272416,
+    "fullTitle": "009-2018 Libert Kuster Junior"
+  },
+  {
+    "id": 24,
+    "number": "010",
+    "year": "2018",
+    "requester": "Denuncia Anônima - Sao Luis",
+    "lat": -20.003301500169094,
+    "lon": -40.73469773510427,
+    "fullTitle": "010-2018 Denuncia Anônima - Sao Luis"
+  },
+  {
+    "id": 25,
+    "number": "011",
+    "year": "2018",
+    "requester": "Isidorio Brandeburgo - Sao Sebastião",
+    "lat": -20.01379525080294,
+    "lon": -40.83631486484516,
+    "fullTitle": "011-2018 Isidorio Brandeburgo - Sao Sebastião"
+  },
+  {
+    "id": 26,
+    "number": "012",
+    "year": "2018",
+    "requester": "APAE - SMJ",
+    "lat": -20.003262291160205,
+    "lon": -40.73736196234226,
+    "fullTitle": "012-2018 APAE - SMJ"
+  },
+  {
+    "id": 27,
+    "number": "013",
+    "year": "2018",
+    "requester": "EDILVA RUSTER",
+    "lat": -20.00493921205376,
+    "lon": -40.73097338523853,
+    "fullTitle": "013-2018 EDILVA RUSTER"
+  },
+  {
+    "id": 28,
+    "number": "013",
+    "year": "2018",
+    "requester": "EDILVA RUSTER (2)",
+    "lat": -20.00493921205376,
+    "lon": -40.73097338523853,
+    "fullTitle": "013-2018 EDILVA RUSTER (2)"
+  },
+  {
+    "id": 29,
+    "number": "014",
+    "year": "2018",
+    "requester": "Estadio Pomeranos",
+    "lat": -20.003308405309806,
+    "lon": -40.74094589009495,
+    "fullTitle": "014-2018 Estadio Pomeranos"
+  },
+  {
+    "id": 30,
+    "number": "014",
+    "year": "2018",
+    "requester": "Estadio Pomeranos (2)",
+    "lat": -20.003308405309806,
+    "lon": -40.74094589009495,
+    "fullTitle": "014-2018 Estadio Pomeranos (2)"
+  },
+  {
+    "id": 31,
+    "number": "015",
+    "year": "2018",
+    "requester": "Talude igreja luterana rua floriano emílio berger",
+    "lat": -20.027659997220894,
+    "lon": -40.74267927858047,
+    "fullTitle": "015-2018 Talude igreja luterana rua floriano emílio berger"
+  },
+  {
+    "id": 32,
+    "number": "016",
+    "year": "2018",
+    "requester": "Gabriela dos Passos Dias",
+    "lat": -20.00062939311514,
+    "lon": -40.736256153295365,
+    "fullTitle": "016-2018 Gabriela dos Passos Dias"
+  },
+  {
+    "id": 33,
+    "number": "017",
+    "year": "2018",
+    "requester": "ODIN INACIO",
+    "lat": -19.99933113265705,
+    "lon": -40.74062577966177,
+    "fullTitle": "017-2018 ODIN INACIO"
+  },
+  {
+    "id": 34,
+    "number": "018",
+    "year": "2018",
+    "requester": "Emilson Vieira da Silva",
+    "lat": -20.012797241725526,
+    "lon": -40.74516759102197,
+    "fullTitle": "018-2018 Emilson Vieira da Silva"
+  },
+  {
+    "id": 35,
+    "number": "019",
+    "year": "2018",
+    "requester": "JHON LENNON",
+    "lat": -19.99950507742588,
+    "lon": -40.73990332303749,
+    "fullTitle": "019-2018 JHON LENNON"
+  },
+  {
+    "id": 36,
+    "number": "024",
+    "year": "2018",
+    "requester": "Thayana Carneiro",
+    "lat": -20.031198695769888,
+    "lon": -40.824901701219254,
+    "fullTitle": "024-2018 Thayana Carneiro"
+  },
+  {
+    "id": 37,
+    "number": "",
+    "year": "2015",
+    "requester": "027 -2018 ALVIS STORCH",
+    "lat": -19.98389943871417,
+    "lon": -40.74294995017473,
+    "fullTitle": "027 -2018 ALVIS STORCH"
+  },
+  {
+    "id": 38,
+    "number": "",
+    "year": "2015",
+    "requester": "027 -2018 ALVIS STORCH (2)",
+    "lat": -19.98389943871417,
+    "lon": -40.74294995017473,
+    "fullTitle": "027 -2018 ALVIS STORCH (2)"
+  },
+  {
+    "id": 39,
+    "number": "028",
+    "year": "2018",
+    "requester": "Adriana Aparecida Almeida Carvalho",
+    "lat": -19.99135027017507,
+    "lon": -40.671133775372226,
+    "fullTitle": "028-2018 Adriana Aparecida Almeida Carvalho"
+  },
+  {
+    "id": 40,
+    "number": "029",
+    "year": "2018",
+    "requester": "Valdir Vesper",
+    "lat": -20.037418613737927,
+    "lon": -40.70794104106981,
+    "fullTitle": "029-2018 Valdir Vesper"
+  },
+  {
+    "id": 41,
+    "number": "030",
+    "year": "2018",
+    "requester": "Saldiro Germano Braun",
+    "lat": -20.038899369803843,
+    "lon": -40.73098005455065,
+    "fullTitle": "030-2018 Saldiro Germano Braun"
+  },
+  {
+    "id": 42,
+    "number": "031",
+    "year": "2018",
+    "requester": "Rafael Schimidt",
+    "lat": -18.126148331422186,
+    "lon": -13.100221866918076,
+    "fullTitle": "031-2018 Rafael Schimidt"
+  },
+  {
+    "id": 43,
+    "number": "032",
+    "year": "2018",
+    "requester": "Elias Fioravante Zottele",
+    "lat": -20.039978495025093,
+    "lon": -40.752456181411,
+    "fullTitle": "032-2018 Elias Fioravante Zottele"
+  },
+  {
+    "id": 44,
+    "number": "",
+    "year": "2015",
+    "requester": "033 -2018 ALVIS STORCH",
+    "lat": -19.98389943871417,
+    "lon": -40.74294995017473,
+    "fullTitle": "033 -2018 ALVIS STORCH"
+  },
+  {
+    "id": 45,
+    "number": "",
+    "year": "2015",
+    "requester": "033 -2018 ALVIS STORCH (2)",
+    "lat": -19.98389943871417,
+    "lon": -40.74294995017473,
+    "fullTitle": "033 -2018 ALVIS STORCH (2)"
+  },
+  {
+    "id": 46,
+    "number": "034",
+    "year": "2018",
+    "requester": "AGENI KUHN BULLERJHAN",
+    "lat": -20.008841194995977,
+    "lon": -40.74414361079943,
+    "fullTitle": "034-2018 AGENI KUHN BULLERJHAN"
+  },
+  {
+    "id": 47,
+    "number": "",
+    "year": "2015",
+    "requester": "036  -2018 Ana Fátima Knaack de Brito",
+    "lat": -20.001930824499617,
+    "lon": -40.72773045297113,
+    "fullTitle": "036  -2018 Ana Fátima Knaack de Brito"
+  },
+  {
+    "id": 48,
+    "number": "",
+    "year": "2015",
+    "requester": "037  -2018 Livaldenir Aparecida Comper Rocha",
+    "lat": -20.009935855245082,
+    "lon": -40.746674597949756,
+    "fullTitle": "037  -2018 Livaldenir Aparecida Comper Rocha"
+  },
+  {
+    "id": 49,
+    "number": "",
+    "year": "2015",
+    "requester": "038 -2018 Nilza Braun",
+    "lat": -20.049155575369074,
+    "lon": -40.80193883726433,
+    "fullTitle": "038 -2018 Nilza Braun"
+  },
+  {
+    "id": 50,
+    "number": "",
+    "year": "2015",
+    "requester": "040 -2018 Delair Maria Corona",
+    "lat": -20.029313484742303,
+    "lon": -40.753988006194845,
+    "fullTitle": "040 -2018 Delair Maria Corona"
+  },
+  {
+    "id": 51,
+    "number": "",
+    "year": "2015",
+    "requester": "041 -2018 Ocorrencia Nelzina Schmidt Marquardt",
+    "lat": -20.02930560211867,
+    "lon": -40.760385222286374,
+    "fullTitle": "041 -2018 Ocorrencia Nelzina Schmidt Marquardt"
+  },
+  {
+    "id": 52,
+    "number": "",
+    "year": "2015",
+    "requester": "042 -2018 Marcelo Gums",
+    "lat": -19.997001785734383,
+    "lon": -40.745535926564685,
+    "fullTitle": "042 -2018 Marcelo Gums"
+  },
+  {
+    "id": 53,
+    "number": "",
+    "year": "2015",
+    "requester": "043 -2018 Jovino Guilherme",
+    "lat": -19.999011717572145,
+    "lon": -40.74043181088994,
+    "fullTitle": "043 -2018 Jovino Guilherme"
+  },
+  {
+    "id": 54,
+    "number": "",
+    "year": "2015",
+    "requester": "044 -2018 Irany Ribeiro de Oliveira",
+    "lat": -20.010949258398124,
+    "lon": -40.75559622719932,
+    "fullTitle": "044 -2018 Irany Ribeiro de Oliveira"
+  },
+  {
+    "id": 55,
+    "number": "",
+    "year": "2015",
+    "requester": "045 -2018 Jovino Guilherme",
+    "lat": -19.999011717572145,
+    "lon": -40.74043181088994,
+    "fullTitle": "045 -2018 Jovino Guilherme"
+  },
+  {
+    "id": 56,
+    "number": "",
+    "year": "2015",
+    "requester": "046 -2018 Irineu Brum",
+    "lat": -19.986056283231484,
+    "lon": -40.802982318789084,
+    "fullTitle": "046 -2018 Irineu Brum"
+  },
+  {
+    "id": 57,
+    "number": "",
+    "year": "2015",
+    "requester": "047 - 2018 Claudiomar Lamas",
+    "lat": -20.0395571802073,
+    "lon": -40.73364632294181,
+    "fullTitle": "047 - 2018 Claudiomar Lamas"
+  },
+  {
+    "id": 58,
+    "number": "",
+    "year": "2015",
+    "requester": "048 -2018 Edvan Mariano Ferreira",
+    "lat": -20.02084155415583,
+    "lon": -40.75626122849159,
+    "fullTitle": "048 -2018 Edvan Mariano Ferreira"
+  },
+  {
+    "id": 59,
+    "number": "",
+    "year": "2015",
+    "requester": "049 -2018 Valdete Saager",
+    "lat": -20.016138697990893,
+    "lon": -40.75201957214513,
+    "fullTitle": "049 -2018 Valdete Saager"
+  },
+  {
+    "id": 60,
+    "number": "",
+    "year": "2015",
+    "requester": "050 -2018 Helena Schwanz Schroeder",
+    "lat": -20.03582248046107,
+    "lon": -40.73225337921749,
+    "fullTitle": "050 -2018 Helena Schwanz Schroeder"
+  },
+  {
+    "id": 61,
+    "number": "",
+    "year": "2015",
+    "requester": "051 -2018 Ivana Tonn",
+    "lat": -20.016138697990893,
+    "lon": -40.75201957214513,
+    "fullTitle": "051 -2018 Ivana Tonn"
+  },
+  {
+    "id": 62,
+    "number": "",
+    "year": "2015",
+    "requester": "052 -2018 Secretaria de Obras",
+    "lat": -20.025085171419434,
+    "lon": -40.75378348039668,
+    "fullTitle": "052 -2018 Secretaria de Obras"
+  },
+  {
+    "id": 63,
+    "number": "",
+    "year": "2015",
+    "requester": "053 -2018 Sirleir de Morais da Silva",
+    "lat": -20.000675056350335,
+    "lon": -40.735763065636476,
+    "fullTitle": "053 -2018 Sirleir de Morais da Silva"
+  },
+  {
+    "id": 64,
+    "number": "",
+    "year": "2015",
+    "requester": "054 -2018 Rubens Nunes de Vargas",
+    "lat": -20.17486392904271,
+    "lon": -40.99966486318255,
+    "fullTitle": "054 -2018 Rubens Nunes de Vargas"
+  },
+  {
+    "id": 65,
+    "number": "",
+    "year": "2015",
+    "requester": "055 -2018 Cesan - Polo de Santa Teresa",
+    "lat": -20.028281827062404,
+    "lon": -40.74396624394158,
+    "fullTitle": "055 -2018 Cesan - Polo de Santa Teresa"
+  },
+  {
+    "id": 66,
+    "number": "",
+    "year": "2015",
+    "requester": "056 -2018 Denuncia Anonima - Hugo Knaak",
+    "lat": -19.99442601043463,
+    "lon": -40.7681028796458,
+    "fullTitle": "056 -2018 Denuncia Anonima - Hugo Knaak"
+  },
+  {
+    "id": 67,
+    "number": "",
+    "year": "2015",
+    "requester": "Modelo",
+    "lat": -20.025085171419434,
+    "lon": -40.75378348039668,
+    "fullTitle": "Modelo"
+  },
+  {
+    "id": 68,
+    "number": "03",
+    "year": "2019",
+    "requester": "Florentino Binow",
+    "lat": -20.06686291442891,
+    "lon": -40.835003179806705,
+    "fullTitle": "Parecer técnico 03-2019 - Florentino Binow"
+  },
+  {
+    "id": 69,
+    "number": "08",
+    "year": "2019",
+    "requester": "Nilo Hinz",
+    "lat": -20.046746459797923,
+    "lon": -40.71996529853895,
+    "fullTitle": "Parecer técnico 08-2019 - Nilo Hinz"
+  },
+  {
+    "id": 70,
+    "number": "09",
+    "year": "2019",
+    "requester": "Ana Maria Vervloet",
+    "lat": -20.01986920104642,
+    "lon": -40.74606126319212,
+    "fullTitle": "Parecer técnico 09-2019 - Ana Maria Vervloet"
+  },
+  {
+    "id": 71,
+    "number": "10",
+    "year": "2019",
+    "requester": "Jhonatan dos Santos Fraga",
+    "lat": -20.009264165366076,
+    "lon": -40.745122311842394,
+    "fullTitle": "Parecer técnico 10-2019 - Jhonatan dos Santos Fraga"
+  },
+  {
+    "id": 72,
+    "number": "102",
+    "year": "2019",
+    "requester": "Gelciane Zanotti Jacob",
+    "lat": -20.02620546299824,
+    "lon": -40.746067105425304,
+    "fullTitle": "Parecer técnico 102-2019 -Gelciane Zanotti Jacob"
+  },
+  {
+    "id": 73,
+    "number": "103",
+    "year": "2019",
+    "requester": "Caps",
+    "lat": -20.030206025387546,
+    "lon": -40.75037146056087,
+    "fullTitle": "Parecer técnico 103-2019 - Caps"
+  },
+  {
+    "id": 74,
+    "number": "104",
+    "year": "2019",
+    "requester": "Herminio Kruger",
+    "lat": -20.048930235384077,
+    "lon": -40.70996126430455,
+    "fullTitle": "Parecer técnico 104-2019 - Herminio Kruger"
+  },
+  {
+    "id": 75,
+    "number": "105",
+    "year": "2019",
+    "requester": "Rozana Maria Knaak Ramlow",
+    "lat": -20.0155433351842,
+    "lon": -40.744111607853675,
+    "fullTitle": "Parecer técnico 105-2019 - Rozana Maria Knaak Ramlow"
+  },
+  {
+    "id": 76,
+    "number": "106",
+    "year": "2019",
+    "requester": "Reginaldo Berger",
+    "lat": -20.032800416046083,
+    "lon": -40.740115447697086,
+    "fullTitle": "Parecer técnico 106-2019 - Reginaldo Berger"
+  },
+  {
+    "id": 77,
+    "number": "11",
+    "year": "2019",
+    "requester": "Ataides Ott de Alencar",
+    "lat": -20.009264165366076,
+    "lon": -40.745122311842394,
+    "fullTitle": "Parecer técnico 11-2019 - Ataides Ott de Alencar"
+  },
+  {
+    "id": 78,
+    "number": "110",
+    "year": "2019",
+    "requester": "Edson Reinke",
+    "lat": -20.001343678733534,
+    "lon": -40.74085776798939,
+    "fullTitle": "Parecer técnico 110-2019 -Edson Reinke"
+  },
+  {
+    "id": 79,
+    "number": "111",
+    "year": "2019",
+    "requester": "Oscar Geraldo Dos Santos",
+    "lat": -20.017655986772247,
+    "lon": -40.759366587089865,
+    "fullTitle": "Parecer técnico 111-2019 -Oscar Geraldo Dos Santos"
+  },
+  {
+    "id": 80,
+    "number": "112",
+    "year": "2019",
+    "requester": "Eduardo Stuhr Junior",
+    "lat": -20.030012518777138,
+    "lon": -40.741556517014786,
+    "fullTitle": "Parecer técnico 112-2019 - Eduardo Stuhr Junior"
+  },
+  {
+    "id": 81,
+    "number": "113",
+    "year": "2019",
+    "requester": "Moacir Nass",
+    "lat": -20.10935014496017,
+    "lon": -40.67758566940323,
+    "fullTitle": "Parecer técnico 113-2019 - Moacir Nass"
+  },
+  {
+    "id": 82,
+    "number": "114",
+    "year": "2019",
+    "requester": "Ana Pereira da Silva",
+    "lat": -20.008593508091703,
+    "lon": -40.74316082488013,
+    "fullTitle": "Parecer técnico 114-2019 - Ana Pereira da Silva"
+  },
+  {
+    "id": 83,
+    "number": "116",
+    "year": "2019",
+    "requester": "Edineia Stange Guilherme",
+    "lat": -20.031016793175656,
+    "lon": -40.74104895439141,
+    "fullTitle": "Parecer técnico 116-2019 - Edineia Stange Guilherme"
+  },
+  {
+    "id": 84,
+    "number": "118",
+    "year": "2019",
+    "requester": "Relatório de Ocorrência -CATA VENTO",
+    "lat": -20.019838147315355,
+    "lon": -40.756377294440476,
+    "fullTitle": "parecer técnico 118-2019 - Relatório de Ocorrência -CATA VENTO"
+  },
+  {
+    "id": 85,
+    "number": "119",
+    "year": "2019",
+    "requester": "José Lopes da Silva",
+    "lat": -20.009169184682825,
+    "lon": -40.744942932768495,
+    "fullTitle": "Parecer técnico 119-2019 - José Lopes da Silva"
+  },
+  {
+    "id": 86,
+    "number": "12",
+    "year": "2019",
+    "requester": "Muro Catavento",
+    "lat": -20.019713470263948,
+    "lon": -40.756324299283605,
+    "fullTitle": "Parecer técnico 12-2019 - Muro Catavento"
+  },
+  {
+    "id": 87,
+    "number": "120",
+    "year": "2019",
+    "requester": "Relatório de Ocorrência -MURO GABIÃO",
+    "lat": -20.020131314386227,
+    "lon": -40.74595510576025,
+    "fullTitle": "parecer técnico 120-2019 - Relatório de Ocorrência -MURO GABIÃO"
+  },
+  {
+    "id": 88,
+    "number": "125",
+    "year": "2019",
+    "requester": "Waldemiro Groner",
+    "lat": -20.039326576972115,
+    "lon": -40.75477734762451,
+    "fullTitle": "Parecer técnico 125-2019 -Waldemiro Groner"
+  },
+  {
+    "id": 89,
+    "number": "127",
+    "year": "2019",
+    "requester": "Controladoria - Ida Mungo",
+    "lat": -20.01728932880113,
+    "lon": -40.751795964886654,
+    "fullTitle": "Parecer técnico 127-2019 - Controladoria - Ida Mungo"
+  },
+  {
+    "id": 90,
+    "number": "134",
+    "year": "2019",
+    "requester": "Mapeamento de risco do PSF São Sebastião",
+    "lat": -20.01232931249118,
+    "lon": -40.79900009548755,
+    "fullTitle": "Parecer técnico 134-2019 - Mapeamento de risco do PSF São Sebastião"
+  },
+  {
+    "id": 91,
+    "number": "134",
+    "year": "2019",
+    "requester": "Mapeamento de risco do PSF São Sebastião (2)",
+    "lat": -20.01232931249118,
+    "lon": -40.79900009548755,
+    "fullTitle": "Parecer técnico 134-2019 - Mapeamento de risco do PSF São Sebastião (2)"
+  },
+  {
+    "id": 92,
+    "number": "14",
+    "year": "2019",
+    "requester": "Dora Berger",
+    "lat": -20.02244638000422,
+    "lon": -40.75513672359077,
+    "fullTitle": "Parecer técnico 14-2019 - Dora Berger"
+  },
+  {
+    "id": 93,
+    "number": "16",
+    "year": "2019",
+    "requester": "Flotelio Abelt",
+    "lat": -19.990697338154753,
+    "lon": -40.81535784077076,
+    "fullTitle": "Parecer técnico 16-2019 - Flotelio Abelt"
+  },
+  {
+    "id": 94,
+    "number": "17",
+    "year": "2019",
+    "requester": "Fagner Jering",
+    "lat": -20.06662992289568,
+    "lon": -40.84169026571389,
+    "fullTitle": "Parecer técnico 17-2019 - Fagner Jering"
+  },
+  {
+    "id": 95,
+    "number": "18",
+    "year": "2019",
+    "requester": "Jovelino Lauret",
+    "lat": -20.00919979822659,
+    "lon": -40.74557641419206,
+    "fullTitle": "Parecer técnico 18-2019 - Jovelino Lauret"
+  },
+  {
+    "id": 96,
+    "number": "33",
+    "year": "2019",
+    "requester": "Vanderlei Klug",
+    "lat": -20.059640352095357,
+    "lon": -40.88949418399202,
+    "fullTitle": "Parecer técnico 33-2019 - Vanderlei Klug"
+  },
+  {
+    "id": 97,
+    "number": "35",
+    "year": "2019",
+    "requester": "Rogério Kalk",
+    "lat": -19.99773368553902,
+    "lon": -40.8060387187522,
+    "fullTitle": "Parecer técnico 35-2019 - Rogério Kalk"
+  },
+  {
+    "id": 98,
+    "number": "36",
+    "year": "2019",
+    "requester": "Josivane Flavio de Lima Soares",
+    "lat": -20.028998141859574,
+    "lon": -40.755690044868466,
+    "fullTitle": "Parecer técnico 36-2019 - Josivane Flavio de Lima Soares"
+  },
+  {
+    "id": 99,
+    "number": "37",
+    "year": "2019",
+    "requester": "Maria Aparecida Pires Conradt",
+    "lat": -20.09599904392105,
+    "lon": -40.739698617543674,
+    "fullTitle": "Parecer técnico 37-2019 - Maria Aparecida Pires Conradt"
+  },
+  {
+    "id": 100,
+    "number": "38",
+    "year": "2019",
+    "requester": "Fredolin Boldt - ponte",
+    "lat": -20.086412368899712,
+    "lon": -40.66159552483392,
+    "fullTitle": "Parecer técnico 38-2019 - Fredolin Boldt - ponte"
+  },
+  {
+    "id": 101,
+    "number": "39",
+    "year": "2019",
+    "requester": "Fredolin Boldt  - manilhas",
+    "lat": -20.102065493304327,
+    "lon": -40.70176448170539,
+    "fullTitle": "Parecer técnico 39-2019 - Fredolin Boldt  - manilhas"
+  },
+  {
+    "id": 102,
+    "number": "41",
+    "year": "2019",
+    "requester": "Balduino Doring",
+    "lat": -20.067412927766256,
+    "lon": -40.83643842411567,
+    "fullTitle": "Parecer técnico 41-2019 - Balduino Doring"
+  },
+  {
+    "id": 103,
+    "number": "43",
+    "year": "2019",
+    "requester": "Competição de Microtratores",
+    "lat": -20.031395460908033,
+    "lon": -40.74217918293065,
+    "fullTitle": "Parecer técnico 43-2019 - Competição de Microtratores"
+  },
+  {
+    "id": 104,
+    "number": "45",
+    "year": "2019",
+    "requester": "Artemilia Hoffman Braw",
+    "lat": -20.016960557305193,
+    "lon": -40.74970872858645,
+    "fullTitle": "Parecer técnico 45-2019 - Artemilia Hoffman Braw"
+  },
+  {
+    "id": 105,
+    "number": "46",
+    "year": "2019",
+    "requester": "Luiz Claudio de Oliveira",
+    "lat": -20.0748437801369,
+    "lon": -40.775332572749555,
+    "fullTitle": "Parecer técnico 46-2019 - Luiz Claudio de Oliveira"
+  },
+  {
+    "id": 106,
+    "number": "47",
+    "year": "2019",
+    "requester": "Jander Carlini Raasch",
+    "lat": -20.038599003925153,
+    "lon": -40.76934269153292,
+    "fullTitle": "Parecer técnico 47-2019 - Jander Carlini Raasch"
+  },
+  {
+    "id": 107,
+    "number": "48",
+    "year": "2019",
+    "requester": "Terra Engenharia",
+    "lat": -20.039794873664455,
+    "lon": -40.75903272752455,
+    "fullTitle": "Parecer técnico 48-2019 - Terra Engenharia"
+  },
+  {
+    "id": 108,
+    "number": "49",
+    "year": "2019",
+    "requester": "Alair Corteletti",
+    "lat": -20.02675637237225,
+    "lon": -40.74477053761343,
+    "fullTitle": "Parecer técnico 49-2019 - Alair Corteletti"
+  },
+  {
+    "id": 109,
+    "number": "50",
+    "year": "2019",
+    "requester": "Jovelina de Lourdes Gonçalves",
+    "lat": -20.030875753079567,
+    "lon": -40.74824348417164,
+    "fullTitle": "Parecer técnico 50-2019 - Jovelina de Lourdes Gonçalves"
+  },
+  {
+    "id": 110,
+    "number": "51",
+    "year": "2019",
+    "requester": "Daniela Wolfgram",
+    "lat": -20.004769706803618,
+    "lon": -40.7538887144681,
+    "fullTitle": "Parecer técnico 51-2019 - Daniela Wolfgram"
+  },
+  {
+    "id": 111,
+    "number": "52",
+    "year": "2019",
+    "requester": "Igreja Evang Luterana no Brasil",
+    "lat": -20.028905431816078,
+    "lon": -40.743523512159314,
+    "fullTitle": "Parecer técnico 52-2019 - Igreja Evang Luterana no Brasil"
+  },
+  {
+    "id": 112,
+    "number": "53",
+    "year": "2019",
+    "requester": "Mardinos Luiz Muller",
+    "lat": -20.017676831444803,
+    "lon": -40.752182456434156,
+    "fullTitle": "Parecer técnico 53-2019 - Mardinos Luiz Muller"
+  },
+  {
+    "id": 113,
+    "number": "54",
+    "year": "2019",
+    "requester": "Lucio Alberto Scheneider",
+    "lat": -20.02768431295517,
+    "lon": -40.74663589320277,
+    "fullTitle": "Parecer técnico 54-2019 - Lucio Alberto Scheneider"
+  },
+  {
+    "id": 114,
+    "number": "55",
+    "year": "2019",
+    "requester": "Dornelia Holz Evangelista",
+    "lat": -20.03390471533254,
+    "lon": -40.73897104126035,
+    "fullTitle": "Parecer técnico 55-2019 - Dornelia Holz Evangelista"
+  },
+  {
+    "id": 115,
+    "number": "56",
+    "year": "2019",
+    "requester": "Erica Sthur Jacob",
+    "lat": -20.00245134448052,
+    "lon": -40.738854579587084,
+    "fullTitle": "Parecer técnico 56-2019 - Erica Sthur Jacob"
+  },
+  {
+    "id": 116,
+    "number": "57",
+    "year": "2019",
+    "requester": "Rafael Schulz",
+    "lat": -20.030903323926925,
+    "lon": -40.76030456960559,
+    "fullTitle": "Parecer técnico 57-2019 - Rafael Schulz"
+  },
+  {
+    "id": 117,
+    "number": "58",
+    "year": "2019",
+    "requester": "Eleunando Brandemburg",
+    "lat": -19.99973810497848,
+    "lon": -40.74560976811402,
+    "fullTitle": "Parecer técnico 58-2019 - Eleunando Brandemburg"
+  },
+  {
+    "id": 118,
+    "number": "59",
+    "year": "2019",
+    "requester": "Erica Sthur Jacob",
+    "lat": -20.00245134448052,
+    "lon": -40.738854579587084,
+    "fullTitle": "Parecer técnico 59-2019 - Erica Sthur Jacob"
+  },
+  {
+    "id": 119,
+    "number": "60",
+    "year": "2019",
+    "requester": "Dornelia Holz Evangelista",
+    "lat": -20.03390471533254,
+    "lon": -40.73897104126035,
+    "fullTitle": "Parecer técnico 60-2019 - Dornelia Holz Evangelista"
+  },
+  {
+    "id": 120,
+    "number": "62",
+    "year": "2019",
+    "requester": "Hildegardt Boldt",
+    "lat": -20.048864040127537,
+    "lon": -40.713570088581655,
+    "fullTitle": "Parecer técnico 62-2019 - Hildegardt Boldt"
+  },
+  {
+    "id": 121,
+    "number": "63",
+    "year": "2019",
+    "requester": "Avelino Discher - Copia",
+    "lat": -20.030941427454618,
+    "lon": -40.740840519575336,
+    "fullTitle": "Parecer técnico 63-2019 - Avelino Discher - Copia"
+  },
+  {
+    "id": 122,
+    "number": "65",
+    "year": "2019",
+    "requester": "Eveline Simoes Ramlow Delpupo",
+    "lat": -20.03903452333823,
+    "lon": -40.75099499001876,
+    "fullTitle": "Parecer técnico 65-2019 - Eveline Simoes Ramlow Delpupo"
+  },
+  {
+    "id": 123,
+    "number": "66",
+    "year": "2019",
+    "requester": "Agnaldo Cezar Batista de Souza EPP",
+    "lat": -20.026277538725463,
+    "lon": -40.75546408144379,
+    "fullTitle": "Parecer técnico 66-2019 - Agnaldo Cezar Batista de Souza EPP"
+  },
+  {
+    "id": 124,
+    "number": "69",
+    "year": "2019",
+    "requester": "Cleomar Fehelberg Schultz",
+    "lat": -20.08724060588751,
+    "lon": -40.800348051176094,
+    "fullTitle": "Parecer técnico 69-2019 - Cleomar Fehelberg Schultz"
+  },
+  {
+    "id": 125,
+    "number": "7",
+    "year": "2019",
+    "requester": "Sebastião Pioto Guilherme",
+    "lat": -20.039760855638026,
+    "lon": -40.75200278693863,
+    "fullTitle": "Parecer técnico 7-2019 - Sebastião Pioto Guilherme"
+  },
+  {
+    "id": 126,
+    "number": "70",
+    "year": "2019",
+    "requester": "Cirleia Otto de Alencar Janke",
+    "lat": -20.00735209604458,
+    "lon": -40.74450383012419,
+    "fullTitle": "Parecer técnico 70-2019 - Cirleia Otto de Alencar Janke"
+  },
+  {
+    "id": 127,
+    "number": "71",
+    "year": "2019",
+    "requester": "Elton Berger",
+    "lat": -19.984414385278786,
+    "lon": -40.73024776135535,
+    "fullTitle": "Parecer técnico 71-2019 - Elton Berger"
+  },
+  {
+    "id": 128,
+    "number": "72",
+    "year": "2019",
+    "requester": "Edithe de Jesus",
+    "lat": -19.992774786788832,
+    "lon": -40.7463583446255,
+    "fullTitle": "Parecer técnico 72-2019 - Edithe de Jesus"
+  },
+  {
+    "id": 129,
+    "number": "73",
+    "year": "2019",
+    "requester": "Sebastião Pioto Guilherme",
+    "lat": -20.039760855638026,
+    "lon": -40.75200278693863,
+    "fullTitle": "Parecer técnico 73-2019 - Sebastião Pioto Guilherme"
+  },
+  {
+    "id": 130,
+    "number": "74",
+    "year": "2019",
+    "requester": "Elisete Coimbra Messias",
+    "lat": -20.024868807426344,
+    "lon": -40.745149126728926,
+    "fullTitle": "Parecer técnico 74-2019 - Elisete Coimbra Messias"
+  },
+  {
+    "id": 131,
+    "number": "75",
+    "year": "2019",
+    "requester": "Alcino Schulz",
+    "lat": -20.020880741151117,
+    "lon": -40.74608199013393,
+    "fullTitle": "Parecer técnico 75-2019 - Alcino Schulz"
+  },
+  {
+    "id": 132,
+    "number": "78",
+    "year": "2019",
+    "requester": "SECURB - Copia",
+    "lat": -20.025086523083985,
+    "lon": -40.75377470220112,
+    "fullTitle": "Parecer técnico 78-2019 - SECURB - Copia"
+  },
+  {
+    "id": 133,
+    "number": "80",
+    "year": "2019",
+    "requester": "Anulado",
+    "lat": -20.029528911865377,
+    "lon": -40.755802513325335,
+    "fullTitle": "Parecer técnico 80-2019 - Anulado"
+  },
+  {
+    "id": 134,
+    "number": "81",
+    "year": "2019",
+    "requester": "Elci Tesch",
+    "lat": -20.029528911865377,
+    "lon": -40.755802513325335,
+    "fullTitle": "Parecer técnico 81-2019 -Elci Tesch"
+  },
+  {
+    "id": 135,
+    "number": "84",
+    "year": "2019",
+    "requester": "Aluguel Arquivo",
+    "lat": -20.02631863413445,
+    "lon": -40.742191755400036,
+    "fullTitle": "Parecer técnico 84-2019 - Aluguel Arquivo"
+  },
+  {
+    "id": 136,
+    "number": "86",
+    "year": "2019",
+    "requester": "Aluguel Arquivo Anexo",
+    "lat": -20.02631863413445,
+    "lon": -40.742191755400036,
+    "fullTitle": "Parecer técnico 86-2019 - Aluguel Arquivo Anexo"
+  },
+  {
+    "id": 137,
+    "number": "87",
+    "year": "2019",
+    "requester": "Eliseu Cont",
+    "lat": -19.99531325473508,
+    "lon": -40.67352922233857,
+    "fullTitle": "Parecer técnico 87-2019 - Eliseu Cont"
+  },
+  {
+    "id": 138,
+    "number": "88",
+    "year": "2019",
+    "requester": "Maria Aparecida Barbosa",
+    "lat": -20.015288788345647,
+    "lon": -40.74591560052317,
+    "fullTitle": "Parecer técnico 88-2019 - Maria Aparecida Barbosa"
+  },
+  {
+    "id": 139,
+    "number": "89",
+    "year": "2019",
+    "requester": "Maria da Penha Batista Krause",
+    "lat": -20.0544653776262,
+    "lon": -40.650338897477624,
+    "fullTitle": "Parecer técnico 89-2019 - Maria da Penha Batista Krause"
+  },
+  {
+    "id": 140,
+    "number": "90",
+    "year": "2019",
+    "requester": "Super Show São Luiz",
+    "lat": -20.00145113601886,
+    "lon": -40.7396664973328,
+    "fullTitle": "Parecer técnico 90-2019 - Super Show São Luiz"
+  },
+  {
+    "id": 141,
+    "number": "91",
+    "year": "2019",
+    "requester": "Renata Wolfgram Badke",
+    "lat": -20.024581453534918,
+    "lon": -40.74592768859664,
+    "fullTitle": "Parecer técnico 91-2019 -Renata Wolfgram Badke"
+  },
+  {
+    "id": 142,
+    "number": "92",
+    "year": "2019",
+    "requester": "Ildomar Berger",
+    "lat": -20.022306004400683,
+    "lon": -40.74527003402456,
+    "fullTitle": "Parecer técnico 92-2019 -Ildomar Berger"
+  },
+  {
+    "id": 143,
+    "number": "93",
+    "year": "2019",
+    "requester": "Jairo Bom Jesus",
+    "lat": -20.028668987953342,
+    "lon": -40.75935303544167,
+    "fullTitle": "Parecer técnico 93-2019 -Jairo Bom Jesus"
+  },
+  {
+    "id": 144,
+    "number": "94",
+    "year": "2019",
+    "requester": "Maria da Penha Batista de Araujo",
+    "lat": -20.007853761063746,
+    "lon": -40.74457339130013,
+    "fullTitle": "Parecer técnico 94-2019 -Maria da Penha Batista de Araujo"
+  },
+  {
+    "id": 145,
+    "number": "95",
+    "year": "2019",
+    "requester": "Anulado",
+    "lat": -20.136979394374357,
+    "lon": -41.01540223275474,
+    "fullTitle": "Parecer técnico 95-2019 - Anulado"
+  },
+  {
+    "id": 146,
+    "number": "96",
+    "year": "2019",
+    "requester": "Joel Majeski",
+    "lat": -20.02336578374588,
+    "lon": -40.74475013046419,
+    "fullTitle": "Parecer técnico 96-2019 - Joel Majeski"
+  },
+  {
+    "id": 147,
+    "number": "",
+    "year": "2015",
+    "requester": "xxx-2019 - Nilza Anhorlz",
+    "lat": -20.01835872803521,
+    "lon": -40.7572076488328,
+    "fullTitle": "Parecer técnico xxx-2019 - Nilza Anhorlz"
+  },
+  {
+    "id": 148,
+    "number": "",
+    "year": "2015",
+    "requester": "MODELO PARECER 2020",
+    "lat": -20.007657836899238,
+    "lon": -40.74445301367065,
+    "fullTitle": "MODELO PARECER 2020"
+  },
+  {
+    "id": 149,
+    "number": "001",
+    "year": "2020",
+    "requester": "Secmam - Pinguela",
+    "lat": -20.066589956622686,
+    "lon": -40.8343052785847,
+    "fullTitle": "Parecer técnico 001-2020 - Secmam - Pinguela"
+  },
+  {
+    "id": 150,
+    "number": "003",
+    "year": "2020",
+    "requester": "Secmam - Caixa Seca",
+    "lat": -20.027184945308235,
+    "lon": -40.75532725294577,
+    "fullTitle": "Parecer técnico 003-2020 - Secmam - Caixa Seca"
+  },
+  {
+    "id": 151,
+    "number": "004",
+    "year": "2020",
+    "requester": "Vilson Ninke",
+    "lat": -20.027765894477756,
+    "lon": -40.74682709456374,
+    "fullTitle": "Parecer técnico 004-2020 - Vilson Ninke"
+  },
+  {
+    "id": 152,
+    "number": "005",
+    "year": "2020",
+    "requester": "Gemael Barbosa Lima",
+    "lat": -20.021785922522547,
+    "lon": -40.74772634263579,
+    "fullTitle": "Parecer técnico 005-2020 - Gemael Barbosa Lima"
+  },
+  {
+    "id": 153,
+    "number": "005",
+    "year": "2020",
+    "requester": "Gemael Barbosa Lima (2)",
+    "lat": -20.01748099092785,
+    "lon": -40.758268318421784,
+    "fullTitle": "Parecer técnico 005-2020 - Gemael Barbosa Lima (2)"
+  },
+  {
+    "id": 154,
+    "number": "005",
+    "year": "2020",
+    "requester": "Gemael Barbosa Lima (3)",
+    "lat": -20.022698932155556,
+    "lon": -40.74308183283646,
+    "fullTitle": "Parecer técnico 005-2020 - Gemael Barbosa Lima (3)"
+  },
+  {
+    "id": 155,
+    "number": "006",
+    "year": "2020",
+    "requester": "Ederaldo Krause",
+    "lat": -20.025177490267296,
+    "lon": -40.744323390191056,
+    "fullTitle": "Parecer técnico 006-2020 - Ederaldo Krause"
+  },
+  {
+    "id": 156,
+    "number": "007",
+    "year": "2020",
+    "requester": "Weverton João Espindula",
+    "lat": -20.169564400337464,
+    "lon": -40.8920579334248,
+    "fullTitle": "Parecer técnico 007-2020 - Weverton João Espindula"
+  },
+  {
+    "id": 157,
+    "number": "009",
+    "year": "2020",
+    "requester": "Delza Otto",
+    "lat": -20.007657836899238,
+    "lon": -40.74445301367065,
+    "fullTitle": "Parecer técnico 009-2020 - Delza Otto"
+  },
+  {
+    "id": 158,
+    "number": "018",
+    "year": "2020",
+    "requester": "Aroldo Antônio Zanotti",
+    "lat": -20.027141607363536,
+    "lon": -40.745654027710955,
+    "fullTitle": "Parecer técnico 018-2020 -Aroldo Antônio Zanotti"
+  },
+  {
+    "id": 159,
+    "number": "019",
+    "year": "2020",
+    "requester": "Pedro Daniel Bromerscchenkel",
+    "lat": -20.015288788345647,
+    "lon": -40.74591560052317,
+    "fullTitle": "Parecer técnico 019-2020 -Pedro Daniel Bromerscchenkel"
+  },
+  {
+    "id": 160,
+    "number": "021",
+    "year": "2020",
+    "requester": "Ademar Hammer",
+    "lat": -19.99818873415771,
+    "lon": -40.74044445631948,
+    "fullTitle": "Parecer técnico 021-2020 -Ademar Hammer"
+  },
+  {
+    "id": 161,
+    "number": "024",
+    "year": "2020",
+    "requester": "Lúcio Alberto Schneider",
+    "lat": -20.027629862356484,
+    "lon": -40.74652394085402,
+    "fullTitle": "Parecer técnico 024-2020 - Lúcio Alberto Schneider"
+  },
+  {
+    "id": 162,
+    "number": "025",
+    "year": "2020",
+    "requester": "Denuncia SECMAN - CAPS",
+    "lat": -20.030206025387546,
+    "lon": -40.75037146056087,
+    "fullTitle": "Parecer técnico 025-2020 - Denuncia SECMAN - CAPS"
+  },
+  {
+    "id": 163,
+    "number": "028",
+    "year": "2020",
+    "requester": "Deolinda Kosanke Zummach",
+    "lat": -20.059379448242034,
+    "lon": -40.71061126513167,
+    "fullTitle": "Parecer técnico 028-2020 - Deolinda Kosanke Zummach"
+  },
+  {
+    "id": 164,
+    "number": "028",
+    "year": "2020",
+    "requester": "Deolinda Kosanke Zummach  (2)",
+    "lat": -20.059379448242034,
+    "lon": -40.71061126513167,
+    "fullTitle": "Parecer técnico 028-2020 - Deolinda Kosanke Zummach  (2)"
+  },
+  {
+    "id": 165,
+    "number": "031",
+    "year": "2020",
+    "requester": "Edvan Hoffmann Bromerchenkel",
+    "lat": -20.007581455254797,
+    "lon": -40.745750652760584,
+    "fullTitle": "Parecer técnico 031-2020 - Edvan Hoffmann Bromerchenkel"
+  },
+  {
+    "id": 166,
+    "number": "033",
+    "year": "2020",
+    "requester": "IEMA",
+    "lat": -20.017871187108053,
+    "lon": -40.75809106656562,
+    "fullTitle": "Parecer técnico 033-2020 - IEMA"
+  },
+  {
+    "id": 167,
+    "number": "034",
+    "year": "2020",
+    "requester": "Marcinete Pereira de Lima",
+    "lat": -20.039177836700475,
+    "lon": -40.73369530642374,
+    "fullTitle": "Parecer técnico 034-2020 - Marcinete Pereira de Lima"
+  },
+  {
+    "id": 168,
+    "number": "035",
+    "year": "2020",
+    "requester": "Sabina Dalpra da Victória",
+    "lat": -20.01847553863091,
+    "lon": -40.69047825911839,
+    "fullTitle": "Parecer técnico 035-2020 - Sabina Dalpra da Victória"
+  },
+  {
+    "id": 169,
+    "number": "037",
+    "year": "2020",
+    "requester": "Carlos Alberto Corona",
+    "lat": -20.03895134126734,
+    "lon": -40.73046932673286,
+    "fullTitle": "Parecer técnico 037-2020 -Carlos Alberto Corona"
+  },
+  {
+    "id": 170,
+    "number": "038",
+    "year": "2020",
+    "requester": "Ademar Hammer",
+    "lat": -19.99818873415771,
+    "lon": -40.74044445631948,
+    "fullTitle": "Parecer técnico 038-2020 -Ademar Hammer"
+  },
+  {
+    "id": 171,
+    "number": "054",
+    "year": "2020",
+    "requester": "COMPDEC - Rio Possmoser 02",
+    "lat": -20.068502840748202,
+    "lon": -40.84664733737181,
+    "fullTitle": "Parecer técnico 054-2020 - COMPDEC - Rio Possmoser 02"
+  },
+  {
+    "id": 172,
+    "number": "054",
+    "year": "2020",
+    "requester": "COMPDEC - Rio Possmoser 02 (2)",
+    "lat": -20.067118777935903,
+    "lon": -40.824786454848685,
+    "fullTitle": "Parecer técnico 054-2020 - COMPDEC - Rio Possmoser 02 (2)"
+  },
+  {
+    "id": 173,
+    "number": "100",
+    "year": "2020",
+    "requester": "Carlos Alberto Corona",
+    "lat": -20.03895134126734,
+    "lon": -40.73046932673286,
+    "fullTitle": "Parecer técnico 100-2020 -Carlos Alberto Corona"
+  },
+  {
+    "id": 174,
+    "number": "105",
+    "year": "2020",
+    "requester": "Ocorrência Desabamento residência",
+    "lat": -19.99180700219475,
+    "lon": -40.753816786564784,
+    "fullTitle": "Parecer técnico 105-2020 - Ocorrência Desabamento residência"
+  },
+  {
+    "id": 175,
+    "number": "106",
+    "year": "2020",
+    "requester": "Ocorrência Escorregamento de Talude",
+    "lat": -20.015817304966138,
+    "lon": -40.74564379518039,
+    "fullTitle": "Parecer técnico 106-2020 - Ocorrência Escorregamento de Talude"
+  },
+  {
+    "id": 176,
+    "number": "107",
+    "year": "2015",
+    "requester": "2020 - COMPDEC - Árvore",
+    "lat": -20.016255654668004,
+    "lon": -40.746078712148204,
+    "fullTitle": "Parecer técnico 107 - 2020 - COMPDEC - Árvore"
+  },
+  {
+    "id": 177,
+    "number": "109",
+    "year": "2015",
+    "requester": "2020 - Ouvidoria - Botijas de Gás",
+    "lat": -20.017228142074778,
+    "lon": -40.75188120771921,
+    "fullTitle": "Parecer técnico 109 - 2020 - Ouvidoria - Botijas de Gás"
+  },
+  {
+    "id": 178,
+    "number": "110",
+    "year": "2020",
+    "requester": "Ocorrência Incendio em residencia",
+    "lat": -20.01784470066161,
+    "lon": -40.75598136621801,
+    "fullTitle": "Parecer técnico 110-2020 - Ocorrência Incendio em residencia"
+  },
+  {
+    "id": 179,
+    "number": "113",
+    "year": "2020",
+    "requester": "Ouvidoria - muro em São Luis",
+    "lat": -19.996000940283963,
+    "lon": -40.74628144845937,
+    "fullTitle": "Parecer técnico 113-2020 - Ouvidoria - muro em São Luis"
+  },
+  {
+    "id": 180,
+    "number": "115",
+    "year": "2020",
+    "requester": "Moto Vix Serra LTDA",
+    "lat": -20.031576708776218,
+    "lon": -40.74054165312778,
+    "fullTitle": "Parecer técnico 115-2020 - Moto Vix Serra LTDA"
+  },
+  {
+    "id": 181,
+    "number": "13",
+    "year": "2020",
+    "requester": "Memorando COMPDEC 0012020",
+    "lat": -20.027184945308235,
+    "lon": -40.75532725294577,
+    "fullTitle": "Parecer técnico 13-2020 - Memorando COMPDEC 0012020"
+  },
+  {
+    "id": 182,
+    "number": "39",
+    "year": "2020",
+    "requester": "Posto Stieg",
+    "lat": -20.03188266674331,
+    "lon": -40.74768074566927,
+    "fullTitle": "Parecer técnico 39-2020 - Posto Stieg"
+  },
+  {
+    "id": 183,
+    "number": "40",
+    "year": "2020",
+    "requester": "Claudiomar Alves Freitas",
+    "lat": -19.992963083513565,
+    "lon": -40.74651933566882,
+    "fullTitle": "Parecer técnico 40-2020 - Claudiomar Alves Freitas"
+  },
+  {
+    "id": 184,
+    "number": "42",
+    "year": "2020",
+    "requester": "Fabrício Magalhães Silva",
+    "lat": -20.03877448137106,
+    "lon": -40.749494839375345,
+    "fullTitle": "Parecer técnico 42-2020 - Fabrício Magalhães Silva"
+  },
+  {
+    "id": 185,
+    "number": "46",
+    "year": "2020",
+    "requester": "Posto Stieg",
+    "lat": -20.03188266674331,
+    "lon": -40.74768074566927,
+    "fullTitle": "Parecer técnico 46-2020 - Posto Stieg"
+  },
+  {
+    "id": 186,
+    "number": "47",
+    "year": "2020",
+    "requester": "Elza Maria da Silva",
+    "lat": -20.039335663205385,
+    "lon": -40.75160052535397,
+    "fullTitle": "Parecer técnico 47-2020 - Elza Maria da Silva"
+  },
+  {
+    "id": 187,
+    "number": "48",
+    "year": "2020",
+    "requester": "Barramento Vilmar Vargas",
+    "lat": -19.986654537025913,
+    "lon": -40.846741268201974,
+    "fullTitle": "Parecer técnico 48-2020 - Barramento Vilmar Vargas"
+  },
+  {
+    "id": 188,
+    "number": "48",
+    "year": "2020",
+    "requester": "Barramento Vilmar Vargas (2)",
+    "lat": -19.986654537025913,
+    "lon": -40.846741268201974,
+    "fullTitle": "Parecer técnico 48-2020 - Barramento Vilmar Vargas (2)"
+  },
+  {
+    "id": 189,
+    "number": "49",
+    "year": "2020",
+    "requester": "Barragem",
+    "lat": -20.05022916011081,
+    "lon": -40.651241024719006,
+    "fullTitle": "Parecer técnico 49-2020 - Barragem"
+  },
+  {
+    "id": 190,
+    "number": "53",
+    "year": "2020",
+    "requester": "Anderson Luiz Ortolon",
+    "lat": -20.0385235114465,
+    "lon": -40.750218421407524,
+    "fullTitle": "Parecer técnico 53-2020 -Anderson Luiz Ortolon"
+  },
+  {
+    "id": 191,
+    "number": "64",
+    "year": "2020",
+    "requester": "Leanderson Saick",
+    "lat": -20.02278888030485,
+    "lon": -40.74312105533984,
+    "fullTitle": "Parecer técnico 64-2020 - Leanderson Saick"
+  },
+  {
+    "id": 192,
+    "number": "75",
+    "year": "2020",
+    "requester": "Dedivânia Silva de Almeida Schoenrock",
+    "lat": -20.030900593606127,
+    "lon": -40.76642480089571,
+    "fullTitle": "Parecer técnico 75-2020 - Dedivânia Silva de Almeida Schoenrock"
+  },
+  {
+    "id": 193,
+    "number": "76",
+    "year": "2020",
+    "requester": "Jossiana Salomão dos Santos",
+    "lat": -20.07028000705126,
+    "lon": -40.846888031418466,
+    "fullTitle": "Parecer técnico 76-2020 - Jossiana Salomão dos Santos"
+  },
+  {
+    "id": 194,
+    "number": "83",
+    "year": "2020",
+    "requester": "Ouvidoria corte de árvore",
+    "lat": -20.031146719797288,
+    "lon": -40.74384406433346,
+    "fullTitle": "Parecer técnico 83-2020 - Ouvidoria corte de árvore"
+  },
+  {
+    "id": 195,
+    "number": "88",
+    "year": "2020",
+    "requester": "Rafaela Dias Bueno",
+    "lat": -20.023032741253058,
+    "lon": -40.74495882792791,
+    "fullTitle": "Parecer técnico 88-2020 - Rafaela Dias Bueno"
+  },
+  {
+    "id": 196,
+    "number": "001",
+    "year": "2021",
+    "requester": "Ocorrência Incendio em apartamento SL",
+    "lat": -20.006100349706564,
+    "lon": -40.74144507239363,
+    "fullTitle": "Parecer técnico 001-2021 - Ocorrência Incendio em apartamento SL"
+  },
+  {
+    "id": 197,
+    "number": "002",
+    "year": "2021",
+    "requester": "Almiro Seidler",
+    "lat": -20.066150328997093,
+    "lon": -40.83158771107273,
+    "fullTitle": "Parecer técnico 002-2021 - Almiro Seidler"
+  },
+  {
+    "id": 198,
+    "number": "003",
+    "year": "2021",
+    "requester": "Nilza Anhorlz",
+    "lat": -20.066900451964177,
+    "lon": -40.757743593916814,
+    "fullTitle": "Parecer técnico 003-2021 -Nilza Anhorlz"
+  },
+  {
+    "id": 199,
+    "number": "004",
+    "year": "2021",
+    "requester": "SECOBR - Rede elétrica",
+    "lat": -19.99631542081804,
+    "lon": -40.806787678867614,
+    "fullTitle": "Parecer técnico 004-2021 - SECOBR - Rede elétrica"
+  },
+  {
+    "id": 200,
+    "number": "005",
+    "year": "2021",
+    "requester": "Miguel Manuel Holz",
+    "lat": -20.001688347662196,
+    "lon": -40.75987901249546,
+    "fullTitle": "Parecer técnico 005-2021 - Miguel Manuel Holz"
+  },
+  {
+    "id": 201,
+    "number": "011",
+    "year": "2021",
+    "requester": "Secretaria de transporte",
+    "lat": -20.048891169814475,
+    "lon": -40.71421009893505,
+    "fullTitle": "Parecer técnico 011-2021 - Secretaria de transporte"
+  },
+  {
+    "id": 202,
+    "number": "012",
+    "year": "2021",
+    "requester": "Geimir Antônio Sperandio",
+    "lat": -20.087267359988292,
+    "lon": -40.82983696954436,
+    "fullTitle": "Parecer técnico 012-2021 - Geimir Antônio Sperandio"
+  },
+  {
+    "id": 203,
+    "number": "013",
+    "year": "2021",
+    "requester": "Ocorrências - São Sebastião do Meio",
+    "lat": -20.04765567124636,
+    "lon": -40.77655508073828,
+    "fullTitle": "Parecer técnico 013-2021 - Ocorrências - São Sebastião do Meio"
+  },
+  {
+    "id": 204,
+    "number": "015",
+    "year": "2015",
+    "requester": "2021 - Bernardo Jackel Junior",
+    "lat": -20.007798400632314,
+    "lon": -40.74529623103813,
+    "fullTitle": "Parecer técnico 015 - 2021 - Bernardo Jackel Junior"
+  },
+  {
+    "id": 205,
+    "number": "020",
+    "year": "2015",
+    "requester": "2021 - Ocorrencia rodovia São João do Garrafão",
+    "lat": -20.153583172038136,
+    "lon": -40.941756341271656,
+    "fullTitle": "Parecer técnico 020 - 2021 - Ocorrencia rodovia São João do Garrafão"
+  },
+  {
+    "id": 206,
+    "number": "022",
+    "year": "2021",
+    "requester": "desinfecção na Câmara",
+    "lat": -20.031782891525502,
+    "lon": -40.74264836802837,
+    "fullTitle": "Parecer técnico 022-2021 - desinfecção na Câmara"
+  },
+  {
+    "id": 207,
+    "number": "025",
+    "year": "2015",
+    "requester": "2021 - Secretaria de Educação - barracão de Rio Possmouser",
+    "lat": -20.059580326701973,
+    "lon": -40.889616876411516,
+    "fullTitle": "Parecer técnico 025 - 2021 - Secretaria de Educação - barracão de Rio Possmouser"
+  },
+  {
+    "id": 208,
+    "number": "026",
+    "year": "2015",
+    "requester": "2021 - Sandro Pereira Dutra",
+    "lat": -20.00747208369969,
+    "lon": -40.74428133295672,
+    "fullTitle": "Parecer técnico 026 - 2021 - Sandro Pereira Dutra"
+  },
+  {
+    "id": 209,
+    "number": "027",
+    "year": "2021",
+    "requester": "Ocorrências - Menegueli",
+    "lat": -20.006978800681008,
+    "lon": -40.715187725493365,
+    "fullTitle": "Parecer técnico 027-2021 - Ocorrências - Menegueli"
+  },
+  {
+    "id": 210,
+    "number": "029",
+    "year": "2021",
+    "requester": "Márcio Humberto Possaitti",
+    "lat": -20.029480029696263,
+    "lon": -40.75359921563208,
+    "fullTitle": "Parecer técnico 029-2021 - Márcio Humberto Possaitti"
+  },
+  {
+    "id": 211,
+    "number": "030",
+    "year": "2021",
+    "requester": "Ocorrência cadáver idosa- recreio",
+    "lat": -20.024206752243572,
+    "lon": -40.699504925517985,
+    "fullTitle": "Parecer técnico 030-2021 - Ocorrência cadáver idosa- recreio"
+  },
+  {
+    "id": 212,
+    "number": "032",
+    "year": "2021",
+    "requester": "Ocorrência deslizamento de terra - caramuru vila nass",
+    "lat": -20.0992175971245,
+    "lon": -40.675523284032224,
+    "fullTitle": "Parecer técnico 032-2021 - Ocorrência deslizamento de terra - caramuru vila nass"
+  },
+  {
+    "id": 213,
+    "number": "033",
+    "year": "2021",
+    "requester": "Ocorrências - Wanderson Emerick",
+    "lat": -20.09131203860995,
+    "lon": -40.69627861928824,
+    "fullTitle": "Parecer técnico 033-2021 - Ocorrências - Wanderson Emerick"
+  },
+  {
+    "id": 214,
+    "number": "034",
+    "year": "2021",
+    "requester": "Ouvidoria - Sebastião de Moura",
+    "lat": -20.06765544769905,
+    "lon": -40.69038328988662,
+    "fullTitle": "Parecer técnico 034-2021 - Ouvidoria - Sebastião de Moura"
+  },
+  {
+    "id": 215,
+    "number": "035",
+    "year": "2021",
+    "requester": "Ocorrência Jambeiro Recreio",
+    "lat": -20.01921138501796,
+    "lon": -40.69725096348715,
+    "fullTitle": "Parecer técnico 035-2021 - Ocorrência Jambeiro Recreio"
+  },
+  {
+    "id": 216,
+    "number": "036",
+    "year": "2021",
+    "requester": "Elcina Malikoski",
+    "lat": -20.01816782181233,
+    "lon": -40.75512545784173,
+    "fullTitle": "Parecer técnico 036-2021 - Elcina Malikoski"
+  },
+  {
+    "id": 217,
+    "number": "038",
+    "year": "2021",
+    "requester": "Vanderleia Costa",
+    "lat": -20.022342247716455,
+    "lon": -40.746330476461104,
+    "fullTitle": "Parecer técnico 038-2021 - Vanderleia Costa"
+  },
+  {
+    "id": 218,
+    "number": "039",
+    "year": "2015",
+    "requester": "2021 - Brena Mendes Barreto",
+    "lat": -20.007423724236773,
+    "lon": -40.74427525696141,
+    "fullTitle": "Parecer técnico 039 - 2021 - Brena Mendes Barreto"
+  },
+  {
+    "id": 219,
+    "number": "045",
+    "year": "2015",
+    "requester": "2021 - Sólidos Participações e Locadora de Veículos",
+    "lat": -20.06701026348503,
+    "lon": -40.83820750197733,
+    "fullTitle": "Parecer técnico 045 - 2021 - Sólidos Participações e Locadora de Veículos"
+  },
+  {
+    "id": 220,
+    "number": "046",
+    "year": "2015",
+    "requester": "2021 - Ana Paula P. R. Schwanz",
+    "lat": -20.03894363156314,
+    "lon": -40.75105133454072,
+    "fullTitle": "Parecer técnico 046 - 2021 - Ana Paula P. R. Schwanz"
+  },
+  {
+    "id": 221,
+    "number": "048",
+    "year": "2015",
+    "requester": "2021 - Jhon lennon",
+    "lat": -19.999233578735765,
+    "lon": -40.73988007980054,
+    "fullTitle": "Parecer técnico 048 - 2021 - Jhon lennon"
+  },
+  {
+    "id": 222,
+    "number": "050",
+    "year": "2015",
+    "requester": "2021 - Fabiano Lopes de Oliveira Mund.",
+    "lat": -20.069169554866583,
+    "lon": -40.844902201048825,
+    "fullTitle": "Parecer técnico 050 - 2021 - Fabiano Lopes de Oliveira Mund."
+  },
+  {
+    "id": 223,
+    "number": "051",
+    "year": "2021",
+    "requester": "Carlos Alberto Corona",
+    "lat": -20.03895134126734,
+    "lon": -40.73046932673286,
+    "fullTitle": "Parecer técnico 051-2021 -Carlos Alberto Corona"
+  },
+  {
+    "id": 224,
+    "number": "052",
+    "year": "2021",
+    "requester": "Marcelo Belmiro Lauvers",
+    "lat": -20.043588933861855,
+    "lon": -40.68005971689129,
+    "fullTitle": "Parecer técnico 052-2021 -Marcelo Belmiro Lauvers"
+  },
+  {
+    "id": 225,
+    "number": "054",
+    "year": "2015",
+    "requester": "2021 - Ocorrência Valter Furlani",
+    "lat": -20.025110294181072,
+    "lon": -40.74591613369504,
+    "fullTitle": "Parecer técnico 054 - 2021 - Ocorrência Valter Furlani"
+  },
+  {
+    "id": 226,
+    "number": "055",
+    "year": "2015",
+    "requester": "2021 - Claudia Ivone Kurth",
+    "lat": -20.03947823103819,
+    "lon": -40.7527109146683,
+    "fullTitle": "Parecer técnico 055 - 2021 - Claudia Ivone Kurth"
+  },
+  {
+    "id": 227,
+    "number": "058",
+    "year": "2015",
+    "requester": "2021 -Ouvidoria processo 3864-21",
+    "lat": -20.004971750756273,
+    "lon": -40.7312950369461,
+    "fullTitle": "Parecer técnico 058 - 2021 -Ouvidoria processo 3864-21"
+  },
+  {
+    "id": 228,
+    "number": "059",
+    "year": "2015",
+    "requester": "2021 - Ocorrência de tombamento e pedra  alto jequitibá",
+    "lat": -20.160370602294424,
+    "lon": -40.74068163590981,
+    "fullTitle": "Parecer técnico 059 - 2021 - Ocorrência de tombamento e pedra  alto jequitibá"
+  },
+  {
+    "id": 229,
+    "number": "060",
+    "year": "2021",
+    "requester": "Jennifer Leite Santos Martins de Souza",
+    "lat": -20.04855792087417,
+    "lon": -40.723187417315124,
+    "fullTitle": "Parecer técnico 060-2021 - Jennifer Leite Santos Martins de Souza"
+  },
+  {
+    "id": 230,
+    "number": "061",
+    "year": "2015",
+    "requester": "2021 - Lucas Reinke de Oliveira",
+    "lat": -20.023682375869768,
+    "lon": -40.74416658615277,
+    "fullTitle": "Parecer técnico 061 - 2021 - Lucas Reinke de Oliveira"
+  },
+  {
+    "id": 231,
+    "number": "062",
+    "year": "2021",
+    "requester": "Dorval Holz",
+    "lat": -20.03427049047481,
+    "lon": -40.71282975489952,
+    "fullTitle": "Parecer técnico 062-2021 - Dorval Holz"
+  },
+  {
+    "id": 232,
+    "number": "063",
+    "year": "2021",
+    "requester": "Secobr Obra irregular Armando José da Silva",
+    "lat": -20.026138107710594,
+    "lon": -40.75642462834699,
+    "fullTitle": "Parecer técnico 063-2021 - Secobr Obra irregular Armando José da Silva"
+  },
+  {
+    "id": 233,
+    "number": "065",
+    "year": "2021",
+    "requester": "LD marmores e granitos Ltda",
+    "lat": -20.026965197102346,
+    "lon": -40.75505967593281,
+    "fullTitle": "Parecer técnico 065-2021 - LD marmores e granitos Ltda"
+  },
+  {
+    "id": 234,
+    "number": "066",
+    "year": "2021",
+    "requester": "Valeria Rodrigues Walger",
+    "lat": -20.067014342698446,
+    "lon": -40.834112608129196,
+    "fullTitle": "Parecer técnico 066-2021 -Valeria Rodrigues Walger"
+  },
+  {
+    "id": 235,
+    "number": "067",
+    "year": "2015",
+    "requester": "2021 -Ouvidoria processo 3864-21",
+    "lat": -20.04837675468885,
+    "lon": -40.77618188021155,
+    "fullTitle": "Parecer técnico 067 - 2021 -Ouvidoria processo 3864-21"
+  },
+  {
+    "id": 236,
+    "number": "071",
+    "year": "2021",
+    "requester": "Angela Maria Nicke hoffmann",
+    "lat": -20.03436267216414,
+    "lon": -40.737586762221454,
+    "fullTitle": "Parecer técnico 071-2021 - Angela Maria Nicke hoffmann"
+  },
+  {
+    "id": 237,
+    "number": "072",
+    "year": "2021",
+    "requester": "Edilaine Pereira de Melo",
+    "lat": -20.00934676670371,
+    "lon": -40.745906888321805,
+    "fullTitle": "Parecer técnico 072-2021 - Edilaine Pereira de Melo"
+  },
+  {
+    "id": 238,
+    "number": "073",
+    "year": "2021",
+    "requester": "Valmir Paulo Hoffmann",
+    "lat": -20.039041514545072,
+    "lon": -40.74990518751312,
+    "fullTitle": "Parecer técnico 073-2021 - Valmir Paulo Hoffmann"
+  },
+  {
+    "id": 239,
+    "number": "075",
+    "year": "2021",
+    "requester": "Sebastião Leite Ribeiro",
+    "lat": -19.99093961247958,
+    "lon": -40.66773703599871,
+    "fullTitle": "Parecer técnico 075-2021 - Sebastião Leite Ribeiro"
+  },
+  {
+    "id": 240,
+    "number": "076",
+    "year": "2021",
+    "requester": "Monichele de Souza Santos",
+    "lat": -20.007852181461047,
+    "lon": -40.74540300032878,
+    "fullTitle": "Parecer técnico 076-2021 - Monichele de Souza Santos"
+  },
+  {
+    "id": 241,
+    "number": "078",
+    "year": "2021",
+    "requester": "Talita Barth",
+    "lat": -20.02073744883633,
+    "lon": -40.76590781879295,
+    "fullTitle": "Parecer técnico 078-2021 - Talita Barth"
+  },
+  {
+    "id": 242,
+    "number": "080",
+    "year": "2021",
+    "requester": "Deolinda Kosanke Zummach",
+    "lat": -20.059379448242034,
+    "lon": -40.71061126513167,
+    "fullTitle": "Parecer técnico 080-2021 - Deolinda Kosanke Zummach"
+  },
+  {
+    "id": 243,
+    "number": "081",
+    "year": "2015",
+    "requester": "2021 - Sólidos Participações e Locadora de Veículos",
+    "lat": -20.06701026348503,
+    "lon": -40.83820750197733,
+    "fullTitle": "Parecer técnico 081 - 2021 - Sólidos Participações e Locadora de Veículos"
+  },
+  {
+    "id": 244,
+    "number": "082",
+    "year": "2015",
+    "requester": "2021 - Hudirlei Rodrigues",
+    "lat": -20.052465510022017,
+    "lon": -40.76569341662873,
+    "fullTitle": "Parecer técnico 082 - 2021 - Hudirlei Rodrigues"
+  },
+  {
+    "id": 245,
+    "number": "083",
+    "year": "2015",
+    "requester": "2021 - Delma Schneider Roepke",
+    "lat": -20.052465510022017,
+    "lon": -40.76569341662873,
+    "fullTitle": "Parecer técnico 083 - 2021 - Delma Schneider Roepke"
+  },
+  {
+    "id": 246,
+    "number": "084",
+    "year": "2015",
+    "requester": "2021 - Ouvidoria Lourival Roepke",
+    "lat": -20.03094562562855,
+    "lon": -40.76050174738832,
+    "fullTitle": "Parecer técnico 084 - 2021 - Ouvidoria Lourival Roepke"
+  },
+  {
+    "id": 247,
+    "number": "088",
+    "year": "2021",
+    "requester": "Jonislau Delai",
+    "lat": -19.99942216311602,
+    "lon": -40.729569048275046,
+    "fullTitle": "Parecer técnico 088-2021 - Jonislau Delai"
+  },
+  {
+    "id": 248,
+    "number": "089",
+    "year": "2021",
+    "requester": "Cras- Residencia da Cirlani de sousa",
+    "lat": -19.99460344585023,
+    "lon": -40.74588914789669,
+    "fullTitle": "Parecer técnico 089-2021 - Cras- Residencia da Cirlani de sousa"
+  },
+  {
+    "id": 249,
+    "number": "092",
+    "year": "2021",
+    "requester": "Ocorrência - Isadora Thom",
+    "lat": -20.002108735157044,
+    "lon": -40.731057490736326,
+    "fullTitle": "Parecer técnico 092-2021 - Ocorrência - Isadora Thom"
+  },
+  {
+    "id": 250,
+    "number": "095",
+    "year": "2021",
+    "requester": "EDP - Dalton Master Plac",
+    "lat": -20.016396999172194,
+    "lon": -40.743652712060154,
+    "fullTitle": "Parecer técnico 095-2021 - EDP - Dalton Master Plac"
+  },
+  {
+    "id": 251,
+    "number": "096",
+    "year": "2021",
+    "requester": "Sgneu Holander",
+    "lat": -20.02570395207338,
+    "lon": -40.756889859183964,
+    "fullTitle": "Parecer técnico 096-2021 - Sgneu Holander"
+  },
+  {
+    "id": 252,
+    "number": "098",
+    "year": "2021",
+    "requester": "Paloma Dubke Potter",
+    "lat": -20.01440549725986,
+    "lon": -40.77959598976188,
+    "fullTitle": "Parecer técnico 098-2021 - Paloma Dubke Potter"
+  },
+  {
+    "id": 253,
+    "number": "104",
+    "year": "2021",
+    "requester": "João Leonardo Vieira Gomes",
+    "lat": -20.005009028200522,
+    "lon": -40.7312612317891,
+    "fullTitle": "Parecer técnico 104-2021 - João Leonardo Vieira Gomes"
+  },
+  {
+    "id": 254,
+    "number": "105",
+    "year": "2021",
+    "requester": "Elvis Pinheiro",
+    "lat": -20.008398178512408,
+    "lon": -40.744998078795035,
+    "fullTitle": "Parecer técnico 105-2021 - Elvis Pinheiro"
+  },
+  {
+    "id": 255,
+    "number": "106",
+    "year": "2021",
+    "requester": "Edmilson Fernandes da Silva",
+    "lat": -20.02278023040646,
+    "lon": -40.74661917777456,
+    "fullTitle": "Parecer técnico 106-2021 - Edmilson Fernandes da Silva"
+  },
+  {
+    "id": 256,
+    "number": "107",
+    "year": "2021",
+    "requester": "Melinda Schreder",
+    "lat": -20.00978500767257,
+    "lon": -40.850338201457035,
+    "fullTitle": "Parecer técnico 107-2021 - Melinda Schreder"
+  },
+  {
+    "id": 257,
+    "number": "108",
+    "year": "2021",
+    "requester": "secobr -  Lourival Roepke",
+    "lat": -20.030913233385615,
+    "lon": -40.76063414913779,
+    "fullTitle": "Parecer técnico 108-2021 - secobr -  Lourival Roepke"
+  },
+  {
+    "id": 258,
+    "number": "113",
+    "year": "2021",
+    "requester": "Anderson Luiz Ortolon",
+    "lat": -20.03857860063553,
+    "lon": -40.750512004253494,
+    "fullTitle": "Parecer técnico 113-2021 - Anderson Luiz Ortolon"
+  },
+  {
+    "id": 259,
+    "number": "114",
+    "year": "2021",
+    "requester": "Anete Jacob Buss",
+    "lat": -20.01434313665228,
+    "lon": -40.74629433180191,
+    "fullTitle": "Parecer técnico 114-2021 - Anete Jacob Buss"
+  },
+  {
+    "id": 260,
+    "number": "116",
+    "year": "2021",
+    "requester": "Morro do Bento",
+    "lat": -20.007538526753663,
+    "lon": -40.74434991856898,
+    "fullTitle": "Parecer técnico 116-2021 - Morro do Bento"
+  },
+  {
+    "id": 261,
+    "number": "118",
+    "year": "2021",
+    "requester": "Lurdes Anna Kunsch Foeger",
+    "lat": -20.095562316543628,
+    "lon": -40.675124464154806,
+    "fullTitle": "Parecer técnico 118-2021 - Lurdes Anna Kunsch Foeger"
+  },
+  {
+    "id": 262,
+    "number": "119",
+    "year": "2021",
+    "requester": "Wesley fernando Barcelos licença ambiental",
+    "lat": -20.015933901652648,
+    "lon": -40.7411420633905,
+    "fullTitle": "Parecer técnico 119-2021 - Wesley fernando Barcelos licença ambiental"
+  },
+  {
+    "id": 263,
+    "number": "120",
+    "year": "2021",
+    "requester": "Ouvidoria Ilha Berger",
+    "lat": -20.056731742777295,
+    "lon": -40.774580490659766,
+    "fullTitle": "Parecer técnico 120-2021 - Ouvidoria Ilha Berger"
+  },
+  {
+    "id": 264,
+    "number": "121",
+    "year": "2021",
+    "requester": "Hospital Concórdia",
+    "lat": -20.031935696335427,
+    "lon": -40.74179019055241,
+    "fullTitle": "Parecer técnico 121-2021 - Hospital Concórdia"
+  },
+  {
+    "id": 265,
+    "number": "125",
+    "year": "2021",
+    "requester": "Ouvidoria Luzia Rossmam Lopes",
+    "lat": -20.009121786830175,
+    "lon": -40.744940116408976,
+    "fullTitle": "Parecer técnico 125-2021 - Ouvidoria Luzia Rossmam Lopes"
+  },
+  {
+    "id": 266,
+    "number": "129",
+    "year": "2021",
+    "requester": "Thatiana Krause Berger",
+    "lat": -20.07096421268531,
+    "lon": -40.84018475976912,
+    "fullTitle": "Parecer técnico 129-2021 - Thatiana Krause Berger"
+  },
+  {
+    "id": 267,
+    "number": "130",
+    "year": "2021",
+    "requester": "Marciel Martins Alves",
+    "lat": -20.06572223824902,
+    "lon": -40.8421885423037,
+    "fullTitle": "Parecer técnico 130-2021 - Marciel Martins Alves"
+  },
+  {
+    "id": 268,
+    "number": "135",
+    "year": "2021",
+    "requester": "Hélio Orlando Menegueli",
+    "lat": -20.006978800681008,
+    "lon": -40.715187725493365,
+    "fullTitle": "Parecer técnico 135-2021 - Hélio Orlando Menegueli"
+  },
+  {
+    "id": 269,
+    "number": "31",
+    "year": "2021",
+    "requester": "Ocorrência Eucalipto - Hélio Meneguele",
+    "lat": -20.006978800681008,
+    "lon": -40.715187725493365,
+    "fullTitle": "Parecer técnico 31-2021 - Ocorrência Eucalipto - Hélio Meneguele"
+  },
+  {
+    "id": 270,
+    "number": "001",
+    "year": "2021",
+    "requester": "Ocorrência Incendio em apartamento SL",
+    "lat": -20.006100349706564,
+    "lon": -40.74144507239363,
+    "fullTitle": "Parecer técnico 001-2021 - Ocorrência Incendio em apartamento SL"
+  },
+  {
+    "id": 271,
+    "number": "002",
+    "year": "2021",
+    "requester": "Almiro Seidler",
+    "lat": -20.066150328997093,
+    "lon": -40.83158771107273,
+    "fullTitle": "Parecer técnico 002-2021 - Almiro Seidler"
+  },
+  {
+    "id": 272,
+    "number": "003",
+    "year": "2021",
+    "requester": "Nilza Anhorlz",
+    "lat": -20.066900451964177,
+    "lon": -40.757743593916814,
+    "fullTitle": "Parecer técnico 003-2021 -Nilza Anhorlz"
+  },
+  {
+    "id": 273,
+    "number": "004",
+    "year": "2021",
+    "requester": "SECOBR - Rede elétrica",
+    "lat": -19.99631542081804,
+    "lon": -40.806787678867614,
+    "fullTitle": "Parecer técnico 004-2021 - SECOBR - Rede elétrica"
+  },
+  {
+    "id": 274,
+    "number": "005",
+    "year": "2021",
+    "requester": "Miguel Manuel Holz",
+    "lat": -20.001688347662196,
+    "lon": -40.75987901249546,
+    "fullTitle": "Parecer técnico 005-2021 - Miguel Manuel Holz"
+  },
+  {
+    "id": 275,
+    "number": "011",
+    "year": "2021",
+    "requester": "Secretaria de transporte",
+    "lat": -20.048891169814475,
+    "lon": -40.71421009893505,
+    "fullTitle": "Parecer técnico 011-2021 - Secretaria de transporte"
+  },
+  {
+    "id": 276,
+    "number": "012",
+    "year": "2021",
+    "requester": "Geimir Antônio Sperandio",
+    "lat": -20.087267359988292,
+    "lon": -40.82983696954436,
+    "fullTitle": "Parecer técnico 012-2021 - Geimir Antônio Sperandio"
+  },
+  {
+    "id": 277,
+    "number": "013",
+    "year": "2021",
+    "requester": "Ocorrências - São Sebastião do Meio",
+    "lat": -20.04765567124636,
+    "lon": -40.77655508073828,
+    "fullTitle": "Parecer técnico 013-2021 - Ocorrências - São Sebastião do Meio"
+  },
+  {
+    "id": 278,
+    "number": "015",
+    "year": "2015",
+    "requester": "2021 - Bernardo Jackel Junior",
+    "lat": -20.007798400632314,
+    "lon": -40.74529623103813,
+    "fullTitle": "Parecer técnico 015 - 2021 - Bernardo Jackel Junior"
+  },
+  {
+    "id": 279,
+    "number": "020",
+    "year": "2015",
+    "requester": "2021 - Ocorrencia rodovia São João do Garrafão",
+    "lat": -20.153583172038136,
+    "lon": -40.941756341271656,
+    "fullTitle": "Parecer técnico 020 - 2021 - Ocorrencia rodovia São João do Garrafão"
+  },
+  {
+    "id": 280,
+    "number": "022",
+    "year": "2021",
+    "requester": "desinfecção na Câmara",
+    "lat": -20.031782891525502,
+    "lon": -40.74264836802837,
+    "fullTitle": "Parecer técnico 022-2021 - desinfecção na Câmara"
+  },
+  {
+    "id": 281,
+    "number": "025",
+    "year": "2015",
+    "requester": "2021 - Secretaria de Educação - barracão de Rio Possmouser",
+    "lat": -20.059580326701973,
+    "lon": -40.889616876411516,
+    "fullTitle": "Parecer técnico 025 - 2021 - Secretaria de Educação - barracão de Rio Possmouser"
+  },
+  {
+    "id": 282,
+    "number": "026",
+    "year": "2015",
+    "requester": "2021 - Sandro Pereira Dutra",
+    "lat": -20.00747208369969,
+    "lon": -40.74428133295672,
+    "fullTitle": "Parecer técnico 026 - 2021 - Sandro Pereira Dutra"
+  },
+  {
+    "id": 283,
+    "number": "027",
+    "year": "2021",
+    "requester": "Ocorrências - Menegueli",
+    "lat": -20.006978800681008,
+    "lon": -40.715187725493365,
+    "fullTitle": "Parecer técnico 027-2021 - Ocorrências - Menegueli"
+  },
+  {
+    "id": 284,
+    "number": "029",
+    "year": "2021",
+    "requester": "Márcio Humberto Possaitti",
+    "lat": -20.029480029696263,
+    "lon": -40.75359921563208,
+    "fullTitle": "Parecer técnico 029-2021 - Márcio Humberto Possaitti"
+  },
+  {
+    "id": 285,
+    "number": "030",
+    "year": "2021",
+    "requester": "Ocorrência cadáver idosa- recreio",
+    "lat": -20.024206752243572,
+    "lon": -40.699504925517985,
+    "fullTitle": "Parecer técnico 030-2021 - Ocorrência cadáver idosa- recreio"
+  },
+  {
+    "id": 286,
+    "number": "032",
+    "year": "2021",
+    "requester": "Ocorrência deslizamento de terra - caramuru vila nass",
+    "lat": -20.0992175971245,
+    "lon": -40.675523284032224,
+    "fullTitle": "Parecer técnico 032-2021 - Ocorrência deslizamento de terra - caramuru vila nass"
+  },
+  {
+    "id": 287,
+    "number": "033",
+    "year": "2021",
+    "requester": "Ocorrências - Wanderson Emerick",
+    "lat": -20.09131203860995,
+    "lon": -40.69627861928824,
+    "fullTitle": "Parecer técnico 033-2021 - Ocorrências - Wanderson Emerick"
+  },
+  {
+    "id": 288,
+    "number": "034",
+    "year": "2021",
+    "requester": "Ouvidoria - Sebastião de Moura",
+    "lat": -20.06765544769905,
+    "lon": -40.69038328988662,
+    "fullTitle": "Parecer técnico 034-2021 - Ouvidoria - Sebastião de Moura"
+  },
+  {
+    "id": 289,
+    "number": "035",
+    "year": "2021",
+    "requester": "Ocorrência Jambeiro Recreio",
+    "lat": -20.01921138501796,
+    "lon": -40.69725096348715,
+    "fullTitle": "Parecer técnico 035-2021 - Ocorrência Jambeiro Recreio"
+  },
+  {
+    "id": 290,
+    "number": "036",
+    "year": "2021",
+    "requester": "Elcina Malikoski",
+    "lat": -20.01816782181233,
+    "lon": -40.75512545784173,
+    "fullTitle": "Parecer técnico 036-2021 - Elcina Malikoski"
+  },
+  {
+    "id": 291,
+    "number": "038",
+    "year": "2021",
+    "requester": "Vanderleia Costa",
+    "lat": -20.022342247716455,
+    "lon": -40.746330476461104,
+    "fullTitle": "Parecer técnico 038-2021 - Vanderleia Costa"
+  },
+  {
+    "id": 292,
+    "number": "039",
+    "year": "2015",
+    "requester": "2021 - Brena Mendes Barreto",
+    "lat": -20.007423724236773,
+    "lon": -40.74427525696141,
+    "fullTitle": "Parecer técnico 039 - 2021 - Brena Mendes Barreto"
+  },
+  {
+    "id": 293,
+    "number": "045",
+    "year": "2015",
+    "requester": "2021 - Sólidos Participações e Locadora de Veículos",
+    "lat": -20.06701026348503,
+    "lon": -40.83820750197733,
+    "fullTitle": "Parecer técnico 045 - 2021 - Sólidos Participações e Locadora de Veículos"
+  },
+  {
+    "id": 294,
+    "number": "046",
+    "year": "2015",
+    "requester": "2021 - Ana Paula P. R. Schwanz",
+    "lat": -20.03894363156314,
+    "lon": -40.75105133454072,
+    "fullTitle": "Parecer técnico 046 - 2021 - Ana Paula P. R. Schwanz"
+  },
+  {
+    "id": 295,
+    "number": "050",
+    "year": "2015",
+    "requester": "2021 - Fabiano Lopes de Oliveira Mund.",
+    "lat": -20.069169554866583,
+    "lon": -40.844902201048825,
+    "fullTitle": "Parecer técnico 050 - 2021 - Fabiano Lopes de Oliveira Mund."
+  },
+  {
+    "id": 296,
+    "number": "051",
+    "year": "2021",
+    "requester": "Carlos Alberto Corona",
+    "lat": -20.03895134126734,
+    "lon": -40.73046932673286,
+    "fullTitle": "Parecer técnico 051-2021 -Carlos Alberto Corona"
+  },
+  {
+    "id": 297,
+    "number": "052",
+    "year": "2021",
+    "requester": "Marcelo Belmiro Lauvers",
+    "lat": -20.043588933861855,
+    "lon": -40.68005971689129,
+    "fullTitle": "Parecer técnico 052-2021 -Marcelo Belmiro Lauvers"
+  },
+  {
+    "id": 298,
+    "number": "054",
+    "year": "2015",
+    "requester": "2021 - Ocorrência Valter Furlani",
+    "lat": -20.025110294181072,
+    "lon": -40.74591613369504,
+    "fullTitle": "Parecer técnico 054 - 2021 - Ocorrência Valter Furlani"
+  },
+  {
+    "id": 299,
+    "number": "055",
+    "year": "2015",
+    "requester": "2021 - Claudia Ivone Kurth",
+    "lat": -20.03947823103819,
+    "lon": -40.7527109146683,
+    "fullTitle": "Parecer técnico 055 - 2021 - Claudia Ivone Kurth"
+  },
+  {
+    "id": 300,
+    "number": "059",
+    "year": "2015",
+    "requester": "2021 - Ocorrência de tombamento e pedra  alto jequitibá",
+    "lat": -20.160370602294424,
+    "lon": -40.74068163590981,
+    "fullTitle": "Parecer técnico 059 - 2021 - Ocorrência de tombamento e pedra  alto jequitibá"
+  },
+  {
+    "id": 301,
+    "number": "060",
+    "year": "2021",
+    "requester": "Jennifer Leite Santos Martins de Souza",
+    "lat": -20.04855792087417,
+    "lon": -40.723187417315124,
+    "fullTitle": "Parecer técnico 060-2021 - Jennifer Leite Santos Martins de Souza"
+  },
+  {
+    "id": 302,
+    "number": "061",
+    "year": "2015",
+    "requester": "2021 - Lucas Reinke de Oliveira",
+    "lat": -20.023682375869768,
+    "lon": -40.74416658615277,
+    "fullTitle": "Parecer técnico 061 - 2021 - Lucas Reinke de Oliveira"
+  },
+  {
+    "id": 303,
+    "number": "062",
+    "year": "2021",
+    "requester": "Dorval Holz",
+    "lat": -20.03427049047481,
+    "lon": -40.71282975489952,
+    "fullTitle": "Parecer técnico 062-2021 - Dorval Holz"
+  },
+  {
+    "id": 304,
+    "number": "063",
+    "year": "2021",
+    "requester": "Secobr Obra irregular Armando José da Silva",
+    "lat": -20.026138107710594,
+    "lon": -40.75642462834699,
+    "fullTitle": "Parecer técnico 063-2021 - Secobr Obra irregular Armando José da Silva"
+  },
+  {
+    "id": 305,
+    "number": "065",
+    "year": "2021",
+    "requester": "LD marmores e granitos Ltda",
+    "lat": -20.026965197102346,
+    "lon": -40.75505967593281,
+    "fullTitle": "Parecer técnico 065-2021 - LD marmores e granitos Ltda"
+  },
+  {
+    "id": 306,
+    "number": "066",
+    "year": "2021",
+    "requester": "Valeria Rodrigues Walger",
+    "lat": -20.067014342698446,
+    "lon": -40.834112608129196,
+    "fullTitle": "Parecer técnico 066-2021 -Valeria Rodrigues Walger"
+  },
+  {
+    "id": 307,
+    "number": "067",
+    "year": "2015",
+    "requester": "2021 -Ouvidoria processo 3864-21",
+    "lat": -20.04837675468885,
+    "lon": -40.77618188021155,
+    "fullTitle": "Parecer técnico 067 - 2021 -Ouvidoria processo 3864-21"
+  },
+  {
+    "id": 308,
+    "number": "071",
+    "year": "2021",
+    "requester": "Angela Maria Nicke hoffmann",
+    "lat": -20.03436267216414,
+    "lon": -40.737586762221454,
+    "fullTitle": "Parecer técnico 071-2021 - Angela Maria Nicke hoffmann"
+  },
+  {
+    "id": 309,
+    "number": "072",
+    "year": "2021",
+    "requester": "Edilaine Pereira de Melo",
+    "lat": -20.00934676670371,
+    "lon": -40.745906888321805,
+    "fullTitle": "Parecer técnico 072-2021 - Edilaine Pereira de Melo"
+  },
+  {
+    "id": 310,
+    "number": "073",
+    "year": "2021",
+    "requester": "Valmir Paulo Hoffmann",
+    "lat": -20.039041514545072,
+    "lon": -40.74990518751312,
+    "fullTitle": "Parecer técnico 073-2021 - Valmir Paulo Hoffmann"
+  },
+  {
+    "id": 311,
+    "number": "075",
+    "year": "2021",
+    "requester": "Sebastião Leite Ribeiro",
+    "lat": -19.99093961247958,
+    "lon": -40.66773703599871,
+    "fullTitle": "Parecer técnico 075-2021 - Sebastião Leite Ribeiro"
+  },
+  {
+    "id": 312,
+    "number": "076",
+    "year": "2021",
+    "requester": "Monichele de Souza Santos",
+    "lat": -20.007852181461047,
+    "lon": -40.74540300032878,
+    "fullTitle": "Parecer técnico 076-2021 - Monichele de Souza Santos"
+  },
+  {
+    "id": 313,
+    "number": "078",
+    "year": "2021",
+    "requester": "Talita Barth",
+    "lat": -20.02073744883633,
+    "lon": -40.76590781879295,
+    "fullTitle": "Parecer técnico 078-2021 - Talita Barth"
+  },
+  {
+    "id": 314,
+    "number": "080",
+    "year": "2021",
+    "requester": "Deolinda Kosanke Zummach",
+    "lat": -20.059379448242034,
+    "lon": -40.71061126513167,
+    "fullTitle": "Parecer técnico 080-2021 - Deolinda Kosanke Zummach"
+  },
+  {
+    "id": 315,
+    "number": "081",
+    "year": "2015",
+    "requester": "2021 - Sólidos Participações e Locadora de Veículos",
+    "lat": -20.06701026348503,
+    "lon": -40.83820750197733,
+    "fullTitle": "Parecer técnico 081 - 2021 - Sólidos Participações e Locadora de Veículos"
+  },
+  {
+    "id": 316,
+    "number": "082",
+    "year": "2015",
+    "requester": "2021 - Hudirlei Rodrigues",
+    "lat": -20.052465510022017,
+    "lon": -40.76569341662873,
+    "fullTitle": "Parecer técnico 082 - 2021 - Hudirlei Rodrigues"
+  },
+  {
+    "id": 317,
+    "number": "083",
+    "year": "2015",
+    "requester": "2021 - Delma Schneider Roepke",
+    "lat": -20.052465510022017,
+    "lon": -40.76569341662873,
+    "fullTitle": "Parecer técnico 083 - 2021 - Delma Schneider Roepke"
+  },
+  {
+    "id": 318,
+    "number": "084",
+    "year": "2015",
+    "requester": "2021 - Ouvidoria Lourival Roepke",
+    "lat": -20.03094562562855,
+    "lon": -40.76050174738832,
+    "fullTitle": "Parecer técnico 084 - 2021 - Ouvidoria Lourival Roepke"
+  },
+  {
+    "id": 319,
+    "number": "088",
+    "year": "2021",
+    "requester": "Jonislau Delai",
+    "lat": -19.99942216311602,
+    "lon": -40.729569048275046,
+    "fullTitle": "Parecer técnico 088-2021 - Jonislau Delai"
+  },
+  {
+    "id": 320,
+    "number": "089",
+    "year": "2021",
+    "requester": "Cras- Residencia da Cirlani de sousa",
+    "lat": -19.99460344585023,
+    "lon": -40.74588914789669,
+    "fullTitle": "Parecer técnico 089-2021 - Cras- Residencia da Cirlani de sousa"
+  },
+  {
+    "id": 321,
+    "number": "092",
+    "year": "2021",
+    "requester": "Ocorrência - Isadora Thom",
+    "lat": -20.002108735157044,
+    "lon": -40.731057490736326,
+    "fullTitle": "Parecer técnico 092-2021 - Ocorrência - Isadora Thom"
+  },
+  {
+    "id": 322,
+    "number": "095",
+    "year": "2021",
+    "requester": "EDP - Dalton Master Plac",
+    "lat": -20.016396999172194,
+    "lon": -40.743652712060154,
+    "fullTitle": "Parecer técnico 095-2021 - EDP - Dalton Master Plac"
+  },
+  {
+    "id": 323,
+    "number": "096",
+    "year": "2021",
+    "requester": "Sgneu Holander",
+    "lat": -20.02570395207338,
+    "lon": -40.756889859183964,
+    "fullTitle": "Parecer técnico 096-2021 - Sgneu Holander"
+  },
+  {
+    "id": 324,
+    "number": "098",
+    "year": "2021",
+    "requester": "Paloma Dubke Potter",
+    "lat": -20.01440549725986,
+    "lon": -40.77959598976188,
+    "fullTitle": "Parecer técnico 098-2021 - Paloma Dubke Potter"
+  },
+  {
+    "id": 325,
+    "number": "104",
+    "year": "2021",
+    "requester": "João Leonardo Vieira Gomes",
+    "lat": -20.005009028200522,
+    "lon": -40.7312612317891,
+    "fullTitle": "Parecer técnico 104-2021 - João Leonardo Vieira Gomes"
+  },
+  {
+    "id": 326,
+    "number": "105",
+    "year": "2021",
+    "requester": "Elvis Pinheiro",
+    "lat": -20.008398178512408,
+    "lon": -40.744998078795035,
+    "fullTitle": "Parecer técnico 105-2021 - Elvis Pinheiro"
+  },
+  {
+    "id": 327,
+    "number": "106",
+    "year": "2021",
+    "requester": "Edmilson Fernandes da Silva",
+    "lat": -20.02278023040646,
+    "lon": -40.74661917777456,
+    "fullTitle": "Parecer técnico 106-2021 - Edmilson Fernandes da Silva"
+  },
+  {
+    "id": 328,
+    "number": "107",
+    "year": "2021",
+    "requester": "Melinda Schreder",
+    "lat": -20.00978500767257,
+    "lon": -40.850338201457035,
+    "fullTitle": "Parecer técnico 107-2021 - Melinda Schreder"
+  },
+  {
+    "id": 329,
+    "number": "108",
+    "year": "2021",
+    "requester": "secobr -  Lourival Roepke",
+    "lat": -20.030913233385615,
+    "lon": -40.76063414913779,
+    "fullTitle": "Parecer técnico 108-2021 - secobr -  Lourival Roepke"
+  },
+  {
+    "id": 330,
+    "number": "135",
+    "year": "2021",
+    "requester": "Hélio Orlando Menegueli",
+    "lat": -20.006978800681008,
+    "lon": -40.715187725493365,
+    "fullTitle": "Parecer técnico 135-2021 - Hélio Orlando Menegueli"
+  },
+  {
+    "id": 331,
+    "number": "31",
+    "year": "2021",
+    "requester": "Ocorrência Eucalipto - Hélio Meneguele",
+    "lat": -20.006978800681008,
+    "lon": -40.715187725493365,
+    "fullTitle": "Parecer técnico 31-2021 - Ocorrência Eucalipto - Hélio Meneguele"
+  },
+  {
+    "id": 332,
+    "number": "003",
+    "year": "2022",
+    "requester": "Raimundo Beling",
+    "lat": -20.018232270290824,
+    "lon": -40.75578639787462,
+    "fullTitle": "Parecer técnico 003-2022-  Raimundo Beling"
+  },
+  {
+    "id": 333,
+    "number": "004",
+    "year": "2022",
+    "requester": "Izautina Burtzlaff",
+    "lat": -20.019920678878034,
+    "lon": -40.746428840838774,
+    "fullTitle": "Parecer técnico 004-2022 - Izautina Burtzlaff"
+  },
+  {
+    "id": 334,
+    "number": "005",
+    "year": "2022",
+    "requester": "Zineldo Roque Gomes",
+    "lat": -20.038994867620843,
+    "lon": -40.75114089367897,
+    "fullTitle": "Parecer técnico 005-2022 - Zineldo Roque Gomes"
+  },
+  {
+    "id": 335,
+    "number": "006",
+    "year": "2022",
+    "requester": "Derlanio Henrique Schwanz",
+    "lat": -20.026423443125893,
+    "lon": -40.74461039957691,
+    "fullTitle": "Parecer técnico 006-2022 - Derlanio Henrique Schwanz"
+  },
+  {
+    "id": 336,
+    "number": "007",
+    "year": "2022",
+    "requester": "Levi da Silva Campos",
+    "lat": -20.039514295026322,
+    "lon": -40.73598325676952,
+    "fullTitle": "Parecer técnico 007-2022 - Levi da Silva Campos"
+  },
+  {
+    "id": 337,
+    "number": "008",
+    "year": "2022",
+    "requester": "Sigmar Miertschink",
+    "lat": -20.032506209815057,
+    "lon": -40.74155551368192,
+    "fullTitle": "Parecer técnico 008-2022 - Sigmar Miertschink"
+  },
+  {
+    "id": 338,
+    "number": "010",
+    "year": "2022",
+    "requester": "Evaninha Vesper Lemke",
+    "lat": -20.069781880503182,
+    "lon": -40.719630219690394,
+    "fullTitle": "Parecer técnico 010-2022 -Evaninha Vesper Lemke"
+  },
+  {
+    "id": 339,
+    "number": "011",
+    "year": "2022",
+    "requester": "Cecília Blanck Fleger",
+    "lat": -20.027887983224666,
+    "lon": -40.74644707906245,
+    "fullTitle": "Parecer técnico 011-2022 - Cecília Blanck Fleger"
+  },
+  {
+    "id": 340,
+    "number": "012",
+    "year": "2022",
+    "requester": "Dalira Timm Jastrow - incendio estrutural",
+    "lat": -20.030173594338326,
+    "lon": -40.863864106489686,
+    "fullTitle": "Parecer técnico 012-2022 - Dalira Timm Jastrow - incendio estrutural"
+  },
+  {
+    "id": 341,
+    "number": "013",
+    "year": "2022",
+    "requester": "Selma Brandt Hackbart",
+    "lat": -19.995498237672255,
+    "lon": -40.807198809809954,
+    "fullTitle": "Parecer técnico 013-2022 - Selma Brandt Hackbart"
+  },
+  {
+    "id": 342,
+    "number": "014",
+    "year": "2022",
+    "requester": "Melinda Schereder",
+    "lat": -20.00978581401861,
+    "lon": -40.850347480691426,
+    "fullTitle": "Parecer técnico 014-2022 -Melinda Schereder"
+  },
+  {
+    "id": 343,
+    "number": "015",
+    "year": "2022",
+    "requester": "Savio Maria Ricardo",
+    "lat": -20.03971634923555,
+    "lon": -40.75147092463724,
+    "fullTitle": "Parecer técnico 015-2022 - Savio Maria Ricardo"
+  },
+  {
+    "id": 344,
+    "number": "016",
+    "year": "2022",
+    "requester": "Reginaldo Davel",
+    "lat": -20.07184804410882,
+    "lon": -40.86700200632721,
+    "fullTitle": "Parecer técnico 016-2022 - Reginaldo Davel"
+  },
+  {
+    "id": 345,
+    "number": "017",
+    "year": "2022",
+    "requester": "Secretaria de Educação - creche",
+    "lat": -20.03038286949447,
+    "lon": -40.73870193460197,
+    "fullTitle": "Parecer técnico 017-2022 - Secretaria de Educação - creche"
+  },
+  {
+    "id": 346,
+    "number": "018",
+    "year": "2022",
+    "requester": "Rafael Tadeu Molino Moreira",
+    "lat": -20.035582855373367,
+    "lon": -40.74686561365044,
+    "fullTitle": "Parecer técnico 018-2022 - Rafael Tadeu Molino Moreira"
+  },
+  {
+    "id": 347,
+    "number": "019",
+    "year": "2022",
+    "requester": "Edson Stieg",
+    "lat": -20.02095330071023,
+    "lon": -40.765178792450875,
+    "fullTitle": "Parecer técnico 019-2022 - Edson Stieg"
+  },
+  {
+    "id": 348,
+    "number": "020",
+    "year": "2022",
+    "requester": "Josias Schulz",
+    "lat": -20.096125731184717,
+    "lon": -40.6752209174828,
+    "fullTitle": "Parecer técnico 020-2022 - Josias Schulz"
+  },
+  {
+    "id": 349,
+    "number": "021",
+    "year": "2022",
+    "requester": "Jefferson Carlos Litke",
+    "lat": -20.033965857152186,
+    "lon": -40.737860166226675,
+    "fullTitle": "Parecer técnico 021-2022 - Jefferson Carlos Litke"
+  },
+  {
+    "id": 350,
+    "number": "023",
+    "year": "2022",
+    "requester": "IBREJETIBÁ",
+    "lat": -20.01441431607608,
+    "lon": -40.74775956678973,
+    "fullTitle": "Parecer técnico 023-2022 - IBREJETIBÁ"
+  },
+  {
+    "id": 351,
+    "number": "024",
+    "year": "2022",
+    "requester": "Securb - talude em Belém",
+    "lat": -20.050424003296058,
+    "lon": -40.7144403968181,
+    "fullTitle": "Parecer técnico 024-2022 - Securb - talude em Belém"
+  },
+  {
+    "id": 352,
+    "number": "025",
+    "year": "2022",
+    "requester": "Rafael Tadeu Molino Moreira - Pousada Paraíso",
+    "lat": -20.023141287218245,
+    "lon": -40.72154108001568,
+    "fullTitle": "Parecer técnico 025-2022 - Rafael Tadeu Molino Moreira - Pousada Paraíso"
+  },
+  {
+    "id": 353,
+    "number": "027",
+    "year": "2022",
+    "requester": "Adriana Oliveira de Jesus de Figueiredo",
+    "lat": -20.009614292868672,
+    "lon": -40.74570063953412,
+    "fullTitle": "Parecer técnico 027-2022 - Adriana Oliveira de Jesus de Figueiredo"
+  },
+  {
+    "id": 354,
+    "number": "028",
+    "year": "2022",
+    "requester": "Luis Carlos Morate Oliveira",
+    "lat": -20.129125249698028,
+    "lon": -40.79506077259876,
+    "fullTitle": "Parecer técnico 028-2022 - Luis Carlos Morate Oliveira"
+  },
+  {
+    "id": 355,
+    "number": "029",
+    "year": "2022",
+    "requester": "Erlinda Beherende",
+    "lat": -20.129125249698028,
+    "lon": -40.79506077259876,
+    "fullTitle": "Parecer técnico 029-2022 - Erlinda Beherende"
+  },
+  {
+    "id": 356,
+    "number": "030",
+    "year": "2022",
+    "requester": "Marilete Stein Schneider",
+    "lat": -20.000878610255835,
+    "lon": -40.74078680982366,
+    "fullTitle": "Parecer técnico 030-2022 - Marilete Stein Schneider"
+  },
+  {
+    "id": 357,
+    "number": "033",
+    "year": "2022",
+    "requester": "José Lopes da Silva",
+    "lat": -20.009169184682825,
+    "lon": -40.744942932768495,
+    "fullTitle": "Parecer técnico 033-2022 - José Lopes da Silva"
+  },
+  {
+    "id": 358,
+    "number": "035",
+    "year": "2022",
+    "requester": "Vereador Rogério Schereder",
+    "lat": -19.995756305928285,
+    "lon": -40.7338176020944,
+    "fullTitle": "Parecer técnico 035-2022 - Vereador Rogério Schereder"
+  },
+  {
+    "id": 359,
+    "number": "036",
+    "year": "2022",
+    "requester": "Ouvidoria",
+    "lat": -20.024677411772956,
+    "lon": -40.74398296620698,
+    "fullTitle": "Parecer técnico 036-2022 - Ouvidoria"
+  },
+  {
+    "id": 360,
+    "number": "040",
+    "year": "2022",
+    "requester": "Ouvidoria - Carolina Morais Lima",
+    "lat": -19.99545300886068,
+    "lon": -40.733434139354756,
+    "fullTitle": "Parecer técnico 040-2022 - Ouvidoria - Carolina Morais Lima"
+  },
+  {
+    "id": 361,
+    "number": "041",
+    "year": "2022",
+    "requester": "Raiane Soares de sá Groner",
+    "lat": -20.029485004260383,
+    "lon": -40.760839220887156,
+    "fullTitle": "Parecer técnico 041-2022 - Raiane Soares de sá Groner"
+  },
+  {
+    "id": 362,
+    "number": "042",
+    "year": "2022",
+    "requester": "Leandro Reinke",
+    "lat": -20.03458448351812,
+    "lon": -40.73832749630419,
+    "fullTitle": "Parecer técnico 042-2022 - Leandro Reinke"
+  },
+  {
+    "id": 363,
+    "number": "043",
+    "year": "2022",
+    "requester": "Ana Regina Bromerchenkel",
+    "lat": -20.007577710330448,
+    "lon": -40.74538821802773,
+    "fullTitle": "Parecer técnico 043-2022 - Ana Regina Bromerchenkel"
+  },
+  {
+    "id": 364,
+    "number": "044",
+    "year": "2022",
+    "requester": "Gilberto Stein Junior",
+    "lat": -20.007440956859703,
+    "lon": -40.74549689933028,
+    "fullTitle": "Parecer técnico 044-2022 - Gilberto Stein Junior"
+  },
+  {
+    "id": 365,
+    "number": "045",
+    "year": "2022",
+    "requester": "Dasio Jose Thom",
+    "lat": -20.02683799637374,
+    "lon": -40.67871780911517,
+    "fullTitle": "Parecer técnico 045-2022 - Dasio Jose Thom"
+  },
+  {
+    "id": 366,
+    "number": "048",
+    "year": "2022",
+    "requester": "Ouvidoria Diselda Bellardt Cabral",
+    "lat": -20.024660499257152,
+    "lon": -40.744003328970464,
+    "fullTitle": "Parecer técnico 048-2022 -Ouvidoria Diselda Bellardt Cabral"
+  },
+  {
+    "id": 367,
+    "number": "051",
+    "year": "2022",
+    "requester": "árvore -Siegmund Berger",
+    "lat": -20.16439204475631,
+    "lon": -40.96469442129136,
+    "fullTitle": "Parecer Técnico 051-2022 - árvore -Siegmund Berger"
+  },
+  {
+    "id": 368,
+    "number": "003",
+    "year": "2022",
+    "requester": "Raimundo Beling",
+    "lat": -20.018232270290824,
+    "lon": -40.75578639787462,
+    "fullTitle": "Parecer técnico 003-2022-  Raimundo Beling"
+  },
+  {
+    "id": 369,
+    "number": "004",
+    "year": "2022",
+    "requester": "Izautina Burtzlaff",
+    "lat": -20.019920678878034,
+    "lon": -40.746428840838774,
+    "fullTitle": "Parecer técnico 004-2022 - Izautina Burtzlaff"
+  },
+  {
+    "id": 370,
+    "number": "005",
+    "year": "2022",
+    "requester": "Zineldo Roque Gomes",
+    "lat": -20.038994867620843,
+    "lon": -40.75114089367897,
+    "fullTitle": "Parecer técnico 005-2022 - Zineldo Roque Gomes"
+  },
+  {
+    "id": 371,
+    "number": "006",
+    "year": "2022",
+    "requester": "Derlanio Henrique Schwanz",
+    "lat": -20.026423443125893,
+    "lon": -40.74461039957691,
+    "fullTitle": "Parecer técnico 006-2022 - Derlanio Henrique Schwanz"
+  },
+  {
+    "id": 372,
+    "number": "007",
+    "year": "2022",
+    "requester": "Levi da Silva Campos",
+    "lat": -20.039514295026322,
+    "lon": -40.73598325676952,
+    "fullTitle": "Parecer técnico 007-2022 - Levi da Silva Campos"
+  },
+  {
+    "id": 373,
+    "number": "008",
+    "year": "2022",
+    "requester": "Sigmar Miertschink",
+    "lat": -20.032506209815057,
+    "lon": -40.74155551368192,
+    "fullTitle": "Parecer técnico 008-2022 - Sigmar Miertschink"
+  },
+  {
+    "id": 374,
+    "number": "010",
+    "year": "2022",
+    "requester": "Evaninha Vesper Lemke",
+    "lat": -20.069781880503182,
+    "lon": -40.719630219690394,
+    "fullTitle": "Parecer técnico 010-2022 -Evaninha Vesper Lemke"
+  },
+  {
+    "id": 375,
+    "number": "011",
+    "year": "2022",
+    "requester": "Cecília Blanck Fleger",
+    "lat": -20.027887983224666,
+    "lon": -40.74644707906245,
+    "fullTitle": "Parecer técnico 011-2022 - Cecília Blanck Fleger"
+  },
+  {
+    "id": 376,
+    "number": "012",
+    "year": "2022",
+    "requester": "Dalira Timm Jastrow - incendio estrutural",
+    "lat": -20.030173594338326,
+    "lon": -40.863864106489686,
+    "fullTitle": "Parecer técnico 012-2022 - Dalira Timm Jastrow - incendio estrutural"
+  },
+  {
+    "id": 377,
+    "number": "013",
+    "year": "2022",
+    "requester": "Selma Brandt Hackbart",
+    "lat": -19.995498237672255,
+    "lon": -40.807198809809954,
+    "fullTitle": "Parecer técnico 013-2022 - Selma Brandt Hackbart"
+  },
+  {
+    "id": 378,
+    "number": "014",
+    "year": "2022",
+    "requester": "Melinda Schereder",
+    "lat": -20.00978581401861,
+    "lon": -40.850347480691426,
+    "fullTitle": "Parecer técnico 014-2022 -Melinda Schereder"
+  },
+  {
+    "id": 379,
+    "number": "015",
+    "year": "2022",
+    "requester": "Savio Maria Ricardo",
+    "lat": -20.03971634923555,
+    "lon": -40.75147092463724,
+    "fullTitle": "Parecer técnico 015-2022 - Savio Maria Ricardo"
+  },
+  {
+    "id": 380,
+    "number": "016",
+    "year": "2022",
+    "requester": "Reginaldo Davel",
+    "lat": -20.07184804410882,
+    "lon": -40.86700200632721,
+    "fullTitle": "Parecer técnico 016-2022 - Reginaldo Davel"
+  },
+  {
+    "id": 381,
+    "number": "017",
+    "year": "2022",
+    "requester": "Secretaria de Educação - creche",
+    "lat": -20.03038286949447,
+    "lon": -40.73870193460197,
+    "fullTitle": "Parecer técnico 017-2022 - Secretaria de Educação - creche"
+  },
+  {
+    "id": 382,
+    "number": "018",
+    "year": "2022",
+    "requester": "Rafael Tadeu Molino Moreira",
+    "lat": -20.035582855373367,
+    "lon": -40.74686561365044,
+    "fullTitle": "Parecer técnico 018-2022 - Rafael Tadeu Molino Moreira"
+  },
+  {
+    "id": 383,
+    "number": "019",
+    "year": "2022",
+    "requester": "Edson Stieg",
+    "lat": -20.02095330071023,
+    "lon": -40.765178792450875,
+    "fullTitle": "Parecer técnico 019-2022 - Edson Stieg"
+  },
+  {
+    "id": 384,
+    "number": "020",
+    "year": "2022",
+    "requester": "Josias Schulz",
+    "lat": -20.096125731184717,
+    "lon": -40.6752209174828,
+    "fullTitle": "Parecer técnico 020-2022 - Josias Schulz"
+  },
+  {
+    "id": 385,
+    "number": "021",
+    "year": "2022",
+    "requester": "Jefferson Carlos Litke",
+    "lat": -20.033965857152186,
+    "lon": -40.737860166226675,
+    "fullTitle": "Parecer técnico 021-2022 - Jefferson Carlos Litke"
+  },
+  {
+    "id": 386,
+    "number": "023",
+    "year": "2022",
+    "requester": "IBREJETIBÁ",
+    "lat": -20.01441431607608,
+    "lon": -40.74775956678973,
+    "fullTitle": "Parecer técnico 023-2022 - IBREJETIBÁ"
+  },
+  {
+    "id": 387,
+    "number": "024",
+    "year": "2022",
+    "requester": "Securb - talude em Belém",
+    "lat": -20.050424003296058,
+    "lon": -40.7144403968181,
+    "fullTitle": "Parecer técnico 024-2022 - Securb - talude em Belém"
+  },
+  {
+    "id": 388,
+    "number": "025",
+    "year": "2022",
+    "requester": "Rafael Tadeu Molino Moreira - Pousada Paraíso",
+    "lat": -20.023141287218245,
+    "lon": -40.72154108001568,
+    "fullTitle": "Parecer técnico 025-2022 - Rafael Tadeu Molino Moreira - Pousada Paraíso"
+  },
+  {
+    "id": 389,
+    "number": "027",
+    "year": "2022",
+    "requester": "Adriana Oliveira de Jesus de Figueiredo",
+    "lat": -20.009614292868672,
+    "lon": -40.74570063953412,
+    "fullTitle": "Parecer técnico 027-2022 - Adriana Oliveira de Jesus de Figueiredo"
+  },
+  {
+    "id": 390,
+    "number": "028",
+    "year": "2022",
+    "requester": "Luis Carlos Morate Oliveira",
+    "lat": -20.129125249698028,
+    "lon": -40.79506077259876,
+    "fullTitle": "Parecer técnico 028-2022 - Luis Carlos Morate Oliveira"
+  },
+  {
+    "id": 391,
+    "number": "029",
+    "year": "2022",
+    "requester": "Erlinda Beherende",
+    "lat": -20.129125249698028,
+    "lon": -40.79506077259876,
+    "fullTitle": "Parecer técnico 029-2022 - Erlinda Beherende"
+  },
+  {
+    "id": 392,
+    "number": "030",
+    "year": "2022",
+    "requester": "Marilete Stein Schneider",
+    "lat": -20.000878610255835,
+    "lon": -40.74078680982366,
+    "fullTitle": "Parecer técnico 030-2022 - Marilete Stein Schneider"
+  },
+  {
+    "id": 393,
+    "number": "033",
+    "year": "2022",
+    "requester": "José Lopes da Silva",
+    "lat": -20.009169184682825,
+    "lon": -40.744942932768495,
+    "fullTitle": "Parecer técnico 033-2022 - José Lopes da Silva"
+  },
+  {
+    "id": 394,
+    "number": "035",
+    "year": "2022",
+    "requester": "Vereador Rogério Schereder",
+    "lat": -19.995756305928285,
+    "lon": -40.7338176020944,
+    "fullTitle": "Parecer técnico 035-2022 - Vereador Rogério Schereder"
+  },
+  {
+    "id": 395,
+    "number": "036",
+    "year": "2022",
+    "requester": "Ouvidoria",
+    "lat": -20.024677411772956,
+    "lon": -40.74398296620698,
+    "fullTitle": "Parecer técnico 036-2022 - Ouvidoria"
+  },
+  {
+    "id": 396,
+    "number": "040",
+    "year": "2022",
+    "requester": "Ouvidoria - Carolina Morais Lima",
+    "lat": -19.99545300886068,
+    "lon": -40.733434139354756,
+    "fullTitle": "Parecer técnico 040-2022 - Ouvidoria - Carolina Morais Lima"
+  },
+  {
+    "id": 397,
+    "number": "041",
+    "year": "2022",
+    "requester": "Raiane Soares de sá Groner",
+    "lat": -20.029485004260383,
+    "lon": -40.760839220887156,
+    "fullTitle": "Parecer técnico 041-2022 - Raiane Soares de sá Groner"
+  },
+  {
+    "id": 398,
+    "number": "042",
+    "year": "2022",
+    "requester": "Leandro Reinke",
+    "lat": -20.03458448351812,
+    "lon": -40.73832749630419,
+    "fullTitle": "Parecer técnico 042-2022 - Leandro Reinke"
+  },
+  {
+    "id": 399,
+    "number": "043",
+    "year": "2022",
+    "requester": "Ana Regina Bromerchenkel",
+    "lat": -20.007577710330448,
+    "lon": -40.74538821802773,
+    "fullTitle": "Parecer técnico 043-2022 - Ana Regina Bromerchenkel"
+  },
+  {
+    "id": 400,
+    "number": "044",
+    "year": "2022",
+    "requester": "Gilberto Stein Junior",
+    "lat": -20.007440956859703,
+    "lon": -40.74549689933028,
+    "fullTitle": "Parecer técnico 044-2022 - Gilberto Stein Junior"
+  },
+  {
+    "id": 401,
+    "number": "045",
+    "year": "2022",
+    "requester": "Dasio Jose Thom",
+    "lat": -20.02683799637374,
+    "lon": -40.67871780911517,
+    "fullTitle": "Parecer técnico 045-2022 - Dasio Jose Thom"
+  },
+  {
+    "id": 402,
+    "number": "048",
+    "year": "2022",
+    "requester": "Ouvidoria Diselda Bellardt Cabral",
+    "lat": -20.024660499257152,
+    "lon": -40.744003328970464,
+    "fullTitle": "Parecer técnico 048-2022 -Ouvidoria Diselda Bellardt Cabral"
+  },
+  {
+    "id": 403,
+    "number": "051",
+    "year": "2022",
+    "requester": "árvore -Siegmund Berger",
+    "lat": -20.16439204475631,
+    "lon": -40.96469442129136,
+    "fullTitle": "Parecer Técnico 051-2022 - árvore -Siegmund Berger"
+  },
+  {
+    "id": 404,
+    "number": "002",
+    "year": "2023",
+    "requester": "Parecer   - Elza Maria da Silva",
+    "lat": -20.03928014362854,
+    "lon": -40.751733731304405,
+    "fullTitle": "Parecer  002-2023 - Elza Maria da Silva"
+  },
+  {
+    "id": 405,
+    "number": "003",
+    "year": "2023",
+    "requester": "Parecer   - Adriana Carla M da Silva Schoenrock",
+    "lat": -20.03789293904248,
+    "lon": -40.7513360050069,
+    "fullTitle": "Parecer  003-2023 - Adriana Carla M da Silva Schoenrock"
+  },
+  {
+    "id": 406,
+    "number": "005",
+    "year": "2023",
+    "requester": "Parecer   - Lezindo Hartwig",
+    "lat": -20.066857544458387,
+    "lon": -40.836389319949184,
+    "fullTitle": "Parecer  005-2023 - Lezindo Hartwig"
+  },
+  {
+    "id": 407,
+    "number": "006",
+    "year": "2023",
+    "requester": "Parecer   - Mickaelly F. dos Passos Pansini",
+    "lat": -20.025413560527078,
+    "lon": -40.74353230909148,
+    "fullTitle": "Parecer  006-2023 - Mickaelly F. dos Passos Pansini"
+  },
+  {
+    "id": 408,
+    "number": "007",
+    "year": "2023",
+    "requester": "Parecer   -Valdemiro Haese",
+    "lat": -19.997764960862632,
+    "lon": -40.742513686763466,
+    "fullTitle": "Parecer  007-2023 -Valdemiro Haese"
+  },
+  {
+    "id": 409,
+    "number": "008",
+    "year": "2023",
+    "requester": "Parecer   - Izautina Burtzlaff",
+    "lat": -20.01993863249597,
+    "lon": -40.746348755840046,
+    "fullTitle": "Parecer  008-2023 - Izautina Burtzlaff"
+  },
+  {
+    "id": 410,
+    "number": "009",
+    "year": "2023",
+    "requester": "Parecer   - Darcio Lorenco Falqueto Junior",
+    "lat": -20.066489910235727,
+    "lon": -40.84116168522366,
+    "fullTitle": "Parecer  009-2023 - Darcio Lorenco Falqueto Junior"
+  },
+  {
+    "id": 411,
+    "number": "012",
+    "year": "2023",
+    "requester": "Parecer   - Solimar Haese",
+    "lat": -20.16108084164896,
+    "lon": -40.95544164713479,
+    "fullTitle": "Parecer  012-2023 - Solimar Haese"
+  },
+  {
+    "id": 412,
+    "number": "013",
+    "year": "2023",
+    "requester": "Parecer   - Daniela Wolfgran",
+    "lat": -19.995312950604415,
+    "lon": -40.75655432724647,
+    "fullTitle": "Parecer  013-2023 - Daniela Wolfgran"
+  },
+  {
+    "id": 413,
+    "number": "014",
+    "year": "2023",
+    "requester": "Parecer   - Ouvidoria - Corte de solo em S J Garrafão - Marieta",
+    "lat": -20.149476470784467,
+    "lon": -40.95338035432361,
+    "fullTitle": "Parecer  014-2023 - Ouvidoria - Corte de solo em S J Garrafão - Marieta"
+  },
+  {
+    "id": 414,
+    "number": "015",
+    "year": "2023",
+    "requester": "Parecer   - Ouvidrioa - Risco Coqueiro",
+    "lat": -20.027755570625928,
+    "lon": -40.72082056353959,
+    "fullTitle": "Parecer  015-2023 - Ouvidrioa - Risco Coqueiro"
+  },
+  {
+    "id": 415,
+    "number": "018",
+    "year": "2023",
+    "requester": "Parecer   -Secretaria de serviços urbanos",
+    "lat": -20.07096421268531,
+    "lon": -40.84018475976912,
+    "fullTitle": "Parecer  018-2023 -Secretaria de serviços urbanos"
+  },
+  {
+    "id": 416,
+    "number": "019",
+    "year": "2023",
+    "requester": "Parecer   - Bernado Jeckel Junior",
+    "lat": -20.007798400632314,
+    "lon": -40.74529623103813,
+    "fullTitle": "Parecer  019-2023 - Bernado Jeckel Junior"
+  },
+  {
+    "id": 417,
+    "number": "020",
+    "year": "2023",
+    "requester": "Parecer   - Árvore - Joel Schneider",
+    "lat": -20.007180019248295,
+    "lon": -40.74486040748306,
+    "fullTitle": "Parecer  020-2023 - Árvore - Joel Schneider"
+  },
+  {
+    "id": 418,
+    "number": "021",
+    "year": "2023",
+    "requester": "Parecer   - Ageni Kuhn Thomaz Bullerjahn",
+    "lat": -19.99720627159473,
+    "lon": -40.738510282937106,
+    "fullTitle": "Parecer  021-2023 - Ageni Kuhn Thomaz Bullerjahn"
+  },
+  {
+    "id": 419,
+    "number": "026",
+    "year": "2023",
+    "requester": "Parecer   - Evaldo Schneider",
+    "lat": -20.084020323857835,
+    "lon": -40.746504687023666,
+    "fullTitle": "Parecer  026-2023 - Evaldo Schneider"
+  },
+  {
+    "id": 420,
+    "number": "030",
+    "year": "2023",
+    "requester": "Parecer  - CTL ENGENHARIA LTDA",
+    "lat": -20.031740120680688,
+    "lon": -40.74715012047368,
+    "fullTitle": "Parecer 030-2023 - CTL ENGENHARIA LTDA"
+  },
+  {
+    "id": 421,
+    "number": "034",
+    "year": "2023",
+    "requester": "Parecer  - Ivania Gaede",
+    "lat": -20.151632640300715,
+    "lon": -40.713611922853914,
+    "fullTitle": "Parecer 034-2023 - Ivania Gaede"
+  },
+  {
+    "id": 422,
+    "number": "036",
+    "year": "2023",
+    "requester": "Parecer  - Vera Nilza Lopes de Oliveira",
+    "lat": -20.089995943554367,
+    "lon": -40.81485331688605,
+    "fullTitle": "Parecer 036-2023 - Vera Nilza Lopes de Oliveira"
+  },
+  {
+    "id": 423,
+    "number": "038",
+    "year": "2023",
+    "requester": "Parecer  - Pommer Comércio Internacional LTDA ME",
+    "lat": -20.068393742763007,
+    "lon": -40.848208747827925,
+    "fullTitle": "Parecer 038-2023 - Pommer Comércio Internacional LTDA ME"
+  },
+  {
+    "id": 424,
+    "number": "039",
+    "year": "2023",
+    "requester": "Parecer  - Vera Lucia Gomes Silva",
+    "lat": -20.15044503381573,
+    "lon": -40.83156852511591,
+    "fullTitle": "Parecer 039-2023 - Vera Lucia Gomes Silva"
+  },
+  {
+    "id": 425,
+    "number": "040",
+    "year": "2023",
+    "requester": "Parecer  - Clebson Berger",
+    "lat": -20.068658587707084,
+    "lon": -40.82720435030775,
+    "fullTitle": "Parecer 040-2023 - Clebson Berger"
+  },
+  {
+    "id": 426,
+    "number": "043",
+    "year": "2023",
+    "requester": "Parecer - Alcides Pimentel",
+    "lat": -20.053339555873745,
+    "lon": -40.691080751955525,
+    "fullTitle": "Parecer 043-2023- Alcides Pimentel"
+  },
+  {
+    "id": 427,
+    "number": "044",
+    "year": "2023",
+    "requester": "Parecer - Sinelza Cardoso de Oliveira",
+    "lat": -20.043762485638133,
+    "lon": -40.796576289567774,
+    "fullTitle": "Parecer 044-2023- Sinelza Cardoso de Oliveira"
+  },
+  {
+    "id": 428,
+    "number": "045",
+    "year": "2023",
+    "requester": "Parecer - Lenita Rosa da Silva Rodrigues",
+    "lat": -20.08611875526383,
+    "lon": -40.754405212012905,
+    "fullTitle": "Parecer 045-2023- Lenita Rosa da Silva Rodrigues"
+  },
+  {
+    "id": 429,
+    "number": "047",
+    "year": "2023",
+    "requester": "Parecer - Raiana Hoffman",
+    "lat": -20.007563142552886,
+    "lon": -40.745399812195394,
+    "fullTitle": "Parecer 047-2023- Raiana Hoffman"
+  },
+  {
+    "id": 430,
+    "number": "048",
+    "year": "2023",
+    "requester": "Parecer - Igor Kerchkoff",
+    "lat": -20.016001762433163,
+    "lon": -40.74800648235439,
+    "fullTitle": "Parecer 048-2023- Igor Kerchkoff"
+  },
+  {
+    "id": 431,
+    "number": "049",
+    "year": "2023",
+    "requester": "Parecer - Silvio Wutke",
+    "lat": -20.025052265833057,
+    "lon": -40.74261077031518,
+    "fullTitle": "Parecer 049-2023- Silvio Wutke"
+  },
+  {
+    "id": 432,
+    "number": "050",
+    "year": "2023",
+    "requester": "Parecer - Edson Stieg",
+    "lat": -20.069618175104416,
+    "lon": -40.84495018308216,
+    "fullTitle": "Parecer 050-2023- Edson Stieg"
+  },
+  {
+    "id": 433,
+    "number": "051",
+    "year": "2023",
+    "requester": "Parecer - Jose Lopes da Silva",
+    "lat": -20.009169184682825,
+    "lon": -40.744942932768495,
+    "fullTitle": "Parecer 051-2023- Jose Lopes da Silva"
+  },
+  {
+    "id": 434,
+    "number": "052",
+    "year": "2023",
+    "requester": "Parecer - Ouvidoria - escola Franz Schneider",
+    "lat": -20.03868961916243,
+    "lon": -40.85467704428666,
+    "fullTitle": "Parecer 052-2023- Ouvidoria - escola Franz Schneider"
+  },
+  {
+    "id": 435,
+    "number": "053",
+    "year": "2023",
+    "requester": "Parecer -Luzia Rossmann",
+    "lat": -20.009121529101428,
+    "lon": -40.744929600994006,
+    "fullTitle": "Parecer 053-2023-Luzia Rossmann"
+  },
+  {
+    "id": 436,
+    "number": "054",
+    "year": "2023",
+    "requester": "Parecer - vistoria em muro ladeira 24 de junho",
+    "lat": -20.009555654800113,
+    "lon": -40.74589418892629,
+    "fullTitle": "Parecer 054-2023- vistoria em muro ladeira 24 de junho"
+  },
+  {
+    "id": 437,
+    "number": "055",
+    "year": "2023",
+    "requester": "Parecer - Marcio Guerra",
+    "lat": -20.09548992402669,
+    "lon": -40.77794489502517,
+    "fullTitle": "Parecer 055-2023- Marcio Guerra"
+  },
+  {
+    "id": 438,
+    "number": "056",
+    "year": "2023",
+    "requester": "Parecer  - Antônio Carlos de Moura e Silva",
+    "lat": -20.033727505906093,
+    "lon": -40.678024576621254,
+    "fullTitle": "Parecer 056-2023 - Antônio Carlos de Moura e Silva"
+  },
+  {
+    "id": 439,
+    "number": "057",
+    "year": "2023",
+    "requester": "Parecer  -Marilene Silva de Souza",
+    "lat": -20.003329237327428,
+    "lon": -40.7288575319382,
+    "fullTitle": "Parecer 057-2023 -Marilene Silva de Souza"
+  },
+  {
+    "id": 440,
+    "number": "058",
+    "year": "2023",
+    "requester": "Parecer - vistoria em São sebastiao do meio- Fabiana Berger",
+    "lat": -20.039256004261325,
+    "lon": -40.77252685297188,
+    "fullTitle": "Parecer 058-2023- vistoria em São sebastiao do meio- Fabiana Berger"
+  },
+  {
+    "id": 441,
+    "number": "059",
+    "year": "2023",
+    "requester": "Parecer - Martin Schulz",
+    "lat": -20.025606957072252,
+    "lon": -40.75321656270125,
+    "fullTitle": "Parecer 059-2023- Martin Schulz"
+  },
+  {
+    "id": 442,
+    "number": "062",
+    "year": "2023",
+    "requester": "Parecer -Glaucir Maria Braga Delpupo",
+    "lat": -19.944124021441453,
+    "lon": -43.69845020500186,
+    "fullTitle": "Parecer 062-2023-Glaucir Maria Braga Delpupo"
+  },
+  {
+    "id": 443,
+    "number": "063",
+    "year": "2023",
+    "requester": "Parecer -Deolinda Kosanke Zumach",
+    "lat": -20.059431580916332,
+    "lon": -40.71056364755034,
+    "fullTitle": "Parecer 063-2023-Deolinda Kosanke Zumach"
+  },
+  {
+    "id": 444,
+    "number": "065",
+    "year": "2023",
+    "requester": "Parecer - Denúncia Rio Possmoser",
+    "lat": -20.06703151684558,
+    "lon": -40.83564222175448,
+    "fullTitle": "Parecer 065-2023- Denúncia Rio Possmoser"
+  },
+  {
+    "id": 445,
+    "number": "066",
+    "year": "2023",
+    "requester": "Parecer -Laurita Boone Ponath",
+    "lat": -20.06649024389701,
+    "lon": -40.83584337431248,
+    "fullTitle": "Parecer 066-2023-Laurita Boone Ponath"
+  },
+  {
+    "id": 446,
+    "number": "01",
+    "year": "2024",
+    "requester": "Parecer  - Mauro Antonio Crocê",
+    "lat": -20.027574416068195,
+    "lon": -40.753491669902,
+    "fullTitle": "Parecer 01-2024 - Mauro Antonio Crocê"
+  },
+  {
+    "id": 447,
+    "number": "02",
+    "year": "2024",
+    "requester": "Parecer  - Atilas Radinz Kuster",
+    "lat": -19.99489491586621,
+    "lon": -40.73257543729249,
+    "fullTitle": "Parecer 02-2024 - Atilas Radinz Kuster"
+  },
+  {
+    "id": 448,
+    "number": "029",
+    "year": "2024",
+    "requester": "Parecer  - IBREJETIBÁ",
+    "lat": -20.02393846350003,
+    "lon": -40.721460776386344,
+    "fullTitle": "Parecer 029-2024 - IBREJETIBÁ"
+  },
+  {
+    "id": 449,
+    "number": "029",
+    "year": "2024",
+    "requester": "Parecer  - IBREJETIBÁ",
+    "lat": -20.02393846350003,
+    "lon": -40.721460776386344,
+    "fullTitle": "Parecer 029-2024 - IBREJETIBÁ"
+  },
+  {
+    "id": 450,
+    "number": "03",
+    "year": "2024",
+    "requester": "Parecer  - Carlos Alberto Barth",
+    "lat": -20.039056789424915,
+    "lon": -40.749986509885865,
+    "fullTitle": "Parecer 03-2024 - Carlos Alberto Barth"
+  },
+  {
+    "id": 451,
+    "number": "039",
+    "year": "2024",
+    "requester": "Parecer  -Rozangêla Braga Orcutt",
+    "lat": -20.00631560924683,
+    "lon": -40.85911778244403,
+    "fullTitle": "Parecer 039-2024 -Rozangêla Braga Orcutt"
+  },
+  {
+    "id": 452,
+    "number": "040",
+    "year": "2024",
+    "requester": "Parecer  -Davi ott",
+    "lat": -19.949384117338163,
+    "lon": -43.77407921421247,
+    "fullTitle": "Parecer 040-2024 -Davi ott"
+  },
+  {
+    "id": 453,
+    "number": "05",
+    "year": "2024",
+    "requester": "Parecer  - Lucia Reisen Reinke",
+    "lat": -20.03458448351812,
+    "lon": -40.73832749630419,
+    "fullTitle": "Parecer 05-2024 - Lucia Reisen Reinke"
+  },
+  {
+    "id": 454,
+    "number": "06",
+    "year": "2024",
+    "requester": "Parecer  - Lucia Reisen Reinke - construção do muro",
+    "lat": -20.03458448351812,
+    "lon": -40.73832749630419,
+    "fullTitle": "Parecer 06-2024 - Lucia Reisen Reinke - construção do muro"
+  },
+  {
+    "id": 455,
+    "number": "07",
+    "year": "2024",
+    "requester": "Parecer  - Rio - Alto São Sebastião - Extrafruti",
+    "lat": -20.011054983821357,
+    "lon": -40.83689706971774,
+    "fullTitle": "Parecer 07-2024 - Rio - Alto São Sebastião - Extrafruti"
+  },
+  {
+    "id": 456,
+    "number": "08",
+    "year": "2024",
+    "requester": "Parecer  - Vicente Saibel",
+    "lat": -19.99489491586621,
+    "lon": -40.73257543729249,
+    "fullTitle": "Parecer 08-2024 - Vicente Saibel"
+  },
+  {
+    "id": 457,
+    "number": "11",
+    "year": "2024",
+    "requester": "Parecer  - Marciana De Souza - Aluguel Social",
+    "lat": -20.004472909889596,
+    "lon": -40.8100841729409,
+    "fullTitle": "Parecer 11-2024 - Marciana De Souza - Aluguel Social"
+  },
+  {
+    "id": 458,
+    "number": "12",
+    "year": "2024",
+    "requester": "Parecer  - Rogério Schereder",
+    "lat": -20.000524818749533,
+    "lon": -40.71871560793604,
+    "fullTitle": "Parecer 12-2024 - Rogério Schereder"
+  },
+  {
+    "id": 459,
+    "number": "13",
+    "year": "2024",
+    "requester": "Parecer  -João Batista Vieira Lopes",
+    "lat": -20.00971709762814,
+    "lon": -40.74591097470951,
+    "fullTitle": "Parecer 13-2024 -João Batista Vieira Lopes"
+  },
+  {
+    "id": 460,
+    "number": "14",
+    "year": "2024",
+    "requester": "Parecer  -Imóvel Defesa Civil SMJ",
+    "lat": -20.031061304743673,
+    "lon": -40.74050042011698,
+    "fullTitle": "Parecer 14-2024 -Imóvel Defesa Civil SMJ"
+  },
+  {
+    "id": 461,
+    "number": "17",
+    "year": "2024",
+    "requester": "Parecer  - Marcenias Guilherme",
+    "lat": -20.067034176325887,
+    "lon": -40.838513701238604,
+    "fullTitle": "Parecer 17-2024 - Marcenias Guilherme"
+  },
+  {
+    "id": 462,
+    "number": "18",
+    "year": "2024",
+    "requester": "Parecer  - Cooperativa Educional Centro Serrana",
+    "lat": -20.02960270398604,
+    "lon": -40.74738991321398,
+    "fullTitle": "Parecer 18-2024 - Cooperativa Educional Centro Serrana"
+  },
+  {
+    "id": 463,
+    "number": "19",
+    "year": "2024",
+    "requester": "Parecer  - Moacir Ribeiro dos Santos",
+    "lat": -20.00470892603741,
+    "lon": -40.71761280102921,
+    "fullTitle": "Parecer 19-2024 - Moacir Ribeiro dos Santos"
+  },
+  {
+    "id": 464,
+    "number": "21",
+    "year": "2024",
+    "requester": "Parecer  - Edno Alves da Cruz",
+    "lat": -19.99874369244442,
+    "lon": -40.7419670418361,
+    "fullTitle": "Parecer 21-2024 - Edno Alves da Cruz"
+  },
+  {
+    "id": 465,
+    "number": "22",
+    "year": "2024",
+    "requester": "Parecer  - Creche vila de Jetibá",
+    "lat": -20.019096289543942,
+    "lon": -40.760255108067646,
+    "fullTitle": "Parecer 22-2024 - Creche vila de Jetibá"
+  },
+  {
+    "id": 466,
+    "number": "23",
+    "year": "2024",
+    "requester": "Parecer  - Célio de Freitas",
+    "lat": -20.00860724338289,
+    "lon": -40.74486658842846,
+    "fullTitle": "Parecer 23-2024 - Célio de Freitas"
+  },
+  {
+    "id": 467,
+    "number": "24",
+    "year": "2024",
+    "requester": "Parecer  - Caixa secas Rio Posmouser",
+    "lat": -20.07096421268531,
+    "lon": -40.84018475976912,
+    "fullTitle": "Parecer 24-2024 - Caixa secas Rio Posmouser"
+  },
+  {
+    "id": 468,
+    "number": "26",
+    "year": "2024",
+    "requester": "Parecer  - Schirlei Brandemburg",
+    "lat": -20.048529214889825,
+    "lon": -40.754579825879055,
+    "fullTitle": "Parecer 26-2024 - Schirlei Brandemburg"
+  },
+  {
+    "id": 469,
+    "number": "27",
+    "year": "2024",
+    "requester": "Parecer  - Ouvidoria",
+    "lat": -20.06720293455941,
+    "lon": -40.84312359699429,
+    "fullTitle": "Parecer 27-2024 - Ouvidoria"
+  },
+  {
+    "id": 470,
+    "number": "33",
+    "year": "2024",
+    "requester": "Parecer  -Douglas de Souza Soares - Regularização Fundiária",
+    "lat": -20.07096421268531,
+    "lon": -40.84018475976912,
+    "fullTitle": "Parecer 33-2024 -Douglas de Souza Soares - Regularização Fundiária"
+  },
+  {
+    "id": 471,
+    "number": "36",
+    "year": "2024",
+    "requester": "Parecer  -Construtora Mattedi LTDA",
+    "lat": -20.06707956550672,
+    "lon": -40.83863105375569,
+    "fullTitle": "Parecer 36-2024 -Construtora Mattedi LTDA"
+  },
+  {
+    "id": 472,
+    "number": "38",
+    "year": "2024",
+    "requester": "Parecer  - Cleiton Aguiar de Oliveira Souza",
+    "lat": -20.009640107832556,
+    "lon": -40.74585851783955,
+    "fullTitle": "Parecer 38-2024 - Cleiton Aguiar de Oliveira Souza"
+  },
+  {
+    "id": 473,
+    "number": "41",
+    "year": "2024",
+    "requester": "Parecer  - Edson Maquinas LTDA - EPP",
+    "lat": -19.999473485268965,
+    "lon": -40.740277870255696,
+    "fullTitle": "Parecer 41-2024 - Edson Maquinas LTDA - EPP"
+  },
+  {
+    "id": 474,
+    "number": "42",
+    "year": "2024",
+    "requester": "Parecer  -Construtora Mattedi LTDA",
+    "lat": -20.06707956550672,
+    "lon": -40.83863105375569,
+    "fullTitle": "Parecer 42-2024 -Construtora Mattedi LTDA"
+  },
+  {
+    "id": 475,
+    "number": "43",
+    "year": "2024",
+    "requester": "Parecer  - Carlos Alberto Corona",
+    "lat": -20.038662525255955,
+    "lon": -40.729972263415405,
+    "fullTitle": "Parecer 43-2024 - Carlos Alberto Corona"
+  },
+  {
+    "id": 476,
+    "number": "45",
+    "year": "2024",
+    "requester": "Parecer  - Vandelino Doring",
+    "lat": -19.996786098882367,
+    "lon": -40.745844409819874,
+    "fullTitle": "Parecer 45-2024 - Vandelino Doring"
+  },
+  {
+    "id": 477,
+    "number": "47",
+    "year": "2024",
+    "requester": "Parecer  - Rosalina Lucia Herzog",
+    "lat": -20.022453334985947,
+    "lon": -40.746854699892026,
+    "fullTitle": "Parecer 47-2024 - Rosalina Lucia Herzog"
+  },
+  {
+    "id": 478,
+    "number": "48",
+    "year": "2024",
+    "requester": "Parecer  - Lecindo Herzog",
+    "lat": -20.022453334985947,
+    "lon": -40.746854699892026,
+    "fullTitle": "Parecer 48-2024 - Lecindo Herzog"
+  },
+  {
+    "id": 479,
+    "number": "49",
+    "year": "2024",
+    "requester": "Parecer  - Sidney Boone",
+    "lat": -20.06707861752594,
+    "lon": -40.843203691063216,
+    "fullTitle": "Parecer 49-2024 - Sidney Boone"
+  },
+  {
+    "id": 480,
+    "number": "02",
+    "year": "2025",
+    "requester": "Parecer  - Katiele Blank Nitz",
+    "lat": -20.022453334985947,
+    "lon": -40.746854699892026,
+    "fullTitle": "Parecer 02-2025 - Katiele Blank Nitz"
+  },
+  {
+    "id": 481,
+    "number": "03",
+    "year": "2025",
+    "requester": "Parecer  - Maria Aparecida Pires Conradt",
+    "lat": -20.09599904392105,
+    "lon": -40.739698617543674,
+    "fullTitle": "Parecer 03-2025 - Maria Aparecida Pires Conradt"
+  },
+  {
+    "id": 482,
+    "number": "04",
+    "year": "2025",
+    "requester": "Parecer  - Edileia Schulz",
+    "lat": -20.043582111561307,
+    "lon": -40.757670031793545,
+    "fullTitle": "Parecer 04-2025 - Edileia Schulz"
+  },
+  {
+    "id": 483,
+    "number": "05",
+    "year": "2024",
+    "requester": "Parecer  - Dorio Hammer",
+    "lat": -20.025033029348123,
+    "lon": -40.75861924577186,
+    "fullTitle": "Parecer 05-2024 - Dorio Hammer"
+  },
+  {
+    "id": 484,
+    "number": "06",
+    "year": "2025",
+    "requester": "Parecer  - Francisco Henrique Ahnert",
+    "lat": -20.00784474987835,
+    "lon": -40.7452404526622,
+    "fullTitle": "Parecer 06-2025 - Francisco Henrique Ahnert"
+  },
+  {
+    "id": 485,
+    "number": "07",
+    "year": "2025",
+    "requester": "Parecer  - Rosangela Braga",
+    "lat": -20.00631193180096,
+    "lon": -40.85921855770119,
+    "fullTitle": "Parecer 07-2025 - Rosangela Braga"
+  },
+  {
+    "id": 486,
+    "number": "08",
+    "year": "2025",
+    "requester": "Parecer  - Ademar Kuster",
+    "lat": -20.070131980600237,
+    "lon": -40.79181638790848,
+    "fullTitle": "Parecer 08-2025 - Ademar Kuster"
+  },
+  {
+    "id": 487,
+    "number": "09",
+    "year": "2025",
+    "requester": "Parecer  - Sonia Butzlaff",
+    "lat": -20.02622516471545,
+    "lon": -40.75646354039532,
+    "fullTitle": "Parecer 09-2025 - Sonia Butzlaff"
+  },
+  {
+    "id": 488,
+    "number": "10",
+    "year": "2025",
+    "requester": "Parecer  - Ana Paula Barbosa da Silva",
+    "lat": -20.001028067938783,
+    "lon": -40.738362843915276,
+    "fullTitle": "Parecer 10-2025 - Ana Paula Barbosa da Silva"
+  },
+  {
+    "id": 489,
+    "number": "11",
+    "year": "2025",
+    "requester": "Parecer  - Secesportes - quadra de São João de Garrafão",
+    "lat": -20.150597243984883,
+    "lon": -40.958930672764374,
+    "fullTitle": "Parecer 11-2025 - Secesportes - quadra de São João de Garrafão"
+  },
+  {
+    "id": 490,
+    "number": "12",
+    "year": "2025",
+    "requester": "Parecer  - Ouvidoria - Camilo Vieira Mendonça",
+    "lat": -20.026423443125893,
+    "lon": -40.74461039957691,
+    "fullTitle": "Parecer 12-2025 - Ouvidoria - Camilo Vieira Mendonça"
+  },
+  {
+    "id": 491,
+    "number": "13",
+    "year": "2025",
+    "requester": "Parecer  - Cristilaine Bolis Marx",
+    "lat": -20.028144070820833,
+    "lon": -40.66532442229025,
+    "fullTitle": "Parecer 13-2025 - Cristilaine Bolis Marx"
+  },
+  {
+    "id": 492,
+    "number": "14",
+    "year": "2025",
+    "requester": "Parecer  - Avaliação para compra da Saude",
+    "lat": -20.100989655978626,
+    "lon": -40.79688897530601,
+    "fullTitle": "Parecer 14-2025 - Avaliação para compra da Saude"
+  },
+  {
+    "id": 493,
+    "number": "15",
+    "year": "2025",
+    "requester": "Parecer  - Jucélio Sec. Interior Vila Nass",
+    "lat": -20.123645152786207,
+    "lon": -40.69981194793855,
+    "fullTitle": "Parecer 15-2025 - Jucélio Sec. Interior Vila Nass"
+  },
+  {
+    "id": 494,
+    "number": "16",
+    "year": "2025",
+    "requester": "Parecer  - Sean Schuvanz Celestino",
+    "lat": -20.082111554878928,
+    "lon": -40.658565705701726,
+    "fullTitle": "Parecer 16-2025 - Sean Schuvanz Celestino"
+  },
+  {
+    "id": 495,
+    "number": "17",
+    "year": "2025",
+    "requester": "Parecer  - Solopamento -Rua Rolf Potratz",
+    "lat": -20.023096086427767,
+    "lon": -40.745130801549955,
+    "fullTitle": "Parecer 17-2025 - Solopamento -Rua Rolf Potratz"
+  },
+  {
+    "id": 496,
+    "number": "18",
+    "year": "2025",
+    "requester": "Parecer  - Elisangela Soave Passos de Carvalho",
+    "lat": -20.184149892537796,
+    "lon": -40.746056839714626,
+    "fullTitle": "Parecer 18-2025 - Elisangela Soave Passos de Carvalho"
+  },
+  {
+    "id": 497,
+    "number": "19",
+    "year": "2025",
+    "requester": "Parecer  - Evandro Hasse",
+    "lat": -20.049111150448702,
+    "lon": -40.75328623211916,
+    "fullTitle": "Parecer 19-2025 - Evandro Hasse"
+  },
+  {
+    "id": 498,
+    "number": "22",
+    "year": "2025",
+    "requester": "Parecer  - Vereador Ilimar Vesper",
+    "lat": -20.051196479895527,
+    "lon": -40.70492908032044,
+    "fullTitle": "Parecer 22-2025 - Vereador Ilimar Vesper"
+  },
+  {
+    "id": 499,
+    "number": "23",
+    "year": "2025",
+    "requester": "Parecer  - Vereadora Ana Paula",
+    "lat": -20.006103208297304,
+    "lon": -40.71714244741013,
+    "fullTitle": "Parecer 23-2025 - Vereadora Ana Paula"
+  },
+  {
+    "id": 500,
+    "number": "24",
+    "year": "2025",
+    "requester": "Parecer  - Thiago Wutke",
+    "lat": -70.0459270234457,
+    "lon": 146.22976916583303,
+    "fullTitle": "Parecer 24-2025 - Thiago Wutke"
+  },
+  {
+    "id": 501,
+    "number": "25",
+    "year": "2025",
+    "requester": "Parecer  - Rosinéia Maier Buss",
+    "lat": -20.02176015897287,
+    "lon": -40.68500316498245,
+    "fullTitle": "Parecer 25-2025 - Rosinéia Maier Buss"
+  },
+  {
+    "id": 502,
+    "number": "26",
+    "year": "2025",
+    "requester": "Parecer  - Orlandino Lopes Ferreira",
+    "lat": -19.993967844758938,
+    "lon": -40.74722800198022,
+    "fullTitle": "Parecer 26-2025 - Orlandino Lopes Ferreira"
+  },
+  {
+    "id": 503,
+    "number": "27",
+    "year": "2025",
+    "requester": "Parecer  - Rosangela Jorden Elizeu",
+    "lat": -20.122197300467292,
+    "lon": -40.6851778982603,
+    "fullTitle": "Parecer 27-2025 - Rosangela Jorden Elizeu"
+  },
+  {
+    "id": 504,
+    "number": "29",
+    "year": "2025",
+    "requester": "Parecer  - Regularização fundiária",
+    "lat": -20.018508405576537,
+    "lon": -40.758509118526476,
+    "fullTitle": "Parecer 29-2025 - Regularização fundiária"
+  },
+  {
+    "id": 505,
+    "number": "30",
+    "year": "2025",
+    "requester": "Parecer  - SECOBR - Vistoria em muro",
+    "lat": -20.03071835048541,
+    "lon": -40.74134044168795,
+    "fullTitle": "Parecer 30-2025 - SECOBR - Vistoria em muro"
+  },
+  {
+    "id": 506,
+    "number": "33",
+    "year": "2025",
+    "requester": "Parecer  - Sheila Gomes",
+    "lat": -20.003932033748807,
+    "lon": -40.72978384654902,
+    "fullTitle": "Parecer 33-2025 - Sheila Gomes"
+  },
+  {
+    "id": 507,
+    "number": "34",
+    "year": "2025",
+    "requester": "Parecer  - Samuel Loose",
+    "lat": -20.0186341738927,
+    "lon": -40.72308420352157,
+    "fullTitle": "Parecer 34-2025 - Samuel Loose"
+  },
+  {
+    "id": 508,
+    "number": "35",
+    "year": "2025",
+    "requester": "Parecer  - CRAS Edismar",
+    "lat": -20.017534511449025,
+    "lon": -40.74921809477964,
+    "fullTitle": "Parecer 35-2025 - CRAS Edismar"
+  },
+  {
+    "id": 509,
+    "number": "37",
+    "year": "2025",
+    "requester": "Parecer  - secretaria Interior - contorno belém",
+    "lat": -20.05273819266575,
+    "lon": -40.737544792361106,
+    "fullTitle": "Parecer 37-2025 - secretaria Interior - contorno belém"
+  },
+  {
+    "id": 510,
+    "number": "38",
+    "year": "2025",
+    "requester": "Parecer  - Elson Amorim",
+    "lat": -20.039099122503913,
+    "lon": -40.74994425155431,
+    "fullTitle": "Parecer 38-2025 - Elson Amorim"
+  },
+  {
+    "id": 511,
+    "number": "39",
+    "year": "2025",
+    "requester": "Parecer  - Evandro Ponath",
+    "lat": -20.039257885906434,
+    "lon": -40.75135419595475,
+    "fullTitle": "Parecer 39-2025 - Evandro Ponath"
+  },
+  {
+    "id": 512,
+    "number": "40",
+    "year": "2025",
+    "requester": "Parecer  -  Supressão de Árvore Prefeitura",
+    "lat": -20.047192803591233,
+    "lon": -40.748891516474814,
+    "fullTitle": "Parecer 40-2025 -  Supressão de Árvore Prefeitura"
+  },
+  {
+    "id": 513,
+    "number": "41",
+    "year": "2025",
+    "requester": "Parecer  - Esídio Tresmann",
+    "lat": -20.007788324960767,
+    "lon": -40.74171327211337,
+    "fullTitle": "Parecer 41-2025 - Esídio Tresmann"
+  },
+  {
+    "id": 514,
+    "number": "42",
+    "year": "2025",
+    "requester": "Parecer  - Fundo Cidades Córrego do Ouro 01",
+    "lat": -20.054934385186712,
+    "lon": -40.75088452536728,
+    "fullTitle": "Parecer 42-2025 - Fundo Cidades Córrego do Ouro 01"
+  },
+  {
+    "id": 515,
+    "number": "43",
+    "year": "2025",
+    "requester": "Parecer  - Fundo Cidades Rio das Pedras",
+    "lat": -20.054934385186712,
+    "lon": -40.75088452536728,
+    "fullTitle": "Parecer 43-2025 - Fundo Cidades Rio das Pedras"
+  },
+  {
+    "id": 516,
+    "number": "44",
+    "year": "2025",
+    "requester": "Parecer  - Paula Roberta de Oliveira",
+    "lat": -20.033280390638296,
+    "lon": -40.73940528935796,
+    "fullTitle": "Parecer 44-2025 - Paula Roberta de Oliveira"
+  },
+  {
+    "id": 517,
+    "number": "45",
+    "year": "2025",
+    "requester": "Parecer  - MPES - Transporte Escolar",
+    "lat": -20.11316096960957,
+    "lon": -40.68908328984745,
+    "fullTitle": "Parecer 45-2025 - MPES - Transporte Escolar"
+  },
+  {
+    "id": 518,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 48 - 2025 -  Adilson Jastrow",
+    "lat": -20.091968719435354,
+    "lon": -40.953387064963685,
+    "fullTitle": "Parecer 48 - 2025 -  Adilson Jastrow"
+  },
+  {
+    "id": 519,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 48 - 2025 -  Adilson Jastrow (2)",
+    "lat": -20.091968719435354,
+    "lon": -40.953387064963685,
+    "fullTitle": "Parecer 48 - 2025 -  Adilson Jastrow (2)"
+  },
+  {
+    "id": 520,
+    "number": "49",
+    "year": "2025",
+    "requester": "Parecer  - Fundo Cidades Córrego do Ouro 02",
+    "lat": -20.04471865008124,
+    "lon": -40.74895502132632,
+    "fullTitle": "Parecer 49-2025 - Fundo Cidades Córrego do Ouro 02"
+  },
+  {
+    "id": 521,
+    "number": "51",
+    "year": "2025",
+    "requester": "Parecer  - Gildo Gonçalves",
+    "lat": -20.09616344560559,
+    "lon": -40.878264687990225,
+    "fullTitle": "Parecer 51-2025 - Gildo Gonçalves"
+  },
+  {
+    "id": 522,
+    "number": "52",
+    "year": "2025",
+    "requester": "Parecer  - Vereador Ilimar Vesper Pousada das Águas",
+    "lat": -20.055110187142887,
+    "lon": -40.75289753754319,
+    "fullTitle": "Parecer 52-2025 - Vereador Ilimar Vesper Pousada das Águas"
+  },
+  {
+    "id": 523,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 53 - 2025 -  Itamar Schwanz",
+    "lat": -20.091968719435354,
+    "lon": -40.953387064963685,
+    "fullTitle": "Parecer 53 - 2025 -  Itamar Schwanz"
+  },
+  {
+    "id": 524,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 53 - 2025 -  Itamar Schwanz (2)",
+    "lat": -20.02601996236098,
+    "lon": -40.75370907255507,
+    "fullTitle": "Parecer 53 - 2025 -  Itamar Schwanz (2)"
+  },
+  {
+    "id": 525,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 54 - 2025 - Aristom Gomes Ferreira",
+    "lat": -20.026497659530246,
+    "lon": -40.74620796709614,
+    "fullTitle": "Parecer 54 - 2025 - Aristom Gomes Ferreira"
+  },
+  {
+    "id": 526,
+    "number": "55",
+    "year": "2025",
+    "requester": "Parecer  - Vereador Ilimar Vesper - Anderson ilha berger",
+    "lat": -20.073813494874976,
+    "lon": -40.76993629246361,
+    "fullTitle": "Parecer 55-2025 - Vereador Ilimar Vesper - Anderson ilha berger"
+  },
+  {
+    "id": 527,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 57 - 2025 - Evandro Fernandes da Silva",
+    "lat": -20.01012470839425,
+    "lon": -40.76348574975288,
+    "fullTitle": "Parecer 57 - 2025 - Evandro Fernandes da Silva"
+  },
+  {
+    "id": 528,
+    "number": "59",
+    "year": "2025",
+    "requester": "Parecer  - Erosão Vila dos Italianos",
+    "lat": -20.039574390738697,
+    "lon": -40.75129289699301,
+    "fullTitle": "Parecer 59-2025 - Erosão Vila dos Italianos"
+  },
+  {
+    "id": 529,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 60 - 2025 -  Roseni de Jesus Pereira",
+    "lat": -20.019515718189574,
+    "lon": -40.74643717559048,
+    "fullTitle": "Parecer 60 - 2025 -  Roseni de Jesus Pereira"
+  },
+  {
+    "id": 530,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 61 - 2025 -  Vereador Ilimar Vesper",
+    "lat": -19.986128638051728,
+    "lon": -40.8029735869857,
+    "fullTitle": "Parecer 61 - 2025 -  Vereador Ilimar Vesper"
+  },
+  {
+    "id": 531,
+    "number": "62",
+    "year": "2025",
+    "requester": "Parecer  - Ouvidoria Vila jetibá",
+    "lat": -20.02077720724341,
+    "lon": -40.76601530687787,
+    "fullTitle": "Parecer 62-2025 - Ouvidoria Vila jetibá"
+  },
+  {
+    "id": 532,
+    "number": "63",
+    "year": "2025",
+    "requester": "Parecer  - Hermindo Gahecht",
+    "lat": -20.022402949898026,
+    "lon": -40.7087067551558,
+    "fullTitle": "Parecer 63-2025 - Hermindo Gahecht"
+  },
+  {
+    "id": 533,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 64 - 2025 - Verônica Friedrich Schultz",
+    "lat": -19.985125261241137,
+    "lon": -40.665628509040864,
+    "fullTitle": "Parecer 64 - 2025 - Verônica Friedrich Schultz"
+  },
+  {
+    "id": 534,
+    "number": "67",
+    "year": "2025",
+    "requester": "Parecer  - Vereador Sigmar Schwans",
+    "lat": -19.99946180030566,
+    "lon": -40.739720034996026,
+    "fullTitle": "Parecer 67-2025 - Vereador Sigmar Schwans"
+  },
+  {
+    "id": 535,
+    "number": "70",
+    "year": "2025",
+    "requester": "Parecer  - Wagner Johson Marins",
+    "lat": -20.01698992120405,
+    "lon": -40.74947967722849,
+    "fullTitle": "Parecer 70-2025 - Wagner Johson Marins"
+  },
+  {
+    "id": 536,
+    "number": "74",
+    "year": "2025",
+    "requester": "Parecer  - cessão da Torre de São Luís",
+    "lat": -20.010387730405043,
+    "lon": -40.74938114476882,
+    "fullTitle": "Parecer 74-2025 - cessão da Torre de São Luís"
+  },
+  {
+    "id": 537,
+    "number": "76",
+    "year": "2025",
+    "requester": "Parecer  - Martin Schultz",
+    "lat": -20.025547700857626,
+    "lon": -40.7531980323604,
+    "fullTitle": "Parecer 76-2025 - Martin Schultz"
+  },
+  {
+    "id": 538,
+    "number": "78",
+    "year": "2025",
+    "requester": "Parecer  - Ponte em São Joao do Garrafão - Vargas",
+    "lat": -20.03220519256985,
+    "lon": -40.74212674533256,
+    "fullTitle": "Parecer 78-2025 - Ponte em São Joao do Garrafão - Vargas"
+  },
+  {
+    "id": 539,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 80 - 2025 - Valdemar Ebert",
+    "lat": -20.068459580233693,
+    "lon": -40.67328777652143,
+    "fullTitle": "Parecer 80 - 2025 - Valdemar Ebert"
+  },
+  {
+    "id": 540,
+    "number": "82",
+    "year": "2025",
+    "requester": "Parecer  - Ivani Jacob Lança",
+    "lat": -20.022398699344695,
+    "lon": -40.74319713396225,
+    "fullTitle": "Parecer 82-2025 - Ivani Jacob Lança"
+  },
+  {
+    "id": 541,
+    "number": "83",
+    "year": "2025",
+    "requester": "Parecer  - Creche Berger",
+    "lat": -20.01966547069263,
+    "lon": -40.7465675691691,
+    "fullTitle": "Parecer 83-2025 - Creche Berger"
+  },
+  {
+    "id": 542,
+    "number": "85",
+    "year": "2025",
+    "requester": "Parecer  - Lecir Schwanz - análise de risco palmeira",
+    "lat": -20.01778469413555,
+    "lon": -40.75479042542994,
+    "fullTitle": "Parecer 85-2025 - Lecir Schwanz - análise de risco palmeira"
+  },
+  {
+    "id": 543,
+    "number": "86",
+    "year": "2025",
+    "requester": "Parecer  - CRAS - Liduina Kosanke",
+    "lat": -19.991597437516294,
+    "lon": -40.704936111720315,
+    "fullTitle": "Parecer 86-2025 - CRAS - Liduina Kosanke"
+  },
+  {
+    "id": 544,
+    "number": "",
+    "year": "2015",
+    "requester": "Parecer 87 - 2025 -  Márcio Soeiro Barboza",
+    "lat": -19.99607565712845,
+    "lon": -40.67488195641061,
+    "fullTitle": "Parecer 87 - 2025 -  Márcio Soeiro Barboza"
+  }
+]

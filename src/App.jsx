@@ -30,6 +30,7 @@ const ChecklistSaida = lazy(() => import('./pages/Checklist/ChecklistSaida'))
 const VistoriaPrint = lazy(() => import('./pages/Vistorias/VistoriaPrint'))
 const ManagementDashboard = lazy(() => import('./pages/Monitoramento/ManagementDashboard'))
 const MonitoramentoMenu = lazy(() => import('./pages/Monitoramento/MonitoramentoMenu'))
+const LegadoDashboard = lazy(() => import('./pages/Legado'))
 
 // Ocorrencias Module (Lazy)
 const OcorrenciasDashboard = lazy(() => import('./pages/Ocorrencias/OcorrenciasDashboard'))
@@ -358,6 +359,12 @@ const AppContent = ({
                                 <Route path="/abrigos/contratos/editar/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ContractForm />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/monitoramento/legado" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <LegadoDashboard />
                                     </ProtectedRoute>
                                 } />
 
