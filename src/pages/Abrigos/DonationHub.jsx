@@ -59,9 +59,6 @@ export default function DonationHub() {
         if (!qty || qty <= 0 || isNaN(qty)) {
             e.quantity = 'Quantidade deve ser maior que zero';
         }
-        if (formData.destination_type === 'SHELTER' && !formData.shelter_id) {
-            e.shelter_id = 'Selecione um abrigo';
-        }
         setErrors(e);
         return Object.keys(e).length === 0;
     };
@@ -162,16 +159,15 @@ export default function DonationHub() {
                             {formData.destination_type === 'SHELTER' && (
                                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                                     <label className="block text-sm font-semibold text-slate-700">
-                                        Selecione o Abrigo <span className="text-red-500">*</span>
+                                        Selecione o Abrigo <span className="text-slate-400 font-normal ml-1">(Opcional)</span>
                                     </label>
                                     <select
                                         name="shelter_id"
                                         value={formData.shelter_id}
                                         onChange={handleChange}
-                                        required={formData.destination_type === 'SHELTER'}
                                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
-                                        <option value="">Selecione...</option>
+                                        <option value="">Não especificar abrigo...</option>
                                         {shelters.map(s => (
                                             <option key={s.id} value={s.id}>{s.name}</option>
                                         ))}

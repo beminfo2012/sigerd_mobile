@@ -623,6 +623,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.assinaturaAgente;
             delete payload.assinaturaAssistido;
             delete payload.apoioTecnico; // Replaced by snake_case version
+            delete payload.checklistRespostas; // Cleaned camelCase
 
         } else if (storeName === 'shelters') {
             payload = {
@@ -646,6 +647,21 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.id; // Remove local IDBK key
             delete payload.synced; // Remove sync flag
             delete payload.supabase_id; // Clean up mapping field if any
+
+            // Clean extraneous fields and map columns for specific tables
+            if (storeName === 'donations') {
+                delete payload.destination_type;
+            } else if (storeName === 'inventory') {
+                payload.inventory_id = payload.item_id;
+                delete payload.item_id;
+                delete payload.min_quantity;
+                delete payload.status;
+            }
+
+            // Properly nullify central or empty shelter_id 
+            if (payload.shelter_id === 'CENTRAL' || payload.shelter_id === '') {
+                payload.shelter_id = null;
+            }
 
             // ID MAPPING: Fix foreign keys for humanitarian module
             if (payload.shelter_id) {
@@ -679,7 +695,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     storeName === 'shelters' ? 'shelter_id' :
                         storeName === 'occupants' ? 'occupant_id' :
                             storeName === 'donations' ? 'donation_id' :
-                                storeName === 'inventory' ? 'item_id' :
+                                storeName === 'inventory' ? 'inventory_id' :
                                     storeName === 'distributions' ? 'distribution_id' :
                                         storeName === 'redap_records' ? 'redap_id' :
                                             storeName === 'emergency_contracts' ? 'contract_id' :
