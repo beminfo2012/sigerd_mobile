@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS ocorrencias_operacionais (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     ocorrencia_id UUID UNIQUE NOT NULL,
     ocorrencia_id_format TEXT NOT NULL, -- e.g. 001/2026
-    denominacao TEXT NOT NULL,
     agente TEXT,
     matricula TEXT,
     solicitante TEXT,
@@ -78,6 +77,18 @@ CREATE POLICY "Allow authenticated to insert occurrences"
 DROP POLICY IF EXISTS "Allow authenticated to update occurrences" ON ocorrencias_operacionais;
 CREATE POLICY "Allow authenticated to update occurrences"
     ON ocorrencias_operacionais FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Técnico em Edificações')
+        )
+    );
+
+DROP POLICY IF EXISTS "Allow authenticated to delete occurrences" ON ocorrencias_operacionais;
+CREATE POLICY "Allow authenticated to delete occurrences"
+    ON ocorrencias_operacionais FOR DELETE
     TO authenticated
     USING (
         EXISTS (
