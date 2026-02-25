@@ -7,25 +7,26 @@
     /* Cores de Sistema (Baseadas em Pro-UX Guidelines) */
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
-    
+
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    
-    --primary: 221 83% 53%; /* Azul Defesa Civil */
+
+    --primary: 221 83% 53%;
+    /* Azul Defesa Civil */
     --primary-foreground: 210 40% 98%;
-    
+
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
-    
+
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    
+
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
-    
+
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
@@ -34,17 +35,25 @@
 
     --warning: 38 92% 50%;
     --warning-foreground: 210 40% 98%;
-    
+
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
-    
+
     --radius: 0.75rem;
+
+    /* SIGERD WEB Design Tokens (Desktop Only) */
+    --web-bg: #f5f7fa;
+    --web-header-gradient: linear-gradient(90deg, #10346E 0%, #1a4b8c 100%);
+    --web-sidebar-gradient: linear-gradient(180deg, #10346E 0%, #1a3c7a 100%);
+    --web-primary: #10346E;
+    --web-accent: #4CAF50;
+    --web-font: 'Segoe UI', system-ui, -apple-system, sans-serif;
 
     /* Gradientes Premium */
     --primary-gradient: linear-gradient(135deg, hsl(221 83% 45%) 0%, hsl(221 83% 58%) 100%);
     --surface-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-    
+
     --bottom-nav-height: 64px;
     --sidebar-width: 280px;
   }
@@ -52,31 +61,31 @@
   .dark {
     --background: 222 47% 11%;
     --foreground: 213 27% 84%;
-    
+
     --card: 222 47% 12%;
     --card-foreground: 213 27% 84%;
-    
+
     --popover: 222 47% 11%;
     --popover-foreground: 213 27% 84%;
-    
+
     --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
-    
+
     --secondary: 217 32% 17.5%;
     --secondary-foreground: 210 40% 98%;
-    
+
     --muted: 217 32% 17.5%;
     --muted-foreground: 215 20% 65%;
-    
+
     --accent: 217 32% 17.5%;
     --accent-foreground: 210 40% 98%;
-    
+
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
 
     --success: 142 71% 30%;
     --success-foreground: 210 40% 98%;
-    
+
     --border: 217 32% 17.5%;
     --input: 217 32% 17.5%;
     --ring: 224 76% 48%;
@@ -100,20 +109,29 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  @media (min-width: 768px) {
+    body {
+      font-family: var(--web-font);
+    }
+  }
+
   /* Melhorar scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
   }
 }
 
 @layer components {
+
   /* Layout Structures */
   .app-container {
     @apply flex flex-col h-screen overflow-hidden;
@@ -127,7 +145,10 @@
   /* Desktop layout adjustment when mobile components are hidden */
   @media (min-width: 768px) {
     .main-content {
+      padding: 0;
       padding-bottom: 2rem;
+      background-color: var(--web-bg);
+      font-family: var(--web-font);
     }
   }
 
@@ -138,6 +159,13 @@
 
   .premium-card {
     @apply bg-card border border-border shadow-sm hover:shadow-md transition-all duration-300 rounded-xl;
+  }
+
+  @media (min-width: 768px) {
+    .premium-card {
+      @apply shadow-[0_6px_18px_rgba(0, 0, 0, 0.04)] border-none rounded-[10px];
+      padding: 18px;
+    }
   }
 
   /* Navigation Components */
@@ -194,8 +222,15 @@
 }
 
 @keyframes animate-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Shelter Specific items (preserving but updating) */

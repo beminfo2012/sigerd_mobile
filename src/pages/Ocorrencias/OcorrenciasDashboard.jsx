@@ -81,7 +81,7 @@ const OcorrenciasDashboard = () => {
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => navigate('/menu')}
+                            onClick={() => navigate('/')}
                             className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-95"
                         >
                             <ArrowLeft size={24} />

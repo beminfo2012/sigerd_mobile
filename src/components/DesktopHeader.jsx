@@ -5,90 +5,51 @@ import { ChevronRight, Search, Bell, Settings, HelpCircle, User } from 'lucide-r
 const DesktopHeader = ({ userProfile }) => {
     const location = useLocation();
 
-    // Breadcrumb mapping
-    const getBreadcrumbs = () => {
-        const pathnames = location.pathname.split('/').filter((x) => x);
-        const labels = {
-            'vistorias': 'Vistorias Técnicas',
-            'ocorrencias': 'Ocorrências',
-            'monitoramento': 'Monitoramento',
-            'riscos': 'Áreas de Risco',
-            'pluviometros': 'Pluviometros',
-            'abrigos': 'Assist. Humanitária',
-            'interdicao': 'Interdição',
-            'georescue': 'GeoRescue',
-            's2id': 'REDAP',
-            'settings': 'Configurações',
-            'reports': 'Relatórios'
-        };
-
-        return pathnames.map((name, index) => {
-            const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
-            const isLast = index === pathnames.length - 1;
-            const label = labels[name] || name.charAt(0).toUpperCase() + name.slice(1);
-
-            return (
-                <div key={routeTo} className="flex items-center">
-                    <ChevronRight size={14} className="mx-2 text-slate-400" />
-                    {isLast ? (
-                        <span className="text-slate-800 dark:text-slate-200 font-bold text-sm tracking-tight">{label}</span>
-                    ) : (
-                        <Link to={routeTo} className="text-slate-500 hover:text-primary transition-colors text-sm font-medium">
-                            {label}
-                        </Link>
-                    )}
-                </div>
-            );
-        });
-    };
 
     return (
-        <header className="hidden md:flex h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-30 px-6 items-center justify-between shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] transition-all">
-            <div className="flex items-center">
-                <Link
-                    to="/"
-                    className="text-slate-500 hover:text-primary transition-colors text-sm font-medium"
-                >
-                    Dashboard
-                </Link>
-                {getBreadcrumbs()}
+        <header
+            className="hidden md:flex h-20 sticky top-0 z-40 px-6 items-center justify-between shadow-lg transition-all"
+            style={{
+                background: 'var(--web-header-gradient)',
+                color: '#fff',
+                fontFamily: 'var(--web-font)'
+            }}
+        >
+            <div className="flex items-center gap-4">
+                <div className="h-4 w-4" /> {/* Spacer instead of logo */}
+
+                <div className="h-8 w-[1px] bg-white/10 mx-6" />
+
+                <div className="flex items-center text-white/80 text-sm font-bold">
+                    <Link to="/" className="hover:text-white transition-colors">Dashboard</Link>
+                    {location.pathname !== '/' && (
+                        <div className="flex items-center">
+                            <ChevronRight size={14} className="mx-2 opacity-40" />
+                            <span className="text-white">
+                                {{
+                                    'vistorias': 'Vistorias',
+                                    'ocorrencias': 'Ocorrências',
+                                    'monitoramento': 'Monitoramento',
+                                    'abrigos': 'Assistência Humanitária',
+                                    'redap': 'REDAP',
+                                    'alerts': 'Avisos INMET',
+                                    'menu': 'Relatórios'
+                                }[location.pathname.split('/').filter(x => x).pop()] || location.pathname.split('/').filter(x => x).pop().charAt(0).toUpperCase() + location.pathname.split('/').filter(x => x).pop().slice(1)}
+                            </span>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                {/* Search Bar */}
-                <div className="relative hidden lg:block">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Pesquisar..."
-                        className="bg-slate-100 dark:bg-slate-800 border-none rounded-full pl-10 pr-4 py-1.5 text-xs w-64 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-                    />
-                </div>
+            <div className="flex items-center gap-6">
 
-                <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2 hidden lg:block" />
-
-                <div className="flex items-center gap-1">
-                    <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative">
-                        <Bell size={18} />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
-                    </button>
-                    <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
-                        <HelpCircle size={18} />
-                    </button>
-                    <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
-                        <Settings size={18} />
-                    </button>
-                </div>
-
-                <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2" />
-
-                <div className="flex items-center gap-3 pl-2">
-                    <div className="text-right hidden xl:block">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-none">{userProfile?.full_name || 'Usuário'}</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{userProfile?.role || 'Agente'}</p>
+                <div className="flex items-center gap-4">
+                    <div className="text-right">
+                        <p className="text-sm font-black text-white leading-none uppercase tracking-tight">{userProfile?.full_name || 'Operador'}</p>
+                        <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-1.5">{userProfile?.role || 'Fiscal'}</p>
                     </div>
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-primary/20">
-                        {userProfile?.full_name?.charAt(0) || 'U'}
+                    <div className="w-11 h-11 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center text-white font-black text-lg shadow-xl backdrop-blur-md">
+                        {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                 </div>
             </div>

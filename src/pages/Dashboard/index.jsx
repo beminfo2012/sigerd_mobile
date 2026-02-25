@@ -1,21 +1,26 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronRight, CloudRain, Map, ArrowLeft, Activity, BarChart3, CloudUpload, CheckCircle, Download, Trash2, FileText, Printer, Flame, Zap, ShieldAlert, ChevronDown, ChevronUp, Truck, Home, Share2, RefreshCw, Plus, Users, X } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import {
+    ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
+    CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
+    ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle
+} from 'lucide-react'
+import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
-import { getPendingSyncCount, syncPendingData, getAllVistoriasLocal, getRemoteVistoriasCache, pullAllData, resetDatabase } from '../../services/db'
+import {
+    getPendingSyncCount, syncPendingData, getAllVistoriasLocal,
+    getRemoteVistoriasCache, pullAllData, resetDatabase
+} from '../../services/db'
+import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService } from '../../services/cemaden'
-import { getShelters, getOccupants, getGlobalInventory } from '../../services/shelterDb'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 import { useToast } from '../../components/ToastNotification'
 import { APP_VERSION } from '../../version'
 
-// Helper functions for Lightning Load
+// --- HELPER FUNCTIONS ---
 const processBreakdown = (records) => {
     const counts = {};
     records.forEach(v => {
@@ -45,7 +50,7 @@ const processBreakdown = (records) => {
         'Outros': 'bg-slate-400'
     };
 
-    const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-50 dark:bg-slate-9000'];
+    const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
     const total = records.length;
 
     return Object.keys(counts).map((label, idx) => ({
@@ -69,16 +74,11 @@ const processLocations = (records) => {
                 lat = parseFloat(v.latitude)
                 lng = parseFloat(v.longitude)
             }
-
             if (isNaN(lat) || isNaN(lng)) return null
-
             const subtypes = v.subtipos_risco || v.subtiposRisco || []
             const category = v.categoria_risco || v.categoriaRisco || 'Outros'
-
             return {
-                lat,
-                lng,
-                risk: category,
+                lat, lng, risk: category,
                 details: subtypes.length > 0 ? subtypes.join(', ') : category,
                 date: v.created_at || v.data_hora || new Date().toISOString()
             }
@@ -86,339 +86,26 @@ const processLocations = (records) => {
         .filter(loc => loc !== null) || [];
 };
 
-const Dashboard = () => {
-    console.log('[Dashboard] Component mounting...');
-    const navigate = useNavigate()
-    const [data, setData] = useState(null)
-    const [weather, setWeather] = useState(null)
-    const [syncDetail, setSyncDetail] = useState({ total: 0 })
-    const [syncing, setSyncing] = useState(false)
-    const [showForecast, setShowForecast] = useState(false)
-    const [loading, setLoading] = useState(true)
-    const [showReportMenu, setShowReportMenu] = useState(false)
-    const [generatingReport, setGeneratingReport] = useState(false)
-    const [cemadenAlerts, setCemadenAlerts] = useState([])
-    const toast = useToast()
-
-    const load = async () => {
-        try {
-            // [LIGHTNING LOAD - STEP 1] Load Local/Cached data immediately to show UI
-            console.log('[Dashboard] Lightning Load: Fetching local/cached data...');
-            const [pendingDetail, localVistorias, cachedVistorias] = await Promise.all([
-                getPendingSyncCount().catch(() => ({ total: 0 })),
-                getAllVistoriasLocal().catch(() => []),
-                getRemoteVistoriasCache().catch(() => [])
-            ]);
-
-            setSyncDetail(pendingDetail);
-
-            // Initial processing with what we have
-            const initialAll = [...cachedVistorias, ...localVistorias];
-            const initialStats = {
-                totalVistorias: initialAll.length,
-                activeOccurrences: 0,
-                inmetAlertsCount: 0
-            };
-
-            // Process initial breakdown and locations...
-            const initialBreakdown = processBreakdown(initialAll);
-            const initialLocations = processLocations(initialAll);
-
-            setData({
-                stats: initialStats,
-                breakdown: initialBreakdown,
-                locations: initialLocations,
-                alerts: []
-            });
-
-            // [LIGHTNING LOAD - STEP 2] Release loading screen NOW
-            setLoading(false);
-            console.log('[Dashboard] Lightning Load: Local data displayed. Fetching server updates...');
-
-            // [LIGHTNING LOAD - STEP 3] Fetch fresh data in background
-            const safetyTimer = setTimeout(() => {
-                if (loading) setLoading(false);
-            }, 5000);
-
-            api.getDashboardData().then(dashResult => {
-                clearTimeout(safetyTimer);
-                if (dashResult && dashResult.stats?.totalVistorias > 0) {
-                    console.log('[Dashboard] Lightning Load: Server data received. Updating UI...');
-                    setData(dashResult);
-                } else if (dashResult) {
-                    // Still update alerts even if vistorias are missing
-                    setData(prev => ({ ...prev, alerts: dashResult.alerts }));
-                }
-            }).catch(err => {
-                clearTimeout(safetyTimer);
-                console.warn('[Dashboard] Background refresh failed:', err);
-            });
-
-            // [LIGHTNING LOAD - STEP 4] Secondary data also in background
-            Promise.all([
-                (async () => {
-                    try {
-                        const r = await fetch('/api/weather');
-                        if (r.ok) return r.json();
-                    } catch (_) { /* proxy not available */ }
-                    // Fallback: fetch directly from Open-Meteo (works anywhere)
-                    try {
-                        const lat = -20.0246, lon = -40.7464;
-                        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
-                        const r2 = await fetch(url);
-                        if (!r2.ok) return null;
-                        const d = await r2.json();
-                        return {
-                            current: { temp: d.current.temperature_2m, humidity: d.current.relative_humidity_2m, rain: d.current.precipitation, wind: d.current.wind_speed_10m, code: d.current.weather_code },
-                            daily: d.daily.time.map((t, i) => ({ date: t, tempMax: d.daily.temperature_2m_max[i], tempMin: d.daily.temperature_2m_min[i], rainProb: d.daily.precipitation_probability_max[i], code: d.daily.weather_code[i] }))
-                        };
-                    } catch (_) { return null; }
-                })(),
-                cemadenService.getActiveAlerts().catch(() => [])
-            ]).then(([weatherRes, cemadenRes]) => {
-                if (weatherRes) setWeather(weatherRes)
-                if (cemadenRes) setCemadenAlerts(cemadenRes || [])
-            });
-
-            return; // Stop here, background promises handle the rest
-        } catch (error) {
-            console.error('Load Error:', error)
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        console.log('[Dashboard] useEffect running - starting data load...');
-        load()
-    }, [])
-
-    const getPredictiveInsights = () => {
-        if (!data || !data.alerts || data.alerts.length === 0) return null;
-
-        // 1. Identify active risks from alerts (using regex to avoid encoding issues)
-        const activeRisks = [];
-        data.alerts.forEach(alert => {
-            const desc = (alert.descricao || alert.aviso_tipo || '').toLowerCase();
-
-            // Mapping alerts keywords to system categories
-            if (/chuva|alagamento|inunda|enxurrada/.test(desc)) {
-                activeRisks.push('Hidrológico');
-            }
-            if (/deslizamento|encosta|geol|geot/.test(desc)) {
-                activeRisks.push('Geológico / Geotécnico');
-            }
-            if (/vento|vendaval|granizo|tempestade|clim/.test(desc)) {
-                activeRisks.push('Climático / Meteorológico');
-            }
-            if (/estrutural|predial|desabamento/.test(desc)) {
-                activeRisks.push('Estrutural');
-            }
-        });
-
-        if (activeRisks.length === 0) return null;
-
-        // 2. Correlate with historical data (locations)
-        const neighborhoodRisk = {};
-        data.locations.forEach(loc => {
-            // Check for risk match (normalized)
-            const isMatch = activeRisks.some(r =>
-                (loc.risk || '').toLowerCase().includes(r.split(' ')[0].toLowerCase().replace(/[^a-z]/g, ''))
-            );
-
-            if (isMatch) {
-                const bairro = loc.bairro || 'Santa Maria de Jetibá';
-                neighborhoodRisk[bairro] = (neighborhoodRisk[bairro] || 0) + 1;
-            }
-        });
-
-        // 3. Sort and get top 3
-        const topBairros = Object.entries(neighborhoodRisk)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 3)
-            .map(([name, count]) => ({ name, count }));
-
-        return {
-            risks: [...new Set(activeRisks)],
-            topBairros,
-            severity: data.alerts[0].severidade || 'Alerta'
-        };
-    };
-
-    const predictive = getPredictiveInsights();
-
-    useEffect(() => {
-        const handleSyncComplete = () => {
-            console.log('[Dashboard] Sync complete detected, refreshing data internally...')
-            load()
-        }
-
-        window.addEventListener('sync-complete', handleSyncComplete)
-        return () => window.removeEventListener('sync-complete', handleSyncComplete)
-    }, [])
-
-    // Cluster Detection for toggle
-    let hasClusters = false;
-    if (data && data.locations) {
-        const clusters = {};
-        data.locations.forEach(loc => {
-            const lat = parseFloat(loc.lat);
-            const lng = parseFloat(loc.lng);
-            if (!isNaN(lat) && !isNaN(lng)) {
-                const gridKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
-                clusters[gridKey] = (clusters[gridKey] || 0) + 1;
-            }
-        });
-        hasClusters = Object.values(clusters).some(count => count >= 2);
-    }
-
-    const handleSync = async () => {
-        if (syncing) return
-        setSyncing(true)
-        const toastId = toast.info('Sincronizando...', 'Buscando novos dados e enviando pendências. Aguarde.');
-
-        try {
-            // 1. Pull new data from server first
-            console.log('[Dashboard] Pulling data from server...');
-            await pullAllData();
-
-            // 2. Then push pending local data
-            const result = await syncPendingData()
-
-            // 3. Refresh Dashboard UI
-            const [newData, newDetail] = await Promise.all([
-                api.getDashboardData(),
-                getPendingSyncCount()
-            ])
-            setData(newData)
-            setSyncDetail(newDetail)
-
-            if (result.success && result.count > 0) {
-                toast.success('Sincronização Concluída', `${result.count} registros enviados.`);
-            } else {
-                toast.success('Dados Atualizados', 'O sistema está sincronizado com a nuvem.');
-            }
-        } catch (error) {
-            console.error('Sync Error:', error)
-            toast.error('Erro na Sincronização', 'Verifique sua conexão e tente novamente.');
-        } finally {
-            setSyncing(false)
-        }
-    }
-
-    const handleClearCache = async () => {
-        if (!window.confirm('⚠️ AVISO: Isso irá apagar TODAS as vistorias do seu celular (mesmo as pendentes) e resetar a base de dados local. Use apenas se o gráfico estiver com erro. Continuar?')) return
-
-        try {
-            setLoading(true)
-            await resetDatabase()
-            alert('Banco de dados resetado com sucesso! Reiniciando...')
-            window.location.reload()
-        } catch (e) {
-            console.error('Reset failed:', e)
-            await clearLocalData().catch(() => { })
-            window.location.reload()
-        }
-    }
-
-    const handleExportKML = () => {
-        if (!data || !data.locations || data.locations.length === 0) {
-            alert('Não há dados de localização para exportar.')
-            return
-        }
-
-        let kml = `<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Vistorias Defesa Civil</name>
-    <description>Localização das vistorias registradas</description>
-    ${data.locations.map((loc, i) => `
-    <Placemark>
-      <name>Vistoria ${i + 1}</name>
-      <description>Risco: ${loc.risk}</description>
-      <Point>
-        <coordinates>${loc.lng},${loc.lat},0</coordinates>
-      </Point>
-    </Placemark>
-    `).join('')}
-  </Document>
-</kml>`
-
-        const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `vistorias_${new Date().toISOString().split('T')[0]}.kml`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-    }
-
-    const getWeatherIcon = (code) => {
-        if (code <= 1) return '☀️'
-        if (code <= 3) return '⛅'
-        if (code <= 48) return '🌫️'
-        if (code <= 67) return '🌧️'
-        if (code <= 77) return '❄️'
-        if (code <= 82) return '🌧️'
-        return '⛈️'
-    }
-
-    // Safety timeout - if loading for more than 10 seconds, something is wrong
-    useEffect(() => {
-        if (loading) {
-            const timeout = setTimeout(() => {
-                console.error('[Dashboard] STUCK IN LOADING STATE FOR 10+ SECONDS!');
-                alert('⚠️ Dashboard travado no carregamento!\n\nO dashboard não conseguiu carregar os dados.\n\nPossíveis causas:\n- Erro na API\n- Dados corrompidos\n- Problema de rede\n\nVeja o console (F12) para mais detalhes.');
-            }, 10000);
-            return () => clearTimeout(timeout);
-        }
-    }, [loading]);
-
-    console.log('[Dashboard] Render - loading:', loading, 'data:', !!data);
-
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-gradient-to-br from-blue-50 to-blue-100">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <span className="font-bold">Carregando SIGERD...</span>
-            <span className="text-sm text-gray-500">Se demorar muito, pressione F12 e veja o console</span>
-        </div>
-    )
-
-    if (!data) {
-        console.error('[Dashboard] NO DATA - returning error message');
-        return (
-            <div className="p-8 text-center">
-                <div className="text-red-500 font-bold text-xl mb-4">❌ Erro ao carregar dados do Dashboard</div>
-                <div className="text-gray-600 mb-4">O dashboard não conseguiu carregar os dados necessários.</div>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
-                >
-                    Recarregar Página
-                </button>
-            </div>
-        )
-    }
-
-    console.log('[Dashboard] Rendering main content with data:', data);
-
-
+// --- SUB-COMPONENT: MOBILE VIEW ---
+const MobileDashboardView = ({
+    data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
+    handleClearCache, handleExportKML, navigate, setShowForecast,
+    showReportMenu, setShowReportMenu, getWeatherIcon
+}) => {
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen font-sans">
-            <div className="max-w-7xl mx-auto p-5 pb-24 lg:p-8">
-
-                {/* 1. Weather Widget (Responsive) */}
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans">
+            <div className="p-5 space-y-8">
+                {/* 1. Weather Widget */}
                 {weather?.current && (
                     <div
                         onClick={() => setShowForecast(true)}
-                        className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all hover:bg-white/60 dark:hover:bg-slate-800/60 mb-6 lg:mb-8"
+                        className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition-all mb-4"
                     >
                         <div className="flex items-center gap-6">
-                            <div className="text-5xl lg:text-6xl">{getWeatherIcon(weather.current.code)}</div>
+                            <div className="text-5xl">{getWeatherIcon(weather.current.code)}</div>
                             <div>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl lg:text-5xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
+                                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
                                     <span className="text-xl font-bold text-slate-400">°C</span>
                                 </div>
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Santa Maria de Jetibá</div>
@@ -433,280 +120,501 @@ const Dashboard = () => {
                                 <Timer size={15} className="text-blue-400 shrink-0" />
                                 <span className="text-slate-600 dark:text-slate-300">Umidade: <span className="font-bold">{weather.current.humidity || 0}%</span></span>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold">
-                                <BarChart3 size={15} className="text-orange-400 shrink-0" />
-                                <span className="text-slate-600 dark:text-slate-300">Vento: <span className="font-bold">{Math.round(weather.current.wind || 0)} km/h</span></span>
-                            </div>
                         </div>
                     </div>
                 )}
 
                 <CemadenAlertBanner alerts={cemadenAlerts} />
 
-                {/* 2. Main Layout (Mobile: Stacked | Desktop: Grid) */}
-                <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+                {/* 2. Indicadores Operacionais */}
+                <div>
+                    <div className="flex justify-between items-center mb-6 px-1">
+                        <div className="flex flex-col">
+                            <h2 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider -mt-1">Santa Maria de Jetibá</span>
+                        </div>
+                        <button
+                            onClick={handleSync}
+                            disabled={syncing}
+                            className={`p-2.5 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500'}`}
+                        >
+                            <RefreshCw size={18} />
+                        </button>
+                    </div>
 
-                    {/* Left Column (Main Content on Desktop | Full Width on Mobile) */}
-                    <div className="lg:col-span-8 xl:col-span-9 space-y-8">
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Sync Card */}
+                        <div onClick={handleSync} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 relative active:scale-95 transition-all group">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                                {syncing ? <CloudUpload size={20} className="animate-bounce" /> : <CloudUpload size={20} />}
+                            </div>
+                            <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
+                                {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
+                            </div>
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Sincronização</div>
+                        </div>
 
-                        {/* Indicators Grid (Mobile layout restored) */}
-                        <div>
-                            <div className="flex justify-between items-center mb-6">
-                                <div className="flex flex-col">
-                                    <h2 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider -mt-1">Santa Maria de Jetibá</span>
+                        {/* INMET Alerts */}
+                        <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-all">
+                            <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
+                                <Zap size={20} />
+                            </div>
+                            <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">{data.stats.inmetAlertsCount || 0}</div>
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Acesso Rápido - Circular Icons */}
+                <div>
+                    <h2 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-6 px-1 uppercase tracking-widest text-center">Acesso Rápido</h2>
+                    <div className="grid grid-cols-4 gap-2 px-1 justify-items-center">
+                        <div onClick={() => navigate('/monitoramento')} className="flex flex-col items-center gap-2.5 cursor-pointer">
+                            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
+                                <BarChart3 size={28} />
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Monitoramento</span>
+                        </div>
+                        <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer">
+                            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
+                                <Home size={28} />
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Assisit. Humanitária</span>
+                        </div>
+                        <div onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center gap-2.5 cursor-pointer">
+                            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
+                                <ClipboardList size={28} />
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Ocorrências</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2.5 relative">
+                            <div onClick={() => setShowReportMenu(!showReportMenu)} className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all cursor-pointer">
+                                <FileText size={28} />
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Relatórios</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Tipologia Breakdown */}
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Vistorias por Tipologia</h3>
+                    <div className="space-y-6">
+                        {data?.breakdown?.slice(0, 5).map((item, idx) => (
+                            <div key={idx}>
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
+                                    <span className="text-xs font-black text-slate-800 dark:text-slate-100">{item.count}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={handleSync}
-                                        disabled={syncing}
-                                        className={`p-2.5 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700'}`}
-                                    >
-                                        <RefreshCw size={18} />
-                                    </button>
+                                <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden">
+                                    <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`} style={{ width: `${item.percentage}%` }} />
                                 </div>
                             </div>
+                        ))}
+                    </div>
+                </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {/* Sync Card */}
-                                <div
-                                    onClick={handleSync}
-                                    className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 relative transition-all cursor-pointer active:scale-95 group"
-                                >
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
-                                        {syncing ? <CloudUpload size={20} className="animate-bounce" /> : <CloudUpload size={20} />}
-                                    </div>
-                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
-                                        {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
-                                    </div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Sincronização</div>
-                                    {((syncDetail.total > 0) || (data.stats.totalVistorias > 0)) && !syncing && (
-                                        <button onClick={(e) => { e.stopPropagation(); handleClearCache(); }} className="mt-4 text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Trash2 size={10} /> Limpar Cache
-                                        </button>
-                                    )}
-                                </div>
+                {/* 5. Map */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                    <div className="h-64 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0">
+                        <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                            <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                        </MapContainer>
+                    </div>
+                </div>
+            </div>
+            <div className="text-center py-8 opacity-40">
+                <span className="text-[10px] font-black uppercase tracking-[4px] dark:text-white">SIGERD MOBILE V{APP_VERSION}</span>
+            </div>
+        </div>
+    );
+};
 
-                                {/* INMET Alerts */}
-                                <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer active:scale-95 transition-all">
-                                    <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
-                                        <Zap size={20} />
-                                    </div>
-                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 leading-none tabular-nums">
-                                        {data.stats.inmetAlertsCount || 0}
-                                    </div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</div>
-                                </div>
+// --- SUB-COMPONENT: WEB VIEW ---
+const WebViewDashboardView = ({
+    data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
+    handleClearCache, handleExportKML, navigate, setShowForecast,
+    showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport
+}) => {
+    return (
+        <div className="bg-[#f0f2f5] dark:bg-slate-950 min-h-screen font-sans flex flex-col">
+            <div className="max-w-[1700px] mx-auto w-full p-6 space-y-6 flex-1">
 
-                                {/* Total Inspections - Hidden on Mobile */}
-                                <div className="hidden md:block bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700">
-                                    <div className="bg-blue-50 text-blue-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
-                                        <ClipboardList size={20} />
-                                    </div>
-                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
-                                        {data.stats.totalVistorias}
-                                    </div>
-                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Vistorias Totais</div>
+                {/* --- 🏁 1. HEADER & TOP CARDS CONTAINER --- */}
+                <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-6">
+
+                    {/* Header: Title & Weather */}
+                    <div className="flex justify-between items-center px-2">
+                        <h2 className="text-xl font-bold text-slate-700 dark:text-slate-100 mt-2">
+                            Monitoramento em Tempo Real
+                        </h2>
+                        {weather?.current && (
+                            <div className="flex items-center gap-4 py-1">
+                                <div className="text-2xl">{getWeatherIcon(weather.current.code)}</div>
+                                <div className="text-xl font-black text-slate-800 dark:text-slate-100">{Math.round(weather.current.temp || 0)}°C</div>
+                                <div className="hidden xl:flex flex-col border-l border-slate-200 dark:border-slate-700 pl-4 ml-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase leading-none italic">Localização</span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Santa Maria de Jetibá</span>
                                 </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Top 4 Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        {/* Card 1: Risk Level */}
+                        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden group shadow-sm">
+                            <div className={`absolute top-0 left-0 w-1.5 h-full ${cemadenAlerts.length > 0 ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                            <div className="flex justify-between items-start mb-6">
+                                <span className="text-xl font-black text-slate-800 dark:text-slate-100">{cemadenAlerts.length > 0 ? 'ALERTA' : 'NORMAL'}</span>
+                                <div className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest leading-none ${cemadenAlerts.length > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'}`}>Status</div>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div className={`h-full rounded-full w-full transition-all duration-1000 ${cemadenAlerts.length > 0 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'}`} />
+                                </div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight italic">Status Base INMET</p>
                             </div>
                         </div>
 
-                        {/* Circular Icons - Mobile Only Section */}
-                        <div className="lg:hidden mb-12">
-                            <h2 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-6 px-1 uppercase tracking-widest">Acesso Rápido</h2>
-                            <div className="grid grid-cols-4 gap-2 px-1 justify-items-center">
-                                {/* Monitoramento */}
-                                <div onClick={() => navigate('/monitoramento')} className="flex flex-col items-center gap-2.5 cursor-pointer group">
-                                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all">
-                                        <BarChart3 size={28} strokeWidth={2.2} />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Monitoramento</span>
+                        {/* Card 2: Ocorrências Hoje */}
+                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl text-purple-500">
+                                    <AlertTriangle size={20} />
                                 </div>
-
-                                {/* ASSIST. HUMANITÁRIA */}
-                                <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer group">
-                                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all">
-                                        <Home size={28} strokeWidth={2.2} />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Assist. Humanitária</span>
-                                </div>
-
-                                {/* Ocorrências */}
-                                <div onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center gap-2.5 cursor-pointer group">
-                                    <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all">
-                                        <ClipboardList size={28} strokeWidth={2.2} />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Ocorrências</span>
-                                </div>
-
-                                {/* Relatórios */}
-                                <div className="flex flex-col items-center gap-2.5 relative">
-                                    <div onClick={() => setShowReportMenu(!showReportMenu)} className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-[#2a5299] active:scale-95 transition-all cursor-pointer">
-                                        <FileText size={28} strokeWidth={2.2} />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight text-center leading-tight">Relatórios</span>
-                                    {showReportMenu && (
-                                        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                                            {[24, 48, 96, 0].map(h => (
-                                                <button key={h} className="w-full text-left px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-700" onClick={() => setShowReportMenu(false)}>
-                                                    {h === 0 ? 'Todo o Período' : `Últimas ${h}h`}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.activeOccurrences}</span>
                             </div>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Ocorrências Hoje</span>
                         </div>
 
-                        {/* Breakdown Panel (Mobile: Visible | Desktop: Hidden, handled by sidebar) */}
-                        <div className="lg:hidden bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Vistorias por Tipologia</h3>
-                            <div className="space-y-6">
-                                {data?.breakdown?.map((item, idx) => (
-                                    <div key={idx}>
-                                        <div className="flex justify-between items-center mb-1.5">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
-                                            <span className="text-xs font-black text-slate-800 dark:text-slate-100">{item.count}</span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden">
-                                            <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`} style={{ width: `${item.percentage}%` }} />
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* Card 3: INMET Alerts */}
+                        <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
+                                    <Zap size={20} />
+                                </div>
+                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{cemadenAlerts.length || 0}</span>
                             </div>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
                         </div>
 
-                        {/* Map Section (Responsive) */}
-                        <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="font-bold text-slate-800 dark:text-slate-100">Mapa Situacional</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Distribuição Geográfica</p>
+                        {/* Card 4: Vistorias Totais */}
+                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500">
+                                    <ClipboardList size={20} />
                                 </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => window.open('/monitoramento/mapa-calor?fullscreen=true', '_blank')} className="bg-orange-50 text-orange-600 p-2 rounded-xl transition-colors" title="Mapa de Calor">
-                                        <Flame size={16} />
-                                    </button>
-                                    <button onClick={handleExportKML} className="bg-slate-100 text-slate-600 p-2 rounded-xl" title="Exportar KML">
-                                        <Download size={16} />
-                                    </button>
-                                </div>
+                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.totalVistorias}</span>
                             </div>
-                            <div className="h-96 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0 border border-slate-100">
-                                <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                                    <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
-                                    {data?.locations?.map((loc, idx) => (
-                                        <CircleMarker
-                                            key={idx}
-                                            center={[loc.lat, loc.lng]}
-                                            radius={6}
-                                            pathOptions={{
-                                                color: '#ffffff',
-                                                weight: 1.5,
-                                                fillColor: String(loc.risk).includes('Alto') ? '#ef4444' : '#f97316',
-                                                fillOpacity: 0.8
-                                            }}
-                                        />
-                                    ))}
-                                </MapContainer>
-                            </div>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Vistorias Totais</span>
                         </div>
                     </div>
 
-                    {/* Right Column (Sidebar - Desktop Only) */}
-                    <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 space-y-8">
-
-                        {/* Quick Access (Desktop Card Style) */}
-                        <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Ações do Sistema</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => navigate('/monitoramento')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
-                                    <BarChart3 className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Monitoramento</span>
-                                </button>
-                                <button onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
-                                    <ClipboardList className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Ocorrências</span>
-                                </button>
-                                <button onClick={() => navigate('/abrigos')} className="flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
-                                    <Home className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Assist. Humanitária</span>
-                                </button>
-                                <div className="relative">
-                                    <button onClick={() => setShowReportMenu(!showReportMenu)} className="w-full flex flex-col items-center p-4 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-transparent hover:border-blue-500 transition-all group">
-                                        <FileText className="text-blue-500 mb-2 group-hover:scale-110 transition-transform" size={24} />
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase">Relatórios</span>
-                                    </button>
-                                    {showReportMenu && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden py-1">
-                                            {[24, 48, 96, 0].map(h => (
-                                                <button key={h} className="w-full text-left px-4 py-2 text-[10px] font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 uppercase" onClick={() => setShowReportMenu(false)}>
-                                                    {h === 0 ? 'Tudo' : `${h}h`}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Breakdown Panel (Desktop Sidebar) */}
-                        <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Resumo Situacional</h3>
-                            <div className="space-y-6">
-                                {data?.breakdown?.map((item, idx) => (
-                                    <div key={idx}>
-                                        <div className="flex justify-between items-center mb-1.5">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
-                                            <span className="text-xs font-black text-slate-800 dark:text-slate-100">{item.count}</span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden">
-                                            <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`} style={{ width: `${item.percentage}%` }} />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </aside>
+                    {/* Blue Horizontal Nav Bar */}
+                    <div className="bg-[#2a5299] rounded-[18px] p-2 flex items-center justify-between overflow-x-auto custom-scrollbar gap-2">
+                        {[
+                            { label: 'Monitoramento', icon: BarChart3, path: '/monitoramento' },
+                            { label: 'Ocorrências', icon: ClipboardList, path: '/ocorrencias' },
+                            { label: 'Assistência Humanitária', icon: Home, path: '/abrigos' },
+                            { label: 'Relatórios', icon: FileText, action: () => setShowReportMenu(!showReportMenu) },
+                            { label: 'Atualizar Dados', icon: RefreshCw, action: handleSync, spin: syncing }
+                        ].map((item, idx) => (
+                            <button
+                                key={idx}
+                                onClick={item.action || (() => navigate(item.path))}
+                                className="flex flex-1 justify-center items-center gap-2.5 px-6 py-3 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-all group shrink-0"
+                            >
+                                <item.icon size={18} className={`opacity-70 group-hover:opacity-100 ${item.spin ? 'animate-spin' : ''}`} />
+                                <span className="text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">{item.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Footer */}
-                <div className="mt-16 mb-8 flex flex-col items-center">
-                    <div className="h-px w-24 bg-slate-200 dark:bg-slate-800 mb-8" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[4px]">SIGERD WEB V{APP_VERSION}</span>
+                {/* --- 🗺️ 2. MAP & RESUMO SITUACIONAL --- */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                    {/* Map Column */}
+                    <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+                        <div className="mb-6 flex flex-col">
+                            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight">Mapa Situacional</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Distribuição Geográfica</p>
+                        </div>
+                        <div className="flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner">
+                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
+                                <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                                <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                {data?.locations?.map((loc, idx) => (
+                                    <CircleMarker
+                                        key={idx}
+                                        center={[loc.lat, loc.lng]}
+                                        radius={6}
+                                        pathOptions={{
+                                            color: '#fff',
+                                            fillColor: String(loc.risk).includes('Alto') ? '#ef4444' : '#f97316',
+                                            fillOpacity: 0.8,
+                                            weight: 1.5
+                                        }}
+                                    />
+                                ))}
+                            </MapContainer>
+                        </div>
+                    </div>
+
+                    {/* Resumo Situacional Column */}
+                    <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-8 uppercase tracking-[3px]">Vistorias por Tipologia</h3>
+                        <div className="space-y-6 flex-1 overflow-y-auto">
+                            {data?.breakdown?.slice(0, 10).map((item, idx) => (
+                                <div key={idx} className="group cursor-default">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors tracking-tight">{item.label}</span>
+                                        <span className="text-sm font-black text-slate-800 dark:text-slate-100">{item.count}</span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`}
+                                            style={{ width: `${item.percentage}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- 📉 3. BOTTOM SUMMARY ROW --- */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Sync Summary */}
+                    <div onClick={handleSync} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${syncing ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30'}`}>
+                                <CheckCircle size={18} className={syncing ? 'animate-spin' : ''} />
+                            </div>
+                            <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Sincronização do Sistema</span>
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Forçar sincronização</span>
+                    </div>
+
+                    {/* INMET Summary */}
+                    <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500 group-hover:scale-110 transition-transform">
+                                <Zap size={18} />
+                            </div>
+                            <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Avisos INMET</span>
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{cemadenAlerts.length || 0}</div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Alertas Ativos</span>
+                    </div>
+
+                    {/* Vistorias Summary */}
+                    <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500 group-hover:scale-110 transition-transform">
+                                <ClipboardList size={18} />
+                            </div>
+                            <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Vistorias</span>
+                        </div>
+                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{data.stats.totalVistorias}</div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Total Computado</span>
+                    </div>
                 </div>
             </div>
 
+            <footer className="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 mt-auto">
+                <div className="flex flex-col">
+                    <span className="text-sm font-black text-slate-800 dark:text-slate-100">SIGERD WEB INTERFACE</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Prefeitura Municipal de Santa Maria de Jetibá</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Version {APP_VERSION}</span>
+                </div>
+            </footer>
+        </div>
+    );
+};
+
+
+// --- MAIN DASHBOARD COMPONENT ---
+const Dashboard = () => {
+    const navigate = useNavigate()
+    const toast = useToast()
+
+    // UI State
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
+    const [loading, setLoading] = useState(true)
+    const [data, setData] = useState(null)
+    const [weather, setWeather] = useState(null)
+    const [syncDetail, setSyncDetail] = useState({ total: 0, vistorias: 0, interdicoes: 0 })
+    const [syncing, setSyncing] = useState(false)
+    const [showForecast, setShowForecast] = useState(false)
+    const [showReportMenu, setShowReportMenu] = useState(false)
+    const [generatingReport, setGeneratingReport] = useState(false)
+    const [cemadenAlerts, setCemadenAlerts] = useState([])
+
+    // Responsive Switch Logic
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 1024)
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
+    const load = async () => {
+        try {
+            const [pendingDetail, localVistorias, cachedVistorias, localOcorrencias] = await Promise.all([
+                getPendingSyncCount().catch(() => ({ total: 0, vistorias: 0, interdicoes: 0 })),
+                getAllVistoriasLocal().catch(() => []),
+                getRemoteVistoriasCache().catch(() => []),
+                getOcorrenciasLocal().catch(() => [])
+            ]);
+
+            const todayStr = new Date().toLocaleDateString('pt-BR');
+            const todayOccurrences = localOcorrencias.filter(o => o.data_ocorrencia === todayStr).length;
+
+            setSyncDetail(pendingDetail);
+            const initialAll = [...cachedVistorias, ...localVistorias];
+            setData({
+                stats: { totalVistorias: initialAll.length, activeOccurrences: todayOccurrences, inmetAlertsCount: 0 },
+                breakdown: processBreakdown(initialAll),
+                locations: processLocations(initialAll),
+                alerts: []
+            });
+            setLoading(false);
+
+            // Refetch in background
+            api.getDashboardData().then(dashResult => {
+                if (dashResult) setData(dashResult);
+            }).catch(() => { });
+
+            // Fetch Weather & Cemaden
+            Promise.all([
+                (async () => {
+                    try {
+                        const lat = -20.0246, lon = -40.7464;
+                        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_height_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
+                        const r = await fetch(url);
+                        if (!r.ok) return null;
+                        const d = await r.json();
+                        return {
+                            current: { temp: d.current.temperature_2m, humidity: d.current.relative_humidity_2m, rain: d.current.precipitation || 0, code: d.current.weather_code },
+                            daily: d.daily.time.map((t, i) => ({ date: t, tempMax: d.daily.temperature_2m_max[i], tempMin: d.daily.temperature_2m_min[i], rainProb: d.daily.precipitation_probability_max[i], code: d.daily.weather_code[i] }))
+                        };
+                    } catch (_) { return null; }
+                })(),
+                cemadenService.getActiveAlerts().catch(() => [])
+            ]).then(([w, c]) => {
+                if (w) setWeather(w)
+                if (c) setCemadenAlerts(c)
+            });
+
+        } catch (error) {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => { load() }, [])
+
+    const handleSync = async () => {
+        if (syncing) return
+        setSyncing(true)
+        toast.info('Sincronizando...', 'Comunicando com o servidor central.')
+        try {
+            await pullAllData();
+            await syncPendingData()
+            const [newData, newDetail] = await Promise.all([api.getDashboardData(), getPendingSyncCount()])
+            setData(newData)
+            setSyncDetail(newDetail)
+            toast.success('Sincronizado', 'Dados atualizados com sucesso.')
+        } catch (error) {
+            toast.error('Erro', 'Falha na comunicação.')
+        } finally {
+            setSyncing(false)
+        }
+    }
+
+    const handleClearCache = async () => {
+        if (!window.confirm('Apagar vistorias locais?')) return
+        await resetDatabase();
+        window.location.reload();
+    }
+
+    const handleExportKML = () => {
+        if (!data?.locations?.length) return alert('Sem dados.');
+        let kml = `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>${data.locations.map(loc => `<Placemark><name>${loc.risk}</name><Point><coordinates>${loc.lng},${loc.lat},0</coordinates></Point></Placemark>`).join('')}</Document></kml>`
+        const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' })
+        const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'vistorias.kml'; link.click();
+    }
+
+    const getWeatherIcon = (code) => {
+        if (code <= 1) return '☀️'; if (code <= 3) return '⛅'; if (code <= 48) return '🌫️'; if (code <= 67) return '🌦️'; return '⛈️';
+    }
+
+    const handleGenerateReport = async (hours = 0) => {
+        try {
+            setGeneratingReport(true);
+            const labels = {
+                24: 'Últimas 24 Horas',
+                48: 'Últimas 48 Horas',
+                72: 'Últimas 72 Horas',
+                96: 'Últimas 96 Horas',
+                0: 'Todo o Período'
+            }
+            const label = labels[hours] || 'Todo o Período';
+
+            // Generate report with current dashboard data
+            await generateSituationalReport(data, weather, [], null, label);
+
+            setShowReportMenu(false);
+            toast.success('Pronto!', 'Relatório gerado.');
+        } catch (error) {
+            console.error('Error generating report:', error);
+            toast.error('Erro', 'Erro ao gerar relatório.');
+        } finally {
+            setGeneratingReport(false);
+        }
+    };
+
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-slate-50 dark:bg-slate-900">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="font-bold text-slate-600 dark:text-slate-300">Carregando Inteligência...</span>
+        </div>
+    )
+
+    if (!data) return <div className="p-8 text-center text-red-500 font-bold">Erro ao carregar dados.</div>
+
+    // Sub-component Props
+    const commonProps = {
+        data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
+        handleClearCache, handleExportKML, navigate, setShowForecast,
+        showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport
+    };
+
+    return (
+        <>
+            {isMobile ? <MobileDashboardView {...commonProps} /> : <WebViewDashboardView {...commonProps} />}
+
             {/* Global Modals */}
             {showForecast && weather && (
-                <div onClick={() => setShowForecast(false)} className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Previsão 7 Dias</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</p>
-                            </div>
-                            <button onClick={() => setShowForecast(false)} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
-                                <X size={20} />
-                            </button>
+                <div onClick={() => setShowForecast(false)} className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Previsão Local</h3>
+                            <button onClick={() => setShowForecast(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><X size={18} /></button>
                         </div>
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                             {weather.daily?.map((day, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-slate-100 transition-all">
+                                <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50">
                                     <div className="flex items-center gap-4">
                                         <div className="text-2xl">{getWeatherIcon(day.code)}</div>
-                                        <div>
-                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                                                {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' })}
-                                            </div>
-                                            <div className="text-[10px] font-bold text-slate-400">{day.rainProb}% chuva</div>
+                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                            {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' })}
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-sm font-black text-slate-800 dark:text-slate-100">{Math.round(day.tempMax)}°</div>
-                                        <div className="text-[10px] font-bold text-slate-300">{Math.round(day.tempMin)}°</div>
-                                    </div>
+                                    <div className="text-sm font-black text-slate-700 dark:text-slate-300">{Math.round(day.tempMax)}° <span className="text-slate-400 font-normal">/ {Math.round(day.tempMin)}°</span></div>
                                 </div>
                             ))}
                         </div>
@@ -717,10 +625,47 @@ const Dashboard = () => {
             {generatingReport && (
                 <div className="fixed inset-0 z-[200] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center gap-4">
                     <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">Gerando Relatório Situacional...</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">Gerando Relatório...</span>
                 </div>
             )}
-        </div>
+
+            {/* Menu de Relatórios para WebView */}
+            {showReportMenu && (
+                <div onClick={() => setShowReportMenu(false)} className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-5">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Emitir Relatório</h3>
+                            <button onClick={() => setShowReportMenu(false)} className="bg-slate-100 dark:bg-slate-700 p-2 rounded-full text-slate-500 hover:text-slate-800 transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            {[
+                                { label: 'Últimas 24 Horas', value: 24 },
+                                { label: 'Últimas 48 Horas', value: 48 },
+                                { label: 'Últimas 72 Horas', value: 72 },
+                                { label: 'Últimas 96 Horas', value: 96 },
+                                { label: 'Todo o Período', value: 0 },
+                            ].map((opt, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleGenerateReport(opt.value)}
+                                    className="w-full text-left px-5 py-4 bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-700/50 hover:bg-blue-50 hover:text-blue-700 rounded-2xl font-bold text-slate-700 dark:text-slate-300 transition-colors flex justify-between items-center group"
+                                >
+                                    <span>{opt.label}</span>
+                                    <FileText size={18} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                .animate-spin-slow { animation: spin 8s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            `}</style>
+        </>
     );
 };
 

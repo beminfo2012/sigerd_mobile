@@ -93,20 +93,20 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
 
     const navItems = [
         {
-            label: 'Início',
+            label: 'Dashboard',
             icon: Home,
             path: '/',
             roles: AGENT_ROLES
         },
         {
-            label: 'GeoRescue',
-            icon: Map,
-            path: '/georescue',
+            label: 'Monitoramento',
+            icon: BarChart3,
+            path: '/monitoramento',
             roles: AGENT_ROLES
         },
         {
             label: 'Vistorias',
-            icon: FileText,
+            icon: Map,
             path: '/vistorias',
             roles: AGENT_ROLES
         },
@@ -117,34 +117,22 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
-            label: 'Interdição',
-            icon: AlertOctagon,
-            path: '/interdicao',
-            roles: AGENT_ROLES
-        },
-        {
-            label: 'Monitoramento',
-            icon: BarChart3,
-            path: '/monitoramento',
-            roles: AGENT_ROLES
-        },
-        {
             label: 'Assist. Humanitária',
             icon: Shield,
             path: '/abrigos',
             roles: HUMANITARIAN_ROLES
         },
         {
-            label: 'REDAP',
-            icon: Navigation,
-            path: '/redap',
-            roles: REDAP_ROLES
+            label: 'Relatórios',
+            icon: FileText,
+            path: '/menu',
+            roles: ['Admin', 'Coordenador']
         },
         {
-            label: 'Configurações',
-            icon: MenuIcon,
-            path: '/menu',
-            roles: ['Admin', 'Coordenador', 'Agente de Defesa Civil']
+            label: 'REDAP',
+            icon: ClipboardCheck,
+            path: '/redap',
+            roles: REDAP_ROLES
         }
     ];
 
@@ -154,8 +142,11 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
 
     return (
         <aside
-            className={`hidden md:flex flex-col h-screen shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-72'} border-r border-white/10`}
-            style={{ backgroundColor: '#10346E' }}
+            className={`hidden md:flex flex-col h-screen shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'} border-r border-white/10 shadow-xl`}
+            style={{
+                background: 'var(--web-sidebar-gradient)',
+                fontFamily: 'var(--web-font)'
+            }}
         >
             {/* Header / Logo */}
             <div className={`p-4 h-20 flex items-center border-b border-white/10 bg-white/5 relative ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
@@ -195,9 +186,9 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                             key={item.path}
                             to={item.path}
                             title={isCollapsed ? item.label : ''}
-                            className={`flex items-center rounded-lg transition-all duration-200 group relative ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'} ${isActive(item.path)
-                                ? 'bg-white text-[#10346E] shadow-lg shadow-black/10'
-                                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center p-4' : 'gap-3 px-5 py-3'} ${isActive(item.path)
+                                ? 'bg-white/10 text-white border-[#4CAF50]'
+                                : 'text-white/70 border-transparent hover:bg-white/5 hover:text-white'
                                 }`}
                         >
                             <item.icon size={20} className={`${isActive(item.path) ? '' : 'group-hover:scale-110 transition-transform'} shrink-0`} />

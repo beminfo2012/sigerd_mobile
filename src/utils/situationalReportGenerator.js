@@ -28,7 +28,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
     const topPluvios = sortedPluvios.slice(0, 5); // Top 5 for table
 
     // Calculate Average 24h Accumulation
-    const avgAcc24 = pluviometerData.length > 0
+    const avgAcc24 = (pluviometerData && pluviometerData.length > 0)
         ? (pluviometerData.reduce((acc, p) => acc + (p.acc24hr || 0), 0) / pluviometerData.length).toFixed(1)
         : '0.0';
 
@@ -299,14 +299,23 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
 
     // Generate PDF
     try {
-        // Wait for potential images to load
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait for potential images to load and ensure container has width
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // CRITICAL FIX: Ensure container has a real width for html2canvas
+        if (container.offsetWidth === 0) {
+            container.style.width = '840px';
+            container.style.minWidth = '840px';
+            container.style.display = 'block';
+            container.style.visibility = 'visible';
+        }
 
         const canvas = await html2canvas(container, {
             scale: 2,
             useCORS: true,
             logging: false,
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
+            windowWidth: 840 // Force window width for capture
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
