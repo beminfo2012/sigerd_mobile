@@ -3,7 +3,15 @@ export default async function handler(request, response) {
     const targetGeocode = "3204559"; // Santa Maria de Jetibá
 
     try {
-        const apiResponse = await fetch(targetUrl);
+        const apiResponse = await fetch(targetUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            }
+        });
+
+        // Add server-side caching to prevent hitting rate limits too often
+        response.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=300');
 
         // Handle rate limits or non-OK responses
         if (!apiResponse.ok) {

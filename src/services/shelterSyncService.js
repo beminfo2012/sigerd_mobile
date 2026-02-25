@@ -1,21 +1,43 @@
 import { supabase } from './supabase';
 import { initDB } from './db';
 
-const TABLES = ['shelters', 'occupants', 'families', 'donations', 'inventory', 'distributions', 'emergency_contracts'];
+const TABLES = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'emergency_contracts'];
 
 export const shelterSyncService = {
     /**
      * Pushes a single record to Supabase
      */
     async pushRecord(table, data) {
-        // Remove local-only fields if any, generally 'id' is local auto-increment, 
-        // we need to keep the UUID (shelter_id, etc)
-        // If the table uses a UUID as primary key in Supabase, we rely on the specific ID field
+        // Map local store names to Supabase table names
+        const remoteTableMap = {
+            'shelters': 'shelters',
+            'occupants': 'shelter_occupants',
+            'donations': 'shelter_donations',
+            'inventory': 'shelter_inventory',
+            'distributions': 'shelter_distributions',
+            'emergency_contracts': 'emergency_contracts'
+        };
 
+        const remoteTable = remoteTableMap[table] || table;
         const { id, synced, ...recordToPush } = data;
 
-        // Map local fields to Supabase expectations if needed
-        // Assuming strict 1:1 mapping for now based on previous code
+        // Map local fields to Supabase expectations
+        if (table === 'shelters') {
+            if (recordToPush.contact_phone && !recordToPush.responsible_phone) {
+                recordToPush.responsible_phone = recordToPush.contact_phone;
+            }
+            if (recordToPush.contact_name && !recordToPush.responsible_name) {
+                recordToPush.responsible_name = recordToPush.contact_name;
+            }
+            if (recordToPush.lat && recordToPush.lng && !recordToPush.coordenadas) {
+                recordToPush.coordenadas = `${recordToPush.lat}, ${recordToPush.lng}`;
+            }
+            // Remove local-only fields
+            delete recordToPush.contact_phone;
+            delete recordToPush.contact_name;
+            delete recordToPush.lat;
+            delete recordToPush.lng;
+        }
 
         try {
             const conflictKey = table === 'shelters' ? 'shelter_id' :
@@ -26,7 +48,7 @@ export const shelterSyncService = {
                                 table === 'emergency_contracts' ? 'contract_id' : 'id';
 
             const { error } = await supabase
-                .from(table)
+                .from(remoteTable)
                 .upsert(recordToPush, { onConflict: conflictKey });
 
             if (error) throw error;
@@ -36,8 +58,6 @@ export const shelterSyncService = {
             const tx = db.transaction(table, 'readwrite');
             const store = tx.objectStore(table);
 
-            // We need to fetch the record again to ensure we don't overwrite newer changes with old data
-            // But for 'synced' flag it's usually safe.
             const record = await store.get(id);
             if (record) {
                 record.synced = true;
@@ -47,7 +67,7 @@ export const shelterSyncService = {
 
             return true;
         } catch (err) {
-            console.error(`Sync error on ${table}:`, err);
+            console.error(`Sync error on ${table} (${remoteTable}):`, err);
             return false;
         }
     },
@@ -58,19 +78,23 @@ export const shelterSyncService = {
     async syncPending() {
         if (!navigator.onLine) return;
 
-        const db = await initDB();
+        try {
+            const db = await initDB();
 
-        for (const table of TABLES) {
-            // Get all records where synced is false (or 0)
-            // Note: Our new shelterDb uses synced: false (boolean)
-            const tx = db.transaction(table, 'readonly');
-            const store = tx.objectStore(table);
-            const index = store.index('synced');
-            const pending = await index.getAll(false);
+            for (const table of TABLES) {
+                if (!db.objectStoreNames.contains(table)) continue;
 
-            for (const record of pending) {
-                await this.pushRecord(table, record);
+                const tx = db.transaction(table, 'readonly');
+                const store = tx.objectStore(table);
+                const index = store.index('synced');
+                const pending = await index.getAll(false);
+
+                for (const record of pending) {
+                    await this.pushRecord(table, record);
+                }
             }
+        } catch (error) {
+            console.error('Error in syncPending:', error);
         }
     },
 
@@ -80,11 +104,21 @@ export const shelterSyncService = {
     async pullData() {
         if (!navigator.onLine) return;
 
+        const remoteTableMap = {
+            'shelters': 'shelters',
+            'occupants': 'shelter_occupants',
+            'donations': 'shelter_donations',
+            'inventory': 'shelter_inventory',
+            'distributions': 'shelter_distributions',
+            'emergency_contracts': 'emergency_contracts'
+        };
+
         const db = await initDB();
 
         for (const table of TABLES) {
+            const remoteTable = remoteTableMap[table] || table;
             try {
-                const { data, error } = await supabase.from(table).select('*');
+                const { data, error } = await supabase.from(remoteTable).select('*');
                 if (error) throw error;
 
                 if (data && data.length > 0) {

@@ -111,136 +111,166 @@ const MobileLoginView = ({
 
 const WebLoginView = ({
     username, setUsername, password, setPassword, loading, error, handleSubmit
-}) => (
-    <div className="min-h-screen w-full flex bg-slate-50 font-sans">
-        {/* Left Side: Branding & Info */}
-        <div className="hidden lg:flex flex-col justify-between w-[45%] bg-[#102754] p-16 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -mr-64 -mt-64 animate-pulse"></div>
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-400/10 blur-[100px] rounded-full -ml-32 -mb-32"></div>
+}) => {
+    const [currentBg, setCurrentBg] = useState(0);
+    const backgrounds = [
+        '/assets/img/login_bg_rescue.png',
+        '/assets/img/login_bg_humanitarian.png'
+    ];
 
-            <div className="relative z-10 flex flex-col gap-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 shadow-2xl">
-                        <img src="/logo_sigerd_new.png" className="w-10 h-10 object-contain" alt="SIGERD" onError={(e) => { e.target.style.display = 'none'; }} />
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentBg((prev) => (prev + 1) % backgrounds.length);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <div className="min-h-screen w-full flex bg-slate-50 font-sans">
+            {/* Left Side: Branding & Info */}
+            <div className="hidden lg:flex flex-col justify-between w-[45%] bg-[#102754] p-16 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -mr-64 -mt-64 animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-400/10 blur-[100px] rounded-full -ml-32 -mb-32"></div>
+
+                <div className="relative z-10 flex flex-col gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 shadow-2xl">
+                            <img src="/logo_sigerd_new.png" className="w-10 h-10 object-contain" alt="SIGERD" onError={(e) => { e.target.style.display = 'none'; }} />
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-black tracking-tighter">SIGERD <span className="text-blue-400 font-bold ml-1">WEB</span></h2>
+                            <span className="text-[10px] uppercase font-black tracking-[4px] opacity-40">Intelligence Management</span>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-3xl font-black tracking-tighter">SIGERD <span className="text-blue-400 font-bold ml-1">WEB</span></h2>
-                        <span className="text-[10px] uppercase font-black tracking-[4px] opacity-40">Intelligence Management</span>
+
+                    <div className="mt-12 space-y-12 max-w-md">
+                        <div>
+                            <h3 className="text-4xl font-black leading-tight mb-4 text-white">Gestão Integrada de Riscos e Desastres.</h3>
+                            <p className="text-lg text-white/50 leading-relaxed">
+                                Plataforma oficial da Defesa Civil de Santa Maria de Jetibá para monitoramento, vistoria e resposta a desastres naturais.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10">
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-blue-400 font-black text-2xl tabular-nums">1.2k+</div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-white/30">Vistorias Realizadas</div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-emerald-400 font-black text-2xl tabular-nums">24/7</div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-white/30">Monitoramento Ativo</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="mt-12 space-y-12 max-w-md">
-                    <div>
-                        <h3 className="text-4xl font-black leading-tight mb-4 text-white">Gestão Integrada de Desastres em Tempo Real.</h3>
-                        <p className="text-lg text-white/50 leading-relaxed">
-                            Plataforma oficial da Defesa Civil de Santa Maria de Jetibá para monitoramento, vistoria e resposta a desastres naturais.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10">
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-blue-400 font-black text-2xl tabular-nums">1.2k+</div>
-                            <div className="text-[10px] font-black uppercase tracking-widest text-white/30">Vistorias Realizadas</div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-emerald-400 font-black text-2xl tabular-nums">24/7</div>
-                            <div className="text-[10px] font-black uppercase tracking-widest text-white/30">Monitoramento Ativo</div>
-                        </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[3px] opacity-20">
+                        <div className="h-[1px] w-12 bg-white"></div>
+                        Prefeitura Municipal de Santa Maria de Jetibá
                     </div>
                 </div>
             </div>
 
-            <div className="relative z-10">
-                <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[3px] opacity-20">
-                    <div className="h-[1px] w-12 bg-white"></div>
-                    Prefeitura Municipal de Santa Maria de Jetibá
+            {/* Right Side: Login Form with Background Images */}
+            <div className="flex-1 flex flex-col justify-center items-center p-8 relative overflow-hidden">
+                {/* Dynamic Backgrounds */}
+                {backgrounds.map((bg, idx) => (
+                    <div
+                        key={idx}
+                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentBg === idx ? 'opacity-20' : 'opacity-0'}`}
+                        style={{
+                            backgroundImage: `url(${bg})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            filter: 'grayscale(30%)'
+                        }}
+                    />
+                ))}
+
+                <div className="absolute top-8 right-8 z-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Acesso Restrito
+                </div>
+
+                <div className="w-full max-w-md space-y-12 bg-white/90 backdrop-blur-sm lg:p-12 lg:rounded-[32px] lg:shadow-2xl lg:shadow-slate-200/50 lg:border lg:border-slate-100 relative z-20">
+                    <div className="lg:hidden flex flex-col items-center gap-4 mb-12">
+                        <img src="/logo_sigerd_new.png" className="w-20 h-20 object-contain" alt="SIGERD" onError={(e) => { e.target.style.display = 'none'; }} />
+                        <h2 className="text-3xl font-black text-[#102754]">SIGERD</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h2 className="text-4xl font-black text-slate-800 tracking-tight">Entrar</h2>
+                        <p className="text-slate-400 font-medium leading-relaxed">Acesse o sistema com suas credenciais oficiais corporativas.</p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
+                            <div className="relative group">
+                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors">
+                                    <User size={20} />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="exemplo@s2id.com"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required
+                                    className="w-full h-16 pl-16 pr-6 rounded-[20px] bg-slate-50/50 border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
+                            <div className="relative group">
+                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors">
+                                    <Lock size={20} />
+                                </div>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="w-full h-16 pl-16 pr-6 rounded-[20px] bg-slate-50/50 border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                                />
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold animate-in">
+                                <ShieldAlert size={20} className="shrink-0" />
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full h-16 bg-[#ff5722] hover:bg-[#e64a19] text-white rounded-[20px] font-black text-base uppercase tracking-widest shadow-xl shadow-[#ff5722]/30 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {loading ? (
+                                    <><Loader2 className="animate-spin" size={24} /> Autenticando...</>
+                                ) : (
+                                    <><LogIn size={20} /> Acessar Sistema</>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="pt-8 flex flex-col items-center gap-4">
+                        <div className="flex items-center gap-2 group cursor-help">
+                            <Info size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Problemas de acesso? Contate a COMPDEC-SMJ</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        {/* Right Side: Login Form */}
-        <div className="flex-1 flex flex-col justify-center items-center p-8 bg-white lg:bg-slate-50 relative">
-            <div className="absolute top-8 right-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Acesso Restrito
-            </div>
-            <div className="w-full max-w-md space-y-12 bg-white lg:p-12 lg:rounded-[32px] lg:shadow-2xl lg:shadow-slate-200/50 lg:border lg:border-slate-100">
-                <div className="lg:hidden flex flex-col items-center gap-4 mb-12">
-                    <img src="/logo_sigerd_new.png" className="w-20 h-20 object-contain" alt="SIGERD" onError={(e) => { e.target.style.display = 'none'; }} />
-                    <h2 className="text-3xl font-black text-[#102754]">SIGERD</h2>
-                </div>
-
-                <div className="space-y-4">
-                    <h2 className="text-4xl font-black text-slate-800 tracking-tight">Entrar</h2>
-                    <p className="text-slate-400 font-medium leading-relaxed">Acesse o sistema com suas credenciais oficiais corporativas.</p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
-                        <div className="relative group">
-                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors">
-                                <User size={20} />
-                            </div>
-                            <input
-                                type="text"
-                                placeholder="exemplo@s2id.com"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                required
-                                className="w-full h-16 pl-16 pr-6 rounded-[20px] bg-slate-50 border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
-                        <div className="relative group">
-                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors">
-                                <Lock size={20} />
-                            </div>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                className="w-full h-16 pl-16 pr-6 rounded-[20px] bg-slate-50 border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
-                            />
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold animate-in">
-                            <ShieldAlert size={20} className="shrink-0" />
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="pt-2">
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full h-16 bg-[#ff5722] hover:bg-[#e64a19] text-white rounded-[20px] font-black text-base uppercase tracking-widest shadow-xl shadow-[#ff5722]/30 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                        >
-                            {loading ? (
-                                <><Loader2 className="animate-spin" size={24} /> Autenticando...</>
-                            ) : (
-                                <><LogIn size={20} /> Acessar Sistema</>
-                            )}
-                        </button>
-                    </div>
-                </form>
-
-                <div className="pt-8 flex flex-col items-center gap-4">
-                    <div className="flex items-center gap-2 group cursor-help">
-                        <Info size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Problemas de acesso? Contate o Suporte TI</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-);
+    );
+};
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('')

@@ -36,7 +36,7 @@ const pullShelterModuleFromCloud = async () => {
         { table: 'shelters', store: 'shelters', key: 'shelter_id' },
         { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
         { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
-        { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
+        { table: 'shelter_inventory', store: 'inventory', key: 'inventory_id' },
         { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' }
     ];
 

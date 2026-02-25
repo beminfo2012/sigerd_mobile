@@ -4,9 +4,9 @@ import { api } from '../../services/api'
 import {
     ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
-    ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle
+    ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers
 } from 'lucide-react'
-import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import {
@@ -90,8 +90,12 @@ const processLocations = (records) => {
 const MobileDashboardView = ({
     data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
     handleClearCache, handleExportKML, navigate, setShowForecast,
-    showReportMenu, setShowReportMenu, getWeatherIcon
+    showReportMenu, setShowReportMenu, getWeatherIcon, statusInfo,
+    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
 }) => {
+    const currentData = viewMode === 'vistorias' ? data.vistorias : data.ocorrencias;
+    const filteredLocations = mapFilter === 'Todas' ? currentData.locations : currentData.locations.filter(l => l.risk === mapFilter);
+    const typologies = ['Todas', ...currentData.breakdown.map(b => b.label)];
     return (
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans">
             <div className="p-5 space-y-8">
@@ -130,8 +134,8 @@ const MobileDashboardView = ({
                 <div>
                     <div className="flex justify-between items-center mb-6 px-1">
                         <div className="flex flex-col">
-                            <h2 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider -mt-1">Santa Maria de Jetibá</span>
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] -mt-1">Santa Maria de Jetibá</span>
                         </div>
                         <button
                             onClick={handleSync}
@@ -148,10 +152,10 @@ const MobileDashboardView = ({
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
                                 {syncing ? <CloudUpload size={20} className="animate-bounce" /> : <CloudUpload size={20} />}
                             </div>
-                            <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
+                            <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
                                 {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
                             </div>
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Sincronização</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização</div>
                         </div>
 
                         {/* INMET Alerts */}
@@ -159,8 +163,8 @@ const MobileDashboardView = ({
                             <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
                                 <Zap size={20} />
                             </div>
-                            <div className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-1 tabular-nums">{data.stats.inmetAlertsCount || 0}</div>
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</div>
+                            <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">{data.stats.inmetAlertsCount || 0}</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</div>
                         </div>
                     </div>
                 </div>
@@ -198,9 +202,9 @@ const MobileDashboardView = ({
 
                 {/* 4. Tipologia Breakdown */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-6 uppercase tracking-[2px]">Vistorias por Tipologia</h3>
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[2px] mb-6">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'} por Tipologia</h3>
                     <div className="space-y-6">
-                        {data?.breakdown?.slice(0, 5).map((item, idx) => (
+                        {currentData?.breakdown?.slice(0, 5).map((item, idx) => (
                             <div key={idx}>
                                 <div className="flex justify-between items-center mb-1.5">
                                     <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
@@ -214,18 +218,88 @@ const MobileDashboardView = ({
                     </div>
                 </div>
 
-                {/* 5. Map */}
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                    <div className="h-64 w-full rounded-[24px] overflow-hidden bg-slate-100 relative z-0">
-                        <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-                            <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                            <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
-                        </MapContainer>
+                {/* 5. Map Section */}
+                <div className="space-y-4">
+                    <div className="flex flex-col gap-4 px-2">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-[2px]">Mapa Situacional</h3>
+                            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                                <MapPin size={12} className="text-blue-500" />
+                                <select
+                                    value={mapFilter}
+                                    onChange={(e) => setMapFilter(e.target.value)}
+                                    className="text-[10px] font-bold bg-transparent border-none text-slate-600 dark:text-slate-300 outline-none"
+                                >
+                                    {typologies.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex p-1 bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-[18px] border border-slate-100/50 dark:border-slate-700/50">
+                            <button
+                                onClick={() => { setViewMode('vistorias'); setMapFilter('Todas'); }}
+                                className={`flex-1 py-3 text-xs font-black rounded-[14px] transition-all ${viewMode === 'vistorias' ? 'bg-white dark:bg-slate-700 shadow-lg text-blue-600 scale-[1.02]' : 'text-slate-500'}`}
+                            >
+                                Vistorias
+                            </button>
+                            <button
+                                onClick={() => { setViewMode('ocorrencias'); setMapFilter('Todas'); }}
+                                className={`flex-1 py-3 text-xs font-black rounded-[14px] transition-all ${viewMode === 'ocorrencias' ? 'bg-white dark:bg-slate-700 shadow-lg text-blue-600 scale-[1.02]' : 'text-slate-500'}`}
+                            >
+                                Ocorrências
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                        <div className="h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0">
+                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                                {/* Map Style Toggle (Mobile - Absolute inside map) */}
+                                <div className="absolute top-4 left-4 z-[1000]">
+                                    <button
+                                        onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
+                                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700 active:scale-90 transition-transform"
+                                    >
+                                        <Layers size={20} />
+                                    </button>
+                                </div>
+
+
+                                {mapStyle === 'street' ? (
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                                ) : (
+                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                )}
+                                <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                {filteredLocations?.map((loc, idx) => (
+                                    <CircleMarker
+                                        key={idx}
+                                        center={[loc.lat, loc.lng]}
+                                        radius={5}
+                                        pathOptions={{
+                                            color: mapStyle === 'street' ? '#fff' : '#3b82f6',
+                                            fillColor: String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316',
+                                            fillOpacity: 0.9,
+                                            weight: 2
+                                        }}
+                                    >
+                                        <Popup minWidth={180}>
+                                            <div className="p-1">
+                                                <div className="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-widest">{viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'}</div>
+                                                <div className="text-xs font-bold text-slate-800 mb-1">{loc.risk}</div>
+                                                <div className="text-[11px] text-slate-500 leading-relaxed mb-2">{loc.details}</div>
+                                                <div className="text-[9px] font-bold text-slate-400 italic uppercase">Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</div>
+                                            </div>
+                                        </Popup>
+                                    </CircleMarker>
+                                ))}
+                            </MapContainer>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className="text-center py-8 opacity-40">
-                <span className="text-[10px] font-black uppercase tracking-[4px] dark:text-white">SIGERD MOBILE V{APP_VERSION}</span>
+                <div className="text-center py-8 opacity-40">
+                    <span className="text-[10px] font-black uppercase tracking-[4px] dark:text-white">SIGERD MOBILE V{APP_VERSION}</span>
+                </div>
             </div>
         </div>
     );
@@ -235,8 +309,12 @@ const MobileDashboardView = ({
 const WebViewDashboardView = ({
     data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
     handleClearCache, handleExportKML, navigate, setShowForecast,
-    showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport
+    showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
+    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
 }) => {
+    const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
+    const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
+    const typologies = ['Todas', ...(currentData.breakdown || []).map(b => b.label)];
     return (
         <div className="bg-[#f0f2f5] dark:bg-slate-950 min-h-screen font-sans flex flex-col">
             <div className="max-w-[1700px] mx-auto w-full p-6 space-y-6 flex-1">
@@ -246,13 +324,13 @@ const WebViewDashboardView = ({
 
                     {/* Header: Title & Weather */}
                     <div className="flex justify-between items-center px-2">
-                        <h2 className="text-xl font-bold text-slate-700 dark:text-slate-100 mt-2">
+                        <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                             Monitoramento em Tempo Real
                         </h2>
                         {weather?.current && (
                             <div className="flex items-center gap-4 py-1">
                                 <div className="text-2xl">{getWeatherIcon(weather.current.code)}</div>
-                                <div className="text-xl font-black text-slate-800 dark:text-slate-100">{Math.round(weather.current.temp || 0)}°C</div>
+                                <div className="text-2xl font-black text-slate-900 dark:text-slate-100">{Math.round(weather.current.temp || 0)}°C</div>
                                 <div className="hidden xl:flex flex-col border-l border-slate-200 dark:border-slate-700 pl-4 ml-2">
                                     <span className="text-[10px] font-black text-slate-400 uppercase leading-none italic">Localização</span>
                                     <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Santa Maria de Jetibá</span>
@@ -265,16 +343,16 @@ const WebViewDashboardView = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                         {/* Card 1: Risk Level */}
                         <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden group shadow-sm">
-                            <div className={`absolute top-0 left-0 w-1.5 h-full ${cemadenAlerts.length > 0 ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                            <div className={`absolute top-0 left-0 w-1.5 h-full ${statusInfo.color}`} />
                             <div className="flex justify-between items-start mb-6">
-                                <span className="text-xl font-black text-slate-800 dark:text-slate-100">{cemadenAlerts.length > 0 ? 'ALERTA' : 'NORMAL'}</span>
-                                <div className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest leading-none ${cemadenAlerts.length > 0 ? 'text-red-500 bg-red-50 dark:bg-red-900/20' : 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'}`}>Status</div>
+                                <span className={`text-xl font-black ${statusInfo.text}`}>{statusInfo.label}</span>
+                                <div className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest leading-none ${statusInfo.text} ${statusInfo.bg}`}>Status</div>
                             </div>
                             <div className="space-y-4">
                                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                                    <div className={`h-full rounded-full w-full transition-all duration-1000 ${cemadenAlerts.length > 0 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'}`} />
+                                    <div className={`h-full rounded-full w-full transition-all duration-1000 ${statusInfo.color} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight italic">Status Base INMET</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Plataforma INMET / CEMADEN</p>
                             </div>
                         </div>
 
@@ -284,9 +362,9 @@ const WebViewDashboardView = ({
                                 <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl text-purple-500">
                                     <AlertTriangle size={20} />
                                 </div>
-                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.activeOccurrences}</span>
+                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.activeOccurrences}</span>
                             </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Ocorrências Hoje</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Ocorrências Hoje</span>
                         </div>
 
                         {/* Card 3: INMET Alerts */}
@@ -295,9 +373,9 @@ const WebViewDashboardView = ({
                                 <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
                                     <Zap size={20} />
                                 </div>
-                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{cemadenAlerts.length || 0}</span>
+                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.inmetAlertsCount || 0}</span>
                             </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
                         </div>
 
                         {/* Card 4: Vistorias Totais */}
@@ -306,9 +384,9 @@ const WebViewDashboardView = ({
                                 <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500">
                                     <ClipboardList size={20} />
                                 </div>
-                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.totalVistorias}</span>
+                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.totalVistorias}</span>
                             </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Vistorias Totais</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Vistorias Totais</span>
                         </div>
                     </div>
 
@@ -337,26 +415,87 @@ const WebViewDashboardView = ({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                     {/* Map Column */}
                     <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
-                        <div className="mb-6 flex flex-col">
-                            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 leading-tight">Mapa Situacional</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 italic">Distribuição Geográfica</p>
+                        <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                            <div className="flex flex-col">
+                                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 leading-tight">Mapa Situacional</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-1 underline decoration-blue-500 decoration-2 underline-offset-4">Distribuição Geográfica</p>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                {/* Toggle Mode */}
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => { setViewMode('vistorias'); setMapFilter('Todas'); }}
+                                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${viewMode === 'vistorias' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Vistorias
+                                    </button>
+                                    <button
+                                        onClick={() => { setViewMode('ocorrencias'); setMapFilter('Todas'); }}
+                                        className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${viewMode === 'ocorrencias' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Ocorrências
+                                    </button>
+                                </div>
+
+                                {/* Filter Dropdown */}
+                                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <MapPin size={14} className="text-slate-400" />
+                                    <select
+                                        value={mapFilter}
+                                        onChange={(e) => setMapFilter(e.target.value)}
+                                        className="text-[11px] font-bold bg-transparent border-none text-slate-600 dark:text-slate-300 outline-none cursor-pointer min-w-[120px]"
+                                    >
+                                        {typologies.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <div className="flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner">
                             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
-                                <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                                <HeatmapLayer points={data?.locations || []} show={true} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
-                                {data?.locations?.map((loc, idx) => (
+                                {/* Map Style Toggle (Web - Below Zoom) */}
+                                <div className="absolute top-[80px] left-[10px] z-[1000]">
+                                    <button
+                                        onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
+                                        className="w-[34px] h-[34px] bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center rounded-[4px] shadow-sm border-2 border-[rgba(0,0,0,0.2)] text-slate-700 dark:text-slate-200 transition-colors"
+                                        title="Alternar vista"
+                                    >
+                                        <Layers size={18} />
+                                    </button>
+                                </div>
+
+                                {mapStyle === 'street' ? (
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                                ) : (
+                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                )}
+                                <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                {filteredLocations?.map((loc, idx) => (
                                     <CircleMarker
                                         key={idx}
                                         center={[loc.lat, loc.lng]}
-                                        radius={6}
+                                        radius={7}
                                         pathOptions={{
-                                            color: '#fff',
-                                            fillColor: String(loc.risk).includes('Alto') ? '#ef4444' : '#f97316',
-                                            fillOpacity: 0.8,
-                                            weight: 1.5
+                                            color: mapStyle === 'street' ? '#fff' : '#3b82f6',
+                                            fillColor: String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316',
+                                            fillOpacity: 0.9,
+                                            weight: 2
                                         }}
-                                    />
+                                    >
+                                        <Popup minWidth={220}>
+                                            <div className="p-2">
+                                                <div className="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-widest">{viewMode === 'vistorias' ? 'Registro de Vistoria' : 'Registro de Ocorrência'}</div>
+                                                <div className="text-sm font-black text-slate-800 mb-2">{loc.risk}</div>
+                                                <div className="text-xs text-slate-500 leading-relaxed mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                    {loc.details || 'Sem detalhes adicionais registrados.'}
+                                                </div>
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase italic">
+                                                    <span>Santa Maria de Jetibá</span>
+                                                    <span>{new Date(loc.date).toLocaleDateString('pt-BR')}</span>
+                                                </div>
+                                            </div>
+                                        </Popup>
+                                    </CircleMarker>
                                 ))}
                             </MapContainer>
                         </div>
@@ -364,13 +503,13 @@ const WebViewDashboardView = ({
 
                     {/* Resumo Situacional Column */}
                     <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
-                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-8 uppercase tracking-[3px]">Vistorias por Tipologia</h3>
-                        <div className="space-y-6 flex-1 overflow-y-auto">
-                            {data?.breakdown?.slice(0, 10).map((item, idx) => (
+                        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-8 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'} por Tipologia</h3>
+                        <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                            {currentData?.breakdown?.slice(0, 10).map((item, idx) => (
                                 <div key={idx} className="group cursor-default">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors tracking-tight">{item.label}</span>
-                                        <span className="text-sm font-black text-slate-800 dark:text-slate-100">{item.count}</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors tracking-tight">{item.label}</span>
+                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-100">{item.count}</span>
                                     </div>
                                     <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
                                         <div
@@ -392,10 +531,10 @@ const WebViewDashboardView = ({
                             <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${syncing ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30'}`}>
                                 <CheckCircle size={18} className={syncing ? 'animate-spin' : ''} />
                             </div>
-                            <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Sincronização do Sistema</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização do Sistema</span>
                         </div>
-                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Forçar sincronização</span>
+                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Forçar sincronização</span>
                     </div>
 
                     {/* INMET Summary */}
@@ -404,10 +543,10 @@ const WebViewDashboardView = ({
                             <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500 group-hover:scale-110 transition-transform">
                                 <Zap size={18} />
                             </div>
-                            <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Avisos INMET</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</span>
                         </div>
-                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{cemadenAlerts.length || 0}</div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Alertas Ativos</span>
+                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{data.stats.inmetAlertsCount || 0}</div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Alertas Ativos</span>
                     </div>
 
                     {/* Vistorias Summary */}
@@ -416,10 +555,10 @@ const WebViewDashboardView = ({
                             <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500 group-hover:scale-110 transition-transform">
                                 <ClipboardList size={18} />
                             </div>
-                            <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Vistorias</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Vistorias</span>
                         </div>
-                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{data.stats.totalVistorias}</div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Total Computado</span>
+                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{data.stats.totalVistorias}</div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Total Computado</span>
                     </div>
                 </div>
             </div>
@@ -454,6 +593,48 @@ const Dashboard = () => {
     const [showReportMenu, setShowReportMenu] = useState(false)
     const [generatingReport, setGeneratingReport] = useState(false)
     const [cemadenAlerts, setCemadenAlerts] = useState([])
+    const [viewMode, setViewMode] = useState('vistorias')
+    const [mapFilter, setMapFilter] = useState('Todas')
+    const [mapStyle, setMapStyle] = useState('street')
+
+    const statusInfo = useMemo(() => {
+        const inmet = data?.alerts || []
+        const cemaden = cemadenAlerts || []
+
+        // Default: Normal State
+        let highest = 'NORMAL'
+        let color = 'bg-emerald-500'
+        let text = 'text-emerald-500'
+        let bg = 'bg-emerald-50'
+        let dot = 'bg-emerald-500'
+
+        if (inmet.length > 0 || cemaden.length > 0) {
+            // Base Alert State
+            highest = 'ATENÇÃO'
+            color = 'bg-amber-500'
+            text = 'text-amber-600'
+            bg = 'bg-amber-50'
+            dot = 'bg-amber-500'
+
+            const severities = inmet.map(a => String(a.severidade || '').toLowerCase())
+
+            if (severities.some(s => s.includes('grande'))) {
+                highest = 'G. PERIGO'
+                color = 'bg-red-600'
+                text = 'text-red-700'
+                bg = 'bg-red-50'
+                dot = 'bg-red-600'
+            } else if (severities.some(s => s.includes('perigo')) || cemaden.length > 0) {
+                highest = 'PERIGO'
+                color = 'bg-orange-500'
+                text = 'text-orange-600'
+                bg = 'bg-orange-50'
+                dot = 'bg-orange-500'
+            }
+        }
+
+        return { label: highest, color, text, bg, dot }
+    }, [data?.alerts, cemadenAlerts])
 
     // Responsive Switch Logic
     useEffect(() => {
@@ -475,11 +656,15 @@ const Dashboard = () => {
             const todayOccurrences = localOcorrencias.filter(o => o.data_ocorrencia === todayStr).length;
 
             setSyncDetail(pendingDetail);
-            const initialAll = [...cachedVistorias, ...localVistorias];
+            const initialAllV = [...cachedVistorias, ...localVistorias];
+            const initialAllO = localOcorrencias; // Ocorrencias mostly local for now or updated by api
+
             setData({
-                stats: { totalVistorias: initialAll.length, activeOccurrences: todayOccurrences, inmetAlertsCount: 0 },
-                breakdown: processBreakdown(initialAll),
-                locations: processLocations(initialAll),
+                vistorias: { stats: { total: initialAllV.length }, breakdown: processBreakdown(initialAllV), locations: processLocations(initialAllV) },
+                ocorrencias: { stats: { total: initialAllO.length, today: todayOccurrences }, breakdown: processBreakdown(initialAllO), locations: processLocations(initialAllO) },
+                stats: { totalVistorias: initialAllV.length, activeOccurrences: todayOccurrences, inmetAlertsCount: 0 },
+                breakdown: processBreakdown(initialAllV),
+                locations: processLocations(initialAllV),
                 alerts: []
             });
             setLoading(false);
@@ -590,7 +775,8 @@ const Dashboard = () => {
     const commonProps = {
         data, weather, cemadenAlerts, syncDetail, syncing, handleSync,
         handleClearCache, handleExportKML, navigate, setShowForecast,
-        showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport
+        showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
+        viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
     };
 
     return (
