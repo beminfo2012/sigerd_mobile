@@ -45,7 +45,7 @@ export function ShelterDetail() {
             try {
                 await deleteShelter(id);
                 alert('Abrigo excluído com sucesso.');
-                navigate('/abrigos');
+                navigate('/abrigos/lista');
             } catch (error) {
                 console.error('Erro ao excluir:', error);
                 alert('Erro ao excluir abrigo.');
@@ -116,11 +116,11 @@ export function ShelterDetail() {
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <button
-                        onClick={() => navigate('/abrigos')}
+                        onClick={() => navigate('/abrigos/lista')}
                         className="flex items-center gap-2 text-[#2a5299] font-semibold w-fit hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
-                        Voltar ao Dashboard
+                        Voltar à Lista
                     </button>
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

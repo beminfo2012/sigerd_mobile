@@ -41,6 +41,14 @@ export function Residents() {
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+                <button
+                    onClick={() => navigate('/abrigos')}
+                    className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
+                >
+                    <ArrowLeft size={20} />
+                    Voltar ao Menu
+                </button>
+
                 <div>
                     <h1 className="text-2xl font-black text-slate-800 mb-1">Residentes</h1>
                     <p className="text-sm text-slate-500">Lista geral de pessoas abrigadas em todas as unidades</p>

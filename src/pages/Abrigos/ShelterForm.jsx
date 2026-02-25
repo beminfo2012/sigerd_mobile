@@ -85,7 +85,7 @@ export function ShelterForm() {
                 });
                 alert('Abrigo cadastrado com sucesso!');
             }
-            navigate(id ? `/abrigos/${id}` : '/abrigos');
+            navigate(id ? `/abrigos/${id}` : '/abrigos/lista');
         } catch (error) {
             console.error('Error saving shelter:', error);
             alert(`Erro ao salvar abrigo: ${error.message}`);
@@ -111,7 +111,7 @@ export function ShelterForm() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
-                        onClick={() => navigate(id ? `/abrigos/${id}` : '/abrigos')}
+                        onClick={() => navigate(id ? `/abrigos/${id}` : '/abrigos/lista')}
                         className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
