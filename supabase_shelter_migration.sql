@@ -140,32 +140,38 @@ ALTER TABLE shelter_inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shelter_distributions ENABLE ROW LEVEL SECURITY;
 
 -- 9. RLS Policies - Allow all authenticated users to read
+DROP POLICY IF EXISTS "Allow authenticated users to read shelters" ON shelters;
 CREATE POLICY "Allow authenticated users to read shelters"
     ON shelters FOR SELECT
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read occupants" ON shelter_occupants;
 CREATE POLICY "Allow authenticated users to read occupants"
     ON shelter_occupants FOR SELECT
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read donations" ON shelter_donations;
 CREATE POLICY "Allow authenticated users to read donations"
     ON shelter_donations FOR SELECT
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read inventory" ON shelter_inventory;
 CREATE POLICY "Allow authenticated users to read inventory"
     ON shelter_inventory FOR SELECT
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated users to read distributions" ON shelter_distributions;
 CREATE POLICY "Allow authenticated users to read distributions"
     ON shelter_distributions FOR SELECT
     TO authenticated
     USING (true);
 
 -- 10. RLS Policies - Allow shelter managers to insert/update
+DROP POLICY IF EXISTS "Allow shelter managers to insert shelters" ON shelters;
 CREATE POLICY "Allow shelter managers to insert shelters"
     ON shelters FOR INSERT
     TO authenticated
@@ -177,6 +183,7 @@ CREATE POLICY "Allow shelter managers to insert shelters"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to update shelters" ON shelters;
 CREATE POLICY "Allow shelter managers to update shelters"
     ON shelters FOR UPDATE
     TO authenticated
@@ -188,6 +195,7 @@ CREATE POLICY "Allow shelter managers to update shelters"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to insert occupants" ON shelter_occupants;
 CREATE POLICY "Allow shelter managers to insert occupants"
     ON shelter_occupants FOR INSERT
     TO authenticated
@@ -199,6 +207,7 @@ CREATE POLICY "Allow shelter managers to insert occupants"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to update occupants" ON shelter_occupants;
 CREATE POLICY "Allow shelter managers to update occupants"
     ON shelter_occupants FOR UPDATE
     TO authenticated
@@ -210,6 +219,7 @@ CREATE POLICY "Allow shelter managers to update occupants"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to insert donations" ON shelter_donations;
 CREATE POLICY "Allow shelter managers to insert donations"
     ON shelter_donations FOR INSERT
     TO authenticated
@@ -221,6 +231,7 @@ CREATE POLICY "Allow shelter managers to insert donations"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to insert inventory" ON shelter_inventory;
 CREATE POLICY "Allow shelter managers to insert inventory"
     ON shelter_inventory FOR INSERT
     TO authenticated
@@ -232,6 +243,7 @@ CREATE POLICY "Allow shelter managers to insert inventory"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to update inventory" ON shelter_inventory;
 CREATE POLICY "Allow shelter managers to update inventory"
     ON shelter_inventory FOR UPDATE
     TO authenticated
@@ -243,6 +255,7 @@ CREATE POLICY "Allow shelter managers to update inventory"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to insert distributions" ON shelter_distributions;
 CREATE POLICY "Allow shelter managers to insert distributions"
     ON shelter_distributions FOR INSERT
     TO authenticated

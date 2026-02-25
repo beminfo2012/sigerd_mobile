@@ -58,16 +58,19 @@ CREATE INDEX IF NOT EXISTS idx_ocorrencias_bairro ON ocorrencias_operacionais(ba
 ALTER TABLE ocorrencias_operacionais ENABLE ROW LEVEL SECURITY;
 
 -- 4. RLS Policies
+DROP POLICY IF EXISTS "Allow authenticated to read occurrences" ON ocorrencias_operacionais;
 CREATE POLICY "Allow authenticated to read occurrences"
     ON ocorrencias_operacionais FOR SELECT
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated to insert occurrences" ON ocorrencias_operacionais;
 CREATE POLICY "Allow authenticated to insert occurrences"
     ON ocorrencias_operacionais FOR INSERT
     TO authenticated
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow authenticated to update occurrences" ON ocorrencias_operacionais;
 CREATE POLICY "Allow authenticated to update occurrences"
     ON ocorrencias_operacionais FOR UPDATE
     TO authenticated
