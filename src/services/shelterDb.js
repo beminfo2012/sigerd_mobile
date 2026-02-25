@@ -614,13 +614,29 @@ export const updateInventoryItem = async (id, changes) => {
 
 export const deleteInventoryItem = async (id) => {
     const db = await initDB();
-    const tx = db.transaction(['inventory', 'audit_log'], 'readwrite');
+    const tx = db.transaction(['inventory', 'distributions', 'donations', 'audit_log'], 'readwrite');
     const store = tx.objectStore('inventory');
+    const distStore = tx.objectStore('distributions');
+    const donStore = tx.objectStore('donations');
     const auditStore = tx.objectStore('audit_log');
 
     const item = await store.get(parseInt(id));
     if (!item) throw new Error('Item não encontrado.');
 
+    // Verifica se há alguma distribuição utilizando este item
+    const allDistributions = await distStore.getAll();
+    const hasDistributions = allDistributions.some(d =>
+        d.status !== 'deleted' &&
+        (String(d.inventory_id) === String(item.id) ||
+            String(d.inventory_id) === String(item.item_id) ||
+            (d.item_name && item.item_name && d.item_name.toLowerCase() === item.item_name.toLowerCase() && String(d.shelter_id) === String(item.shelter_id)))
+    );
+
+    if (hasDistributions) {
+        throw new Error('Não é possível excluir: Este item já possui distribuições registradas.');
+    }
+
+    // Soft-delete do item de inventário
     const updated = {
         ...item,
         status: 'deleted',
@@ -630,11 +646,30 @@ export const deleteInventoryItem = async (id) => {
     };
     await store.put(updated);
 
+    // Soft-delete das doações (Relatórios Gerais) que originaram este item
+    const allDonations = await donStore.getAll();
+    const matchingDonations = allDonations.filter(d =>
+        d.status !== 'deleted' &&
+        d.item_description && item.item_name &&
+        d.item_description.toLowerCase() === item.item_name.toLowerCase() &&
+        String(d.shelter_id) === String(item.shelter_id)
+    );
+
+    for (const d of matchingDonations) {
+        await donStore.put({
+            ...d,
+            status: 'deleted',
+            deleted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            synced: false
+        });
+    }
+
     await auditStore.add({
         action: 'INVENTORY_DELETE',
         entity_type: 'inventory',
         entity_id: item.item_id || String(id),
-        details: `Soft-deleted: ${item.item_name} (${item.quantity} ${item.unit})`,
+        details: `Deleted: ${item.item_name} e arquivou ${matchingDonations.length} doação(ões)`,
         timestamp: new Date().toISOString()
     });
 

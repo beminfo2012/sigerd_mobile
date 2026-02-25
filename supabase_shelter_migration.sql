@@ -221,6 +221,30 @@ CREATE POLICY "Allow shelter managers to insert donations"
         )
     );
 
+DROP POLICY IF EXISTS "Allow shelter managers to update donations" ON shelter_donations;
+CREATE POLICY "Allow shelter managers to update donations"
+    ON shelter_donations FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
+        )
+    );
+
+DROP POLICY IF EXISTS "Allow shelter managers to delete donations" ON shelter_donations;
+CREATE POLICY "Allow shelter managers to delete donations"
+    ON shelter_donations FOR DELETE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
+        )
+    );
+
 DROP POLICY IF EXISTS "Allow shelter managers to insert inventory" ON shelter_inventory;
 CREATE POLICY "Allow shelter managers to insert inventory"
     ON shelter_inventory FOR INSERT
@@ -250,6 +274,30 @@ CREATE POLICY "Allow shelter managers to insert distributions"
     ON shelter_distributions FOR INSERT
     TO authenticated
     WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
+        )
+    );
+
+DROP POLICY IF EXISTS "Allow shelter managers to update distributions" ON shelter_distributions;
+CREATE POLICY "Allow shelter managers to update distributions"
+    ON shelter_distributions FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Secretário', 'Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura')
+        )
+    );
+
+DROP POLICY IF EXISTS "Allow shelter managers to delete distributions" ON shelter_distributions;
+CREATE POLICY "Allow shelter managers to delete distributions"
+    ON shelter_distributions FOR DELETE
+    TO authenticated
+    USING (
         EXISTS (
             SELECT 1 FROM profiles 
             WHERE id = auth.uid() 
