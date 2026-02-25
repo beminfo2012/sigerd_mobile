@@ -2,7 +2,7 @@ import { openDB } from 'idb'
 import { supabase } from './supabase'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 21
+const DB_VERSION = 23
 
 
 let dbPromise = null;
@@ -53,17 +53,26 @@ export const initDB = async () => {
                 if (!db.objectStoreNames.contains(name)) {
                     const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
                     store.createIndex('synced', 'synced', { unique: false });
-                    // Add shelter_id index for donations, inventory, distributions
-                    if (['donations', 'inventory', 'distributions'].includes(name)) {
+                    // Add shelter_id index for donations, inventory, distributions, occupants
+                    if (['occupants', 'donations', 'inventory', 'distributions', 'shelters'].includes(name)) {
                         store.createIndex('shelter_id', 'shelter_id', { unique: false });
+                    }
+                    if (name === 'shelters') {
+                        store.createIndex('supabase_id', 'supabase_id', { unique: false });
                     }
                 } else {
                     ensureSyncedIndex(name);
                     // Ensure shelter_id index exists on humanitarian stores
-                    if (['donations', 'inventory', 'distributions'].includes(name)) {
+                    if (['occupants', 'donations', 'inventory', 'distributions', 'shelters'].includes(name)) {
                         const store = transaction.objectStore(name);
                         if (!store.indexNames.contains('shelter_id')) {
                             store.createIndex('shelter_id', 'shelter_id', { unique: false });
+                        }
+                    }
+                    if (name === 'shelters') {
+                        const store = transaction.objectStore(name);
+                        if (!store.indexNames.contains('supabase_id')) {
+                            store.createIndex('supabase_id', 'supabase_id', { unique: false });
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity, Plus, MapPin } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity, Plus, MapPin, X } from 'lucide-react'
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
 import html2canvas from 'html2canvas'
 import { saveManualReading, getManualReadings } from '../../services/db'
@@ -499,22 +499,24 @@ const Pluviometros = ({ hideHeader = false }) => {
             {/* Details Modal */}
             {selectedStation && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 relative">
-                        <div className="flex justify-between items-start mb-6">
+                    <div className="bg-white w-full max-w-md rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-300 relative max-h-[90vh]">
+                        {/* Fixed Header */}
+                        <div className="p-5 pb-4 border-b border-gray-100 flex justify-between items-start shrink-0">
                             <div>
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Detalhes da Estação</h3>
-                                <h2 className="text-2xl font-black text-gray-800 leading-tight">{selectedStation.name}</h2>
-                                <div className="text-sm text-gray-500 mt-1">ID: {selectedStation.id}</div>
+                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Detalhes da Estação</h3>
+                                <h2 className="text-base sm:text-lg font-black text-gray-800 leading-tight pr-2">{selectedStation.name}</h2>
+                                <div className="text-xs text-gray-500 mt-0.5">ID: {selectedStation.id}</div>
                             </div>
                             <button
                                 onClick={() => setSelectedStation(null)}
-                                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                                className="p-2 -mr-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors shrink-0"
                             >
-                                <ArrowLeft size={20} className="text-gray-600" />
+                                <X size={20} className="text-gray-600" />
                             </button>
                         </div>
 
-                        <div className="space-y-6">
+                        {/* Scrollable Content */}
+                        <div className="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1">
                             <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <span className="font-bold text-gray-600">Nível de Risco Atual</span>
                                 <RiskBadge level={getRiskLevel(selectedStation.acc24hr).label} size="lg" />
@@ -593,22 +595,26 @@ const Pluviometros = ({ hideHeader = false }) => {
                                 </p>
                             </div>
 
-                            {selectedStation.lat && selectedStation.lng && (
-                                <button
-                                    onClick={(e) => openInMaps(e, selectedStation)}
-                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
-                                >
-                                    <MapPin size={20} />
-                                    Abrir no Google Maps
-                                </button>
-                            )}
+                        </div>
 
+                        {/* Fixed Footer */}
+                        <div className="p-4 pt-3 border-t border-gray-100 shrink-0 flex gap-3">
                             <button
                                 onClick={() => setSelectedStation(null)}
-                                className="w-full py-4 bg-[#2a5299] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
+                                className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all text-sm"
                             >
                                 Fechar
                             </button>
+
+                            {selectedStation.lat && selectedStation.lng && (
+                                <button
+                                    onClick={(e) => openInMaps(e, selectedStation)}
+                                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all text-sm"
+                                >
+                                    <MapPin size={16} />
+                                    Abrir no Mapa
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -192,8 +192,7 @@ const AppContent = ({
                     )}
 
                     {/* Desktop Header - Hide on print and mobile */}
-
-
+                    {!isPrintPage && <DesktopHeader userProfile={userProfile} />}
                     {/* Main Content Area */}
                     <main className={isPrintPage ? "" : "main-content"}>
                         <Suspense fallback={
@@ -435,11 +434,13 @@ function App() {
         }
     })
 
-    const AGENT_ROLES = ['Admin', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'Técnico em Edificações']
-    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
-    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
+    const AGENT_ROLES = ['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'Técnico em Edificações']
+    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
+    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
     const REDAP_ROLES = [
         'Admin',
+        'Administrador',
+        'administrador',
         'Coordenador',
         'Coordenador de Proteção e Defesa Civil',
         'Agente de Defesa Civil',

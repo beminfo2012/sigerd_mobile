@@ -46,12 +46,15 @@ export default function ShelterMenu() {
         'agente de defesa civil',
         'técnico em edificações',
         'admin',
+        'administrador',
         'agente',
         'tecnico',
         'coordenador',
         'coordenador de proteção e defesa civil',
         'secretário',
-        'assistente social'
+        'assistente social',
+        'humanitario_total',
+        'humanitario_leitura'
     ];
     const HUMANITARIAN_READ_ONLY = ['humanitario_leitura'];
 
@@ -210,7 +213,7 @@ export default function ShelterMenu() {
             icon: Building2,
             path: '/abrigos/lista',
             color: 'bg-blue-50 text-[#2a5299]',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
             title: 'Estoque Municipal',
@@ -218,7 +221,7 @@ export default function ShelterMenu() {
             icon: Package,
             path: '/abrigos/estoque',
             color: 'bg-emerald-50 text-emerald-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
         {
             title: 'Receber Doações',
@@ -226,7 +229,7 @@ export default function ShelterMenu() {
             icon: Gift,
             path: '/abrigos/doacoes-central',
             color: 'bg-amber-50 text-amber-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
             title: 'Logística & Distribuição',
@@ -234,7 +237,7 @@ export default function ShelterMenu() {
             icon: Truck,
             path: '/abrigos/logistica',
             color: 'bg-purple-50 text-purple-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
             title: 'Relatórios Gerais',
@@ -242,7 +245,7 @@ export default function ShelterMenu() {
             icon: FileText,
             path: '/abrigos/relatorios',
             color: 'bg-slate-50 text-slate-600',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
 
         {
@@ -251,7 +254,7 @@ export default function ShelterMenu() {
             icon: FileText,
             path: '/abrigos/contratos',
             color: 'bg-amber-50 text-amber-700',
-            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         }
     ];
 
@@ -322,7 +325,7 @@ export default function ShelterMenu() {
                     </button>
                 </div>
 
-                {activeTab === 'dashboard' && isAgent && (
+                {activeTab === 'dashboard' && (
                     <>
                         {/* Summary KPI Cards */}
                         <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
