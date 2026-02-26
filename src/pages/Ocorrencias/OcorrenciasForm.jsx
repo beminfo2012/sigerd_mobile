@@ -7,7 +7,7 @@ import {
     X, Phone, User, Fingerprint, Siren, ClipboardList, Share
 } from 'lucide-react';
 import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
-import { initDB } from '../../services/db';
+import { initDB, searchInstallations } from '../../services/db';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/ToastNotification';
 import { CHECKLIST_DATA } from '../../data/checklists';
@@ -94,6 +94,122 @@ const SearchableInput = ({
                                 <div className="p-10 text-center space-y-2 opacity-50">
                                     <Search size={32} className="mx-auto text-slate-300" />
                                     <p className="font-bold text-sm">Nenhum resultado encontrado</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white dark:from-slate-800 to-transparent pointer-events-none h-20"></div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const AsyncSearchableInput = ({
+    label,
+    value,
+    onChange,
+    onSearch,
+    placeholder,
+    icon: IconComponent,
+    labelClasses,
+    inputClasses
+}) => {
+    const [search, setSearch] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+    const [options, setOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setSearch('');
+            setOptions([]);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const delayDebounceFn = setTimeout(async () => {
+            if (search.length >= 3) {
+                setLoading(true);
+                try {
+                    const results = await onSearch(search);
+                    setOptions(results || []);
+                } catch (e) {
+                    setOptions([]);
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+                setOptions([]);
+            }
+        }, 500);
+        return () => clearTimeout(delayDebounceFn);
+    }, [search, isOpen, onSearch]);
+
+    return (
+        <div className="relative">
+            <label className={labelClasses}>{label}</label>
+            <div className="relative group">
+                {IconComponent && <IconComponent size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />}
+                <div
+                    onClick={() => setIsOpen(true)}
+                    className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[56px] flex items-center justify-between pr-4`}
+                >
+                    <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-300'}>
+                        {value || placeholder}
+                    </span>
+                    <Search size={16} className="text-slate-300" />
+                </div>
+            </div>
+
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
+                                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                    <X size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    autoFocus
+                                    className={`${inputClasses} pl-12`}
+                                    placeholder="Comece a digitar para filtrar..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                                {loading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-blue-500" size={18} />}
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto p-2 pb-20">
+                            {options.length > 0 ? (
+                                options.map((opt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={`w-full text-left p-4 rounded-2xl transition-all flex items-center justify-between group mb-1 ${value === opt.label ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        <div className="flex-1">
+                                            <div className="font-bold">{opt.label}</div>
+                                            {opt.sublabel && <div className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{opt.sublabel}</div>}
+                                        </div>
+                                        {value === opt.label && <CheckCircle size={18} className="ml-2" />}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-10 text-center space-y-2 opacity-50">
+                                    <Search size={32} className="mx-auto text-slate-300" />
+                                    <p className="font-bold text-sm">
+                                        {search.length < 3 ? 'Digite pelo menos 3 caracteres' : 'Nenhum resultado encontrado'}
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -711,6 +827,35 @@ const OcorrenciasForm = () => {
                                     <option key={b.nome} value={b.nome}>{b.nome}</option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <AsyncSearchableInput
+                                label="Unidade Consumidora (GeoRescue)"
+                                placeholder="Buscar por UC, nome ou endereço..."
+                                value={formData.unidade_consumidora}
+                                onSearch={async (query) => {
+                                    const results = await searchInstallations(query);
+                                    return results.slice(0, 10).map(r => ({
+                                        label: r.full_uc || r.id,
+                                        sublabel: `${r.name ? r.name + ' - ' : ''}${r.address || ''}`,
+                                        data: r
+                                    }));
+                                }}
+                                onChange={opt => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        unidade_consumidora: opt.label,
+                                        // Auto-preencher endereço se vazio
+                                        endereco: prev.endereco ? prev.endereco : (opt.data?.address || ''),
+                                        lat: prev.lat ? prev.lat : (opt.data?.lat || null),
+                                        lng: prev.lng ? prev.lng : (opt.data?.lng || null),
+                                    }));
+                                }}
+                                icon={Search}
+                                labelClasses={labelClasses}
+                                inputClasses={inputClasses}
+                            />
                         </div>
 
                         <div className={`rounded-3xl p-5 border-2 transition-all ${gpsStatus === 'success' ? (formData.accuracy < 15 ? 'bg-emerald-50/20 border-emerald-100/50' : 'bg-amber-50/20 border-amber-100/50') : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700'}`}>

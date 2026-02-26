@@ -5,11 +5,20 @@ import {
     AlertTriangle, ShieldAlert, ChevronRight, MapPin, Trash2,
     Eye, ShieldCheck, RefreshCw, Loader2
 } from 'lucide-react';
-import { getOcorrenciasLocal, deleteOcorrenciaLocal } from '../../services/ocorrenciasDb';
+import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal } from '../../services/ocorrenciasDb';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+
+export const OCORRENCIA_STATUSES = {
+    'Pendente': { label: 'Pendente', bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
+    'Em Análise': { label: 'Em Análise', bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+    'Em Atendimento': { label: 'Em Atendimento', bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+    'Atendido': { label: 'Atendido', bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+    'Finalizada': { label: 'Finalizada', bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
+    'Cancelada': { label: 'Cancelada', bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' }
+};
 
 const OcorrenciasDashboard = () => {
     const navigate = useNavigate();
@@ -19,6 +28,7 @@ const OcorrenciasDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
+    const [statusModalRecord, setStatusModalRecord] = useState(null);
 
     useEffect(() => {
         loadRecords();
@@ -52,10 +62,22 @@ const OcorrenciasDashboard = () => {
         }
     };
 
+    const handleStatusChange = async (record, newStatus) => {
+        try {
+            await saveOcorrenciaLocal({ ...record, status: newStatus });
+            toast.success('Status atualizado com sucesso!');
+            loadRecords();
+        } catch (e) {
+            toast.error('Erro ao atualizar status.');
+        } finally {
+            setStatusModalRecord(null);
+        }
+    };
+
     const filtered = records.filter(r => {
         const search = searchTerm.toLowerCase();
         return (
-            (r.denominacao || '').toLowerCase().includes(search) ||
+            (r.categoriaRisco || r.categoria_risco || '').toLowerCase().includes(search) ||
             (r.bairro || '').toLowerCase().includes(search) ||
             (r.endereco || '').toLowerCase().includes(search) ||
             (r.solicitante || '').toLowerCase().includes(search) ||
@@ -155,14 +177,36 @@ const OcorrenciasDashboard = () => {
                                                 )}
                                             </div>
 
-                                            <h3 className="font-black text-slate-800 dark:text-white text-lg leading-tight group-hover:text-red-500 transition-colors">
-                                                {record.denominacao || 'Ocorrência sem título'}
-                                            </h3>
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-black text-slate-800 dark:text-white text-lg leading-tight group-hover:text-red-500 transition-colors">
+                                                    {record.categoriaRisco || record.categoria_risco || 'Ocorrência sem título'}
+                                                </h3>
+                                            </div>
 
                                             <div className="flex flex-col gap-2 pt-2">
-                                                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                    <Clock size={12} />
-                                                    {new Date(record.created_at).toLocaleDateString('pt-BR')} - {new Date(record.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                        <Clock size={12} />
+                                                        {new Date(record.created_at).toLocaleDateString('pt-BR')}
+                                                    </div>
+
+                                                    {/* Status Toggler Button */}
+                                                    <div className="relative">
+                                                        {(() => {
+                                                            const st = OCORRENCIA_STATUSES[record.status || 'Pendente'] || OCORRENCIA_STATUSES['Pendente'];
+                                                            return (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setStatusModalRecord(record);
+                                                                    }}
+                                                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${st.bg} ${st.text} ${st.border} hover:scale-105 active:scale-95 transition-all`}
+                                                                >
+                                                                    {st.label}
+                                                                </button>
+                                                            );
+                                                        })()}
+                                                    </div>
                                                 </div>
                                                 {record.bairro && (
                                                     <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -203,12 +247,52 @@ const OcorrenciasDashboard = () => {
 
             <ConfirmModal
                 isOpen={showDeleteModal}
-                title="Excluir Ocorrência"
-                message="Deseja remover permanentemente este registro do dispositivo?"
-                onConfirm={handleDelete}
                 onClose={() => setShowDeleteModal(false)}
-                type="danger"
+                onConfirm={handleDelete}
+                title="Excluir Ocorrência?"
+                message={`Tem certeza que deseja apagar a ocorrência ${recordToDelete?.ocorrencia_id_format || ''}?`}
+                isDestructive={true}
             />
+
+            {/* Status Modal */}
+            {statusModalRecord && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
+                        <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                            <div>
+                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">Alterar Status</h3>
+                                <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">
+                                    ID: {statusModalRecord?.ocorrencia_id_format}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setStatusModalRecord(null)}
+                                className="w-8 h-8 flex items-center justify-center bg-white dark:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full shadow-sm hover:scale-105 active:scale-95 transition-all"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-2">
+                            {Object.keys(OCORRENCIA_STATUSES).map(key => {
+                                const opt = OCORRENCIA_STATUSES[key];
+                                const isActive = statusModalRecord.status === key;
+                                return (
+                                    <button
+                                        key={key}
+                                        onClick={() => handleStatusChange(statusModalRecord, key)}
+                                        className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all border-2 ${isActive ? `border-transparent ${opt.bg} ${opt.text} shadow-inner` : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}
+                                    >
+                                        <div className={`text-xs font-black uppercase tracking-widest ${isActive ? '' : 'text-slate-600 dark:text-slate-300'}`}>
+                                            {opt.label}
+                                        </div>
+                                        {isActive && <CheckCircle size={18} />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

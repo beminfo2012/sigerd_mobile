@@ -161,6 +161,9 @@ const AppContent = ({
             <SyncBackground />
             <PWAUpdater />
 
+            {/* Desktop Header - Hide on print and mobile */}
+            {!isPrintPage && <DesktopHeader userProfile={userProfile} />}
+
             <div className={`flex flex-1 ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
                 {/* Sidebar - Desktop Only */}
                 {!isPrintPage && (
@@ -192,8 +195,6 @@ const AppContent = ({
                         </header>
                     )}
 
-                    {/* Desktop Header - Hide on print and mobile */}
-                    {!isPrintPage && <DesktopHeader userProfile={userProfile} />}
                     {/* Main Content Area */}
                     <main className={isPrintPage ? "" : "main-content"}>
                         <Suspense fallback={

@@ -8,7 +8,6 @@ import { supabase } from './supabase'
 // ... (Initial state remains same)
 export const INITIAL_OCORRENCIA_STATE = {
     ocorrencia_id_format: '', // format: 001/2026
-    denominacao: '',
     agente: '',              // Responsável Técnico
     matricula: '',
     solicitante: '',
@@ -17,6 +16,7 @@ export const INITIAL_OCORRENCIA_STATE = {
     temSolicitanteEspecifico: false,
     endereco: '',
     bairro: '',
+    unidade_consumidora: '',
     data_ocorrencia: new Date().toLocaleDateString('pt-BR'),
     horario_ocorrencia: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     lat: null,
@@ -47,7 +47,7 @@ export const INITIAL_OCORRENCIA_STATE = {
         matricula: '',
         assinatura: null
     },
-    status: 'finalized',
+    status: 'Pendente',
     synced: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -100,7 +100,17 @@ export const saveOcorrenciaLocal = async (data) => {
 export const getOcorrenciasLocal = async () => {
     const db = await initDB();
     const records = await db.getAll('ocorrencias_operacionais');
-    return records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    // Custom deduplication by ocorrencia_id_format / ocorrencia_id to avoid local double entries
+    const dedupMap = new Map();
+    records.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) // Sort ascending so newest overrides oldest in Map
+        .forEach(r => {
+            const key = r.ocorrencia_id_format || r.ocorrencia_id || r.id;
+            dedupMap.set(key, r);
+        });
+
+    const finalRecords = Array.from(dedupMap.values());
+    return finalRecords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
 /**

@@ -60,6 +60,12 @@ export default defineConfig({
   ],
   server: {
     proxy: {
+      '/cemaden': {
+        target: 'https://sws.cemaden.gov.br',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/cemaden/, '')
+      },
       '/api': {
         target: 'https://sigerd-mobile.vercel.app', // Fallback para produção para evitar o erro local
         changeOrigin: true,

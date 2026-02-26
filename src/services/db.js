@@ -237,7 +237,7 @@ export const saveVistoriaOffline = async (data) => {
 export const getPendingSyncCount = async () => {
     const db = await initDB()
 
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'ocorrencias_operacionais', 'despachos', 'emergency_contracts', 'manual_readings'];
     let detail = {
         total: 0,
         vistorias: 0,
@@ -247,7 +247,11 @@ export const getPendingSyncCount = async () => {
         donations: 0,
         inventory: 0,
         distributions: 0,
-        redap_records: 0
+        redap_records: 0,
+        ocorrencias_operacionais: 0,
+        despachos: 0,
+        emergency_contracts: 0,
+        manual_readings: 0
     };
 
     for (const storeName of stores) {
@@ -610,6 +614,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                 assinatura_agente: signatureAgenteUrl,
                 assinatura_assistido: signatureAssistidoUrl,
                 fotos: processedPhotos,
+                unidade_consumidora: item.unidade_consumidora || item.unidadeConsumidora || '',
+                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
             };
 
             // Remove camelCase fields to keep Supabase clean
@@ -624,6 +630,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.assinaturaAssistido;
             delete payload.apoioTecnico; // Replaced by snake_case version
             delete payload.checklistRespostas; // Cleaned camelCase
+            delete payload.unidadeConsumidora; // Cleaned camelCase
             delete payload.cobrade; // Cleaned removed field
             delete payload.denominacao; // Cleaned removed field
             delete payload.supabase_id; // Cleaned unused field

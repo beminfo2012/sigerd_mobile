@@ -70,6 +70,29 @@ const processBreakdown = (list) => {
     })).sort((a, b) => b.count - a.count);
 };
 
+const processLocalidadeBreakdown = (list) => {
+    const counts = {};
+    list.forEach(v => {
+        const loc = v.bairro || v.comunidade || v.localidade || 'Não Informado';
+        const label = loc.trim() || 'Não Informado';
+        counts[label] = (counts[label] || 0) + 1;
+    });
+
+    const colors = [
+        'bg-indigo-500', 'bg-blue-500', 'bg-sky-500',
+        'bg-emerald-500', 'bg-teal-500', 'bg-orange-500',
+        'bg-rose-500', 'bg-purple-500', 'bg-amber-500', 'bg-cyan-500'
+    ];
+    const total = list.length;
+
+    return Object.keys(counts).map((label, idx) => ({
+        label,
+        count: counts[label],
+        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+        color: colors[idx % colors.length]
+    })).sort((a, b) => b.count - a.count);
+};
+
 export const api = {
     async getDashboardData() {
         try {
@@ -95,8 +118,8 @@ export const api = {
             // 3. Process Ocorrencias
             const oData = remoteOcorrencias.data || [];
             const oMap = new Map();
-            oData.forEach(o => oMap.set(o.ocorrencia_id || o.id, o));
-            localOcorrencias.filter(o => !o.synced).forEach(o => oMap.set(o.ocorrencia_id || o.id, o));
+            oData.forEach(o => oMap.set(o.ocorrencia_id_format || o.ocorrencia_id || o.id, o));
+            localOcorrencias.filter(o => !o.synced).forEach(o => oMap.set(o.ocorrencia_id_format || o.ocorrencia_id || o.id, o));
             const allOcorrencias = Array.from(oMap.values());
 
             // 4. INMET
@@ -114,11 +137,13 @@ export const api = {
                 vistorias: {
                     stats: { total: allVistorias.length },
                     breakdown: processBreakdown(allVistorias),
+                    localidadeBreakdown: processLocalidadeBreakdown(allVistorias),
                     locations: processListToMapData(allVistorias)
                 },
                 ocorrencias: {
                     stats: { total: allOcorrencias.length, today: todayOccurrences },
                     breakdown: processBreakdown(allOcorrencias),
+                    localidadeBreakdown: processLocalidadeBreakdown(allOcorrencias),
                     locations: processListToMapData(allOcorrencias)
                 },
                 stats: {

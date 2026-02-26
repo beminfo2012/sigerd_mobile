@@ -11,7 +11,7 @@ import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import {
     getPendingSyncCount, syncPendingData, getAllVistoriasLocal,
-    getRemoteVistoriasCache, pullAllData, resetDatabase
+    getRemoteVistoriasCache, pullAllData, resetDatabase, getManualReadings
 } from '../../services/db'
 import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
@@ -79,6 +79,7 @@ const processLocations = (records) => {
             const category = v.categoria_risco || v.categoriaRisco || 'Outros'
             return {
                 lat, lng, risk: category,
+                status: v.status || 'Pendente',
                 details: subtypes.length > 0 ? subtypes.join(', ') : category,
                 date: v.created_at || v.data_hora || new Date().toISOString()
             }
@@ -86,12 +87,36 @@ const processLocations = (records) => {
         .filter(loc => loc !== null) || [];
 };
 
+const processLocalidadeBreakdown = (records) => {
+    const counts = {};
+    records.forEach(v => {
+        const loc = v.bairro || v.comunidade || v.localidade || 'Não Informado';
+        const label = loc.trim() || 'Não Informado';
+        counts[label] = (counts[label] || 0) + 1;
+    });
+
+    const colors = [
+        'bg-indigo-500', 'bg-blue-500', 'bg-sky-500',
+        'bg-emerald-500', 'bg-teal-500', 'bg-orange-500',
+        'bg-rose-500', 'bg-purple-500', 'bg-amber-500', 'bg-cyan-500'
+    ];
+    const total = records.length;
+
+    return Object.keys(counts).map((label, idx) => ({
+        label,
+        count: counts[label],
+        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+        color: colors[idx % colors.length]
+    })).sort((a, b) => b.count - a.count);
+};
+
 // --- SUB-COMPONENT: MOBILE VIEW ---
 const MobileDashboardView = ({
     data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
-    handleClearCache, handleExportKML, navigate, setShowForecast,
+    handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, statusInfo,
-    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
+    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
+    chartMode, setChartMode
 }) => {
     const currentData = viewMode === 'vistorias' ? data.vistorias : data.ocorrencias;
     const filteredLocations = mapFilter === 'Todas' ? currentData.locations : currentData.locations.filter(l => l.risk === mapFilter);
@@ -220,9 +245,25 @@ const MobileDashboardView = ({
 
                 {/* 4. Tipologia Breakdown */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                    <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[2px] mb-6">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'} por Tipologia</h3>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[2px]">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</h3>
+                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                            <button
+                                onClick={() => setChartMode('tipologia')}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'tipologia' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                Tipologia
+                            </button>
+                            <button
+                                onClick={() => setChartMode('localidade')}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'localidade' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                Localidade
+                            </button>
+                        </div>
+                    </div>
                     <div className="space-y-6">
-                        {currentData?.breakdown?.slice(0, 5).map((item, idx) => (
+                        {(chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown)?.slice(0, 5).map((item, idx) => (
                             <div key={idx}>
                                 <div className="flex justify-between items-center mb-1.5">
                                     <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
@@ -296,14 +337,26 @@ const MobileDashboardView = ({
                                         radius={5}
                                         pathOptions={{
                                             color: mapStyle === 'street' ? '#fff' : '#3b82f6',
-                                            fillColor: String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316',
+                                            fillColor: viewMode === 'ocorrencias'
+                                                ? (loc.status === 'Cancelada' ? '#64748b' :
+                                                    loc.status === 'Em Análise' ? '#f97316' :
+                                                        loc.status === 'Em Atendimento' ? '#f59e0b' :
+                                                            loc.status === 'Atendido' ? '#3b82f6' :
+                                                                loc.status === 'Finalizada' ? '#10b981' :
+                                                                    '#ef4444') // Pendente
+                                                : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
                                             fillOpacity: 0.9,
                                             weight: 2
                                         }}
                                     >
                                         <Popup minWidth={180}>
                                             <div className="p-1">
-                                                <div className="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-widest">{viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'}</div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'}</span>
+                                                    {viewMode === 'ocorrencias' && (
+                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{loc.status}</span>
+                                                    )}
+                                                </div>
                                                 <div className="text-xs font-bold text-slate-800 mb-1">{loc.risk}</div>
                                                 <div className="text-[11px] text-slate-500 leading-relaxed mb-2">{loc.details}</div>
                                                 <div className="text-[9px] font-bold text-slate-400 italic uppercase">Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</div>
@@ -326,9 +379,10 @@ const MobileDashboardView = ({
 // --- SUB-COMPONENT: WEB VIEW ---
 const WebViewDashboardView = ({
     data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
-    handleClearCache, handleExportKML, navigate, setShowForecast,
+    handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
-    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
+    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
+    chartMode, setChartMode
 }) => {
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
     const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
@@ -347,9 +401,6 @@ const WebViewDashboardView = ({
                         </h2>
                     </div>
 
-                    <CemadenAlertBanner alerts={cemadenAlerts} />
-
-
                     {/* Top 5 Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {/* Card 1: Risk Level */}
@@ -367,18 +418,7 @@ const WebViewDashboardView = ({
                             </div>
                         </div>
 
-                        {/* Card 2: Ocorrências Hoje */}
-                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl text-purple-500">
-                                    <AlertTriangle size={20} />
-                                </div>
-                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.activeOccurrences}</span>
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Ocorrências Hoje</span>
-                        </div>
-
-                        {/* Card 3: INMET Alerts */}
+                        {/* Card 2: INMET Alerts */}
                         <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
@@ -387,6 +427,17 @@ const WebViewDashboardView = ({
                                 <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
+                        </div>
+
+                        {/* Card 3: Ocorrências Hoje */}
+                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl text-purple-500">
+                                    <AlertTriangle size={20} />
+                                </div>
+                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.activeOccurrences}</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Ocorrências Hoje</span>
                         </div>
 
                         {/* Card 4: Vistorias Totais */}
@@ -400,47 +451,67 @@ const WebViewDashboardView = ({
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Vistorias Totais</span>
                         </div>
 
-                        {/* Card 5: Weather Card (Final Position) */}
-                        {weather?.current ? (
-                            <div onClick={() => setShowForecast(true)} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
-                                <div className="flex justify-between items-start">
-                                    <div className="text-4xl">{getWeatherIcon(weather.current.code)}</div>
-                                    <div className="text-right">
-                                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}°C</div>
-                                        <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">SANTA MARIA DE JETIBÁ</div>
-                                    </div>
+                        {/* Card 5: Média Pluviométrica (Substituindo o Weather Card antigo) */}
+                        <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                            <div className="flex justify-between items-start">
+                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-500 group-hover:scale-110 transition-transform">
+                                    <Droplets size={24} />
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-50 dark:border-slate-700/50">
-                                    <div className="flex items-center gap-1.5 overflow-hidden">
-                                        <CloudRain size={12} className="text-blue-500 shrink-0" />
-                                        <span className="text-[9px] font-bold text-slate-500 truncate">{weather.daily?.[0]?.rainProb || 0}% <span className="text-slate-300 font-normal">Chuva</span></span>
+                                <div className="text-right">
+                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">
+                                        {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : 0}<span className="text-lg text-slate-400 font-bold ml-0.5">mm</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 overflow-hidden">
-                                        <Timer size={12} className="text-blue-400 shrink-0" />
-                                        <span className="text-[9px] font-bold text-slate-500 truncate">{weather.current.humidity || 0}% <span className="text-slate-300 font-normal">Umid</span></span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 overflow-hidden">
-                                        <Activity size={12} className="text-slate-400 shrink-0" />
-                                        <span className="text-[9px] font-bold text-slate-500 truncate">{Math.round(weather.current.wind || 6)} km/h <span className="text-slate-300 font-normal">Vento</span></span>
-                                    </div>
-                                    {rainfall && rainfall[0] && (
-                                        <div className="flex items-center gap-1.5 overflow-hidden">
-                                            <Gauge size={12} className="text-indigo-500 shrink-0" />
-                                            <span className="text-[9px] font-bold text-slate-500 truncate">{rainfall[0].rain} <span className="text-slate-300 font-normal">Pluv</span></span>
-                                        </div>
-                                    )}
+                                    <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">MÉDIA 24H</div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl animate-pulse shadow-sm flex flex-col justify-between">
-                                <div className="flex justify-between">
-                                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-full" />
-                                    <div className="w-16 h-8 bg-slate-100 dark:bg-slate-700 rounded" />
+                            <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50 dark:border-slate-700/50">
+                                <div className="flex items-center gap-1.5 overflow-hidden">
+                                    <Gauge size={12} className="text-indigo-400 shrink-0" />
+                                    <span className="text-[9px] font-bold text-slate-500 truncate">Estações: <span className="text-slate-600 dark:text-slate-300 font-black">{rainfall?.length || 0}</span> ativas</span>
                                 </div>
-                                <div className="h-4 bg-slate-100 dark:bg-slate-700 rounded w-full mt-4" />
                             </div>
-                        )}
+                        </div>
                     </div>
+
+                    {/* Clima Horizontal - Abaixo dos Minicards */}
+                    {weather?.current && (
+                        <div onClick={() => setShowForecast(true)} className="flex w-full flex-col md:flex-row items-center justify-between py-2.5 px-6 rounded-[16px] bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/60 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all group overflow-hidden">
+                            <div className="flex items-center gap-4 relative z-10 w-full md:w-auto mb-3 md:mb-0">
+                                <div className="text-3xl drop-shadow-sm text-blue-500 group-hover:scale-110 transition-transform">{getWeatherIcon(weather.current.code)}</div>
+                                <div>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tracking-tighter">{Math.round(weather.current.temp || 0)}°C</span>
+                                    </div>
+                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Previsão • Santa Maria de Jetibá</div>
+                                </div>
+                            </div>
+                            <div className="flex gap-6 relative z-10 w-full md:w-auto">
+                                <div className="flex items-center gap-1.5">
+                                    <CloudRain size={16} className="text-blue-500" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.daily?.[0]?.rainProb || 0}%</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Chuva</span>
+                                    </div>
+                                </div>
+                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+                                <div className="flex items-center gap-1.5">
+                                    <Timer size={16} className="text-blue-400" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.current.humidity || 0}%</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Umidade</span>
+                                    </div>
+                                </div>
+                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+                                <div className="flex items-center gap-1.5">
+                                    <Activity size={16} className="text-slate-400" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{Math.round(weather.current.wind || 6)} km/h</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Vento</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Blue Horizontal Nav Bar */}
                     <div className="bg-[#2a5299] rounded-[18px] p-2 flex items-center justify-between overflow-x-auto custom-scrollbar gap-2">
@@ -526,17 +597,29 @@ const WebViewDashboardView = ({
                                     <CircleMarker
                                         key={idx}
                                         center={[loc.lat, loc.lng]}
-                                        radius={7}
+                                        radius={5}
                                         pathOptions={{
                                             color: mapStyle === 'street' ? '#fff' : '#3b82f6',
-                                            fillColor: String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316',
+                                            fillColor: viewMode === 'ocorrencias'
+                                                ? (loc.status === 'Cancelada' ? '#64748b' :
+                                                    loc.status === 'Em Análise' ? '#f97316' :
+                                                        loc.status === 'Em Atendimento' ? '#f59e0b' :
+                                                            loc.status === 'Atendido' ? '#3b82f6' :
+                                                                loc.status === 'Finalizada' ? '#10b981' :
+                                                                    '#ef4444') // Pendente
+                                                : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
                                             fillOpacity: 0.9,
                                             weight: 2
                                         }}
                                     >
                                         <Popup minWidth={220}>
                                             <div className="p-2">
-                                                <div className="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-widest">{viewMode === 'vistorias' ? 'Registro de Vistoria' : 'Registro de Ocorrência'}</div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{viewMode === 'vistorias' ? 'Registro de Vistoria' : 'Registro de Ocorrência'}</span>
+                                                    {viewMode === 'ocorrencias' && (
+                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{loc.status}</span>
+                                                    )}
+                                                </div>
                                                 <div className="text-sm font-black text-slate-800 mb-2">{loc.risk}</div>
                                                 <div className="text-xs text-slate-500 leading-relaxed mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
                                                     {loc.details || 'Sem detalhes adicionais registrados.'}
@@ -555,9 +638,25 @@ const WebViewDashboardView = ({
 
                     {/* Resumo Situacional Column */}
                     <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
-                        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-8 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'} por Tipologia</h3>
+                        <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</h3>
+                            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                <button
+                                    onClick={() => setChartMode('tipologia')}
+                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'tipologia' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Tipologia
+                                </button>
+                                <button
+                                    onClick={() => setChartMode('localidade')}
+                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'localidade' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Localidade
+                                </button>
+                            </div>
+                        </div>
                         <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                            {currentData?.breakdown?.slice(0, 10).map((item, idx) => (
+                            {(chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown)?.slice(0, 10).map((item, idx) => (
                                 <div key={idx} className="group cursor-default">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors tracking-tight">{item.label}</span>
@@ -571,6 +670,52 @@ const WebViewDashboardView = ({
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Pluviômetros (Relocado para o final da lista situacional) */}
+                        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                            {/* Índices Pluviométricos Row */}
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center px-1">
+                                    <h4 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[2px] flex items-center gap-2">
+                                        Estações Pluviométricas (24h)
+                                        {pluvioLoading && <RefreshCw size={12} className="animate-spin text-blue-500" />}
+                                    </h4>
+                                    <button onClick={() => navigate('/pluviometros')} className="text-[9px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 py-1 px-2.5 rounded-lg active:scale-95">Ver painel</button>
+                                </div>
+
+                                {pluvioLoading ? (
+                                    <div className="text-center py-6">
+                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Buscando Estações...</div>
+                                    </div>
+                                ) : rainfall?.length > 0 ? (
+                                    <div className="space-y-2.5 pr-2 custom-scrollbar max-h-[220px] overflow-y-auto">
+                                        {rainfall.slice(0, 5).map((station, idx) => (
+                                            <div key={idx} onClick={() => navigate('/pluviometros')} className="group flex items-center justify-between p-3 rounded-[16px] bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-500/50 hover:bg-blue-50/30 hover:shadow-sm cursor-pointer transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-3 h-3 rounded-[4px] shadow-sm transform group-hover:rotate-45 transition-transform ${station.level === 'Extremo' ? 'bg-red-500 shadow-red-500/40' : station.level === 'Alerta' ? 'bg-orange-500 shadow-orange-500/40' : station.level === 'Atenção' ? 'bg-amber-400 shadow-amber-400/40' : 'bg-emerald-400 shadow-emerald-400/40'}`} />
+                                                    <div className="flex flex-col justify-center">
+                                                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-tight leading-tight line-clamp-1 max-w-[140px] truncate">{station.name}</span>
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{station.level}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/80 px-3 py-1.5 rounded-[12px] border border-slate-100 dark:border-slate-800 group-hover:bg-white dark:group-hover:bg-slate-800 transition-colors">
+                                                    <Droplets size={12} className={station.level === 'Normal' ? 'text-blue-400' : station.level === 'Extremo' ? 'text-red-500' : 'text-slate-500'} />
+                                                    <div className="flex items-baseline gap-0.5">
+                                                        <span className="text-sm font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tighter">{(station.rainRaw || 0).toFixed(1)}</span>
+                                                        <span className="text-[9px] font-bold text-slate-500 leading-none">mm</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-center border border-slate-100 dark:border-slate-800">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nenhuma estação com chuva reportada</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -647,9 +792,11 @@ const Dashboard = () => {
     const [generatingReport, setGeneratingReport] = useState(false)
     const [cemadenAlerts, setCemadenAlerts] = useState([])
     const [viewMode, setViewMode] = useState('vistorias')
+    const [chartMode, setChartMode] = useState('tipologia')
     const [mapFilter, setMapFilter] = useState('Todas')
     const [mapStyle, setMapStyle] = useState('street')
     const [climateLoading, setClimateLoading] = useState(true)
+    const [pluvioLoading, setPluvioLoading] = useState(true)
 
     const statusInfo = useMemo(() => {
         if (climateLoading) {
@@ -726,8 +873,8 @@ const Dashboard = () => {
             const initialAllO = localOcorrencias; // Ocorrencias mostly local for now or updated by api
 
             setData({
-                vistorias: { stats: { total: initialAllV.length }, breakdown: processBreakdown(initialAllV), locations: processLocations(initialAllV) },
-                ocorrencias: { stats: { total: initialAllO.length, today: todayOccurrences }, breakdown: processBreakdown(initialAllO), locations: processLocations(initialAllO) },
+                vistorias: { stats: { total: initialAllV.length }, breakdown: processBreakdown(initialAllV), localidadeBreakdown: processLocalidadeBreakdown(initialAllV), locations: processLocations(initialAllV) },
+                ocorrencias: { stats: { total: initialAllO.length, today: todayOccurrences }, breakdown: processBreakdown(initialAllO), localidadeBreakdown: processLocalidadeBreakdown(initialAllO), locations: processLocations(initialAllO) },
                 stats: { totalVistorias: initialAllV.length, activeOccurrences: todayOccurrences, inmetAlertsCount: 0 },
                 breakdown: processBreakdown(initialAllV),
                 locations: processLocations(initialAllV),
@@ -787,9 +934,58 @@ const Dashboard = () => {
                 } catch (e) { console.warn('[Cemaden] Alerts failed:', e); }
 
                 try {
+                    setPluvioLoading(true);
+
+                    // Fetch Manual Readings (SEDE) from DB
+                    const manualReadings = await getManualReadings()
+                    const now = new Date()
+                    const getLatestForPeriod = (period, hours) => {
+                        const windowStart = new Date(now.getTime() - hours * 60 * 60 * 1000)
+                        const relevant = manualReadings.filter(r =>
+                            (r.period === period || (!r.period && period === '1h')) &&
+                            new Date(r.date) > windowStart &&
+                            new Date(r.date) <= now
+                        )
+                        return relevant.length > 0 ? parseFloat(relevant[0].volume) : 0
+                    }
+
+                    const manualAcc24h = getLatestForPeriod('24h', 24)
+                    const manualStation = {
+                        id: 'SEDE_DEFESA_CIVIL',
+                        name: 'SEDE DEFESA CIVIL (Manual)',
+                        rainRaw: manualAcc24h,
+                    }
+
+                    const res = await fetch('/api/pluviometros')
+                    let apiData = []
+                    if (res.ok) {
+                        apiData = await res.json()
+                    }
+
+                    const formattedApi = apiData.map(st => ({
+                        id: st.id,
+                        name: st.name,
+                        rainRaw: st.acc24hr || 0,
+                    }))
+
+                    const combined = [manualStation, ...formattedApi].map(station => {
+                        let level = 'Normal';
+                        const acc24 = station.rainRaw;
+                        if (acc24 >= 80) level = 'Extremo';
+                        else if (acc24 >= 50) level = 'Alerta';
+                        else if (acc24 >= 30) level = 'Atenção';
+
+                        return { ...station, level }
+                    }).filter(station => parseFloat(station.rainRaw) > 0);
+
+                    setRainfall(combined);
+                } catch (e) {
+                    console.warn('[Pluviometros] Fetch failed, using fallback:', e);
                     const rain = await cemadenService.getRainfallData();
                     setRainfall(rain || []);
-                } catch (e) { console.warn('[Cemaden] Rainfall failed:', e); }
+                } finally {
+                    setPluvioLoading(false);
+                }
 
                 // Fallback direct INMET fetch if data.alerts is empty
                 try {
@@ -886,9 +1082,10 @@ const Dashboard = () => {
     // Sub-component Props
     const commonProps = {
         data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
-        handleClearCache, handleExportKML, navigate, setShowForecast,
+        handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
         showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
-        viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle
+        viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
+        chartMode, setChartMode
     };
 
     return (

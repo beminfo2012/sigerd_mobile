@@ -130,6 +130,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: HUMANITARIAN_ROLES
         },
         {
+            label: 'GeoRescue',
+            icon: Map,
+            path: '/georescue',
+            roles: AGENT_ROLES // Use agent roles for GeoRescue or the same roles as others
+        },
+        {
             label: 'Relatórios',
             icon: FileText,
             path: '/menu',
@@ -146,65 +152,45 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     const filteredItems = navItems.filter(item =>
         item.roles.includes(userProfile?.role) || userProfile?.role === 'Admin'
     );
-
     return (
         <aside
-            className={`hidden md:flex flex-col h-screen shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'} border-r border-white/10 shadow-xl`}
+            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'} border-r border-white/10 shadow-xl`}
             style={{
                 background: 'var(--web-sidebar-gradient)',
                 fontFamily: 'var(--web-font)'
             }}
         >
-            {/* Header / Logo */}
-            <div className={`p-4 h-20 flex items-center border-b border-white/10 bg-white/5 relative ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                <Link
-                    to="/"
-                    className="flex items-center gap-3 active:scale-95 transition-transform"
-                    onAuxClick={(e) => { if (e.button === 1) window.open('/', '_blank') }}
-                >
-                    <img src="/logo_header.png" alt="Logo" className="h-10 w-auto object-contain shrink-0 brightness-0 invert" onError={(e) => e.target.style.display = 'none'} />
-                    {!isCollapsed && (
-                        <div className="animate-in fade-in slide-in-from-left-2 duration-300">
-                            <h2 className="text-sm font-bold text-white m-0 leading-none tracking-tight">SIGERD</h2>
-                            <span className="text-[10px] text-white/60 uppercase tracking-widest font-semibold">Defesa Civil</span>
-                        </div>
-                    )}
-                </Link>
-
-                {/* Toggle Button */}
-                <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-[#10346E] shadow-sm hover:bg-white/90 transition-all z-10"
-                >
-                    {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-                </button>
-            </div>
+            {/* Toggle Button */}
+            <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="absolute right-0 top-[24px] translate-x-1/2 w-7 h-7 bg-[var(--web-bg)] border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-[var(--web-primary)] shadow-md hover:scale-110 transition-transform cursor-pointer z-[100]"
+                title={isCollapsed ? 'Expandir Menu' : 'Retrair Menu'}
+            >
+                {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            </button>
 
             {/* Navigation */}
-            <nav className={`flex-1 overflow-y-auto space-y-1 py-6 ${isCollapsed ? 'px-2' : 'p-4'}`}>
-                {!isCollapsed && (
-                    <p className="px-3 text-[10px] font-bold text-white/40 uppercase tracking-widest mb-4 animate-in fade-in duration-500">
-                        Navegação Principal
-                    </p>
-                )}
+            <nav className={`flex-1 overflow-y-auto space-y-1 py-6 ${isCollapsed ? 'px-2' : 'px-4'}`}>
                 <div className="space-y-1">
                     {filteredItems.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
                             title={isCollapsed ? item.label : ''}
-                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center p-4' : 'gap-3 px-5 py-3'} ${isActive(item.path)
+                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3 gap-3'} ${isActive(item.path)
                                 ? 'bg-white/10 text-white border-[#4CAF50]'
                                 : 'text-white/70 border-transparent hover:bg-white/5 hover:text-white'
                                 }`}
                         >
                             <item.icon size={20} className={`${isActive(item.path) ? '' : 'group-hover:scale-110 transition-transform'} shrink-0`} />
+
                             {!isCollapsed && (
-                                <span className="text-sm font-semibold truncate animate-in fade-in slide-in-from-left-2 duration-300">
+                                <span className="text-sm font-semibold truncate animate-in fade-in duration-300">
                                     {item.label}
                                 </span>
                             )}
-                            {isCollapsed && isActive(item.path) && (
+
+                            {isActive(item.path) && (
                                 <div className="absolute left-0 w-1 h-6 bg-white rounded-r-full" />
                             )}
                         </Link>
@@ -260,7 +246,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
 
                 <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className={`w-full flex items-center rounded-xl bg-white/10 border border-white/10 shadow-sm transition-all hover:bg-white/20 p-2 ${isCollapsed ? 'justify-center' : 'gap-3'}`}
+                    className={`w-full flex items-center rounded-xl bg-white/10 border border-white/10 shadow-sm transition-all hover:bg-white/20 p-2 ${isCollapsed ? 'justify-center' : 'gap-3 px-3'}`}
                 >
                     <div className="user-avatar !w-10 !h-10 !bg-white !text-[#10346E] !border-white/20 shrink-0 shadow-sm shadow-black/10 transition-transform active:scale-90">
                         {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}

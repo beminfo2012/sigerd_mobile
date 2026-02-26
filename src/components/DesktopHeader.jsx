@@ -8,7 +8,7 @@ const DesktopHeader = ({ userProfile }) => {
 
     return (
         <header
-            className="hidden md:flex h-20 sticky top-0 z-40 px-6 items-center justify-between shadow-lg transition-all"
+            className="hidden md:flex h-20 shrink-0 z-40 px-6 items-center justify-between shadow-lg transition-all"
             style={{
                 background: 'var(--web-header-gradient)',
                 color: '#fff',
@@ -16,29 +16,19 @@ const DesktopHeader = ({ userProfile }) => {
             }}
         >
             <div className="flex items-center gap-4">
-                <div className="h-4 w-4" /> {/* Spacer instead of logo */}
-
-                <div className="h-8 w-[1px] bg-white/10 mx-6" />
-
-                <div className="flex items-center text-white/80 text-sm font-bold">
-                    <Link to="/" className="hover:text-white transition-colors">Dashboard</Link>
-                    {location.pathname !== '/' && (
-                        <div className="flex items-center">
-                            <ChevronRight size={14} className="mx-2 opacity-40" />
-                            <span className="text-white">
-                                {{
-                                    'vistorias': 'Vistorias',
-                                    'ocorrencias': 'Ocorrências',
-                                    'monitoramento': 'Monitoramento',
-                                    'abrigos': 'Assistência Humanitária',
-                                    'redap': 'REDAP',
-                                    'alerts': 'Avisos INMET',
-                                    'menu': 'Relatórios'
-                                }[location.pathname.split('/').filter(x => x).pop()] || location.pathname.split('/').filter(x => x).pop().charAt(0).toUpperCase() + location.pathname.split('/').filter(x => x).pop().slice(1)}
-                            </span>
+                <Link
+                    to="/"
+                    className="flex items-center gap-4 active:scale-95 transition-transform"
+                    onAuxClick={(e) => { if (e.button === 1) window.open('/', '_blank') }}
+                >
+                    <img src="/logo_header.png" alt="Logo" className="h-10 w-auto object-contain shrink-0 brightness-0 invert" onError={(e) => e.target.style.display = 'none'} />
+                    <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+                        <div className="flex flex-col">
+                            <h2 className="text-xl font-bold text-white m-0 leading-none tracking-tight">SIGERD</h2>
+                            <span className="text-[10px] text-white/60 uppercase tracking-widest font-semibold mt-0.5">Defesa Civil Santa Maria de Jetibá</span>
                         </div>
-                    )}
-                </div>
+                    </div>
+                </Link>
             </div>
 
             <div className="flex items-center gap-6">
