@@ -9,7 +9,6 @@ import { Badge } from '../../components/Shelter/ui/Badge.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { getShelters, deleteShelter } from '../../services/shelterDb.js';
-import { seedSheltersIfNeeded } from '../../utils/seedShelters';
 
 export default function ShelterList() {
     const navigate = useNavigate();
@@ -19,7 +18,6 @@ export default function ShelterList() {
 
     useEffect(() => {
         const loadData = async () => {
-            await seedSheltersIfNeeded();
             const s = await getShelters();
             setShelters(s || []);
         };

@@ -12,7 +12,6 @@ import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { getShelters, getOccupants, getDonations, deleteShelter } from '../../services/shelterDb.js';
 import { shelterSyncService } from '../../services/shelterSyncService';
 import { generateShelterReport } from '../../services/pdfReportService';
-import { seedSheltersIfNeeded } from '../../utils/seedShelters';
 
 export function Dashboard() {
     const navigate = useNavigate();
@@ -29,9 +28,6 @@ export function Dashboard() {
 
     useEffect(() => {
         const loadData = async () => {
-            // Attempt seed first
-            await seedSheltersIfNeeded();
-
             const s = await getShelters();
             const o = await getOccupants();
             const d = await getDonations();
