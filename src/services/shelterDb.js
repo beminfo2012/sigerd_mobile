@@ -94,7 +94,16 @@ export const getShelters = async () => {
     await pullShelterModuleFromCloud();
     const db = await initDB();
     const all = await db.getAll('shelters');
-    return all.filter(s => s.status !== 'deleted');
+
+    // Deduplicate to avoid local double entries from sync overlaps
+    const dedupMap = new Map();
+    all.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .forEach(s => {
+            const key = s.shelter_id || s.supabase_id || s.id;
+            dedupMap.set(key, s);
+        });
+
+    return Array.from(dedupMap.values()).filter(s => s.status !== 'deleted');
 };
 
 export const getShelterById = async (id) => {
@@ -175,11 +184,22 @@ const resolveToBusinessShelterId = async (id) => {
 export const getOccupants = async (shelterId) => {
     await pullShelterModuleFromCloud();
     const db = await initDB();
+    let all = [];
     if (shelterId) {
         const bid = await resolveToBusinessShelterId(shelterId);
-        return db.getAllFromIndex('occupants', 'shelter_id', bid);
+        all = await db.getAllFromIndex('occupants', 'shelter_id', bid);
+    } else {
+        all = await db.getAll('occupants');
     }
-    return db.getAll('occupants');
+
+    // Deduplicate
+    const dedupMap = new Map();
+    all.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        .forEach(o => {
+            const key = o.occupant_id || o.supabase_id || o.id;
+            dedupMap.set(key, o);
+        });
+    return Array.from(dedupMap.values());
 };
 
 export const addOccupant = async (occupantData) => {
