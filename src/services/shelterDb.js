@@ -95,13 +95,22 @@ export const getShelters = async () => {
     const db = await initDB();
     const all = await db.getAll('shelters');
 
-    // Deduplicate to avoid local double entries from sync overlaps
+    // Deduplicate to avoid local double entries from sync overlaps or repeated seeds
     const dedupMap = new Map();
-    all.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-        .forEach(s => {
-            const key = s.shelter_id || s.supabase_id || s.id;
-            dedupMap.set(key, s);
-        });
+    all.sort((a, b) => {
+        // Process WORST items first, BEST items LAST so they overwrite in the Map.
+        // Best = has supabase_id, is synced
+        const scoreA = (a.supabase_id ? 2 : 0) + (a.synced ? 1 : 0);
+        const scoreB = (b.supabase_id ? 2 : 0) + (b.synced ? 1 : 0);
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        // Fallback to date sorting
+        return new Date(a.created_at) - new Date(b.created_at);
+    }).forEach(s => {
+        // We deduplicate by name to eliminate ghost "seeded" shelters. 
+        // Real shelters with the same name shouldn't exist in the same region database.
+        const cleanName = s.name ? s.name.trim().toLowerCase() : (s.shelter_id || s.id);
+        dedupMap.set(cleanName, s);
+    });
 
     return Array.from(dedupMap.values()).filter(s => s.status !== 'deleted');
 };
