@@ -265,6 +265,11 @@ const AppContent = ({
                                         <ManagementDashboard />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/usuarios" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil']}>
+                                        <UserManagement />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/checklist-saida" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <ChecklistSaida />

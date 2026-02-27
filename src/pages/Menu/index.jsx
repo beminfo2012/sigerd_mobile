@@ -286,7 +286,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     )}
 
                 {/* Management Section (Strategic) - FOR COORDINATORS AND ADMINS */}
-                {['Admin', 'Coordenador', 'Secretário', 'admin'].includes(userProfile?.role) && (
+                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin'].includes(userProfile?.role) && (
                     <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/monitoramento/gestao'}
@@ -303,6 +303,23 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                             </div>
                             <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Novo</div>
                         </button>
+
+                        {['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
+                            <button
+                                onClick={() => window.location.href = '/usuarios'}
+                                className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-t border-slate-50 dark:border-slate-700"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-600 rounded-2xl mr-4">
+                                        <Users size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Usuários</span>
+                                        <span className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest">Painel de Administração</span>
+                                    </div>
+                                </div>
+                            </button>
+                        )}
                     </div>
                 )}
 

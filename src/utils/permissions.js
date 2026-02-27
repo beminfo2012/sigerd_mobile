@@ -30,7 +30,8 @@ export const isAdmin = async () => {
             return false
         }
 
-        return data?.role === 'Admin'
+        const adminRoles = ['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil'];
+        return adminRoles.includes(data?.role);
     } catch (error) {
         console.error('Error in isAdmin:', error)
         return false

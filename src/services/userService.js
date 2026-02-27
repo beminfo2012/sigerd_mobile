@@ -28,13 +28,22 @@ export const listUsers = async () => {
 
         if (error) throw error
 
-        // Get email from auth.users for each profile
+        // Get email from auth.users for each profile (gracefully ignoring errors for non-admins)
         const usersWithEmail = await Promise.all(
             (data || []).map(async (profile) => {
-                const { data: { user } } = await supabase.auth.admin.getUserById(profile.id)
+                let email = 'Privado/Restrito'
+                try {
+                    const { data: { user }, error: authError } = await supabase.auth.admin.getUserById(profile.id)
+                    if (!authError && user) {
+                        email = user.email
+                    }
+                } catch (e) {
+                    // Ignore admin route errors for ordinary operators
+                }
+
                 return {
                     ...profile,
-                    email: user?.email || 'N/A'
+                    email
                 }
             })
         )
@@ -246,6 +255,6 @@ export const updateUserPassword = async (userId, newPassword) => {
         return { data, error: null }
     } catch (error) {
         console.error('Error updating password:', error)
-        return { data: null, error }
+        return { data: null, error: { message: 'A chave atual não tem permissão para usar auth.admin. Essa operação exige backend.' } }
     }
 }

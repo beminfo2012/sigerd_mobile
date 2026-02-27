@@ -136,10 +136,10 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES // Use agent roles for GeoRescue or the same roles as others
         },
         {
-            label: 'Relatórios',
-            icon: FileText,
+            label: 'Configurações',
+            icon: Settings,
             path: '/menu',
-            roles: ['Admin', 'Coordenador']
+            roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin']
         },
         {
             label: 'REDAP',

@@ -241,40 +241,46 @@ const UserForm = ({ user, onClose }) => {
                         <Shield size={12} />
                         Perfil de Acesso *
                     </label>
-                    <div className="space-y-2">
-                        {roles.map((role) => {
-                            const Icon = role.icon
-                            const isSelected = formData.role === role.value
-                            return (
-                                <button
-                                    key={role.value}
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, role: role.value })}
-                                    className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${isSelected
-                                            ? `bg-${role.color}-50 border-${role.color}-200 text-${role.color}-700`
-                                            : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-slate-200'
-                                        }`}
-                                >
-                                    <Icon size={20} />
-                                    <div className="flex-1 text-left">
-                                        <div className="font-black text-sm">{role.label}</div>
-                                        <div className="text-[10px] font-medium opacity-70">
-                                            {role.value === 'Admin' && 'Acesso total + gerenciar usuários'}
-                                            {role.value === 'Operador' && 'Acesso padrão de campo'}
-                                            {role.value === 'Visualizador' && 'Apenas visualização'}
-                                        </div>
-                                    </div>
-                                    {isSelected && (
-                                        <div className={`w-6 h-6 rounded-full bg-${role.color}-600 text-white flex items-center justify-center`}>
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                    )}
-                                </button>
-                            )
-                        })}
-                    </div>
+                    <select
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                        className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800"
+                    >
+                        <optgroup label="Administração">
+                            <option value="Admin">Administrador (TI/Total)</option>
+                            <option value="Coordenador">Coordenador Municipal (Geral)</option>
+                        </optgroup>
+                        <optgroup label="Operacional">
+                            <option value="Agente de Defesa Civil">Agente de Defesa Civil</option>
+                            <option value="Técnico em Edificações">Técnico em Edificações</option>
+                            <option value="Secretário">Secretário</option>
+                            <option value="Operador">Operador de Campo Auxiliar</option>
+                        </optgroup>
+                        <optgroup label="Assistência Humanitária e Abrigos">
+                            <option value="Humanitario_Total">Assistência Humanitária (Gestão Total)</option>
+                            <option value="Assistente Social">Assistente Social</option>
+                            <option value="Humanitario_Leitura">Humantiária (Somente Leitura)</option>
+                        </optgroup>
+                        <optgroup label="Respostas e Desastres (Redap)">
+                            <option value="Redap_Geral">Redap - Gestão Geral (Defesa Civil)</option>
+                            <option value="Redap_Saude">Redap - Sec. Saúde</option>
+                            <option value="Redap_Obras">Redap - Sec. Obras e Infraestrutura</option>
+                            <option value="Redap_Social">Redap - Sec. Assistência Social</option>
+                            <option value="Redap_Educacao">Redap - Sec. Educação</option>
+                            <option value="Redap_Agricultura">Redap - Sec. Agricultura</option>
+                            <option value="Redap_Interior">Redap - Sec. Interior</option>
+                            <option value="Redap_Administracao">Redap - Sec. Administração</option>
+                            <option value="Redap_EsporteTurismo">Redap - Sec. Esportes e Turismo</option>
+                            <option value="Redap_DefesaSocial">Redap - Sec. Defesa Social</option>
+                            <option value="Redap_Transportes">Redap - Sec. Transportes</option>
+                            <option value="Redap_Cesan">Redap - CESAN / Água</option>
+                            <option value="Redap_CDL">Redap - CDL / Comércio local</option>
+                            <option value="Redap_Setorial">Redap - Setorial (Padrão)</option>
+                        </optgroup>
+                        <optgroup label="Outros">
+                            <option value="Visualizador">Visualizador (Somente Leitura Limitado)</option>
+                        </optgroup>
+                    </select>
                 </div>
 
                 {/* Status Toggle */}
@@ -293,8 +299,8 @@ const UserForm = ({ user, onClose }) => {
                             onClick={handleToggleStatus}
                             disabled={loading}
                             className={`p-2 rounded-2xl transition-all ${formData.is_active
-                                    ? 'bg-green-50 text-green-600 hover:bg-green-100'
-                                    : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                                : 'bg-red-50 text-red-600 hover:bg-red-100'
                                 }`}
                         >
                             {formData.is_active ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
