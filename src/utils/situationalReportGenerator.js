@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { LOGO_BASE64 } from './logoBase64';
 
-export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período', humanitarianData = null, shouldShare = false) => {
+export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período', humanitarianData = null, shouldShare = false, reportType = 'vistorias') => {
     // Create a temporary container for the PDF content
     const container = document.createElement('div');
     container.style.position = 'absolute';
@@ -43,7 +43,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <img src="${LOGO_BASE64}" style="height: 60px; display: block;" />
                     <div>
-                        <h1 style="margin: 0; font-size: 24px; color: #2a5299; text-transform: uppercase; font-weight: 900;">Relatório Situacional</h1>
+                        <h1 style="margin: 0; font-size: 24px; color: #2a5299; text-transform: uppercase; font-weight: 900;">Relatório de ${reportType === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</h1>
                         <p style="margin: 5px 0 0; font-size: 14px; color: #64748b; font-weight: bold;">Período: ${timeframeLabel}</p>
                         <p style="margin: 2px 0 0; font-size: 12px; color: #94a3b8;">Defesa Civil de Santa Maria de Jetibá - ES</p>
                     </div>
@@ -59,8 +59,8 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                 <h2 style="font-size: 16px; color: #2a5299; text-transform: uppercase; font-weight: 800; border-left: 4px solid #2a5299; padding-left: 10px; margin-bottom: 15px;">1. Panorama Operacional</h2>
                 <div style="display: flex; gap: 20px;">
                     <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
-                        <div style="font-size: 32px; font-weight: 900; color: #1e293b;">${dashboardData.stats.totalVistorias || 0}</div>
-                        <div style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">Total de Vistorias</div>
+                        <div style="font-size: 32px; font-weight: 900; color: #1e293b;">${dashboardData.stats?.totalVistorias ?? dashboardData.locations?.length ?? 0}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">Total de ${reportType === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</div>
                     </div>
                     <div style="flex: 1; background: #fff1f2; padding: 15px; border-radius: 8px; border: 1px solid #fecdd3; text-align: center;">
                         <div style="font-size: 32px; font-weight: 900; color: #e11d48;">${dashboardData.stats.activeOccurrences || 0}</div>

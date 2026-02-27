@@ -1,0 +1,88 @@
+# Guia de Implantação e Integração (API Alerta ES)
+
+Este documento detalha a arquitetura construída e serve como manual de implantação do motor de extração de dados da Defesa Civil do Estado (ES) focado no município de **Santa Maria de Jetibá**, para integração direta com a plataforma **SIGERD**.
+
+---
+
+## 🏗️ 1. Arquitetura da Solução
+
+O sistema foi dividido em duas camadas independentes (desacopladas), o que facilita a manutenção e escalabilidade:
+
+### A. Back-end (O Motor / API)
+*   **Linguagem/Framework:** Python 3 com FastAPI.
+*   **Objetivo:** Agir de forma invisível no servidor. Ele navega pelos sites `alerta.es.gov.br`, lê o HTML (via `BeautifulSoup`), baixa os PDFs de ocorrência na memória (sem salvar no disco) e extrai o texto interno usando o pacote `pypdf`.
+*   **Inteligência:** Utiliza Expressões Regulares (RegEx) para transformar frases soltas nos PDFs em dados estruturados (separando, por exemplo, o nome do município do índice pluviométrico `14.8 mm`).
+*   **Saída:** Retorna todos os dados "mastigados" em formato **JSON** pelas portas HTTP.
+
+### B. Front-end (O Cliente / SIGERD)
+*   **Linguagem:** HTML, JavaScript Vanilla (requisições `fetch()`) e Tailwind CSS para design.
+*   **Objetivo:** Requisitar os dados do painel traseiro via HTTP GET e injetá-los no DOM (tela) instantaneamente.
+
+---
+
+## 🚀 2. Como Hospedar a API na Nuvem (Produção)
+
+Para que o aplicativo SIGERD e seus dispositivos móveis tenham acesso a esta API 24/7 de qualquer lugar, o código gerado ([scraper_api.py](file:///c:/Users/Coord01/Desktop/alertaes/scraper_api.py) e [requirements.txt](file:///c:/Users/Coord01/Desktop/alertaes/requirements.txt)) precisa residir em um Ambiente de Nuvem (Cloud).
+
+### Passo a Passo Recomendado (Render.com, Railway ou AWS EC2):
+
+1.  **Versionamento:** Crie um repositório no GitHub (ou similar) e suba apenas dois arquivos:
+    *   [scraper_api.py](file:///c:/Users/Coord01/Desktop/alertaes/scraper_api.py) (código-fonte)
+    *   [requirements.txt](file:///c:/Users/Coord01/Desktop/alertaes/requirements.txt) (lista de dependências como `fastapi`, `uvicorn`, `beautifulsoup4`, `pypdf`, `requests`)
+2.  **Plataforma Cloud (Exemplo: Render):**
+    *   Crie um "New Web Service" e vincule ao repositório do GitHub.
+    *   Em **Build Command**, coloque: `pip install -r requirements.txt`
+    *   Em **Start Command**, coloque: `uvicorn scraper_api:app --host 0.0.0.0 --port $PORT`
+3.  **Resultado da Implantação:** A plataforma irá instalar o Python e gerar um link fixo HTTPS seguro (Ex: `https://api-alerta-smj.onrender.com`).
+
+---
+
+## 🔌 3. Como Integrar no Front-end (Aplicação SIGERD atual)
+
+Com o link da API pública gerado, a implantação na sua aplicação existente (SIGERD) é através de simples requisições Assíncronas.
+
+### A. Lendo os Avisos em Tempo Real (Painéis Centrais)
+Você deverá focar o seu sistema para chamar periodicamente a Rota de `Alertas`.
+
+```javascript
+// Exemplo em um Componente do SIGERD (React, Vue, etc)
+fetch("https://SUA_API_NA_NUVEM.com/api/alertas?filtro_serrana=true")
+  .then(response => response.json())
+  .then(data => {
+      let avisosAtivos = data.dados_extraidos;
+      let totalAlertas = avisosAtivos.length;
+      
+      // Atualiza o card de avisos: document.getElementById('contador').innerText = totalAlertas;
+  });
+```
+
+### B. Extraindo o Pluviômetro do PDF (Relatórios de Campo)
+A Rota de extração do PDF irá baixar e analisar o documento oficial automaticamente:
+
+```javascript
+fetch("https://SUA_API_NA_NUVEM.com/api/boletim-serrana")
+  .then(response => response.json())
+  .then(data => {
+      // Retorna o link oficial para download do PDF inteiro
+      let urlDocumentoDefesaCivil = data.url_oficial; 
+      
+      // Retorna em Array tudo que achou de Chuva para SMJ
+      let indicesDeChuva = data.chuvas_regiao_serrana; 
+      // Ex: ["Santa Maria De Jetibá: 20.4 mm"]
+  });
+```
+
+---
+
+## 🛠️ 4. Fluxograma Operacional Diário
+
+1. Ocasionalmente, o Estado cadastra informações no Portal Defesa Civil ES e emite Novos PDFs.
+2. O Servidor da Nuvem do SIGERD (Python/FastAPI) fica silencioso aguardando pedidos.
+3. O Coordenador (Bruno Pagel) abre o painel web ou o App do SIGERD.
+4. O App SIGERD efetua as chamadas HTTP (Fetch) para a Nuvem de Monitoramento.
+5. Em menos de 1.5 segundos, a Nuvem raspa os sites do governo, lê os PDFs e devolve respostas.
+6. A interface SIGERD carrega.
+
+### Pontos de Atenção na Implantação
+*   **Mudanças Estaduais:** Se o Governo do ES refizer o design inteiro do site estadual `alerta.es.gov.br`, a API em Python precisará de manutenção na sua lógica de `BeautifulSoup` para encontrar os novos cantos escondidos do site governamental.
+*   **Limites de Requisição:** Para evitar banimento temporário do IP da sua hospedagem pelos servidores do Estado, o ideal é que a interface do seu sistema não bombardeie a API de extração toda hora. Mantenha os robôs buscando atualizações com pelo menos 5 a 10 minutos de intervalo.

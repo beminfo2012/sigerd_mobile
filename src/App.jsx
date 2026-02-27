@@ -129,19 +129,25 @@ const AppContent = ({
 
     useEffect(() => {
         const checkRedirect = async () => {
-            if (isAuthenticated && userProfile?.email?.endsWith('@redap.com') && location.pathname === '/') {
-                try {
-                    const draft = await getLatestDraftRedap();
-                    // Só redireciona se for um rascunho válido (com COBRADE definido pela DC)
-                    if (draft && draft.data.tipificacao.cobrade) {
-                        navigate(`/redap/editar/${draft.id}`, { replace: true });
-                    } else {
-                        // Se não houver rascunho com COBRADE, vai para o dashboard monitorar
+            if (isAuthenticated && userProfile?.email) {
+                // Determine if user has ONLY Redap role
+                const isStrictlyRedap = userProfile.role?.startsWith('Redap_') && userProfile.role !== 'Redap_Geral';
+                const isAdminOrAgent = ['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Redap_Geral'].includes(userProfile.role);
+
+                // For test/mock users like admin@s2id.com we want to let them through to dashboard if they are Admin.
+                // Redirect strictly REDAP users to the REDAP module
+                if (isStrictlyRedap && !isAdminOrAgent && location.pathname === '/') {
+                    try {
+                        const draft = await getLatestDraftRedap();
+                        if (draft && draft.data.tipificacao.cobrade) {
+                            navigate(`/redap/editar/${draft.id}`, { replace: true });
+                        } else {
+                            navigate('/redap', { replace: true });
+                        }
+                    } catch (error) {
+                        console.error('Redirection error:', error);
                         navigate('/redap', { replace: true });
                     }
-                } catch (error) {
-                    console.error('Redirection error:', error);
-                    navigate('/redap', { replace: true });
                 }
             }
         };
@@ -205,12 +211,12 @@ const AppContent = ({
                         }>
                             <Routes>
                                 <Route path="/" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                    <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, 'Redap_Geral']}>
                                         <Dashboard />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/georescue" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                    <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, 'Redap_Geral']}>
                                         <GeoRescue />
                                     </ProtectedRoute>
                                 } />
@@ -393,7 +399,7 @@ const AppContent = ({
                     </main>
 
                     {/* Bottom Navigation - Hide on print and desktop */}
-                    {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
+                    {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral' || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
                         <nav className="bottom-nav md:hidden">
                             <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
                                 <Home size={24} />

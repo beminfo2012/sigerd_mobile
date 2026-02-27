@@ -4,7 +4,8 @@ import { api } from '../../services/api'
 import {
     ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
-    ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers
+    ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
+    Download, ChevronDown, ExternalLink
 } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -376,6 +377,117 @@ const MobileDashboardView = ({
     );
 };
 
+// --- SUB-COMPONENT: BOLETINS CARD ---
+const BoletinsCard = () => {
+    const [activeTab, setActiveTab] = useState('ext');
+    const [boletinsMet, setBoletinsMet] = useState([]);
+    const [boletinsExt, setBoletinsExt] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchBoletins = async () => {
+            setLoading(true);
+            try {
+                const [resMet, resExt] = await Promise.all([
+                    fetch('http://127.0.0.1:8000/api/boletim-meteorologico?limite=10').catch(() => null),
+                    fetch('http://127.0.0.1:8000/api/boletim-extraordinario?limite=10').catch(() => null)
+                ]);
+                if (resMet && resMet.ok) {
+                    const data = await resMet.json();
+                    setBoletinsMet(data.boletins || []);
+                }
+                if (resExt && resExt.ok) {
+                    const data = await resExt.json();
+                    setBoletinsExt(data.boletins || []);
+                }
+            } catch (err) {
+                console.warn('[BoletinsCard] Fetch failed:', err);
+            }
+            setLoading(false);
+        };
+        fetchBoletins();
+    }, []);
+
+    const isMet = activeTab === 'met';
+    const currentList = isMet ? boletinsMet : boletinsExt;
+
+    return (
+        <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden w-full transition-all">
+            {/* TABS CONTROLS SMALL */}
+            <div className="flex bg-slate-50 dark:bg-slate-800/80 p-1 border-b border-slate-100 dark:border-slate-800">
+                <button
+                    onClick={() => setActiveTab('ext')}
+                    className={`flex-1 py-1 px-1 rounded-xl text-[9px] font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-1 ${!isMet
+                        ? 'bg-white dark:bg-slate-700 shadow-sm text-orange-500 border border-slate-100 dark:border-slate-600'
+                        : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                        }`}
+                >
+                    <ClipboardList size={12} /> Extra
+                </button>
+                <button
+                    onClick={() => setActiveTab('met')}
+                    className={`flex-1 py-1 px-1 rounded-xl text-[9px] font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-1 ${isMet
+                        ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-500 border border-slate-100 dark:border-slate-600'
+                        : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                        }`}
+                >
+                    <CloudRain size={12} /> Meteo
+                </button>
+            </div>
+
+            {/* SCROLLABLE LIST */}
+            <div className="p-2 flex-1 flex flex-col overflow-hidden relative min-h-[140px] max-h-[200px]">
+                {loading ? (
+                    <div className="absolute inset-0 flex justify-center items-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-300 border-t-slate-800"></div>
+                    </div>
+                ) : currentList.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2 h-full">
+                        <FileText size={18} className="opacity-40" />
+                        <span className="text-[10px] uppercase tracking-widest font-bold">Vazio</span>
+                    </div>
+                ) : (
+                    <div className="overflow-y-auto pr-2 custom-scrollbar flex-1 flex flex-col gap-2">
+                        {currentList.map((b, idx) => {
+                            const isFirst = idx === 0;
+                            return (
+                                <a
+                                    key={idx}
+                                    href={b.url_pdf}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={`group flex items-center p-2 rounded-xl transition-all border ${isFirst
+                                        ? `bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow`
+                                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:border-slate-100 dark:hover:border-slate-800'
+                                        }`}
+                                >
+                                    <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mr-2 shadow-sm ${isMet
+                                        ? (isFirst ? 'bg-blue-500 text-white' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-500 border border-blue-100 dark:border-blue-800/50')
+                                        : (isFirst ? 'bg-orange-500 text-white' : 'bg-orange-50 dark:bg-orange-900/30 text-orange-500 border border-orange-100 dark:border-orange-800/50')
+                                        }`}>
+                                        <FileText size={14} />
+                                    </div>
+                                    <div className="flex-1 overflow-hidden pr-2">
+                                        {isFirst && (
+                                            <div className="flex items-center mb-0.5">
+                                                <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest leading-none">Mais Recente</span>
+                                            </div>
+                                        )}
+                                        <h4 className={`font-bold text-[10px] sm:text-[11px] leading-tight truncate transition-colors ${isFirst ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-300'
+                                            } ${isMet ? 'group-hover:text-blue-500' : 'group-hover:text-orange-500'}`}>
+                                            {b.titulo}
+                                        </h4>
+                                    </div>
+                                    <ExternalLink size={10} className={`shrink-0 transition-all ${isFirst ? 'text-slate-400 group-hover:text-slate-600' : 'text-slate-300 opacity-0 group-hover:opacity-100'}`} />
+                                </a>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 // --- SUB-COMPONENT: WEB VIEW ---
 const WebViewDashboardView = ({
     data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
@@ -721,41 +833,39 @@ const WebViewDashboardView = ({
                 </div>
 
                 {/* --- 📉 3. BOTTOM SUMMARY ROW --- */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Sync Summary */}
-                    <div onClick={handleSync} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all">
-                        <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${syncing ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30'}`}>
-                                <CheckCircle size={18} className={syncing ? 'animate-spin' : ''} />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left Column (Sync & Vistorias) */}
+                    <div className="lg:col-span-8 flex flex-col gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                            {/* Sync Summary */}
+                            <div onClick={handleSync} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all justify-center">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${syncing ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30'}`}>
+                                        <CheckCircle size={18} className={syncing ? 'animate-spin' : ''} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização do Sistema</span>
+                                </div>
+                                <div className="text-2xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Forçar sincronização</span>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização do Sistema</span>
+
+                            {/* Vistorias Summary */}
+                            <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all justify-center">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500 group-hover:scale-110 transition-transform">
+                                        <ClipboardList size={18} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Vistorias</span>
+                                </div>
+                                <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{data.stats.totalVistorias}</div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Total Computado</span>
+                            </div>
                         </div>
-                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Forçar sincronização</span>
                     </div>
 
-                    {/* INMET Summary */}
-                    <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500 group-hover:scale-110 transition-transform">
-                                <Zap size={18} />
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</span>
-                        </div>
-                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{((data.alerts || []).length + (cemadenAlerts || []).length)}</div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Alertas Ativos</span>
-                    </div>
-
-                    {/* Vistorias Summary */}
-                    <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500 group-hover:scale-110 transition-transform">
-                                <ClipboardList size={18} />
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Vistorias</span>
-                        </div>
-                        <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{data.stats.totalVistorias}</div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Total Computado</span>
+                    {/* Right Column (Boletins Card) */}
+                    <div className="lg:col-span-4 h-full">
+                        <BoletinsCard />
                     </div>
                 </div>
             </div>
@@ -1057,8 +1167,66 @@ const Dashboard = () => {
             }
             const label = labels[hours] || 'Todo o Período';
 
+            // Filter context based on viewMode
+            const sourceData = viewMode === 'vistorias' ? data.vistorias : data.ocorrencias;
+            let finalLocations = sourceData.locations || [];
+
+            if (hours > 0) {
+                const limitDate = new Date();
+                limitDate.setHours(limitDate.getHours() - hours);
+                finalLocations = finalLocations.filter(loc => {
+                    if (!loc.date) return false;
+                    return new Date(loc.date) >= limitDate;
+                });
+            }
+
+            // Recalculate Breakdown
+            const colorPalette = {
+                'Geológico / Geotécnico': '#f97316',
+                'Risco Geológico': '#f97316',
+                'Hidrológico': '#3b82f6',
+                'Inundação': '#3b82f6',
+                'Alagamento': '#60a5fa',
+                'Inundação/Alagamento': '#3b82f6',
+                'Enxurrada': '#2563eb',
+                'Estrutural': '#94a3b8',
+                'Estrutural/Predial': '#94a3b8',
+                'Ambiental': '#10b981',
+                'Tecnológico': '#f59e0b',
+                'Climático / Meteorológico': '#0ea5e9',
+                'Infraestrutura Urbana': '#6366f1',
+                'Sanitário': '#f43f5e',
+                'Deslizamento': '#f97316',
+                'Vendaval': '#0284c7',
+                'Granizo': '#818cf8',
+                'Incêndio': '#ef4444',
+                'Outros': '#94a3b8'
+            };
+
+            const counts = {};
+            finalLocations.forEach(loc => {
+                const cat = loc.risk || 'Outros';
+                counts[cat] = (counts[cat] || 0) + 1;
+            });
+
+            const finalBreakdown = Object.keys(counts).map(catLabel => ({
+                label: catLabel,
+                count: counts[catLabel],
+                percentage: finalLocations.length > 0 ? Math.round((counts[catLabel] / finalLocations.length) * 100) : 0,
+                color: colorPalette[catLabel] || '#94a3b8'
+            })).sort((a, b) => b.count - a.count);
+
+            const reportData = {
+                stats: {
+                    totalVistorias: finalLocations.length,
+                    activeOccurrences: data.stats?.activeOccurrences || 0
+                },
+                breakdown: finalBreakdown,
+                locations: finalLocations
+            };
+
             // Generate report with current dashboard data
-            await generateSituationalReport(data, weather, [], null, label);
+            await generateSituationalReport(reportData, weather, [], null, label, null, false, viewMode);
 
             setShowReportMenu(false);
             toast.success('Pronto!', 'Relatório gerado.');

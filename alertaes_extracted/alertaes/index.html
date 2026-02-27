@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boletins Defesa Civil</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F3F4F6;
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800 antialiased p-6 md:p-10 flex flex-col items-center justify-start min-h-screen">
+
+    <div class="w-full max-w-4xl flex flex-wrap gap-6 items-start justify-center">
+
+        <!-- Boletins Extraordinários (Card Menor) -->
+        <div
+            class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col flex-1 min-w-[320px] max-w-lg transition-all duration-300">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center bg-gray-50/50 rounded-t-xl">
+                <i class="fa-solid fa-clipboard-list mr-3 text-orange-500 text-lg"></i>
+                <h3 class="font-bold text-[#1e3a8a] text-xs tracking-wider uppercase">
+                    Boletins Extraordinários
+                </h3>
+            </div>
+
+            <div id="loading-ext" class="py-12 flex justify-center items-center">
+                <i class="fa-solid fa-spinner fa-spin text-gray-300 text-2xl"></i>
+            </div>
+
+            <div id="destaque-ext" class="hidden p-4">
+                <!-- O item principal será injetado aqui -->
+            </div>
+
+            <div id="accordion-ext" class="hidden border-t border-gray-100">
+                <button onclick="toggleLista('lista-content-ext')"
+                    class="w-full px-5 py-3 text-xs text-gray-500 hover:text-[#1e3a8a] hover:bg-gray-50 flex justify-between items-center font-bold tracking-wide uppercase transition-colors">
+                    Ver Histórico de Boletins
+                    <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                        id="icon-lista-content-ext"></i>
+                </button>
+
+                <div id="lista-content-ext" class="hidden flex-col border-t border-gray-50 bg-gray-50/30">
+                    <div class="px-4 py-2 flex justify-end">
+                        <div class="relative w-28">
+                            <select id="filtro-ano-ext" onchange="carregarBoletinsExt(true)"
+                                class="w-full appearance-none bg-white border border-gray-200 text-gray-600 rounded px-3 py-1 text-xs font-medium cursor-pointer focus:outline-none focus:border-blue-300 shadow-sm">
+                                <option value="">Todos</option>
+                                <option value="2026" selected>2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                            </select>
+                            <i
+                                class="fa-solid fa-chevron-down text-[8px] absolute right-2 top-2 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+                    <div class="max-h-56 overflow-y-auto px-2 pb-3 custom-scrollbar">
+                        <ul id="lista-boletins-ext" class="space-y-1"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="erro-ext" class="hidden text-center text-red-500 text-xs py-4 font-medium">
+                Falha ao carregar boletins.
+            </div>
+        </div>
+
+        <!-- Boletins Meteorológicos (Card Menor) -->
+        <div
+            class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col flex-1 min-w-[320px] max-w-lg transition-all duration-300">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center bg-gray-50/50 rounded-t-xl">
+                <i class="fa-solid fa-cloud-sun-rain mr-3 text-blue-500 text-lg"></i>
+                <h3 class="font-bold text-[#1e3a8a] text-xs tracking-wider uppercase">
+                    Boletins Meteorológicos
+                </h3>
+            </div>
+
+            <div id="loading-met" class="py-12 flex justify-center items-center">
+                <i class="fa-solid fa-spinner fa-spin text-gray-300 text-2xl"></i>
+            </div>
+
+            <div id="destaque-met" class="hidden p-4">
+                <!-- O item principal será injetado aqui -->
+            </div>
+
+            <div id="accordion-met" class="hidden border-t border-gray-100">
+                <button onclick="toggleLista('lista-content-met')"
+                    class="w-full px-5 py-3 text-xs text-gray-500 hover:text-[#1e3a8a] hover:bg-gray-50 flex justify-between items-center font-bold tracking-wide uppercase transition-colors">
+                    Ver Histórico de Boletins
+                    <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                        id="icon-lista-content-met"></i>
+                </button>
+
+                <div id="lista-content-met" class="hidden flex-col border-t border-gray-50 bg-gray-50/30">
+                    <div class="px-4 py-2 flex justify-end">
+                        <div class="relative w-28">
+                            <select id="filtro-ano-met" onchange="carregarBoletinsMet(true)"
+                                class="w-full appearance-none bg-white border border-gray-200 text-gray-600 rounded px-3 py-1 text-xs font-medium cursor-pointer focus:outline-none focus:border-blue-300 shadow-sm">
+                                <option value="">Todos</option>
+                                <option value="2026" selected>2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                            </select>
+                            <i
+                                class="fa-solid fa-chevron-down text-[8px] absolute right-2 top-2 text-gray-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+                    <div class="max-h-56 overflow-y-auto px-2 pb-3 custom-scrollbar">
+                        <ul id="lista-boletins-met" class="space-y-1"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="erro-met" class="hidden text-center text-red-500 text-xs py-4 font-medium">
+                Falha ao carregar boletins.
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000/api';
+
+        // Animação manual do Accordion
+        function toggleLista(contentId) {
+            const el = document.getElementById(contentId);
+            const icon = document.getElementById('icon-' + contentId);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function criarItemHTML(bol, isMet, isDestaque = false) {
+            const iconeColorClass = isMet ? 'text-blue-500 bg-blue-50 border-blue-100' : 'text-orange-500 bg-orange-50 border-orange-100';
+            const hoverTitleClass = isMet ? 'group-hover:text-blue-700' : 'group-hover:text-orange-700';
+
+            if (isDestaque) {
+                return `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded uppercase tracking-widest border border-green-200">Mais Recente</span>
+                        <span class="text-[10px] text-gray-400 font-medium">Última Atualização</span>
+                    </div>
+                    <a href="${bol.url_pdf}" target="_blank" class="group flex items-start p-4 hover:bg-gray-50 rounded-xl transition-all border border-gray-100 shadow-sm hover:shadow">
+                        <div class="${iconeColorClass} border w-12 h-12 rounded-lg flex items-center justify-center mr-4 shrink-0 shadow-sm bg-white transition-colors">
+                            <i class="fa-solid fa-file-pdf text-2xl"></i>
+                        </div>
+                        <div class="flex-1 overflow-hidden pr-2">
+                            <h4 class="font-bold text-gray-800 text-sm ${hoverTitleClass} transition-colors leading-tight mb-1">${bol.titulo}</h4>
+                            <p class="text-xs text-blue-500 font-medium flex items-center mt-2 group-hover:text-blue-700">
+                                <i class="fa-solid fa-download mr-1 text-[10px]"></i> Baixar Documento Oficial
+                            </p>
+                        </div>
+                    </a>
+                `;
+            } else {
+                return `
+                    <a href="${bol.url_pdf}" target="_blank" class="group flex items-center p-2 hover:bg-gray-100 rounded-lg transition-colors border border-transparent">
+                        <div class="${iconeColorClass} border w-8 h-8 rounded shrink-0 flex items-center justify-center mr-3 bg-white">
+                            <i class="fa-solid fa-file-pdf text-[10px]"></i>
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                            <h4 class="font-medium text-gray-600 text-xs ${hoverTitleClass} truncate transition-colors">${bol.titulo}</h4>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-gray-300 text-[10px] ml-2 group-hover:text-gray-500 transition-colors"></i>
+                    </a>
+                `;
+            }
+        }
+
+        async function renderizarListaBoletins(endpoint, suffix, ano, skipLoadingDestaque = false) {
+            const ul = document.getElementById('lista-boletins-' + suffix);
+            const loadContainer = document.getElementById('loading-' + suffix);
+            const errContainer = document.getElementById('erro-' + suffix);
+            const destContainer = document.getElementById('destaque-' + suffix);
+            const accContainer = document.getElementById('accordion-' + suffix);
+
+            const isMet = endpoint.includes('meteorologico');
+
+            if (!skipLoadingDestaque) {
+                ul.innerHTML = '';
+                destContainer.innerHTML = '';
+                destContainer.classList.add('hidden');
+                accContainer.classList.add('hidden');
+                loadContainer.classList.remove('hidden');
+            }
+            errContainer.classList.add('hidden');
+
+            let url = `${API_BASE_URL}/${endpoint}?limite=30`;
+            if (ano) url += `&ano=${ano}`;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API Error');
+                const data = await res.json();
+                const boletins = data.boletins || [];
+
+                loadContainer.classList.add('hidden');
+
+                if (boletins.length === 0) {
+                    ul.innerHTML = `<li class="text-gray-400 text-center py-6 text-xs font-medium">Nenhum registro encontrado.</li>`;
+                    if (!skipLoadingDestaque) {
+                        destContainer.innerHTML = '<div class="text-center text-gray-400 text-xs py-4">Sem dados recentes.</div>';
+                        destContainer.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                // Se houver boletins, o 1º vai pro Destaque (se não estivermos apenas filtrando a lista com o skipLoadingDestaque ligado)
+                if (!skipLoadingDestaque) {
+                    destContainer.innerHTML = criarItemHTML(boletins[0], isMet, true);
+                    destContainer.classList.remove('hidden');
+                    accContainer.classList.remove('hidden');
+                }
+
+                ul.innerHTML = ''; // Limpa a lista antes de reescrever
+
+                // Os demais (ou todos se estivermos filtrando no dropdown) vão pra lista
+                const boletinsLista = skipLoadingDestaque ? boletins : boletins.slice(1);
+
+                if (boletinsLista.length === 0) {
+                    ul.innerHTML = `<li class="text-gray-400 text-center py-4 text-xs">Sem documentos adicionais.</li>`;
+                } else {
+                    boletinsLista.forEach(bol => {
+                        const li = document.createElement('li');
+                        li.innerHTML = criarItemHTML(bol, isMet, false);
+                        ul.appendChild(li);
+                    });
+                }
+
+            } catch (err) {
+                loadContainer.classList.add('hidden');
+                if (errContainer) errContainer.classList.remove('hidden');
+                console.error(err);
+            }
+        }
+
+        function carregarBoletinsMet(apenasAtualizarLista = false) {
+            const ano = document.getElementById('filtro-ano-met').value;
+            // Se eu escolho um ano, eu atualizo apenas a lista suspensa (o topo permanece o último pdf absoluto)
+            renderizarListaBoletins('boletim-meteorologico', 'met', ano, apenasAtualizarLista);
+        }
+
+        function carregarBoletinsExt(apenasAtualizarLista = false) {
+            const ano = document.getElementById('filtro-ano-ext').value;
+            renderizarListaBoletins('boletim-extraordinario', 'ext', ano, apenasAtualizarLista);
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarBoletinsExt();
+            carregarBoletinsMet();
+        });
+
+    </script>
+</body>
+
+</html>
