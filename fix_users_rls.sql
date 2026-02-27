@@ -1,3 +1,8 @@
+-- 0. Adicionando Colunas Faltantes na Tabela 'profiles'
+-- O aplicativo atualizado agora suporta Perfis Ativos/Inativos, então a coluna precisa existir no banco.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES auth.users(id);
+
 -- Correção de Permissões RLS (Row Level Security) para a Tabela 'profiles'
 -- Para permitir que os Coordenadores Municipais consigam ler o painel de usuários SEGURO contra recursão infinita
 
