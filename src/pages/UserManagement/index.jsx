@@ -35,12 +35,13 @@ const UserManagement = () => {
             const { data, error } = await listUsers()
             if (error) {
                 console.error('Error loading users:', error)
-                alert('Erro ao carregar usuários.')
+                alert('Erro ao carregar usuários: ' + (error.message || JSON.stringify(error)))
             } else {
                 setUsers(data || [])
             }
         } catch (error) {
-            console.error('Error:', error)
+            console.error('Exception loading users:', error)
+            alert('Falha na tentativa de carregar usuários: ' + error.message)
         } finally {
             setLoading(false)
         }
