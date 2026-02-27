@@ -237,7 +237,7 @@ export const saveVistoriaOffline = async (data) => {
 export const getPendingSyncCount = async () => {
     const db = await initDB()
 
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'ocorrencias_operacionais', 'despachos', 'emergency_contracts', 'manual_readings'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'ocorrencias_operacionais', 'despachos', 'emergency_contracts'];
     let detail = {
         total: 0,
         vistorias: 0,
@@ -250,8 +250,7 @@ export const getPendingSyncCount = async () => {
         redap_records: 0,
         ocorrencias_operacionais: 0,
         despachos: 0,
-        emergency_contracts: 0,
-        manual_readings: 0
+        emergency_contracts: 0
     };
 
     for (const storeName of stores) {
@@ -274,7 +273,7 @@ export const getPendingSyncCount = async () => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'manual_readings', 'despachos', 'ocorrencias_operacionais'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'despachos', 'ocorrencias_operacionais'];
     let syncedCount = 0
 
     for (const storeName of stores) {
