@@ -343,41 +343,9 @@ const Login = ({ onLogin }) => {
         e.preventDefault()
         setError('')
 
-        if (!navigator.onLine && !username.endsWith('@s2id.com')) {
+        if (!navigator.onLine) {
             setError('⚠️ Sem internet. Conecte-se para entrar pela primeira vez.')
             return
-        }
-
-        const TEST_ACCOUNTS = {
-            'saude@s2id.com': { role: 'Redap_Saude', name: 'Secretaria de Saúde' },
-            'securb@s2id.com': { role: 'Redap_Obras', name: 'Secretaria de Serviços Urbanos' },
-            'social@s2id.com': { role: 'Redap_Social', name: 'Secretaria de Assistência Social' },
-            'educacao@s2id.com': { role: 'Redap_Educacao', name: 'Secretaria de Educação' },
-            'agricultura@s2id.com': { role: 'Redap_Agricultura', name: 'Secretaria de Agricultura' },
-            'interior@s2id.com': { role: 'Redap_Interior', name: 'Secretaria de Interior' },
-            'administracao@s2id.com': { role: 'Redap_Administracao', name: 'Secretaria de Administração' },
-            'cdl@s2id.com': { role: 'Redap_CDL', name: 'CDL - Comércio e Serviços' },
-            'cesan@s2id.com': { role: 'Redap_Cesan', name: 'CESAN - Água e Esgoto' },
-            'defesasocial@s2id.com': { role: 'Redap_DefesaSocial', name: 'Secretaria de Defesa Social' },
-            'esporte@s2id.com': { role: 'Redap_EsporteTurismo', name: 'Secretaria de Esporte e Turismo' },
-            'transportes@s2id.com': { role: 'Redap_Transportes', name: 'Secretaria de Transportes' },
-            'defesa@s2id.com': { role: 'Agente de Defesa Civil', name: 'Agente de Teste' },
-            'admin@s2id.com': { role: 'Admin', name: 'Administrador de Teste' }
-        };
-
-        if (password === 'teste123' && TEST_ACCOUNTS[username]) {
-            setLoading(true);
-            const mockProfile = {
-                id: 'mock-' + username,
-                full_name: TEST_ACCOUNTS[username].name,
-                email: username,
-                role: TEST_ACCOUNTS[username].role,
-                is_mock: true
-            };
-            localStorage.setItem('auth', 'true');
-            localStorage.setItem('userProfile', JSON.stringify(mockProfile));
-            setTimeout(() => onLogin(), 800);
-            return;
         }
 
         setLoading(true)
