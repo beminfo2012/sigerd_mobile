@@ -388,9 +388,10 @@ const BoletinsCard = () => {
         const fetchBoletins = async () => {
             setLoading(true);
             try {
+                const baseURL = 'https://sigerd-mobile.vercel.app';
                 const [resMet, resExt] = await Promise.all([
-                    fetch('http://127.0.0.1:8000/api/boletim-meteorologico?limite=10').catch(() => null),
-                    fetch('http://127.0.0.1:8000/api/boletim-extraordinario?limite=10').catch(() => null)
+                    fetch(`${baseURL}/api/boletim-meteorologico?limite=10`).catch(() => null),
+                    fetch(`${baseURL}/api/boletim-extraordinario?limite=10`).catch(() => null)
                 ]);
                 if (resMet && resMet.ok) {
                     const data = await resMet.json();
