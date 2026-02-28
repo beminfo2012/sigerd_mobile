@@ -53,106 +53,110 @@
   },
   {
     "id": 14,
-    "nome": "Córrego do Ouro"
+    "nome": "Centro"
   },
   {
     "id": 15,
-    "nome": "Córrego Simão"
+    "nome": "Córrego do Ouro"
   },
   {
     "id": 16,
-    "nome": "Garrafão"
+    "nome": "Córrego Simão"
   },
   {
     "id": 17,
-    "nome": "Jequitibá"
+    "nome": "Garrafão"
   },
   {
     "id": 18,
-    "nome": "Recreio"
+    "nome": "Jequitibá"
   },
   {
     "id": 19,
-    "nome": "Rio Aparecida"
+    "nome": "Recreio"
   },
   {
     "id": 20,
-    "nome": "Rio Bonito"
+    "nome": "Rio Aparecida"
   },
   {
     "id": 21,
-    "nome": "Rio Claro"
+    "nome": "Rio Bonito"
   },
   {
     "id": 22,
-    "nome": "Rio Cristal"
+    "nome": "Rio Claro"
   },
   {
     "id": 23,
-    "nome": "Rio das Pedras"
+    "nome": "Rio Cristal"
   },
   {
     "id": 24,
-    "nome": "Rio do Queijo"
+    "nome": "Rio das Pedras"
   },
   {
     "id": 25,
-    "nome": "Rio Lamego"
+    "nome": "Rio do Queijo"
   },
   {
     "id": 26,
-    "nome": "Rio Novo / Rio Nove"
+    "nome": "Rio Lamego"
   },
   {
     "id": 27,
-    "nome": "Rio Plantoja"
+    "nome": "Rio Novo / Rio Nove"
   },
   {
     "id": 28,
-    "nome": "Rio Possmouser"
+    "nome": "Rio Plantoja"
   },
   {
     "id": 29,
-    "nome": "Rio Sabino"
+    "nome": "Rio Possmouser"
   },
   {
     "id": 30,
-    "nome": "Rio Taquara/Taquarinha"
+    "nome": "Rio Sabino"
   },
   {
     "id": 31,
-    "nome": "Rio Triunfo"
+    "nome": "Rio Taquara/Taquarinha"
   },
   {
     "id": 32,
-    "nome": "Rio Veado"
+    "nome": "Rio Triunfo"
   },
   {
     "id": 33,
-    "nome": "Santa Luzia"
+    "nome": "Rio Veado"
   },
   {
     "id": 34,
-    "nome": "Santa Maria de Jetibá"
+    "nome": "Santa Luzia"
   },
   {
     "id": 35,
-    "nome": "São Bento"
+    "nome": "Santa Maria de Jetibá"
   },
   {
     "id": 36,
-    "nome": "São João de Garrafão"
+    "nome": "São Bento"
   },
   {
     "id": 37,
-    "nome": "São José do Rio Claro"
+    "nome": "São João de Garrafão"
   },
   {
     "id": 38,
-    "nome": "São Sebastião do Meio"
+    "nome": "São José do Rio Claro"
   },
   {
     "id": 39,
+    "nome": "São Sebastião do Meio"
+  },
+  {
+    "id": 40,
     "nome": "Serra do Gelo"
   }
 ]

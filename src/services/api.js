@@ -46,8 +46,11 @@ const processListToMapData = (list) => {
             const category = v.categoria_risco || v.categoriaRisco || 'Outros'
 
             return {
+                id: v.id,
+                formattedId: v.ocorrencia_id_format || v.ocorrencia_id || v.vistoria_id || v.vistoriaId || (v.id ? String(v.id).split('-')[0].toUpperCase() : ''),
                 lat, lng,
                 risk: category,
+                status: v.status || 'Pendente',
                 details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : category,
                 date: v.created_at || v.data_hora || v.dataHora || new Date().toISOString()
             }
