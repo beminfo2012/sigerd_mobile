@@ -64,7 +64,7 @@ const processBreakdown = (records) => {
 
 const processLocations = (records) => {
     return records
-        .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude))
+        .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude) || (v.lat && v.lng))
         .map(v => {
             let lat, lng;
             if (v.coordenadas && String(v.coordenadas).includes(',')) {
@@ -74,14 +74,19 @@ const processLocations = (records) => {
             } else if (v.latitude && v.longitude) {
                 lat = parseFloat(v.latitude)
                 lng = parseFloat(v.longitude)
+            } else if (v.lat && v.lng) {
+                lat = parseFloat(v.lat)
+                lng = parseFloat(v.lng)
             }
             if (isNaN(lat) || isNaN(lng)) return null
             const subtypes = v.subtipos_risco || v.subtiposRisco || []
             const category = v.categoria_risco || v.categoriaRisco || 'Outros'
             return {
+                id: v.id,
+                formattedId: v.ocorrencia_id_format || v.vistoria_id || v.vistoriaId || '',
                 lat, lng, risk: category,
                 status: v.status || 'Pendente',
-                details: subtypes.length > 0 ? subtypes.join(', ') : category,
+                details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : category,
                 date: v.created_at || v.data_hora || new Date().toISOString()
             }
         })
@@ -351,16 +356,25 @@ const MobileDashboardView = ({
                                         }}
                                     >
                                         <Popup minWidth={180}>
-                                            <div className="p-1">
+                                            <div
+                                                className="p-1 cursor-pointer group"
+                                                onClick={() => navigate(`/${viewMode === 'vistorias' ? 'vistorias' : 'ocorrencias'}/editar/${loc.id}`)}
+                                                title="Clique para abrir detalhes"
+                                            >
                                                 <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'}</span>
+                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
+                                                        {viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
+                                                    </span>
                                                     {viewMode === 'ocorrencias' && (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{loc.status}</span>
+                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
                                                     )}
                                                 </div>
-                                                <div className="text-xs font-bold text-slate-800 mb-1">{loc.risk}</div>
-                                                <div className="text-[11px] text-slate-500 leading-relaxed mb-2">{loc.details}</div>
-                                                <div className="text-[9px] font-bold text-slate-400 italic uppercase">Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</div>
+                                                <div className="text-xs font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors">{loc.risk}</div>
+                                                <div className="text-[11px] text-slate-500 leading-relaxed mb-2 line-clamp-2">{loc.details}</div>
+                                                <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase">
+                                                    <span>{new Date(loc.date).toLocaleDateString('pt-BR')}</span>
+                                                    <span className="text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-all">ABRIR ↗</span>
+                                                </div>
                                             </div>
                                         </Popup>
                                     </CircleMarker>
@@ -726,20 +740,26 @@ const WebViewDashboardView = ({
                                         }}
                                     >
                                         <Popup minWidth={220}>
-                                            <div className="p-2">
+                                            <div
+                                                className="p-2 cursor-pointer group"
+                                                onClick={() => navigate(`/${viewMode === 'vistorias' ? 'vistorias' : 'ocorrencias'}/editar/${loc.id}`)}
+                                                title="Clique para abrir detalhes"
+                                            >
                                                 <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{viewMode === 'vistorias' ? 'Registro de Vistoria' : 'Registro de Ocorrência'}</span>
+                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
+                                                        {viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
+                                                    </span>
                                                     {viewMode === 'ocorrencias' && (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{loc.status}</span>
+                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
                                                     )}
                                                 </div>
-                                                <div className="text-sm font-black text-slate-800 mb-2">{loc.risk}</div>
-                                                <div className="text-xs text-slate-500 leading-relaxed mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                <div className="text-sm font-black text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">{loc.risk}</div>
+                                                <div className="text-xs text-slate-500 leading-relaxed mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100 line-clamp-2">
                                                     {loc.details || 'Sem detalhes adicionais registrados.'}
                                                 </div>
-                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase italic">
-                                                    <span>Santa Maria de Jetibá</span>
+                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
                                                     <span>{new Date(loc.date).toLocaleDateString('pt-BR')}</span>
+                                                    <span className="text-blue-500 bg-blue-50 px-2 py-1 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-all">ABRIR ↗</span>
                                                 </div>
                                             </div>
                                         </Popup>
