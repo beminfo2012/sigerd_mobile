@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 DO $$
 DECLARE
     usr RECORD;
-    new_id UUID;
+    new_user_id UUID;
     existing_id UUID;
 BEGIN
     FOR usr IN SELECT * FROM json_populate_recordset(null::record, 
@@ -29,28 +29,47 @@ BEGIN
         SELECT id INTO existing_id FROM auth.users WHERE email = usr.e;
         
         IF existing_id IS NULL THEN
-            new_id := gen_random_uuid();
+            new_user_id := gen_random_uuid();
             
-            -- Inserir do lado Auth de forma forçada, já confirmando o E-mail e Hasheando a Senha
+            -- 1. Inserir o Usuário em auth.users
             INSERT INTO auth.users (
                 instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, 
                 recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, 
                 created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token
             ) VALUES (
-                '00000000-0000-0000-0000-000000000000', new_id, 'authenticated', 'authenticated', 
+                '00000000-0000-0000-0000-000000000000', new_user_id, 'authenticated', 'authenticated', 
                 usr.e, crypt('redap123', gen_salt('bf')), now(), now(), now(), 
                 '{"provider":"email","providers":["email"]}', 
                 json_build_object('full_name', usr.n, 'role', usr.r)::jsonb, 
                 now(), now(), '', '', '', ''
             );
+
+            -- 2. SUPABASE REQUER O REGISTRO DE IDENTIDADE PARA LOGINS EMAIL/SENHA FUNCIONAREM
+            -- id é uuid, provider_id é text
+            INSERT INTO auth.identities (
+                id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+            ) VALUES (
+                gen_random_uuid(), new_user_id, new_user_id::text, json_build_object('sub', new_user_id::text, 'email', usr.e)::jsonb, 'email', now(), now(), now()
+            );
             
-            -- Inserir/Atualizar perfil na tabela profiles pública
+            -- 3. Inserir o Perfil na tabela profiles
             INSERT INTO public.profiles (id, full_name, role, is_active, updated_at)
-            VALUES (new_id, usr.n, usr.r, true, now())
-            ON CONFLICT (id) DO UPDATE SET role = usr.r, full_name = usr.n;
+            VALUES (new_user_id, usr.n, usr.r, true, now());
+
         ELSE
-            -- Se a conta já existe, apenas garantir que o Perfil de permissão na tabela profiles confere
-            UPDATE public.profiles SET role = usr.r, full_name = usr.n WHERE id = existing_id;
+            -- Se já existia, resetamos a senha e também verificamos a identity
+            UPDATE auth.users SET encrypted_password = crypt('redap123', gen_salt('bf')), email_confirmed_at = now() WHERE id = existing_id;
+            
+            -- Tenta inserir identity se faltou na geração anterior
+            -- id em identites é um gen_random_uuid() puro (sem ::text)
+            INSERT INTO auth.identities (
+                id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+            ) VALUES (
+                gen_random_uuid(), existing_id, existing_id::text, json_build_object('sub', existing_id::text, 'email', usr.e)::jsonb, 'email', now(), now(), now()
+            ) ON CONFLICT DO NOTHING;
+
+            -- Corrige Perfil na tabela profiles
+            UPDATE public.profiles SET role = usr.r, full_name = usr.n, is_active = true WHERE id = existing_id;
         END IF;
 
     END LOOP;

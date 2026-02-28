@@ -177,10 +177,17 @@ const OcorrenciasDashboard = () => {
                                                 )}
                                             </div>
 
-                                            <div className="flex justify-between items-start">
+                                            <div className="flex flex-col gap-1 items-start">
                                                 <h3 className="font-black text-slate-800 dark:text-white text-lg leading-tight group-hover:text-red-500 transition-colors">
                                                     {record.categoriaRisco || record.categoria_risco || 'Ocorrência sem título'}
                                                 </h3>
+                                                {(record.subtiposRisco || record.subtipos_risco) && (record.subtiposRisco?.length > 0 || record.subtipos_risco?.length > 0) && (
+                                                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 line-clamp-2 leading-snug">
+                                                        {Array.isArray(record.subtiposRisco || record.subtipos_risco)
+                                                            ? (record.subtiposRisco || record.subtipos_risco).join(', ')
+                                                            : (record.subtiposRisco || record.subtipos_risco)}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div className="flex flex-col gap-2 pt-2">

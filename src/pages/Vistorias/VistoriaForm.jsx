@@ -28,9 +28,10 @@ const logradourosData = logradourosDataRaw
         bairro: item["Bairro"] ? item["Bairro"].trim() : ""
     }));
 
-// Get unique neighborhoods from the new file
-const uniqueBairrosFromStreets = [...new Set(logradourosData.map(l => l.bairro).filter(Boolean))].sort();
-const bairrosData = uniqueBairrosFromStreets.map(b => ({ nome: b }));
+const bairrosData = bairrosDataRaw
+    .filter(b => b.nome)
+    .map(b => ({ nome: b.nome.trim() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
 
 
 const RISK_DATA = {

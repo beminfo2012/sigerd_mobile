@@ -224,6 +224,7 @@ const AsyncSearchableInput = ({
 
 // Address Data Imports
 import logradourosDataRaw from '../../../nomesderuas.json';
+import bairrosDataRaw from '../../../Bairros.json';
 
 // Normalize Address Data
 const logradourosData = logradourosDataRaw
@@ -233,8 +234,10 @@ const logradourosData = logradourosDataRaw
         bairro: item["Bairro"] ? item["Bairro"].trim() : ""
     }));
 
-const uniqueBairrosFromStreets = [...new Set(logradourosData.map(l => l.bairro).filter(Boolean))].sort();
-const bairrosData = uniqueBairrosFromStreets.map(b => ({ nome: b }));
+const bairrosData = bairrosDataRaw
+    .filter(b => b.nome)
+    .map(b => ({ nome: b.nome.trim() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
 
 const OcorrenciasForm = () => {
     const { id } = useParams();
@@ -268,7 +271,7 @@ const OcorrenciasForm = () => {
         ],
         'Quedas e Desabamentos': [
             'Queda de árvore', 'Queda de galhos sobre via', 'Queda de poste', 'Desabamento de muro',
-            'Desabamento parcial de residência', 'Colapso estrutural de edificação', 'Risco estrutural em imóvel'
+            'Desabamento parcial de residência', 'Colapso estrutural de edificação', 'Risco estrutural em imóvel', 'Queda de Ponte de Madeira', 'Queda de Ponte de Concreto', 'Queda de passarela'
         ],
         'Eventos Naturais / Climáticos': [
             'Alagamento', 'Enchente', 'Inundação', 'Enxurrada', 'Deslizamento de terra',
