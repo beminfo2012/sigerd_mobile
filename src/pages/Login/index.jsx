@@ -115,7 +115,9 @@ const WebLoginView = ({
     const [currentBg, setCurrentBg] = useState(0);
     const backgrounds = [
         '/assets/img/login_bg_rescue.png',
-        '/assets/img/login_bg_humanitarian.png'
+        '/assets/img/login_bg_humanitarian.png',
+        '/assets/img/login_bg_mud_rescue.png',
+        '/assets/img/login_bg_def_smj.jpeg'
     ];
 
     useEffect(() => {
@@ -126,89 +128,72 @@ const WebLoginView = ({
     }, []);
 
     return (
-        <div className="min-h-screen w-full flex bg-slate-50 font-sans">
-            {/* Left Side: Branding & Info */}
-            <div className="hidden lg:flex flex-col justify-between w-[45%] bg-[#102754] p-16 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -mr-64 -mt-64 animate-pulse"></div>
-                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-400/10 blur-[100px] rounded-full -ml-32 -mb-32"></div>
-
-                <div className="relative z-10 flex flex-col gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 shadow-2xl">
-                            <img src="/logo_sigerd_new.png" className="w-10 h-10 object-contain" alt="SIGERD" onError={(e) => { e.target.style.display = 'none'; }} />
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-black tracking-tighter">SIGERD <span className="text-blue-400 font-bold ml-1">WEB</span></h2>
-                            <span className="text-[10px] uppercase font-black tracking-[4px] opacity-40">Intelligence Management</span>
-                        </div>
-                    </div>
-
-                    <div className="mt-12 space-y-12 max-w-md">
-                        <div>
-                            <h3 className="text-4xl font-black leading-tight mb-4 text-white">Gestão Integrada de Riscos e Desastres.</h3>
-                            <p className="text-lg text-white/50 leading-relaxed">
-                                Plataforma oficial da Defesa Civil de Santa Maria de Jetibá para monitoramento, vistoria e resposta a desastres naturais.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10">
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-blue-400 font-black text-2xl tabular-nums">1.2k+</div>
-                                <div className="text-[10px] font-black uppercase tracking-widest text-white/30">Vistorias Realizadas</div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-emerald-400 font-black text-2xl tabular-nums">24/7</div>
-                                <div className="text-[10px] font-black uppercase tracking-widest text-white/30">Monitoramento Ativo</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="relative z-10">
-                    <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[3px] opacity-20">
-                        <div className="h-[1px] w-12 bg-white"></div>
-                        Prefeitura Municipal de Santa Maria de Jetibá
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Side: Login Form with Background Images */}
-            <div className="flex-1 flex flex-col justify-center items-center p-8 relative overflow-hidden">
-                {/* Dynamic Backgrounds */}
+        <div className="min-h-screen w-full flex bg-[#122e65] font-sans selection:bg-blue-500/30">
+            {/* Left Side: Dynamic Backgrounds & Bold Message */}
+            <div className="hidden lg:flex flex-1 relative overflow-hidden">
+                {/* Background Slideshow */}
                 {backgrounds.map((bg, idx) => (
                     <div
                         key={idx}
-                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentBg === idx ? 'opacity-20' : 'opacity-0'}`}
+                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentBg === idx ? 'opacity-50' : 'opacity-0'}`}
                         style={{
                             backgroundImage: `url(${bg})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
-                            filter: 'grayscale(30%)'
                         }}
-                    />
+                    >
+                        {/* Overlay to darken image slightly for text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#122e65] via-transparent to-transparent opacity-60"></div>
+                        <div className="absolute inset-0 bg-[#122e65]/20"></div>
+                    </div>
                 ))}
 
-                <div className="absolute top-8 right-8 z-10 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Acesso Restrito
+                {/* Content Overlay */}
+                <div className="relative z-10 w-full h-full flex flex-col justify-end p-24 pb-32">
+                    <div className="max-w-xl">
+                        <div className="mb-4">
+                            <h2 className="text-7xl font-black text-white leading-none tracking-tighter">
+                                CONSTRUINDO<br />
+                                <span className="text-blue-500">A RESILIÊNCIA</span>
+                            </h2>
+                        </div>
+
+                        <div className="flex gap-6 items-start mt-8">
+                            <div className="w-1.5 h-20 bg-blue-600 rounded-full shrink-0"></div>
+                            <p className="text-lg text-white/60 font-medium leading-relaxed max-w-md">
+                                Plataforma integrada de gestão e resposta a desastres.
+                                Controle total das ocorrências, vistorias e monitoramento em tempo real.
+                            </p>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <div className="w-full max-w-md space-y-12 bg-white/90 backdrop-blur-sm lg:p-12 lg:rounded-[32px] lg:shadow-2xl lg:shadow-slate-200/50 lg:border lg:border-slate-100 relative z-20">
-                    <div className="lg:hidden flex flex-col items-center gap-4 mb-12">
-                        <img src="/logo_sigerd_new.png" className="w-20 h-20 object-contain" alt="SIGERD" onError={(e) => { e.target.style.display = 'none'; }} />
-                        <h2 className="text-3xl font-black text-[#102754]">SIGERD</h2>
+            {/* Right Side: Professional Dark Login Panel */}
+            <div className="w-full lg:w-[500px] flex flex-col justify-center items-center bg-[#122e65] p-12 relative">
+                {/* Ambient glow in background */}
+                <div className="absolute top-1/4 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full"></div>
+
+                <div className="w-full max-w-sm space-y-12 relative z-10">
+                    <div className="flex flex-col items-center gap-6">
+                        <img
+                            src="/logo_sigerd_new.png"
+                            className="w-24 h-24 object-contain"
+                            alt="SIGERD"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <div className="text-center space-y-2">
+                            <h2 className="text-3xl font-black text-white uppercase tracking-tight">Bem-Vindo de Volta</h2>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[3px]">Insira suas credenciais para continuar</p>
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <h2 className="text-4xl font-black text-slate-800 tracking-tight">Entrar</h2>
-                        <p className="text-slate-400 font-medium leading-relaxed">Acesse o sistema com suas credenciais oficiais corporativas.</p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Usuário / E-mail</label>
                             <div className="relative group">
-                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors">
-                                    <User size={20} />
+                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-blue-400 transition-colors">
+                                    <User size={18} />
                                 </div>
                                 <input
                                     type="text"
@@ -216,16 +201,16 @@ const WebLoginView = ({
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     required
-                                    className="w-full h-16 pl-16 pr-6 rounded-[20px] bg-slate-50/50 border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                                    className="w-full h-14 pl-16 pr-6 rounded-2xl bg-[#eff3ff] border-none outline-none focus:ring-4 focus:ring-blue-500/20 transition-all font-bold text-[#050a18] placeholder:text-slate-400 shadow-inner"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Senha de Acesso</label>
                             <div className="relative group">
-                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors">
-                                    <Lock size={20} />
+                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-blue-400 transition-colors">
+                                    <Lock size={18} />
                                 </div>
                                 <input
                                     type="password"
@@ -233,39 +218,43 @@ const WebLoginView = ({
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full h-16 pl-16 pr-6 rounded-[20px] bg-slate-50/50 border border-slate-200 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                                    className="w-full h-14 pl-16 pr-6 rounded-2xl bg-[#eff3ff] border-none outline-none focus:ring-4 focus:ring-blue-500/20 transition-all font-bold text-[#050a18] placeholder:text-slate-400 shadow-inner"
                                 />
                             </div>
                         </div>
 
                         {error && (
-                            <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold animate-in">
-                                <ShieldAlert size={20} className="shrink-0" />
+                            <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-200 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+                                <ShieldAlert size={18} className="shrink-0" />
                                 {error}
                             </div>
                         )}
 
-                        <div className="pt-2">
+                        <div className="pt-4">
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full h-16 bg-[#ff5722] hover:bg-[#e64a19] text-white rounded-[20px] font-black text-base uppercase tracking-widest shadow-xl shadow-[#ff5722]/30 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                className="w-full h-14 bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[3px] shadow-2xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                             >
                                 {loading ? (
-                                    <><Loader2 className="animate-spin" size={24} /> Autenticando...</>
+                                    <><Loader2 className="animate-spin" size={20} /> Autenticando...</>
                                 ) : (
-                                    <><LogIn size={20} /> Acessar Sistema</>
+                                    <>Acessar <LogIn size={18} /></>
                                 )}
                             </button>
                         </div>
                     </form>
 
-                    <div className="pt-8 flex flex-col items-center gap-4">
-                        <div className="flex items-center gap-2 group cursor-help">
-                            <Info size={16} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Problemas de acesso? Contate a COMPDEC-SMJ</span>
+                    <div className="pt-8 flex flex-col items-center">
+                        <div className="flex items-center gap-3 text-[10px] font-black text-white/20 uppercase tracking-[2px] hover:text-white/40 transition-colors cursor-help">
+                            <Info size={14} />
+                            <span>Contate a COMPDEC-SMJ para ajuda</span>
                         </div>
                     </div>
+                </div>
+
+                <div className="absolute bottom-8 text-[10px] font-bold text-white/10 uppercase tracking-[4px]">
+                    SIGERD Mobile v3.0
                 </div>
             </div>
         </div>
