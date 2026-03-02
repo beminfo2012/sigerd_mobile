@@ -358,12 +358,25 @@ const OcorrenciasForm = () => {
         try {
             const record = await getOcorrenciaById(recordId);
             if (record) {
+                // Map snake_case to camelCase for form fields if they exist
+                const mappedRecord = {
+                    ...record,
+                    categoriaRisco: record.categoria_risco || record.categoriaRisco || '',
+                    subtiposRisco: record.subtipos_risco || record.subtiposRisco || [],
+                    nivelRisco: record.nivel_risco || record.nivelRisco || '',
+                    checklistRespostas: record.checklist_respostas || record.checklistRespostas || {},
+                    assinaturaAgente: record.assinatura_agente || record.assinaturaAgente || null,
+                    assinaturaAssistido: record.assinatura_assistido || record.assinaturaAssistido || null,
+                    temApoioTecnico: record.tem_apoio_tecnico !== undefined ? record.tem_apoio_tecnico : (record.temApoioTecnico || false),
+                    apoioTecnico: record.apoio_tecnico || record.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null }
+                };
+
                 setFormData({
                     ...INITIAL_OCORRENCIA_STATE,
-                    ...record
+                    ...mappedRecord
                 });
-                if (record.cpf) {
-                    setDocType(record.cpf.length > 14 ? 'CNPJ' : 'CPF');
+                if (mappedRecord.cpf) {
+                    setDocType(mappedRecord.cpf.length > 14 ? 'CNPJ' : 'CPF');
                 }
             }
         } catch (error) {
@@ -495,7 +508,7 @@ const OcorrenciasForm = () => {
                 observacoes: `${formData.categoriaRisco || 'Ocorrência'}\n\n${formData.observacoes}${danosHumanosText}`
             };
 
-            const result = await generatePDF(pdfData, 'vistoria');
+            const result = await generatePDF(pdfData, 'ocorrencia');
             if (result.success) {
                 toast.success('Relatório Gerado!', 'O arquivo foi criado e está pronto para salvar ou compartilhar.');
             } else {

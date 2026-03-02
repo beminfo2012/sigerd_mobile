@@ -33,8 +33,10 @@ const MonitoramentoMenu = lazy(() => import('./pages/Monitoramento/Monitoramento
 const LegadoDashboard = lazy(() => import('./pages/Legado'))
 
 // Ocorrencias Module (Lazy)
+// Ocorrencias Module (Lazy)
 const OcorrenciasDashboard = lazy(() => import('./pages/Ocorrencias/OcorrenciasDashboard'))
 const OcorrenciasForm = lazy(() => import('./pages/Ocorrencias/OcorrenciasForm'))
+const OcorrenciasPrint = lazy(() => import('./pages/Ocorrencias/OcorrenciasPrint'))
 
 // Shelter Module (Lazy)
 const ShelterMenu = lazy(() => import('./pages/Abrigos/Menu'))
@@ -280,6 +282,11 @@ const AppContent = ({
                                 <Route path="/ocorrencias" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <OcorrenciasDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/ocorrencias/imprimir/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <OcorrenciasPrint />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/ocorrencias/novo" element={

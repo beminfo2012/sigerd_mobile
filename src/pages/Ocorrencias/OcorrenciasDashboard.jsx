@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
     Plus, ArrowLeft, Search, Clock, CheckCircle,
     AlertTriangle, ShieldAlert, ChevronRight, MapPin, Trash2,
-    Eye, ShieldCheck, RefreshCw, Loader2
+    Eye, ShieldCheck, RefreshCw, Loader2, FileText, Calendar
 } from 'lucide-react';
+import { generateConsolidatedReport } from '../../utils/ocorrenciaConsolidadoGenerator';
 import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal } from '../../services/ocorrenciasDb';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -29,6 +30,7 @@ const OcorrenciasDashboard = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [statusModalRecord, setStatusModalRecord] = useState(null);
+    const [selectedDate, setSelectedDate] = useState('');
 
     useEffect(() => {
         loadRecords();
@@ -76,14 +78,39 @@ const OcorrenciasDashboard = () => {
 
     const filtered = records.filter(r => {
         const search = searchTerm.toLowerCase();
-        return (
-            (r.categoriaRisco || r.categoria_risco || '').toLowerCase().includes(search) ||
+        const matchesSearch = (
+            (r.categoriaRisco || r.categoria_risco || r.tipo_info || r.riscoTipo || '').toLowerCase().includes(search) ||
             (r.bairro || '').toLowerCase().includes(search) ||
             (r.endereco || '').toLowerCase().includes(search) ||
             (r.solicitante || '').toLowerCase().includes(search) ||
             (r.ocorrencia_id_format || '').toLowerCase().includes(search)
         );
+        let matchesDate = true;
+        if (selectedDate) {
+            try {
+                const recordDate = new Date(r.created_at).toISOString().split('T')[0];
+                matchesDate = recordDate === selectedDate;
+            } catch (e) {
+                matchesDate = false;
+            }
+        }
+        return matchesSearch && matchesDate;
     });
+
+    const handleGenerateDailyReport = async () => {
+        if (filtered.length === 0) {
+            toast.error('Nenhum registro para exportar.');
+            return;
+        }
+        toast.info('Gerando relatório consolidado...');
+        const dateFilename = selectedDate ? new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Geral';
+        const success = await generateConsolidatedReport(filtered, dateFilename);
+        if (success) {
+            toast.success('Relatório gerado com sucesso!');
+        } else {
+            toast.error('Erro ao gerar relatório.');
+        }
+    };
 
 
     if (loading) {
@@ -112,27 +139,46 @@ const OcorrenciasDashboard = () => {
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Log de Atendimento Operacional</p>
                         </div>
                     </div>
-                    <Button
-                        onClick={() => navigate('/ocorrencias/novo')}
-                        className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20 px-6 h-12"
-                    >
-                        <Plus size={18} className="mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo</span>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            onClick={handleGenerateDailyReport}
+                            className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 px-4 h-12"
+                            title="Gerar Relatório Consolidado"
+                        >
+                            <FileText size={18} className="sm:mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Relatório</span>
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/ocorrencias/novo')}
+                            className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20 px-6 h-12"
+                        >
+                            <Plus size={18} className="mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo</span>
+                        </Button>
+                    </div>
                 </div>
             </div>
 
             <main className="max-w-4xl mx-auto p-5 sm:p-8 space-y-8">
-                {/* Search */}
-                <div className="relative group max-w-2xl mx-auto">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nome, logradouro, bairro ou ID..."
-                        className="w-full pl-14 pr-6 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-
+                {/* Search and Filters */}
+                <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
+                    <div className="relative group flex-1">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nome, logradouro, bairro ou ID..."
+                            className="w-full pl-14 pr-6 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="relative shrink-0">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                        <input
+                            type="date"
+                            className="w-full sm:w-auto h-full pl-12 pr-4 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                        />
+                    </div>
                 </div>
 
                 {/* List */}
@@ -179,15 +225,22 @@ const OcorrenciasDashboard = () => {
 
                                             <div className="flex flex-col gap-1 items-start">
                                                 <h3 className="font-black text-slate-800 dark:text-white text-lg leading-tight group-hover:text-red-500 transition-colors">
-                                                    {record.categoriaRisco || record.categoria_risco || 'Ocorrência sem título'}
+                                                    {record.categoriaRisco || record.categoria_risco || record.tipo_info || record.tipoInfo || record.riscoTipo || record.risco_tipo || 'Ocorrência sem título'}
                                                 </h3>
-                                                {(record.subtiposRisco || record.subtipos_risco) && (record.subtiposRisco?.length > 0 || record.subtipos_risco?.length > 0) && (
-                                                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 line-clamp-2 leading-snug">
-                                                        {Array.isArray(record.subtiposRisco || record.subtipos_risco)
-                                                            ? (record.subtiposRisco || record.subtipos_risco).join(', ')
-                                                            : (record.subtiposRisco || record.subtipos_risco)}
-                                                    </p>
-                                                )}
+                                                {(() => {
+                                                    let subtipos = record.subtiposRisco || record.subtipos_risco || [];
+                                                    if (typeof subtipos === 'string') {
+                                                        try { subtipos = JSON.parse(subtipos); } catch (e) { subtipos = [subtipos]; }
+                                                    }
+                                                    if (Array.isArray(subtipos) && subtipos.length > 0) {
+                                                        return (
+                                                            <p className="text-xs font-bold text-slate-400 dark:text-slate-500 line-clamp-2 leading-snug">
+                                                                {subtipos.join(', ')}
+                                                            </p>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </div>
 
                                             <div className="flex flex-col gap-2 pt-2">
@@ -225,16 +278,29 @@ const OcorrenciasDashboard = () => {
                                         </div>
 
                                         <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setRecordToDelete(record);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                                className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setRecordToDelete(record);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                    title="Excluir Ocorrência"
+                                                    className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`/ocorrencias/imprimir/${record.id || record.ocorrencia_id_format}`, '_blank');
+                                                    }}
+                                                    title="Visualizar Relatório (PDF)"
+                                                    className="p-3 text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                            </div>
                                             <div className="w-10 h-10 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
                                                 <ChevronRight size={24} />
                                             </div>

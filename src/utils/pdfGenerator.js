@@ -6,8 +6,8 @@ import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
 // v1.46.21-GOLDEN
 
 const normalizeData = (data, type) => {
-    const isVistoria = type === 'vistoria';
-    if (isVistoria) {
+    const isVistoriaOuOcorrencia = type === 'vistoria' || type === 'ocorrencia';
+    if (isVistoriaOuOcorrencia) {
         return {
             vistoriaId: data.vistoriaId || data.vistoria_id || '---',
             processo: data.processo || data.processo_sei || '---',
@@ -20,8 +20,14 @@ const normalizeData = (data, type) => {
             bairro: data.bairro || '---',
             latitude: data.latitude || '---',
             longitude: data.longitude || '---',
-            categoriaRisco: data.categoriaRisco || data.categoria_risco || '---',
-            subtiposRisco: data.subtiposRisco || data.subtipos_risco || [],
+            categoriaRisco: data.categoriaRisco || data.categoria_risco || data.tipo_info || data.tipoInfo || data.riscoTipo || data.risco_tipo || '---',
+            subtiposRisco: (() => {
+                let s = data.subtiposRisco || data.subtipos_risco || [];
+                if (typeof s === 'string') {
+                    try { s = JSON.parse(s); } catch (e) { s = [s]; }
+                }
+                return Array.isArray(s) ? s : [];
+            })(),
             nivelRisco: data.nivelRisco || data.nivel_risco || 'Baixo',
             situacaoObservada: data.situacaoObservada || data.situacao_observada || 'Estabilizado',
             populacaoEstimada: data.populacaoEstimada || data.populacao_estimada || '---',
@@ -128,9 +134,9 @@ export const generatePDF = async (rawData, type) => {
     ]);
 
     const data = normalizeData(rawData, type);
-    const isVistoria = type === 'vistoria';
-    const title = isVistoria ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 'ORDEM DE INTERDIÇÃO';
-    const filename = `${type}_${(data.vistoriaId || data.interdicaoId).replace(/[\/\\]/g, '_')}.pdf`;
+    const isVistoriaOuOcorrencia = type === 'vistoria' || type === 'ocorrencia';
+    const title = type === 'vistoria' ? 'RELATÓRIO DE VISTORIA TÉCNICA' : type === 'ocorrencia' ? 'RELATÓRIO DE OCORRÊNCIA' : 'ORDEM DE INTERDIÇÃO';
+    const filename = `${type}_${(data.vistoriaId || data.interdicaoId || data.id || 'sem_id').replace(/[\/\\]/g, '_')}.pdf`;
 
     const container = document.createElement('div');
     container.style.cssText = `position: absolute; left: -9999px; top: 0; width: 840px; background: white; font-family: 'Inter', Arial, sans-serif; color: #1a1a1a;`;
@@ -171,7 +177,7 @@ export const generatePDF = async (rawData, type) => {
 
     let contentHtml = `<div style="padding: 0 40px 40px 40px;">`;
 
-    if (isVistoria) {
+    if (isVistoriaOuOcorrencia) {
         contentHtml += `
             ${sectionTitle('1. Identificação e Responsável')}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
@@ -294,8 +300,19 @@ export const generatePDF = async (rawData, type) => {
         blocks.forEach(block => {
             const rect = block.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
-            const top = rect.top - containerRect.top;
-            const bottom = rect.bottom - containerRect.top;
+            let top = rect.top - containerRect.top;
+            let bottom = rect.bottom - containerRect.top;
+
+            // Recalculate heights adjusting for previously inserted spacers
+            let accumulatedSpacerHeight = 0;
+            container.querySelectorAll('.pdf-spacer').forEach(s => {
+                if (s.getBoundingClientRect().top - containerRect.top < top) {
+                    accumulatedSpacerHeight += parseFloat(s.style.height);
+                }
+            });
+
+            top += accumulatedSpacerHeight;
+            bottom += accumulatedSpacerHeight;
 
             const pageIdx = Math.floor(top / PAGE_PX);
             const pageBottomIdx = Math.floor((bottom - 5) / PAGE_PX);
