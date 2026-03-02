@@ -54,8 +54,12 @@ const OcorrenciasPrint = () => {
             if (!id) return;
             try {
                 // 1. Try to fetch from Local DB first (support offline usage)
-                const localVistorias = await getOcorrenciasLocal().catch(() => []);
-                const localMatch = localVistorias.find(v => v.id === id || v.ocorrencia_id_format === id);
+                const localOcorrencias = await getOcorrenciasLocal().catch(() => []);
+                const localMatch = localOcorrencias.find(v =>
+                    String(v.id) === String(id) ||
+                    String(v.ocorrencia_id) === String(id) ||
+                    v.ocorrencia_id_format === id
+                );
 
                 if (localMatch) {
                     setData(localMatch);
@@ -64,16 +68,26 @@ const OcorrenciasPrint = () => {
                 }
 
                 // 2. Fetch from Supabase if not local
-                const { data: reportData, error } = await supabase
-                    .from('vistorias')
-                    .select('*')
-                    .or(`id.eq.${id},ocorrencia_id_format.eq.${id}`)
-                    .single();
+                // Try to find by UUID id, formatted ID string, or the serial id_local
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+                const isNumeric = /^\d+$/.test(id);
+
+                let query = supabase.from('ocorrencias_operacionais').select('*');
+
+                if (isUuid) {
+                    query = query.eq('ocorrencia_id', id);
+                } else if (isNumeric) {
+                    query = query.or(`id_local.eq.${id},ocorrencia_id_format.eq.${id}`);
+                } else {
+                    query = query.eq('ocorrencia_id_format', id);
+                }
+
+                const { data: reportData, error } = await query.single();
 
                 if (reportData) {
                     setData(reportData);
                 } else {
-                    console.warn("Vistoria not found:", error);
+                    console.warn("Ocorrencia not found:", error);
                 }
             } catch (error) {
                 console.error('Error fetching report:', error);

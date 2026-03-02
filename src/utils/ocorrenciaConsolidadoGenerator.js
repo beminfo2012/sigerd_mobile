@@ -43,7 +43,7 @@ export const generateConsolidatedReport = async (records, dateStr) => {
         const headerHeight = 35;
 
         // Cabeçalho Oficial
-        if (logoDefesaCivilStr) {
+        if (logoDefesaCivilStr && logoDefesaCivilStr.startsWith('data:image')) {
             pdf.addImage(logoDefesaCivilStr, 'PNG', 15, 5, 20, 25);
         }
 
@@ -58,24 +58,39 @@ export const generateConsolidatedReport = async (records, dateStr) => {
 
         pdf.setFontSize(12);
         pdf.setTextColor(42, 82, 153);
-        pdf.text(`RELATÓRIO CONSOLIDADO DE OCORRÊNCIAS - ${dateStr}`, pageWidth / 2, 26, { align: "center" });
+        pdf.text(`RELATÓRIO CONSOLIDADO DE OCORRÊNCIAS - ${dateStr || 'Geral'}`, pageWidth / 2, 26, { align: "center" });
 
-        if (logoSigerdStr) {
+        if (logoSigerdStr && logoSigerdStr.startsWith('data:image')) {
             pdf.addImage(logoSigerdStr, 'PNG', pageWidth - 35, 5, 20, 25);
         }
 
         // Tabela de Dados
         const tableBody = records.map((r, i) => {
-            const dataHora = new Date(r.created_at).toLocaleString('pt-BR');
-            const endereco = `${r.endereco || 'SC'}, Bairro: ${r.bairro || 'SC'}`;
-            const subtipos = Array.isArray(r.subtiposRisco || r.subtipos_risco) ? (r.subtiposRisco || r.subtipos_risco).join(', ') : (r.subtiposRisco || r.subtipos_risco || '');
+            let dataHora = '---';
+            try {
+                const rawDate = r.created_at || r.data_ocorrencia;
+                if (rawDate) {
+                    dataHora = new Date(rawDate).toLocaleString('pt-BR');
+                }
+            } catch (e) {
+                console.warn('Date parsing error:', e);
+            }
+
+            const endereco = `${r.endereco || 'S/E'}, Bairro: ${r.bairro || 'S/B'}`;
+            const subtipos = (() => {
+                let s = r.subtiposRisco || r.subtipos_risco || [];
+                if (typeof s === 'string') {
+                    try { s = JSON.parse(s); } catch (e) { s = [s]; }
+                }
+                return Array.isArray(s) ? s.join(', ') : '';
+            })();
 
             return [
                 (i + 1).toString(),
-                r.ocorrencia_id_format || r.id,
+                r.ocorrencia_id_format || r.id_local || r.id || '---',
                 dataHora,
                 r.solicitante || 'Não Identificado',
-                (r.categoriaRisco || r.categoria_risco || ''),
+                (r.categoriaRisco || r.categoria_risco || r.tipo_info || ''),
                 subtipos,
                 endereco,
                 r.status || 'Pendente'
