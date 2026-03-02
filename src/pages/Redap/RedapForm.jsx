@@ -216,7 +216,8 @@ const RedapForm = () => {
         return permissions[section] || false;
     };
 
-    const isGlobalReadOnly = !(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role) || user?.role?.startsWith('Redap_'));
+    const isDC = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role);
+    const isGlobalReadOnly = !(isDC || user?.role?.startsWith('Redap_') || user?.role?.startsWith('S2id_'));
 
     // AI Generation Logic
     const handleGenerateIA = async (field) => {
@@ -525,162 +526,167 @@ const RedapForm = () => {
                     </div>
                 )}
 
-                {/* 6.1 DANOS HUMANOS */}
-                <SectionHeader
-                    icon={Users}
-                    title="6.1 Danos Humanos"
-                    isOpen={openSections.danos_humanos}
-                    onToggle={() => toggleSection('danos_humanos')}
-                    color="slate"
-                />
-                {openSections.danos_humanos && (
-                    <div className="p-4 bg-white grid grid-cols-2 sm:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-300">
-                        {['mortos', 'feridos', 'enfermos', 'desabrigados', 'desalojados', 'desaparecidos', 'outros_afetados'].map(field => (
-                            <div key={field}>
-                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">{field.replace('_', ' ')}</label>
-                                <NumberInput
-                                    disabled={!canEditSection('danos_humanos')}
-                                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm font-bold disabled:opacity-60"
-                                    value={formData.data.danos_humanos[field]}
-                                    onChange={(val) => updateData('danos_humanos', field, val)}
-                                />
-                            </div>
-                        ))}
-                        <div className="col-span-full">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">6.1.1 Descrição</label>
-                            <textarea
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm min-h-[100px] disabled:opacity-60"
-                                disabled={!canEditSection('danos_humanos')}
-                                value={formData.data.danos_humanos.descricao}
-                                onChange={(e) => updateData('danos_humanos', 'descricao', e.target.value)}
-                                placeholder="Descreva os danos humanos..."
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* 6.2 DANOS MATERIAIS */}
-                <SectionHeader
-                    icon={Home}
-                    title="6.2 Danos Materiais"
-                    isOpen={openSections.danos_materiais}
-                    onToggle={() => toggleSection('danos_materiais')}
-                    color="slate"
-                />
-                {openSections.danos_materiais && (
-                    <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300 overflow-x-auto">
-                        <table className="w-full text-left min-w-[500px]">
-                            <thead>
-                                <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                                    <th className="pb-4 pl-2">Discriminação</th>
-                                    <th className="pb-4 text-center">Danificadas</th>
-                                    <th className="pb-4 text-center">Destruídas</th>
-                                    <th className="pb-4 text-right pr-2">Valor (R$)</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-sm">
-                                {Object.keys(formData.data.danos_materiais).map(key => (
-                                    <tr key={key} className="border-t border-slate-50 group hover:bg-slate-50/50 transition-colors">
-                                        <td className="py-4 pl-2 font-bold text-slate-700 capitalize text-xs">
-                                            {key.replace(/_/g, ' ')}
-                                        </td>
-                                        <td className="py-2 text-center">
-                                            <NumberInput
-                                                disabled={!canEditSection('danos_materiais')}
-                                                className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
-                                                value={formData.data.danos_materiais[key].danificadas}
-                                                onChange={(val) => updateDeepData('danos_materiais', key, 'danificadas', val)}
-                                            />
-                                        </td>
-                                        <td className="py-2 text-center">
-                                            <NumberInput
-                                                disabled={!canEditSection('danos_materiais')}
-                                                className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
-                                                value={formData.data.danos_materiais[key].destruidas}
-                                                onChange={(val) => updateDeepData('danos_materiais', key, 'destruidas', val)}
-                                            />
-                                        </td>
-                                        <td className="py-2 pr-2 text-right">
-                                            <CurrencyInput
-                                                disabled={!canEditSection('danos_materiais')}
-                                                className="w-24 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
-                                                value={formData.data.danos_materiais[key].valor}
-                                                onChange={(val) => updateDeepData('danos_materiais', key, 'valor', val)}
-                                            />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* 6.3 DANOS AMBIENTAIS */}
-                <SectionHeader
-                    icon={Leaf}
-                    title="6.3 Danos Ambientais"
-                    isOpen={openSections.danos_ambientais}
-                    onToggle={() => toggleSection('danos_ambientais')}
-                    color="slate"
-                />
-                {openSections.danos_ambientais && (
-                    <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
-                        {Object.keys(formData.data.danos_ambientais).filter(k => k !== 'descricao').map(key => (
-                            <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="flex-1 font-bold text-slate-700 text-xs capitalize">{key.replace(/_/g, ' ')}</div>
-                                <div className="flex items-center gap-4">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            disabled={!canEditSection('danos_ambientais')}
-                                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-60"
-                                            checked={formData.data.danos_ambientais[key].sim}
-                                            onChange={(e) => updateDeepData('danos_ambientais', key, 'sim', e.target.checked)}
-                                        />
-                                        <span className="text-[10px] font-black uppercase text-slate-400">Sim</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder={key === 'incendios' ? "Área" : "População"}
-                                        className="w-32 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
-                                        value={formData.data.danos_ambientais[key][key === 'incendios' ? 'area' : 'populacao']}
-                                        onChange={(e) => updateDeepData('danos_ambientais', key, key === 'incendios' ? 'area' : 'populacao', e.target.value)}
-                                        disabled={!formData.data.danos_ambientais[key].sim || !canEditSection('danos_ambientais')}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* 7. PREJUÍZOS */}
-                <SectionHeader
-                    icon={FileText}
-                    title="7. Prejuízos Públicos & Privados"
-                    isOpen={openSections.prejuizos_publicos}
-                    onToggle={() => toggleSection('prejuizos_publicos')}
-                    color="slate"
-                />
-                {openSections.prejuizos_publicos && (
-                    <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300">
-                        {/* Públicos */}
-                        <div className="space-y-3">
-                            <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">7.1 Públicos</h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {Object.keys(formData.data.prejuizos_publicos).map(key => (
-                                    <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                        <span className="text-[10px] font-bold text-slate-600 uppercase capitalize">{key.replace(/_/g, ' ')}</span>
-                                        <CurrencyInput
-                                            disabled={!canEditSection('prejuizos_publicos')}
-                                            className="w-24 p-1.5 bg-white border border-slate-200 rounded-lg text-right font-bold text-xs outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
-                                            value={formData.data.prejuizos_publicos[key]}
-                                            onChange={(val) => updateData('prejuizos_publicos', key, val)}
+                {/* ----------- SEÇÕES DE DANOS E PREJUÍZOS (SOMENTE DEFESA CIVIL) ----------- */}
+                {isDC && (
+                    <>
+                        {/* 6.1 DANOS HUMANOS */}
+                        <SectionHeader
+                            icon={Users}
+                            title="6.1 Danos Humanos"
+                            isOpen={openSections.danos_humanos}
+                            onToggle={() => toggleSection('danos_humanos')}
+                            color="slate"
+                        />
+                        {openSections.danos_humanos && (
+                            <div className="p-4 bg-white grid grid-cols-2 sm:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-300">
+                                {['mortos', 'feridos', 'enfermos', 'desabrigados', 'desalojados', 'desaparecidos', 'outros_afetados'].map(field => (
+                                    <div key={field}>
+                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">{field.replace('_', ' ')}</label>
+                                        <NumberInput
+                                            disabled={!canEditSection('danos_humanos')}
+                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm font-bold disabled:opacity-60"
+                                            value={formData.data.danos_humanos[field]}
+                                            onChange={(val) => updateData('danos_humanos', field, val)}
                                         />
                                     </div>
                                 ))}
+                                <div className="col-span-full">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">6.1.1 Descrição</label>
+                                    <textarea
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm min-h-[100px] disabled:opacity-60"
+                                        disabled={!canEditSection('danos_humanos')}
+                                        value={formData.data.danos_humanos.descricao}
+                                        onChange={(e) => updateData('danos_humanos', 'descricao', e.target.value)}
+                                        placeholder="Descreva os danos humanos..."
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    </div>
+                        )}
+
+                        {/* 6.2 DANOS MATERIAIS */}
+                        <SectionHeader
+                            icon={Home}
+                            title="6.2 Danos Materiais"
+                            isOpen={openSections.danos_materiais}
+                            onToggle={() => toggleSection('danos_materiais')}
+                            color="slate"
+                        />
+                        {openSections.danos_materiais && (
+                            <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300 overflow-x-auto">
+                                <table className="w-full text-left min-w-[500px]">
+                                    <thead>
+                                        <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                                            <th className="pb-4 pl-2">Discriminação</th>
+                                            <th className="pb-4 text-center">Danificadas</th>
+                                            <th className="pb-4 text-center">Destruídas</th>
+                                            <th className="pb-4 text-right pr-2">Valor (R$)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {Object.keys(formData.data.danos_materiais).map(key => (
+                                            <tr key={key} className="border-t border-slate-50 group hover:bg-slate-50/50 transition-colors">
+                                                <td className="py-4 pl-2 font-bold text-slate-700 capitalize text-xs">
+                                                    {key.replace(/_/g, ' ')}
+                                                </td>
+                                                <td className="py-2 text-center">
+                                                    <NumberInput
+                                                        disabled={!canEditSection('danos_materiais')}
+                                                        className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                        value={formData.data.danos_materiais[key].danificadas}
+                                                        onChange={(val) => updateDeepData('danos_materiais', key, 'danificadas', val)}
+                                                    />
+                                                </td>
+                                                <td className="py-2 text-center">
+                                                    <NumberInput
+                                                        disabled={!canEditSection('danos_materiais')}
+                                                        className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                        value={formData.data.danos_materiais[key].destruidas}
+                                                        onChange={(val) => updateDeepData('danos_materiais', key, 'destruidas', val)}
+                                                    />
+                                                </td>
+                                                <td className="py-2 pr-2 text-right">
+                                                    <CurrencyInput
+                                                        disabled={!canEditSection('danos_materiais')}
+                                                        className="w-24 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                        value={formData.data.danos_materiais[key].valor}
+                                                        onChange={(val) => updateDeepData('danos_materiais', key, 'valor', val)}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* 6.3 DANOS AMBIENTAIS */}
+                        <SectionHeader
+                            icon={Leaf}
+                            title="6.3 Danos Ambientais"
+                            isOpen={openSections.danos_ambientais}
+                            onToggle={() => toggleSection('danos_ambientais')}
+                            color="slate"
+                        />
+                        {openSections.danos_ambientais && (
+                            <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                {Object.keys(formData.data.danos_ambientais).filter(k => k !== 'descricao').map(key => (
+                                    <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <div className="flex-1 font-bold text-slate-700 text-xs capitalize">{key.replace(/_/g, ' ')}</div>
+                                        <div className="flex items-center gap-4">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    disabled={!canEditSection('danos_ambientais')}
+                                                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-60"
+                                                    checked={formData.data.danos_ambientais[key].sim}
+                                                    onChange={(e) => updateDeepData('danos_ambientais', key, 'sim', e.target.checked)}
+                                                />
+                                                <span className="text-[10px] font-black uppercase text-slate-400">Sim</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder={key === 'incendios' ? "Área" : "População"}
+                                                className="w-32 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
+                                                value={formData.data.danos_ambientais[key][key === 'incendios' ? 'area' : 'populacao']}
+                                                onChange={(e) => updateDeepData('danos_ambientais', key, key === 'incendios' ? 'area' : 'populacao', e.target.value)}
+                                                disabled={!formData.data.danos_ambientais[key].sim || !canEditSection('danos_ambientais')}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* 7. PREJUÍZOS */}
+                        <SectionHeader
+                            icon={FileText}
+                            title="7. Prejuízos Públicos & Privados"
+                            isOpen={openSections.prejuizos_publicos}
+                            onToggle={() => toggleSection('prejuizos_publicos')}
+                            color="slate"
+                        />
+                        {openSections.prejuizos_publicos && (
+                            <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300">
+                                {/* Públicos */}
+                                <div className="space-y-3">
+                                    <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">7.1 Públicos</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {Object.keys(formData.data.prejuizos_publicos).map(key => (
+                                            <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                                <span className="text-[10px] font-bold text-slate-600 uppercase capitalize">{key.replace(/_/g, ' ')}</span>
+                                                <CurrencyInput
+                                                    disabled={!canEditSection('prejuizos_publicos')}
+                                                    className="w-24 p-1.5 bg-white border border-slate-200 rounded-lg text-right font-bold text-xs outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
+                                                    value={formData.data.prejuizos_publicos[key]}
+                                                    onChange={(val) => updateData('prejuizos_publicos', key, val)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* EXPANSÃO SETORIAL ESPECÍFICA */}

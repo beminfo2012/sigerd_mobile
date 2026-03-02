@@ -114,11 +114,37 @@ export const getOcorrenciasLocal = async () => {
 };
 
 /**
- * Get single occurrence
+ * Get single occurrence (local and fallback to cloud)
  */
 export const getOcorrenciaById = async (id) => {
     const db = await initDB();
-    return await db.get('ocorrencias_operacionais', parseInt(id));
+    // Tenta primeiro no DB local (pode ser id numérico gerado pelo indexedDB ou uuid salvo como id)
+    let localRecord = null;
+    if (!isNaN(parseInt(id)) && String(parseInt(id)) === String(id)) {
+        localRecord = await db.get('ocorrencias_operacionais', parseInt(id));
+    }
+    if (!localRecord) {
+        // Tenta achar buscando de outra forma no DB local
+        const allLocal = await db.getAll('ocorrencias_operacionais');
+        localRecord = allLocal.find(r => String(r.id) === String(id) || r.ocorrencia_id === id);
+    }
+
+    // Se não encontrou ou onLine, vamos sempre tentar puxar o online para garantir dados completos se não for registro 100% não syncado
+    if (navigator.onLine && (!localRecord || localRecord.synced)) {
+        try {
+            const { supabase } = await import('./supabase');
+            const { data } = await supabase
+                .from('ocorrencias_operacionais')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (data) return data;
+        } catch (e) {
+            console.warn('Erro ao buscar ocorrencia remotamente, usando fallback', e);
+        }
+    }
+
+    return localRecord;
 };
 
 /**
