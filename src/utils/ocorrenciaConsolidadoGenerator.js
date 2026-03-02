@@ -40,16 +40,12 @@ export const generateConsolidatedReport = async (records, dateStr) => {
         }
 
         const pageWidth = pdf.internal.pageSize.getWidth();
-        const headerHeight = 35;
-
-        // Cabeçalho Oficial
-        if (logoDefesaCivilStr && logoDefesaCivilStr.startsWith('data:image')) {
-            pdf.addImage(logoDefesaCivilStr, 'PNG', 15, 5, 20, 25);
-        }
+        // Skip logo loading if base64 conversion fails to prevent PDF generation crash
+        const headerHeight = 25;
 
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(14);
-        pdf.setTextColor(42, 82, 153); // Azul Defesa Civil #2a5299
+        pdf.setTextColor(42, 82, 153);
         pdf.text("PREFEITURA MUNICIPAL DE SANTA MARIA DE JETIBÁ", pageWidth / 2, 12, { align: "center" });
 
         pdf.setFontSize(10);
@@ -58,74 +54,63 @@ export const generateConsolidatedReport = async (records, dateStr) => {
 
         pdf.setFontSize(12);
         pdf.setTextColor(42, 82, 153);
-        pdf.text(`RELATÓRIO CONSOLIDADO DE OCORRÊNCIAS - ${dateStr || 'Geral'}`, pageWidth / 2, 26, { align: "center" });
-
-        if (logoSigerdStr && logoSigerdStr.startsWith('data:image')) {
-            pdf.addImage(logoSigerdStr, 'PNG', pageWidth - 35, 5, 20, 25);
-        }
+        pdf.text(`RELATÓRIO CONSOLIDADO DE OCORRÊNCIAS - ${String(dateStr || 'Geral')}`, pageWidth / 2, 26, { align: "center" });
 
         // Tabela de Dados
         const tableBody = records.map((r, i) => {
             let dataHora = '---';
-            try {
-                const rawDate = r.created_at || r.data_ocorrencia;
-                if (rawDate) {
-                    dataHora = new Date(rawDate).toLocaleString('pt-BR');
+            if (r.created_at || r.data_ocorrencia) {
+                try {
+                    dataHora = new Date(r.created_at || r.data_ocorrencia).toLocaleString('pt-BR').substring(0, 16);
+                } catch (e) {
+                    dataHora = String(r.data_ocorrencia || '---');
                 }
-            } catch (e) {
-                console.warn('Date parsing error:', e);
             }
 
-            const endereco = `${r.endereco || 'S/E'}, Bairro: ${r.bairro || 'S/B'}`;
-            const subtipos = (() => {
-                let s = r.subtiposRisco || r.subtipos_risco || [];
-                if (typeof s === 'string') {
-                    try { s = JSON.parse(s); } catch (e) { s = [s]; }
+            const endereco = String(r.endereco || 'S/E').substring(0, 50);
+            const bairro = String(r.bairro || 'S/B');
+
+            let subtipos = '';
+            const s = r.subtiposRisco || r.subtipos_risco || [];
+            if (Array.isArray(s)) {
+                subtipos = s.join(', ');
+            } else if (typeof s === 'string') {
+                try {
+                    const parsed = JSON.parse(s);
+                    subtipos = Array.isArray(parsed) ? parsed.join(', ') : s;
+                } catch (e) {
+                    subtipos = s;
                 }
-                return Array.isArray(s) ? s.join(', ') : '';
-            })();
+            }
 
             return [
                 (i + 1).toString(),
-                r.ocorrencia_id_format || r.id_local || r.id || '---',
+                String(r.ocorrencia_id_format || r.id_local || r.id || '---'),
                 dataHora,
-                r.solicitante || 'Não Identificado',
-                (r.categoriaRisco || r.categoria_risco || r.tipo_info || ''),
-                subtipos,
-                endereco,
-                r.status || 'Pendente'
+                String(r.solicitante || 'N/I').substring(0, 30),
+                String(r.categoriaRisco || r.categoria_risco || r.tipo_info || '---'),
+                String(subtipos).substring(0, 60),
+                `${endereco} (${bairro})`,
+                String(r.status || 'Pendente')
             ];
         });
 
         pdf.autoTable({
-            startY: headerHeight,
-            head: [['Nº', 'ID', 'Data/Hora', 'Solicitante', 'Tipo (Categoria)', 'Subtipo', 'Endereço', 'Status']],
+            startY: 32,
+            head: [['Nº', 'ID', 'Data/Hora', 'Solicitante', 'Tipo', 'Subtipo', 'Localização (Endereço/Bairro)', 'Status']],
             body: tableBody,
             theme: 'grid',
-            styles: {
-                fontSize: 8,
-                cellPadding: 2,
-                font: 'helvetica'
-            },
-            headStyles: {
-                fillColor: [42, 82, 153],
-                textColor: [255, 255, 255],
-                fontStyle: 'bold'
-            },
-            alternateRowStyles: {
-                fillColor: [241, 245, 249] // Tailwind slate-50
-            },
-            margin: { top: headerHeight, left: 10, right: 10, bottom: 15 }
+            styles: { fontSize: 7, cellPadding: 1, font: 'helvetica' },
+            headStyles: { fillColor: [42, 82, 153], textColor: [255, 255, 255] },
+            margin: { left: 5, right: 5 }
         });
 
         const totalPages = pdf.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
             pdf.setPage(i);
-            pdf.setFont("helvetica", "normal");
             pdf.setFontSize(7);
             pdf.setTextColor(150, 150, 150);
-            const str = `Gerado pelo SIGERD Mobile em ${new Date().toLocaleString('pt-BR')} - Página ${i} de ${totalPages}`;
-            pdf.text(str, pageWidth / 2, pdf.internal.pageSize.getHeight() - 8, { align: "center" });
+            pdf.text(`SIGERD Mobile - Página ${i}/${totalPages}`, pageWidth / 2, pdf.internal.pageSize.getHeight() - 5, { align: "center" });
         }
 
         const dateFilename = dateStr.replace(/\//g, '-');
