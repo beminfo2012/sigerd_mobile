@@ -10,7 +10,9 @@ import {
     Shield,
     Users,
     ClipboardCheck,
+    ClipboardList,
     BarChart3,
+    Activity,
     Package,
     Navigation,
     LogOut,
@@ -24,7 +26,8 @@ import {
     Settings,
     CheckCircle,
     RefreshCcw,
-    History
+    History,
+    Heart
 } from 'lucide-react';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
 import ProfileModal from './ProfileModal';
@@ -113,7 +116,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         },
         {
             label: 'Vistorias',
-            icon: Map,
+            icon: ClipboardList,
             path: '/vistorias',
             roles: AGENT_ROLES
         },
@@ -125,7 +128,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         },
         {
             label: 'Assist. Humanitária',
-            icon: Shield,
+            icon: Heart,
             path: '/abrigos',
             roles: HUMANITARIAN_ROLES
         },
@@ -133,7 +136,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'GeoRescue',
             icon: Map,
             path: '/georescue',
-            roles: AGENT_ROLES // Use agent roles for GeoRescue or the same roles as others
+            roles: AGENT_ROLES
         },
         {
             label: 'Configurações',

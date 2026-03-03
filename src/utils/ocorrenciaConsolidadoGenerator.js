@@ -1,124 +1,145 @@
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
-import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from './reportLogos';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { LOGO_BASE64 } from './logoBase64';
 
-const getBase64Image = (url) => {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
-            } catch (e) {
-                resolve(null);
-            }
-        };
-        img.onerror = () => resolve(null);
-        img.src = url;
-    });
-};
-
-export const generateConsolidatedReport = async (records, dateStr) => {
+/**
+ * Gera um relatório PDF consolidado de ocorrências formatado para impressão.
+ * @param {Array} occurrences - Lista de ocorrências filtradas.
+ * @param {string} dateRange - Período ou data selecionada para exibição no título.
+ */
+export const generateConsolidatedReport = async (occurrences, dateRange = 'Geral') => {
     try {
-        const pdf = new jsPDF('l', 'mm', 'a4'); // Paisagem para caber mais colunas
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.width;
 
-        let logoDefesaCivilStr = null;
-        let logoSigerdStr = null;
+        // Configurações de cores (Paleta Profissional)
+        const colors = {
+            primary: [0, 51, 102], // Marinho
+            secondary: [240, 240, 240], // Cinza Claro
+            accent: [255, 102, 0], // Laranja Defesa Civil
+            text: [60, 60, 60],
+            tableHead: [0, 64, 128]
+        };
 
+        // --- CABEÇALHO ---
+        // Logo (usando Base64 local para evitar erros de rede/CORS)
         try {
-            [logoDefesaCivilStr, logoSigerdStr] = await Promise.all([
-                getBase64Image(LOGO_DEFESA_CIVIL),
-                getBase64Image(LOGO_SIGERD)
-            ]);
+            pdf.addImage(LOGO_BASE64, 'PNG', 15, 10, 25, 25);
         } catch (e) {
-            console.warn('Logos indisponíveis para o relatorio consolidado.');
+            console.error('Erro ao carregar logo no PDF:', e);
         }
 
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        // Skip logo loading if base64 conversion fails to prevent PDF generation crash
-        const headerHeight = 25;
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(14);
-        pdf.setTextColor(42, 82, 153);
-        pdf.text("PREFEITURA MUNICIPAL DE SANTA MARIA DE JETIBÁ", pageWidth / 2, 12, { align: "center" });
+        // Títulos
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(16);
+        pdf.setTextColor(...colors.primary);
+        pdf.text('DEFESA CIVIL', 45, 18);
 
         pdf.setFontSize(10);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text("COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL", pageWidth / 2, 18, { align: "center" });
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('SISTEMA DE GESTÃO DE RISCOS E DESASTRES - SIGERD', 45, 24);
 
-        pdf.setFontSize(12);
-        pdf.setTextColor(42, 82, 153);
-        pdf.text(`RELATÓRIO CONSOLIDADO DE OCORRÊNCIAS - ${String(dateStr || 'Geral')}`, pageWidth / 2, 26, { align: "center" });
+        pdf.setFontSize(14);
+        pdf.setTextColor(...colors.text);
+        pdf.text('Relatório Consolidado de Ocorrências', 45, 32);
 
-        // Tabela de Dados
-        const tableBody = records.map((r, i) => {
-            let dataHora = '---';
-            if (r.created_at || r.data_ocorrencia) {
-                try {
-                    dataHora = new Date(r.created_at || r.data_ocorrencia).toLocaleString('pt-BR').substring(0, 16);
-                } catch (e) {
-                    dataHora = String(r.data_ocorrencia || '---');
-                }
-            }
+        // Linha divisória
+        pdf.setDrawColor(...colors.primary);
+        pdf.setLineWidth(0.5);
+        pdf.line(15, 38, pageWidth - 15, 38);
 
-            const endereco = String(r.endereco || 'S/E').substring(0, 50);
-            const bairro = String(r.bairro || 'S/B');
+        // Informações do Relatório
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(80, 80, 80);
+        pdf.text(`Filtro aplicado: ${dateRange}`, 15, 45);
+        pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth - 15, 45, { align: 'right' });
+        pdf.text(`Total de registros: ${occurrences.length}`, 15, 50);
 
-            let subtipos = '';
-            const s = r.subtiposRisco || r.subtipos_risco || [];
-            if (Array.isArray(s)) {
-                subtipos = s.join(', ');
-            } else if (typeof s === 'string') {
-                try {
-                    const parsed = JSON.parse(s);
-                    subtipos = Array.isArray(parsed) ? parsed.join(', ') : s;
-                } catch (e) {
-                    subtipos = s;
-                }
-            }
+        // --- CORPO DO RELATÓRIO (TABELA) ---
+        const tableColumn = ["Protocolo", "Data/Hora", "Tipo", "Natureza", "Bairro", "Status"];
+        const tableRows = occurrences.map(occ => [
+            String(occ.numero_protocolo || occ.numero_ocorrencia || 'S/N').toUpperCase(),
+            formatDate(occ.data_ocorrencia || occ.data_cadastro || occ.created_at),
+            String(occ.tipo || occ.tipo_ocorrencia || 'N/I'),
+            String(occ.natureza || 'N/I'),
+            String(occ.bairro || 'N/I'),
+            translateStatus(occ.status)
+        ]);
 
-            return [
-                (i + 1).toString(),
-                String(r.ocorrencia_id_format || r.id_local || r.id || '---'),
-                dataHora,
-                String(r.solicitante || 'N/I').substring(0, 30),
-                String(r.categoriaRisco || r.categoria_risco || r.tipo_info || '---'),
-                String(subtipos).substring(0, 60),
-                `${endereco} (${bairro})`,
-                String(r.status || 'Pendente')
-            ];
-        });
-
-        pdf.autoTable({
-            startY: 32,
-            head: [['Nº', 'ID', 'Data/Hora', 'Solicitante', 'Tipo', 'Subtipo', 'Localização (Endereço/Bairro)', 'Status']],
-            body: tableBody,
+        autoTable(pdf, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 55,
             theme: 'grid',
-            styles: { fontSize: 7, cellPadding: 1, font: 'helvetica' },
-            headStyles: { fillColor: [42, 82, 153], textColor: [255, 255, 255] },
-            margin: { left: 5, right: 5 }
+            headStyles: {
+                fillColor: colors.tableHead,
+                textColor: [255, 255, 255],
+                fontSize: 9,
+                halign: 'center',
+                fontStyle: 'bold'
+            },
+            styles: {
+                fontSize: 8,
+                cellPadding: 3,
+                overflow: 'linebreak'
+            },
+            columnStyles: {
+                0: { cellWidth: 25 }, // Protocolo
+                1: { cellWidth: 35 }, // Data
+                2: { cellWidth: 25 }, // Tipo
+                3: { cellWidth: 40 }, // Natureza
+                4: { cellWidth: 35 }, // Bairro
+                5: { cellWidth: 25, halign: 'center' } // Status
+            },
+            alternateRowStyles: {
+                fillColor: colors.secondary
+            },
+            margin: { left: 15, right: 15, bottom: 20 }
         });
 
-        const totalPages = pdf.internal.getNumberOfPages();
-        for (let i = 1; i <= totalPages; i++) {
+        // --- RODAPÉ ---
+        const pageCount = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
             pdf.setPage(i);
-            pdf.setFontSize(7);
+            pdf.setFontSize(8);
             pdf.setTextColor(150, 150, 150);
-            pdf.text(`SIGERD Mobile - Página ${i}/${totalPages}`, pageWidth / 2, pdf.internal.pageSize.getHeight() - 5, { align: "center" });
+            const footerText = `Página ${i} de ${pageCount} | Documento emitido pelo Sistema SIGERD Mobile`;
+            pdf.text(footerText, pageWidth / 2, pdf.internal.pageSize.height - 10, { align: 'center' });
         }
 
-        const dateFilename = dateStr.replace(/\//g, '-');
-        pdf.save(`Relatorio_Ocorrencias_${dateFilename}.pdf`);
-
+        // --- SALVAMENTO ---
+        const safeDate = String(dateRange).replace(/\//g, '-').replace(/ /g, '_');
+        pdf.save(`Relatorio_Ocorrencias_${safeDate}.pdf`);
         return true;
-    } catch (e) {
-        console.error("Consolidated report error:", e);
+    } catch (error) {
+        console.error('Erro ao gerar PDF consolidado:', error);
         return false;
     }
+};
+
+// Funções auxiliares sanitizadas
+const formatDate = (dateValue) => {
+    if (!dateValue) return 'N/I';
+    try {
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) return String(dateValue);
+        return date.toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        return 'N/I';
+    }
+};
+
+const translateStatus = (status) => {
+    const s = String(status || '').toLowerCase();
+    if (s === 'atendida' || s === 'concluida') return 'Concluída';
+    if (s === 'em_andamento' || s === 'em curso') return 'Em Curso';
+    if (s === 'pendente') return 'Pendente';
+    return status || 'Pendente';
 };

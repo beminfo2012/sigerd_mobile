@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, BarChart3, Calendar, Download, Users, ShieldAlert, Home, Activity, CheckCircle, Clock, Filter, Printer, Share2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
 import { getAllVistoriasLocal, getRemoteVistoriasCache, getAllInterdicoesLocal } from '../../services/db'
+import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
 import { getOccupants } from '../../services/shelterDb'
 import { generateManagementReport } from '../../utils/managementReportGenerator'
 
-const ManagementDashboard = () => {
+const ManagementDashboard = ({ hideHeader = false }) => {
     const navigate = useNavigate()
     const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}')
     const [loading, setLoading] = useState(true)
@@ -30,17 +31,19 @@ const ManagementDashboard = () => {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [local, remote, interdicoes, occupants] = await Promise.all([
+            const [local, remote, interdicoes, occupants, ocorrencias] = await Promise.all([
                 getAllVistoriasLocal(),
                 getRemoteVistoriasCache(),
                 getAllInterdicoesLocal(),
-                getOccupants()
+                getOccupants(),
+                getOcorrenciasLocal()
             ])
 
             setAllData({
                 vistorias: [...remote, ...local],
                 interdicoes: interdicoes || [],
-                occupants: occupants || []
+                occupants: occupants || [],
+                ocorrencias: ocorrencias || []
             })
         } catch (error) {
             console.error('Erro ao carregar dados:', error)
@@ -66,13 +69,15 @@ const ManagementDashboard = () => {
         return {
             vistorias: filterByDate(allData.vistorias || []),
             interdicoes: filterByDate(allData.interdicoes || []),
-            occupants: allData.occupants || [] // Occupants are current state, usually not filtered by entry date for management view but can be if needed
+            ocorrencias: filterByDate(allData.ocorrencias || []),
+            occupants: allData.occupants || []
         }
     }, [allData, timeframe])
 
     const stats = useMemo(() => {
         const vistorias = filteredData.vistorias || []
-        const total = vistorias.length
+        const ocorrencias = filteredData.ocorrencias || []
+        const total = vistorias.length + ocorrencias.length
         const riskLevels = { 'Muito Alto': 0, 'Alto': 0, 'Médio': 0, 'Baixo': 0, 'Outros': 0 }
         const categories = {}
         const monthlyTrend = {}
@@ -81,41 +86,53 @@ const ManagementDashboard = () => {
         let totalInterdicoes = (filteredData.interdicoes || []).length
         let desabrigados = (filteredData.occupants || []).filter(o => o.status !== 'exited').length
         let desalojados = 0
+        let mortos = 0
+        let feridos = 0
         let totalPeopleAssist = 0
 
+        // Process Vistorias
         vistorias.forEach(item => {
-            // Risk Level
             const risk = item.nivel_risco || item.nivelRisco || 'Outros'
             riskLevels[risk] = (riskLevels[risk] || 0) + 1
-
-            // Category
             const cat = item.categoria_risco || item.categoriaRisco || 'Outros'
             categories[cat] = (categories[cat] || 0) + 1
-
-            // Trend
             const date = new Date(item.created_at || item.data_hora || Date.now())
             const monthKey = date.toLocaleDateString('pt-BR', { month: 'short' })
             monthlyTrend[monthKey] = (monthlyTrend[monthKey] || 0) + 1
-
-            // Displaced/Interdicted in Vistoria
+            const pop = parseInt(item.populacao_estimada || item.populacaoEstimada || 0)
+            totalPeopleAssist += pop
             const medidas = item.medidas_tomadas || item.medidasTomadas || []
-            if (medidas.includes('Interdição Parcial') || medidas.includes('Interdição Total')) {
-                // If it's not already counted in interdicoes table (to avoid double counting if UI creates both)
-                // For simplicity, we assume interdicoes table is primary for legal acts
-            }
-
             if (medidas.includes('Desalojamento') || medidas.includes('Orientação ao morador (sair do imóvel)')) {
-                desalojados += parseInt(item.populacao_estimada || item.populacaoEstimada || 0)
+                desalojados += pop
             }
+        })
 
-            totalPeopleAssist += parseInt(item.populacao_estimada || item.populacaoEstimada || 0)
+        // Process Ocorrencias (Real Operational Data)
+        ocorrencias.forEach(item => {
+            const risk = item.nivelRisco || 'Outros'
+            riskLevels[risk] = (riskLevels[risk] || 0) + 1
+            const cat = item.categoriaRisco || 'Outros'
+            categories[cat] = (categories[cat] || 0) + 1
+            const date = new Date(item.created_at || item.data_ocorrencia || Date.now())
+            const monthKey = date.toLocaleDateString('pt-BR', { month: 'short' })
+            monthlyTrend[monthKey] = (monthlyTrend[monthKey] || 0) + 1
+
+            mortos += parseInt(item.mortos || 0)
+            feridos += parseInt(item.feridos || 0)
+            desalojados += parseInt(item.desalojados || 0)
+            const d = parseInt(item.desabrigados || 0) // if they are in shelters we already count 'occupants' but this gives historical view
+            totalPeopleAssist += (parseInt(item.mortos || 0) + parseInt(item.feridos || 0) + parseInt(item.desalojados || 0) + parseInt(item.desabrigados || 0) + parseInt(item.outros_afetados || 0))
         })
 
         return {
             total,
+            vistoriasCount: vistorias.length,
+            ocorrenciasCount: ocorrencias.length,
             interdicoes: totalInterdicoes,
             desabrigados,
             desalojados,
+            mortos,
+            feridos,
             riskChart: Object.entries(riskLevels).map(([name, value]) => ({ name, value })),
             categoryChart: Object.entries(categories)
                 .map(([name, value]) => ({ name, value }))
@@ -136,22 +153,24 @@ const ManagementDashboard = () => {
     return (
         <div className="bg-[#f8fafc] min-h-screen pb-24 font-sans text-slate-800">
             {/* Executive Header */}
-            <header className="bg-white border-b border-slate-200 px-6 h-20 flex items-center justify-between sticky top-0 z-50">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="p-2.5 hover:bg-slate-50 rounded-2xl transition-all active:scale-95 text-slate-400 border border-slate-100">
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div>
-                        <h1 className="text-xl font-black text-slate-900 leading-tight tracking-tight">Gestão Estratégica</h1>
-                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Visão Administrativa SIGERD</p>
+            {!hideHeader && (
+                <header className="bg-white border-b border-slate-200 px-6 h-20 flex items-center justify-between sticky top-0 z-50">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate(-1)} className="p-2.5 hover:bg-slate-50 rounded-2xl transition-all active:scale-95 text-slate-400 border border-slate-100">
+                            <ArrowLeft size={20} />
+                        </button>
+                        <div>
+                            <h1 className="text-xl font-black text-slate-900 leading-tight tracking-tight">Gestão Estratégica</h1>
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Visão Administrativa SIGERD</p>
+                        </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-colors active:scale-95 shadow-sm border border-blue-100">
-                        <Printer size={20} />
-                    </button>
-                </div>
-            </header>
+                    <div className="flex items-center gap-2">
+                        <button className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-colors active:scale-95 shadow-sm border border-blue-100">
+                            <Printer size={20} />
+                        </button>
+                    </div>
+                </header>
+            )}
 
             <main className="p-6 space-y-8 max-w-2xl mx-auto">
                 {/* Timeframe Selector */}
@@ -179,30 +198,31 @@ const ManagementDashboard = () => {
                             <Activity size={20} />
                         </div>
                         <div className="text-4xl font-black text-slate-900 leading-none">{stats.total}</div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Vistorias Totais</div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Demandas Totais</div>
+                        <div className="text-[8px] font-bold text-slate-300 uppercase mt-1">Vistorias ({stats.vistoriasCount}) + Ocor. ({stats.ocorrenciasCount})</div>
                     </div>
-                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
                         <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-4 border border-emerald-100/50">
                             <Users size={20} />
                         </div>
                         <div className="text-4xl font-black text-slate-900 leading-none">{Math.round(stats.familiesAfected)}</div>
                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Cidadãos Impactados</div>
+                        {stats.mortos > 0 && <div className="absolute top-4 right-4 text-[10px] font-black text-red-600">⚠ VITIMA FATAL</div>}
                     </div>
 
-                    {/* New KPIs */}
                     <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
                         <div className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4 border border-red-100/50">
                             <ShieldAlert size={20} />
                         </div>
                         <div className="text-4xl font-black text-slate-900 leading-none">{stats.interdicoes}</div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Interdições</div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Interdições Ativas</div>
                     </div>
                     <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
                         <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-4 border border-orange-100/50">
                             <Home size={20} />
                         </div>
                         <div className="text-4xl font-black text-slate-900 leading-none">{stats.desabrigados + stats.desalojados}</div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Desabr./Desaloj.</div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Fora de Suas Casas</div>
                     </div>
                 </div>
 

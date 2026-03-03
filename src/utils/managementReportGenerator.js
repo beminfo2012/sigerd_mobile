@@ -1,5 +1,6 @@
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { LOGO_BASE64 } from './logoBase64';
 
 export const generateManagementReport = async (stats, timeframe, userProfile) => {
     console.log("Iniciando geração de relatório...", { stats, timeframe });
@@ -20,6 +21,13 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
             doc.setFillColor(...primaryColor);
             doc.rect(0, 0, 210, 45, 'F');
 
+            // Add Logo
+            try {
+                doc.addImage(LOGO_BASE64, 'PNG', 10, 8, 28, 28);
+            } catch (e) {
+                console.error('Erro ao adicionar logo ao report:', e);
+            }
+
             doc.setTextColor(255, 255, 255);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(22);
@@ -27,8 +35,8 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
 
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
-            doc.text(`DEFESA CIVIL MUNICIPAL - SANTA MARIA DE JETIBÁ / ES`, 105, 30, { align: 'center' });
-            doc.text(`SISTEMA SIGERD MOBILE - RELATÓRIO EXECUTIVO`, 105, 35, { align: 'center' });
+            doc.text(`DEFESA CIVIL MUNICIPAL - SANTA MARIA DE JETIBÁ / ES`, 115, 30, { align: 'center' });
+            doc.text(`SISTEMA SIGERD MOBILE - RELATÓRIO EXECUTIVO ESTRATÉGICO`, 115, 35, { align: 'center' });
         };
 
         // 1. Cover / Executive Summary
@@ -41,7 +49,7 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(11);
-        const summaryText = `Este documento consolida as atividades operacionais, impactos sociais e medidas preventivas da Defesa Civil no período: ${timeframe.toUpperCase()}. \n\nA análise foca na severidade dos riscos mapeados, na eficácia das medidas de interdição e na ASSIST. HUMANITÁRIA prestada para garantir a segurança da população em áreas de vulnerabilidade.`;
+        const summaryText = `Este documento consolida as atividades operacionais (Vistorias e Ocorrências), impactos sociais e medidas preventivas da Defesa Civil no período: ${timeframe.toUpperCase()}. \n\nA análise foca na severidade dos riscos mapeados, na eficácia das medidas de interdição e na ASSIST. HUMANITÁRIA prestada para garantir a segurança da população em áreas de vulnerabilidade, contabilizando danos humanos e materiais reais.`;
         const splitSummary = doc.splitTextToSize(summaryText, 170);
         doc.text(splitSummary, 20, 70);
 
@@ -60,7 +68,7 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
         doc.setTextColor(...textColor);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text('VISTORIAS REALIZADAS', 60, 132, { align: 'center' });
+        doc.text(`DEMANDAS TOTAIS (${stats.vistoriasCount} Vit / ${stats.ocorrenciasCount} Ocor)`, 60, 132, { align: 'center' });
         doc.text('CIDADÃOS IMPACTADOS', 150, 132, { align: 'center' });
 
         // 3. Humanitarian & Interdictions Section
@@ -71,6 +79,8 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
 
         const impactTableData = [
             ['Interdições Realizadas (Atos Legais)', stats.interdicoes, 'Medidas de proteção à vida'],
+            ['Vítimas Fatais (Óbitos)', stats.mortos, stats.mortos > 0 ? 'CRÍTICO: Perda de vida' : 'Sem vítimas fatais'],
+            ['Feridos / Enfermos', stats.feridos, 'Necessidade de cuidados médicos'],
             ['Desabrigados (Em Abrigos Públicos)', stats.desabrigados, 'Assistência em abrigos oficiais'],
             ['Desalojados (Casa de Parentes)', stats.desalojados, 'Remoção temporária preventiva']
         ];
@@ -142,7 +152,7 @@ export const generateManagementReport = async (stats, timeframe, userProfile) =>
 
         autoTable(doc, {
             startY: trendY + 7,
-            head: [['Mês/Período', 'Volume de Vistorias']],
+            head: [['Mês/Período', 'Volume de Demandas (Vit + Ocor)']],
             body: trendData,
             theme: 'grid',
             headStyles: { fillColor: [30, 41, 59] },

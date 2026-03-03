@@ -1,14 +1,15 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CloudRain, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { CloudRain, ShieldAlert, ArrowLeft, BarChart3 } from 'lucide-react';
 
 // Lazy load the full components
 const Pluviometros = lazy(() => import('../Pluviometros/index'));
 const RiskDashboard = lazy(() => import('./RiskDashboard'));
+const ManagementDashboard = lazy(() => import('./ManagementDashboard'));
 
 export default function MonitoramentoMenu() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('pluviometros'); // 'pluviometros' or 'riscos'
+    const [activeTab, setActiveTab] = useState('pluviometros'); // 'pluviometros', 'riscos' or 'gestao'
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
@@ -28,20 +29,27 @@ export default function MonitoramentoMenu() {
                 </div>
 
                 {/* Tab Switcher - estilo REDAP */}
-                <div className="flex p-1 bg-slate-200/50 rounded-2xl w-fit mx-auto">
+                <div className="flex p-1 bg-slate-200/50 rounded-2xl w-fit mx-auto overflow-x-auto no-scrollbar max-w-full">
                     <button
                         onClick={() => setActiveTab('pluviometros')}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'pluviometros' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'pluviometros' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         <CloudRain size={13} strokeWidth={2.5} />
-                        Pluviômetros
+                        Chuva
                     </button>
                     <button
                         onClick={() => setActiveTab('riscos')}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'riscos' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'riscos' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         <ShieldAlert size={13} strokeWidth={2.5} />
-                        Áreas de Risco
+                        Mapa de Riscos
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('gestao')}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'gestao' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        <BarChart3 size={13} strokeWidth={2.5} />
+                        Gestão
                     </button>
                 </div>
             </header>
@@ -57,8 +65,10 @@ export default function MonitoramentoMenu() {
                     <div className="animate-in fade-in duration-500">
                         {activeTab === 'pluviometros' ? (
                             <Pluviometros hideHeader={true} />
-                        ) : (
+                        ) : activeTab === 'riscos' ? (
                             <RiskDashboard hideHeader={true} />
+                        ) : (
+                            <ManagementDashboard hideHeader={true} />
                         )}
                     </div>
                 </Suspense>
