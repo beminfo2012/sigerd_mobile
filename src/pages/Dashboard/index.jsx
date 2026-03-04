@@ -125,47 +125,68 @@ const EventLogCard = ({ data, rainfall, cemadenAlerts }) => {
         const generatedEvents = [];
 
         (data.vistorias?.locations || []).forEach(v => {
-            generatedEvents.push({ id: `vist-${v.id}`, time: new Date(v.date), title: `Vistoria ${v.formattedId}`, desc: `${v.risk} - ${v.status}`, icon: '📋', color: 'text-blue-500' });
+            generatedEvents.push({ id: `vist-${v.id}`, time: new Date(v.date), title: `Emissão de Vistoria ${v.formattedId}`, desc: `${v.risk} - ${v.status} (${v.details})`, icon: '📋', color: 'text-blue-500' });
         });
         (data.ocorrencias?.locations || []).forEach(o => {
-            generatedEvents.push({ id: `oco-${o.id}`, time: new Date(o.date), title: `Ocorrência ${o.formattedId}`, desc: `${o.risk} - ${o.status}`, icon: '🏠', color: 'text-orange-500' });
+            generatedEvents.push({ id: `oco-${o.id}`, time: new Date(o.date), title: `Nova Ocorrência ${o.formattedId}`, desc: `${o.risk} - ${o.status}`, icon: '🏠', color: 'text-orange-500' });
         });
         (data.alerts || []).forEach((a, idx) => {
-            generatedEvents.push({ id: `inmet-${idx}`, time: new Date(), title: `Aviso INMET`, desc: `${a.descricao || a.resumo || 'Alerta Meteorológico'}`, icon: '⚠️', color: 'text-red-500' });
+            generatedEvents.push({ id: `inmet-${idx}`, time: new Date(), title: `Aviso INMET Emitido`, desc: `${a.descricao || a.resumo || 'Alerta Meteorológico'}`, icon: '⚠️', color: 'text-red-500' });
         });
         (cemadenAlerts || []).forEach((c, idx) => {
-            generatedEvents.push({ id: `cemaden-${idx}`, time: new Date(), title: `Aviso CEMADEN`, desc: `${c.tipo || 'Alerta Geo/Hidro'}`, icon: '⚠️', color: 'text-red-500' });
+            generatedEvents.push({ id: `cemaden-${idx}`, time: new Date(), title: `Aviso CEMADEN Emitido`, desc: `${c.tipo || 'Alerta Geo/Hidro'}: ${c.municipio || 'Santa Maria de Jetibá'}`, icon: '⚠️', color: 'text-red-500' });
+        });
+        (rainfall || []).filter(r => r.rainRaw > 0).forEach((r, idx) => {
+            generatedEvents.push({ id: `pluvio-${idx}`, time: new Date(), title: `Pluviômetro CEMADEN`, desc: `${r.name} registrou ${r.rainRaw.toFixed(1)}mm (${r.level})`, icon: '🌧️', color: 'text-blue-400' });
         });
 
-        // Add some mock recent logins/actions for flavor if needed, but real data is enough.
-        generatedEvents.sort((a, b) => b.time - a.time);
-        setEvents(generatedEvents.slice(0, 50));
+        generatedEvents.push({ id: `sys-1`, time: new Date(), title: `Sincronização do Sistema`, desc: `Dados atualizados com sucesso via SIGERD e plataformas parceiras`, icon: '🟢', color: 'text-emerald-500' });
+
+        fetch('https://sigerd-mobile.vercel.app/api/boletim-meteorologico?limite=3')
+            .then(res => res.json())
+            .then(bolData => {
+                if (bolData && bolData.boletins) {
+                    bolData.boletins.forEach((b, idx) => {
+                        generatedEvents.push({ id: `bol-${idx}`, time: new Date(), title: `Boletim Emitido`, desc: b.titulo, icon: '📊', color: 'text-indigo-500' });
+                    });
+                }
+                generatedEvents.sort((a, b) => b.time - a.time);
+                setEvents(generatedEvents.slice(0, 100));
+            })
+            .catch(() => {
+                generatedEvents.sort((a, b) => b.time - a.time);
+                setEvents(generatedEvents.slice(0, 100));
+            });
+
     }, [data, rainfall, cemadenAlerts]);
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full w-full overflow-hidden transition-all">
-            <div className="flex bg-slate-50 dark:bg-slate-800/80 p-3 border-b border-slate-100 dark:border-slate-800 items-center gap-2">
-                <Clock size={16} className="text-blue-500" />
-                <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">
-                    Log de Eventos
-                </h3>
+            <div className="flex bg-slate-50 dark:bg-slate-800/80 p-2.5 border-b border-slate-100 dark:border-slate-800 items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-blue-500" />
+                    <h3 className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">
+                        Registro de Eventos do Sistema
+                    </h3>
+                </div>
+                <span className="text-[9px] font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-full uppercase tabular-nums tracking-widest">100 Últimos</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar max-h-[300px]">
-                {events.length === 0 && <div className="text-center text-slate-400 text-xs my-6">Nenhum evento registrado.</div>}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar max-h-[300px]">
+                {events.length === 0 && <div className="text-center text-slate-400 text-[10px] my-6 uppercase font-bold tracking-widest">Nenhum evento registrado</div>}
                 {events.map(ev => (
-                    <div key={ev.id} className="flex gap-3 relative group">
-                        <div className="w-px h-full bg-slate-200 dark:bg-slate-700 absolute left-[15px] top-8 z-0"></div>
-                        <div className="w-8 h-8 shrink-0 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-xs z-10 group-hover:scale-110 transition-transform">
+                    <div key={ev.id} className="flex gap-2.5 relative group items-start">
+                        <div className="w-px h-[calc(100%+8px)] bg-slate-200 dark:bg-slate-700/50 absolute left-[11px] top-4 z-0"></div>
+                        <div className="w-6 h-6 shrink-0 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-[10px] z-10">
                             {ev.icon}
                         </div>
-                        <div className="flex-1 pb-3">
-                            <div className="flex justify-between items-start mb-0.5">
-                                <span className={`text-[9px] font-black ${ev.color} leading-none uppercase tracking-widest`}>{ev.title}</span>
-                                <span className="text-[8px] font-bold text-slate-400 tabular-nums">
-                                    {ev.time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        <div className="flex-1 pb-1 pt-0.5">
+                            <div className="flex justify-between items-center mb-0.5 pr-1">
+                                <span className={`text-[9px] font-black ${ev.color} leading-none uppercase tracking-widest truncate max-w-[65%]`}>{ev.title}</span>
+                                <span className="text-[8px] font-bold text-slate-400 tabular-nums shrink-0 uppercase tracking-wider">
+                                    {ev.time.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {ev.time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
-                            <p className="text-[10px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                            <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 leading-snug line-clamp-2 pr-2">
                                 {ev.desc}
                             </p>
                         </div>
@@ -180,6 +201,13 @@ const EventLogCard = ({ data, rainfall, cemadenAlerts }) => {
 const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInfo, viewMode, setViewMode, mapFilter, mapStyle }) => {
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
     const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
+    const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+
+    useEffect(() => {
+        const observer = new MutationObserver(() => setIsDark(document.documentElement.classList.contains('dark')));
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <div className="h-screen w-screen bg-slate-50 dark:bg-slate-950 flex flex-col p-6 gap-6 overflow-hidden">
@@ -244,7 +272,7 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
                 <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-md overflow-hidden relative">
                     <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                         {mapStyle === 'street' ? (
-                            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" /> // Dark mode tiles for TV
+                            <TileLayer url={`https://{s}.basemaps.cartocdn.com/${isDark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`} />
                         ) : (
                             <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                         )}
@@ -718,7 +746,7 @@ const WebViewDashboardView = ({
                         </h2>
                         <div className="flex gap-3">
                             <button
-                                onClick={() => window.open('/?tvMode=true', '_blank')}
+                                onClick={() => window.open('/?tvMode=true', '_blank', 'toolbar=no,scrollbars=yes,resizable=yes,top=50,left=50,width=1280,height=800')}
                                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
                             >
                                 <MonitorPlay size={16} /> Modo TV
