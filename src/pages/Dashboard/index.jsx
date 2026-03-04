@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
+import {
+    ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
     Download, ChevronDown, ExternalLink, Bell, MonitorPlay, Clock
+} from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
