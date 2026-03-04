@@ -128,6 +128,7 @@ const AppContent = ({
     const navigate = useNavigate();
     const location = useLocation();
     const isPrintPage = location.pathname.includes('/imprimir/') || location.search.includes('fullscreen=true');
+    const isTvMode = location.search.includes('tvMode=true');
 
     useEffect(() => {
         const checkRedirect = async () => {
@@ -169,12 +170,12 @@ const AppContent = ({
             <SyncBackground />
             <PWAUpdater />
 
-            {/* Desktop Header - Hide on print and mobile */}
-            {!isPrintPage && <DesktopHeader userProfile={userProfile} />}
+            {/* Desktop Header - Hide on print, mobile, and TV mode */}
+            {!isPrintPage && !isTvMode && <DesktopHeader userProfile={userProfile} />}
 
             <div className={`flex flex-1 ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
                 {/* Sidebar - Desktop Only */}
-                {!isPrintPage && (
+                {!isPrintPage && !isTvMode && (
                     <Sidebar
                         userProfile={userProfile}
                         setUserProfile={setUserProfile}
@@ -190,8 +191,8 @@ const AppContent = ({
 
 
                 <div className={`flex flex-col flex-1 relative ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
-                    {/* Mobile Header - Hide on print and desktop */}
-                    {!isPrintPage && (
+                    {/* Mobile Header - Hide on print, desktop, and TV mode */}
+                    {!isPrintPage && !isTvMode && (
                         <header className="mobile-header md:hidden px-4">
                             <div className="flex items-center gap-2">
                                 <img src="/logo_header.png" alt="Logo" className="h-8 w-auto object-contain" onError={(e) => e.target.style.display = 'none'} />
@@ -410,8 +411,8 @@ const AppContent = ({
                         </Suspense>
                     </main>
 
-                    {/* Bottom Navigation - Hide on print and desktop */}
-                    {!isPrintPage && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral' || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
+                    {/* Bottom Navigation - Hide on print, desktop, and TV mode */}
+                    {!isPrintPage && !isTvMode && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral' || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
                         <nav className="bottom-nav md:hidden">
                             <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
                                 <Home size={24} />

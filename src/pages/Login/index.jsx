@@ -117,7 +117,8 @@ const WebLoginView = ({
         '/assets/img/login_bg_rescue.png',
         '/assets/img/login_bg_humanitarian.png',
         '/assets/img/login_bg_mud_rescue.png',
-        '/assets/img/login_bg_def_smj.jpeg'
+        '/assets/img/login_bg_def_smj.jpeg',
+        '/assets/img/login_bg_def_smj_acre.jpeg'
     ];
 
     useEffect(() => {
@@ -149,7 +150,7 @@ const WebLoginView = ({
                 ))}
 
                 {/* Content Overlay */}
-                <div className="relative z-10 w-full h-full flex flex-col justify-end p-24 pb-32">
+                <div className="relative z-10 w-full h-full flex flex-col justify-start p-24 pb-32">
                     <div className="max-w-xl">
                         <div className="mb-4">
                             <h2 className="text-7xl font-black text-white leading-none tracking-tighter">

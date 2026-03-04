@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../services/api'
-import {
-    ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
+ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
-    Download, ChevronDown, ExternalLink
-} from 'lucide-react'
+    Download, ChevronDown, ExternalLink, Bell, MonitorPlay, Clock
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
@@ -114,6 +112,181 @@ const processLocalidadeBreakdown = (records) => {
         percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
         color: colors[idx % colors.length]
     })).sort((a, b) => b.count - a.count);
+};
+
+// --- SUB-COMPONENT: EVENT LOG DRAWER ---
+const EventLogDrawer = ({ open, onClose, data, rainfall, cemadenAlerts }) => {
+    const [events, setEvents] = useState([]);
+
+    useEffect(() => {
+        if (!data) return;
+        const generatedEvents = [];
+
+        (data.vistorias?.locations || []).forEach(v => {
+            generatedEvents.push({ id: `vist-${v.id}`, time: new Date(v.date), title: `Vistoria ${v.formattedId}`, desc: `${v.risk} - ${v.status}`, icon: '📋', color: 'text-blue-500' });
+        });
+        (data.ocorrencias?.locations || []).forEach(o => {
+            generatedEvents.push({ id: `oco-${o.id}`, time: new Date(o.date), title: `Ocorrência ${o.formattedId}`, desc: `${o.risk} - ${o.status}`, icon: '🏠', color: 'text-orange-500' });
+        });
+        (data.alerts || []).forEach((a, idx) => {
+            generatedEvents.push({ id: `inmet-${idx}`, time: new Date(), title: `Aviso INMET`, desc: `${a.descricao || a.resumo || 'Alerta Meteorológico'}`, icon: '⚠️', color: 'text-red-500' });
+        });
+        (cemadenAlerts || []).forEach((c, idx) => {
+            generatedEvents.push({ id: `cemaden-${idx}`, time: new Date(), title: `Aviso CEMADEN`, desc: `${c.tipo || 'Alerta Geo/Hidro'}`, icon: '⚠️', color: 'text-red-500' });
+        });
+
+        // Add some mock recent logins/actions for flavor if needed, but real data is enough.
+        generatedEvents.sort((a, b) => b.time - a.time);
+        setEvents(generatedEvents.slice(0, 50));
+    }, [data, rainfall, cemadenAlerts]);
+
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-slate-900 shadow-2xl z-[2000] border-l border-slate-100 dark:border-slate-800 flex flex-col transform transition-transform animate-in slide-in-from-right duration-300">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80">
+                <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-[2px] text-xs flex items-center gap-2">
+                    <Clock size={16} className="text-blue-500" /> Log de Eventos
+                </h3>
+                <button onClick={onClose} className="p-2 bg-slate-200 dark:bg-slate-700/50 rounded-full text-slate-500 hover:text-slate-700 transition-colors">
+                    <X size={14} />
+                </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                {events.length === 0 && <div className="text-center text-slate-400 text-xs mt-10">Nenhum evento registrado.</div>}
+                {events.map(ev => (
+                    <div key={ev.id} className="flex gap-4 relative group">
+                        <div className="w-px h-full bg-slate-200 dark:bg-slate-700 absolute left-[15px] top-8 z-0"></div>
+                        <div className="w-8 h-8 shrink-0 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-xs z-10 group-hover:scale-110 transition-transform">
+                            {ev.icon}
+                        </div>
+                        <div className="flex-1 pb-4">
+                            <div className="flex justify-between items-start mb-1">
+                                <span className={`text-[10px] font-black ${ev.color} leading-none uppercase tracking-widest`}>{ev.title}</span>
+                                <span className="text-[9px] font-bold text-slate-400 tabular-nums">
+                                    {ev.time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                            <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                                {ev.desc}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// --- SUB-COMPONENT: TV MODE VIEW ---
+const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInfo, viewMode, setViewMode, mapFilter, mapStyle, navigate }) => {
+    const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
+    const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
+
+    return (
+        <div className="h-screen w-screen bg-slate-950 flex flex-col p-6 gap-6 overflow-hidden">
+            {/* TV Header */}
+            <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl">
+                <div className="flex gap-6 items-center">
+                    <img src="/logo_header.png" alt="Logo" className="h-14 w-auto object-contain brightness-0 invert" onError={(e) => e.target.style.display = 'none'} />
+                    <div>
+                        <h1 className="text-3xl font-black text-white tracking-widest uppercase">SALA DE OPERAÇÕES</h1>
+                        <h2 className="text-sm font-bold text-blue-400 tracking-[4px] uppercase">Monitoramento Contínuo - Defesa Civil</h2>
+                    </div>
+                </div>
+                <div className="flex gap-6 items-center">
+                    <div className="text-right">
+                        <div className="text-4xl font-black text-white tabular-nums flex items-center gap-4">
+                            {weather?.current && <span>{Math.round(weather.current.temp)}°C</span>}
+                            <span className="text-blue-500 font-normal">|</span>
+                            {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    </div>
+                    <button onClick={() => navigate('/?tvMode=false')} className="p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl text-slate-300 transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+            </div>
+
+            {/* TV Content */}
+            <div className="flex-1 flex gap-6 min-h-0">
+                {/* Left Stats Column */}
+                <div className="w-[400px] flex flex-col gap-6 shrink-0">
+                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center relative overflow-hidden flex-1">
+                        <div className={`absolute top-0 left-0 w-full h-2 ${statusInfo.color}`} />
+                        <span className={`text-[11px] font-black uppercase tracking-[4px] mb-4 ${statusInfo.text}`}>Status Atual</span>
+                        <div className={`text-5xl font-black text-center mb-6 px-4 py-2 rounded-2xl ${statusInfo.bg} ${statusInfo.text}`}>
+                            {statusInfo.label}
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                            <div className={`h-full rounded-full w-full opacity-80 ${statusInfo.color}`} />
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex-1 flex flex-col justify-center gap-2">
+                        <div className="flex items-center gap-4 mb-2 text-blue-400">
+                            <AlertTriangle size={32} />
+                            <span className="text-xs font-black uppercase tracking-[3px]">Ocorrências Ativas</span>
+                        </div>
+                        <span className="text-7xl font-black text-white tabular-nums">{data.stats.activeOccurrences}</span>
+                    </div>
+
+                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex-1 flex flex-col justify-center gap-2">
+                        <div className="flex items-center gap-4 mb-2 text-indigo-400">
+                            <Droplets size={32} />
+                            <span className="text-xs font-black uppercase tracking-[3px]">Média 24H (mm)</span>
+                        </div>
+                        <span className="text-7xl font-black text-white tabular-nums">
+                            {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0'}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Right Map Column */}
+                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden relative">
+                    <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                        {mapStyle === 'street' ? (
+                            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" /> // Dark mode tiles for TV
+                        ) : (
+                            <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                        )}
+                        <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 30, blur: 20, opacity: 0.8 }} />
+                        {filteredLocations?.map((loc, idx) => (
+                            <CircleMarker
+                                key={idx} center={[loc.lat, loc.lng]} radius={8}
+                                pathOptions={{
+                                    color: '#fff',
+                                    fillColor: viewMode === 'ocorrencias'
+                                        ? (loc.status === 'Em Atendimento' ? '#f59e0b' : loc.status === 'Pendente' ? '#ef4444' : '#3b82f6')
+                                        : (String(loc.risk).includes('Alto') ? '#ef4444' : '#f97316'),
+                                    fillOpacity: 0.9, weight: 3
+                                }}
+                            >
+                                <Popup><div className="font-bold text-sm p-1">{loc.risk} - {loc.status}</div></Popup>
+                            </CircleMarker>
+                        ))}
+                    </MapContainer>
+
+                    {/* TV Legend */}
+                    <div className="absolute bottom-8 right-8 z-[1000] bg-slate-900/95 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-slate-700 text-xs font-black text-white uppercase tracking-widest space-y-4">
+                        <div className="mb-2 text-[10px] text-slate-400">LEGENDA DO MAPA ({viewMode.toUpperCase()})</div>
+                        {viewMode === 'ocorrencias' ? (
+                            <>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-blue-500 border-2 border-white"></div>Atendido</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-amber-500 border-2 border-white"></div>Em Atendimento</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-red-500 border-2 border-white"></div>Pendente</div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-red-500 border-2 border-white"></div>Risco Alto / Crítico</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-orange-500 border-2 border-white"></div>Risco Médio / Baixo</div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 // --- SUB-COMPONENT: MOBILE VIEW ---
@@ -375,6 +548,24 @@ const MobileDashboardView = ({
                                     </CircleMarker>
                                 ))}
                             </MapContainer>
+                            {/* Standard Mobile Legend */}
+                            <div className="absolute bottom-2 right-2 z-[1000] bg-white/95 dark:bg-slate-800/95 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-1.5">
+                                <div className="mb-0.5 text-[7px] text-slate-400">LEGENDA DO MAPA</div>
+                                {viewMode === 'ocorrencias' ? (
+                                    <>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>Atendido</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>Em Atend.</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>Em Análise</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>Pendente</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-slate-500"></div>Cancelada</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>Risco Alto</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>Risco Baixo</div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -504,11 +695,17 @@ const WebViewDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode
+    chartMode, setChartMode, onOpenEventLog
 }) => {
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
     const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
     const typologies = ['Todas', ...(currentData.breakdown || []).map(b => b.label)];
+
+    const isTvMode = new URLSearchParams(window.location.search).get('tvMode') === 'true';
+    if (isTvMode) {
+        return <TvModeDashboardView data={data} weather={weather} cemadenAlerts={cemadenAlerts} rainfall={rainfall} statusInfo={statusInfo} viewMode={viewMode} setViewMode={setViewMode} mapFilter={mapFilter} mapStyle={mapStyle} navigate={navigate} />
+    }
+
     return (
         <div className="bg-[#f0f2f5] dark:bg-slate-950 min-h-screen font-sans flex flex-col">
             <div className="max-w-[1700px] mx-auto w-full p-6 space-y-6 flex-1">
@@ -521,6 +718,20 @@ const WebViewDashboardView = ({
                         <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                             Monitoramento em Tempo Real
                         </h2>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={onOpenEventLog}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-100/80 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
+                            >
+                                <Bell size={16} className="text-blue-500" /> Eventos
+                            </button>
+                            <button
+                                onClick={() => navigate('/?tvMode=true')}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
+                            >
+                                <MonitorPlay size={16} /> Modo TV
+                            </button>
+                        </div>
                     </div>
 
                     {/* Top 5 Cards Grid */}
@@ -756,6 +967,24 @@ const WebViewDashboardView = ({
                                     </CircleMarker>
                                 ))}
                             </MapContainer>
+                            {/* Standard Web Legend */}
+                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 dark:bg-slate-800/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
+                                <div className="mb-1 text-[8px] text-slate-400">LEGENDA DO MAPA</div>
+                                {viewMode === 'ocorrencias' ? (
+                                    <>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Atendido</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-500"></div>Em Atendimento</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-500"></div>Em Análise</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-500"></div>Pendente</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-slate-500"></div>Cancelada</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-500"></div>Risco Alto / Crítico</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-500"></div>Risco Médio / Baixo</div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -918,6 +1147,7 @@ const Dashboard = () => {
     const [mapStyle, setMapStyle] = useState('street')
     const [climateLoading, setClimateLoading] = useState(true)
     const [pluvioLoading, setPluvioLoading] = useState(true)
+    const [showEventLog, setShowEventLog] = useState(false)
 
     const statusInfo = useMemo(() => {
         if (climateLoading) {
@@ -1264,11 +1494,12 @@ const Dashboard = () => {
         handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
         showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
         viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-        chartMode, setChartMode
+        chartMode, setChartMode, onOpenEventLog: () => setShowEventLog(true)
     };
 
     return (
         <>
+            <EventLogDrawer open={showEventLog} onClose={() => setShowEventLog(false)} data={data} rainfall={rainfall} cemadenAlerts={cemadenAlerts} />
             {isMobile ? <MobileDashboardView {...commonProps} /> : <WebViewDashboardView {...commonProps} />}
 
             {/* Global Modals */}
