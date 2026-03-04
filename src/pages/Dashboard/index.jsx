@@ -116,8 +116,8 @@ const processLocalidadeBreakdown = (records) => {
     })).sort((a, b) => b.count - a.count);
 };
 
-// --- SUB-COMPONENT: EVENT LOG DRAWER ---
-const EventLogDrawer = ({ open, onClose, data, rainfall, cemadenAlerts }) => {
+// --- SUB-COMPONENT: EVENT LOG CARD ---
+const EventLogCard = ({ data, rainfall, cemadenAlerts }) => {
     const [events, setEvents] = useState([]);
 
     useEffect(() => {
@@ -142,34 +142,30 @@ const EventLogDrawer = ({ open, onClose, data, rainfall, cemadenAlerts }) => {
         setEvents(generatedEvents.slice(0, 50));
     }, [data, rainfall, cemadenAlerts]);
 
-    if (!open) return null;
-
     return (
-        <div className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-slate-900 shadow-2xl z-[2000] border-l border-slate-100 dark:border-slate-800 flex flex-col transform transition-transform animate-in slide-in-from-right duration-300">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/80">
-                <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-[2px] text-xs flex items-center gap-2">
-                    <Clock size={16} className="text-blue-500" /> Log de Eventos
+        <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full w-full overflow-hidden transition-all">
+            <div className="flex bg-slate-50 dark:bg-slate-800/80 p-3 border-b border-slate-100 dark:border-slate-800 items-center gap-2">
+                <Clock size={16} className="text-blue-500" />
+                <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">
+                    Log de Eventos
                 </h3>
-                <button onClick={onClose} className="p-2 bg-slate-200 dark:bg-slate-700/50 rounded-full text-slate-500 hover:text-slate-700 transition-colors">
-                    <X size={14} />
-                </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
-                {events.length === 0 && <div className="text-center text-slate-400 text-xs mt-10">Nenhum evento registrado.</div>}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar max-h-[300px]">
+                {events.length === 0 && <div className="text-center text-slate-400 text-xs my-6">Nenhum evento registrado.</div>}
                 {events.map(ev => (
-                    <div key={ev.id} className="flex gap-4 relative group">
+                    <div key={ev.id} className="flex gap-3 relative group">
                         <div className="w-px h-full bg-slate-200 dark:bg-slate-700 absolute left-[15px] top-8 z-0"></div>
                         <div className="w-8 h-8 shrink-0 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-xs z-10 group-hover:scale-110 transition-transform">
                             {ev.icon}
                         </div>
-                        <div className="flex-1 pb-4">
-                            <div className="flex justify-between items-start mb-1">
-                                <span className={`text-[10px] font-black ${ev.color} leading-none uppercase tracking-widest`}>{ev.title}</span>
-                                <span className="text-[9px] font-bold text-slate-400 tabular-nums">
+                        <div className="flex-1 pb-3">
+                            <div className="flex justify-between items-start mb-0.5">
+                                <span className={`text-[9px] font-black ${ev.color} leading-none uppercase tracking-widest`}>{ev.title}</span>
+                                <span className="text-[8px] font-bold text-slate-400 tabular-nums">
                                     {ev.time.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
-                            <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                            <p className="text-[10px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
                                 {ev.desc}
                             </p>
                         </div>
@@ -181,30 +177,30 @@ const EventLogDrawer = ({ open, onClose, data, rainfall, cemadenAlerts }) => {
 };
 
 // --- SUB-COMPONENT: TV MODE VIEW ---
-const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInfo, viewMode, setViewMode, mapFilter, mapStyle, navigate }) => {
+const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInfo, viewMode, setViewMode, mapFilter, mapStyle }) => {
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
     const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
 
     return (
-        <div className="h-screen w-screen bg-slate-950 flex flex-col p-6 gap-6 overflow-hidden">
+        <div className="h-screen w-screen bg-slate-50 dark:bg-slate-950 flex flex-col p-6 gap-6 overflow-hidden">
             {/* TV Header */}
-            <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-md">
                 <div className="flex gap-6 items-center">
-                    <img src="/logo_header.png" alt="Logo" className="h-14 w-auto object-contain brightness-0 invert" onError={(e) => e.target.style.display = 'none'} />
+                    <img src="/logo_header.png" alt="Logo" className="h-14 w-auto object-contain dark:brightness-0 dark:invert" onError={(e) => e.target.style.display = 'none'} />
                     <div>
-                        <h1 className="text-3xl font-black text-white tracking-widest uppercase">SALA DE OPERAÇÕES</h1>
-                        <h2 className="text-sm font-bold text-blue-400 tracking-[4px] uppercase">Monitoramento Contínuo - Defesa Civil</h2>
+                        <h1 className="text-3xl font-black text-slate-800 dark:text-white tracking-widest uppercase">SALA DE OPERAÇÕES</h1>
+                        <h2 className="text-sm font-bold text-blue-500 dark:text-blue-400 tracking-[4px] uppercase">Monitoramento Contínuo - Defesa Civil</h2>
                     </div>
                 </div>
                 <div className="flex gap-6 items-center">
                     <div className="text-right">
-                        <div className="text-4xl font-black text-white tabular-nums flex items-center gap-4">
+                        <div className="text-4xl font-black text-slate-800 dark:text-white tabular-nums flex items-center gap-4">
                             {weather?.current && <span>{Math.round(weather.current.temp)}°C</span>}
                             <span className="text-blue-500 font-normal">|</span>
                             {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </div>
                     </div>
-                    <button onClick={() => navigate('/?tvMode=false')} className="p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl text-slate-300 transition-colors">
+                    <button onClick={() => window.close()} className="p-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-2xl text-slate-600 dark:text-slate-300 transition-colors">
                         <X size={24} />
                     </button>
                 </div>
@@ -214,38 +210,38 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
             <div className="flex-1 flex gap-6 min-h-0">
                 {/* Left Stats Column */}
                 <div className="w-[400px] flex flex-col gap-6 shrink-0">
-                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center relative overflow-hidden flex-1">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-3xl shadow-md flex flex-col items-center justify-center relative overflow-hidden flex-1">
                         <div className={`absolute top-0 left-0 w-full h-2 ${statusInfo.color}`} />
                         <span className={`text-[11px] font-black uppercase tracking-[4px] mb-4 ${statusInfo.text}`}>Status Atual</span>
                         <div className={`text-5xl font-black text-center mb-6 px-4 py-2 rounded-2xl ${statusInfo.bg} ${statusInfo.text}`}>
                             {statusInfo.label}
                         </div>
-                        <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
                             <div className={`h-full rounded-full w-full opacity-80 ${statusInfo.color}`} />
                         </div>
                     </div>
 
-                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex-1 flex flex-col justify-center gap-2">
-                        <div className="flex items-center gap-4 mb-2 text-blue-400">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-3xl shadow-md flex-1 flex flex-col justify-center gap-2">
+                        <div className="flex items-center gap-4 mb-2 text-blue-500 dark:text-blue-400">
                             <AlertTriangle size={32} />
                             <span className="text-xs font-black uppercase tracking-[3px]">Ocorrências Ativas</span>
                         </div>
-                        <span className="text-7xl font-black text-white tabular-nums">{data.stats.activeOccurrences}</span>
+                        <span className="text-7xl font-black text-slate-800 dark:text-white tabular-nums">{data.stats.activeOccurrences}</span>
                     </div>
 
-                    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex-1 flex flex-col justify-center gap-2">
-                        <div className="flex items-center gap-4 mb-2 text-indigo-400">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-3xl shadow-md flex-1 flex flex-col justify-center gap-2">
+                        <div className="flex items-center gap-4 mb-2 text-indigo-500 dark:text-indigo-400">
                             <Droplets size={32} />
                             <span className="text-xs font-black uppercase tracking-[3px]">Média 24H (mm)</span>
                         </div>
-                        <span className="text-7xl font-black text-white tabular-nums">
+                        <span className="text-7xl font-black text-slate-800 dark:text-white tabular-nums">
                             {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0'}
                         </span>
                     </div>
                 </div>
 
                 {/* Right Map Column */}
-                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden relative">
+                <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-md overflow-hidden relative">
                     <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                         {mapStyle === 'street' ? (
                             <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" /> // Dark mode tiles for TV
@@ -697,7 +693,7 @@ const WebViewDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode, onOpenEventLog
+    chartMode, setChartMode
 }) => {
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
     const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
@@ -722,13 +718,7 @@ const WebViewDashboardView = ({
                         </h2>
                         <div className="flex gap-3">
                             <button
-                                onClick={onOpenEventLog}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-100/80 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
-                            >
-                                <Bell size={16} className="text-blue-500" /> Eventos
-                            </button>
-                            <button
-                                onClick={() => navigate('/?tvMode=true')}
+                                onClick={() => window.open('/?tvMode=true', '_blank')}
                                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
                             >
                                 <MonitorPlay size={16} /> Modo TV
@@ -1076,7 +1066,7 @@ const WebViewDashboardView = ({
 
                 {/* --- 📉 3. BOTTOM SUMMARY ROW --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left Column (Sync & Vistorias) */}
+                    {/* Left Column (Sync & Event Log) */}
                     <div className="lg:col-span-8 flex flex-col gap-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
                             {/* Sync Summary */}
@@ -1091,16 +1081,9 @@ const WebViewDashboardView = ({
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Forçar sincronização</span>
                             </div>
 
-                            {/* Vistorias Summary */}
-                            <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all justify-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500 group-hover:scale-110 transition-transform">
-                                        <ClipboardList size={18} />
-                                    </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Vistorias</span>
-                                </div>
-                                <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{data.stats.totalVistorias}</div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Total Computado</span>
+                            {/* Event Log Card (Replaces Vistoria Card block) */}
+                            <div className="flex flex-col border border-transparent">
+                                <EventLogCard data={data} rainfall={rainfall} cemadenAlerts={cemadenAlerts} />
                             </div>
                         </div>
                     </div>
@@ -1149,7 +1132,6 @@ const Dashboard = () => {
     const [mapStyle, setMapStyle] = useState('street')
     const [climateLoading, setClimateLoading] = useState(true)
     const [pluvioLoading, setPluvioLoading] = useState(true)
-    const [showEventLog, setShowEventLog] = useState(false)
 
     const statusInfo = useMemo(() => {
         if (climateLoading) {
@@ -1496,12 +1478,11 @@ const Dashboard = () => {
         handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
         showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
         viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-        chartMode, setChartMode, onOpenEventLog: () => setShowEventLog(true)
+        chartMode, setChartMode
     };
 
     return (
         <>
-            <EventLogDrawer open={showEventLog} onClose={() => setShowEventLog(false)} data={data} rainfall={rainfall} cemadenAlerts={cemadenAlerts} />
             {isMobile ? <MobileDashboardView {...commonProps} /> : <WebViewDashboardView {...commonProps} />}
 
             {/* Global Modals */}
