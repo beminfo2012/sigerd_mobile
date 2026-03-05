@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { LOGO_BASE64 } from './logoBase64';
 
-export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, mapElement, timeframeLabel = 'Todo o Período', humanitarianData = null, shouldShare = false, reportType = 'vistorias') => {
+export const generateSituationalReport = async (dashboardData, weatherData, pluviometerData, humanitarianData = null, timeframeLabel = 'Todo o Período', mapElement = null, shouldShare = false, reportType = 'vistorias') => {
     // Create a temporary container for the PDF content
     const container = document.createElement('div');
     container.style.position = 'absolute';
@@ -193,7 +193,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                                     <div style="display: flex; justify-content: space-between; background: #f8fafc; padding: 12px; border-radius: 12px;">
                                         <div style="text-align: center;">
                                             <div style="font-size: 9px; font-weight: 800; color: #94a3b8; margin-bottom: 4px;">PRECIPITAÇÃO</div>
-                                            <div style="font-size: 14px; font-weight: 900; color: #3b82f6;">${weatherData.daily[0].rainProb}%</div>
+                                            <div style="font-size: 14px; font-weight: 900; color: #3b82f6;">${weatherData.daily && weatherData.daily[0] ? weatherData.daily[0].rainProb : 0}%</div>
                                         </div>
                                         <div style="text-align: center;">
                                             <div style="font-size: 9px; font-weight: 800; color: #94a3b8; margin-bottom: 4px;">ACUL. 1H</div>
@@ -292,7 +292,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                         </div>
                         <div style="background: #f0f9ff; border: 1px solid #e0f2fe; border-radius: 16px; padding: 15px; text-align: center;">
                             <div style="font-size: 10px; font-weight: 800; color: #0369a1; text-transform: uppercase;">Pessoas Abrigadas</div>
-                            <div style="font-size: 24px; font-weight: 900; color: #0c4a6e;">${humanitarianData.occupants?.filter(o => o.status !== 'exited').length || 0}</div>
+                            <div style="font-size: 24px; font-weight: 900; color: #0c4a6e;">${humanitarianData.occupants?.filter(o => o.status !== 'exited')?.length || 0}</div>
                         </div>
                         <div style="background: #fdf2f8; border: 1px solid #fce7f3; border-radius: 16px; padding: 15px; text-align: center;">
                             <div style="font-size: 10px; font-weight: 800; color: #9d174d; text-transform: uppercase;">Itens de Estoque</div>
@@ -362,15 +362,15 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
         }
 
         const canvas = await html2canvas(container, {
-            scale: 2.5, // Even higher scale for crisp output
+            scale: 2.0, // Scale 2.0 is safer for memory and usually enough
             useCORS: true,
-            logging: false,
+            logging: true, // Internal logging for debug
             backgroundColor: '#ffffff',
             windowWidth: 840,
-            allowTaint: true
+            // allowTaint: true - REMOVED: this can prevent toDataURL if non-CORS images are present
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgData = canvas.toDataURL('image/jpeg', 0.90);
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -383,14 +383,15 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
 
-        while (heightLeft >= 0) {
+        while (heightLeft > 0) {
             position = heightLeft - imgHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pdfHeight;
         }
 
-        // OUTPUT FILENAME MUST BE: (Rel. Situacional).pdf
+        // Create the PDF Blob for sharing or viewing
+        const blob = pdf.output('blob');
         const fileName = `(Rel. Situacional).pdf`;
 
         // 1. ATTEMPT NATIVE SHARE (Web Share API)
@@ -426,9 +427,11 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
         }
 
     } catch (error) {
-        console.error("Error generating situational report:", error);
-        alert("Erro ao gerar relatório PDF.");
+        console.error("CRITICAL ERROR generating situational report PDF:", error);
+        alert("Erro ao gerar relatório PDF. Verifique se o navegador permitiu a criação do arquivo.");
     } finally {
-        document.body.removeChild(container);
+        if (container && container.parentNode) {
+            document.body.removeChild(container);
+        }
     }
 };
