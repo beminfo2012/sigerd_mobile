@@ -15,6 +15,7 @@ import {
     getRemoteVistoriasCache, pullAllData, resetDatabase, getManualReadings
 } from '../../services/db'
 import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
+import { getShelters, getOccupants, getInventory } from '../../services/shelterDb'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService } from '../../services/cemaden'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
@@ -1478,8 +1479,16 @@ const Dashboard = () => {
                 locations: finalLocations
             };
 
+            // Fetch Humanitarian Data for complete report
+            const [shelters, occupants, inventory] = await Promise.all([
+                getShelters().catch(() => []),
+                getOccupants().catch(() => []),
+                getInventory().catch(() => [])
+            ]);
+            const humanitarianData = { shelters, occupants, inventory };
+
             // Generate report with current dashboard data
-            await generateSituationalReport(reportData, weather, [], null, label, null, false, viewMode);
+            await generateSituationalReport(reportData, weather, rainfall || [], humanitarianData, label, null, false, viewMode);
 
             setShowReportMenu(false);
             toast.success('Pronto!', 'Relatório gerado.');
