@@ -295,7 +295,7 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
                     </MapContainer>
 
                     {/* TV Legend */}
-                    <div className="absolute bottom-8 right-8 z-[1000] bg-slate-900/95 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-slate-700 text-xs font-black text-white uppercase tracking-widest space-y-4">
+                    <div className="absolute bottom-8 right-8 z-[1000] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl p-6 rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700/50 text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest space-y-4">
                         <div className="mb-2 text-[10px] text-slate-400">LEGENDA DO MAPA ({viewMode.toUpperCase()})</div>
                         {viewMode === 'ocorrencias' ? (
                             <>
@@ -989,7 +989,7 @@ const WebViewDashboardView = ({
                                 ))}
                             </MapContainer>
                             {/* Standard Web Legend */}
-                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl p-3.5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
+                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl p-3.5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
                                 <div className="mb-1 text-[8px] text-slate-400">LEGENDA DO MAPA</div>
                                 {viewMode === 'ocorrencias' ? (
                                     <>
