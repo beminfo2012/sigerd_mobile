@@ -86,6 +86,7 @@ const processLocations = (records) => {
                 id: v.id,
                 formattedId: v.ocorrencia_id_format || v.ocorrencia_id || v.vistoria_id || v.vistoriaId || (v.id ? String(v.id).split('-')[0].toUpperCase() : ''),
                 lat, lng, risk: category,
+                nivelRisco: v.nivel_risco || v.nivelRisco || 'Baixo',
                 status: v.status || 'Pendente',
                 details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : category,
                 date: v.created_at || v.data_hora || new Date().toISOString()
@@ -285,8 +286,8 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
                                     color: '#fff',
                                     fillColor: viewMode === 'ocorrencias'
                                         ? (loc.status === 'Em Atendimento' ? '#f59e0b' : loc.status === 'Pendente' ? '#ef4444' : '#3b82f6')
-                                        : (String(loc.risk).includes('Alto') ? '#ef4444' : '#f97316'),
-                                    fillOpacity: 0.9, weight: 3
+                                        : (loc.nivelRisco === 'Iminente' ? '#dc2626' : loc.nivelRisco === 'Alto' ? '#ea580c' : loc.nivelRisco === 'Médio' ? '#f59e0b' : '#10b981'),
+                                    fillOpacity: 1, weight: 3
                                 }}
                             >
                                 <Popup><div className="font-bold text-sm p-1">{loc.risk} - {loc.status}</div></Popup>
@@ -294,8 +295,7 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
                         ))}
                     </MapContainer>
 
-                    {/* TV Legend */}
-                    <div className="absolute bottom-8 right-8 z-[1000] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl p-6 rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700/50 text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest space-y-4">
+                    <div className="absolute bottom-8 right-8 z-[1000] bg-white/20 dark:bg-slate-900/20 backdrop-blur-3xl p-6 rounded-3xl shadow-2xl border border-white/10 dark:border-slate-700/30 text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest space-y-4">
                         <div className="mb-2 text-[10px] text-slate-400">LEGENDA DO MAPA ({viewMode.toUpperCase()})</div>
                         {viewMode === 'ocorrencias' ? (
                             <>
@@ -305,8 +305,10 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
                             </>
                         ) : (
                             <>
-                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-red-500 border-2 border-white"></div>Risco Alto / Crítico</div>
-                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-orange-500 border-2 border-white"></div>Risco Médio / Baixo</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-red-600 border-2 border-white"></div>Risco Iminente</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-orange-600 border-2 border-white"></div>Risco Alto</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-amber-500 border-2 border-white"></div>Risco Médio</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 rounded-full bg-emerald-500 border-2 border-white"></div>Risco Baixo</div>
                             </>
                         )}
                     </div>
@@ -989,7 +991,7 @@ const WebViewDashboardView = ({
                                 ))}
                             </MapContainer>
                             {/* Standard Web Legend */}
-                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl p-3.5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
+                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/20 dark:bg-slate-900/20 backdrop-blur-3xl p-3.5 rounded-2xl shadow-xl border border-white/10 dark:border-slate-700/30 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
                                 <div className="mb-1 text-[8px] text-slate-400">LEGENDA DO MAPA</div>
                                 {viewMode === 'ocorrencias' ? (
                                     <>
@@ -1001,8 +1003,10 @@ const WebViewDashboardView = ({
                                     </>
                                 ) : (
                                     <>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-500"></div>Risco Alto / Crítico</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-500"></div>Risco Médio / Baixo</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Risco Iminente</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Risco Alto</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-500"></div>Risco Médio</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-emerald-500"></div>Risco Baixo</div>
                                     </>
                                 )}
                             </div>
