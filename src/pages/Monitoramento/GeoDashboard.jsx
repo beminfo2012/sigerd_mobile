@@ -106,7 +106,7 @@ const GeoDashboard = () => {
             {/* Header / Controls */}
             <div className="absolute top-3 left-3 right-3 z-[1000] pointer-events-none">
                 <div className="flex flex-col gap-2.5">
-                    <div className="flex justify-between items-center bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-xl pointer-events-auto border border-white">
+                    <div className="flex justify-between items-center bg-white/75 backdrop-blur-xl p-2 rounded-2xl shadow-xl pointer-events-auto border border-white/50">
                         <div className="flex items-center gap-2 min-w-0">
                             {!isFullscreen && (
                                 <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-600 flex-shrink-0">
@@ -145,7 +145,7 @@ const GeoDashboard = () => {
                     </div>
 
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none pointer-events-auto px-1 -mx-1">
-                        <div className="flex bg-white/90 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-white gap-1 shrink-0">
+                        <div className="flex bg-white/75 backdrop-blur-xl p-1.5 rounded-xl shadow-lg border border-white/50 gap-1 shrink-0">
                             <div className="p-1.5 text-slate-400 border-r border-slate-100 px-2 flex items-center gap-1">
                                 <Filter size={14} />
                                 <span className="text-[10px] font-black uppercase tracking-tighter">Filtros</span>
@@ -161,7 +161,7 @@ const GeoDashboard = () => {
                             </select>
                         </div>
 
-                        <div className="flex bg-white/90 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-white gap-1 shrink-0">
+                        <div className="flex bg-white/75 backdrop-blur-xl p-1.5 rounded-xl shadow-lg border border-white/50 gap-1 shrink-0">
                             <div className="p-1.5 text-slate-400 border-r border-slate-100 px-2 flex items-center gap-1">
                                 <Calendar size={14} />
                             </div>

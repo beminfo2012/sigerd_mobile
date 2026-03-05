@@ -128,7 +128,7 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                                     <div style="font-size: 11px; opacity: 0.6; margin-top: 5px;">Mapeamento de riscos e ocorrências no período</div>
                                 </div>
                                 <!-- Legend inside map -->
-                                <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 9px; font-weight: 800; display: flex; flex-direction: column; gap: 6px;">
+                                <div style="position: absolute; bottom: 15px; left: 15px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); padding: 10px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-size: 9px; font-weight: 800; display: flex; flex-direction: column; gap: 6px;">
                                     <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></div> OCORRÊNCIA</div>
                                     <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; background: #f59e0b; border-radius: 50%;"></div> ÁREA DE RISCO</div>
                                     <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%;"></div> PLUVIÔMETRO</div>

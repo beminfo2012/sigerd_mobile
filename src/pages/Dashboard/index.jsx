@@ -989,7 +989,7 @@ const WebViewDashboardView = ({
                                 ))}
                             </MapContainer>
                             {/* Standard Web Legend */}
-                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 dark:bg-slate-800/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
+                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl p-3.5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
                                 <div className="mb-1 text-[8px] text-slate-400">LEGENDA DO MAPA</div>
                                 {viewMode === 'ocorrencias' ? (
                                     <>
