@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../../services/supabase'
-import { Fingerprint, User, Lock, Info, ShieldAlert, LogIn, Loader2 } from 'lucide-react'
+import { Fingerprint, User, Lock, Info, ShieldAlert, LogIn, Loader2, Eye, EyeOff } from 'lucide-react'
 
 const MobileLoginView = ({
-    username, setUsername, password, setPassword, loading, error, handleSubmit, handleBiometricLogin
+    username, setUsername, password, setPassword, loading, error, handleSubmit, handleBiometricLogin, showPassword, setShowPassword
 }) => (
     <div
         className="fixed inset-0 w-screen h-screen flex flex-col justify-center items-center overflow-hidden font-sans"
@@ -62,13 +62,20 @@ const MobileLoginView = ({
                     <div className="relative">
                         <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40" size={20} />
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="Senha"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full h-16 pl-14 pr-6 rounded-2xl bg-[#1e293b]/30 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-white/40 transition-all text-base font-medium"
+                            className="w-full h-16 pl-14 pr-14 rounded-2xl bg-[#1e293b]/30 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-white/40 transition-all text-base font-medium"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
                     </div>
 
                     {error && (
@@ -110,7 +117,7 @@ const MobileLoginView = ({
 );
 
 const WebLoginView = ({
-    username, setUsername, password, setPassword, loading, error, handleSubmit
+    username, setUsername, password, setPassword, loading, error, handleSubmit, showPassword, setShowPassword
 }) => {
     const [currentBg, setCurrentBg] = useState(0);
     const backgrounds = [
@@ -171,15 +178,15 @@ const WebLoginView = ({
             </div>
 
             {/* Right Side: Professional Dark Login Panel */}
-            <div className="w-full lg:w-[500px] flex flex-col justify-center items-center bg-[#122e65] p-12 relative">
+            <div className="w-full lg:w-[500px] flex flex-col justify-start pt-16 items-center bg-[#122e65] p-12 relative">
                 {/* Ambient glow in background */}
                 <div className="absolute top-1/4 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full"></div>
 
-                <div className="w-full max-w-sm space-y-12 relative z-10">
+                <div className="w-full max-w-sm space-y-10 relative z-10">
                     <div className="flex flex-col items-center gap-6">
                         <img
                             src="/logo_sigerd_new.png"
-                            className="w-24 h-24 object-contain"
+                            className="w-44 h-44 object-contain mb-2"
                             alt="SIGERD"
                             onError={(e) => { e.target.style.display = 'none'; }}
                         />
@@ -191,7 +198,7 @@ const WebLoginView = ({
 
                     <form onSubmit={handleSubmit} className="space-y-8">
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Usuário / E-mail</label>
+                            <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">E-mail</label>
                             <div className="relative group">
                                 <div className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-blue-400 transition-colors">
                                     <User size={18} />
@@ -214,13 +221,20 @@ const WebLoginView = ({
                                     <Lock size={18} />
                                 </div>
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
-                                    className="w-full h-14 pl-16 pr-6 rounded-2xl bg-[#eff3ff] border-none outline-none focus:ring-4 focus:ring-blue-500/20 transition-all font-bold text-[#050a18] placeholder:text-slate-400 shadow-inner"
+                                    className="w-full h-14 pl-16 pr-14 rounded-2xl bg-[#eff3ff] border-none outline-none focus:ring-4 focus:ring-blue-500/20 transition-all font-bold text-[#050a18] placeholder:text-slate-400 shadow-inner"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
 
@@ -268,6 +282,7 @@ const Login = ({ onLogin }) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
+    const [showPassword, setShowPassword] = useState(false)
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 1024)
@@ -353,7 +368,7 @@ const Login = ({ onLogin }) => {
         }
     }
 
-    const commonProps = { username, setUsername, password, setPassword, loading, error, handleSubmit, handleBiometricLogin };
+    const commonProps = { username, setUsername, password, setPassword, loading, error, handleSubmit, handleBiometricLogin, showPassword, setShowPassword };
 
     return isMobile ? <MobileLoginView {...commonProps} /> : <WebLoginView {...commonProps} />;
 }

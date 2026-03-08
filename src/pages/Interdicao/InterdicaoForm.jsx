@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2, Sparkles, Siren, CheckCircle } from 'lucide-react'
+import { Save, Camera, FileText, MapPin, Trash2, Share, ArrowLeft, Crosshair, ShieldAlert, AlertOctagon, User, Upload, X, Edit2, Sparkles, Siren, CheckCircle, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { checkRiskArea } from '../../services/riskAreas'
 import { saveInterdicaoOffline, deleteInterdicaoLocal } from '../../services/db'
@@ -13,7 +13,99 @@ import { UserContext } from '../../App'
 import { refineReportText } from '../../services/ai'
 import ConfirmModal from '../../components/ConfirmModal'
 import bairrosData from '../../../Bairros.json'
-import logradourosData from '../../../Logradouros.json'
+import logradourosDataRaw from '../../../nomesderuas.json'
+
+// Normalize logradouros data
+const logradourosData = logradourosDataRaw
+    .filter(item => item["Logradouro (Rua, Av. e etc)"])
+    .map(item => ({
+        nome: item["Logradouro (Rua, Av. e etc)"].trim(),
+        bairro: item["Bairro"] ? item["Bairro"].trim() : ""
+    }));
+
+const SearchableInput = ({
+    label,
+    value,
+    onChange,
+    options,
+    placeholder,
+    icon: IconComponent,
+    labelClasses,
+    inputClasses
+}) => {
+    const [search, setSearch] = React.useState('');
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    const filteredOptions = options.filter(opt =>
+        opt.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <div className="relative">
+            <label className={labelClasses}>{label}</label>
+            <div className="relative group">
+                {IconComponent && <IconComponent size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />}
+                <div
+                    onClick={() => setIsOpen(true)}
+                    className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[56px] flex items-center justify-between pr-4`}
+                >
+                    <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-300 dark:text-slate-600'}>
+                        {value || placeholder}
+                    </span>
+                    <Search size={16} className="text-slate-300" />
+                </div>
+            </div>
+
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
+                                <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                    <X size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    autoFocus
+                                    className={`${inputClasses} pl-12 text-black`}
+                                    placeholder="Comece a digitar para filtrar..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto p-2 pb-20">
+                            {filteredOptions.length > 0 ? (
+                                filteredOptions.map((opt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={`w-full text-left p-4 rounded-2xl font-bold transition-all flex items-center justify-between group mb-1 ${value === opt ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        <span className="flex-1">{opt}</span>
+                                        {value === opt && <CheckCircle size={18} className="ml-2" />}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-10 text-center space-y-2 opacity-50">
+                                    <Search size={32} className="mx-auto text-slate-300" />
+                                    <p className="font-bold text-sm">Nenhum resultado encontrado</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
@@ -53,12 +145,14 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         relatorioTecnico: '',
         recomendacoes: '',
         orgaosAcionados: '',
-        agente: userProfile?.full_name || '',
-        matricula: userProfile?.matricula || '',
+        agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
+        matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
         assinaturaAgente: null,
-        apoioTecnico: { nome: '', crea: '', matricula: '', assinatura: null }
+        apoioTecnico: { nome: '', crea: '', matricula: '', assinatura: null },
+        temApoioTecnico: false
     })
 
+    const [docType, setDocType] = useState('CPF')
     const [showSignaturePad, setShowSignaturePad] = useState(false)
     const [saving, setSaving] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
@@ -68,13 +162,29 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
     const [refining, setRefining] = useState(false)
 
     useEffect(() => {
+        const formatDateTime = (val) => {
+            if (!val) return '';
+            try {
+                const d = new Date(val);
+                if (isNaN(d.getTime())) return val;
+                const pad = (num) => String(num).padStart(2, '0');
+                const year = d.getFullYear();
+                const month = pad(d.getMonth() + 1);
+                const day = pad(d.getDate());
+                const hours = pad(d.getHours());
+                const minutes = pad(d.getMinutes());
+                return `${year}-${month}-${day}T${hours}:${minutes}`;
+            } catch (e) { return val; }
+        };
+
         if (initialData) {
-            // Map DB fields back to form state if necessary
-            // For interdicao, the fields seem to match mostly, but let's be careful
             setFormData({
                 ...initialData,
                 interdicaoId: initialData.interdicao_id || initialData.interdicaoId,
-                dataHora: initialData.data_hora || initialData.dataHora,
+                dataHora: formatDateTime(initialData.data_hora || initialData.dataHora || initialData.created_at),
+                municipio: initialData.municipio || 'Santa Maria de Jetibá',
+                bairro: initialData.bairro || initialData.localidade || '',
+                endereco: initialData.endereco || initialData.logradouro || '',
                 tipoAlvo: initialData.tipo_alvo || initialData.tipoAlvo,
                 tipoAlvoEspecificar: initialData.tipo_alvo_especificar || initialData.tipoAlvoEspecificar,
                 responsavelNome: initialData.responsavel_nome || initialData.responsavelNome,
@@ -101,14 +211,14 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     }
                     return a;
                 })(),
-                fotos: (initialData.fotos || []).map((f, i) =>
+                fotos: (Array.isArray(initialData.fotos) ? initialData.fotos : []).map((f, i) =>
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
                         : { ...f, id: f.id || `photo-${i}`, legenda: f.legenda || '' }
-                )
+                ),
+                temApoioTecnico: !!(initialData.apoioTecnico?.nome || initialData.apoio_tecnico?.nome)
             })
 
-            // Check Risk Area on Load
             if (initialData.latitude && initialData.longitude) {
                 const riskInfo = checkRiskArea(initialData.latitude, initialData.longitude);
                 setDetectedRiskArea(riskInfo);
@@ -117,6 +227,23 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
             getNextId()
         }
     }, [initialData])
+
+    // Update agent info when user profile loads
+    useEffect(() => {
+        if (userProfile && (!formData.agente || !formData.matricula)) {
+            setFormData(prev => ({
+                ...prev,
+                agente: prev.agente || userProfile.full_name || '',
+                matricula: prev.matricula || userProfile.matricula || ''
+            }))
+        }
+    }, [userProfile])
+
+    // Persist agent info
+    useEffect(() => {
+        if (formData.agente) localStorage.setItem('lastAgentName', formData.agente)
+        if (formData.matricula) localStorage.setItem('lastAgentMatricula', formData.matricula)
+    }, [formData.agente, formData.matricula])
 
     // Listen for deletion events to recalculate ID
     useEffect(() => {
@@ -328,18 +455,18 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
     }
 
     // Styles
-    const inputClasses = "w-full bg-slate-50 p-3.5 rounded-xl border border-gray-200 outline-none focus:border-[#2a5299] focus:ring-2 focus:ring-[#2a5299]/20 transition-all text-gray-700 font-medium placeholder:text-gray-400"
-    const labelClasses = "text-sm text-[#2a5299] font-bold block mb-1.5 uppercase tracking-wide opacity-90"
-    const sectionClasses = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-5"
+    const inputClasses = "w-full bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-gray-200 dark:border-slate-700 outline-none focus:border-[#2a5299] dark:focus:border-blue-500 focus:ring-2 focus:ring-[#2a5299]/20 transition-all text-gray-700 dark:text-slate-200 font-medium placeholder:text-gray-400"
+    const labelClasses = "text-sm text-[#2a5299] dark:text-blue-400 font-bold block mb-1.5 uppercase tracking-wide opacity-90"
+    const sectionClasses = "bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 space-y-5"
 
     return (
-        <div className="bg-slate-50 min-h-screen pb-32 font-sans">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-32 font-sans transition-colors duration-300">
             {/* Header */}
-            <div className="bg-white px-5 py-4 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] sticky top-0 z-10 border-b border-gray-100 flex items-center gap-3">
-                <button onClick={onBack} className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full">
+            <div className="bg-white dark:bg-slate-900 px-5 py-4 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] sticky top-0 z-10 border-b border-gray-100 dark:border-slate-800 flex items-center gap-3">
+                <button onClick={onBack} className="p-2 -ml-2 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full">
                     <ArrowLeft size={24} />
                 </button>
-                <h1 className="text-2xl font-black text-gray-800 tracking-tight">
+                <h1 className="text-2xl font-black text-gray-800 dark:text-white tracking-tight">
                     {initialData ? (formData.interdicaoId || 'Interdição') : 'Nova Interdição'}
                 </h1>
             </div>
@@ -359,115 +486,168 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
 
             <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-xl mx-auto">
 
-                {/* 1. Identificação */}
+                {/* 1. SEÇÃO: Identificação */}
                 <section className={sectionClasses}>
-                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
-                        <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                        1. Identificação
-                    </h2>
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">1. Identificação</h2>
+                    </div>
 
                     <div className="grid grid-cols-2 gap-5">
                         <div className="col-span-2">
                             <label className={labelClasses}>Nº Interdição</label>
-                            <div className={`text-lg font-black p-3.5 rounded-xl border flex justify-between items-center shadow-inner ${formData.interdicaoId ? 'bg-blue-50/50 text-[#2a5299] border-blue-100/50' : 'bg-orange-50/50 text-orange-600 border-orange-100/50 italic text-base'}`}>
+                            <div className={`text-lg font-black p-3.5 rounded-xl border flex justify-between items-center shadow-inner ${formData.interdicaoId ? 'bg-blue-50/50 dark:bg-blue-900/20 text-[#2a5299] dark:text-blue-300 border-blue-100/50 dark:border-blue-800/50' : 'bg-orange-50/50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border-orange-100/50 dark:border-orange-800/50 italic text-base'}`}>
                                 {formData.interdicaoId || 'Pendente (Gerado no Sincronismo)'}
                             </div>
                         </div>
+
                         <div className="col-span-2">
                             <label className={labelClasses}>Data e Hora</label>
                             <input type="datetime-local" value={formData.dataHora} onChange={e => handleChange('dataHora', e.target.value)} className={inputClasses} />
                         </div>
-                        <div>
-                            <label className={labelClasses}>Município</label>
-                            <input type="text" value={formData.municipio} readOnly className={`${inputClasses} bg-gray-100 text-gray-500`} />
-                        </div>
-                        <div>
-                            <label className={labelClasses}>Bairro / Localidade</label>
-                            <input
-                                type="text"
-                                list="bairros-list"
-                                value={formData.bairro}
-                                onChange={e => handleChange('bairro', e.target.value)}
-                                className={inputClasses}
-                                required
-                                placeholder="Digite ou selecione..."
-                            />
-                            <datalist id="bairros-list">
-                                {bairrosData.map(b => b.nome).sort().map(nome => (
-                                    <option key={nome} value={nome} />
-                                ))}
-                            </datalist>
-                        </div>
+
                         <div className="col-span-2">
-                            <label className={labelClasses}>Endereço Completo</label>
-                            <input
-                                type="text"
-                                list="logradouros-interdicao-list"
-                                value={formData.endereco}
-                                onChange={e => handleChange('endereco', e.target.value)}
-                                className={inputClasses}
-                                required
-                                placeholder="Rua, número, ponto de referência..."
-                            />
-                            <datalist id="logradouros-interdicao-list">
-                                {logradourosData.map(l => l.nome).sort().map(nome => (
-                                    <option key={nome} value={nome} />
+                            <label className={labelClasses}>Tipo de Alvo</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['Imóvel', 'Via pública', 'Área pública', 'Outro'].map(t => (
+                                    <button key={t} type="button" onClick={() => handleChange('tipoAlvo', t)} className={`p-3 rounded-xl text-xs font-bold border transition-all ${formData.tipoAlvo === t ? 'bg-[#2a5299] border-[#2a5299] dark:bg-blue-600 dark:border-blue-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400'}`}>
+                                        {t}
+                                    </button>
                                 ))}
-                            </datalist>
+                            </div>
+                            {formData.tipoAlvo === 'Outro' && (
+                                <input type="text" placeholder="Especifique..." value={formData.tipoAlvoEspecificar} onChange={e => handleChange('tipoAlvoEspecificar', e.target.value)} className={`${inputClasses} mt-2 animate-in slide-in-from-top-2 duration-300`} />
+                            )}
                         </div>
-                    </div>
-
-                    <div>
-                        <label className={labelClasses}>Tipo de Alvo</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {['Imóvel', 'Via pública', 'Área pública', 'Outro'].map(t => (
-                                <button key={t} type="button" onClick={() => handleChange('tipoAlvo', t)} className={`p-3 rounded-xl text-xs font-bold border transition-all ${formData.tipoAlvo === t ? 'bg-[#2a5299] border-[#2a5299] text-white shadow-md' : 'bg-white border-slate-100 text-slate-500'}`}>
-                                    {t}
-                                </button>
-                            ))}
-                        </div>
-                        {formData.tipoAlvo === 'Outro' && (
-                            <input type="text" placeholder="Especifique..." value={formData.tipoAlvoEspecificar} onChange={e => handleChange('tipoAlvoEspecificar', e.target.value)} className={`${inputClasses} mt-2 animate-in slide-in-from-top-2 duration-300`} />
-                        )}
                     </div>
                 </section>
 
-                {/* 2. Geolocalização */}
+                {/* 2. SEÇÃO: Responsável Técnico */}
                 <section className={sectionClasses}>
-                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
-                        <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                        2. Localização
-                    </h2>
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <MapPin size={20} className="absolute left-4 top-4 text-[#2a5299]" />
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">2. Responsável Técnico</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label className={labelClasses}>Agente</label>
                             <input
                                 type="text"
-                                className={`${inputClasses} pl-12 bg-gray-100 text-gray-500`}
-                                value={formData.coordenadas}
-                                readOnly
-                                placeholder="Lat, Long"
+                                className={inputClasses}
+                                value={formData.agente}
+                                onChange={e => handleChange('agente', e.target.value)}
+                                placeholder="Nome do Agente"
                             />
                         </div>
-                        <button
-                            type="button"
-                            onClick={getLocation}
-                            className={`p-3.5 rounded-xl shadow-lg active:scale-95 transition-all text-white flex items-center justify-center gap-2 ${gettingLoc ? 'bg-gray-400' : 'bg-[#2a5299] hover:bg-[#1e3c72]'}`}
-                            disabled={gettingLoc}
-                        >
-                            <Crosshair size={24} className={gettingLoc ? 'animate-spin' : ''} />
-                            {gettingLoc ? 'Buscando...' : ''}
-                        </button>
+                        <div>
+                            <label className={labelClasses}>Matrícula</label>
+                            <input
+                                type="text"
+                                className={inputClasses}
+                                value={formData.matricula}
+                                onChange={e => handleChange('matricula', e.target.value)}
+                                placeholder="Matrícula"
+                            />
+                        </div>
                     </div>
                 </section>
 
-                {/* 3. Identificação do Responsável */}
+                {/* 3. SEÇÃO: Localização */}
+                <section className={sectionClasses}>
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">3. Localização</h2>
+                    </div>
+
+                    <div className="space-y-5">
+                        <div className="space-y-2">
+                            <label className={labelClasses}>Coordenadas (Lat, Lng)</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <MapPin size={20} className="absolute left-4 top-4 text-[#2a5299]" />
+                                    <input
+                                        type="text"
+                                        className={inputClasses}
+                                        style={{ paddingLeft: '3rem' }}
+                                        value={formData.coordenadas}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            const parts = val.split(',');
+                                            let updates = { coordenadas: val };
+                                            if (parts.length >= 2) {
+                                                const lat = parseFloat(parts[0].trim());
+                                                const lng = parseFloat(parts[1].trim());
+                                                if (!isNaN(lat) && !isNaN(lng)) {
+                                                    updates.latitude = lat;
+                                                    updates.longitude = lng;
+                                                }
+                                            }
+                                            setFormData(prev => ({ ...prev, ...updates }));
+                                        }}
+                                        placeholder="-20.1234, -40.1234"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={getLocation}
+                                    className={`p-3.5 rounded-xl shadow-lg active:scale-95 transition-all text-white flex items-center justify-center gap-2 ${gettingLoc ? 'bg-gray-400' : 'bg-[#2a5299] hover:bg-[#1e3c72]'}`}
+                                    disabled={gettingLoc}
+                                >
+                                    <Crosshair size={24} className={gettingLoc ? 'animate-spin' : ''} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-5">
+                            <div>
+                                <label className={labelClasses}>Município</label>
+                                <input type="text" value={formData.municipio} readOnly className={`${inputClasses} bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500`} />
+                            </div>
+                            <div>
+                                <SearchableInput
+                                    label="Bairro / Localidade"
+                                    placeholder="Selecione o bairro..."
+                                    value={formData.bairro}
+                                    onChange={val => handleChange('bairro', val)}
+                                    options={bairrosData.map(b => b.nome).sort()}
+                                    labelClasses={labelClasses}
+                                    inputClasses={inputClasses}
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <SearchableInput
+                                    label="Endereço da Ocorrência"
+                                    placeholder="Nome da rua, avenida..."
+                                    value={formData.endereco}
+                                    onChange={val => {
+                                        const found = logradourosData.find(l => l.nome.toLowerCase() === val.toLowerCase());
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            endereco: val,
+                                            bairro: found ? found.bairro : prev.bairro
+                                        }));
+                                    }}
+                                    options={logradourosData
+                                        .filter(l => !formData.bairro || l.bairro === formData.bairro)
+                                        .map(l => l.nome)
+                                        .sort()}
+                                    icon={MapPin}
+                                    labelClasses={labelClasses}
+                                    inputClasses={inputClasses}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                {/* 4. SEÇÃO: Responsável / Proprietário */}
                 {formData.tipoAlvo !== 'Via pública' && (
                     <section className={`${sectionClasses} animate-in fade-in duration-500`}>
-                        <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
-                            <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                            3. Responsável / Proprietário
-                        </h2>
+                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">4. Responsável / Proprietário</h2>
+                        </div>
 
                         <div className="space-y-4">
                             <div>
@@ -476,8 +656,53 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className={labelClasses}>CPF/CNPJ</label>
-                                    <input type="tel" inputMode="numeric" pattern="[0-9]*" value={formData.responsavelCpf} onChange={e => handleChange('responsavelCpf', e.target.value.replace(/\D/g, ''))} className={inputClasses} />
+                                    <div className="flex justify-between items-center px-1">
+                                        <label className={labelClasses}>{docType}</label>
+                                        <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 mb-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDocType('CPF')
+                                                    handleChange('responsavelCpf', '')
+                                                }}
+                                                className={`text-[9px] px-2 py-0.5 rounded font-black transition-all ${docType === 'CPF' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-slate-500'}`}
+                                            >
+                                                CPF
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setDocType('CNPJ')
+                                                    handleChange('responsavelCpf', '')
+                                                }}
+                                                className={`text-[9px] px-2 py-0.5 rounded font-black transition-all ${docType === 'CNPJ' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 dark:text-slate-500'}`}
+                                            >
+                                                CNPJ
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="tel"
+                                        className={inputClasses}
+                                        placeholder={docType === 'CPF' ? "000.000.000-00" : "00.000.000/0000-00"}
+                                        value={formData.responsavelCpf}
+                                        onChange={e => {
+                                            let v = e.target.value.replace(/\D/g, '');
+                                            if (docType === 'CPF') {
+                                                if (v.length > 11) v = v.slice(0, 11);
+                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                            } else {
+                                                if (v.length > 14) v = v.slice(0, 14);
+                                                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                                                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                                                v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                                                v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                                            }
+                                            handleChange('responsavelCpf', v);
+                                        }}
+                                    />
                                 </div>
                                 <div>
                                     <label className={labelClasses}>Telefone</label>
@@ -492,18 +717,18 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     </section>
                 )}
 
-                {/* 4. Caracterização do Risco */}
+                {/* 5. SEÇÃO: Caracterização do Risco */}
                 <section className={sectionClasses}>
-                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
-                        <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                        4. Caracterização do Risco
-                    </h2>
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">5. Caracterização do Risco</h2>
+                    </div>
 
                     <div>
                         <label className={labelClasses}>Tipo de Ocorrência (Múltiplo)</label>
                         <div className="flex flex-wrap gap-2">
                             {['Risco estrutural', 'Deslizamento', 'Alagamento', 'Erosão', 'Incêndio', 'Colapso parcial', 'Colapso total', 'Outro'].map(r => (
-                                <button key={r} type="button" onClick={() => toggleRisco(r)} className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${formData.riscoTipo.includes(r) ? 'bg-red-600 border-red-600 text-white shadow-sm' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>
+                                <button key={r} type="button" onClick={() => toggleRisco(r)} className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${formData.riscoTipo.includes(r) ? 'bg-red-600 border-red-600 dark:bg-red-700 dark:border-red-700 text-white shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'}`}>
                                     {r}
                                 </button>
                             ))}
@@ -513,9 +738,22 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     <div>
                         <label className={labelClasses}>Grau de Risco</label>
                         <div className="grid grid-cols-4 gap-2">
-                            {['Baixo', 'Médio', 'Alto', 'Imediato'].map(g => (
-                                <button key={g} type="button" onClick={() => handleChange('riscoGrau', g)} className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all border ${formData.riscoGrau === g ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-100 text-slate-400'}`}>
-                                    {g}
+                            {[
+                                { id: 'Baixo', color: 'bg-emerald-500' },
+                                { id: 'Médio', color: 'bg-amber-500' },
+                                { id: 'Alto', color: 'bg-orange-500' },
+                                { id: 'Imediato', color: 'bg-red-600' }
+                            ].map(g => (
+                                <button
+                                    key={g.id}
+                                    type="button"
+                                    onClick={() => handleChange('riscoGrau', g.id)}
+                                    className={`py-3 rounded-xl text-[10px] font-black uppercase transition-all border ${formData.riscoGrau === g.id
+                                        ? `${g.color} border-transparent text-white shadow-lg scale-105`
+                                        : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-slate-200 dark:hover:border-slate-600'
+                                        }`}
+                                >
+                                    {g.id}
                                 </button>
                             ))}
                         </div>
@@ -544,19 +782,31 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     </div>
                 </section>
 
-                {/* 5. Medida Administrativa */}
+                {/* 6. SEÇÃO: Medida Administrativa */}
                 <section className={sectionClasses}>
-                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
-                        <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                        5. Medida Administrativa
-                    </h2>
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">6. Medida Administrativa</h2>
+                    </div>
 
                     <div>
                         <label className={labelClasses}>Tipo de Interdição</label>
                         <div className="grid grid-cols-3 gap-2">
-                            {['Total', 'Parcial', 'Preventiva'].map(m => (
-                                <button key={m} type="button" onClick={() => handleChange('medidaTipo', m)} className={`p-3 rounded-xl text-xs font-bold border transition-all ${formData.medidaTipo === m ? 'bg-amber-500 border-amber-500 text-white shadow-md' : 'bg-white border-slate-100 text-slate-500'}`}>
-                                    {m}
+                            {[
+                                { id: 'Preventiva', color: 'bg-blue-500' },
+                                { id: 'Parcial', color: 'bg-orange-400' },
+                                { id: 'Total', color: 'bg-red-600' }
+                            ].map(m => (
+                                <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() => handleChange('medidaTipo', m.id)}
+                                    className={`p-3 rounded-xl text-xs font-bold border transition-all ${formData.medidaTipo === m.id
+                                        ? `${m.color} border-transparent text-white shadow-lg scale-105`
+                                        : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-200 dark:hover:border-slate-600'
+                                        }`}
+                                >
+                                    {m.id}
                                 </button>
                             ))}
                         </div>
@@ -578,26 +828,26 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         )}
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl border border-red-100">
+                    <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-800/50">
                         <div>
-                            <div className="text-xs font-black text-red-600 uppercase tracking-widest">Evacuação</div>
-                            <div className="text-[10px] font-bold text-red-400">Desocupação imediata?</div>
+                            <div className="text-xs font-black text-red-600 dark:text-red-400 uppercase tracking-widest">Evacuação</div>
+                            <div className="text-[10px] font-bold text-red-400 dark:text-red-500">Desocupação imediata?</div>
                         </div>
-                        <div className="flex bg-white p-1 rounded-xl shadow-inner border border-red-100">
-                            <button type="button" onClick={() => handleChange('evacuacaoNecessaria', true)} className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${formData.evacuacaoNecessaria ? 'bg-red-600 text-white shadow-md' : 'text-slate-400'}`}>SIM</button>
-                            <button type="button" onClick={() => handleChange('evacuacaoNecessaria', false)} className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${!formData.evacuacaoNecessaria ? 'bg-slate-100 text-slate-600' : 'text-slate-400'}`}>NÃO</button>
+                        <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl shadow-inner border border-red-100 dark:border-red-800/30">
+                            <button type="button" onClick={() => handleChange('evacuacaoNecessaria', true)} className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${formData.evacuacaoNecessaria ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 dark:text-slate-500'}`}>SIM</button>
+                            <button type="button" onClick={() => handleChange('evacuacaoNecessaria', false)} className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${!formData.evacuacaoNecessaria ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>NÃO</button>
                         </div>
                     </div>
                 </section>
 
-                {/* 6. Registro Fotográfico */}
+                {/* 7. SEÇÃO: Registro Fotográfico */}
                 <section className={sectionClasses}>
-                    <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-2">
-                        <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                            <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                            6. Registro Fotográfico
-                        </h2>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{formData.fotos.length} fotos</span>
+                    <div className="flex justify-between items-center border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">7. Registro Fotográfico</h2>
+                        </div>
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full font-black uppercase">{formData.fotos.length} fotos</span>
                     </div>
 
                     <div className="grid grid-cols-4 gap-3 justify-items-center">
@@ -626,12 +876,12 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     </div>
                 </section>
 
-                {/* 7. Observações Técnicas */}
+                {/* 8. SEÇÃO: Relatório e Recomendações */}
                 <section className={sectionClasses}>
-                    <h2 className="font-bold text-gray-800 text-lg border-b border-gray-100 pb-3 mb-2 flex items-center gap-2">
-                        <span className="w-1 h-6 bg-[#2a5299] rounded-full"></span>
-                        7. Relatório e Recomendações
-                    </h2>
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">8. Relatório e Recomendações</h2>
+                    </div>
 
                     <div>
                         <div className="flex justify-between items-center mb-1.5">
@@ -648,8 +898,16 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         </div>
                         <textarea rows="2" value={formData.recomendacoes} onChange={e => handleChange('recomendacoes', e.target.value)} className={inputClasses} placeholder="O que o morador/município deve fazer..." />
                     </div>
+                </section>
 
-                    <div className="pt-4 border-t border-gray-100 space-y-4">
+                {/* 9. SEÇÃO: Assinaturas */}
+                <section className={sectionClasses}>
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">9. Assinaturas</h2>
+                    </div>
+
+                    <div className="pt-4 space-y-4">
                         <div>
                             <div className="flex justify-between items-center mb-1.5">
                                 <label className={labelClasses} style={{ marginBottom: 0 }}>Assinatura do Agente</label>
@@ -669,71 +927,86 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                                     setActiveSignatureType('agente')
                                     setShowSignaturePad(true)
                                 }}
-                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
+                                className="h-32 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] dark:hover:border-blue-500 transition-colors"
                             >
                                 {formData.assinaturaAgente ? (
                                     <img src={formData.assinaturaAgente} className="h-full w-auto object-contain" />
                                 ) : (
                                     <div className="text-center">
-                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Tocar para Assinar (Agente)</span>
+                                        <Edit2 size={24} className="mx-auto text-slate-300 dark:text-slate-600 group-hover:text-[#2a5299] dark:group-hover:text-blue-500" />
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Tocar para Assinar (Agente)</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-gray-100">
-                            <label className={labelClasses}>Apoio Técnico (Obras/Engenharia)</label>
-                            <div className="space-y-3 mb-4">
-                                <input
-                                    type="text"
-                                    placeholder="Nome do Técnico"
-                                    className={`${inputClasses} text-sm py-2`}
-                                    value={formData.apoioTecnico.nome}
-                                    onChange={e => setFormData(prev => ({
-                                        ...prev,
-                                        apoioTecnico: { ...prev.apoioTecnico, nome: e.target.value }
-                                    }))}
-                                />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="CREA/CAU"
-                                        className={`${inputClasses} text-sm py-2`}
-                                        value={formData.apoioTecnico.crea}
-                                        onChange={e => setFormData(prev => ({
-                                            ...prev,
-                                            apoioTecnico: { ...prev.apoioTecnico, crea: e.target.value }
-                                        }))}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Matrícula"
-                                        className={`${inputClasses} text-sm py-2`}
-                                        value={formData.apoioTecnico.matricula}
-                                        onChange={e => setFormData(prev => ({
-                                            ...prev,
-                                            apoioTecnico: { ...prev.apoioTecnico, matricula: e.target.value }
-                                        }))}
-                                    />
+                        <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
+                            <div className="flex items-center justify-between mb-4 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/30">
+                                <div>
+                                    <div className="text-xs font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">Apoio Técnico</div>
+                                    <div className="text-[10px] font-bold text-blue-400 dark:text-blue-500">Houve participação de técnico/engenheiro?</div>
+                                </div>
+                                <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl shadow-inner border border-blue-100 dark:border-blue-800/50">
+                                    <button type="button" onClick={() => handleChange('temApoioTecnico', true)} className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${formData.temApoioTecnico ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 dark:text-slate-500'}`}>SIM</button>
+                                    <button type="button" onClick={() => handleChange('temApoioTecnico', false)} className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all ${!formData.temApoioTecnico ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>NÃO</button>
                                 </div>
                             </div>
-                            <div
-                                onClick={() => {
-                                    setActiveSignatureType('apoio')
-                                    setShowSignaturePad(true)
-                                }}
-                                className="h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] transition-colors"
-                            >
-                                {formData.apoioTecnico.assinatura ? (
-                                    <img src={formData.apoioTecnico.assinatura} className="h-full w-auto object-contain" />
-                                ) : (
-                                    <div className="text-center">
-                                        <Edit2 size={24} className="mx-auto text-slate-300 group-hover:text-[#2a5299]" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Assinar Apoio Técnico</span>
+
+                            {formData.temApoioTecnico && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <label className={labelClasses}>Dados do Técnico (Obras/Engenharia)</label>
+                                    <div className="space-y-3 mb-4">
+                                        <input
+                                            type="text"
+                                            placeholder="Nome do Técnico"
+                                            className={`${inputClasses} text-sm py-2`}
+                                            value={formData.apoioTecnico.nome}
+                                            onChange={e => setFormData(prev => ({
+                                                ...prev,
+                                                apoioTecnico: { ...prev.apoioTecnico, nome: e.target.value }
+                                            }))}
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="CREA/CAU"
+                                                className={`${inputClasses} text-sm py-2`}
+                                                value={formData.apoioTecnico.crea}
+                                                onChange={e => setFormData(prev => ({
+                                                    ...prev,
+                                                    apoioTecnico: { ...prev.apoioTecnico, crea: e.target.value }
+                                                }))}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Matrícula"
+                                                className={`${inputClasses} text-sm py-2`}
+                                                value={formData.apoioTecnico.matricula}
+                                                onChange={e => setFormData(prev => ({
+                                                    ...prev,
+                                                    apoioTecnico: { ...prev.apoioTecnico, matricula: e.target.value }
+                                                }))}
+                                            />
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                    <div
+                                        onClick={() => {
+                                            setActiveSignatureType('apoio')
+                                            setShowSignaturePad(true)
+                                        }}
+                                        className="h-32 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] dark:hover:border-blue-500 transition-colors"
+                                    >
+                                        {formData.apoioTecnico.assinatura ? (
+                                            <img src={formData.apoioTecnico.assinatura} className="h-full w-auto object-contain" />
+                                        ) : (
+                                            <div className="text-center">
+                                                <Edit2 size={24} className="mx-auto text-slate-300 dark:text-slate-600 group-hover:text-[#2a5299] dark:group-hover:text-blue-500" />
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Assinar Apoio Técnico</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>

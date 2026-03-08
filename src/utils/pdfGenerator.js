@@ -67,8 +67,8 @@ const normalizeData = (data, type) => {
             dataHora: data.dataHora || data.data_hora || data.created_at,
             responsavelNome: data.responsavelNome || data.responsavel_nome || '---',
             responsavelCpf: data.responsavelCpf || data.responsavel_cpf || '---',
-            endereco: data.endereco || '---',
-            bairro: data.bairro || '---',
+            endereco: data.endereco || data.logradouro || '---',
+            bairro: data.bairro || data.localidade || '---',
             municipio: data.municipio || '---',
             tipoAlvo: data.tipoAlvo || data.tipo_alvo || '---',
             medidaTipo: data.medidaTipo || data.medida_tipo || '---',
@@ -82,6 +82,10 @@ const normalizeData = (data, type) => {
             longitude: data.longitude || '---',
             agente: data.agente || '---',
             matricula: data.matricula || '---',
+            responsavelTelefone: data.responsavelTelefone || data.responsavel_telefone || '---',
+            responsavelEmail: data.responsavelEmail || data.responsavel_email || '---',
+            tipoAlvoEspecificar: data.tipoAlvoEspecificar || data.tipo_alvo_especificar || '',
+            evacuacaoNecessaria: data.evacuacaoNecessaria || data.evacuacao_necessaria || false,
             fotos: (() => {
                 let photos = data.fotos || [];
                 if (typeof photos === 'string') {
@@ -135,7 +139,7 @@ export const generatePDF = async (rawData, type) => {
 
     const data = normalizeData(rawData, type);
     const isVistoriaOuOcorrencia = type === 'vistoria' || type === 'ocorrencia';
-    const title = type === 'vistoria' ? 'RELATÓRIO DE VISTORIA TÉCNICA' : type === 'ocorrencia' ? 'RELATÓRIO DE OCORRÊNCIA' : 'ORDEM DE INTERDIÇÃO';
+    const title = type === 'vistoria' ? 'RELATÓRIO DE VISTORIA TÉCNICA' : type === 'ocorrencia' ? 'RELATÓRIO DE OCORRÊNCIA' : 'RELATÓRIO DE INTERDIÇÃO';
     const filename = `${type}_${(data.vistoriaId || data.interdicaoId || data.id || 'sem_id').replace(/[\/\\]/g, '_')}.pdf`;
 
     const container = document.createElement('div');
@@ -242,6 +246,88 @@ export const generatePDF = async (rawData, type) => {
 
             ${data.fotos.length > 0 ? `
                 ${sectionTitle('6. Anexo Fotográfico')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    ${data.fotos.map((f, idx) => `
+                        <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
+                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
+                            <div style="padding: 12px; background: white;">
+                                <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
+                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: ${data.latitude}, ${data.longitude}</div>
+                                ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+    } else {
+        contentHtml += `
+            ${sectionTitle('1. Identificação da Interdição')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                ${renderField('Nº da Interdição', data.interdicaoId)}
+                ${renderField('Data do Registro', new Date(data.dataHora).toLocaleString('pt-BR'))}
+                ${renderField('Agente Responsável', data.agente)}
+                ${renderField('Matrícula do Agente', data.matricula)}
+            </div>
+
+            ${sectionTitle('2. Localização e Responsável')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
+                ${renderField('Bairro / Localidade', data.bairro)}
+                ${renderField('Município', data.municipio)}
+                ${renderField('Coordenadas', `${data.latitude}, ${data.longitude}`)}
+                ${renderField('Tipo de Alvo', data.tipoAlvo)}
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; margin-top: 10px;">
+                <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">DADOS DO RESPONSÁVEL / PROPRIETÁRIO</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px;">
+                    ${renderField('Nome do Responsável', data.responsavelNome)}
+                    ${renderField('CPF / CNPJ', data.responsavelCpf)}
+                    ${renderField('Telefone', data.responsavelTelefone)}
+                    ${renderField('Email', data.responsavelEmail)}
+                </div>
+            </div>
+
+            ${sectionTitle('3. Diagnóstico e Medida Administrativa')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+                    <div style="font-size: 9px; color: #64748b; font-weight: 700; uppercase; margin-bottom: 3px;">Grau de Risco</div>
+                    <div>${getNivelBadge(data.riscoGrau)}</div>
+                </div>
+                ${renderField('Tipo de Interdição', data.medidaTipo)}
+                ${renderField('Prazo Estabelecido', data.medidaPrazo)}
+                <div style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; grid-column: span 2;">
+                    <div style="font-size: 9px; color: #64748b; font-weight: 700; uppercase; margin-bottom: 3px;">Riscos Identificados</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                        ${(Array.isArray(data.riscoTipo) ? data.riscoTipo : []).map(r => `
+                            <span style="background: #eff6ff; color: #2563eb; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; border: 1px solid #dbeafe;">${r}</span>
+                        `).join('')}
+                    </div>
+                </div>
+                ${renderField('Evacuação Necessária', data.evacuacaoNecessaria ? 'SIM' : 'NÃO')}
+                ${renderField('Situação Observada', data.situacaoObservada)}
+            </div>
+
+            <div style="page-break-before: always; height: 1px;"></div>
+
+            ${sectionTitle('4. Parecer Técnico e Recomendações')}
+            <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
+                <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">RELATÓRIO TÉCNICO</div>
+                <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6; margin-bottom: 20px;">
+                    "${data.relatorioTecnico}"
+                </div>
+                
+                <div style="padding-top: 25px; border-top: 1px dashed #cbd5e1; margin-top: 10px;">
+                    <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">RECOMENDAÇÕES</div>
+                    <div style="font-size: 13px; color: #475569; font-weight: 600; line-height: 1.6;">
+                        ${data.recomendacoes}
+                    </div>
+                </div>
+            </div>
+
+            ${data.fotos.length > 0 ? `
+                ${sectionTitle('5. Anexo Fotográfico')}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
                         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">

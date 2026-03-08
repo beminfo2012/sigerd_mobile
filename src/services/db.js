@@ -476,24 +476,44 @@ export const syncSingleItem = async (storeName, item, db) => {
             }
         } else if (storeName === 'interdicoes') {
             let officialId = item.interdicaoId || item.interdicao_id
+            const currentYear = new Date().getFullYear();
 
+            // [FIX] Robust Numeric Max ID Fetching for Interdicoes
             if (!officialId) {
-                const currentYear = new Date().getFullYear();
-                const { data: maxData } = await supabase
+                console.log(`[Sync] Fetching max ID for Interdicoes sequence...`);
+                const { data: recentData, error: maxError } = await supabase
                     .from('interdicoes')
                     .select('interdicao_id')
                     .filter('interdicao_id', 'like', `%/${currentYear}`)
-                    .order('interdicao_id', { ascending: false })
-                    .limit(1);
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (maxError) {
+                    console.error(`[Sync] Error fetching max sequence for interdicoes:`, maxError);
+                }
 
                 let maxNum = 0;
-                if (maxData && maxData.length > 0) {
-                    const lastId = maxData[0].interdicao_id;
-                    const num = parseInt(lastId.split('/')[0]);
-                    if (!isNaN(num)) maxNum = num;
+                if (recentData && recentData.length > 0) {
+                    recentData.forEach(r => {
+                        if (r.interdicao_id && r.interdicao_id.includes('/')) {
+                            const num = parseInt(r.interdicao_id.split('/')[0]);
+                            if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                        }
+                    });
                 }
+
+                // Safety check local data
+                const localItems = await db.getAll('interdicoes');
+                localItems.forEach(li => {
+                    const lid = li.interdicaoId || li.interdicao_id;
+                    if (lid && lid.includes(`/${currentYear}`)) {
+                        const n = parseInt(lid.split('/')[0]);
+                        if (!isNaN(n)) maxNum = Math.max(maxNum, n);
+                    }
+                });
+
                 officialId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`;
-                console.log(`[Sync] Assigned new Interdicao ID: ${officialId}`);
+                console.log(`[Sync] Assigned NEW Interdicao ID: ${officialId} (Max was ${maxNum})`);
             }
 
             // [NEW] Upload Signatures to Storage for Interdicoes
@@ -515,36 +535,40 @@ export const syncSingleItem = async (storeName, item, db) => {
 
             payload = {
                 interdicao_id: officialId,
-                data_hora: item.dataHora || item.data_hora,
-                tipo_info: item.tipo_info || item.tipoInfo || item.riscoTipo || 'Interdição',
-                municipio: item.municipio,
-                bairro: item.bairro,
-                endereco: item.endereco,
-                tipo_alvo: item.tipoAlvo,
-                tipo_alvo_especificar: item.tipoAlvoEspecificar,
-                latitude: item.latitude,
-                longitude: item.longitude,
-                coordenadas: item.coordenadas,
-                responsavel_nome: item.responsavelNome,
-                responsavel_cpf: item.responsavelCpf,
-                responsavel_telefone: item.responsavelTelefone,
-                responsavel_email: item.responsavelEmail,
-                risco_tipo: item.riscoTipo,
-                risco_grau: item.riscoGrau,
-                situacao_observada: item.situacaoObservada,
-                medida_tipo: item.medidaTipo,
-                medida_prazo: item.medidaPrazo,
-                medida_prazo_data: item.medidaPrazoData,
-                evacuacao_necessaria: item.evacuacaoNecessaria,
+                data_hora: item.dataHora || item.data_hora || new Date().toISOString(),
+                municipio: item.municipio || 'Santa Maria de Jetibá',
+                bairro: item.bairro || '',
+                endereco: item.endereco || '',
+                tipo_alvo: item.tipoAlvo || 'Imóvel',
+                tipo_alvo_especificar: item.tipoAlvoEspecificar || '',
+                latitude: item.latitude ? parseFloat(item.latitude) : null,
+                longitude: item.longitude ? parseFloat(item.longitude) : null,
+                coordenadas: item.coordenadas || (item.latitude && item.longitude ? `${item.latitude},${item.longitude}` : ''),
+                responsavel_nome: item.responsavelNome || '',
+                responsavel_cpf: item.responsavelCpf || '',
+                responsavel_telefone: item.responsavelTelefone || '',
+                responsavel_email: item.responsavelEmail || '',
+                risco_tipo: Array.isArray(item.riscoTipo) ? item.riscoTipo : (Array.isArray(item.risco_tipo) ? item.risco_tipo : []),
+                risco_grau: item.riscoGrau || item.risco_grau || 'Médio',
+                situacao_observada: item.situacaoObservada || item.situacao_observada || '',
+                medida_tipo: item.medidaTipo || item.medida_tipo || 'Total',
+                medida_prazo: item.medidaPrazo || item.medida_prazo || 'Indeterminado',
+                medida_prazo_data: item.medidaPrazoData || item.medida_prazo_data || null,
+                evacuacao_necessaria: item.evacuacaoNecessaria ?? item.evacuacao_necessaria ?? false,
                 fotos: processedPhotos,
-                relatorio_tecnico: item.relatorioTecnico,
-                recomendacoes: item.recomendacoes,
-                orgaos_acionados: item.orgaosAcionados,
+                relatorio_tecnico: item.relatorioTecnico || item.relatorio_tecnico || '',
+                recomendacoes: item.recomendacoes || '',
+                orgaos_acionados: item.orgaosAcionados || item.orgaos_acionados || '',
+                agente: item.agente || '',
+                matricula: item.matricula || '',
                 assinatura_agente: signatureAgenteUrl,
                 apoio_tecnico: {
-                    ...(item.apoioTecnico || item.apoio_tecnico || {}),
+                    nome: item.apoioTecnico?.nome || item.apoio_tecnico?.nome || '',
+                    crea: item.apoioTecnico?.crea || item.apoio_tecnico?.crea || '',
+                    matricula: item.apoioTecnico?.matricula || item.apoio_tecnico?.matricula || '',
                     assinatura: signatureApoioUrl
-                }
+                },
+                created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
         } else if (storeName === 'redap_records') {
             // REDAP Signatures: Handle main signature and sector-specific signatures
@@ -1016,6 +1040,21 @@ export const getAllInterdicoesLocal = async () => {
         ...i,
         tipo_info: i.tipo_info || i.tipoInfo || i.riscoTipo || 'Interdição'
     }))
+}
+
+export const getInterdicaoFull = async (id) => {
+    const db = await initDB()
+    const tx = db.transaction(['interdicoes'], 'readonly')
+    const store = tx.objectStore('interdicoes')
+
+    let item = await store.get(id)
+    if (!item) {
+        const all = await store.getAll()
+        item = all.find(v => v.id === id || v.id === parseInt(id) || v.interdicao_id === id || v.supabase_id === id)
+    }
+
+    await tx.done
+    return item
 }
 
 export const saveInterdicaoOffline = async (data) => {
