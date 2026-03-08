@@ -43,12 +43,13 @@ const VistoriaList = ({ onNew, onEdit }) => {
             // 1. Fetch from Supabase (Optimized Select)
             const { data: rawCloudData, error } = await supabase
                 .from('vistorias')
-                .select('id, vistoria_id, created_at, solicitante, endereco, bairro, nivel_risco, categoria_risco, tipo_info, synced')
+                .select('id, vistoria_id, created_at, solicitante, endereco, bairro, nivel_risco, categoria_risco, tipo_info')
                 .order('created_at', { ascending: false })
 
             // Map cloud data to match local camelCase structure
             const cloudData = (rawCloudData || []).map(item => ({
                 ...item,
+                synced: true,
                 nivelRisco: item.nivel_risco,
                 categoriaRisco: item.categoria_risco
             }))

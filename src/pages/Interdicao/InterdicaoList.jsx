@@ -42,7 +42,7 @@ const InterdicaoList = ({ onNew, onEdit }) => {
             // 1. Cloud
             const { data: cloudData, error } = await supabase
                 .from('interdicoes')
-                .select('id, interdicao_id, created_at, data_hora, responsavel_nome, endereco, bairro, risco_grau, medida_tipo, synced')
+                .select('id, interdicao_id, created_at, data_hora, responsavel_nome, endereco, bairro, risco_grau, medida_tipo')
                 .order('created_at', { ascending: false })
 
             // 2. Local
@@ -51,6 +51,7 @@ const InterdicaoList = ({ onNew, onEdit }) => {
             // 3. Merge
             const merged = [...(cloudData || [])].map(item => ({
                 ...item,
+                synced: true,
                 riscoGrau: item.risco_grau || item.riscoGrau,
                 responsavelNome: item.responsavel_nome || item.responsavelNome,
                 medidaTipo: item.medida_tipo || item.medidaTipo,
