@@ -235,12 +235,54 @@ export const generatePDF = async (rawData, type) => {
             ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
                 ${sectionTitle('5. Constatações Técnicas')}
                 <div style="background: #eff6ff; border-radius: 12px; padding: 12px 20px; border: 1px solid #dbeafe; margin-bottom: 25px; page-break-inside: avoid;">
-                    ${Object.keys(data.checklistRespostas).filter(k => data.checklistRespostas[k]).map(item => `
-                        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px;">
-                            <div style="color: #2563eb; font-weight: bold; font-size: 16px;">✓</div>
-                            <div style="font-size: 11px; color: #1e3a8a; font-weight: 700; line-height: 1.3;">${item}</div>
-                        </div>
-                    `).join('')}
+                    ${(() => {
+                    const responses = data.checklistRespostas;
+                    const structuralKeys = Object.keys(responses).filter(k => k.startsWith('structural:') && responses[k]);
+                    const standardKeys = Object.keys(responses).filter(k => !k.startsWith('structural:') && responses[k]);
+
+                    let html = '';
+
+                    // Render Structural first if exists
+                    if (structuralKeys.length > 0) {
+                        const sections = {};
+                        structuralKeys.forEach(k => {
+                            const parts = k.split(':');
+                            const sectionTitle = parts[1];
+                            if (!sections[sectionTitle]) sections[sectionTitle] = [];
+                            sections[sectionTitle].push(parts.length === 4 ? `${parts[2]}: ${parts[3]}` : parts[2]);
+                        });
+
+                        html += `<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #bfdbfe;">
+                                <div style="font-size: 10px; font-weight: 800; color: #1e40af; text-transform: uppercase; margin-bottom: 8px;">DIAGNÓSTICO ESTRUTURAL</div>`;
+
+                        Object.entries(sections).forEach(([title, items]) => {
+                            html += `
+                                    <div style="margin-bottom: 8px;">
+                                        <div style="font-size: 9px; font-weight: 800; color: #3b82f6; text-transform: uppercase; margin-bottom: 3px;">${title}</div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                            ${items.map(item => `<span style="background: #dbeafe; color: #1e3a8a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">${item}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                        });
+                        html += `</div>`;
+                    }
+
+                    // Render Standard
+                    if (standardKeys.length > 0) {
+                        html += `<div>
+                                ${structuralKeys.length > 0 ? `<div style="font-size: 10px; font-weight: 800; color: #1e40af; text-transform: uppercase; margin-top: 5px; margin-bottom: 8px;">OUTRAS CONSTATAÇÕES</div>` : ''}
+                                ${standardKeys.map(item => `
+                                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 5px;">
+                                        <div style="color: #2563eb; font-weight: bold; font-size: 14px;">✓</div>
+                                        <div style="font-size: 11px; color: #1e3a8a; font-weight: 700; line-height: 1.3;">${item}</div>
+                                    </div>
+                                `).join('')}
+                            </div>`;
+                    }
+
+                    return html;
+                })()}
                 </div>
             ` : ''}
 

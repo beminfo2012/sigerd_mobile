@@ -75,6 +75,71 @@ const RISK_DATA = {
     'Outros': ['Outro Risco (descrever)', 'Situação Atípica', 'Risco Não Classificado']
 }
 
+const STRUCTURAL_DETAILED_CHECKLIST = [
+    {
+        title: "1. TERRENO E ENTORNO",
+        groups: [
+            {
+                label: "Movimentação do terreno",
+                options: ["Não apresenta patologia", "Pequenos indícios", "Erosão", "Recalque", "Afundamento", "Talude instável"]
+            },
+            {
+                label: "Drenagem",
+                options: ["Adequada", "Deficiente", "Água acumulada", "Infiltração próxima à fundação"]
+            }
+        ]
+    },
+    {
+        title: "2. FUNDAÇÕES",
+        options: ["Não apresenta patologia", "Trincas na base", "Recalque localizado", "Desnivelamento do piso", "Deslocamento solo/estrutura", "Afundamento significativo"]
+    },
+    {
+        title: "3. PILARES",
+        options: ["Não apresenta patologia", "Fissura superficial", "Trinca estrutural", "Armadura exposta", "Concreto deteriorado", "Esmagamento", "Pilar inclinado"]
+    },
+    {
+        title: "4. VIGAS",
+        options: ["Não apresenta patologia", "Fissuras", "Trinca diagonal", "Deformação", "Armadura exposta", "Concreto deteriorado", "Risco de ruptura"]
+    },
+    {
+        title: "5. LAJES",
+        options: ["Não apresenta patologia", "Fissuras", "Flecha excessiva", "Infiltração", "Armadura exposta", "Desplacamento do concreto", "Colapso parcial"]
+    },
+    {
+        title: "6. PAREDES E ALVENARIA",
+        options: ["Não apresenta patologia", "Trinca horizontal", "Trinca vertical", "Trinca diagonal", "Trincas em portas/janelas", "Parede fora de prumo", "Abaulamento", "Deslocamento estrutural"]
+    },
+    {
+        title: "7. COBERTURA",
+        groups: [
+            {
+                label: "Estrutura do telhado",
+                options: ["Não apresenta patologia", "Madeira deteriorada", "Estrutura metálica corroída", "Deformação estrutural", "Risco de colapso"]
+            },
+            {
+                label: "Telhas",
+                options: ["Sem problemas", "Telhas deslocadas", "Telhas quebradas", "Risco de queda"]
+            }
+        ]
+    },
+    {
+        title: "8. INDÍCIOS DE MOVIMENTAÇÃO ESTRUTURAL",
+        options: ["Não observado", "Portas não fecham", "Janelas travando", "Piso desnivelado", "Degraus deslocados", "Estrutura inclinada"]
+    },
+    {
+        title: "9. INFILTRAÇÕES E UMIDADE",
+        options: ["Não apresenta patologia", "Umidade ascendente", "Infiltração em paredes", "Infiltração em laje", "Mofo/bolor", "Eflorescência"]
+    },
+    {
+        title: "10. INTERVENÇÕES ESTRUTURAIS IRREGULARES",
+        options: ["Não identificado", "Remoção de parede", "Ampliação sem projeto", "Corte em vigas", "Corte em pilares", "Sobrecarga estrutural"]
+    },
+    {
+        title: "11. ELEMENTOS EXTERNOS COM RISCO",
+        options: ["Não identificado", "Marquise com fissuras", "Sacada com trincas", "Muro inclinado", "Caixa d’água comprometida", "Estrutura com risco de queda"]
+    }
+]
+
 const ENCAMINHAMENTOS_LIST = [
     'Secretaria de Interior',
     'Secretaria de Ação Social',
@@ -935,7 +1000,168 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </select>
                             </div>
 
-                            {formData.categoriaRisco && CHECKLIST_DATA[formData.categoriaRisco] && (
+                            {formData.categoriaRisco === 'Estrutural' && (
+                                <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-5 rounded-[2.5rem] border-2 border-indigo-100/50 dark:border-indigo-900/30 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="flex items-center justify-between px-2">
+                                        <h3 className="font-black text-indigo-900 dark:text-indigo-400 text-[10px] uppercase tracking-[2px] flex items-center gap-2">
+                                            <ClipboardCheck size={18} className="text-indigo-600" /> Checklist Estrutural Detalhado
+                                        </h3>
+                                        <span className="text-[10px] font-black bg-indigo-600 text-white px-3 py-1 rounded-full uppercase">Técnico</span>
+                                    </div>
+
+                                    <div className="space-y-8">
+                                        {STRUCTURAL_DETAILED_CHECKLIST.map((section, sIdx) => (
+                                            <div key={sIdx} className="space-y-4">
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-4 border-indigo-500 pl-3 ml-1">{section.title}</h4>
+
+                                                {section.groups ? (
+                                                    <div className="grid grid-cols-1 gap-6">
+                                                        {section.groups.map((group, gIdx) => (
+                                                            <div key={gIdx} className="space-y-2">
+                                                                <label className="text-[9px] font-bold text-slate-500 ml-1">{group.label}</label>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {group.options.map(opt => {
+                                                                        const key = `structural:${section.title}:${group.label}:${opt}`;
+                                                                        const isSelected = formData.checklistRespostas[key];
+                                                                        return (
+                                                                            <button
+                                                                                key={opt}
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
+                                                                                    setFormData(prev => {
+                                                                                        const newRes = { ...prev.checklistRespostas };
+                                                                                        if (isNeg) {
+                                                                                            // Clear others in group
+                                                                                            Object.keys(newRes).forEach(k => {
+                                                                                                if (k.startsWith(`structural:${section.title}:${group.label}:`)) delete newRes[k];
+                                                                                            });
+                                                                                            newRes[key] = true;
+                                                                                        } else {
+                                                                                            // Uncheck neg
+                                                                                            ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].forEach(n => {
+                                                                                                delete newRes[`structural:${section.title}:${group.label}:${n}`];
+                                                                                            });
+                                                                                            newRes[key] = !newRes[key];
+                                                                                        }
+                                                                                        return { ...prev, checklistRespostas: newRes };
+                                                                                    });
+                                                                                }}
+                                                                                className={`px-4 py-2.5 rounded-xl text-[10px] font-bold border-2 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-500'}`}
+                                                                            >
+                                                                                {opt}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {section.options.map(opt => {
+                                                            const key = `structural:${section.title}:${opt}`;
+                                                            const isSelected = formData.checklistRespostas[key];
+                                                            return (
+                                                                <button
+                                                                    key={opt}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
+                                                                        setFormData(prev => {
+                                                                            const newRes = { ...prev.checklistRespostas };
+                                                                            if (isNeg) {
+                                                                                Object.keys(newRes).forEach(k => {
+                                                                                    if (k.startsWith(`structural:${section.title}:`)) delete newRes[k];
+                                                                                });
+                                                                                newRes[key] = true;
+                                                                            } else {
+                                                                                ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].forEach(n => {
+                                                                                    delete newRes[`structural:${section.title}:${n}`];
+                                                                                });
+                                                                                newRes[key] = !newRes[key];
+                                                                            }
+                                                                            return { ...prev, checklistRespostas: newRes };
+                                                                        });
+                                                                    }}
+                                                                    className={`px-4 py-2.5 rounded-xl text-[10px] font-bold border-2 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-500'}`}
+                                                                >
+                                                                    {opt}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {/* 16. REGISTROS (Custom UI) */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-4 border-emerald-500 pl-3 ml-1">16. REGISTROS</h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                {[
+                                                    { id: 'fotos', label: 'Fotos Anexadas', icon: <Camera size={14} />, checked: formData.fotos.length > 0 },
+                                                    { id: 'croqui', label: 'Croqui Elaborado', icon: <FileText size={14} />, checked: formData.checklistRespostas['structural:16:croqui'] },
+                                                    { id: 'video', label: 'Vídeo Gravado', icon: <RefreshCw size={14} />, checked: formData.checklistRespostas['structural:16:video'] }
+                                                ].map(reg => (
+                                                    <div
+                                                        key={reg.id}
+                                                        onClick={() => {
+                                                            if (reg.id === 'fotos') return; // Managed by file input
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                checklistRespostas: {
+                                                                    ...prev.checklistRespostas,
+                                                                    [`structural:16:${reg.id}`]: !prev.checklistRespostas[`structural:16:${reg.id}`]
+                                                                }
+                                                            }))
+                                                        }}
+                                                        className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${reg.checked ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-400 opacity-60'}`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            {reg.icon}
+                                                            <span className="text-[10px] font-black uppercase tracking-wider">{reg.label}</span>
+                                                        </div>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${reg.checked ? 'bg-white text-emerald-600' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                                                            {reg.checked ? <CheckCircle2 size={12} /> : <Circle size={12} />}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const answers = Object.keys(formData.checklistRespostas)
+                                                .filter(k => k.startsWith('structural:') && formData.checklistRespostas[k]);
+
+                                            if (answers.length === 0) return alert("Marque pelo menos um item para consolidar.");
+
+                                            const formatted = answers.map(k => {
+                                                const parts = k.split(':');
+                                                const section = parts[1];
+                                                const label = parts.length === 4 ? `(${parts[2]}) ${parts[3]}` : parts[2];
+                                                return `• ${section}: ${label}`;
+                                            }).join('\n');
+
+                                            const text = `DIAGNÓSTICO ESTRUTURAL DETALHADO:\n${formatted}\n\n`;
+                                            setFormData(prev => ({ ...prev, observacoes: textRefined(text) + prev.observacoes }));
+
+                                            function textRefined(t) {
+                                                // Clean up the prefix numbers for the final text
+                                                return t.replace(/^\d+\.\s/gm, '');
+                                            }
+                                        }}
+                                        className="w-full p-4 bg-white dark:bg-slate-900 border-2 border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-3xl font-black text-[10px] uppercase tracking-[2px] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all shadow-sm active:scale-[0.98]"
+                                    >
+                                        Consolidar Diagnóstico Estrutural
+                                    </button>
+                                </div>
+                            )}
+
+                            {formData.categoriaRisco && formData.categoriaRisco !== 'Estrutural' && CHECKLIST_DATA[formData.categoriaRisco] && (
                                 <div className="bg-blue-50/30 dark:bg-blue-900/10 p-5 rounded-3xl border-2 border-blue-100/50 dark:border-blue-900/30 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-black text-blue-900 dark:text-blue-400 text-[10px] uppercase tracking-wider flex items-center gap-2">
@@ -966,7 +1192,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            const simAnswers = Object.keys(formData.checklistRespostas).filter(k => formData.checklistRespostas[k]);
+                                            const simAnswers = Object.keys(formData.checklistRespostas).filter(k => formData.checklistRespostas[k] && !k.startsWith('structural:'));
                                             if (simAnswers.length === 0) return alert("Marque pelo menos um item para consolidar.");
                                             const text = `CONSTATAÇÕES TÉCNICAS:\n${simAnswers.map(a => `[SIM] ${a}`).join('\n')}\n\n`;
                                             setFormData(prev => ({ ...prev, observacoes: text + prev.observacoes }));
@@ -1004,21 +1230,21 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 <label className={labelClasses}>Nível de Risco</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
-                                        { id: 'Baixo', color: 'bg-emerald-500' },
-                                        { id: 'Médio', color: 'bg-amber-500' },
-                                        { id: 'Alto', color: 'bg-orange-600' },
-                                        { id: 'Iminente', color: 'bg-red-600' }
+                                        { id: 'Baixo', label: 'Baixo', color: 'bg-emerald-500' },
+                                        { id: 'Médio', label: 'Moderado', color: 'bg-amber-500' },
+                                        { id: 'Alto', label: 'Alto', color: 'bg-orange-600' },
+                                        { id: 'Iminente', label: 'Muito Alto / Iminente', color: 'bg-red-600' }
                                     ].map(nivel => (
                                         <button
                                             key={nivel.id}
                                             type="button"
                                             onClick={() => setFormData({ ...formData, nivelRisco: nivel.id })}
-                                            className={`p-3 rounded-xl font-black text-[10px] uppercase tracking-wider border-2 transition-all ${formData.nivelRisco === nivel.id
+                                            className={`p-3 rounded-xl font-black text-[9px] uppercase tracking-wider border-2 transition-all ${formData.nivelRisco === nivel.id
                                                 ? `${nivel.color} text-white border-transparent shadow-lg scale-105`
                                                 : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-700'
                                                 }`}
                                         >
-                                            {nivel.id}
+                                            {nivel.label}
                                         </button>
                                     ))}
                                 </div>
@@ -1112,17 +1338,27 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             {/* Checklist Medidas */}
                             <div className="space-y-4">
                                 <label className={labelClasses}>Medidas e Recomendações</label>
-                                <div className="grid grid-cols-1 gap-2 mt-2">
-                                    {['Monitoramento', 'Isolamento da área', 'Interdição Parcial', 'Interdição Total', 'Acionamento de outro órgão', 'Orientação ao morador'].map(m => (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                                    {[
+                                        'Orientação ao responsável',
+                                        'Notificação preventiva',
+                                        'Solicitação de laudo estrutural',
+                                        'Monitoramento',
+                                        'Escoramento emergencial',
+                                        'Interdição parcial',
+                                        'Interdição total',
+                                        'Isolamento da área',
+                                        'Acionamento de outro órgão'
+                                    ].map(m => (
                                         <button
                                             key={m}
                                             type="button"
                                             onClick={() => toggleArrayItem('medidasTomadas', m)}
-                                            className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.medidasTomadas.includes(m) ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
+                                            className={`p-3 rounded-xl text-left text-xs font-bold border-2 transition-all flex items-center justify-between ${formData.medidasTomadas.includes(m) ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
                                         >
                                             {m}
-                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${formData.medidasTomadas.includes(m) ? 'bg-white border-white text-blue-600' : 'border-slate-200 dark:border-slate-600'}`}>
-                                                {formData.medidasTomadas.includes(m) && <CheckCircle size={16} />}
+                                            <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center ${formData.medidasTomadas.includes(m) ? 'bg-white border-white text-blue-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                                {formData.medidasTomadas.includes(m) && <CheckCircle size={14} />}
                                             </div>
                                         </button>
                                     ))}
