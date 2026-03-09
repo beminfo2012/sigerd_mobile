@@ -245,7 +245,7 @@ const InterdicaoPrint = () => {
                                 <img src={LOGO_SIGERD} alt="SIGERD" className="h-[85px] w-auto object-contain" />
                             </div>
                         </div>
-                        <h1 className="text-2xl font-black text-red-600 uppercase tracking-wide text-center">Relatório de Interdição</h1>
+                        <h1 className="text-2xl font-black text-red-600 uppercase tracking-wide text-center">Auto de Interdição</h1>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100 mt-2">
                             <span>Emissão: {new Date().toLocaleString('pt-BR')}</span>
                             <span>•</span>
