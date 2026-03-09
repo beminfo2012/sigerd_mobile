@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2 } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
@@ -1001,113 +1001,165 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             </div>
 
                             {formData.categoriaRisco === 'Estrutural' && (
-                                <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-5 rounded-[2.5rem] border-2 border-indigo-100/50 dark:border-indigo-900/30 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
-                                    <div className="flex items-center justify-between px-2">
-                                        <h3 className="font-black text-indigo-900 dark:text-indigo-400 text-[10px] uppercase tracking-[2px] flex items-center gap-2">
-                                            <ClipboardCheck size={18} className="text-indigo-600" /> Checklist Estrutural Detalhado
-                                        </h3>
-                                        <span className="text-[10px] font-black bg-indigo-600 text-white px-3 py-1 rounded-full uppercase">Técnico</span>
+                                <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-500/30">
+                                                <ClipboardCheck size={24} className="text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-black text-slate-900 dark:text-slate-100 text-sm sm:text-xl uppercase tracking-tight">
+                                                    Checklist Estrutural
+                                                </h3>
+                                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mt-1">Diagnóstico Técnico Detalhado</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                                <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                    {Object.keys(formData.checklistRespostas).filter(k => k.startsWith('structural:')).length} Itens Marcados
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-8">
-                                        {STRUCTURAL_DETAILED_CHECKLIST.map((section, sIdx) => (
-                                            <div key={sIdx} className="space-y-4">
-                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-4 border-indigo-500 pl-3 ml-1">{section.title}</h4>
+                                    <div className="flex flex-col gap-4">
+                                        {STRUCTURAL_DETAILED_CHECKLIST.map((section, sIdx) => {
+                                            const sectionAnswers = Object.keys(formData.checklistRespostas).filter(k => k.startsWith(`structural:${section.title}:`));
+                                            const hasIssues = sectionAnswers.some(k => {
+                                                const parts = k.split(':');
+                                                const opt = parts[parts.length - 1];
+                                                return !["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
+                                            });
+                                            const isClean = sectionAnswers.length > 0 && !hasIssues;
 
-                                                {section.groups ? (
-                                                    <div className="grid grid-cols-1 gap-6">
-                                                        {section.groups.map((group, gIdx) => (
-                                                            <div key={gIdx} className="space-y-2">
-                                                                <label className="text-[9px] font-bold text-slate-500 ml-1">{group.label}</label>
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {group.options.map(opt => {
-                                                                        const key = `structural:${section.title}:${group.label}:${opt}`;
-                                                                        const isSelected = formData.checklistRespostas[key];
-                                                                        return (
-                                                                            <button
-                                                                                key={opt}
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
-                                                                                    setFormData(prev => {
-                                                                                        const newRes = { ...prev.checklistRespostas };
-                                                                                        if (isNeg) {
-                                                                                            // Clear others in group
-                                                                                            Object.keys(newRes).forEach(k => {
-                                                                                                if (k.startsWith(`structural:${section.title}:${group.label}:`)) delete newRes[k];
+                                            return (
+                                                <div key={sIdx} className={`group p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex flex-col bg-white dark:bg-slate-900/50 shadow-sm ${hasIssues
+                                                    ? 'border-amber-200 dark:border-amber-900/30 bg-amber-50/20'
+                                                    : isClean
+                                                        ? 'border-emerald-200 dark:border-emerald-900/30 bg-emerald-50/20'
+                                                        : 'border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900/50 hover:shadow-md'}`}>
+
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                                                            {section.title}
+                                                        </h4>
+                                                        <div className="flex gap-2">
+                                                            {hasIssues && <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-full text-[10px] font-bold"><AlertTriangle size={12} /> ALERTA</div>}
+                                                            {isClean && <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-bold"><CheckCircle2 size={12} /> NORMAL</div>}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        {section.groups ? (
+                                                            <div className="grid grid-cols-1 gap-4">
+                                                                {section.groups.map((group, gIdx) => (
+                                                                    <div key={gIdx} className="space-y-2.5">
+                                                                        <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block pl-1">{group.label}</label>
+                                                                        <div className="flex flex-wrap gap-2">
+                                                                            {group.options.map(opt => {
+                                                                                const key = `structural:${section.title}:${group.label}:${opt}`;
+                                                                                const isSelected = formData.checklistRespostas[key];
+                                                                                const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
+                                                                                return (
+                                                                                    <button
+                                                                                        key={opt}
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            setFormData(prev => {
+                                                                                                const newRes = { ...prev.checklistRespostas };
+                                                                                                if (isNeg) {
+                                                                                                    Object.keys(newRes).forEach(k => {
+                                                                                                        if (k.startsWith(`structural:${section.title}:${group.label}:`)) delete newRes[k];
+                                                                                                    });
+                                                                                                    newRes[key] = true;
+                                                                                                } else {
+                                                                                                    const negOpts = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
+                                                                                                    negOpts.forEach(n => {
+                                                                                                        delete newRes[`structural:${section.title}:${group.label}:${n}`];
+                                                                                                    });
+                                                                                                    newRes[key] = !newRes[key];
+                                                                                                }
+                                                                                                return { ...prev, checklistRespostas: newRes };
                                                                                             });
-                                                                                            newRes[key] = true;
-                                                                                        } else {
-                                                                                            // Uncheck neg
-                                                                                            ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].forEach(n => {
-                                                                                                delete newRes[`structural:${section.title}:${group.label}:${n}`];
-                                                                                            });
-                                                                                            newRes[key] = !newRes[key];
-                                                                                        }
-                                                                                        return { ...prev, checklistRespostas: newRes };
-                                                                                    });
-                                                                                }}
-                                                                                className={`px-4 py-2.5 rounded-xl text-[10px] font-bold border-2 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-500'}`}
-                                                                            >
-                                                                                {opt}
-                                                                            </button>
-                                                                        );
-                                                                    })}
-                                                                </div>
+                                                                                        }}
+                                                                                        className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${isSelected
+                                                                                            ? isNeg
+                                                                                                ? 'bg-emerald-600 border-emerald-600 text-white ring-2 ring-emerald-500/20'
+                                                                                                : 'bg-indigo-600 border-indigo-600 text-white ring-2 ring-indigo-500/20'
+                                                                                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300 hover:bg-slate-50'}`}
+                                                                                    >
+                                                                                        {opt}
+                                                                                    </button>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {section.options.map(opt => {
-                                                            const key = `structural:${section.title}:${opt}`;
-                                                            const isSelected = formData.checklistRespostas[key];
-                                                            return (
-                                                                <button
-                                                                    key={opt}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
-                                                                        setFormData(prev => {
-                                                                            const newRes = { ...prev.checklistRespostas };
-                                                                            if (isNeg) {
-                                                                                Object.keys(newRes).forEach(k => {
-                                                                                    if (k.startsWith(`structural:${section.title}:`)) delete newRes[k];
+                                                        ) : (
+                                                            <div className="flex flex-wrap gap-2.5">
+                                                                {section.options.map(opt => {
+                                                                    const key = `structural:${section.title}:${opt}`;
+                                                                    const isSelected = formData.checklistRespostas[key];
+                                                                    const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
+                                                                    return (
+                                                                        <button
+                                                                            key={opt}
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setFormData(prev => {
+                                                                                    const newRes = { ...prev.checklistRespostas };
+                                                                                    if (isNeg) {
+                                                                                        Object.keys(newRes).forEach(k => {
+                                                                                            if (k.startsWith(`structural:${section.title}:`)) delete newRes[k];
+                                                                                        });
+                                                                                        newRes[key] = true;
+                                                                                    } else {
+                                                                                        const negOpts = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
+                                                                                        negOpts.forEach(n => {
+                                                                                            delete newRes[`structural:${section.title}:${n}`];
+                                                                                        });
+                                                                                        newRes[key] = !newRes[key];
+                                                                                    }
+                                                                                    return { ...prev, checklistRespostas: newRes };
                                                                                 });
-                                                                                newRes[key] = true;
-                                                                            } else {
-                                                                                ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].forEach(n => {
-                                                                                    delete newRes[`structural:${section.title}:${n}`];
-                                                                                });
-                                                                                newRes[key] = !newRes[key];
-                                                                            }
-                                                                            return { ...prev, checklistRespostas: newRes };
-                                                                        });
-                                                                    }}
-                                                                    className={`px-4 py-2.5 rounded-xl text-[10px] font-bold border-2 transition-all ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-500'}`}
-                                                                >
-                                                                    {opt}
-                                                                </button>
-                                                            );
-                                                        })}
+                                                                            }}
+                                                                            className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all duration-200 shadow-sm ${isSelected
+                                                                                ? isNeg
+                                                                                    ? 'bg-emerald-600 border-emerald-600 text-white ring-2 ring-emerald-500/20'
+                                                                                    : 'bg-indigo-600 border-indigo-600 text-white ring-2 ring-indigo-500/20'
+                                                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300 hover:bg-slate-50'}`}
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
 
-                                        {/* 16. REGISTROS (Custom UI) */}
+                                    {/* Footer Section - Multi-media and Consolidation */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 border-t border-slate-100 dark:border-slate-800">
                                         <div className="space-y-4">
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-l-4 border-emerald-500 pl-3 ml-1">16. REGISTROS</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <h4 className="text-[11px] sm:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[3px] pl-1">
+                                                12. DOCUMENTAÇÃO E REGISTROS
+                                            </h4>
+                                            <div className="grid grid-cols-3 gap-3">
                                                 {[
-                                                    { id: 'fotos', label: 'Fotos Anexadas', icon: <Camera size={14} />, checked: formData.fotos.length > 0 },
-                                                    { id: 'croqui', label: 'Croqui Elaborado', icon: <FileText size={14} />, checked: formData.checklistRespostas['structural:16:croqui'] },
-                                                    { id: 'video', label: 'Vídeo Gravado', icon: <RefreshCw size={14} />, checked: formData.checklistRespostas['structural:16:video'] }
+                                                    { id: 'fotos', label: 'Fotos', icon: <Camera size={20} />, checked: formData.fotos.length > 0, color: 'emerald' },
+                                                    { id: 'croqui', label: 'Croqui', icon: <FileText size={20} />, checked: formData.checklistRespostas['structural:16:croqui'], color: 'indigo' },
+                                                    { id: 'video', label: 'Vídeo', icon: <Zap size={20} />, checked: formData.checklistRespostas['structural:16:video'], color: 'blue' }
                                                 ].map(reg => (
                                                     <div
                                                         key={reg.id}
                                                         onClick={() => {
-                                                            if (reg.id === 'fotos') return; // Managed by file input
+                                                            if (reg.id === 'fotos') return;
                                                             setFormData(prev => ({
                                                                 ...prev,
                                                                 checklistRespostas: {
@@ -1116,48 +1168,62 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                                 }
                                                             }))
                                                         }}
-                                                        className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${reg.checked ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-400 opacity-60'}`}
+                                                        className={`p-4 rounded-2xl border-2 cursor-pointer flex flex-col items-center gap-3 transition-all duration-300 ${reg.checked
+                                                            ? `bg-${reg.color}-500/10 border-${reg.color}-500 text-${reg.color}-600 shadow-lg shadow-${reg.color}-500/10`
+                                                            : 'bg-white dark:bg-slate-800/50 border-slate-100 dark:border-slate-700 text-slate-400 hover:border-indigo-200 dark:hover:border-indigo-900/50'}`}
                                                     >
-                                                        <div className="flex items-center gap-2">
+                                                        <div className={`p-3 rounded-xl ${reg.checked ? `bg-${reg.color}-500 text-white shadow-lg` : 'bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700'}`}>
                                                             {reg.icon}
-                                                            <span className="text-[10px] font-black uppercase tracking-wider">{reg.label}</span>
                                                         </div>
-                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${reg.checked ? 'bg-white text-emerald-600' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                                                            {reg.checked ? <CheckCircle2 size={12} /> : <Circle size={12} />}
+                                                        <span className="text-xs font-bold uppercase tracking-wider">{reg.label}</span>
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${reg.checked ? `bg-${reg.color}-500 text-white scale-110 shadow-md` : 'bg-slate-100 dark:bg-slate-700'}`}>
+                                                            {reg.checked && <CheckCircle2 size={14} />}
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
+
+                                        <div className="flex flex-col justify-end gap-5">
+                                            <div className="bg-indigo-50/50 dark:bg-indigo-900/10 p-5 rounded-3xl border border-indigo-100/50 dark:border-indigo-900/20 shadow-inner">
+                                                <p className="text-xs sm:text-sm text-indigo-700/80 dark:text-indigo-400/80 font-medium leading-relaxed">
+                                                    Ao finalizar a marcação dos itens acima, utilize o botão de consolidação para converter o checklist em um texto técnico profissional para o relatório.
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const answers = Object.keys(formData.checklistRespostas)
+                                                        .filter(k => k.startsWith('structural:') && formData.checklistRespostas[k]);
+
+                                                    if (answers.length === 0) return alert("Marque pelo menos um item para consolidar.");
+
+                                                    const sections = {};
+                                                    answers.forEach(key => {
+                                                        const parts = key.split(':');
+                                                        const sectionTitle = parts[1];
+                                                        const content = parts[parts.length - 1];
+                                                        if (!sections[sectionTitle]) sections[sectionTitle] = [];
+                                                        sections[sectionTitle].push(content);
+                                                    });
+
+                                                    let text = "\n--- DIAGNÓSTICO ESTRUTURAL ---\n";
+                                                    Object.entries(sections).forEach(([title, items]) => {
+                                                        text += `${title}: ${items.join(", ")}\n`;
+                                                    });
+
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        observacoes: text + (prev.observacoes || "")
+                                                    }));
+                                                }}
+                                                className="w-full py-4 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-3 transition-all duration-300 shadow-xl shadow-indigo-600/30 hover:shadow-indigo-600/40 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
+                                            >
+                                                <RefreshCw size={20} className="animate-spin-slow" />
+                                                CONSOLIDAR DIAGNÓSTICO
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const answers = Object.keys(formData.checklistRespostas)
-                                                .filter(k => k.startsWith('structural:') && formData.checklistRespostas[k]);
-
-                                            if (answers.length === 0) return alert("Marque pelo menos um item para consolidar.");
-
-                                            const formatted = answers.map(k => {
-                                                const parts = k.split(':');
-                                                const section = parts[1];
-                                                const label = parts.length === 4 ? `(${parts[2]}) ${parts[3]}` : parts[2];
-                                                return `• ${section}: ${label}`;
-                                            }).join('\n');
-
-                                            const text = `DIAGNÓSTICO ESTRUTURAL DETALHADO:\n${formatted}\n\n`;
-                                            setFormData(prev => ({ ...prev, observacoes: textRefined(text) + prev.observacoes }));
-
-                                            function textRefined(t) {
-                                                // Clean up the prefix numbers for the final text
-                                                return t.replace(/^\d+\.\s/gm, '');
-                                            }
-                                        }}
-                                        className="w-full p-4 bg-white dark:bg-slate-900 border-2 border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-3xl font-black text-[10px] uppercase tracking-[2px] hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all shadow-sm active:scale-[0.98]"
-                                    >
-                                        Consolidar Diagnóstico Estrutural
-                                    </button>
                                 </div>
                             )}
 
