@@ -568,6 +568,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     matricula: item.apoioTecnico?.matricula || item.apoio_tecnico?.matricula || '',
                     assinatura: signatureApoioUrl
                 },
+                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
         } else if (storeName === 'redap_records') {

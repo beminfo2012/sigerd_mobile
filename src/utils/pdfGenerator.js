@@ -107,7 +107,8 @@ const normalizeData = (data, type) => {
                     try { apoio = JSON.parse(apoio); } catch (e) { console.warn('Apoio parsing failed:', e); }
                 }
                 return apoio;
-            })()
+            })(),
+            checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
         };
     }
 };
