@@ -4,7 +4,8 @@ import {
     ArrowLeft, Save, MapPin, Navigation, Shield, Users, Info, Loader2,
     RefreshCw, ShieldCheck, AlertTriangle, Sparkles, Trash2, Maximize2,
     FileText, Edit2, CheckCircle, CheckCircle2, Circle, Camera, Search,
-    X, Phone, User, Fingerprint, Siren, ClipboardList, Share
+    X, Phone, User, Fingerprint, Siren, ClipboardList, Share,
+    Download, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
 import { initDB, searchInstallations } from '../../services/db';
@@ -515,6 +516,25 @@ const OcorrenciasForm = () => {
             }
             return { ...prev, [field]: [...current, item] };
         });
+    };
+
+    const downloadPhoto = (dataUrl, filename) => {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const nextPhoto = () => {
+        if (selectedPhotoIndex === null) return;
+        setSelectedPhotoIndex((selectedPhotoIndex + 1) % formData.fotos.length);
+    };
+
+    const prevPhoto = () => {
+        if (selectedPhotoIndex === null) return;
+        setSelectedPhotoIndex((selectedPhotoIndex - 1 + formData.fotos.length) % formData.fotos.length);
     };
 
     const handleGeneratePDF = async () => {
@@ -1378,29 +1398,101 @@ const OcorrenciasForm = () => {
                 />
             )}
 
-            {/* Photo Zoom Modal */}
+            {/* Photo Lightbox / Popup */}
             {selectedPhotoIndex !== null && (
-                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
-                    <button
-                        onClick={() => setSelectedPhotoIndex(null)}
-                        className="absolute top-6 right-6 p-4 text-white hover:bg-white/10 rounded-full transition-all active:scale-95"
-                    >
-                        <X size={32} />
-                    </button>
-                    <img
-                        src={formData.fotos[selectedPhotoIndex].data}
-                        className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
-                        alt="Zoom"
-                    />
-                    <div className="mt-8 text-center space-y-4 max-w-md w-full px-6">
-                        <p className="text-white font-black text-xs uppercase tracking-widest opacity-50">Legenda da Imagem</p>
-                        <input
-                            type="text"
-                            placeholder="Adicione uma legenda..."
-                            className="w-full bg-white/10 border-2 border-white/10 rounded-2xl px-6 py-4 text-white font-bold text-center outline-none focus:border-white/30"
-                            value={formData.fotos[selectedPhotoIndex].legenda || ''}
-                            onChange={(e) => updatePhotoCaption(formData.fotos[selectedPhotoIndex].id, e.target.value)}
+                <div
+                    className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
+                    onClick={() => setSelectedPhotoIndex(null)}
+                >
+                    {/* Toolbar Superior */}
+                    <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-50">
+                        <div className="flex flex-col">
+                            <span className="text-white font-black text-sm uppercase tracking-widest drop-shadow-lg">
+                                Foto {selectedPhotoIndex + 1} de {formData.fotos.length}
+                            </span>
+                            {formData.fotos[selectedPhotoIndex]?.legenda && (
+                                <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider drop-shadow-md">
+                                    {formData.fotos[selectedPhotoIndex].legenda}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const foto = formData.fotos[selectedPhotoIndex];
+                                    downloadPhoto(foto.data, `ocorrencia-${formData.ocorrencia_id_format.replace('/', '-')}-foto-${selectedPhotoIndex + 1}.jpg`);
+                                }}
+                                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl backdrop-blur-md transition-all border border-white/10 shadow-xl active:scale-95"
+                                title="Baixar esta foto"
+                            >
+                                <Download size={22} />
+                            </button>
+                            <button
+                                onClick={() => setSelectedPhotoIndex(null)}
+                                className="p-3 bg-red-600/20 hover:bg-red-600/40 text-red-100 rounded-2xl backdrop-blur-md transition-all border border-red-500/20 shadow-xl active:scale-95"
+                            >
+                                <X size={22} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Botões de Navegação */}
+                    {formData.fotos.length > 1 && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
+                            >
+                                <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
+                            >
+                                <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </>
+                    )}
+
+                    {/* Imagem Central */}
+                    <div className="relative w-full max-h-[70vh] flex-1 flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={formData.fotos[selectedPhotoIndex]?.data}
+                            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
+                            alt="Visualização em tela cheia"
                         />
+                    </div>
+
+                    {/* Painel Inferior: Legenda e Miniaturas */}
+                    <div
+                        className="w-full bg-gradient-to-t from-slate-950 via-slate-900/90 to-transparent pt-12 pb-6 px-6 flex flex-col items-center gap-6 z-50"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Legenda Editável */}
+                        <div className="w-full max-w-md">
+                            <p className="text-white font-black text-[10px] uppercase tracking-widest opacity-50 text-center mb-2">Edite a Legenda</p>
+                            <input
+                                type="text"
+                                placeholder="Adicione uma legenda..."
+                                className="w-full bg-white/10 border-2 border-white/10 rounded-2xl px-6 py-4 text-white font-bold text-center outline-none focus:border-white/30 transition-all shadow-inner"
+                                value={formData.fotos[selectedPhotoIndex]?.legenda || ''}
+                                onChange={(e) => updatePhotoCaption(formData.fotos[selectedPhotoIndex].id, e.target.value)}
+                            />
+                        </div>
+
+                        {/* Miniaturas */}
+                        <div className="flex gap-3 overflow-x-auto p-2 max-w-full no-scrollbar pb-4">
+                            {formData.fotos.map((f, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setSelectedPhotoIndex(i)}
+                                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${selectedPhotoIndex === i ? 'border-white scale-110 shadow-lg' : 'border-white/20 opacity-50 hover:opacity-100'}`}
+                                >
+                                    <img src={f.data} className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

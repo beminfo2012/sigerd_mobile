@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { ArrowLeft, Save, Camera, MapPin, Search, Plus, X, Siren, Clock, FileText, CheckCircle, Edit2, User, Phone, Mail, Crosshair, AlertTriangle, Info, RefreshCw, Upload, Sparkles, Mic, Type, Activity, ChevronRight, Share, Trash2 } from 'lucide-react'
+import { ArrowLeft, Save, Camera, MapPin, Search, Plus, X, Siren, Clock, FileText, CheckCircle, Edit2, User, Phone, Mail, Crosshair, AlertTriangle, Info, RefreshCw, Upload, Sparkles, Mic, Type, Activity, ChevronRight, Share, Trash2, Download, ChevronLeft, Maximize2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { checkRiskArea } from '../../services/riskAreas'
@@ -162,6 +162,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [refining, setRefining] = useState(false)
+    const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null)
 
     useEffect(() => {
         const formatDateTime = (val) => {
@@ -395,6 +396,25 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
     const removePhoto = (id) => {
         setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(p => p.id !== id) }))
     }
+
+    const downloadPhoto = (dataUrl, filename) => {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const nextPhoto = () => {
+        if (selectedPhotoIndex === null) return;
+        setSelectedPhotoIndex((selectedPhotoIndex + 1) % formData.fotos.length);
+    };
+
+    const prevPhoto = () => {
+        if (selectedPhotoIndex === null) return;
+        setSelectedPhotoIndex((selectedPhotoIndex - 1 + formData.fotos.length) % formData.fotos.length);
+    };
 
     const getNextId = async () => {
         const currentYear = new Date().getFullYear()
@@ -867,20 +887,32 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full font-black uppercase">{formData.fotos.length} fotos</span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-3 justify-items-center">
-                        <FileInput onFileSelect={handlePhotoSelect} label="+" />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <FileInput onFileSelect={handlePhotoSelect} className="h-32" />
                         {formData.fotos.map((foto, idx) => (
-                            <div key={foto.id} className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md group">
-                                <img src={foto.data || foto} className="w-full h-full object-cover" alt="Preview" />
-                                <button type="button" onClick={() => removePhoto(foto.id)} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <X size={12} />
+                            <div key={foto.id} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 group shadow-sm bg-slate-50 dark:bg-slate-900">
+                                <img
+                                    src={foto.data || foto}
+                                    className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
+                                    onClick={() => setSelectedPhotoIndex(idx)}
+                                />
+                                <div
+                                    className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none flex items-center justify-center"
+                                >
+                                    <Maximize2 size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => removePhoto(foto.id)}
+                                    className="absolute top-2 right-2 z-10 bg-red-600/80 backdrop-blur-md text-white p-1.5 rounded-xl shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                    <Trash2 size={16} />
                                 </button>
-                                <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/40">
+                                <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-2 z-10">
                                     <input
-                                        type="text"
+                                        className="w-full bg-transparent border-none text-[10px] text-white placeholder-white/70 focus:ring-0 p-0 font-bold"
                                         placeholder="Legenda..."
-                                        className="w-full bg-transparent text-[8px] text-white border-none p-0 focus:ring-0 placeholder:text-white/60"
-                                        value={foto.legenda}
+                                        value={foto.legenda || ''}
                                         onChange={e => {
                                             const newFotos = [...formData.fotos]
                                             newFotos[idx].legenda = e.target.value
@@ -891,6 +923,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                             </div>
                         ))}
                     </div>
+
                 </section>
 
                 {/* 8. SEÇÃO: Relatório e Recomendações */}
@@ -1087,6 +1120,108 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                 confirmText="Sim, Excluir Agora"
                 cancelText="Não, Voltar"
             />
+            {/* Photo Lightbox / Popup */}
+            {selectedPhotoIndex !== null && (
+                <div
+                    className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
+                    onClick={() => setSelectedPhotoIndex(null)}
+                >
+                    {/* Toolbar Superior */}
+                    <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-50">
+                        <div className="flex flex-col">
+                            <span className="text-white font-black text-sm uppercase tracking-widest drop-shadow-lg">
+                                Foto {selectedPhotoIndex + 1} de {formData.fotos.length}
+                            </span>
+                            {formData.fotos[selectedPhotoIndex]?.legenda && (
+                                <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider drop-shadow-md">
+                                    {formData.fotos[selectedPhotoIndex].legenda}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const foto = formData.fotos[selectedPhotoIndex];
+                                    downloadPhoto(foto.data || foto, `interdicao-${formData.interdicaoId}-foto-${selectedPhotoIndex + 1}.jpg`);
+                                }}
+                                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl backdrop-blur-md transition-all border border-white/10 shadow-xl active:scale-95"
+                                title="Baixar esta foto"
+                            >
+                                <Download size={22} />
+                            </button>
+                            <button
+                                onClick={() => setSelectedPhotoIndex(null)}
+                                className="p-3 bg-red-600/20 hover:bg-red-600/40 text-red-100 rounded-2xl backdrop-blur-md transition-all border border-red-500/20 shadow-xl active:scale-95"
+                            >
+                                <X size={22} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Botões de Navegação */}
+                    {formData.fotos.length > 1 && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
+                            >
+                                <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
+                            >
+                                <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </>
+                    )}
+
+                    {/* Imagem Central */}
+                    <div className="relative w-full max-h-[70vh] flex-1 flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={formData.fotos[selectedPhotoIndex]?.data || formData.fotos[selectedPhotoIndex]}
+                            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
+                            alt="Visualização em tela cheia"
+                        />
+                    </div>
+
+                    {/* Painel Inferior: Legenda e Miniaturas */}
+                    <div
+                        className="w-full bg-gradient-to-t from-slate-950 via-slate-900/90 to-transparent pt-12 pb-6 px-6 flex flex-col items-center gap-6 z-50"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Legenda Editável */}
+                        <div className="w-full max-w-md">
+                            <p className="text-white font-black text-[10px] uppercase tracking-widest opacity-50 text-center mb-2">Edite a Legenda</p>
+                            <input
+                                type="text"
+                                placeholder="Adicione uma legenda..."
+                                className="w-full bg-white/10 border-2 border-white/10 rounded-2xl px-6 py-4 text-white font-bold text-center outline-none focus:border-white/30 transition-all shadow-inner"
+                                value={formData.fotos[selectedPhotoIndex]?.legenda || ''}
+                                onChange={(e) => {
+                                    const newFotos = [...formData.fotos]
+                                    newFotos[selectedPhotoIndex].legenda = e.target.value
+                                    handleChange('fotos', newFotos)
+                                }}
+                            />
+                        </div>
+
+                        {/* Miniaturas */}
+                        <div className="flex gap-3 overflow-x-auto p-2 max-w-full no-scrollbar pb-4">
+                            {formData.fotos.map((f, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setSelectedPhotoIndex(i)}
+                                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${selectedPhotoIndex === i ? 'border-white scale-110 shadow-lg' : 'border-white/20 opacity-50 hover:opacity-100'}`}
+                                >
+                                    <img src={f.data || f} className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
