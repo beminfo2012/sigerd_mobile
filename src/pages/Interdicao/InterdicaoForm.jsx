@@ -127,6 +127,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         municipio: 'Santa Maria de Jetibá',
         bairro: '',
         endereco: '',
+        informacoes_complementares: '',
         tipoAlvo: 'Imóvel',
         tipoAlvoEspecificar: '',
         latitude: '',
@@ -214,6 +215,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     }
                     return a;
                 })(),
+                informacoes_complementares: initialData.informacoes_complementares || initialData.informacoesComplementares || '',
                 fotos: (Array.isArray(initialData.fotos) ? initialData.fotos : []).map((f, i) =>
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
@@ -670,6 +672,16 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                                     icon={MapPin}
                                     labelClasses={labelClasses}
                                     inputClasses={inputClasses}
+                                />
+                            </div>
+                            <div className="col-span-2 space-y-2">
+                                <label className={labelClasses}>Informações Complementares</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ex: Próximo à igreja, casa azul..."
+                                    className={inputClasses}
+                                    value={formData.informacoes_complementares}
+                                    onChange={e => handleChange('informacoes_complementares', e.target.value)}
                                 />
                             </div>
                         </div>

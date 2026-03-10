@@ -270,6 +270,12 @@ const VistoriaPrint = () => {
                             <span>Emissão: {new Date().toLocaleString('pt-BR')}</span>
                             <span>•</span>
                             <span>ID: {data.vistoriaId || data.vistoria_id || '---'}</span>
+                            {(data.processo || data.processo_sei) && (
+                                <>
+                                    <span>•</span>
+                                    <span>PROCESSO: {data.processo || data.processo_sei}</span>
+                                </>
+                            )}
                         </div>
                     </header>
 
@@ -324,6 +330,12 @@ const VistoriaPrint = () => {
                                         <div className="p-3">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Bairro</p>
                                             <p className="font-bold text-slate-800">{data.bairro || '---'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 border-b border-slate-200">
+                                        <div className="p-3 bg-slate-50">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Informações Complementares</p>
+                                            <p className="font-bold text-slate-800">{data.informacoes_complementares || data.informacoesComplementares || '---'}</p>
                                         </div>
                                     </div>
                                     <div className="p-3 bg-white">
@@ -411,18 +423,74 @@ const VistoriaPrint = () => {
                         </div>
                     </section>
 
-                    {/* 4. Relatório Técnico */}
-                    <section className="mb-8 avoid-break">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-1 h-5 bg-slate-600 rounded-full"></div>
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Relatório Técnico Circunstanciado</h2>
-                        </div>
-                        <div className="bg-white border border-slate-200 p-6 rounded-lg shadow-sm text-xs leading-relaxed text-justify text-slate-700 whitespace-pre-wrap font-medium">
-                            {data.observacoes || 'Nenhuma observação técnica registrada.'}
-                        </div>
-                    </section>
+                    {/* 4. Checklist Técnico (Moved up to Item 4) */}
+                    {checklistItems.length > 0 && (
+                        <section className="mb-8 avoid-break">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-1 h-5 bg-teal-600 rounded-full"></div>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Checklist Técnico Vistoria</h2>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+                                {(() => {
+                                    const structural = checklistItems.filter(k => k.startsWith('structural:'));
+                                    const standard = checklistItems.filter(k => !k.startsWith('structural:'));
+                                    const okOptions = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
 
-                    {/* 5. Medidas e Encaminhamentos */}
+                                    let html = [];
+
+                                    if (structural.length > 0) {
+                                        const sections = {};
+                                        structural.forEach(k => {
+                                            const parts = k.split(':');
+                                            const sec = parts[1];
+                                            if (!sections[sec]) sections[sec] = [];
+                                            sections[sec].push(parts.length === 4 ? `${parts[2]}: ${parts[3]}` : parts[2]);
+                                        });
+
+                                        Object.keys(sections).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sec => {
+                                            html.push(
+                                                <div key={sec} className="mb-4 last:mb-0">
+                                                    <h4 className="text-[10px] font-black text-blue-600 uppercase mb-2 tracking-wider">{sec}</h4>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {sections[sec].sort().map((item, idx) => {
+                                                            const opt = item.includes(':') ? item.split(':')[1].trim() : item.trim();
+                                                            const isAlert = !okOptions.includes(opt);
+                                                            return (
+                                                                <span key={idx} className={`text-[10px] font-bold px-3 py-1 rounded shadow-sm border ${isAlert ? 'bg-red-100 text-red-700 border-red-200' : 'bg-green-100 text-green-700 border-green-200'}`}>
+                                                                    {item}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        });
+                                    }
+
+                                    if (standard.length > 0) {
+                                        if (structural.length > 0) html.push(<div key="sep" className="my-4 border-t border-slate-200 dashed"></div>);
+                                        html.push(
+                                            <div key="std" className="grid grid-cols-2 gap-2">
+                                                {standard.sort().map((item, idx) => {
+                                                    const isAlert = !okOptions.includes(item);
+                                                    return (
+                                                        <div key={idx} className={`flex items-center gap-2 p-2 border rounded shadow-sm ${isAlert ? 'bg-red-100 border-red-200' : 'bg-green-100 border-green-200'}`}>
+                                                            <span className={isAlert ? 'text-red-500 font-bold' : 'text-green-500 font-bold'}>✔</span>
+                                                            <span className={`text-[10px] font-bold uppercase ${isAlert ? 'text-red-700' : 'text-green-700'}`}>{item}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    }
+
+                                    return html;
+                                })()}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* 5. Medidas e 6. Encaminhamentos */}
                     <section className="mb-8 avoid-break">
                         <div className="grid grid-cols-2 gap-6">
                             <div>
@@ -457,26 +525,6 @@ const VistoriaPrint = () => {
                             </div>
                         </div>
                     </section>
-
-                    {/* 7. Checklist (Optional) */}
-                    {checklistItems.length > 0 && (
-                        <section className="mb-8 avoid-break">
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className="w-1 h-5 bg-teal-600 rounded-full"></div>
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">7. Checklist Técnico</h2>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                {checklistItems.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 p-2 border border-slate-100 bg-slate-50 rounded">
-                                        <div className="w-4 h-4 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-                                            <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-600 uppercase leading-tight">{item}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )}
 
                     <div className="page-break"></div>
 

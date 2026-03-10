@@ -340,6 +340,12 @@ const OcorrenciasPrint = () => {
                                             <p className="font-bold text-slate-800">{data.bairro || '---'}</p>
                                         </div>
                                     </div>
+                                    <div className="grid grid-cols-1 border-b border-slate-200 overflow-hidden">
+                                        <div className="p-3 bg-slate-50">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Informações Complementares</p>
+                                            <p className="font-bold text-slate-800">{data.informacoes_complementares || data.informacoesComplementares || '---'}</p>
+                                        </div>
+                                    </div>
                                     <div className="p-3 bg-white">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">CPF / Documento</p>
                                         <p className="font-bold text-slate-800">{data.cpf || '---'}</p>
@@ -418,10 +424,11 @@ const OcorrenciasPrint = () => {
                                         if (typeof subtipos === 'string') {
                                             try { subtipos = JSON.parse(subtipos); } catch (e) { subtipos = [subtipos]; }
                                         }
+                                        const outroTexto = data.subtipoRiscoOutros || data.subtipo_risco_outros;
                                         if (Array.isArray(subtipos) && subtipos.length > 0) {
                                             return subtipos.map((tag, i) => (
                                                 <span key={i} className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                                                    {tag}
+                                                    {tag === 'Outros' && outroTexto ? `Outros (${outroTexto})` : tag}
                                                 </span>
                                             ));
                                         }
@@ -432,18 +439,33 @@ const OcorrenciasPrint = () => {
                         </div>
                     </section>
 
-                    {/* 4. Relatório Técnico */}
-                    <section className="mb-8 avoid-break">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="w-1 h-5 bg-slate-600 rounded-full"></div>
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Relatório Técnico Circunstanciado</h2>
-                        </div>
-                        <div className="bg-white border border-slate-200 p-6 rounded-lg shadow-sm text-xs leading-relaxed text-justify text-slate-700 whitespace-pre-wrap font-medium">
-                            {data.observacoes || 'Nenhuma observação técnica registrada.'}
-                        </div>
-                    </section>
+                    {/* 4. Checklist Técnico (Moved up) */}
+                    {checklistItems.length > 0 && (
+                        <section className="mb-8 avoid-break">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-1 h-5 bg-teal-600 rounded-full"></div>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Checklist Técnico</h2>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {(() => {
+                                        const okOptions = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
+                                        return checklistItems.sort().map((item, idx) => {
+                                            const isAlert = !okOptions.includes(item);
+                                            return (
+                                                <div key={idx} className={`flex items-center gap-2 p-2 border rounded shadow-sm ${isAlert ? 'bg-red-100 border-red-200' : 'bg-green-100 border-green-200'}`}>
+                                                    <div className={`w-2 h-2 rounded-full shrink-0 ${isAlert ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                                                    <span className={`text-[10px] font-bold uppercase leading-tight ${isAlert ? 'text-red-700' : 'text-green-700'}`}>{item}</span>
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+                        </section>
+                    )}
 
-                    {/* 5. Medidas e Encaminhamentos */}
+                    {/* 5. Medidas e 6. Encaminhamentos */}
                     <section className="mb-8 avoid-break">
                         <div className="grid grid-cols-2 gap-6">
                             <div>
@@ -478,26 +500,6 @@ const OcorrenciasPrint = () => {
                             </div>
                         </div>
                     </section>
-
-                    {/* 7. Checklist (Optional) */}
-                    {checklistItems.length > 0 && (
-                        <section className="mb-8 avoid-break">
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className="w-1 h-5 bg-teal-600 rounded-full"></div>
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">7. Checklist Técnico</h2>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                {checklistItems.map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-2 p-2 border border-slate-100 bg-slate-50 rounded">
-                                        <div className="w-4 h-4 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-                                            <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-600 uppercase leading-tight">{item}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    )}
 
                     <div className="page-break"></div>
 

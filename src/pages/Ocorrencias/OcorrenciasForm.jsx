@@ -262,42 +262,44 @@ const OcorrenciasForm = () => {
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
 
     const RISK_DATA = {
+        'Outros': ['Outros'],
         'Incêndios': [
             'Incêndio em residência', 'Incêndio em estabelecimento comercial', 'Incêndio industrial',
             'Incêndio em veículo', 'Incêndio florestal / em vegetação', 'Incêndio em terreno baldio',
-            'Incêndio em área de preservação'
+            'Incêndio em área de preservação', 'Outros'
         ],
         'Acidentes de Trânsito': [
             'Colisão entre veículos', 'Capotamento', 'Atropelamento', 'Acidente com motocicleta',
-            'Acidente com vítima presa nas ferragens', 'Tombamento de caminhão', 'Derramamento de carga perigosa'
+            'Acidente com vítima presa nas ferragens', 'Tombamento de caminhão', 'Derramamento de carga perigosa', 'Outros'
         ],
         'Quedas e Desabamentos': [
             'Queda de árvore', 'Queda de galhos sobre via', 'Queda de poste', 'Desabamento de muro',
-            'Desabamento parcial de residência', 'Colapso estrutural de edificação', 'Risco estrutural em imóvel', 'Queda de Ponte de Madeira', 'Queda de Ponte de Concreto', 'Queda de passarela'
+            'Desabamento parcial de residência', 'Colapso estrutural de edificação', 'Risco estrutural em imóvel', 'Queda de Ponte de Madeira', 'Queda de Ponte de Concreto', 'Queda de passarela', 'Outros'
         ],
         'Eventos Naturais / Climáticos': [
             'Alagamento', 'Enchente', 'Inundação', 'Enxurrada', 'Deslizamento de terra',
-            'Erosão', 'Vendaval', 'Granizo', 'Raios com danos estruturais'
+            'Erosão', 'Vendaval', 'Granizo', 'Raios com danos estruturais', 'Outros'
         ],
         'Salvamentos': [
             'Resgate de vítima em altura', 'Resgate veicular', 'Resgate aquático', 'Busca por desaparecido',
-            'Resgate em mata', 'Retirada de animal em situação de risco', 'Pessoa presa em elevador'
+            'Resgate em mata', 'Retirada de animal em situação de risco', 'Pessoa presa em elevador', 'Outros'
         ],
         'Produtos Perigosos': [
             'Vazamento de gás', 'Vazamento de produto químico', 'Explosão', 'Risco de explosão',
-            'Derramamento de combustível', 'Contaminação ambiental'
+            'Derramamento de combustível', 'Contaminação ambiental', 'Outros'
         ],
         'Apoio Humanitário': [
             'Distribuição de donativos', 'Abrigamento temporário', 'Cadastro de famílias atingidas',
-            'Avaliação de danos e prejuízos', 'Apoio em decretação de situação de emergência'
+            'Avaliação de danos e prejuízos', 'Apoio em decretação de situação de emergência', 'Outros'
         ],
         'Atendimento Pré-Hospitalar': [
-            'Mal súbito', 'Parada cardiorrespiratória', 'Trauma', 'Queda da própria altura', 'Afogamento'
+            'Mal súbito', 'Parada cardiorrespiratória', 'Trauma', 'Queda da própria altura', 'Afogamento', 'Outros'
         ],
         'Ocorrências Urbanas Diversas': [
             'Fiação elétrica caída', 'Obstrução de via', 'Rompimento de adutora', 'Pane em elevador',
-            'Abertura de residência (emergencial)', 'Ameaça de suicídio'
-        ]
+            'Abertura de residência (emergencial)', 'Ameaça de suicídio', 'Outros'
+        ],
+        'Outros': ['Outros']
     };
 
     useEffect(() => {
@@ -365,7 +367,9 @@ const OcorrenciasForm = () => {
                     ...record,
                     categoriaRisco: record.categoria_risco || record.categoriaRisco || '',
                     subtiposRisco: record.subtipos_risco || record.subtiposRisco || [],
+                    subtipoRiscoOutros: record.subtipo_risco_outros || record.subtipoRiscoOutros || '',
                     nivelRisco: record.nivel_risco || record.nivelRisco || '',
+                    informacoes_complementares: record.informacoes_complementares || record.informacoesComplementares || '',
                     checklistRespostas: record.checklist_respostas || record.checklistRespostas || {},
                     assinaturaAgente: record.assinatura_agente || record.assinaturaAgente || null,
                     assinaturaAssistido: record.assinatura_assistido || record.assinaturaAssistido || null,
@@ -512,7 +516,12 @@ const OcorrenciasForm = () => {
         setFormData(prev => {
             const current = prev[field] || [];
             if (current.includes(item)) {
-                return { ...prev, [field]: current.filter(i => i !== item) };
+                const newArr = current.filter(i => i !== item);
+                const updates = { [field]: newArr };
+                if (field === 'subtiposRisco' && item === 'Outros') {
+                    updates.subtipoRiscoOutros = '';
+                }
+                return { ...prev, ...updates };
             }
             return { ...prev, [field]: [...current, item] };
         });
@@ -895,17 +904,26 @@ const OcorrenciasForm = () => {
 
 
                         <div className="space-y-2">
-                            <label className={labelClasses}>Bairro</label>
-                            <select
-                                className={inputClasses}
+                            <SearchableInput
+                                label="Bairro"
+                                placeholder="Selecione o bairro..."
                                 value={formData.bairro}
-                                onChange={e => setFormData({ ...formData, bairro: e.target.value })}
-                            >
-                                <option value="">Selecione o Bairro</option>
-                                {bairrosData.map(b => (
-                                    <option key={b.nome} value={b.nome}>{b.nome}</option>
-                                ))}
-                            </select>
+                                options={bairrosData.map(b => b.nome).sort()}
+                                onChange={val => setFormData({ ...formData, bairro: val })}
+                                labelClasses={labelClasses}
+                                inputClasses={inputClasses}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className={labelClasses}>Informações Complementares</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: Próximo ao mercado, ponto de referência..."
+                                className={inputClasses}
+                                value={formData.informacoes_complementares}
+                                onChange={e => setFormData({ ...formData, informacoes_complementares: e.target.value })}
+                            />
                         </div>
 
                         <div className="space-y-2">
@@ -993,20 +1011,40 @@ const OcorrenciasForm = () => {
                         </div>
 
                         {formData.categoriaRisco && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {RISK_DATA[formData.categoriaRisco].map(sub => (
-                                    <button
-                                        key={sub}
-                                        type="button"
-                                        onClick={() => toggleArrayItem('subtiposRisco', sub)}
-                                        className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.subtiposRisco?.includes(sub) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
-                                    >
-                                        {sub}
-                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${formData.subtiposRisco?.includes(sub) ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
-                                            {formData.subtiposRisco?.includes(sub) && <CheckCircle2 size={14} />}
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {RISK_DATA[formData.categoriaRisco].map(sub => (
+                                        <button
+                                            key={sub}
+                                            type="button"
+                                            onClick={() => toggleArrayItem('subtiposRisco', sub)}
+                                            className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.subtiposRisco?.includes(sub) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
+                                        >
+                                            {sub}
+                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${formData.subtiposRisco?.includes(sub) ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                                {formData.subtiposRisco?.includes(sub) && <CheckCircle2 size={14} />}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {formData.subtiposRisco?.includes('Outros') && (
+                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Especifique o Tipo de Risco</label>
+                                        <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500">
+                                                <Edit2 size={18} />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                className={`${inputClasses} pl-12 border-indigo-100 bg-indigo-50/10 focus:ring-indigo-500/20`}
+                                                placeholder="Descreva o risco não listado acima..."
+                                                value={formData.subtipoRiscoOutros}
+                                                onChange={e => setFormData({ ...formData, subtipoRiscoOutros: e.target.value })}
+                                            />
                                         </div>
-                                    </button>
-                                ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 

@@ -17,6 +17,7 @@ const normalizeData = (data, type) => {
             telefone: data.telefone || '---',
             enderecoSolicitante: data.enderecoSolicitante || data.endereco_solicitante || '---',
             endereco: data.endereco || '---',
+            informacoes_complementares: data.informacoes_complementares || data.informacoesComplementares || '---',
             bairro: data.bairro || '---',
             latitude: data.latitude || '---',
             longitude: data.longitude || '---',
@@ -28,6 +29,7 @@ const normalizeData = (data, type) => {
                 }
                 return Array.isArray(s) ? s : [];
             })(),
+            subtipoRiscoOutros: data.subtipoRiscoOutros || data.subtipo_risco_outros || '',
             nivelRisco: data.nivelRisco || data.nivel_risco || 'Baixo',
             situacaoObservada: data.situacaoObservada || data.situacao_observada || 'Estabilizado',
             populacaoEstimada: data.populacaoEstimada || data.populacao_estimada || '---',
@@ -68,6 +70,7 @@ const normalizeData = (data, type) => {
             responsavelNome: data.responsavelNome || data.responsavel_nome || '---',
             responsavelCpf: data.responsavelCpf || data.responsavel_cpf || '---',
             endereco: data.endereco || data.logradouro || '---',
+            informacoes_complementares: data.informacoes_complementares || data.informacoes_complementares || '---',
             bairro: data.bairro || data.localidade || '---',
             municipio: data.municipio || '---',
             tipoAlvo: data.tipoAlvo || data.tipo_alvo || '---',
@@ -198,6 +201,7 @@ export const generatePDF = async (rawData, type) => {
                 ${renderField('CPF/CNPJ', data.cpf)}
                 ${renderField('Telefone', data.telefone)}
                 <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
+                <div style="grid-column: span 2;">${renderField('Informações Complementares', data.informacoes_complementares)}</div>
                 ${renderField('Bairro / Localidade', data.bairro)}
                 ${renderField('Coordenadas', `${data.latitude}, ${data.longitude}`)}
             </div>
@@ -206,86 +210,110 @@ export const generatePDF = async (rawData, type) => {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                 ${renderField('Categoria Principal', data.categoriaRisco)}
                 <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-                    <div style="font-size: 9px; color: #64748b; font-weight: 700; uppercase; margin-bottom: 3px;">Nível de Risco</div>
+                    <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px;">Nível de Risco</div>
                     <div>${getNivelBadge(data.nivelRisco)}</div>
+                </div>
+                <div style="grid-column: span 2;">
+                    ${renderField('Tipologia / Subtipos', data.subtiposRisco.map(s => s === 'Outros' ? `Outros (${data.subtipoRiscoOutros})` : s).join(', ') || '---')}
                 </div>
             </div>
 
             <div style="page-break-before: always; height: 1px;"></div>
-            
-            ${sectionTitle('4. Parecer e Recomendações')}
-            <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
-                <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">DESCRIÇÃO TÉCNICA / HISTÓRICO</div>
-                <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6; margin-bottom: 20px;">
-                    "${data.observacoes}"
-                </div>
-                
-                <div style="padding-top: 25px; border-top: 1px dashed #cbd5e1; margin-top: 10px;">
-                    <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">MEDIDAS RECOMENDADAS</div>
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                        ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Monitoramento e Orientação']).map(m => `
-                            <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #475569; font-weight: 600;">
-                                <div style="color: #2a5299;">•</div>
-                                <div>${m}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
 
-            ${Object.keys(data.checklistRespostas).some(k => data.checklistRespostas[k]) ? `
-                ${sectionTitle('5. Constatações Técnicas')}
-                <div style="background: #eff6ff; border-radius: 12px; padding: 12px 20px; border: 1px solid #dbeafe; margin-bottom: 25px; page-break-inside: avoid;">
-                    ${(() => {
-                    const responses = data.checklistRespostas;
-                    const structuralKeys = Object.keys(responses).filter(k => k.startsWith('structural:') && responses[k]);
-                    const standardKeys = Object.keys(responses).filter(k => !k.startsWith('structural:') && responses[k]);
+            ${(() => {
+                const responses = data.checklistRespostas;
+                const structuralKeys = Object.keys(responses).filter(k => k.startsWith('structural:') && responses[k]);
+                const standardKeys = Object.keys(responses).filter(k => !k.startsWith('structural:') && responses[k]);
+                const okOptions = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
 
-                    let html = '';
+                const renderChecklistBlock = (orderNum, titleStr) => {
+                    let html = `${sectionTitle(`${orderNum}. ${titleStr}`)}
+                        <div style="background: #f0f7ff; border-radius: 12px; padding: 20px; border: 1px solid #bae6fd; margin-bottom: 25px; page-break-inside: avoid;">`;
 
-                    // Render Structural first if exists
                     if (structuralKeys.length > 0) {
                         const sections = {};
                         structuralKeys.forEach(k => {
                             const parts = k.split(':');
-                            const sectionTitle = parts[1];
-                            if (!sections[sectionTitle]) sections[sectionTitle] = [];
-                            sections[sectionTitle].push(parts.length === 4 ? `${parts[2]}: ${parts[3]}` : parts[2]);
+                            const title = parts[1];
+                            if (!sections[title]) sections[title] = [];
+                            sections[title].push(parts.length === 4 ? `${parts[2]}: ${parts[3]}` : parts[2]);
                         });
 
-                        html += `<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #bfdbfe;">
-                                <div style="font-size: 10px; font-weight: 800; color: #1e40af; text-transform: uppercase; margin-bottom: 8px;">DIAGNÓSTICO ESTRUTURAL</div>`;
+                        html += `<div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #7dd3fc;">
+                                <div style="font-size: 11px; font-weight: 900; color: #0369a1; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px;">CHECKLIST TÉCNICO ESTRUTURAL</div>`;
 
-                        Object.entries(sections).forEach(([title, items]) => {
+                        Object.keys(sections).sort((a, b) => parseInt(a) - parseInt(b)).forEach(title => {
                             html += `
-                                    <div style="margin-bottom: 8px;">
-                                        <div style="font-size: 9px; font-weight: 800; color: #3b82f6; text-transform: uppercase; margin-bottom: 3px;">${title}</div>
-                                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                                            ${items.map(item => `<span style="background: #dbeafe; color: #1e3a8a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">${item}</span>`).join('')}
-                                        </div>
+                                <div style="margin-bottom: 12px;">
+                                    <div style="font-size: 10px; font-weight: 800; color: #0284c7; text-transform: uppercase; margin-bottom: 6px;">${title}</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                        ${sections[title].sort().map(item => {
+                                const optionPart = item.includes(':') ? item.split(':')[1].trim() : item.trim();
+                                const isAlert = !okOptions.includes(optionPart);
+                                const bgColor = isAlert ? '#fee2e2' : '#dcfce7';
+                                const textColor = isAlert ? '#b91c1c' : '#15803d';
+                                const borderColor = isAlert ? '#fecaca' : '#bbf7d0';
+                                return `<span style="background: ${bgColor}; color: ${textColor}; border: 1px solid ${borderColor}; padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">${item}</span>`;
+                            }).join('')}
                                     </div>
-                                `;
+                                </div>
+                            `;
                         });
                         html += `</div>`;
                     }
 
-                    // Render Standard
                     if (standardKeys.length > 0) {
                         html += `<div>
-                                ${structuralKeys.length > 0 ? `<div style="font-size: 10px; font-weight: 800; color: #1e40af; text-transform: uppercase; margin-top: 5px; margin-bottom: 8px;">OUTRAS CONSTATAÇÕES</div>` : ''}
-                                ${standardKeys.map(item => `
-                                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 5px;">
-                                        <div style="color: #2563eb; font-weight: bold; font-size: 14px;">✓</div>
-                                        <div style="font-size: 11px; color: #1e3a8a; font-weight: 700; line-height: 1.3;">${item}</div>
-                                    </div>
-                                `).join('')}
+                                ${structuralKeys.length > 0 ? `<div style="font-size: 11px; font-weight: 900; color: #0369a1; text-transform: uppercase; margin-top: 10px; margin-bottom: 12px; letter-spacing: 1px;">OUTRAS CONSTATAÇÕES</div>` : ''}
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    ${standardKeys.sort().map(item => `
+                                        <div style="display: flex; align-items: start; gap: 10px; background: white; padding: 10px 15px; border-radius: 8px; border: 1px solid #e0f2fe; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                            <div style="color: #0284c7; font-weight: 900; font-size: 14px;">✓</div>
+                                            <div style="font-size: 11px; color: #0c4a6e; font-weight: 700; line-height: 1.3;">${item}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>`;
                     }
 
+                    html += `</div>`;
                     return html;
-                })()}
-                </div>
-            ` : ''}
+                };
+
+                const renderRecomendacoesBlock = (orderNum) => `
+                    ${sectionTitle(`${orderNum}. Recomendações e Encaminhamentos`)}
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">MEDIDAS RECOMENDADAS</div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Monitoramento e Orientação']).map(m => `
+                                <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #475569; font-weight: 600;">
+                                    <div style="color: #2a5299;">•</div>
+                                    <div>${m}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${data.encaminhamentos && data.encaminhamentos.length > 0 ? `
+                        <div style="padding-top: 20px; border-top: 1px dashed #cbd5e1; margin-top: 20px;">
+                            <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">ENCAMINHAMENTOS</div>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                ${data.encaminhamentos.map(e => `
+                                    <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #475569; font-weight: 600;">
+                                        <div style="color: #7c3aed;">➜</div>
+                                        <div>${e}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>` : ''}
+                    </div>
+                `;
+
+                if (structuralKeys.length > 0 || standardKeys.length > 0) {
+                    return renderChecklistBlock(4, 'Checklist Técnico de Vistoria') + renderRecomendacoesBlock(5);
+                } else {
+                    return renderRecomendacoesBlock(4);
+                }
+            })()}
 
             ${data.fotos.length > 0 ? `
                 ${sectionTitle('6. Anexo Fotográfico')}
@@ -316,6 +344,7 @@ export const generatePDF = async (rawData, type) => {
             ${sectionTitle('2. Localização e Responsável')}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                 <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
+                <div style="grid-column: span 2;">${renderField('Informações Complementares', data.informacoes_complementares)}</div>
                 ${renderField('Bairro / Localidade', data.bairro)}
                 ${renderField('Município', data.municipio)}
                 ${renderField('Coordenadas', `${data.latitude}, ${data.longitude}`)}

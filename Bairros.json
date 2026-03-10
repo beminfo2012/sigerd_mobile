@@ -145,18 +145,22 @@
   },
   {
     "id": 37,
-    "nome": "São João de Garrafão"
+    "nome": "São Luis"
   },
   {
     "id": 38,
-    "nome": "São José do Rio Claro"
+    "nome": "São João de Garrafão"
   },
   {
     "id": 39,
-    "nome": "São Sebastião do Meio"
+    "nome": "São José do Rio Claro"
   },
   {
     "id": 40,
+    "nome": "São Sebastião do Meio"
+  },
+  {
+    "id": 41,
     "nome": "Serra do Gelo"
   }
 ]

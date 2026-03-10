@@ -303,6 +303,10 @@ const InterdicaoPrint = () => {
                                             <p className="font-bold text-slate-800">{data.municipio || 'Santa Maria de Jetibá'}</p>
                                         </div>
                                     </div>
+                                    <div className="p-3 border-b border-slate-200 bg-slate-50">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Informações Complementares</p>
+                                        <p className="font-bold text-slate-800">{data.informacoes_complementares || data.informacoes_complementares || '---'}</p>
+                                    </div>
                                     <div className="p-3 border-b border-slate-200">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Nome do Responsável / Proprietário</p>
                                         <p className="font-bold text-slate-800 uppercase">{data.responsavel_nome || data.responsavelNome || '---'}</p>
@@ -420,17 +424,14 @@ const InterdicaoPrint = () => {
                         </div>
                     </section>
 
-                    {/* 4. Parecer Técnico e Recomendações */}
+                    {/* 4. Recomendações Técnicas */}
                     <section className="mb-8 avoid-break">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-1 h-5 bg-slate-600 rounded-full"></div>
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Parecer Técnico e Recomendações</h2>
+                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Recomendações Técnicas</h2>
                         </div>
                         <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg text-xs leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
-                            <p className="font-black text-[10px] text-slate-400 uppercase mb-2">Relatório Circunstanciado:</p>
-                            <div className="mb-6">{data.relatorio_tecnico || data.relatorioTecnico || 'Nenhuma observação registrada.'}</div>
-
-                            <p className="font-black text-[10px] text-slate-400 uppercase mb-2">Recomendações Técnicas:</p>
+                            <p className="font-black text-[10px] text-slate-400 uppercase mb-2">Orientações e Providências:</p>
                             <div>{data.recomendacoes || 'Nenhuma recomendação registrada.'}</div>
                         </div>
                     </section>

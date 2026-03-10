@@ -70,7 +70,8 @@ const AlertArt = ({ format, severity, alertType, startDate, endDate, risks, inst
                     textTransform: 'uppercase',
                     boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
                     textAlign: 'center',
-                    minWidth: '200px'
+                    minWidth: '200px',
+                    whiteSpace: 'nowrap'
                 }}>
                     {severity.toUpperCase()}
                 </div>
@@ -301,7 +302,7 @@ const Alerts = () => {
             })
 
             const link = document.createElement('a')
-            link.download = `alerta-defesa-civil-\${Date.now()}.jpg`
+            link.download = `alerta-defesa-civil-${Date.now()}.jpg`
             link.href = dataUrl
             link.click()
         } catch (error) {
@@ -344,7 +345,7 @@ const Alerts = () => {
         }
 
         // 4. Open official WhatsApp Channel
-        const waChannelLink = `https://whatsapp.com/channel/0029Vb7CuCcCcW4lh0Lhj115`
+        const waChannelLink = `https://whatsapp.com/channel/0029Vb7CuCcW4lh0Lhj115`
         window.open(waChannelLink, '_blank')
     }
 

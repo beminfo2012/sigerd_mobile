@@ -100,11 +100,13 @@ export const api = {
     async getDashboardData() {
         try {
             // 1. Fetch data in parallel
-            const [remoteVistorias, remoteOcorrencias, localVistorias, localOcorrencias, inmetResp] = await Promise.all([
+            const [remoteVistorias, remoteOcorrencias, remoteInterdicoes, localVistorias, localOcorrencias, localInterdicoes, inmetResp] = await Promise.all([
                 navigator.onLine ? supabase.from('vistorias').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
                 navigator.onLine ? supabase.from('ocorrencias_operacionais').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
+                navigator.onLine ? supabase.from('interdicoes').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
                 getAllVistoriasLocal().catch(() => []),
                 getOcorrenciasLocal().catch(() => []),
+                getAllInterdicoesLocal().catch(() => []),
                 fetch('/api/inmet').catch(() => null)
             ]);
 
@@ -125,7 +127,14 @@ export const api = {
             localOcorrencias.filter(o => !o.synced).forEach(o => oMap.set(o.ocorrencia_id_format || o.ocorrencia_id || o.id, o));
             const allOcorrencias = Array.from(oMap.values());
 
-            // 4. INMET
+            // 4. Process Interdicoes
+            const iData = remoteInterdicoes.data || [];
+            const iMap = new Map();
+            iData.forEach(i => iMap.set(i.interdicao_id || i.id, i));
+            localInterdicoes.filter(i => !i.synced).forEach(i => iMap.set(i.interdicaoId || i.id, i));
+            const allInterdicoes = Array.from(iMap.values());
+
+            // 5. INMET
             let inmetAlerts = [];
             if (inmetResp && inmetResp.ok) {
                 const alerts = await inmetResp.json();
@@ -149,10 +158,17 @@ export const api = {
                     localidadeBreakdown: processLocalidadeBreakdown(allOcorrencias),
                     locations: processListToMapData(allOcorrencias)
                 },
+                interdicoes: {
+                    stats: { total: allInterdicoes.length },
+                    breakdown: processBreakdown(allInterdicoes.map(i => ({ ...i, categoriaRisco: i.risco_grau }))),
+                    localidadeBreakdown: processLocalidadeBreakdown(allInterdicoes),
+                    locations: processListToMapData(allInterdicoes)
+                },
                 stats: {
                     totalVistorias: allVistorias.length,
                     activeOccurrences: todayOccurrences,
                     totalOccurrences: allOcorrencias.length,
+                    totalInterdicoes: allInterdicoes.length,
                     inmetAlertsCount: inmetAlerts.length
                 },
                 // Maintaining top level for backward compat if needed

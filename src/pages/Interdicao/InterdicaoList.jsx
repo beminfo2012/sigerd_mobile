@@ -42,7 +42,7 @@ const InterdicaoList = ({ onNew, onEdit }) => {
             // 1. Cloud
             const { data: cloudData, error } = await supabase
                 .from('interdicoes')
-                .select('id, interdicao_id, created_at, data_hora, responsavel_nome, endereco, bairro, risco_grau, medida_tipo')
+                .select('*')
                 .order('created_at', { ascending: false })
 
             // 2. Local

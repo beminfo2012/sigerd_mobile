@@ -443,6 +443,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 telefone: item.telefone || '',
                 endereco: item.endereco || '',
                 bairro: item.bairro || '',
+                informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
                 latitude: item.latitude ? parseFloat(item.latitude) : null,
                 longitude: item.longitude ? parseFloat(item.longitude) : null,
                 coordenadas: item.coordenadas || (item.latitude && item.longitude ? `${item.latitude},${item.longitude}` : ''),
@@ -539,6 +540,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 municipio: item.municipio || 'Santa Maria de Jetibá',
                 bairro: item.bairro || '',
                 endereco: item.endereco || '',
+                informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
                 tipo_alvo: item.tipoAlvo || 'Imóvel',
                 tipo_alvo_especificar: item.tipoAlvoEspecificar || '',
                 latitude: item.latitude ? parseFloat(item.latitude) : null,
@@ -640,6 +642,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                 fotos: processedPhotos,
                 unidade_consumidora: item.unidade_consumidora || item.unidadeConsumidora || '',
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
+                subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
+                informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
             };
 
             // Remove camelCase fields to keep Supabase clean
@@ -648,6 +652,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.categoriaRisco;
             delete payload.nivelRisco;
             delete payload.subtiposRisco;
+            delete payload.subtipoRiscoOutros;
             delete payload.temSolicitanteEspecifico;
             delete payload.temApoioTecnico;
             delete payload.assinaturaAgente;

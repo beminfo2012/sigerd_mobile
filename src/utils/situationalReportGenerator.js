@@ -91,22 +91,26 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             <div style="padding: 30px 40px;">
 
                 <!-- STATS GRID -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 35px;">
-                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #3b82f6;">
-                        <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Ocorrências</div>
-                        <div style="font-size: 32px; font-weight: 900; color: #1e293b;">${dashboardData.locations?.length || 0}</div>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 35px;">
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #3b82f6;">
+                        <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Vistorias</div>
+                        <div style="font-size: 24px; font-weight: 900; color: #1e293b;">${dashboardData.vistorias?.stats?.total || 0}</div>
                     </div>
-                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #ef4444;">
-                        <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Avisos Ativos</div>
-                        <div style="font-size: 32px; font-weight: 900; color: #1e293b;">${dashboardData.stats?.activeOccurrences || 0}</div>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #8b5cf6;">
+                        <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Ocorrências</div>
+                        <div style="font-size: 24px; font-weight: 900; color: #1e293b;">${dashboardData.ocorrencias?.stats?.total || 0}</div>
                     </div>
-                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #10b981;">
-                        <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Chuva Média 24h</div>
-                        <div style="font-size: 32px; font-weight: 900; color: #1e293b;">${avgAcc24}<span style="font-size: 14px; font-weight: 500; color: #94a3b8; margin-left: 2px;">mm</span></div>
+                    <div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 16px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #ef4444;">
+                        <div style="font-size: 9px; font-weight: 800; color: #cf222e; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Interdições</div>
+                        <div style="font-size: 24px; font-weight: 900; color: #ef4444;">${dashboardData.interdicoes?.stats?.total || dashboardData.stats?.totalInterdicoes || 0}</div>
                     </div>
-                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #6366f1;">
-                        <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Áreas em Monitoramento</div>
-                        <div style="font-size: 32px; font-weight: 900; color: #1e293b;">${Object.keys(neighborhoodStats).length}</div>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #10b981;">
+                        <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Chuva 24h</div>
+                        <div style="font-size: 24px; font-weight: 900; color: #1e293b;">${avgAcc24}<span style="font-size: 12px; font-weight: 500; color: #94a3b8; margin-left: 2px;">mm</span></div>
+                    </div>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #6366f1;">
+                        <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px;">Bairros</div>
+                        <div style="font-size: 24px; font-weight: 900; color: #1e293b;">${Object.keys(neighborhoodStats).length}</div>
                     </div>
                 </div>
 

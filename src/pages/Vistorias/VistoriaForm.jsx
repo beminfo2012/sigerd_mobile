@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
@@ -159,6 +159,90 @@ const ENCAMINHAMENTOS_LIST = [
     'Outros'
 ]
 
+const SearchableInput = ({
+    label,
+    value,
+    onChange,
+    options,
+    placeholder,
+    icon: IconComponent,
+    labelClasses,
+    inputClasses
+}) => {
+    const [search, setSearch] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    const filteredOptions = options.filter(opt =>
+        opt.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <div className="relative">
+            <label className={labelClasses}>{label}</label>
+            <div className="relative group">
+                {IconComponent && <IconComponent size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />}
+                <div
+                    onClick={() => setIsOpen(true)}
+                    className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[56px] flex items-center justify-between pr-4`}
+                >
+                    <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-300 dark:text-slate-600'}>
+                        {value || placeholder}
+                    </span>
+                    <Search size={16} className="text-slate-300" />
+                </div>
+            </div>
+
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
+                                <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                    <X size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    autoFocus
+                                    className={`${inputClasses} pl-12 text-black`}
+                                    placeholder="Comece a digitar para filtrar..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto p-2 pb-20">
+                            {filteredOptions.length > 0 ? (
+                                filteredOptions.map((opt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={`w-full text-left p-4 rounded-2xl font-bold transition-all flex items-center justify-between group mb-1 ${value === opt ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        <span className="flex-1">{opt}</span>
+                                        {value === opt && <CheckCircle size={18} className="ml-2" />}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-10 text-center space-y-2 opacity-50">
+                                    <Search size={32} className="mx-auto text-slate-300" />
+                                    <p className="font-bold text-sm">Nenhum resultado encontrado</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const VistoriaForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
     const navigate = useNavigate()
@@ -174,6 +258,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         telefone: '',
         endereco: '',
         bairro: '',
+        informacoes_complementares: '',
         latitude: '',
         longitude: '',
         coordenadas: '',
@@ -283,6 +368,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 gruposVulneraveis: Array.isArray(initialData.grupos_vulneraveis || initialData.gruposVulneraveis) ? (initialData.grupos_vulneraveis || initialData.gruposVulneraveis) : [],
                 medidasTomadas: Array.isArray(initialData.medidas_tomadas || initialData.medidasTomadas) ? (initialData.medidas_tomadas || initialData.medidasTomadas) : [],
                 encaminhamentos: Array.isArray(initialData.encaminhamentos) ? initialData.encaminhamentos : [],
+                informacoes_complementares: initialData.informacoes_complementares || initialData.informacoesComplementares || '',
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
                 apoioTecnico: {
                     nome: apoio?.nome || '',
@@ -884,54 +970,50 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className={labelClasses}>Endereço da Ocorrência</label>
-                                <div className="relative group">
-                                    <MapPin size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />
-                                    <input
-                                        type="text"
-                                        list="logradouros-list"
-                                        className={`${inputClasses} pl-12`}
-                                        value={formData.endereco}
-                                        onChange={e => {
-                                            const streetName = e.target.value;
-                                            const found = logradourosData.find(l => l.nome.toLowerCase() === streetName.toLowerCase());
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                endereco: streetName,
-                                                bairro: found ? found.bairro : prev.bairro
-                                            }));
-                                        }}
-                                        placeholder="Nome da rua, avenida..."
-                                    />
-                                    <datalist id="logradouros-list">
-                                        {logradourosData
-                                            .filter(l => !formData.bairro || l.bairro === formData.bairro)
-                                            .map(l => l.nome)
-                                            .sort()
-                                            .map(nome => (
-                                                <option key={nome} value={nome} />
-                                            ))}
-                                    </datalist>
-                                </div>
+                                <SearchableInput
+                                    label="Endereço da Ocorrência"
+                                    placeholder="Nome da rua, avenida..."
+                                    value={formData.endereco}
+                                    onChange={val => {
+                                        const found = logradourosData.find(l => l.nome.toLowerCase() === val.toLowerCase());
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            endereco: val,
+                                            bairro: found ? found.bairro : prev.bairro
+                                        }));
+                                    }}
+                                    options={logradourosData
+                                        .filter(l => !formData.bairro || l.bairro === formData.bairro)
+                                        .map(l => l.nome)
+                                        .sort()}
+                                    icon={MapPin}
+                                    labelClasses={labelClasses}
+                                    inputClasses={inputClasses}
+                                />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className={labelClasses}>Bairro</label>
-                                    <input
-                                        type="text"
-                                        list="bairros-list"
-                                        className={inputClasses}
-                                        value={formData.bairro}
-                                        onChange={e => setFormData({ ...formData, bairro: e.target.value })}
+                                    <SearchableInput
+                                        label="Bairro"
                                         placeholder="Selecione o bairro..."
+                                        value={formData.bairro}
+                                        onChange={val => setFormData({ ...formData, bairro: val })}
+                                        options={bairrosData.map(b => b.nome).sort()}
+                                        labelClasses={labelClasses}
+                                        inputClasses={inputClasses}
                                     />
-                                    <datalist id="bairros-list">
-                                        {bairrosData.map(b => b.nome).sort().map(nome => (
-                                            <option key={nome} value={nome} />
-                                        ))}
-                                    </datalist>
                                 </div>
                                 <div className="space-y-2">
+                                    <label className={labelClasses}>Informações Complementares</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: Próximo à igreja, casa azul..."
+                                        className={inputClasses}
+                                        value={formData.informacoes_complementares}
+                                        onChange={e => setFormData({ ...formData, informacoes_complementares: e.target.value })}
+                                    />
+                                </div>
+                                <div className="sm:col-span-2 space-y-2">
                                     <label className={labelClasses}>Coordenadas (Lat, Lng)</label>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
