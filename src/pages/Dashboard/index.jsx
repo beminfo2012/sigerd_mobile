@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { UserContext } from '../../App'
 import { api } from '../../services/api'
 import {
     ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
@@ -326,6 +327,8 @@ const MobileDashboardView = ({
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
     chartMode, setChartMode
 }) => {
+    const userProfile = useContext(UserContext);
+    const isOperador = userProfile?.role === 'Operador';
     const currentData = viewMode === 'vistorias' ? data.vistorias : data.ocorrencias;
     const filteredLocations = mapFilter === 'Todas' ? currentData.locations : currentData.locations.filter(l => l.risk === mapFilter);
     const typologies = ['Todas', ...currentData.breakdown.map(b => b.label)];
@@ -382,43 +385,45 @@ const MobileDashboardView = ({
                 <CemadenAlertBanner alerts={cemadenAlerts} />
 
                 {/* 2. Indicadores Operacionais */}
-                <div>
-                    <div className="flex justify-between items-center mb-6 px-1">
-                        <div className="flex flex-col">
-                            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] -mt-1">Santa Maria de Jetibá</span>
-                        </div>
-                        <button
-                            onClick={handleSync}
-                            disabled={syncing}
-                            className={`p-2.5 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500'}`}
-                        >
-                            <RefreshCw size={18} />
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Sync Card */}
-                        <div onClick={handleSync} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 relative active:scale-95 transition-all group">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
-                                {syncing ? <CloudUpload size={20} className="animate-bounce" /> : <CloudUpload size={20} />}
+                {!isOperador && (
+                    <div>
+                        <div className="flex justify-between items-center mb-6 px-1">
+                            <div className="flex flex-col">
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] -mt-1">Santa Maria de Jetibá</span>
                             </div>
-                            <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
-                                {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
-                            </div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização</div>
+                            <button
+                                onClick={handleSync}
+                                disabled={syncing}
+                                className={`p-2.5 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500'}`}
+                            >
+                                <RefreshCw size={18} />
+                            </button>
                         </div>
 
-                        {/* INMET Alerts */}
-                        <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-all">
-                            <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
-                                <Zap size={20} />
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Sync Card */}
+                            <div onClick={handleSync} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 relative active:scale-95 transition-all group">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                                    {syncing ? <CloudUpload size={20} className="animate-bounce" /> : <CloudUpload size={20} />}
+                                </div>
+                                <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
+                                    {(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? (syncDetail.vistorias + syncDetail.interdicoes) : '100%'}
+                                </div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização</div>
                             </div>
-                            <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">{data.stats.inmetAlertsCount || 0}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</div>
+
+                            {/* INMET Alerts */}
+                            <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-all">
+                                <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
+                                    <Zap size={20} />
+                                </div>
+                                <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">{data.stats.inmetAlertsCount || 0}</div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Avisos INMET</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* 3. Acesso Rápido - Circular Icons */}
                 <div>
@@ -430,24 +435,28 @@ const MobileDashboardView = ({
                             </div>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Monitoramento</span>
                         </div>
-                        <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer">
-                            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
-                                <Home size={28} />
+                        {!isOperador && (
+                            <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer">
+                                <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
+                                    <Home size={28} />
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Assisit. Humanitária</span>
                             </div>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Assisit. Humanitária</span>
-                        </div>
+                        )}
                         <div onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center gap-2.5 cursor-pointer">
                             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
                                 <ClipboardList size={28} />
                             </div>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Ocorrências</span>
                         </div>
-                        <div className="flex flex-col items-center gap-2.5 relative">
-                            <div onClick={() => setShowReportMenu(!showReportMenu)} className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all cursor-pointer">
-                                <FileText size={28} />
+                        {!isOperador && (
+                            <div className="flex flex-col items-center gap-2.5 relative">
+                                <div onClick={() => setShowReportMenu(!showReportMenu)} className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all cursor-pointer">
+                                    <FileText size={28} />
+                                </div>
+                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Relatórios</span>
                             </div>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Relatórios</span>
-                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -775,15 +784,17 @@ const WebViewDashboardView = ({
                         </div>
 
                         {/* Card 2: INMET Alerts */}
-                        <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
-                                    <Zap size={20} />
+                        {!isOperador && (
+                            <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
+                                        <Zap size={20} />
+                                    </div>
+                                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
                                 </div>
-                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
-                        </div>
+                        )}
 
                         {/* Card 3: Ocorrências Hoje */}
                         <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
@@ -1107,18 +1118,20 @@ const WebViewDashboardView = ({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     {/* Left Column (Sync & Event Log) */}
                     <div className="lg:col-span-8 flex flex-col gap-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                        <div className={`grid grid-cols-1 ${!isOperador ? 'md:grid-cols-2' : ''} gap-6 h-full`}>
                             {/* Sync Summary */}
-                            <div onClick={handleSync} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all justify-center">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${syncing ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30'}`}>
-                                        <CheckCircle size={18} className={syncing ? 'animate-spin' : ''} />
+                            {!isOperador && (
+                                <div onClick={handleSync} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all justify-center">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${syncing ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30'}`}>
+                                            <CheckCircle size={18} className={syncing ? 'animate-spin' : ''} />
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização do Sistema</span>
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização do Sistema</span>
+                                    <div className="text-2xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Forçar sincronização</span>
                                 </div>
-                                <div className="text-2xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Forçar sincronização</span>
-                            </div>
+                            )}
 
                             {/* Event Log Card (Replaces Vistoria Card block) */}
                             <div className="flex flex-col border border-transparent">

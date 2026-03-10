@@ -220,7 +220,7 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/georescue" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, 'Redap_Geral']}>
+                                    <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, 'Redap_Geral'].filter(r => r !== 'Operador')}>
                                         <GeoRescue />
                                     </ProtectedRoute>
                                 } />
@@ -250,7 +250,7 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/alerts" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES.filter(r => r !== 'Operador')}>
                                         <Alerts />
                                     </ProtectedRoute>
                                 } />
@@ -424,10 +424,12 @@ const AppContent = ({
                                 <Home size={24} />
                                 <span>Início</span>
                             </Link>
-                            <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
-                                <Map size={24} />
-                                <span>GeoRescue</span>
-                            </Link>
+                            {userProfile?.role !== 'Operador' && (
+                                <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
+                                    <Map size={24} />
+                                    <span>GeoRescue</span>
+                                </Link>
+                            )}
                             <div className="nav-item fab-container">
                                 <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
                                     <FileText size={24} />
@@ -468,8 +470,8 @@ function App() {
     })
 
     const AGENT_ROLES = ['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'Técnico em Edificações', 'Operador']
-    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social', 'Operador']
-    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social', 'Operador']
+    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
+    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
     const REDAP_ROLES = [
         'Admin',
         'Administrador',

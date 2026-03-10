@@ -199,25 +199,27 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
             <div className="space-y-4">
                 <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                     {/* Sync Option */}
-                    <button
-                        onClick={handleManualSync}
-                        disabled={syncing}
-                        className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
-                    >
-                        <div className="flex items-center">
-                            <div className={`p-3 rounded-2xl mr-4 ${syncDetail.total > 0 ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-500' : 'bg-green-50 dark:bg-green-950/30 text-green-500'}`}>
-                                <Database size={22} className={syncing ? 'animate-spin' : ''} />
+                    {userProfile?.role !== 'Operador' && (
+                        <button
+                            onClick={handleManualSync}
+                            disabled={syncing}
+                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
+                        >
+                            <div className="flex items-center">
+                                <div className={`p-3 rounded-2xl mr-4 ${syncDetail.total > 0 ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-500' : 'bg-green-50 dark:bg-green-950/30 text-green-500'}`}>
+                                    <Database size={22} className={syncing ? 'animate-spin' : ''} />
+                                </div>
+                                <div>
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Sincronizar Dados</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                                        {syncDetail.total > 0 ? `${syncDetail.total} registros pendentes` : 'Tudo atualizado'}
+                                    </span>
+                                </div>
                             </div>
-                            <div>
-                                <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Sincronizar Dados</span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                    {syncDetail.total > 0 ? `${syncDetail.total} registros pendentes` : 'Tudo atualizado'}
-                                </span>
-                            </div>
-                        </div>
-                        {syncDetail.total > 0 && <RefreshCcw size={18} className="text-slate-300" />}
-                        {syncDetail.total === 0 && <CheckCircle size={18} className="text-green-500" />}
-                    </button>
+                            {syncDetail.total > 0 && <RefreshCcw size={18} className="text-slate-300" />}
+                            {syncDetail.total === 0 && <CheckCircle size={18} className="text-green-500" />}
+                        </button>
+                    )}
 
                     {/* Settings Option (Clear Cache Only) */}
                     <button

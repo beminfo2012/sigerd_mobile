@@ -142,7 +142,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'GeoRescue',
             icon: Map,
             path: '/georescue',
-            roles: AGENT_ROLES
+            roles: AGENT_ROLES.filter(r => r !== 'Operador')
         },
         {
             label: 'Configurações',
@@ -223,15 +223,17 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                                 Editar Perfil
                             </button>
 
-                            <button onClick={handleManualSync} disabled={syncing} className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50 text-left">
-                                <div className="flex items-center gap-3">
-                                    <Cloud size={18} className={syncing ? "animate-spin text-orange-500" : "text-orange-500"} />
-                                    Sincronizar Dados
-                                </div>
-                                {syncDetail.total > 0 && (
-                                    <span className="bg-orange-100 text-orange-600 text-[9px] px-1.5 py-0.5 rounded-full">{syncDetail.total}</span>
-                                )}
-                            </button>
+                            {userProfile?.role !== 'Operador' && (
+                                <button onClick={handleManualSync} disabled={syncing} className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50 text-left">
+                                    <div className="flex items-center gap-3">
+                                        <Cloud size={18} className={syncing ? "animate-spin text-orange-500" : "text-orange-500"} />
+                                        Sincronizar Dados
+                                    </div>
+                                    {syncDetail.total > 0 && (
+                                        <span className="bg-orange-100 text-orange-600 text-[9px] px-1.5 py-0.5 rounded-full">{syncDetail.total}</span>
+                                    )}
+                                </button>
+                            )}
 
                             <button onClick={handleClearCache} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left">
                                 <Trash2 size={18} className="text-red-400" />
