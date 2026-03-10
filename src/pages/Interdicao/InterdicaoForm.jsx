@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { ArrowLeft, Save, Camera, MapPin, Search, Plus, X, Siren, Clock, FileText, CheckCircle, Edit2, User, Phone, Mail, Crosshair, AlertTriangle, Info, RefreshCw, Upload, Sparkles, Mic, Type, Activity, ChevronRight, Share, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import exifr from 'exifr'
+
 import { checkRiskArea } from '../../services/riskAreas'
 import { saveInterdicaoOffline, deleteInterdicaoLocal } from '../../services/db'
 import FileInput from '../../components/FileInput'
 import { generatePDF } from '../../utils/pdfGenerator'
-import { compressImage } from '../../utils/imageOptimizer'
+import { compressImage, extractMetadata } from '../../utils/imageOptimizer'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
 import { supabase } from '../../services/supabase'
@@ -346,44 +346,29 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         }))
     }
 
-    const handlePhotoSelect = async (files, source = 'camera') => {
-        const newPhotos = await Promise.all(files.map(file => {
+    const handlePhotoSelect = async (files) => {
+        // Prepare current form coords as fallback
+        const formCoords = formData.latitude && formData.longitude ? {
+            lat: formData.latitude,
+            lng: formData.longitude
+        } : null;
+
+        const newPhotos = await Promise.all(files.map(async (file) => {
             return new Promise((resolve) => {
                 const reader = new FileReader()
                 reader.onloadend = async () => {
                     try {
-                        let coords = null;
-                        let timestamp = null;
+                        // Extract metadata from file (Works for both camera and gallery if file has EXIF)
+                        const meta = await extractMetadata(file);
 
-                        if (source === 'camera') {
-                            coords = formData.latitude && formData.longitude ? {
-                                lat: formData.latitude,
-                                lng: formData.longitude
-                            } : null;
-                        }
-
-                        // Se vir da galeria, tenta extrair dos metadados EXIF
-                        if (source === 'gallery') {
-                            try {
-                                const metadata = await exifr.gps(file);
-                                if (metadata && metadata.latitude && metadata.longitude) {
-                                    coords = {
-                                        lat: metadata.latitude.toFixed(6),
-                                        lng: metadata.longitude.toFixed(6)
-                                    };
-                                }
-                                const date = await exifr.parse(file, ['DateTimeOriginal']);
-                                if (date && date.DateTimeOriginal) {
-                                    timestamp = date.DateTimeOriginal;
-                                }
-                            } catch (metaErr) {
-                                console.warn("Erro ao ler EXIF:", metaErr);
-                            }
-                        }
+                        // Prioritize EXIF coords, then form coords
+                        const finalCoords = meta.coords || formCoords;
+                        // Prioritize EXIF timestamp, then current date
+                        const finalTimestamp = meta.timestamp || new Date();
 
                         const compressed = await compressImage(reader.result, {
-                            coordinates: coords,
-                            timestamp: timestamp || true // Usa o da imagem ou o atual
+                            coordinates: finalCoords,
+                            timestamp: finalTimestamp
                         });
 
                         resolve({
@@ -405,6 +390,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
         }))
         setFormData(prev => ({ ...prev, fotos: [...prev.fotos, ...newPhotos] }))
     }
+
 
     const removePhoto = (id) => {
         setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(p => p.id !== id) }))

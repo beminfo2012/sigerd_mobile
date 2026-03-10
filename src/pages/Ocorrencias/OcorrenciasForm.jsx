@@ -19,6 +19,7 @@ import SignaturePadComp from '../../components/SignaturePad';
 import FileInput from '../../components/FileInput';
 import { refineReportText } from '../../services/ai';
 import { generatePDF } from '../../utils/pdfGenerator';
+import { compressImage, extractMetadata } from '../../utils/imageOptimizer';
 
 const SearchableInput = ({
     label,
@@ -437,21 +438,63 @@ const OcorrenciasForm = () => {
         }
     };
 
-    const handlePhotoSelect = (files) => {
+    const handlePhotoSelect = async (files) => {
         if (!files || !Array.isArray(files)) return;
-        files.forEach(file => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const newPhoto = {
-                    id: crypto.randomUUID(),
-                    data: reader.result, // Ensures it's Base64
-                    legenda: ''
+
+        // Try to get current location as fallback
+        let currentCoords = null;
+        if (formData.lat && formData.lng) {
+            currentCoords = { lat: formData.lat, lng: formData.lng };
+        } else if (navigator.geolocation) {
+            try {
+                const pos = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+                });
+                currentCoords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) };
+            } catch (e) {
+                console.warn("Geolocation fallback failed", e);
+            }
+        }
+
+        const processedPhotos = await Promise.all(files.map(async (file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    try {
+                        // Extract metadata from file
+                        const meta = await extractMetadata(file);
+
+                        // Use EXIF coords if available, otherwise fallback
+                        const finalCoords = meta.coords || currentCoords;
+                        // Use EXIF timestamp if available, otherwise current date
+                        const finalTimestamp = meta.timestamp || new Date();
+
+                        const compressed = await compressImage(reader.result, {
+                            coordinates: finalCoords,
+                            timestamp: finalTimestamp
+                        });
+
+                        resolve({
+                            id: crypto.randomUUID(),
+                            data: compressed,
+                            legenda: ''
+                        });
+                    } catch (err) {
+                        console.error("Error processing photo:", err);
+                        resolve({
+                            id: crypto.randomUUID(),
+                            data: reader.result,
+                            legenda: ''
+                        });
+                    }
                 };
-                setFormData(prev => ({ ...prev, fotos: [...(prev.fotos || []), newPhoto] }));
-            };
-            if (file) reader.readAsDataURL(file);
-        });
+                reader.readAsDataURL(file);
+            });
+        }));
+
+        setFormData(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...processedPhotos] }));
     };
+
 
     const removePhoto = (id) => {
         setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(f => f.id !== id) }));

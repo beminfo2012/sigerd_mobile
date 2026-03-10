@@ -7,7 +7,7 @@ import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
 import { generatePDF } from '../../utils/pdfGenerator'
-import { compressImage } from '../../utils/imageOptimizer'
+import { compressImage, extractMetadata } from '../../utils/imageOptimizer'
 import { useToast } from '../../components/ToastNotification'
 import SignaturePadComp from '../../components/SignaturePad'
 import VoiceInput from '../../components/VoiceInput'
@@ -471,41 +471,30 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     }
 
     const handlePhotoSelect = async (files) => {
-        // Attempt to get location if missing (Best Effort for High Fidelity)
-        let currentCoords = formData.latitude && formData.longitude ? {
+        // Prepare current form coords as fallback
+        const formCoords = formData.latitude && formData.longitude ? {
             lat: formData.latitude,
             lng: formData.longitude
         } : null;
 
-        if (!currentCoords && navigator.geolocation) {
-            try {
-                const pos = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000, enableHighAccuracy: true });
-                });
-                currentCoords = {
-                    lat: pos.coords.latitude.toFixed(6),
-                    lng: pos.coords.longitude.toFixed(6)
-                };
-
-                // Also update form state if we got it
-                setFormData(prev => ({
-                    ...prev,
-                    latitude: currentCoords.lat,
-                    longitude: currentCoords.lng,
-                    coordenadas: `${currentCoords.lat}, ${currentCoords.lng}`
-                }));
-            } catch (e) {
-                console.warn("Auto-GPS for photo failed:", e);
-                // Continue without coords
-            }
-        }
-
-        const newPhotos = await Promise.all(files.map(file => {
+        const newPhotos = await Promise.all(files.map(async (file) => {
             return new Promise((resolve) => {
                 const reader = new FileReader()
                 reader.onloadend = async () => {
                     try {
-                        const compressed = await compressImage(reader.result, { coordinates: currentCoords });
+                        // Extract metadata from file
+                        const meta = await extractMetadata(file);
+
+                        // Prioritize EXIF coords, then form coords
+                        const finalCoords = meta.coords || formCoords;
+                        // Prioritize EXIF timestamp, then current date
+                        const finalTimestamp = meta.timestamp || new Date();
+
+                        const compressed = await compressImage(reader.result, {
+                            coordinates: finalCoords,
+                            timestamp: finalTimestamp
+                        });
+
                         resolve({
                             id: Date.now() + Math.random(),
                             data: compressed,
@@ -527,6 +516,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         }))
         setFormData(prev => ({ ...prev, fotos: [...prev.fotos, ...newPhotos] }))
     }
+
 
     // [SAFE AI] Comparison State - Strictly Local, No Global Side Effects
     const [comparisonContent, setComparisonContent] = useState(null) // { original: '', refined: '' }
