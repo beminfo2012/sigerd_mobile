@@ -1,0 +1,52 @@
+PERMISSÕES POR PERFIL DE ACESSO - SIGERD MOBILE
+
+1. PERFIS ADMINISTRATIVOS
+(Admin, Administrador, Coordenador, Coordenador de Proteção e Defesa Civil)
+- Acesso total ao Dashboard e Monitoramento.
+- Gestão completa de Vistorias, Ocorrências e Interdições (Criar, Editar, Excluir).
+- Gestão de Usuários (Criar, Editar, Ativar/Desativar contas).
+- Gestão total de Assistência Humanitária (Abrigos, Estoque, Doações, Contratos).
+- Gestão total do módulo REDAP (Resposta a Desastres).
+- Configurações do sistema.
+
+2. PERFIS OPERACIONAIS (AGENTES)
+(Agente de Defesa Civil, Técnico em Edificações, Secretário)
+- Acesso ao Dashboard e Monitoramento em Tempo Real.
+- Gestão de Vistorias e Ocorrências.
+- Gestão de Interdições.
+- Consulta de Pluviômetros e Alertas (INMET/CEMADEN).
+- Acesso ao GeoRescue.
+- Checklist de Saída.
+- NÃO podem gerenciar usuários.
+- Podem ter acesso limitado ou total à Humanitária dependendo da configuração específica.
+
+3. PERFIS DE ASSISTÊNCIA HUMANITÁRIA (GESTOR SOCIAL)
+(Humanitario_Total, Assistente Social)
+- Gestão completa de Abrigos e Abrigados.
+- Controle de estoque e saída de insumos.
+- Gestão de Doações (Central e nos Abrigos).
+- Emissão de Relatórios de assistência.
+- Gestão de Contratos de aluguel social/ajuda.
+
+4. PERFIS DE LEITURA HUMANITÁRIA
+(Humanitario_Leitura, Voluntário)
+- Consulta de abrigados e estoque.
+- Registro de doações (opcional dependendo da tela).
+- NÃO podem editar dados mestres de abrigos ou relatórios gerenciais.
+
+5. PERFIS REDAP SETORIAL (SECRETARIAS)
+(Redap_Saude, Redap_Obras, Redap_Educacao, Redap_Social, Redap_Agricultura, etc.)
+- Acesso EXCLUSIVO ao módulo REDAP.
+- Preenchimento de informações técnicas da sua respectiva secretaria para o formulário de desastre.
+- Usuários restritos: ao logar, são redirecionados automaticamente para o fluxo REDAP.
+- NÃO acessam o Dashboard geral de Defesa Civil nem vistorias/interdições.
+
+6. PERFIS DE VISUALIZAÇÃO
+(Visualizador)
+- Acesso apenas para consulta (Read-only) em módulos permitidos.
+- Geralmente limitado a dashboards de monitoramento.
+- NÃO podem criar ou editar registros.
+
+7. PERFIL OPERADOR (AUXILIAR)
+- Cadastro de ocorrências e vistorias simples no campo.
+- Acesso às ferramentas de monitoramento.

@@ -757,8 +757,8 @@ const WebViewDashboardView = ({
                         </div>
                     </div>
 
-                    {/* Top 6 Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                    {/* Top 5 Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {/* Card 1: Risk Level */}
                         <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden group shadow-sm">
                             <div className={`absolute top-0 left-0 w-1.5 h-full ${statusInfo.color}`} />
@@ -774,15 +774,15 @@ const WebViewDashboardView = ({
                             </div>
                         </div>
 
-                        {/* Card 2: Interdições Totais */}
-                        <div onClick={() => navigate('/interdicao')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                        {/* Card 2: INMET Alerts */}
+                        <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-500">
-                                    <ShieldAlert size={20} />
+                                <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
+                                    <Zap size={20} />
                                 </div>
-                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.interdicoes?.stats?.total || 0}</span>
+                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Interdições</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
                         </div>
 
                         {/* Card 3: Ocorrências Hoje */}
@@ -807,18 +807,7 @@ const WebViewDashboardView = ({
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Vistorias</span>
                         </div>
 
-                        {/* Card 5: INMET Alerts */}
-                        <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
-                                    <Zap size={20} />
-                                </div>
-                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
-                        </div>
-
-                        {/* Card 6: Média Pluviométrica */}
+                        {/* Card 5: Média Pluviométrica */}
                         <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
                             <div className="flex justify-between items-start">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-500 group-hover:scale-110 transition-transform">

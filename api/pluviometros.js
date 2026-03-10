@@ -80,10 +80,20 @@ export default async function handler(request, response) {
     // --- FETCH ANA ---
     const fetchAna = async () => {
         const ANA_STATIONS = [
-            { id: "57118080", name: "PCH RIO BONITO MONTANTE 1" },
-            { id: "57090000", name: "SÃO JOÃO DE GARRAFÃO" },
-            { id: "57117000", name: "PCH RIO BONITO MONTANTE 2" },
-            { id: "57119000", name: "PCH RIO BONITO BARRAMENTO" }
+            { id: "02040007", name: "SANTA MARIA DO JETIBÁ (Pluv)", type: "pluviometric" },
+            { id: "02040047", name: "PCH RIO BONITO MONTANTE 1 (Pluv)", type: "pluviometric" },
+            { id: "02040048", name: "PCH RIO BONITO BARRAMENTO (Pluv)", type: "pluviometric" },
+            { id: "02040055", name: "PCH RIO BONITO JUSANTE (Pluv)", type: "pluviometric" },
+            { id: "02040208", name: "POSSMOUSER (Pluv)", type: "pluviometric" },
+            { id: "02040209", name: "SÃO JOÃO DE GARRAFÃO (Pluv)", type: "pluviometric" },
+            { id: "57090000", name: "SÃO JOÃO DE GARRAFÃO", type: "fluviometric" },
+            { id: "57100000", name: "PRÓXIMO EMATER", type: "fluviometric" },
+            { id: "57115000", name: "SANTA MARIA DE JETIBÁ", type: "fluviometric" },
+            { id: "57117000", name: "PCH RIO BONITO MONTANTE 2", type: "fluviometric" },
+            { id: "57118000", name: "POSSMOUSER", type: "fluviometric" },
+            { id: "57118080", name: "PCH RIO BONITO MONTANTE 1", type: "fluviometric" },
+            { id: "57119000", name: "PCH RIO BONITO BARRAMENTO", type: "fluviometric" },
+            { id: "57119500", name: "PCH RIO BONITO JUSANTE", type: "fluviometric" }
         ];
 
         const anaPromises = ANA_STATIONS.map(async (station) => {
@@ -187,7 +197,7 @@ export default async function handler(request, response) {
                 return {
                     id: station.id,
                     name: station.name,
-                    type: "fluviometric",
+                    type: station.type || "fluviometric",
                     isRealTime: true,
                     level: parseFloat(latest.Nivel || 0),
                     flow: parseFloat(latest.Vazao || 0),
@@ -208,7 +218,7 @@ export default async function handler(request, response) {
                 return {
                     id: station.id,
                     name: station.name,
-                    type: "fluviometric",
+                    type: station.type || "fluviometric",
                     isRealTime: false,
                     status: "Offline",
                     level: 0,
@@ -226,16 +236,31 @@ export default async function handler(request, response) {
     // --- COORDINATES MAPPING ---
     const STATION_COORDINATES = {
         // CEMADEN
-        '320455902A': { lat: -19.974, lng: -40.697 }, // Vila de Jetibá
-        '320455901A': { lat: -19.912, lng: -40.735 }, // Alto Rio Possmoser
-        '320455903A': { lat: -20.015, lng: -40.758 }, // São Luis
+        '320455901': { lat: -20.067, lng: -40.840 }, // Alto Rio Possmoser
+        '320455902': { lat: -20.019, lng: -40.760 }, // Vila de Jetibá
+        '320455903': { lat: -20.156, lng: -40.941 }, // São João do Garrafão
+        '320455904': { lat: -20.003, lng: -40.737 }, // São Luis
+        '320455905': { lat: -20.056, lng: -40.689 }, // Baixo São Sebastião
+        '320455902A': { lat: -20.019, lng: -40.760 }, // Fallback Vila de Jetibá
+        '320455901A': { lat: -20.067, lng: -40.840 }, // Fallback Alto Rio Possmoser
+        '320455903A': { lat: -20.156, lng: -40.941 }, // Fallback São Luis / Garrafão
         '407': { lat: -19.970, lng: -40.690 }, // Example mapping if id matches numeric
 
         // ANA
-        '57118080': { lat: -20.033333, lng: -40.733333 }, // PCH RIO BONITO MONTANTE 1
-        '57090000': { lat: -20.100000, lng: -40.700000 }, // SÃO JOÃO DE GARRAFÃO (Approx)
-        '57117000': { lat: -20.050000, lng: -40.750000 }, // PCH RIO BONITO MONTANTE 2 (Approx)
-        '57119000': { lat: -20.050000, lng: -40.633333 }, // PCH RIO BONITO BARRAMENTO
+        '02040007': { lat: -20.028, lng: -40.744 },
+        '02040047': { lat: -20.049, lng: -40.748 },
+        '02040048': { lat: -20.061, lng: -40.643 },
+        '02040055': { lat: -20.057, lng: -40.617 },
+        '02040208': { lat: -20.070, lng: -40.792 },
+        '02040209': { lat: -20.147, lng: -40.960 },
+        '57090000': { lat: -20.147, lng: -40.960 },
+        '57100000': { lat: -20.052, lng: -40.764 },
+        '57115000': { lat: -20.038, lng: -40.729 },
+        '57117000': { lat: -20.114, lng: -40.815 },
+        '57118000': { lat: -20.070, lng: -40.792 },
+        '57118080': { lat: -20.049, lng: -40.748 },
+        '57119000': { lat: -20.061, lng: -40.643 },
+        '57119500': { lat: -20.057, lng: -40.617 },
 
         // SEDE (Manual) - Optional helper if needed elsewhere
         'SEDE_DEFESA_CIVIL': { lat: -20.030, lng: -40.740 }
