@@ -49,11 +49,12 @@ export const compressImage = (base64Str, options = {}) => {
                     lines.push(`LAT: ${coordinates.lat} | LNG: ${coordinates.lng}`);
                 }
                 if (timestamp) {
-                    const now = new Date().toLocaleString('pt-BR', {
+                    const dateObj = (timestamp instanceof Date) ? timestamp : new Date();
+                    const formattedDate = dateObj.toLocaleString('pt-BR', {
                         year: 'numeric', month: '2-digit', day: '2-digit',
                         hour: '2-digit', minute: '2-digit', second: '2-digit'
                     });
-                    lines.push(`DATA: ${now}`);
+                    lines.push(`DATA: ${formattedDate}`);
                 }
 
                 // Calculate bar dimensions
@@ -61,19 +62,39 @@ export const compressImage = (base64Str, options = {}) => {
                 const totalTextHeight = lines.length * lineHeight;
                 const barHeight = totalTextHeight + (padding * 1.5);
 
-                // Draw dark technical background (High Contrast)
-                ctx.fillStyle = 'rgba(10, 10, 10, 0.85)'; // Almost black, high fidelity
+                // Draw dark technical background with subtle gradient
+                const grad = ctx.createLinearGradient(0, height - barHeight, 0, height);
+                grad.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+                grad.addColorStop(1, 'rgba(20, 20, 20, 0.95)');
+                ctx.fillStyle = grad;
                 ctx.fillRect(0, height - barHeight, width, barHeight);
+
+                // Add a subtle top border to the bar
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, height - barHeight);
+                ctx.lineTo(width, height - barHeight);
+                ctx.stroke();
 
                 // Draw technical text
                 ctx.fillStyle = '#FFFFFF';
                 ctx.textAlign = 'left';
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
-                ctx.shadowBlur = 2;
+                ctx.shadowColor = "rgba(255,255,255,0.1)"; // Very subtle glow
+                ctx.shadowBlur = 1;
 
                 lines.forEach((line, index) => {
                     const yPos = height - barHeight + padding + (lineHeight * (index + 0.7));
-                    ctx.fillText(line.toUpperCase(), padding, yPos);
+                    // Highlight labels (LAT, LNG, DATA)
+                    const labelPart = line.split(':')[0] + ':';
+                    const valuePart = line.split(':')[1];
+
+                    ctx.font = `800 ${fontSize}px "Roboto Mono", monospace, sans-serif`;
+                    ctx.fillText(labelPart.toUpperCase(), padding, yPos);
+
+                    const labelWidth = ctx.measureText(labelPart.toUpperCase()).width;
+                    ctx.font = `400 ${fontSize}px "Roboto Mono", monospace, sans-serif`;
+                    ctx.fillText(valuePart, padding + labelWidth + 5, yPos);
                 });
             }
 

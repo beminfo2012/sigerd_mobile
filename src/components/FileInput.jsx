@@ -15,10 +15,10 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
         if (galleryInputRef.current) galleryInputRef.current.click()
     }
 
-    const handleChange = (e) => {
+    const handleChange = (e, source) => {
         const files = Array.from(e.target.files)
         if (files.length > 0) {
-            onFileSelect(files)
+            onFileSelect(files, source)
         }
     }
 
@@ -32,7 +32,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
                 accept="image/*"
                 capture="environment"
                 multiple
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, 'camera')}
             />
 
             {/* Gallery Input (Standard) */}
@@ -42,7 +42,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
                 className="hidden"
                 accept="image/*"
                 multiple
-                onChange={handleChange}
+                onChange={(e) => handleChange(e, 'gallery')}
             />
 
             <button
