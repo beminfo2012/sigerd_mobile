@@ -467,9 +467,9 @@ function App() {
         }
     })
 
-    const AGENT_ROLES = ['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'Técnico em Edificações']
-    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
-    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social']
+    const AGENT_ROLES = ['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'Técnico em Edificações', 'Operador']
+    const HUMANITARIAN_ROLES = ['Humanitario_Leitura', 'Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social', 'Operador']
+    const HUMANITARIAN_FULL_ROLES = ['Humanitario_Total', 'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Assistente Social', 'Operador']
     const REDAP_ROLES = [
         'Admin',
         'Administrador',
@@ -477,6 +477,7 @@ function App() {
         'Coordenador',
         'Coordenador de Proteção e Defesa Civil',
         'Agente de Defesa Civil',
+        'Operador',
         'Redap_Geral',
         'Redap_Setorial',
         'Redap_Saude',
