@@ -13,8 +13,9 @@ export const listUsers = async () => {
             return { data: null, error: { message: 'Acesso negado. Apenas administradores podem listar usuários.' } }
         }
 
+        // Nova forma Segura de puxar dados (Consumindo do Banco de Dados Diretamente)
         const { data, error } = await supabase
-            .from('profiles')
+            .from('vw_user_profiles')
             .select(`
                 id,
                 full_name,
@@ -22,33 +23,14 @@ export const listUsers = async () => {
                 role,
                 is_active,
                 created_at,
-                updated_at
+                updated_at,
+                email
             `)
             .order('created_at', { ascending: false })
 
         if (error) throw error
 
-        // Get email from auth.users for each profile (gracefully ignoring errors for non-admins)
-        const usersWithEmail = await Promise.all(
-            (data || []).map(async (profile) => {
-                let email = 'Privado/Restrito'
-                try {
-                    const { data: { user }, error: authError } = await supabase.auth.admin.getUserById(profile.id)
-                    if (!authError && user) {
-                        email = user.email
-                    }
-                } catch (e) {
-                    // Ignore admin route errors for ordinary operators
-                }
-
-                return {
-                    ...profile,
-                    email
-                }
-            })
-        )
-
-        return { data: usersWithEmail, error: null }
+        return { data: data || [], error: null }
     } catch (error) {
         console.error('Error listing users:', error)
         return { data: null, error }
