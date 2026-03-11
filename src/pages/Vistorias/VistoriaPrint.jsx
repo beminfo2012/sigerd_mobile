@@ -203,6 +203,18 @@ const VistoriaPrint = () => {
         .filter(([_, val]) => val === true)
         .map(([key]) => key);
 
+    // Dynamic section numbers
+    const hasChecklist = checklistItems.length > 0;
+    const hasObs = !!(data.observacoes && data.observacoes !== '---');
+    const hasPhotos = photos.length > 0;
+
+    let secNum = 4;
+    const numChecklist = hasChecklist ? secNum++ : null;
+    const numMedidas = secNum++;
+    const numEncaj = secNum++;
+    const numObs = hasObs ? secNum++ : null;
+    const numFotos = hasPhotos ? secNum++ : null;
+
     return (
         <div className="bg-slate-100 min-h-screen font-sans text-slate-800 print:bg-white print:p-0 p-8 flex justify-center">
             <style>{`
@@ -428,7 +440,7 @@ const VistoriaPrint = () => {
                         <section className="mb-8 avoid-break">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="w-1 h-5 bg-teal-600 rounded-full"></div>
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Checklist Técnico Vistoria</h2>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">{numChecklist}. Checklist Técnico Vistoria</h2>
                             </div>
                             <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
                                 {(() => {
@@ -496,7 +508,7 @@ const VistoriaPrint = () => {
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="w-1 h-4 bg-emerald-600 rounded-full"></div>
-                                    <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest">5. Medidas Adotadas</h2>
+                                    <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest">{numMedidas}. Medidas Adotadas</h2>
                                 </div>
                                 <div className="border border-emerald-100 bg-emerald-50/50 rounded-lg p-4 h-full">
                                     <ul className="space-y-2">
@@ -511,7 +523,7 @@ const VistoriaPrint = () => {
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
                                     <div className="w-1 h-4 bg-purple-600 rounded-full"></div>
-                                    <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest">6. Encaminhamentos</h2>
+                                    <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest">{numEncaj}. Encaminhamentos</h2>
                                 </div>
                                 <div className="border border-purple-100 bg-purple-50/50 rounded-lg p-4 h-full">
                                     <ul className="space-y-2">
@@ -526,6 +538,21 @@ const VistoriaPrint = () => {
                         </div>
                     </section>
 
+                    {/* 7. Observações Técnicas */}
+                    {(data.observacoes && data.observacoes !== '---') && (
+                        <section className="mb-8 avoid-break">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-1 h-5 bg-yellow-500 rounded-full"></div>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">{numObs}. Observações Técnicas</h2>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
+                                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed italic">
+                                    "{data.observacoes}"
+                                </p>
+                            </div>
+                        </section>
+                    )}
+
                     <div className="page-break"></div>
 
                     {/* 8. Relatório Fotográfico */}
@@ -533,7 +560,7 @@ const VistoriaPrint = () => {
                         <section className="mb-10">
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="w-1 h-5 bg-pink-500 rounded-full"></div>
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">8. Relatório Fotográfico</h2>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">{numFotos}. Relatório Fotográfico</h2>
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 {photos.map((photo, i) => (
