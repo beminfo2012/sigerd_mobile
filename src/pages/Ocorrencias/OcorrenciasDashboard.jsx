@@ -41,6 +41,34 @@ const OcorrenciasDashboard = () => {
     const loadRecords = async () => {
         try {
             const data = await getOcorrenciasLocal();
+            
+            if (navigator.onLine) {
+                try {
+                    const { supabase } = await import('../../services/supabase');
+                    const { data: remoteData, error } = await supabase
+                        .from('ocorrencias_operacionais')
+                        .select('id, ocorrencia_id, ocorrencia_id_format, agente, endereco, bairro, data_ocorrencia, horario_ocorrencia, categoria_risco, nivel_risco, subtipos_risco, status, created_at, updated_at')
+                        .order('created_at', { ascending: false });
+                        
+                    if (!error && remoteData && remoteData.length > 0) {
+                        remoteData.forEach(d => {
+                            d.synced = true;
+                            data.push(d);
+                        });
+                        
+                        const dedupMap = new Map();
+                        data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                            .forEach(r => dedupMap.set(r.ocorrencia_id || r.id, r));
+                        
+                        setRecords(Array.from(dedupMap.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+                        setLoading(false);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Silent fail fetching remote ocorrencias in dash:', e);
+                }
+            }
+
             setRecords(data);
         } catch (error) {
             console.error('Error loading records:', error);

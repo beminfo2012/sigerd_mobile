@@ -31,7 +31,7 @@ const ManagementDashboard = ({ hideHeader = false }) => {
     const loadData = async () => {
         setLoading(true)
         try {
-            const [local, remote, interdicoes, occupants, ocorrencias] = await Promise.all([
+            const [local, remote, interdicoes, occupants, localOco] = await Promise.all([
                 getAllVistoriasLocal(),
                 getRemoteVistoriasCache(),
                 getAllInterdicoesLocal(),
@@ -39,11 +39,26 @@ const ManagementDashboard = ({ hideHeader = false }) => {
                 getOcorrenciasLocal()
             ])
 
+            let remoteOco = [];
+            if (navigator.onLine) {
+                try {
+                    const { supabase } = await import('../../services/supabase');
+                    const { data } = await supabase.from('ocorrencias_operacionais')
+                        .select('id, ocorrencia_id, categoria_risco, nivel_risco, nivelRisco, categoriaRisco, data_ocorrencia, mortos, feridos, desalojados, desabrigados, outros_afetados, created_at');
+                    if (data) remoteOco = data;
+                } catch(e) {}
+            }
+
+            const ocoMap = new Map();
+            remoteOco.forEach(o => ocoMap.set(o.ocorrencia_id || o.id, o));
+            (localOco || []).filter(o => !o.synced).forEach(o => ocoMap.set(o.ocorrencia_id || o.id, o));
+            const finalOco = Array.from(ocoMap.values());
+
             setAllData({
                 vistorias: [...remote, ...local],
                 interdicoes: interdicoes || [],
                 occupants: occupants || [],
-                ocorrencias: ocorrencias || []
+                ocorrencias: finalOco
             })
         } catch (error) {
             console.error('Erro ao carregar dados:', error)
