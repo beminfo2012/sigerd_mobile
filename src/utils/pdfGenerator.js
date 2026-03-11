@@ -185,9 +185,11 @@ export const generatePDF = async (rawData, type) => {
 
     let contentHtml = `<div style="padding: 0 40px 40px 40px;">`;
 
+    let secNum = 1;
+
     if (isVistoriaOuOcorrencia) {
         contentHtml += `
-            ${sectionTitle('1. Identificação e Responsável')}
+            ${sectionTitle(`${secNum++}. Identificação e Responsável`)}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                 ${renderField('Data do Registro', new Date(data.dataHora).toLocaleString('pt-BR'))}
                 ${renderField('Protocolo/Processo', data.processo)}
@@ -195,7 +197,7 @@ export const generatePDF = async (rawData, type) => {
                 ${renderField('Matrícula do Agente', data.matricula)}
             </div>
 
-            ${sectionTitle('2. Localização e Solicitante')}
+            ${sectionTitle(`${secNum++}. Localização e Solicitante`)}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                 <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
                 ${renderField('CPF/CNPJ', data.cpf)}
@@ -206,7 +208,7 @@ export const generatePDF = async (rawData, type) => {
                 ${renderField('Coordenadas', `${data.latitude}, ${data.longitude}`)}
             </div>
 
-            ${sectionTitle('3. Diagnóstico de Risco')}
+            ${sectionTitle(`${secNum++}. Diagnóstico de Risco`)}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                 ${renderField('Categoria Principal', data.categoriaRisco)}
                 <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
@@ -221,13 +223,26 @@ export const generatePDF = async (rawData, type) => {
             <div style="page-break-before: always; height: 1px;"></div>
 
             ${(() => {
+                let htmlBlocks = '';
+
+                if (data.observacoes && data.observacoes !== '---') {
+                    htmlBlocks += `
+                    ${sectionTitle(`${secNum++}. Observações Técnicas`)}
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">RELATÓRIO TÉCNICO</div>
+                        <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;">
+                            "${data.observacoes}"
+                        </div>
+                    </div>`;
+                }
+
                 const responses = data.checklistRespostas;
                 const structuralKeys = Object.keys(responses).filter(k => k.startsWith('structural:') && responses[k]);
                 const standardKeys = Object.keys(responses).filter(k => !k.startsWith('structural:') && responses[k]);
                 const okOptions = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
 
-                const renderChecklistBlock = (orderNum, titleStr) => {
-                    let html = `${sectionTitle(`${orderNum}. ${titleStr}`)}
+                const renderChecklistBlock = (titleStr) => {
+                    let html = `${sectionTitle(`${secNum++}. ${titleStr}`)}
                         <div style="background: #f0f7ff; border-radius: 12px; padding: 20px; border: 1px solid #bae6fd; margin-bottom: 25px; page-break-inside: avoid;">`;
 
                     if (structuralKeys.length > 0) {
@@ -280,8 +295,8 @@ export const generatePDF = async (rawData, type) => {
                     return html;
                 };
 
-                const renderRecomendacoesBlock = (orderNum) => `
-                    ${sectionTitle(`${orderNum}. Recomendações e Encaminhamentos`)}
+                const renderRecomendacoesBlock = () => `
+                    ${sectionTitle(`${secNum++}. Recomendações e Encaminhamentos`)}
                     <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
                         <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">MEDIDAS RECOMENDADAS</div>
                         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -309,14 +324,16 @@ export const generatePDF = async (rawData, type) => {
                 `;
 
                 if (structuralKeys.length > 0 || standardKeys.length > 0) {
-                    return renderChecklistBlock(4, 'Checklist Técnico de Vistoria') + renderRecomendacoesBlock(5);
-                } else {
-                    return renderRecomendacoesBlock(4);
+                    htmlBlocks += renderChecklistBlock('Checklist Técnico de Vistoria');
                 }
+                
+                htmlBlocks += renderRecomendacoesBlock();
+                
+                return htmlBlocks;
             })()}
 
             ${data.fotos.length > 0 ? `
-                ${sectionTitle('6. Anexo Fotográfico')}
+                ${sectionTitle(`${secNum++}. Anexo Fotográfico`)}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
                         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
