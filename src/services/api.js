@@ -123,8 +123,8 @@ export const api = {
             // 3. Process Ocorrencias
             const oData = remoteOcorrencias.data || [];
             const oMap = new Map();
-            oData.forEach(o => oMap.set(o.ocorrencia_id_format || o.ocorrencia_id || o.id, o));
-            localOcorrencias.filter(o => !o.synced).forEach(o => oMap.set(o.ocorrencia_id_format || o.ocorrencia_id || o.id, o));
+            oData.forEach(o => oMap.set(o.ocorrencia_id || o.id, o));
+            localOcorrencias.filter(o => !o.synced).forEach(o => oMap.set(o.ocorrencia_id || o.id, o));
             const allOcorrencias = Array.from(oMap.values());
 
             // 4. Process Interdicoes

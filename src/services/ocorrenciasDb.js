@@ -107,7 +107,7 @@ export const getOcorrenciasLocal = async () => {
     const dedupMap = new Map();
     records.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) // Sort ascending so newest overrides oldest in Map
         .forEach(r => {
-            const key = r.ocorrencia_id_format || r.ocorrencia_id || r.id;
+            const key = r.ocorrencia_id || r.id;
             dedupMap.set(key, r);
         });
 
