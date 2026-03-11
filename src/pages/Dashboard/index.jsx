@@ -735,6 +735,8 @@ const WebViewDashboardView = ({
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
     chartMode, setChartMode
 }) => {
+    const userProfile = useContext(UserContext);
+    const isOperador = userProfile?.role === 'Operador';
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
     const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
     const typologies = ['Todas', ...(currentData.breakdown || []).map(b => b.label)];
