@@ -1051,13 +1051,30 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                                             />
                                         </div>
                                     </div>
-                                    <div
-                                        onClick={() => {
-                                            setActiveSignatureType('apoio')
-                                            setShowSignaturePad(true)
-                                        }}
-                                        className="h-32 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] dark:hover:border-blue-500 transition-colors"
-                                    >
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center mb-1.5">
+                                                <label className={labelClasses} style={{ marginBottom: 0 }}>Assinatura do Apoio</label>
+                                                {userProfile?.signature && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({ 
+                                                            ...prev, 
+                                                            apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature } 
+                                                        }))}
+                                                        className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
+                                                    >
+                                                        <CheckCircle size={12} />
+                                                        Usar Assinatura Salva
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div
+                                                onClick={() => {
+                                                    setActiveSignatureType('apoio')
+                                                    setShowSignaturePad(true)
+                                                }}
+                                                className="h-32 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-[#2a5299] dark:hover:border-blue-500 transition-colors"
+                                            >
                                         {formData.apoioTecnico.assinatura ? (
                                             <img src={formData.apoioTecnico.assinatura} className="h-full w-auto object-contain" />
                                         ) : (
@@ -1068,7 +1085,8 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                                         )}
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        )}
                         </div>
                     </div>
                 </section>

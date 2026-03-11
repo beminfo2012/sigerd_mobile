@@ -1670,7 +1670,21 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         </div>
 
                                         <div className="space-y-3">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Assinatura do Apoio</label>
+                                            <div className="flex justify-between items-center px-1">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Assinatura do Apoio</label>
+                                                {userProfile?.signature && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({ 
+                                                            ...prev, 
+                                                            apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature } 
+                                                        }))}
+                                                        className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
+                                                    >
+                                                        <Sparkles size={12} /> Auto-assinar
+                                                    </button>
+                                                )}
+                                            </div>
                                             <div
                                                 onClick={() => { setActiveSignatureType('apoio'); setShowSignaturePad(true); }}
                                                 className="h-32 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-indigo-500/50 transition-all shadow-inner"
