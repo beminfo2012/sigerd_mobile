@@ -162,5 +162,13 @@
   {
     "id": 41,
     "nome": "Serra do Gelo"
+  },
+  {
+    "id": 42,
+    "nome": "Vila Jetibá"
+  },
+  {
+    "id": 43,
+    "nome": "Vila Nova"
   }
 ]
