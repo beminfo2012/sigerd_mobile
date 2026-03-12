@@ -751,7 +751,7 @@ const WebViewDashboardView = ({
             <div className="max-w-[1700px] mx-auto w-full p-6 space-y-6 flex-1">
 
                 {/* --- 🏁 1. HEADER & TOP CARDS CONTAINER --- */}
-                <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800 p-6 space-y-6">
+                <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-lg shadow-orange-500/20 border border-orange-400 dark:border-orange-500/50 p-6 space-y-6">
 
                     {/* Header: Title */}
                     <div className="flex justify-between items-center px-2">
