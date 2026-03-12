@@ -886,7 +886,7 @@ export const pullAllData = async (force = false) => {
             { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
             //{ table: 'despachos', store: 'despachos', key: 'despacho_id' },
             { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' },
-            { table: 'agenda_vistorias', store: 'agenda_vistorias' }
+            { table: 'agenda_vistorias', store: 'agenda_vistorias', key: 'id' }
         ];
 
         // Fetch ALL tables in parallel with a 60s timeout (photos take time)

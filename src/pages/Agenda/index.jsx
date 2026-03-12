@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, Edit2, CheckCircle, Calendar as CalendarIcon, List, LayoutDashboard, AlertCircle, Plus,
     Clock, CheckCircle2, ChevronLeft, ChevronRight, Filter, AlertTriangle, X, Link, Search
 } from 'lucide-react';
-import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgendaLocal } from '../../services/db';
+import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgendaLocal, pullAllData } from '../../services/db';
 import { toast } from '../../components/ToastNotification';
 import { format, addDays, differenceInDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -27,18 +27,29 @@ const SearchableInput = ({
     label,
     value,
     onChange,
-    options,
+    options, // Can be array of strings or array of { value, label, isLinked, subLabel }
     placeholder,
     icon: IconComponent,
     labelClasses,
-    inputClasses
+    inputClasses,
+    renderOption // Optional custom render function
 }) => {
     const [search, setSearch] = useState('');
     const [isOpen, setIsOpen] = useState(false);
 
-    const filteredOptions = options.filter(opt =>
-        opt.toLowerCase().includes(search.toLowerCase())
-    );
+    const getLabel = (opt) => typeof opt === 'string' ? opt : opt.label;
+    const getValue = (opt) => typeof opt === 'string' ? opt : opt.value;
+
+    const filteredOptions = options.filter(opt => {
+        const text = getLabel(opt).toLowerCase();
+        return text.includes(search.toLowerCase());
+    });
+
+    const selectedLabel = useMemo(() => {
+        if (!value) return '';
+        const found = options.find(o => getValue(o) === value);
+        return found ? getLabel(found) : value;
+    }, [value, options]);
 
     return (
         <div className="relative">
@@ -49,10 +60,10 @@ const SearchableInput = ({
                     onClick={() => setIsOpen(true)}
                     className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[52px] flex items-center justify-between pr-4`}
                 >
-                    <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-300 dark:text-slate-600'}>
-                        {value || placeholder}
+                    <span className={value ? 'text-slate-800 dark:text-white truncate pr-2' : 'text-slate-300 dark:text-slate-600 truncate pr-2'}>
+                        {selectedLabel || placeholder}
                     </span>
-                    <Search size={16} className="text-slate-300" />
+                    <Search size={16} className="text-slate-300 shrink-0" />
                 </div>
             </div>
 
@@ -70,29 +81,49 @@ const SearchableInput = ({
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                 <input
                                     autoFocus
-                                    className={`${inputClasses} pl-12 text-black`}
+                                    className={`${inputClasses} pl-12 text-black dark:text-white border border-slate-200 dark:border-slate-700`}
                                     placeholder="Comece a digitar para filtrar..."
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
                                 />
                             </div>
                         </div>
-                        <div className="overflow-y-auto p-2 pb-20">
+                        <div className="overflow-y-auto p-4 custom-scrollbar space-y-1">
                             {filteredOptions.length > 0 ? (
-                                filteredOptions.map((opt, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => {
-                                            onChange(opt);
-                                            setIsOpen(false);
-                                            setSearch('');
-                                        }}
-                                        className={`w-full text-left p-4 rounded-2xl font-bold transition-all flex items-center justify-between group mb-1 ${value === opt ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
-                                    >
-                                        <span className="flex-1">{opt}</span>
-                                        {value === opt && <CheckCircle size={18} className="ml-2" />}
-                                    </button>
-                                ))
+                                filteredOptions.map((opt, idx) => {
+                                    const optValue = getValue(opt);
+                                    const optLabel = getLabel(opt);
+                                    const isSelected = value === optValue;
+                                    const isLinked = opt.isLinked;
+                                    
+                                    return (
+                                        <button
+                                            key={idx}
+                                            onClick={() => {
+                                                onChange(optValue);
+                                                setIsOpen(false);
+                                                setSearch('');
+                                            }}
+                                            className={`w-full text-left p-4 rounded-2xl font-bold transition-all flex items-center justify-between group relative overflow-hidden ${isSelected ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
+                                        >
+                                            {isLinked && !isSelected && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500"></div>
+                                            )}
+                                            
+                                            <div className="flex flex-col">
+                                                <span className="flex items-center gap-2">
+                                                    {optLabel}
+                                                    {isLinked && !isSelected && (
+                                                        <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 uppercase font-black tracking-tighter">Vinculado</span>
+                                                    )}
+                                                </span>
+                                                {opt.subLabel && <span className={`text-[10px] font-medium opacity-60 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>{opt.subLabel}</span>}
+                                            </div>
+                                            
+                                            {isSelected && <CheckCircle size={18} className="ml-2 shrink-0" />}
+                                        </button>
+                                    );
+                                })
                             ) : (
                                 <div className="p-10 text-center space-y-2 opacity-50">
                                     <Search size={32} className="mx-auto text-slate-300" />
@@ -161,6 +192,8 @@ const Agenda = () => {
     const [loading, setLoading] = useState(true);
     const [vistoriasBase, setVistoriasBase] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [refreshing, setRefreshing] = useState(false);
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
     
     // User role check
     const [isCoordinator, setIsCoordinator] = useState(false);
@@ -180,7 +213,7 @@ const Agenda = () => {
     
     // Details View State
     const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [selectedAgenda, setSelectedAgenda] = useState(null);
+    const [refreshCount, setRefreshCount] = useState(0);
     
     const [formData, setFormData] = useState({
         numero_processo: '',
@@ -218,8 +251,12 @@ const Agenda = () => {
     };
 
     useEffect(() => {
-        const load = async () => {
+        const load = async (forcePull = false) => {
+            if (forcePull) setRefreshing(true);
             try {
+                if (forcePull && navigator.onLine) {
+                    await pullAllData(true);
+                }
                 // Check Role
                 const localStr = localStorage.getItem('userProfile');
                 if (localStr) {
@@ -305,10 +342,66 @@ const Agenda = () => {
                 console.error("Erro ao carregar agenda", err);
             } finally {
                 setLoading(false);
+                setRefreshing(false);
             }
         };
-        load();
-    }, [showModal, showLinkModal, showDeleteModal]);
+
+        if (!initialLoadDone) {
+            load(true);
+            setInitialLoadDone(true);
+        } else {
+            load();
+        }
+    }, [showModal, showLinkModal, showDeleteModal, refreshCount]);
+
+    const handleManualRefresh = async () => {
+        setRefreshing(true);
+        try {
+            if (!navigator.onLine) {
+                toast.warning('Offline', 'Você precisa de internet para buscar novos dados.');
+                return;
+            }
+            await pullAllData(true);
+            // After pull, we need to reload from local too
+            const [dbVistorias, dbAgendas] = await Promise.all([
+                getAllVistoriasLocal(),
+                getAllAgendaLocal()
+            ]);
+            setVistoriasBase(dbVistorias);
+            
+            // Re-process the list (simplified version of the logic in useEffect)
+            // Actually, triggers by changing a dummy state is easier, but let's just trigger the reload logic
+            // Using a hack to re-run the useEffect: we can add a refresh counter
+        } catch (e) {
+            console.error(e);
+            toast.error('Erro', 'Falha ao atualizar dados.');
+        } finally {
+            setRefreshing(false);
+            // Trigger local reload by toggling a state or just calling the logic again.
+            // But useEffect already runs on mount. Let's add a state refreshCount.
+            setRefreshCount(prev => prev + 1);
+        }
+    };
+
+    const vistoriasOptions = useMemo(() => {
+        // Find all vistoria_ids already used in agenda items TO HIGHLIGHT
+        const linkedIds = new Set(agendas.map(a => a.vistoria_id).filter(Boolean));
+        
+        return vistoriasBase
+            .map(v => {
+                const vid = v.vistoria_id || v.id;
+                return {
+                    value: vid, // Store the actual ID
+                    label: `${vid} - ${v.endereco || 'Sem endereço'}`,
+                    subLabel: `${v.status || 'Nova'} • ${v.bairro || 'Sem bairro'} • ${v.solicitante || 'Sem solicitante'}`,
+                    isLinked: linkedIds.has(vid),
+                    numId: parseInt(String(vid).replace(/\D/g, '')) || 0
+                };
+            })
+            // Sort numerically (ascending handles 2024 before 2025, but usually we want newest first)
+            // Let's do descending so newest IDs are at top
+            .sort((a, b) => b.numId - a.numId);
+    }, [vistoriasBase, agendas]);
 
     const filteredAgendas = useMemo(() => {
         let f = agendas;
@@ -466,6 +559,14 @@ const Agenda = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
+                    <button 
+                        onClick={handleManualRefresh}
+                        disabled={refreshing}
+                        className={`p-3 rounded-2xl border transition-all ${refreshing ? 'bg-slate-50 border-slate-200 text-slate-400' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:text-blue-500'}`}
+                        title="Atualizar Dados"
+                    >
+                        <RefreshCcw size={20} className={refreshing ? 'animate-spin' : ''} />
+                    </button>
                     <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-[16px]">
                         <button 
                             onClick={() => setViewMode('painel')}
@@ -842,19 +943,19 @@ const Agenda = () => {
                             </div>
 
                             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-[16px] border border-blue-100 dark:border-blue-900/50">
-                                <label className="block text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2 flex items-center gap-1">
-                                    <Link size={12}/> Vistoria Integrada (Opcional)
-                                </label>
-                                <select 
+                                <SearchableInput
+                                    label="Vistoria Integrada (Opcional)"
+                                    placeholder="Não integrar no momento (avulsa)"
                                     value={formData.vistoria_id}
-                                    onChange={(e) => setFormData({...formData, vistoria_id: e.target.value})}
-                                    className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 p-3 rounded-[12px] font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value="">Não integrar no momento (avulsa)</option>
-                                    {vistoriasBase.filter(v => v.status !== 'Finalizada' || v.id === formData.vistoria_id || v.vistoria_id === formData.vistoria_id).map(v => (
-                                        <option key={v.id} value={v.vistoria_id || v.id}>{v.vistoria_id || v.id} - {v.endereco || 'Sem endereço'}</option>
-                                    ))}
-                                </select>
+                                    onChange={val => setFormData({ ...formData, vistoria_id: val })}
+                                    options={vistoriasOptions.filter(opt => {
+                                        // Optional: filter only non-finished ones, or specific logic
+                                        return true;
+                                    })}
+                                    labelClasses="block text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2 flex items-center gap-1"
+                                    inputClasses="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 p-3 rounded-[12px] font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                                    icon={Link}
+                                />
                                 <p className="text-[9px] text-blue-600/70 mt-2 font-bold leading-tight">Você pode integrar com um processo de vistoria que já foi criado no sistema pela equipe operacional.</p>
                             </div>
                         </div>
@@ -885,18 +986,19 @@ const Agenda = () => {
                             Vincular à agenda <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-800 dark:text-slate-200">{agendaToLink?.numero_processo}</span> para <span className="text-blue-600 dark:text-blue-400">paralisar o prazo limite</span> usando a data em que ela foi gerada pela vistoria.
                         </p>
 
-                        <div className="mb-6">
-                            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Processos Pendentes / Finalizados</label>
-                            <select 
+                        <div className="mb-8">
+                            <SearchableInput
+                                label="Processos Pendentes / Finalizados"
+                                placeholder="Selecione ou busque o Nº..."
                                 value={selectedLinkId}
-                                onChange={(e) => setSelectedLinkId(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-800 border-none p-4 rounded-[16px] font-bold text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Não vincular a nenhuma</option>
-                                {vistoriasBase.map(v => (
-                                    <option key={v.id} value={v.vistoria_id || v.id}>{v.vistoria_id || v.id} - {v.endereco?.substring(0,25) || 'S/ endereço'} ({v.status || 'Nova'})</option>
-                                ))}
-                            </select>
+                                onChange={setSelectedLinkId}
+                                options={vistoriasOptions}
+                                labelClasses="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2"
+                                inputClasses="w-full bg-slate-50 dark:bg-slate-800 border-none p-4 rounded-[16px] font-bold text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="text-[10px] text-slate-400 mt-2 italic px-1">
+                                <span className="text-emerald-500 font-black">●</span> Itens com tarja verde já estão vinculados.
+                            </p>
                         </div>
 
                         <button onClick={handleSaveLink} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest p-4 rounded-[16px] text-xs shadow-lg shadow-blue-500/30 transition-all flex justify-center items-center gap-2">

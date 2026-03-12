@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
 import ProfileModal from './ProfileModal';
+import ConfirmModal from './ConfirmModal';
+import { toast } from './ToastNotification';
 
 const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP_ROLES, isDarkMode, setIsDarkMode, setUserProfile }) => {
     const location = useLocation();
@@ -39,6 +41,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showClearCacheModal, setShowClearCacheModal] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [syncDetail, setSyncDetail] = useState({ total: 0 });
     const userMenuRef = useRef(null);
@@ -86,14 +89,10 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         }
     };
 
-    const handleClearCache = (e) => {
-        e.stopPropagation();
-        if (window.confirm('Deseja limpar o cache de histórico? Isso não apaga vistorias pendentes.')) {
-            clearLocalData().then(() => {
-                alert('Cache limpo!');
-                window.location.reload();
-            });
-        }
+    const handleConfirmClearCache = async () => {
+        await clearLocalData();
+        toast.info('Cache Limpo', 'O histórico foi removido.');
+        setTimeout(() => window.location.reload(), 1500);
     };
 
     const navItems = [
@@ -242,7 +241,10 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                                 </button>
                             )}
 
-                            <button onClick={handleClearCache} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setShowClearCacheModal(true); setShowUserMenu(false); }} 
+                                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left"
+                            >
                                 <Trash2 size={18} className="text-red-400" />
                                 Limpar Cache
                             </button>
@@ -285,6 +287,16 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                     onClose={() => setShowProfileModal(false)}
                 />
             )}
+
+            <ConfirmModal 
+                isOpen={showClearCacheModal}
+                onClose={() => setShowClearCacheModal(false)}
+                onConfirm={handleConfirmClearCache}
+                title="Limpar Histórico?"
+                message="Deseja limpar o cache de histórico? Isso não apaga vistorias pendentes e melhora a velocidade do app."
+                confirmText="Limpar Agora"
+                type="info"
+            />
         </aside>
     );
 };

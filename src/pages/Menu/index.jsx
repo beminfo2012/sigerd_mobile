@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar } from 'lucide-react'
-import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData } from '../../services/db'
+import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData, pullAllData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
+import ConfirmModal from '../../components/ConfirmModal'
+import { toast } from '../../components/ToastNotification'
 
 const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode }) => {
     const [syncDetail, setSyncDetail] = useState({ total: 0 })
     const [syncing, setSyncing] = useState(false)
     const [showProfileModal, setShowProfileModal] = useState(false)
+    const [showClearCacheModal, setShowClearCacheModal] = useState(false)
+    const [showResetDBModal, setShowResetDBModal] = useState(false)
     const [editName, setEditName] = useState(userProfile?.full_name || '')
     const [editMatricula, setEditMatricula] = useState(userProfile?.matricula || '')
     const [editSignature, setEditSignature] = useState(userProfile?.signature || null)
@@ -43,7 +47,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                         const newProfile = { ...userProfile, role: 'Redap_Saude' }
                         setUserProfile(newProfile)
                         localStorage.setItem('userProfile', JSON.stringify(newProfile))
-                        alert('Perfil corrigido automaticamente para Secretaria de Saúde.')
+                        toast.info('Perfil Corrigido', 'Perfil atualizado automaticamente para Secretaria de Saúde.')
                     }
                 }
             }
@@ -66,7 +70,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                         const newProfile = { ...userProfile, role: 'Agente de Defesa Civil' }
                         setUserProfile(newProfile)
                         localStorage.setItem('userProfile', JSON.stringify(newProfile))
-                        alert('Acesso total restaurado ao SIGERD.')
+                        toast.success('Acesso Restaurado', 'Acesso total restaurado ao SIGERD.')
                     }
                 }
             }
@@ -77,7 +81,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
     const handleManualSync = async () => {
         if (syncDetail.total === 0 || syncing) return
         if (!navigator.onLine) {
-            alert('Você precisa estar online para sincronizar dados.')
+            toast.warning('Offline', 'Você precisa estar online para sincronizar dados.')
             return
         }
 
@@ -86,12 +90,12 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
             const result = await syncPendingData()
             if (result.success) {
                 await loadPendingCount()
-                alert(`${result.count} registros sincronizados com sucesso!`)
+                toast.success('Sincronizado', `${result.count} registros enviados com sucesso!`)
                 window.dispatchEvent(new CustomEvent('sync-complete'))
             }
         } catch (e) {
             console.error('Sync failed:', e)
-            alert('Erro na sincronização.')
+            toast.error('Erro', 'Falha na sincronização dos dados.')
         } finally {
             setSyncing(false)
         }
@@ -118,22 +122,20 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     setUserProfile(updatedProfile)
                     localStorage.setItem('userProfile', JSON.stringify(updatedProfile))
                     setShowProfileModal(false)
-                    alert('Perfil atualizado!')
+                    toast.success('Perfil Atualizado', 'Suas informações foram salvas.')
                 } else {
-                    alert('Erro ao atualizar perfil.')
+                    toast.error('Erro', 'Não foi possível atualizar o perfil.')
                 }
             }
         } catch (e) {
             console.error(e)
-            alert('Erro de conexão.')
+            toast.error('Conexão', 'Erro de conexão com o servidor.')
         } finally {
             setSavingProfile(false)
         }
     }
 
     const handleResetDB = async () => {
-        if (!window.confirm('⚠️ AVISO CRÍTICO: Isso apagará TODOS os dados do celular e deslogará você. Use apenas se o aplicativo estiver travado ou com dados corrompidos. Continuar?')) return
-
         try {
             await resetDatabase()
             onLogout()
@@ -142,6 +144,12 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
             await clearLocalData()
             onLogout()
         }
+    }
+
+    const handleConfirmClearCache = async () => {
+        await clearLocalData()
+        toast.info('Cache Limpo', 'O histórico foi removido para liberar espaço.')
+        setTimeout(() => window.location.reload(), 1500)
     }
 
     return (
@@ -223,13 +231,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                     {/* Settings Option (Clear Cache Only) */}
                     <button
-                        onClick={async () => {
-                            if (window.confirm('Deseja limpar o cache de histórico? Isso não apaga vistorias pendentes.')) {
-                                await clearLocalData()
-                                alert('Cache limpo!')
-                                window.location.reload()
-                            }
-                        }}
+                        onClick={() => setShowClearCacheModal(true)}
                         className="w-full p-5 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
                     >
                         <div className="p-3 bg-slate-50 dark:bg-slate-700 text-slate-500 rounded-2xl mr-4">
@@ -244,7 +246,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     {/* Critical Reset - Only for Agents */}
                     {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
                         <button
-                            onClick={handleResetDB}
+                            onClick={() => setShowResetDBModal(true)}
                             className="w-full p-5 flex items-center hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
                         >
                             <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-500 rounded-2xl mr-4">
@@ -450,6 +452,28 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[4px]">SIGERD MOBILE {isDarkMode ? '🌙' : '☀️'}</p>
                 <p className="text-[10px] font-bold text-slate-200 mt-1">Defesa Civil Municipal</p>
             </div>
+
+            <ConfirmModal 
+                isOpen={showClearCacheModal}
+                onClose={() => setShowClearCacheModal(false)}
+                onConfirm={handleConfirmClearCache}
+                title="Limpar Histórico?"
+                message="Deseja limpar o cache de histórico? Isso não apaga vistorias pendentes e melhora a velocidade do app."
+                confirmText="Limpar Agora"
+                type="info"
+            />
+
+            <ConfirmModal 
+                isOpen={showResetDBModal}
+                onClose={() => setShowResetDBModal(false)}
+                onConfirm={handleResetDB}
+                title="Reset Total?"
+                message="⚠️ AVISO CRÍTICO: Isso apagará TODOS os dados do celular e deslogará você. Use apenas se o aplicativo estiver travado."
+                confirmText="Resetar Tudo"
+                type="danger"
+                requireTypedConfirmation={true}
+                typedConfirmationWord="RESETAR"
+            />
         </div>
     )
 }

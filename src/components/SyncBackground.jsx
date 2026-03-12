@@ -67,6 +67,10 @@ const SyncBackground = () => {
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'redap_records' }, payload => {
                     notificationService.notifyNewRecord('redap', payload.new);
                 })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agenda_vistorias' }, () => {
+                    console.log('[SyncBackground] New agenda item detected. Pulling...');
+                    pullAllData(true);
+                })
                 .subscribe();
 
             return channel;
