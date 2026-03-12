@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Edit2, CheckCircle, Calendar as CalendarIcon, List, LayoutDashboard, AlertCircle, Plus,
-    Clock, CheckCircle2, ChevronLeft, ChevronRight, Filter, AlertTriangle, X, Link, Search
+    Clock, CheckCircle2, ChevronLeft, ChevronRight, Filter, AlertTriangle, X, Link, Search, RefreshCcw
 } from 'lucide-react';
 import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgendaLocal, pullAllData } from '../../services/db';
 import { toast } from '../../components/ToastNotification';
