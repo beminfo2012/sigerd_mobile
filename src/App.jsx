@@ -32,6 +32,7 @@ const InterdicaoPrint = lazy(() => import('./pages/Interdicao/InterdicaoPrint'))
 const ManagementDashboard = lazy(() => import('./pages/Monitoramento/ManagementDashboard'))
 const MonitoramentoMenu = lazy(() => import('./pages/Monitoramento/MonitoramentoMenu'))
 const LegadoDashboard = lazy(() => import('./pages/Legado'))
+const Agenda = lazy(() => import('./pages/Agenda'))
 
 // Ocorrencias Module (Lazy)
 // Ocorrencias Module (Lazy)
@@ -232,6 +233,11 @@ const AppContent = ({
                                 <Route path="/vistorias/imprimir/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <VistoriaPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/agenda" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Agenda />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/pluviometros" element={

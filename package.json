@@ -15,6 +15,7 @@
     "@turf/boolean-point-in-polygon": "^7.3.1",
     "@turf/helpers": "^7.3.1",
     "classnames": "^2.5.1",
+    "date-fns": "^4.1.0",
     "docx": "^9.5.2",
     "docxtemplater": "^3.68.1",
     "exifr": "^7.1.3",

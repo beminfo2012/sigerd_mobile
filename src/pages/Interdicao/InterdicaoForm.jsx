@@ -109,6 +109,8 @@ const SearchableInput = ({
     );
 };
 
+
+
 const InterdicaoForm = ({ onBack, initialData = null }) => {
     const userProfile = useContext(UserContext)
     const navigate = useNavigate()
@@ -790,7 +792,7 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                                 { id: 'Baixo', color: 'bg-emerald-500' },
                                 { id: 'Médio', color: 'bg-amber-500' },
                                 { id: 'Alto', color: 'bg-orange-500' },
-                                { id: 'Imediato', color: 'bg-red-600' }
+                                { id: 'Iminente', color: 'bg-red-600' }
                             ].map(g => (
                                 <button
                                     key={g.id}
@@ -829,6 +831,8 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                         />
                     </div>
                 </section>
+
+
 
                 {/* 6. SEÇÃO: Medida Administrativa */}
                 <section className={sectionClasses}>

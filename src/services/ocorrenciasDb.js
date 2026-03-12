@@ -154,7 +154,7 @@ export const getOcorrenciaById = async (id) => {
  */
 export const triggerOcorrenciaSync = async (id) => {
     const db = await initDB();
-    const record = await db.get('ocorrencias_operacionais', parseInt(id));
+    const record = await db.get('ocorrencias_operacionais', id);
     if (!record) return false;
 
     try {
@@ -175,6 +175,6 @@ export const syncAllOcorrencias = async () => {
     const pending = records.filter(r => !r.synced);
 
     for (const r of pending) {
-        await triggerOcorrenciaSync(r.id);
+        await triggerOcorrenciaSync(r.ocorrencia_id);
     }
 };

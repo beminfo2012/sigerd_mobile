@@ -27,7 +27,8 @@ import {
     CheckCircle,
     RefreshCcw,
     History,
-    Heart
+    Heart,
+    Calendar
 } from 'lucide-react';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
 import ProfileModal from './ProfileModal';
@@ -118,6 +119,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'Vistorias',
             icon: ClipboardList,
             path: '/vistorias',
+            roles: AGENT_ROLES
+        },
+        {
+            label: 'Agenda',
+            icon: Calendar,
+            path: '/agenda',
             roles: AGENT_ROLES
         },
         {

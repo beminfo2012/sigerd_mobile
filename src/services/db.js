@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 23
+const DB_VERSION = 24
 
 
 let dbPromise = null;
@@ -156,6 +156,15 @@ export const initDB = async () => {
             } else {
                 ensureSyncedIndex('ocorrencias_operacionais');
             }
+
+            // Agenda Vistorias (v24)
+            if (!db.objectStoreNames.contains('agenda_vistorias')) {
+                const store = db.createObjectStore('agenda_vistorias', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('numero_processo', 'numero_processo', { unique: false });
+            } else {
+                ensureSyncedIndex('agenda_vistorias');
+            }
         },
     });
     return dbPromise;
@@ -250,7 +259,8 @@ export const getPendingSyncCount = async () => {
         redap_records: 0,
         ocorrencias_operacionais: 0,
         despachos: 0,
-        emergency_contracts: 0
+        emergency_contracts: 0,
+        agenda_vistorias: 0
     };
 
     for (const storeName of stores) {
@@ -273,7 +283,7 @@ export const getPendingSyncCount = async () => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'despachos', 'ocorrencias_operacionais'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'despachos', 'ocorrencias_operacionais', 'agenda_vistorias'];
     let syncedCount = 0
 
     for (const storeName of stores) {
@@ -337,7 +347,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                         };
                         const folder = folderMap[storeName] || 'general'
 
-                        const entityId = (item.vistoria_id || item.interdicao_id || item.redap_id || item.id)
+                        const entityId = (item.vistoria_id || item.interdicao_id || item.redap_id || item.ocorrencia_id || item.id)
                         const fileName = `${entityId}/${foto.id || crypto.randomUUID()}.jpg`
                         const { error: uploadError } = await supabase.storage
                             .from(folder)
@@ -570,7 +580,6 @@ export const syncSingleItem = async (storeName, item, db) => {
                     matricula: item.apoioTecnico?.matricula || item.apoio_tecnico?.matricula || '',
                     assinatura: signatureApoioUrl
                 },
-                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
         } else if (storeName === 'redap_records') {
@@ -606,8 +615,59 @@ export const syncSingleItem = async (storeName, item, db) => {
                 created_at: item.created_at,
                 updated_at: item.updated_at
             };
+        } else if (storeName === 'agenda_vistorias') {
+            payload = {
+                numero_processo: item.numero_processo || '',
+                data_abertura: item.data_abertura || new Date().toISOString(),
+                data_limite: item.data_limite || null,
+                categoria_risco: item.categoria_risco || '',
+                solicitante: item.solicitante || '',
+                endereco: item.endereco || '',
+                status: item.status || 'Protocolada',
+                vistoria_id: item.vistoria_id || null,
+                created_by: item.created_by || null,
+                created_at: item.created_at || new Date().toISOString(),
+                updated_at: item.updated_at || new Date().toISOString()
+            }
         } else if (storeName === 'ocorrencias_operacionais') {
             const folder = 'ocorrencias';
+            const currentYear = new Date().getFullYear();
+            let officialIdFormat = item.ocorrencia_id_format;
+
+            // [FIX] Robust Numeric Max ID Fetching for Ocorrencias if missing
+            if (!officialIdFormat) {
+                console.log(`[Sync] Fetching max ID for Ocorrencias sequence...`);
+                const { data: recentData, error: maxError } = await supabase
+                    .from('ocorrencias_operacionais')
+                    .select('ocorrencia_id_format')
+                    .ilike('ocorrencia_id_format', `%/${currentYear}`)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                let maxNum = 0;
+                if (recentData && recentData.length > 0) {
+                    recentData.forEach(r => {
+                        if (r.ocorrencia_id_format && r.ocorrencia_id_format.includes('/')) {
+                            const num = parseInt(r.ocorrencia_id_format.split('/')[0]);
+                            if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                        }
+                    });
+                }
+
+                // Check local too
+                const localRecords = await db.getAll('ocorrencias_operacionais');
+                localRecords.forEach(r => {
+                    const oid = r.ocorrencia_id_format;
+                    if (oid && oid.includes(`/${currentYear}`)) {
+                        const num = parseInt(oid.split('/')[0]);
+                        if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                    }
+                });
+
+                officialIdFormat = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
+                console.log(`[Sync] Assigned NEW Ocorrencia Format ID: ${officialIdFormat}`);
+            }
+
             const oid = item.ocorrencia_id || crypto.randomUUID();
 
             let signatureAgenteUrl = item.assinaturaAgente || item.assinatura_agente || null;
@@ -625,44 +685,51 @@ export const syncSingleItem = async (storeName, item, db) => {
             }
 
             payload = {
-                ...item,
                 ocorrencia_id: oid,
-                id_local: item.id,
-                categoria_risco: item.categoriaRisco || item.categoria_risco,
-                nivel_risco: item.nivelRisco || item.nivel_risco,
-                subtipos_risco: item.subtiposRisco || item.subtipos_risco,
-                tem_solicitante_especifico: item.temSolicitanteEspecifico || item.tem_solicitante_especifico,
-                tem_apoio_tecnico: item.temApoioTecnico || item.tem_apoio_tecnico,
+                ocorrencia_id_format: officialIdFormat,
+                agente: item.agente || '',
+                matricula: item.matricula || '',
+                solicitante: item.solicitante || '',
+                cpf: item.cpf || '',
+                telefone: item.telefone || '',
+                tem_solicitante_especifico: item.temSolicitanteEspecifico || item.tem_solicitante_especifico || false,
+                endereco: item.endereco || '',
+                bairro: item.bairro || '',
+                data_ocorrencia: item.data_ocorrencia || '',
+                horario_ocorrencia: item.horario_ocorrencia || '',
+                latitude: item.latitude || item.lat || null,
+                longitude: item.longitude || item.lng || null,
+                accuracy: item.accuracy || null,
+                gps_timestamp: item.gps_timestamp || null,
+                mortos: parseInt(item.mortos) || 0,
+                feridos: parseInt(item.feridos) || 0,
+                enfermos: parseInt(item.enfermos) || 0,
+                desalojados: parseInt(item.desalojados) || 0,
+                desabrigados: parseInt(item.desabrigados) || 0,
+                desaparecidos: parseInt(item.desaparecidos) || 0,
+                outros_afetados: parseInt(item.outros_afetados) || 0,
+                tem_danos_humanos: item.tem_danos_humanos || false,
+                categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
+                nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
+                subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : 
+                               (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
+                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
+                descricao_danos: item.descricao_danos || '',
+                observacoes: item.observacoes || '',
+                fotos: processedPhotos,
+                assinatura_agente: signatureAgenteUrl,
+                assinatura_assistido: signatureAssistidoUrl,
+                tem_apoio_tecnico: item.temApoioTecnico || item.tem_apoio_tecnico || false,
                 apoio_tecnico: {
                     ...(item.apoioTecnico || item.apoio_tecnico || {}),
                     assinatura: signatureApoioUrl
                 },
-                assinatura_agente: signatureAgenteUrl,
-                assinatura_assistido: signatureAssistidoUrl,
-                fotos: processedPhotos,
-                unidade_consumidora: item.unidade_consumidora || item.unidadeConsumidora || '',
-                checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
-                subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
-                informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
+                status: item.status === 'finalized' ? 'finalized' : 'finalized', 
+                updated_at: new Date().toISOString()
             };
 
-            // Remove camelCase fields to keep Supabase clean
-            delete payload.id;
-            delete payload.synced;
-            delete payload.categoriaRisco;
-            delete payload.nivelRisco;
-            delete payload.subtiposRisco;
-            delete payload.subtipoRiscoOutros;
-            delete payload.temSolicitanteEspecifico;
-            delete payload.temApoioTecnico;
-            delete payload.assinaturaAgente;
-            delete payload.assinaturaAssistido;
-            delete payload.apoioTecnico; // Replaced by snake_case version
-            delete payload.checklistRespostas; // Cleaned camelCase
-            delete payload.unidadeConsumidora; // Cleaned camelCase
-            delete payload.cobrade; // Cleaned removed field
-            delete payload.denominacao; // Cleaned removed field
-            delete payload.supabase_id; // Cleaned unused field
+            // Remove unused keys from sub-objects if necessary
+            if (payload.apoio_tecnico) delete payload.apoio_tecnico.assinatura_pad;
 
         } else if (storeName === 'shelters') {
             payload = {
@@ -767,6 +834,9 @@ export const syncSingleItem = async (storeName, item, db) => {
                 record.interdicao_id = officialId;
             } else if (storeName === 'redap_records') {
                 record.redap_id = payload.redap_id;
+            } else if (storeName === 'ocorrencias_operacionais') {
+                record.ocorrencia_id_format = payload.ocorrencia_id_format;
+                record.ocorrencia_id = payload.ocorrencia_id;
             }
             await store.put(record);
         }
@@ -812,8 +882,9 @@ export const pullAllData = async (force = false) => {
             { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
             { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' },
             { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
-            { table: 'despachos', store: 'despachos', key: 'despacho_id' },
-            { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' }
+            //{ table: 'despachos', store: 'despachos', key: 'despacho_id' },
+            { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' },
+            { table: 'agenda_vistorias', store: 'agenda_vistorias' }
         ];
 
         // Fetch ALL tables in parallel with a 60s timeout (photos take time)
@@ -1387,3 +1458,38 @@ export const deleteContract = async (id) => {
         triggerSync();
     }
 }
+
+// --- AGENDA VISTORIAS ---
+export const getAllAgendaLocal = async () => {
+    const db = await initDB();
+    const all = await db.getAll('agenda_vistorias');
+    return all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+export const saveAgendaOffline = async (data) => {
+    const db = await initDB();
+    const isUpdate = !!data.id;
+    const savePayload = {
+        ...data,
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+
+    if (!isUpdate) {
+        savePayload.created_at = new Date().toISOString();
+        const localId = await db.add('agenda_vistorias', savePayload);
+        triggerSync();
+        return localId;
+    } else {
+        await db.put('agenda_vistorias', savePayload);
+        triggerSync();
+        return data.id;
+    }
+}
+
+export const deleteAgendaLocal = async (id) => {
+    const db = await initDB();
+    await db.delete('agenda_vistorias', id);
+    triggerSync();
+}
+

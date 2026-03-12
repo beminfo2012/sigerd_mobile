@@ -306,17 +306,20 @@ const OcorrenciasForm = () => {
         if (id && id !== 'novo') {
             loadRecord(id);
         } else {
-            const now = new Date();
-            setFormData(prev => ({
-                ...prev,
-                data_ocorrencia: now.toLocaleDateString('pt-BR'),
-                horario_ocorrencia: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
-                matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || ''
-            }));
-            getNextId();
-            captureGPS(true);
-            setLoading(false);
+            const init = async () => {
+                const now = new Date();
+                setFormData(prev => ({
+                    ...prev,
+                    data_ocorrencia: now.toLocaleDateString('pt-BR'),
+                    horario_ocorrencia: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                    agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
+                    matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || ''
+                }));
+                await getNextId();
+                captureGPS(true);
+                setLoading(false);
+            }
+            init();
         }
     }, [id, userProfile]);
 
@@ -353,8 +356,10 @@ const OcorrenciasForm = () => {
 
             const nextId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
             setFormData(prev => ({ ...prev, ocorrencia_id_format: nextId }));
+            return nextId;
         } catch (e) {
             console.error('Error calculating next ID:', e);
+            return null;
         }
     };
 
@@ -601,10 +606,17 @@ const OcorrenciasForm = () => {
             return;
         }
 
+        let currentId = formData.ocorrencia_id_format;
+        if (!currentId) {
+            toast.info('Gerando numeração...');
+            currentId = await getNextId();
+        }
+
         setSaving(true);
         try {
             const finalData = {
                 ...formData,
+                ocorrencia_id_format: currentId,
                 solicitante: formData.temSolicitanteEspecifico ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil",
                 status: 'finalized',
                 updated_at: new Date().toISOString()
