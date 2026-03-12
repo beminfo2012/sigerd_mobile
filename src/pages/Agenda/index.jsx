@@ -173,10 +173,10 @@ const calculateLimit = (dataAbertura, categoriaRisco, subtipos = '') => {
 };
 
 const getStatusColor = (diasRestantes, prazoTotal) => {
-    if (diasRestantes < 0) return { bg: 'bg-red-100 dark:bg-red-900/30', border: 'border-red-500', text: 'text-red-700 dark:text-red-400', label: 'Vencido', color: 'red' };
-    if (diasRestantes <= 1) return { bg: 'bg-orange-100 dark:bg-orange-900/30', border: 'border-orange-500', text: 'text-orange-700 dark:text-orange-400', label: 'Crítico', color: 'orange' };
-    if (diasRestantes <= (prazoTotal / 2)) return { bg: 'bg-yellow-100 dark:bg-yellow-900/30', border: 'border-yellow-500', text: 'text-yellow-700 dark:text-yellow-400', label: 'Atenção', color: 'yellow' };
-    return { bg: 'bg-green-100 dark:bg-green-900/30', border: 'border-green-500', text: 'text-green-700 dark:text-green-400', label: 'No Prazo', color: 'green' };
+    if (diasRestantes < 0) return { bg: 'bg-red-50 dark:bg-red-950/20', border: 'border-red-500', text: 'text-red-700 dark:text-red-400', label: 'Vencido', color: 'red' };
+    if (diasRestantes <= 1) return { bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-orange-500', text: 'text-orange-700 dark:text-orange-400', label: 'Crítico', color: 'orange' };
+    if (diasRestantes <= (prazoTotal / 2)) return { bg: 'bg-yellow-50 dark:bg-yellow-950/20', border: 'border-yellow-500', text: 'text-yellow-700 dark:text-yellow-400', label: 'Atenção', color: 'yellow' };
+    return { bg: 'bg-green-50 dark:bg-green-950/20', border: 'border-green-500', text: 'text-green-700 dark:text-green-400', label: 'No Prazo', color: 'green' };
 };
 
 const getVistoriaStatus = (status, vinculado = false) => {
@@ -213,6 +213,7 @@ const Agenda = () => {
     
     // Details View State
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [selectedAgenda, setSelectedAgenda] = useState(null);
     const [refreshCount, setRefreshCount] = useState(0);
     
     const [formData, setFormData] = useState({
@@ -308,14 +309,18 @@ const Agenda = () => {
 
                     // Se vinculou, parar contagem na data do protocolo/criação da vistoria
                     let targetDate = new Date();
-                    targetDate.setHours(0, 0, 0, 0);
-
+                    
                     if (linkedVistoria) {
                         targetDate = new Date(linkedVistoria.data_hora || linkedVistoria.createdAt || linkedVistoria.created_at || today);
-                        targetDate.setHours(0, 0, 0, 0);
                     }
                     
-                    const diasRestantes = differenceInDays(limitInfo.dataLimite, targetDate);
+                    // Normalize dates to 00:00:00 to get pure day difference
+                    const dLimite = new Date(limitInfo.dataLimite);
+                    dLimite.setHours(0, 0, 0, 0);
+                    const dTarget = new Date(targetDate);
+                    dTarget.setHours(0, 0, 0, 0);
+
+                    const diasRestantes = differenceInDays(dLimite, dTarget);
                     
                     const baseStatus = item.status || (item.is_legacy_vistoria ? item.status : 'Protocolada');
                     // If linked vistoria exists and has a conclusion status, use it
@@ -390,10 +395,17 @@ const Agenda = () => {
         return vistoriasBase
             .map(v => {
                 const vid = v.vistoria_id || v.id;
+                const requerante = v.solicitante || 'Sem requerente';
+                const label = `${vid} - ${requerante}`;
+                
+                const logradouro = v.endereco || 'Sem endereço';
+                const bairro = v.bairro || 'Sem bairro';
+                const subLabel = `${bairro} - ${logradouro} • ${v.status || 'Nova'}`;
+
                 return {
-                    value: vid, // Store the actual ID
-                    label: `${vid} - ${v.endereco || 'Sem endereço'}`,
-                    subLabel: `${v.status || 'Nova'} • ${v.bairro || 'Sem bairro'} • ${v.solicitante || 'Sem solicitante'}`,
+                    value: vid,
+                    label: label,
+                    subLabel: subLabel,
                     isLinked: linkedIds.has(vid),
                     numId: parseInt(String(vid).replace(/\D/g, '')) || 0
                 };
@@ -659,9 +671,12 @@ const Agenda = () => {
 
                     {/* Vistorias Mais Críticas Preview */}
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800">
-                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest mb-4">Top 5 Mais Críticas (Abertas)</h3>
+                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest mb-4">Agendas Críticas / Vencidas (Sem Vínculo)</h3>
                         <div className="space-y-3">
-                            {filteredAgendas.filter(v => v.statusOperacional !== 'Concluída').slice(0, 5).map(v => (
+                            {filteredAgendas
+                                .filter(v => v.statusOperacional !== 'Concluída' && !v.linkedVistoria)
+                                .sort((a, b) => a.diasRestantes - b.diasRestantes)
+                                .map(v => (
                                 <div key={v.id || v.agenda_id} className={`flex justify-between items-center p-4 rounded-[16px] border ${v.riscoColor.border} ${v.riscoColor.bg} cursor-pointer hover:scale-[1.01] transition-transform shadow-sm group`} onClick={(e) => handleShowDetails(v, e)}>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
@@ -684,8 +699,12 @@ const Agenda = () => {
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <div className="text-right">
-                                            <div className={`text-2xl font-black ${v.riscoColor.text} leading-none`}>{v.diasRestantes}</div>
-                                            <div className="text-[9px] uppercase tracking-widest font-bold opacity-70">Dias Restantes</div>
+                                            <div className={`text-2xl font-black ${v.riscoColor.text} leading-none truncate`}>
+                                                {v.diasRestantes}
+                                            </div>
+                                            <div className="text-[9px] uppercase tracking-widest font-black opacity-70 whitespace-nowrap">
+                                                {v.diasRestantes < 0 ? 'Dias em Atraso' : 'Dias Restantes'}
+                                            </div>
                                         </div>
                                         {isCoordinator && (
                                             <button onClick={(e) => handleDeleteClick(v, e)} className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -719,7 +738,11 @@ const Agenda = () => {
                             </thead>
                             <tbody>
                                 {filteredAgendas.map((v) => (
-                                    <tr key={v.id || v.agenda_id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                                    <tr 
+                                        key={v.id || v.agenda_id} 
+                                        className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors cursor-pointer"
+                                        onClick={(e) => handleShowDetails(v, e)}
+                                    >
                                         <td className="p-4">
                                             <div className="font-bold text-slate-800 dark:text-slate-200">{v.numero_processo || 'NOVO'}</div>
                                             <div className="text-xs text-slate-500 truncate max-w-[150px]">
@@ -1069,8 +1092,13 @@ const Agenda = () => {
                                         <CalendarIcon size={14} className="text-orange-500" />
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-orange-500">Data Limite</label>
-                                        <div className="text-xs font-black text-slate-800 dark:text-slate-100">{format(new Date(selectedAgenda.dataLimite), 'dd/MM/yyyy')} ({selectedAgenda.diasRestantes} dias restantes)</div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-orange-500">Data Limite / Status</label>
+                                        <div className="text-xs font-black text-slate-800 dark:text-slate-100">
+                                            {format(new Date(selectedAgenda.dataLimite), 'dd/MM/yyyy')} 
+                                            <span className={`ml-2 ${selectedAgenda.diasRestantes < 0 ? 'text-red-500' : 'text-orange-500'}`}>
+                                                ({Math.abs(selectedAgenda.diasRestantes)} {selectedAgenda.diasRestantes < 0 ? 'dias em atraso' : 'dias restantes'})
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
