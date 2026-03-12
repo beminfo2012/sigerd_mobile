@@ -1,12 +1,111 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-    Calendar as CalendarIcon, List, LayoutDashboard, AlertCircle, Plus,
+import { Trash2, Edit2, CheckCircle, Calendar as CalendarIcon, List, LayoutDashboard, AlertCircle, Plus,
     Clock, CheckCircle2, ChevronLeft, ChevronRight, Filter, AlertTriangle, X, Link, Search
 } from 'lucide-react';
-import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline } from '../../services/db';
-import { format, addDays, differenceInDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
+import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgendaLocal } from '../../services/db';
+import { toast } from '../../components/ToastNotification';
+import { format, addDays, differenceInDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import bairrosDataRaw from '../../../Bairros.json';
+import logradourosDataRaw from '../../../nomesderuas.json';
+
+// Normalize data for searchable inputs
+const logradourosData = logradourosDataRaw
+    .filter(item => item["Logradouro (Rua, Av. e etc)"])
+    .map(item => ({
+        nome: item["Logradouro (Rua, Av. e etc)"].trim(),
+        bairro: item["Bairro"] ? item["Bairro"].trim() : ""
+    }));
+
+const bairrosData = bairrosDataRaw
+    .filter(b => b.nome)
+    .map(b => ({ nome: b.nome.trim() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
+
+const SearchableInput = ({
+    label,
+    value,
+    onChange,
+    options,
+    placeholder,
+    icon: IconComponent,
+    labelClasses,
+    inputClasses
+}) => {
+    const [search, setSearch] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+
+    const filteredOptions = options.filter(opt =>
+        opt.toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <div className="relative">
+            <label className={labelClasses}>{label}</label>
+            <div className="relative group">
+                {IconComponent && <IconComponent size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />}
+                <div
+                    onClick={() => setIsOpen(true)}
+                    className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[52px] flex items-center justify-between pr-4`}
+                >
+                    <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-300 dark:text-slate-600'}>
+                        {value || placeholder}
+                    </span>
+                    <Search size={16} className="text-slate-300" />
+                </div>
+            </div>
+
+            {isOpen && (
+                <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
+                                <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                    <X size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    autoFocus
+                                    className={`${inputClasses} pl-12 text-black`}
+                                    placeholder="Comece a digitar para filtrar..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto p-2 pb-20">
+                            {filteredOptions.length > 0 ? (
+                                filteredOptions.map((opt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                            setSearch('');
+                                        }}
+                                        className={`w-full text-left p-4 rounded-2xl font-bold transition-all flex items-center justify-between group mb-1 ${value === opt ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        <span className="flex-1">{opt}</span>
+                                        {value === opt && <CheckCircle size={18} className="ml-2" />}
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-10 text-center space-y-2 opacity-50">
+                                    <Search size={32} className="mx-auto text-slate-300" />
+                                    <p className="font-bold text-sm">Nenhum resultado encontrado</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 // Constants for deadlines (in days)
 const PRAZOS = {
@@ -69,11 +168,19 @@ const Agenda = () => {
     // Daily Prioritárias Filtro
     const [showingPrioritarias, setShowingPrioritarias] = useState(false);
 
-    // Modal Setup
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [agendaToDelete, setAgendaToDelete] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('todos'); // 'todos', 'integrados', 'pendentes'
+    
+    // Modal & Linking States
     const [showModal, setShowModal] = useState(false);
     const [showLinkModal, setShowLinkModal] = useState(false);
     const [agendaToLink, setAgendaToLink] = useState(null);
     const [selectedLinkId, setSelectedLinkId] = useState('');
+    
+    // Details View State
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [selectedAgenda, setSelectedAgenda] = useState(null);
     
     const [formData, setFormData] = useState({
         numero_processo: '',
@@ -81,9 +188,34 @@ const Agenda = () => {
         categoria_risco: '',
         solicitante: '',
         endereco: '',
+        bairro: '',
+        informacoes_complementares: '',
         status: 'Protocolada',
-        vistoria_id: ''
+        vistoria_id: '',
+        data_atendimento: null
     });
+
+    const resetForm = () => {
+        setFormData({
+            numero_processo: '',
+            data_abertura: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+            categoria_risco: '',
+            solicitante: '',
+            endereco: '',
+            bairro: '',
+            informacoes_complementares: '',
+            status: 'Protocolada',
+            vistoria_id: '',
+            data_atendimento: null
+        });
+    };
+
+    const handleProcessoMask = (value) => {
+        // Formato YYYY-XXXXX (Ano - Numero/Letra)
+        const v = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (v.length <= 4) return v;
+        return `${v.slice(0, 4)}-${v.slice(4, 9)}`;
+    };
 
     useEffect(() => {
         const load = async () => {
@@ -95,6 +227,9 @@ const Agenda = () => {
                     const isCoord = ['Admin', 'Administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário'].includes(prof.role);
                     setIsCoordinator(isCoord);
                 }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
                 const [dbVistorias, dbAgendas] = await Promise.all([
                     getAllVistoriasLocal(),
@@ -135,13 +270,15 @@ const Agenda = () => {
                     }
 
                     // Se vinculou, parar contagem na data do protocolo/criação da vistoria
-                    let targetDate = today;
+                    let targetDate = new Date();
+                    targetDate.setHours(0, 0, 0, 0);
+
                     if (linkedVistoria) {
                         targetDate = new Date(linkedVistoria.data_hora || linkedVistoria.createdAt || linkedVistoria.created_at || today);
                         targetDate.setHours(0, 0, 0, 0);
                     }
                     
-                    const diasRestantes = differenceInDays(limite, targetDate);
+                    const diasRestantes = differenceInDays(limitInfo.dataLimite, targetDate);
                     
                     const baseStatus = item.status || (item.is_legacy_vistoria ? item.status : 'Protocolada');
                     // If linked vistoria exists and has a conclusion status, use it
@@ -150,12 +287,15 @@ const Agenda = () => {
                     
                     const riscoColor = getStatusColor(diasRestantes, limitInfo.prazoDias);
                     
+                    const dataAtendimento = linkedVistoria ? (linkedVistoria.data_hora || linkedVistoria.createdAt || linkedVistoria.created_at) : null;
+                    
                     return {
                         ...item,
                         ...limitInfo,
                         diasRestantes,
                         statusOperacional,
                         riscoColor,
+                        data_atendimento: dataAtendimento,
                         linkedVistoria: linkedVistoria || (item.is_legacy_vistoria ? item : null)
                     };
                 });
@@ -168,10 +308,18 @@ const Agenda = () => {
             }
         };
         load();
-    }, [showModal, showLinkModal]);
+    }, [showModal, showLinkModal, showDeleteModal]);
 
     const filteredAgendas = useMemo(() => {
         let f = agendas;
+        
+        // Filtro por integração
+        if (filterStatus === 'integrados') {
+            f = f.filter(v => !!v.vistoria_id || v.is_legacy_vistoria);
+        } else if (filterStatus === 'pendentes') {
+            f = f.filter(v => !v.vistoria_id && !v.is_legacy_vistoria);
+        }
+
         if (showingPrioritarias) {
             f = f.filter(v => 
                 v.statusOperacional !== 'Concluída' && 
@@ -179,7 +327,7 @@ const Agenda = () => {
             );
         }
         return f.sort((a, b) => a.diasRestantes - b.diasRestantes);
-    }, [agendas, showingPrioritarias]);
+    }, [agendas, showingPrioritarias, filterStatus]);
 
     const stats = useMemo(() => {
         const ativas = agendas.filter(v => v.statusOperacional !== 'Concluída');
@@ -204,31 +352,71 @@ const Agenda = () => {
 
     const handleSaveNovoAgendamento = async () => {
         if (!formData.numero_processo || !formData.data_abertura || !formData.categoria_risco) {
-            alert('Preencha Número do Processo, Data e Risco obrigatoriamente.');
+            toast.warning('Campos Obrigatórios', 'Preencha Número do Processo, Data e Risco.');
             return;
         }
         
         try {
             const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+            
+            // Calcular data limite antes de salvar para persistir no banco
+            const { dataLimite } = calculateLimit(formData.data_abertura, formData.categoria_risco);
+
+            // Verificar se há uma vistoria vinculada selecionada para pegar a data de atendimento
+            let dataAtendimento = formData.data_atendimento;
+            if (formData.vistoria_id) {
+                const vist = vistoriasBase.find(v => (v.vistoria_id === formData.vistoria_id || v.id === formData.vistoria_id));
+                if (vist) dataAtendimento = vist.data_hora || vist.createdAt || vist.created_at;
+            }
+
             await saveAgendaOffline({
                 ...formData,
+                data_limite: dataLimite.toISOString(),
+                data_atendimento: dataAtendimento,
                 created_by: userProfile.id || null
             });
+
             setShowModal(false);
-            setFormData({
-                numero_processo: '',
-                data_abertura: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-                categoria_risco: '',
-                solicitante: '',
-                endereco: '',
-                status: 'Protocolada',
-                vistoria_id: ''
-            });
-            alert('Agedamento salvo com sucesso!');
+            resetForm();
+            toast.success('Sucesso', formData.id ? 'Agendamento atualizado!' : 'Agendamento salvo com sucesso!');
         } catch (e) {
             console.error('Erro ao salvar agenda:', e);
-            alert('Falha ao salvar o agendamento.');
+            toast.error('Erro', 'Falha ao salvar o agendamento.');
         }
+    };
+
+    const handleEdit = (agenda, e) => {
+        if (e) e.stopPropagation();
+        setFormData({
+            ...agenda,
+            data_abertura: agenda.data_abertura ? format(new Date(agenda.data_abertura), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+            vistoria_id: agenda.vistoria_id || ''
+        });
+        setShowModal(true);
+    };
+
+    const handleDeleteClick = (agenda, e) => {
+        if (e) e.stopPropagation();
+        setAgendaToDelete(agenda);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await deleteAgendaLocal(agendaToDelete.id);
+            toast.success('Excluído', 'Agendamento removido com sucesso.');
+            setShowDeleteModal(false);
+            setAgendaToDelete(null);
+        } catch (e) {
+            console.error(e);
+            toast.error('Erro', 'Falha ao excluir.');
+        }
+    };
+
+    const handleShowDetails = (agenda, e) => {
+        if (e) e.stopPropagation();
+        setSelectedAgenda(agenda);
+        setShowDetailsModal(true);
     };
 
     const handleOpenLinkModal = (agenda, e) => {
@@ -240,16 +428,20 @@ const Agenda = () => {
 
     const handleSaveLink = async () => {
         try {
+            const vist = vistoriasBase.find(v => (v.vistoria_id === selectedLinkId || v.id === selectedLinkId));
+            const dataAtendimento = vist ? (vist.data_hora || vist.createdAt || vist.created_at) : null;
+
             await saveAgendaOffline({
                 ...agendaToLink,
                 vistoria_id: selectedLinkId || null,
+                data_atendimento: dataAtendimento
             });
-            alert('Vistoria vinculada com sucesso!');
+            toast.success('Sucesso', 'Vistoria vinculada com sucesso!');
             setShowLinkModal(false);
             setAgendaToLink(null);
         } catch (e) {
             console.error(e);
-            alert('Erro ao vincular.');
+            toast.error('Erro', 'Erro ao vincular.');
         }
     };
 
@@ -307,14 +499,35 @@ const Agenda = () => {
                 </div>
             </div>
 
-            {/* BOTÃO MODO PRIORITÁRIO (SEMPRE VISÍVEL) */}
-            <div className="flex justify-end">
+            {/* BOTÕES DE FILTRO E PRIORIDADE */}
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <div className="flex gap-2">
+                    <button 
+                        onClick={() => setFilterStatus('todos')}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === 'todos' ? 'bg-slate-800 text-white shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
+                    >
+                        Todos
+                    </button>
+                    <button 
+                        onClick={() => setFilterStatus('integrados')}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === 'integrados' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
+                    >
+                        Vinculados
+                    </button>
+                    <button 
+                        onClick={() => setFilterStatus('pendentes')}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === 'pendentes' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
+                    >
+                        Pendentes
+                    </button>
+                </div>
+
                 <button 
                     onClick={() => setShowingPrioritarias(!showingPrioritarias)}
                     className={`px-6 py-3 rounded-[16px] font-black text-[11px] uppercase tracking-widest flex items-center gap-2 transition-all ${showingPrioritarias ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-red-400'}`}
                 >
                     <AlertTriangle size={16} className={showingPrioritarias ? 'animate-pulse' : 'text-red-500'} />
-                    {showingPrioritarias ? 'Exibindo Prioritárias do Dia' : 'Filtrar Prioritárias do Dia'}
+                    {showingPrioritarias ? 'Exibindo Prioritárias' : 'Filtrar Prioritárias'}
                 </button>
             </div>
 
@@ -348,26 +561,36 @@ const Agenda = () => {
                         <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest mb-4">Top 5 Mais Críticas (Abertas)</h3>
                         <div className="space-y-3">
                             {filteredAgendas.filter(v => v.statusOperacional !== 'Concluída').slice(0, 5).map(v => (
-                                <div key={v.id || v.agenda_id} className={`flex justify-between items-center p-4 rounded-[16px] border ${v.riscoColor.border} ${v.riscoColor.bg} ${v.linkedVistoria ? 'cursor-pointer hover:scale-[1.01] transition-transform' : ''}`} onClick={() => v.linkedVistoria && navigate('/vistorias', { state: { selectedVistoria: v.linkedVistoria } })}>
+                                <div key={v.id || v.agenda_id} className={`flex justify-between items-center p-4 rounded-[16px] border ${v.riscoColor.border} ${v.riscoColor.bg} cursor-pointer hover:scale-[1.01] transition-transform shadow-sm group`} onClick={(e) => handleShowDetails(v, e)}>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className={`text-[10px] font-black uppercase tracking-widest ${v.riscoColor.text}`}>{v.riscoColor.label}</span>
-                                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/50 dark:bg-slate-950/30 text-slate-600 dark:text-slate-300 uppercase font-bold">{v.numero_processo || 'S/ PROC'}</span>
+                                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/50 dark:bg-slate-950/30 text-slate-600 dark:text-slate-300 uppercase font-bold">{v.numero_processo}</span>
                                             {v.linkedVistoria && (
                                                 <span className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-black uppercase flex items-center gap-1"><Link size={10}/> Integrada</span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <h4 className={`font-black ${v.riscoColor.text}`}>{v.categoria_risco || 'Geral'}</h4>
-                                            {!v.linkedVistoria && !v.is_legacy_vistoria && (
-                                                <button onClick={(e) => handleOpenLinkModal(v, e)} className="text-[9px] font-black uppercase bg-slate-100 dark:bg-slate-800 px-2 rounded text-slate-500 hover:text-blue-600 transition-colors">Vincular</button>
+                                            {!v.linkedVistoria && !v.is_legacy_vistoria && isCoordinator && (
+                                                <div className="flex gap-2">
+                                                    <button onClick={(e) => handleOpenLinkModal(v, e)} className="text-[9px] font-black uppercase bg-slate-100 dark:bg-slate-800 px-2 rounded text-slate-500 hover:text-blue-600 transition-colors">Vincular</button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(v); }} className="p-1 text-slate-400 hover:text-blue-500"><Edit2 size={12}/></button>
+                                                </div>
                                             )}
                                         </div>
                                         <p className="text-xs opacity-70 mt-0.5">{v.endereco || 'Endereço não informado'}</p>
                                     </div>
-                                    <div className="text-right">
-                                        <div className={`text-2xl font-black ${v.riscoColor.text} leading-none`}>{v.diasRestantes}</div>
-                                        <div className="text-[9px] uppercase tracking-widest font-bold opacity-70">Dias Restantes</div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <div className={`text-2xl font-black ${v.riscoColor.text} leading-none`}>{v.diasRestantes}</div>
+                                            <div className="text-[9px] uppercase tracking-widest font-bold opacity-70">Dias Restantes</div>
+                                        </div>
+                                        {isCoordinator && (
+                                            <button onClick={(e) => handleDeleteClick(v, e)} className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -387,8 +610,10 @@ const Agenda = () => {
                                     <th className="p-4">Risco / Categoria</th>
                                     <th className="p-4">Protocolo</th>
                                     <th className="p-4">Data Limite</th>
+                                    <th className="p-4">Atendimento</th>
                                     <th className="p-4">Status Integração</th>
                                     <th className="p-4">Prazo Real</th>
+                                    {isCoordinator && <th className="p-4">Ações</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -396,7 +621,9 @@ const Agenda = () => {
                                     <tr key={v.id || v.agenda_id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                                         <td className="p-4">
                                             <div className="font-bold text-slate-800 dark:text-slate-200">{v.numero_processo || 'NOVO'}</div>
-                                            <div className="text-xs text-slate-500 truncate max-w-[150px]">{v.endereco}</div>
+                                            <div className="text-xs text-slate-500 truncate max-w-[150px]">
+                                                {v.endereco}{v.bairro ? `, ${v.bairro}` : ''}
+                                            </div>
                                             {v.solicitante && <div className="text-[9px] text-slate-400">Req: {v.solicitante}</div>}
                                         </td>
                                         <td className="p-4">
@@ -405,6 +632,9 @@ const Agenda = () => {
                                         </td>
                                         <td className="p-4 text-xs text-slate-600 dark:text-slate-400">{format(new Date(v.data_abertura), 'dd/MM/yyyy HH:mm')}</td>
                                         <td className="p-4 text-xs font-bold text-slate-800 dark:text-slate-200">{format(new Date(v.dataLimite), 'dd/MM/yyyy')}</td>
+                                        <td className="p-4 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                            {v.data_atendimento ? format(new Date(v.data_atendimento), 'dd/MM/yyyy') : 'Pendente'}
+                                        </td>
                                         <td className="p-4">
                                             <div className="flex flex-col gap-1 items-start">
                                                 <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-black ${v.statusOperacional === 'Concluída' ? 'bg-slate-100 text-slate-500' : v.statusOperacional === 'Agendada' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
@@ -415,7 +645,7 @@ const Agenda = () => {
                                                         <Link size={10}/> Ver Vistoria
                                                     </span>
                                                 )}
-                                                {!v.linkedVistoria && !v.is_legacy_vistoria && (
+                                                {!v.linkedVistoria && !v.is_legacy_vistoria && isCoordinator && (
                                                     <>
                                                         <span className="text-[9px] font-bold text-slate-400 px-1 py-0.5 uppercase">Não Integrado</span>
                                                         <button onClick={(e) => handleOpenLinkModal(v, e)} className="text-[9px] font-black uppercase bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-md text-slate-500 hover:text-blue-600 transition-colors mt-1">Vincular Vistoria</button>
@@ -429,11 +659,19 @@ const Agenda = () => {
                                                 <span className={`text-xl font-black leading-none mt-1 ${v.riscoColor.text}`}>{v.diasRestantes} <span className="text-[10px]">dias</span></span>
                                             </div>
                                         </td>
+                                        {isCoordinator && (
+                                            <td className="p-4">
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => handleEdit(v)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 size={16}/></button>
+                                                    <button onClick={() => handleDeleteClick(v)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16}/></button>
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                                 {filteredAgendas.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum agendamento encontrado.</td>
+                                        <td colSpan={isCoordinator ? 7 : 6} className="p-8 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum agendamento encontrado.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -500,10 +738,10 @@ const Agenda = () => {
                     <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[32px] overflow-hidden shadow-2xl flex flex-col">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                             <div>
-                                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Novo Agendamento</h3>
+                                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">{formData.id ? 'Editar Agendamento' : 'Novo Agendamento'}</h3>
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Restrito Coordenadoria</p>
                             </div>
-                            <button onClick={() => setShowModal(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-700 transition-colors">
+                            <button onClick={() => { setShowModal(false); resetForm(); }} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-700 transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -515,9 +753,10 @@ const Agenda = () => {
                                     <input 
                                         type="text" 
                                         value={formData.numero_processo}
-                                        onChange={(e) => setFormData({...formData, numero_processo: e.target.value})}
+                                        onChange={(e) => setFormData({...formData, numero_processo: handleProcessoMask(e.target.value)})}
                                         className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ex: 2026/014"
+                                        placeholder="Ex: 2026-A001"
+                                        maxLength={10}
                                     />
                                 </div>
                                 <div>
@@ -549,25 +788,57 @@ const Agenda = () => {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Solicitante (Opcional)</label>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Solicitante</label>
                                 <input 
                                     type="text" 
                                     value={formData.solicitante}
                                     onChange={(e) => setFormData({...formData, solicitante: e.target.value})}
                                     className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Nome de quem solicitou"
+                                    placeholder="Nome do morador"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Endereço do Chamado (Opcional)</label>
-                                <input 
-                                    type="text" 
+                            <div className="space-y-4 pt-2">
+                                <SearchableInput
+                                    label="Logradouro *"
+                                    placeholder="Rua, Avenida..."
                                     value={formData.endereco}
-                                    onChange={(e) => setFormData({...formData, endereco: e.target.value})}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Logradouro e bairro"
+                                    onChange={val => {
+                                        const found = logradourosData.find(l => l.nome.toLowerCase() === val.toLowerCase());
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            endereco: val,
+                                            bairro: found ? found.bairro : prev.bairro
+                                        }));
+                                    }}
+                                    options={logradourosData
+                                        .filter(l => !formData.bairro || l.bairro === formData.bairro)
+                                        .map(l => l.nome)
+                                        .sort()}
+                                    labelClasses="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1"
+                                    inputClasses="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
                                 />
+
+                                <SearchableInput
+                                    label="Bairro *"
+                                    placeholder="Selecione o bairro..."
+                                    value={formData.bairro}
+                                    onChange={val => setFormData({ ...formData, bairro: val })}
+                                    options={bairrosData.map(b => b.nome).sort()}
+                                    labelClasses="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1"
+                                    inputClasses="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Informações Complementares</label>
+                                    <input 
+                                        type="text" 
+                                        value={formData.informacoes_complementares}
+                                        onChange={(e) => setFormData({...formData, informacoes_complementares: e.target.value})}
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ex: Próximo à igreja, casa azul..."
+                                    />
+                                </div>
                             </div>
 
                             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-[16px] border border-blue-100 dark:border-blue-900/50">
@@ -577,10 +848,10 @@ const Agenda = () => {
                                 <select 
                                     value={formData.vistoria_id}
                                     onChange={(e) => setFormData({...formData, vistoria_id: e.target.value})}
-                                    className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 p-3 rounded-[12px] font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="">Não integrar no momento (avulsa)</option>
-                                    {vistoriasBase.filter(v => v.status !== 'Finalizada').map(v => (
+                                    {vistoriasBase.filter(v => v.status !== 'Finalizada' || v.id === formData.vistoria_id || v.vistoria_id === formData.vistoria_id).map(v => (
                                         <option key={v.id} value={v.vistoria_id || v.id}>{v.vistoria_id || v.id} - {v.endereco || 'Sem endereço'}</option>
                                     ))}
                                 </select>
@@ -593,7 +864,7 @@ const Agenda = () => {
                                 onClick={handleSaveNovoAgendamento}
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest p-4 rounded-[16px] text-sm shadow-lg shadow-blue-500/30 transition-all flex justify-center items-center gap-2"
                             >
-                                <CheckCircle2 size={18} /> Cadastrar Agendamento
+                                <CheckCircle2 size={18} /> {formData.id ? 'Salvar Alterações' : 'Cadastrar Agendamento'}
                             </button>
                         </div>
                     </div>
@@ -631,6 +902,171 @@ const Agenda = () => {
                         <button onClick={handleSaveLink} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest p-4 rounded-[16px] text-xs shadow-lg shadow-blue-500/30 transition-all flex justify-center items-center gap-2">
                             <CheckCircle2 size={16} /> Confirmar Vínculo
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL DETALHES (INFORMAÇÕES) */}
+            {showDetailsModal && selectedAgenda && (
+                <div className="fixed inset-0 z-[140] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl flex flex-col">
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2 rounded-xl ${selectedAgenda.riscoColor.bg}`}>
+                                    <AlertCircle size={20} className={selectedAgenda.riscoColor.text} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 leading-tight">Detalhes da Agenda</h3>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">ID: {selectedAgenda.id || 'Local'}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowDetailsModal(false)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-slate-700 transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-5">
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Processo</label>
+                                    <div className="text-sm font-black text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl inline-block">
+                                        {selectedAgenda.numero_processo}
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Status</label>
+                                    <span className={`px-2 py-1 rounded-md text-[9px] uppercase font-black ${selectedAgenda.statusOperacional === 'Concluída' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
+                                        {selectedAgenda.statusOperacional}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                        <AlertTriangle size={14} className="text-slate-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Tipo de Risco</label>
+                                        <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{selectedAgenda.categoria_risco}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                        <Clock size={14} className="text-slate-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Protocolo em</label>
+                                        <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{format(new Date(selectedAgenda.data_abertura), 'dd/MM/yyyy HH:mm')}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
+                                        <CalendarIcon size={14} className="text-orange-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-orange-500">Data Limite</label>
+                                        <div className="text-xs font-black text-slate-800 dark:text-slate-100">{format(new Date(selectedAgenda.dataLimite), 'dd/MM/yyyy')} ({selectedAgenda.diasRestantes} dias restantes)</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                        <List size={14} className="text-slate-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Solicitante</label>
+                                        <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{selectedAgenda.solicitante || 'Não informado'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 border-t border-slate-50 dark:border-slate-800 pt-4">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                                        <Search size={14} className="text-blue-500" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Endereço Completo</label>
+                                        <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200 leading-tight">
+                                            {selectedAgenda.endereco}
+                                            {selectedAgenda.bairro && `, ${selectedAgenda.bairro}`}
+                                        </div>
+                                        {selectedAgenda.informacoes_complementares && (
+                                            <div className="text-[9px] text-slate-400 mt-1 italic">Obs: {selectedAgenda.informacoes_complementares}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {selectedAgenda.linkedVistoria && (
+                                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-between gap-3 border border-emerald-100 dark:border-emerald-800">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center text-emerald-600">
+                                            <CheckCircle size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-emerald-600 uppercase">Atendido em</p>
+                                            <p className="text-xs font-black text-emerald-700 dark:text-emerald-300">
+                                                {format(new Date(selectedAgenda.data_atendimento), 'dd/MM/yyyy')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => navigate('/vistorias', { state: { selectedVistoria: selectedAgenda.linkedVistoria } })}
+                                        className="p-2 bg-white dark:bg-emerald-800 rounded-xl text-emerald-600 shadow-sm hover:scale-105 transition-transform"
+                                    >
+                                        <Link size={16} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
+                            <button 
+                                onClick={() => setShowDetailsModal(false)}
+                                className="flex-1 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-black uppercase tracking-widest p-4 rounded-2xl text-xs border border-slate-100 dark:border-slate-600"
+                            >
+                                Fechar
+                            </button>
+                            {isCoordinator && (
+                                <button 
+                                    onClick={() => { setShowDetailsModal(false); handleEdit(selectedAgenda); }}
+                                    className="px-6 bg-blue-600 text-white font-black uppercase tracking-widest p-4 rounded-2xl text-xs flex items-center justify-center gap-2"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL CONFIRMAÇÃO EXCLUSÃO */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl p-6 text-center">
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                            <Trash2 size={32} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Excluir Agendamento?</h3>
+                        <p className="text-sm text-slate-500 mb-6 font-bold">
+                            Esta ação é irreversível. O processo <span className="text-red-500">{agendaToDelete?.numero_processo}</span> será removido da agenda.
+                        </p>
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black uppercase tracking-widest p-4 rounded-[16px] text-xs transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={confirmDelete}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest p-4 rounded-[16px] text-xs shadow-lg shadow-red-500/30 transition-all"
+                            >
+                                Sim, Excluir
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

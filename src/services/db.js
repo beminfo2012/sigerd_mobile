@@ -246,7 +246,7 @@ export const saveVistoriaOffline = async (data) => {
 export const getPendingSyncCount = async () => {
     const db = await initDB()
 
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'ocorrencias_operacionais', 'despachos', 'emergency_contracts'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'ocorrencias_operacionais', 'despachos', 'emergency_contracts', 'agenda_vistorias'];
     let detail = {
         total: 0,
         vistorias: 0,
@@ -617,6 +617,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             };
         } else if (storeName === 'agenda_vistorias') {
             payload = {
+                id: item.supabase_id || undefined,
                 numero_processo: item.numero_processo || '',
                 data_abertura: item.data_abertura || new Date().toISOString(),
                 data_limite: item.data_limite || null,
@@ -807,7 +808,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                                             storeName === 'emergency_contracts' ? 'contract_id' :
                                                 storeName === 'despachos' ? 'despacho_id' :
                                                     storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
-                                                        undefined
+                                                        storeName === 'agenda_vistorias' ? 'id' :
+                                                            undefined
         }).select();
 
         if (error) {
