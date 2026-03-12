@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
@@ -705,23 +705,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     };
 
     const handleGeneratePDF = async () => {
-        if (generating) return;
-        setGenerating(true);
-        toast.info('Gerando PDF...', 'Por favor, aguarde enquanto processamos o relatório e as imagens.');
-
-        try {
-            const result = await generatePDF(formData, 'vistoria');
-            if (result.success) {
-                toast.success('Relatório Gerado!', 'O arquivo foi criado e está pronto para salvar ou compartilhar.');
-            } else {
-                toast.error('Erro ao gerar PDF', result.error || 'Ocorreu um erro inesperado.');
-            }
-        } catch (e) {
-            console.error('PDF Error:', e);
-            toast.error('Erro Crítico', 'Não foi possível gerar o PDF. Verifique sua conexão e tente novamente.');
-        } finally {
-            setGenerating(false);
+        const id = formData.id || formData.vistoria_id || formData.vistoriaId;
+        if (!id) {
+            toast.warning('Ação Necessária', 'Por favor, salve a vistoria primeiro para gerar o PDF neste modelo.');
+            return;
         }
+        window.open(`/vistorias/imprimir/${id}`, '_blank');
     };
 
     const handleSubmit = async (e) => {
@@ -1770,7 +1759,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 onClick={handleGeneratePDF}
                                 className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                             >
-                                <Share size={18} className="mr-2" /> RELATÓRIO PDF
+                                <Printer size={18} className="mr-2" /> IMPRIMIR PDF
                             </Button>
                             <Button
                                 type="button"

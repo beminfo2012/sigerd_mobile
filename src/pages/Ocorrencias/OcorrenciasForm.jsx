@@ -5,7 +5,7 @@ import {
     RefreshCw, ShieldCheck, AlertTriangle, Sparkles, Trash2, Maximize2,
     FileText, Edit2, CheckCircle, CheckCircle2, Circle, Camera, Search,
     X, Phone, User, Fingerprint, Siren, ClipboardList, Share,
-    Download, ChevronLeft, ChevronRight
+    Download, ChevronLeft, ChevronRight, Printer
 } from 'lucide-react';
 import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
 import { initDB, searchInstallations } from '../../services/db';
@@ -552,51 +552,12 @@ const OcorrenciasForm = () => {
     };
 
     const handleGeneratePDF = async () => {
-        if (generating) return;
-        setGenerating(true);
-        toast.info('Gerando PDF...', 'Por favor, aguarde enquanto processamos o relatório e as imagens.');
-
-        try {
-            // Consolidar danos humanos para o PDF
-            let danosHumanosText = '';
-            if (formData.tem_danos_humanos) {
-                const parts = [];
-                if (formData.mortos > 0) parts.push(`Mortos: ${formData.mortos}`);
-                if (formData.feridos > 0) parts.push(`Feridos: ${formData.feridos}`);
-                if (formData.enfermos > 0) parts.push(`Enfermos: ${formData.enfermos}`);
-                if (formData.desalojados > 0) parts.push(`Desalojados: ${formData.desalojados}`);
-                if (formData.desabrigados > 0) parts.push(`Desabrigados: ${formData.desabrigados}`);
-                if (formData.desaparecidos > 0) parts.push(`Desaparecidos: ${formData.desaparecidos}`);
-                if (formData.outros_afetados > 0) parts.push(`Outros afetados: ${formData.outros_afetados}`);
-
-                if (parts.length > 0) {
-                    danosHumanosText = `\n\nDANOS HUMANOS:\n${parts.join(', ')}`;
-                }
-            }
-
-            // Se não houver solicitante específico, preencher com o padrão para o PDF
-            const pdfData = {
-                ...formData,
-                solicitante: formData.temSolicitanteEspecifico ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil",
-                vistoriaId: formData.ocorrencia_id_format, // Mapping for generator compatibility
-                categoria_risco: formData.categoriaRisco,
-                subtipos_risco: formData.subtiposRisco,
-                nivel_risco: formData.nivelRisco,
-                observacoes: `${formData.categoriaRisco || 'Ocorrência'}\n\n${formData.observacoes}${danosHumanosText}`
-            };
-
-            const result = await generatePDF(pdfData, 'ocorrencia');
-            if (result.success) {
-                toast.success('Relatório Gerado!', 'O arquivo foi criado e está pronto para salvar ou compartilhar.');
-            } else {
-                toast.error('Erro ao gerar PDF', result.error || 'Ocorreu um erro inesperado.');
-            }
-        } catch (e) {
-            console.error('PDF Error:', e);
-            toast.error('Erro Crítico', 'Não foi possível gerar o PDF. Verifique sua conexão e tente novamente.');
-        } finally {
-            setGenerating(false);
+        const id = formData.id || formData.ocorrencia_id || formData.ocorrencia_id_format;
+        if (!id) {
+            toast.warning('Ação Necessária', 'Por favor, salve a ocorrência primeiro para gerar o PDF neste modelo.');
+            return;
         }
+        window.open(`/ocorrencias/imprimir/${id}`, '_blank');
     };
 
 
@@ -1433,8 +1394,8 @@ const OcorrenciasForm = () => {
                             disabled={generating}
                             className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm"
                         >
-                            {generating ? <Loader2 size={18} className="animate-spin mr-2" /> : <Share size={18} className="mr-2" />}
-                            RELATÓRIO PDF
+                            <Printer size={18} className="mr-2" />
+                            IMPRIMIR PDF
                         </Button>
                         <Button
                             type="button"

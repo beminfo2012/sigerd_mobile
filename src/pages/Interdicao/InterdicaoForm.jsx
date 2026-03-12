@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { ArrowLeft, Save, Camera, MapPin, Search, Plus, X, Siren, Clock, FileText, CheckCircle, Edit2, User, Phone, Mail, Crosshair, AlertTriangle, Info, RefreshCw, Upload, Sparkles, Mic, Type, Activity, ChevronRight, Share, Trash2, Download, ChevronLeft, Maximize2 } from 'lucide-react'
+import { ArrowLeft, Save, Camera, MapPin, Search, Plus, X, Siren, Clock, FileText, CheckCircle, Edit2, User, Phone, Mail, Crosshair, AlertTriangle, Info, RefreshCw, Upload, Sparkles, Mic, Type, Activity, ChevronRight, Share, Trash2, Download, ChevronLeft, Maximize2, Printer } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { checkRiskArea } from '../../services/riskAreas'
@@ -1110,8 +1110,19 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                     </button>
 
                     <div className="grid grid-cols-2 gap-4 mt-4">
-                        <button type="button" onClick={() => generatePDF(formData, 'interdicao')} className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm">
-                            <Share size={20} /> Exportar PDF
+                        <button 
+                            type="button" 
+                            onClick={() => {
+                                const id = formData.id || formData.interdicaoId || formData.interdicao_id;
+                                if (!id) {
+                                    alert('Por favor, salve a interdição primeiro para gerar o PDF neste modelo.');
+                                    return;
+                                }
+                                window.open(`/interdicao/imprimir/${id}`, '_blank');
+                            }} 
+                            className="flex justify-center items-center gap-2 p-4 border border-gray-200 rounded-xl font-bold text-gray-600 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <Printer size={20} /> IMPRIMIR PDF
                         </button>
                         <button
                             type="button"
