@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, Edit2, CheckCircle, Calendar as CalendarIcon, List, LayoutDashboard, AlertCircle, Plus,
     Clock, CheckCircle2, ChevronLeft, ChevronRight, Filter, AlertTriangle, X, Link, Search, RefreshCcw, ArrowLeft
 } from 'lucide-react';
-import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgendaLocal, pullAllData } from '../../services/db';
+import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgendaLocal, pullAllData, getAllInterdicoesLocal } from '../../services/db';
+import { getOcorrenciasLocal } from '../../services/ocorrenciasDb';
 import { toast } from '../../components/ToastNotification';
 import { format, addDays, differenceInDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -191,6 +192,8 @@ const Agenda = () => {
     const [agendas, setAgendas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [vistoriasBase, setVistoriasBase] = useState([]);
+    const [ocorrenciasBase, setOcorrenciasBase] = useState([]);
+    const [interdicoesBase, setInterdicoesBase] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [refreshing, setRefreshing] = useState(false);
     const [initialLoadDone, setInitialLoadDone] = useState(false);
@@ -255,9 +258,12 @@ const Agenda = () => {
         const load = async (forcePull = false) => {
             if (forcePull) setRefreshing(true);
             try {
+                // Background sync attempt
                 if (forcePull && navigator.onLine) {
-                    await pullAllData(true);
+                    pullAllData(true).then(() => load(false)).catch(e => console.warn('[Agenda] Sync background failed', e));
                 }
+                
+                // Continue immediately with local data
                 // Check Role
                 const localStr = localStorage.getItem('userProfile');
                 if (localStr) {
@@ -269,39 +275,61 @@ const Agenda = () => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
-                const [dbVistorias, dbAgendas] = await Promise.all([
+                const [dbVistorias, dbAgendas, dbOcos, dbInter] = await Promise.all([
                     getAllVistoriasLocal(),
-                    getAllAgendaLocal()
+                    getAllAgendaLocal(),
+                    getOcorrenciasLocal(),
+                    getAllInterdicoesLocal()
                 ]);
                 
                 setVistoriasBase(dbVistorias);
+                setOcorrenciasBase(dbOcos);
+                setInterdicoesBase(dbInter);
 
-                // Create a Map for O(1) vistorias lookup
-                const vistoriasMap = new Map();
+                // Create a Map for O(1) registry lookup (Vistorias, Occurrences, Interdictions)
+                const registriesMap = new Map();
+                
+                // Process Vistorias
                 dbVistorias.forEach(v => {
-                    if (v.vistoria_id) vistoriasMap.set(String(v.vistoria_id), v);
-                    if (v.id) vistoriasMap.set(String(v.id), v);
+                    const vid = v.vistoria_id || v.id;
+                    if (vid) registriesMap.set(String(vid), { ...v, type: 'Vistoria' });
+                    if (v.supabase_id) registriesMap.set(String(v.supabase_id), { ...v, type: 'Vistoria' });
+                });
+
+                // Process Ocorrências
+                dbOcos.forEach(o => {
+                    const oid = o.ocorrencia_id_format || o.ocorrencia_id || o.id;
+                    if (oid) registriesMap.set(String(oid), { ...o, type: 'Ocorrência', data_atendimento: o.data_ocorrencia });
+                    if (o.supabase_id) registriesMap.set(String(o.supabase_id), { ...o, type: 'Ocorrência', data_atendimento: o.data_ocorrencia });
+                });
+
+                // Process Interdições
+                dbInter.forEach(i => {
+                    const iid = i.interdicao_id || i.interdicaoId || i.id;
+                    if (iid) registriesMap.set(String(iid), { ...i, type: 'Interdição' });
+                    if (i.supabase_id) registriesMap.set(String(iid), { ...i, type: 'Interdição' }); // Note: intentional use of iid or i.supabase_id
+                    if (i.supabase_id) registriesMap.set(String(i.supabase_id), { ...i, type: 'Interdição' });
                 });
 
                 // NOVO: Mostra apenas o que está efetivamente na tabela de agenda
                 const processadas = dbAgendas.map(item => {
-                    const limitInfo = calculateLimit(
-                        item.data_abertura, 
-                        item.categoria_risco, 
-                        ''
-                    );
+                    const limitInfo = calculateLimit(item.data_abertura, item.categoria_risco, '');
                     
-                    // Check linked vistoria using the Map (High Performance)
-                    let linkedVistoria = null;
+                    // Check linked record using the Map (High Performance)
+                    let linkedRecord = null;
                     if (item.vistoria_id) {
-                        linkedVistoria = vistoriasMap.get(String(item.vistoria_id));
+                        linkedRecord = registriesMap.get(String(item.vistoria_id));
+                    }
+                    
+                    if (!linkedRecord && item.numero_processo) {
+                        linkedRecord = registriesMap.get(String(item.numero_processo));
                     }
 
-                    // Se vinculou, parar contagem na data do protocolo/criação da vistoria
+                    // Se vinculou, parar contagem na data do protocolo/criação da vistoria/ocorrência
                     let targetDate = new Date();
-                    
-                    if (linkedVistoria) {
-                        targetDate = new Date(linkedVistoria.data_hora || linkedVistoria.createdAt || linkedVistoria.created_at || today);
+                    if (linkedRecord) {
+                        const rawDate = linkedRecord.data_hora || linkedRecord.data_ocorrencia || linkedRecord.data_atendimento || linkedRecord.createdAt || linkedRecord.created_at || today;
+                        targetDate = new Date(rawDate);
                     }
                     
                     // Normalize dates to 00:00:00 to get pure day difference
@@ -311,25 +339,19 @@ const Agenda = () => {
                     dTarget.setHours(0, 0, 0, 0);
 
                     const diasRestantes = differenceInDays(dLimite, dTarget);
-                    
                     const baseStatus = item.status || 'Protocolada';
-                    // If linked vistoria exists and has a conclusion status, use it
-                    const finalStatus = linkedVistoria?.status === 'Finalizada' || linkedVistoria?.status === 'Concluída' ? 'Concluída' : baseStatus;
+                    
+                    // Unified completion check
+                    const isConcluido = linkedRecord?.status === 'Finalizada' || 
+                                      linkedRecord?.status === 'Concluída' || 
+                                      linkedRecord?.status === 'finalized';
+                                      
+                    const finalStatus = isConcluido ? 'Concluída' : baseStatus;
                     const statusOperacional = getVistoriaStatus(finalStatus, !!item.vistoria_id);
-                    
                     const riscoColor = getStatusColor(diasRestantes, limitInfo.prazoDias);
+                    const dataAtendimento = linkedRecord ? (linkedRecord.data_hora || linkedRecord.data_ocorrencia || linkedRecord.data_atendimento || linkedRecord.createdAt || linkedRecord.created_at) : null;
                     
-                    const dataAtendimento = linkedVistoria ? (linkedVistoria.data_hora || linkedVistoria.createdAt || linkedVistoria.created_at) : null;
-                    
-                    return {
-                        ...item,
-                        ...limitInfo,
-                        diasRestantes,
-                        statusOperacional,
-                        riscoColor,
-                        data_atendimento: dataAtendimento,
-                        linkedVistoria: linkedVistoria
-                    };
+                    return { ...item, ...limitInfo, diasRestantes, statusOperacional, riscoColor, data_atendimento: dataAtendimento, linkedVistoria: linkedRecord };
                 });
                 
                 setAgendas(processadas);
@@ -379,31 +401,39 @@ const Agenda = () => {
     };
 
     const vistoriasOptions = useMemo(() => {
-        // Find all vistoria_ids already used in agenda items TO HIGHLIGHT
         const linkedIds = new Set(agendas.map(a => a.vistoria_id).filter(Boolean));
         
-        return vistoriasBase
-            .map(v => {
-                const vid = v.vistoria_id || v.id;
-                const requerante = v.solicitante || 'Sem requerente';
-                const label = `${vid} - ${requerante}`;
-                
-                const logradouro = v.endereco || 'Sem endereço';
-                const bairro = v.bairro || 'Sem bairro';
-                const subLabel = `${bairro} - ${logradouro} • ${v.status || 'Nova'}`;
+        const optVists = vistoriasBase.map(v => ({
+            value: v.supabase_id || v.vistoria_id || v.id,
+            label: `[Vistoria] ${v.vistoria_id || v.id} - ${v.solicitante || 'Sem nome'}`,
+            subLabel: `${v.bairro || ''} - ${v.endereco || ''} • ${v.status || 'Nova'}`,
+            isLinked: linkedIds.has(v.supabase_id) || linkedIds.has(v.vistoria_id) || linkedIds.has(String(v.id)),
+            type: 'Vistoria',
+            numId: parseInt(String(v.vistoria_id || v.id).replace(/\D/g, '')) || 0
+        }));
 
-                return {
-                    value: vid,
-                    label: label,
-                    subLabel: subLabel,
-                    isLinked: linkedIds.has(vid),
-                    numId: parseInt(String(vid).replace(/\D/g, '')) || 0
-                };
-            })
-            // Sort numerically (ascending handles 2024 before 2025, but usually we want newest first)
-            // Let's do descending so newest IDs are at top
-            .sort((a, b) => b.numId - a.numId);
-    }, [vistoriasBase, agendas]);
+        const optOcos = ocorrenciasBase.map(o => ({
+            value: o.supabase_id || o.ocorrencia_id || o.id,
+            label: `[Ocorrência] ${o.ocorrencia_id_format || o.id} - ${o.solicitante || 'Sem nome'}`,
+            subLabel: `${o.bairro || ''} - ${o.endereco || ''} • ${o.status || 'Pendente'}`,
+            isLinked: linkedIds.has(o.supabase_id) || linkedIds.has(o.ocorrencia_id) || linkedIds.has(String(o.id)),
+            type: 'Ocorrência',
+            numId: parseInt(String(o.ocorrencia_id_format || o.id).replace(/\D/g, '')) || 0
+        }));
+
+        const optInter = interdicoesBase.map(i => ({
+            value: i.supabase_id || i.interdicao_id || i.id,
+            label: `[Interdição] ${i.interdicao_id || i.id} - ${i.responsavel_nome || i.solicitante || 'Sem nome'}`,
+            subLabel: `${i.bairro || ''} - ${i.endereco || ''} • ${i.status || 'Finalizada'}`,
+            isLinked: linkedIds.has(i.supabase_id) || linkedIds.has(i.interdicao_id) || linkedIds.has(String(i.id)),
+            type: 'Interdição',
+            numId: parseInt(String(i.interdicao_id || i.id).replace(/\D/g, '')) || 0
+        }));
+
+        return [...optVists, ...optOcos, ...optInter].sort((a, b) => b.numId - a.numId);
+    }, [vistoriasBase, ocorrenciasBase, interdicoesBase, agendas]);
+
+
 
     const filteredAgendas = useMemo(() => {
         let f = agendas;
@@ -457,11 +487,12 @@ const Agenda = () => {
             // Calcular data limite antes de salvar para persistir no banco
             const { dataLimite } = calculateLimit(formData.data_abertura, formData.categoria_risco);
 
-            // Verificar se há uma vistoria vinculada selecionada para pegar a data de atendimento
+            // Verificar se há um registro vinculado selecionado para pegar a data de atendimento
             let dataAtendimento = formData.data_atendimento;
             if (formData.vistoria_id) {
-                const vist = vistoriasBase.find(v => (v.vistoria_id === formData.vistoria_id || v.id === formData.vistoria_id));
-                if (vist) dataAtendimento = vist.data_hora || vist.createdAt || vist.created_at;
+                const combinedBase = [...vistoriasBase, ...ocorrenciasBase, ...interdicoesBase];
+                const vist = combinedBase.find(v => (v.vistoria_id === formData.vistoria_id || v.ocorrencia_id === formData.vistoria_id || v.interdicao_id === formData.vistoria_id || v.supabase_id === formData.vistoria_id || String(v.id) === String(formData.vistoria_id)));
+                if (vist) dataAtendimento = vist.data_hora || vist.data_ocorrencia || vist.createdAt || vist.created_at || vist.data_atendimento;
             }
 
             await saveAgendaOffline({
@@ -523,8 +554,9 @@ const Agenda = () => {
 
     const handleSaveLink = async () => {
         try {
-            const vist = vistoriasBase.find(v => (v.vistoria_id === selectedLinkId || v.id === selectedLinkId));
-            const dataAtendimento = vist ? (vist.data_hora || vist.createdAt || vist.created_at) : null;
+            const combinedBase = [...vistoriasBase, ...ocorrenciasBase, ...interdicoesBase];
+            const vist = combinedBase.find(v => (v.vistoria_id === selectedLinkId || v.ocorrencia_id === selectedLinkId || v.interdicao_id === selectedLinkId || v.supabase_id === selectedLinkId || String(v.id) === String(selectedLinkId)));
+            const dataAtendimento = vist ? (vist.data_hora || vist.data_ocorrencia || vist.createdAt || vist.created_at) : null;
 
             await saveAgendaOffline({
                 ...agendaToLink,

@@ -889,84 +889,82 @@ export const pullAllData = async (force = false) => {
             { table: 'agenda_vistorias', store: 'agenda_vistorias', key: 'id' }
         ];
 
-        // Fetch ALL tables in parallel with a 60s timeout (photos take time)
-        const fetchPromise = Promise.allSettled(
-            modules.map(mod => {
+        // Fetch tables sequentially to avoid overloading the DB pool and accurately identify bottlenecks
+        let totalPulled = 0;
+        const results = [];
+
+        for (const mod of modules) {
+            console.log(`[Pull] Fetching ${mod.table}...`);
+            const tableStartTime = Date.now();
+            
+            try {
                 let query = supabase.from(mod.table).select('*');
-                // Optmize heavy tables with the new indexes for performance
                 if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters'].includes(mod.table)) {
                     query = query.order('created_at', { ascending: false });
                 }
-                return query;
-            })
-        );
 
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 60000)
-        );
+                // Individual timeout per table (30s each)
+                const tablePromise = query;
+                const tableTimeout = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error(`Timeout fetching ${mod.table}`)), 30000)
+                );
 
-        const results = await Promise.race([fetchPromise, timeoutPromise]);
+                const { data, error, status } = await Promise.race([tablePromise, tableTimeout]);
 
-        let totalPulled = 0;
-        for (let i = 0; i < modules.length; i++) {
-            const mod = modules[i];
-            const result = results[i];
-
-            if (result.status !== 'fulfilled') {
-                console.warn(`[Pull] Failed to fetch ${mod.table}:`, result.reason);
-                continue;
-            }
-
-            const { data, error, status } = result.value;
-
-            // Handle 404 gracefully (Table might not exist yet)
-            if (status === 404) {
-                console.warn(`[Pull] Table ${mod.table} not found (404). Skipping.`);
-                continue;
-            }
-
-            if (error || !data || data.length === 0) {
-                if (error) console.warn(`[Pull] Error fetching ${mod.table}:`, error);
-                continue;
-            }
-
-            try {
-                const tx = db.transaction(mod.store, 'readwrite');
-                const store = tx.objectStore(mod.store);
-                const allLocal = await store.getAll();
-                const localBySupId = new Map(allLocal.filter(l => l.supabase_id).map(l => [l.supabase_id, l]));
-                const localByKey = new Map(mod.key ? allLocal.filter(l => l[mod.key]).map(l => [l[mod.key], l]) : []);
-
-                for (const item of data) {
-                    const { id: supabaseId, ...rest } = item;
-                    const localMatch = localBySupId.get(supabaseId) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
-
-                    if (localMatch) {
-                        // [FIX] Always update if the remote data has a newer 'updated_at' 
-                        // or if we are forcing a refresh.
-                        const remoteDate = new Date(item.updated_at || item.created_at || 0).getTime();
-                        const localDate = new Date(localMatch.updated_at || localMatch.created_at || 0).getTime();
-
-                        if (localMatch.synced === false) continue; // Don't overwrite pending local changes
-
-                        if (!force && remoteDate <= localDate) continue; // No newer data
-                    }
-
-                    const toStore = {
-                        ...rest,
-                        id: localMatch ? localMatch.id : undefined,
-                        supabase_id: supabaseId,
-                        synced: true
-                    };
-
-                    if (!localMatch) delete toStore.id;
-
-                    store.put(toStore);
-                    totalPulled++;
+                if (status === 404) {
+                    console.warn(`[Pull] Table ${mod.table} not found (404). Skipping.`);
+                    continue;
                 }
-                await tx.done;
-            } catch (e) {
-                console.warn(`[Pull] Write failed for ${mod.table}:`, e);
+
+                if (error) {
+                    console.error(`[Pull] Error fetching ${mod.table}:`, error);
+                    continue;
+                }
+
+                if (!data || data.length === 0) {
+                    console.log(`[Pull] ${mod.table}: No data found.`);
+                    continue;
+                }
+
+                console.log(`[Pull] ${mod.table}: Fetched ${data.length} records in ${Date.now() - tableStartTime}ms`);
+
+                try {
+                    const tx = db.transaction(mod.store, 'readwrite');
+                    const store = tx.objectStore(mod.store);
+                    const allLocal = await store.getAll();
+                    const localBySupId = new Map(allLocal.filter(l => l.supabase_id).map(l => [l.supabase_id, l]));
+                    const localByKey = new Map(mod.key ? allLocal.filter(l => l[mod.key]).map(l => [l[mod.key], l]) : []);
+
+                    for (const item of data) {
+                        const { id: supabaseId, ...rest } = item;
+                        const localMatch = localBySupId.get(supabaseId) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
+
+                        if (localMatch) {
+                            const remoteDate = new Date(item.updated_at || item.created_at || 0).getTime();
+                            const localDate = new Date(localMatch.updated_at || localMatch.created_at || 0).getTime();
+
+                            if (localMatch.synced === false) continue;
+                            if (!force && remoteDate <= localDate) continue;
+                        }
+
+                        const toStore = {
+                            ...rest,
+                            id: localMatch ? localMatch.id : undefined,
+                            supabase_id: supabaseId,
+                            synced: true
+                        };
+
+                        if (!localMatch) delete toStore.id;
+
+                        store.put(toStore);
+                        totalPulled++;
+                    }
+                    await tx.done;
+                } catch (e) {
+                    console.warn(`[Pull] Write failed for ${mod.table}:`, e);
+                }
+            } catch (err) {
+                console.error(`[Pull] Critical error processing ${mod.table}:`, err);
             }
         }
 
