@@ -894,7 +894,7 @@ export const pullAllData = async (force = false) => {
             modules.map(mod => {
                 let query = supabase.from(mod.table).select('*');
                 // Optmize heavy tables with the new indexes for performance
-                if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias'].includes(mod.table)) {
+                if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters'].includes(mod.table)) {
                     query = query.order('created_at', { ascending: false });
                 }
                 return query;
