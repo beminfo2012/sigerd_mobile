@@ -688,6 +688,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             }
 
             payload = {
+                id: item.supabase_id || undefined,
                 ocorrencia_id: oid,
                 ocorrencia_id_format: officialIdFormat,
                 agente: item.agente || '',
@@ -727,7 +728,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     ...(item.apoioTecnico || item.apoio_tecnico || {}),
                     assinatura: signatureApoioUrl
                 },
-                status: item.status === 'finalized' ? 'finalized' : 'finalized', 
+                status: item.status || 'Pendente', 
                 updated_at: new Date().toISOString()
             };
 
@@ -809,7 +810,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                                         storeName === 'redap_records' ? 'redap_id' :
                                             storeName === 'emergency_contracts' ? 'contract_id' :
                                                 storeName === 'despachos' ? 'despacho_id' :
-                                                        storeName === 'ocorrencias_operacionais' ? 'id' :
+                                                    storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
                                                     (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
                                                         undefined
         }).select();
