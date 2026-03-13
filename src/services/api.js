@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { getRemoteVistoriasCache, saveRemoteVistoriasCache, getAllVistoriasLocal } from './db'
+import { getRemoteVistoriasCache, saveRemoteVistoriasCache, getAllVistoriasLocal, getAllInterdicoesLocal } from './db'
 import { getOcorrenciasLocal } from './ocorrenciasDb'
 
 const colorPalette = {

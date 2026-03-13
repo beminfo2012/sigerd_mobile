@@ -204,7 +204,10 @@ export const shelterSyncService = {
             const tx = db.transaction(table, 'readonly');
             const store = tx.objectStore(table);
             const count = await store.count();
-            const syncedCount = await store.index('synced').count(true); // Count where synced is true
+            let syncedCount = 0;
+            if (store.indexNames.contains('synced')) {
+                syncedCount = await store.index('synced').count(true);
+            }
 
             total += count;
             synced += syncedCount;
