@@ -283,39 +283,18 @@ const Agenda = () => {
                     if (v.id) vistoriasMap.set(String(v.id), v);
                 });
 
-                // Map Agendas
-                const agendasLinkedIds = new Set(dbAgendas.map(a => String(a.vistoria_id)).filter(id => id !== 'null' && id !== 'undefined'));
-
-                // Combine Agendas with Orphan Vistorias (Legacy compatibility)
-                const orphanVistorias = dbVistorias.filter(v => {
-                    const vid = String(v.vistoria_id || v.id || v.vistoriaId);
-                    return !agendasLinkedIds.has(vid);
-                }).map(v => ({
-                    ...v,
-                    is_legacy_vistoria: true,
-                    agenda_id: `v-${v.id}`,
-                    numero_processo: v.vistoria_id || v.vistoriaId || 'Sem Processo',
-                    data_abertura: v.data_hora || v.createdAt,
-                    categoria_risco: v.categoriaRisco || v.categoria_risco || 'Geral'
-                }));
-
-                const combinedList = [...dbAgendas, ...orphanVistorias];
-
-                const processadas = combinedList.map(item => {
+                // NOVO: Mostra apenas o que está efetivamente na tabela de agenda
+                const processadas = dbAgendas.map(item => {
                     const limitInfo = calculateLimit(
                         item.data_abertura, 
                         item.categoria_risco, 
-                        item.is_legacy_vistoria ? item.subtiposRisco : ''
+                        ''
                     );
                     
                     // Check linked vistoria using the Map (High Performance)
                     let linkedVistoria = null;
                     if (item.vistoria_id) {
                         linkedVistoria = vistoriasMap.get(String(item.vistoria_id));
-                    }
-                    
-                    if (!linkedVistoria && item.is_legacy_vistoria) {
-                        linkedVistoria = item;
                     }
 
                     // Se vinculou, parar contagem na data do protocolo/criação da vistoria
@@ -333,10 +312,10 @@ const Agenda = () => {
 
                     const diasRestantes = differenceInDays(dLimite, dTarget);
                     
-                    const baseStatus = item.status || (item.is_legacy_vistoria ? item.status : 'Protocolada');
+                    const baseStatus = item.status || 'Protocolada';
                     // If linked vistoria exists and has a conclusion status, use it
                     const finalStatus = linkedVistoria?.status === 'Finalizada' || linkedVistoria?.status === 'Concluída' ? 'Concluída' : baseStatus;
-                    const statusOperacional = getVistoriaStatus(finalStatus, !!item.vistoria_id || item.is_legacy_vistoria);
+                    const statusOperacional = getVistoriaStatus(finalStatus, !!item.vistoria_id);
                     
                     const riscoColor = getStatusColor(diasRestantes, limitInfo.prazoDias);
                     
