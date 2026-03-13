@@ -57,8 +57,22 @@ const OcorrenciasDashboard = () => {
                         });
                         
                         const dedupMap = new Map();
-                        data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-                            .forEach(r => dedupMap.set(r.ocorrencia_id || r.id, r));
+                        // Sort by updated_at ascending so the most recent one (local or remote) overwrites in the Map
+                        data.sort((a, b) => {
+                            const dateA = new Date(a.updated_at || a.created_at);
+                            const dateB = new Date(b.updated_at || b.created_at);
+                            return dateA - dateB;
+                        }).forEach(r => {
+                            const key = r.ocorrencia_id || r.id;
+                            // If we already have this record in the map, and the existing one is local and UNSYNCED, 
+                            // keep the local one unless the new one from cloud is strictly newer (already processed by sync)
+                            const existing = dedupMap.get(key);
+                            if (existing && !existing.synced && r.synced) {
+                                // Keep the unsynced local version as it has the latest user changes
+                                return;
+                            }
+                            dedupMap.set(key, r);
+                        });
                         
                         setRecords(Array.from(dedupMap.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
                         setLoading(false);

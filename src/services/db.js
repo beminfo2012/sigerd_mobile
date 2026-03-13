@@ -809,7 +809,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                                         storeName === 'redap_records' ? 'redap_id' :
                                             storeName === 'emergency_contracts' ? 'contract_id' :
                                                 storeName === 'despachos' ? 'despacho_id' :
-                                                    storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
+                                                        storeName === 'ocorrencias_operacionais' ? 'id' :
                                                     (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
                                                         undefined
         }).select();
