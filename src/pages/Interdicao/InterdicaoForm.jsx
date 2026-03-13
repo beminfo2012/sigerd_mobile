@@ -432,7 +432,9 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
             const { data } = await supabase
                 .from('interdicoes')
                 .select('interdicao_id')
-                .filter('interdicao_id', 'like', `%/${currentYear}`)
+                .ilike('interdicao_id', `%/${currentYear}`)
+                .order('created_at', { ascending: false })
+                .limit(100);
 
             let maxNum = 0
             if (data && data.length > 0) {

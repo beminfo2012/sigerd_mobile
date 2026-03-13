@@ -433,6 +433,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         .from('vistorias')
                         .select('vistoria_id')
                         .ilike('vistoria_id', `%/${currentYear}`)
+                        .order('created_at', { ascending: false })
                         .limit(500); // Higher limit to ensure we see all recent ones
 
                     if (data && data.length > 0) {

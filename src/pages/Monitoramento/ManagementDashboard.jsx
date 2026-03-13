@@ -44,7 +44,8 @@ const ManagementDashboard = ({ hideHeader = false }) => {
                 try {
                     const { supabase } = await import('../../services/supabase');
                     const { data } = await supabase.from('ocorrencias_operacionais')
-                        .select('id, ocorrencia_id, categoria_risco, nivel_risco, nivelRisco, categoriaRisco, data_ocorrencia, mortos, feridos, desalojados, desabrigados, outros_afetados, created_at');
+                        .select('id, ocorrencia_id, categoria_risco, nivel_risco, nivelRisco, categoriaRisco, data_ocorrencia, mortos, feridos, desalojados, desabrigados, outros_afetados, created_at')
+                        .order('created_at', { ascending: false });
                     if (data) remoteOco = data;
                 } catch(e) {}
             }

@@ -342,6 +342,7 @@ const OcorrenciasForm = () => {
                     .from('ocorrencias_operacionais')
                     .select('ocorrencia_id_format')
                     .ilike('ocorrencia_id_format', `%/${currentYear}`)
+                    .order('created_at', { ascending: false })
                     .limit(100);
 
                 if (data) {

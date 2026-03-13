@@ -424,11 +424,25 @@ const InterdicaoPrint = () => {
                         </div>
                     </section>
 
-                    {/* 4. Recomendações Técnicas */}
+                    {/* 4. Relatório Técnico */}
+                    {(data.relatorio_tecnico || data.relatorioTecnico) && (
+                        <section className="mb-8 avoid-break">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-1 h-5 bg-purple-600 rounded-full"></div>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Relatório Técnico</h2>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg text-xs leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
+                                <p className="font-black text-[10px] text-slate-400 uppercase mb-2">Parecer Técnico Elaborado:</p>
+                                <div className="italic text-slate-800">"{data.relatorio_tecnico || data.relatorioTecnico}"</div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* 5. Recomendações Técnicas */}
                     <section className="mb-8 avoid-break">
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-1 h-5 bg-slate-600 rounded-full"></div>
-                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">4. Recomendações Técnicas</h2>
+                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">5. Recomendações Técnicas</h2>
                         </div>
                         <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg text-xs leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
                             <p className="font-black text-[10px] text-slate-400 uppercase mb-2">Orientações e Providências:</p>
@@ -443,7 +457,7 @@ const InterdicaoPrint = () => {
                         <section className="mb-10">
                             <div className="flex items-center gap-2 mb-6">
                                 <div className="w-1 h-5 bg-pink-500 rounded-full"></div>
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">5. Relatório Fotográfico</h2>
+                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">6. Relatório Fotográfico</h2>
                             </div>
                             <div className="grid grid-cols-2 gap-6">
                                 {photos.map((photo, i) => (

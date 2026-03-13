@@ -400,20 +400,31 @@ export const generatePDF = async (rawData, type) => {
 
             <div style="page-break-before: always; height: 1px;"></div>
 
-            ${sectionTitle('4. Parecer Técnico e Recomendações')}
-            <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
-                <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">RELATÓRIO TÉCNICO</div>
-                <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6; margin-bottom: 20px;">
-                    "${data.relatorioTecnico}"
-                </div>
-                
-                <div style="padding-top: 25px; border-top: 1px dashed #cbd5e1; margin-top: 10px;">
-                    <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">RECOMENDAÇÕES</div>
+            ${(() => {
+                let blocks = '';
+                if (data.relatorioTecnico && data.relatorioTecnico !== '---' && data.relatorioTecnico !== '') {
+                    blocks += `
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
+                        <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">RELATÓRIO TÉCNICO ELABORADO</div>
+                        <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6;">
+                            "${data.relatorioTecnico}"
+                        </div>
+                    </div>`;
+                }
+
+                blocks += `
+                <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
+                    <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">RECOMENDAÇÕES E PROVIDÊNCIAS</div>
                     <div style="font-size: 13px; color: #475569; font-weight: 600; line-height: 1.6;">
-                        ${data.recomendacoes}
+                        ${data.recomendacoes || 'Nenhuma recomendação registrada.'}
                     </div>
-                </div>
-            </div>
+                </div>`;
+                
+                return `
+                    ${sectionTitle('4. Parecer Técnico e Recomendações')}
+                    ${blocks}
+                `;
+            })()}
 
             ${data.fotos.length > 0 ? `
                 ${sectionTitle('5. Anexo Fotográfico')}

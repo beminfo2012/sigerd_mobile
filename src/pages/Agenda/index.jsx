@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Edit2, CheckCircle, Calendar as CalendarIcon, List, LayoutDashboard, AlertCircle, Plus,
-    Clock, CheckCircle2, ChevronLeft, ChevronRight, Filter, AlertTriangle, X, Link, Search, RefreshCcw
+    Clock, CheckCircle2, ChevronLeft, ChevronRight, Filter, AlertTriangle, X, Link, Search, RefreshCcw, ArrowLeft
 } from 'lucide-react';
 import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgendaLocal, pullAllData } from '../../services/db';
 import { toast } from '../../components/ToastNotification';
@@ -40,10 +40,10 @@ const SearchableInput = ({
     const getLabel = (opt) => typeof opt === 'string' ? opt : opt.label;
     const getValue = (opt) => typeof opt === 'string' ? opt : opt.value;
 
-    const filteredOptions = options.filter(opt => {
+    const filteredOptions = useMemo(() => options.filter(opt => {
         const text = getLabel(opt).toLowerCase();
         return text.includes(search.toLowerCase());
-    });
+    }), [options, search]);
 
     const selectedLabel = useMemo(() => {
         if (!value) return '';
@@ -276,13 +276,20 @@ const Agenda = () => {
                 
                 setVistoriasBase(dbVistorias);
 
+                // Create a Map for O(1) vistorias lookup
+                const vistoriasMap = new Map();
+                dbVistorias.forEach(v => {
+                    if (v.vistoria_id) vistoriasMap.set(String(v.vistoria_id), v);
+                    if (v.id) vistoriasMap.set(String(v.id), v);
+                });
+
                 // Map Agendas
-                const agendasLinkedIds = dbAgendas.map(a => a.vistoria_id).filter(Boolean);
+                const agendasLinkedIds = new Set(dbAgendas.map(a => String(a.vistoria_id)).filter(id => id !== 'null' && id !== 'undefined'));
 
                 // Combine Agendas with Orphan Vistorias (Legacy compatibility)
                 const orphanVistorias = dbVistorias.filter(v => {
-                    const vid = v.vistoria_id || v.id || v.vistoriaId;
-                    return !agendasLinkedIds.includes(vid);
+                    const vid = String(v.vistoria_id || v.id || v.vistoriaId);
+                    return !agendasLinkedIds.has(vid);
                 }).map(v => ({
                     ...v,
                     is_legacy_vistoria: true,
@@ -301,10 +308,14 @@ const Agenda = () => {
                         item.is_legacy_vistoria ? item.subtiposRisco : ''
                     );
                     
-                    // Check linked vistoria
+                    // Check linked vistoria using the Map (High Performance)
                     let linkedVistoria = null;
                     if (item.vistoria_id) {
-                        linkedVistoria = dbVistorias.find(v => (v.vistoria_id === item.vistoria_id || v.id === item.vistoria_id));
+                        linkedVistoria = vistoriasMap.get(String(item.vistoria_id));
+                    }
+                    
+                    if (!linkedVistoria && item.is_legacy_vistoria) {
+                        linkedVistoria = item;
                     }
 
                     // Se vinculou, parar contagem na data do protocolo/criação da vistoria
@@ -324,8 +335,8 @@ const Agenda = () => {
                     
                     const baseStatus = item.status || (item.is_legacy_vistoria ? item.status : 'Protocolada');
                     // If linked vistoria exists and has a conclusion status, use it
-                    const finalStatus = linkedVistoria?.status === 'Finalizada' ? 'Concluída' : baseStatus;
-                    const statusOperacional = getVistoriaStatus(finalStatus, !!item.vistoria_id);
+                    const finalStatus = linkedVistoria?.status === 'Finalizada' || linkedVistoria?.status === 'Concluída' ? 'Concluída' : baseStatus;
+                    const statusOperacional = getVistoriaStatus(finalStatus, !!item.vistoria_id || item.is_legacy_vistoria);
                     
                     const riscoColor = getStatusColor(diasRestantes, limitInfo.prazoDias);
                     
@@ -338,7 +349,7 @@ const Agenda = () => {
                         statusOperacional,
                         riscoColor,
                         data_atendimento: dataAtendimento,
-                        linkedVistoria: linkedVistoria || (item.is_legacy_vistoria ? item : null)
+                        linkedVistoria: linkedVistoria
                     };
                 });
                 
@@ -560,14 +571,22 @@ const Agenda = () => {
             
             {/* CABEÇALHO */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800">
-                <div>
-                    <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-3">
-                        <CalendarIcon size={28} className="text-blue-500" />
-                        Agenda de Vistorias
-                    </h1>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                        Controle de Prazos e Agendamentos Administrativos
-                    </p>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => navigate('/')} 
+                        className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all active:scale-95"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-3">
+                            <CalendarIcon size={28} className="text-blue-500" />
+                            Agenda de Vistorias
+                        </h1>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                            Controle de Prazos e Agendamentos Administrativos
+                        </p>
+                    </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
