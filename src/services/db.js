@@ -617,7 +617,6 @@ export const syncSingleItem = async (storeName, item, db) => {
             };
         } else if (storeName === 'agenda_vistorias') {
             payload = {
-                id: item.supabase_id || undefined,
                 numero_processo: item.numero_processo || '',
                 data_abertura: item.data_abertura || new Date().toISOString(),
                 data_limite: item.data_limite || null,
@@ -629,6 +628,9 @@ export const syncSingleItem = async (storeName, item, db) => {
                 created_by: item.created_by || null,
                 created_at: item.created_at || new Date().toISOString(),
                 updated_at: item.updated_at || new Date().toISOString()
+            }
+            if (item.supabase_id) {
+                payload.id = item.supabase_id;
             }
         } else if (storeName === 'ocorrencias_operacionais') {
             const folder = 'ocorrencias';
@@ -808,8 +810,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                                             storeName === 'emergency_contracts' ? 'contract_id' :
                                                 storeName === 'despachos' ? 'despacho_id' :
                                                     storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
-                                                        storeName === 'agenda_vistorias' ? 'id' :
-                                                            undefined
+                                                    (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
+                                                        undefined
         }).select();
 
         if (error) {
@@ -1478,6 +1480,7 @@ export const saveAgendaOffline = async (data) => {
     const isUpdate = !!data.id;
     const savePayload = {
         ...data,
+        supabase_id: data.supabase_id || data.id_supabase || (typeof data.id === 'string' && data.id.includes('-') ? data.id : undefined) || crypto.randomUUID(),
         updated_at: new Date().toISOString(),
         synced: false
     };
@@ -1488,6 +1491,7 @@ export const saveAgendaOffline = async (data) => {
         triggerSync();
         return localId;
     } else {
+        // Ensure we don't overwrite with a partial record if possible
         await db.put('agenda_vistorias', savePayload);
         triggerSync();
         return data.id;
