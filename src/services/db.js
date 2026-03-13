@@ -900,7 +900,7 @@ export const pullAllData = async (force = false) => {
             try {
                 let query = supabase.from(mod.table).select('*');
                 if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters'].includes(mod.table)) {
-                    query = query.order('created_at', { ascending: false });
+                    query = query.order('created_at', { ascending: false }).limit(200);
                 }
 
                 // Individual timeout per table (30s each)

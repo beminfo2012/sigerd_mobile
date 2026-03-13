@@ -99,11 +99,20 @@ const processLocalidadeBreakdown = (list) => {
 export const api = {
     async getDashboardData() {
         try {
-            // 1. Fetch data in parallel
+            // 1. Fetch data from Supabase in parallel with specific columns and limits
             const [remoteVistorias, remoteOcorrencias, remoteInterdicoes, localVistorias, localOcorrencias, localInterdicoes, inmetResp] = await Promise.all([
-                navigator.onLine ? supabase.from('vistorias').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
-                navigator.onLine ? supabase.from('ocorrencias_operacionais').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
-                navigator.onLine ? supabase.from('interdicoes').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
+                navigator.onLine ? supabase.from('vistorias')
+                    .select('id, vistoria_id, created_at, coordenadas, latitude, longitude, categoria_risco, subtipos_risco, status, bairro')
+                    .order('created_at', { ascending: false })
+                    .limit(100) : Promise.resolve({ data: [] }),
+                navigator.onLine ? supabase.from('ocorrencias_operacionais')
+                    .select('id, ocorrencia_id, ocorrencia_id_format, created_at, coordenadas, latitude, longitude, categoria_risco, subtipos_risco, status, bairro, data_ocorrencia')
+                    .order('created_at', { ascending: false })
+                    .limit(100) : Promise.resolve({ data: [] }),
+                navigator.onLine ? supabase.from('interdicoes')
+                    .select('id, interdicao_id, created_at, coordenadas, latitude, longitude, risco_grau, status, bairro')
+                    .order('created_at', { ascending: false })
+                    .limit(100) : Promise.resolve({ data: [] }),
                 getAllVistoriasLocal().catch(() => []),
                 getOcorrenciasLocal().catch(() => []),
                 getAllInterdicoesLocal().catch(() => []),
