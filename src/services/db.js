@@ -688,7 +688,6 @@ export const syncSingleItem = async (storeName, item, db) => {
             }
 
             payload = {
-                id: item.supabase_id || undefined,
                 ocorrencia_id: oid,
                 ocorrencia_id_format: officialIdFormat,
                 agente: item.agente || '',
@@ -701,8 +700,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                 bairro: item.bairro || '',
                 data_ocorrencia: item.data_ocorrencia || '',
                 horario_ocorrencia: item.horario_ocorrencia || '',
-                latitude: item.latitude || item.lat || null,
-                longitude: item.longitude || item.lng || null,
+                lat: item.latitude || item.lat || null,
+                lng: item.longitude || item.lng || null,
                 accuracy: item.accuracy || null,
                 gps_timestamp: item.gps_timestamp || null,
                 mortos: parseInt(item.mortos) || 0,
@@ -731,6 +730,10 @@ export const syncSingleItem = async (storeName, item, db) => {
                 status: item.status || 'Pendente', 
                 updated_at: new Date().toISOString()
             };
+
+            if (item.supabase_id) {
+                payload.id = item.supabase_id;
+            }
 
             // Remove unused keys from sub-objects if necessary
             if (payload.apoio_tecnico) delete payload.apoio_tecnico.assinatura_pad;
@@ -1501,6 +1504,20 @@ export const saveAgendaOffline = async (data) => {
 
 export const deleteAgendaLocal = async (id) => {
     const db = await initDB();
+    const item = await db.get('agenda_vistorias', id);
+    
+    // Attempt remote delete if it has a supabase_id or if the id itself is a UUID (linked directly)
+    const remoteId = item?.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null);
+    
+    if (remoteId && navigator.onLine) {
+        try {
+            console.log(`[Sync] Deleting agenda item ${remoteId} from Supabase...`);
+            await supabase.from('agenda_vistorias').delete().eq('id', remoteId);
+        } catch (e) {
+            console.error('[Sync] Error deleting agenda item from Supabase:', e);
+        }
+    }
+
     await db.delete('agenda_vistorias', id);
     triggerSync();
 }
