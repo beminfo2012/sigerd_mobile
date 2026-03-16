@@ -298,8 +298,7 @@ const OcorrenciasForm = () => {
         'Ocorrências Urbanas Diversas': [
             'Fiação elétrica caída', 'Obstrução de via', 'Rompimento de adutora', 'Pane em elevador',
             'Abertura de residência (emergencial)', 'Ameaça de suicídio', 'Outros'
-        ],
-        'Outros': ['Outros']
+        ]
     };
 
     useEffect(() => {
