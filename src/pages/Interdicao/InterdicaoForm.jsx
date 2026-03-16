@@ -1097,6 +1097,46 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao }) => {
                     </div>
                 </section>
 
+                {/* Histórico de Desinterdição */}
+                {initialData?.desinterdicoes && initialData.desinterdicoes.length > 0 && (
+                    <div className="mt-8 bg-green-50 dark:bg-green-900/10 rounded-[2rem] p-6 border border-green-100 dark:border-green-800/20 shadow-inner">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600">
+                                <Sparkles size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-[11px]">Histórico de Desinterdição</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Autos vinculados a esta interdição</p>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {initialData.desinterdicoes.map((d, i) => (
+                                <div key={d.id || i} className="bg-white dark:bg-slate-800/50 p-4 rounded-2xl shadow-sm border border-green-100/50 dark:border-green-900/30 flex items-center justify-between group hover:border-green-300 transition-all">
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${d.tipo_desinterdicao === 'Parcial' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                                                {d.tipo_desinterdicao || 'Total'}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-black text-slate-700 dark:text-white">
+                                            {new Date(d.created_at).toLocaleString('pt-BR')}
+                                        </span>
+                                        <span className="text-[9px] text-slate-400 font-bold uppercase">{d.agente || 'Agente'}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => window.open(`/desinterdicao/imprimir/${d.id}`, '_blank')}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-black uppercase tracking-tighter text-xs shadow-md shadow-green-200 dark:shadow-none active:scale-95"
+                                    >
+                                        <Printer size={16} />
+                                        PDF
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Submit button */}
                 <div className="pt-6">
                     <button
@@ -1111,7 +1151,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao }) => {
                         )}
                     </button>
 
-                    {initialData && (!formData.status || formData.status === 'Interditado') && (
+                    {initialData && (!formData.status || formData.status === 'Interditado' || formData.status === 'Parcialmente Desinterditado') && (
                         <button
                             type="button"
                             onClick={() => onDesinterdicao(formData)}

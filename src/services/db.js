@@ -625,11 +625,16 @@ export const syncSingleItem = async (storeName, item, db) => {
         } else if (storeName === 'desinterdicoes') {
             payload = {
                 interdicao_id: item.interdicao_id || item.interdicaoId,
-                data_nova_vistoria: item.data_nova_vistoria || item.dataNovaVistoria || new Date().toISOString(),
+                data_nova_vistoria: item.data_nova_vistoria || item.dataNovaVistoria || new Date().toISOString().split('T')[0],
                 agente: item.agente || '',
                 matricula: item.matricula || '',
+                responsavel_nome: item.responsavel_nome || item.responsavelNome || '',
+                endereco: item.endereco || '',
+                bairro: item.bairro || '',
                 medidas_corretivas_executadas: item.medidas_corretivas_executadas || item.medidasCorretivas || '',
                 situacao_verificada: item.situacao_verificada || item.situacaoVerificada || '',
+                tipo_desinterdicao: item.tipo_desinterdicao || item.tipoDesinterdicao || 'Total',
+                status_anterior: item.status_anterior || 'Interditado',
                 fotos: processedPhotos,
                 documentos: processedDocuments,
                 observacoes_tecnicas: item.observacoes_tecnicas || item.observacoes || '',
