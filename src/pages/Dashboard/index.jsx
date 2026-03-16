@@ -67,6 +67,31 @@ const processBreakdown = (records) => {
     return breakdownItems;
 };
 
+const processLocalidadeBreakdown = (records) => {
+    const counts = {};
+    records.forEach(v => {
+        const loc = v.bairro || v.comunidade || v.localidade || 'Não Informado';
+        const label = loc.trim() || 'Não Informado';
+        counts[label] = (counts[label] || 0) + 1;
+    });
+
+    const colors = [
+        'bg-indigo-500', 'bg-blue-500', 'bg-sky-500',
+        'bg-emerald-500', 'bg-teal-500', 'bg-orange-500',
+        'bg-rose-500', 'bg-purple-500', 'bg-amber-500', 'bg-cyan-500'
+    ];
+    const total = records.length;
+
+    const breakdownItems = Object.keys(counts).map((label, idx) => ({
+        label,
+        count: counts[label],
+        percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
+        color: colors[idx % colors.length]
+    })).sort((a, b) => b.count - a.count);
+
+    return breakdownItems;
+};
+
 const processLocations = (records) => {
     return records
         .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude) || (v.lat && v.lng))
