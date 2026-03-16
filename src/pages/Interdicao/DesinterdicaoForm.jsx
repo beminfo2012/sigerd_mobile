@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Save, MapPin, Calendar, User, FileText, Camera, Trash2, Maximize2, X, ChevronLeft, ChevronRight, Download, Sparkles } from 'lucide-react'
+import { ArrowLeft, Save, MapPin, Calendar, User, FileText, Camera, Trash2, Maximize2, X, ChevronLeft, ChevronRight, Download, Sparkles, CheckCircle, Printer, Edit2 } from 'lucide-react'
+import SignaturePadComp from '../../components/SignaturePad'
 import { UserContext } from '../../App'
 import { useContext } from 'react'
 import FileInput from '../../components/FileInput'
@@ -7,40 +8,50 @@ import { saveDesinterdicaoOffline, updateInterdicaoStatus } from '../../services
 import { generatePDF } from '../../utils/pdfGenerator'
 import { toast } from '../../components/ToastNotification'
 
-const DesinterdicaoForm = ({ interdicao, onBack }) => {
+const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
     const userProfile = useContext(UserContext)
     const [saving, setSaving] = useState(false)
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null)
+    const [showSignaturePad, setShowSignaturePad] = useState(false)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [lastGeneratedId, setLastGeneratedId] = useState(null)
 
     const [formData, setFormData] = useState({
-        interdicaoId: interdicao.interdicaoId || interdicao.interdicao_id,
-        dataNovaVistoria: new Date().toISOString().split('T')[0],
-        agente: userProfile?.name || '',
-        matricula: userProfile?.registration || '',
-        responsavelNome: interdicao.responsavelNome || interdicao.responsavel_nome || '',
-        endereco: interdicao.endereco || '',
-        bairro: interdicao.bairro || '',
-        medidasCorretivas: '',
-        situacaoVerificada: '',
-        observacoes: '',
-        fotos: [],
-        documentos: [],
-        tipoDesinterdicao: 'Total' // 'Total' or 'Parcial'
+        id: initialData?.id || null,
+        interdicaoId: initialData?.interdicao_id || initialData?.interdicaoId || interdicao?.interdicao_id || interdicao?.interdicaoId || interdicao?.id,
+        dataNovaVistoria: initialData?.data_nova_vistoria || initialData?.dataNovaVistoria || new Date().toISOString().split('T')[0],
+        agente: initialData?.agente || userProfile?.name || '',
+        matricula: initialData?.matricula || userProfile?.registration || '',
+        responsavelNome: initialData?.responsavel_nome || initialData?.responsavelNome || interdicao?.responsavel_nome || interdicao?.responsavelNome || '',
+        endereco: initialData?.endereco || interdicao?.endereco || '',
+        bairro: initialData?.bairro || interdicao?.bairro || '',
+        medidasCorretivas: initialData?.medidas_corretivas_executadas || initialData?.medidasCorretivas || '',
+        situacaoVerificada: initialData?.situacao_verificada || initialData?.situacaoVerificada || '',
+        observacoes: initialData?.observacoes_tecnicas || initialData?.observacoes || '',
+        fotos: initialData?.fotos || [],
+        documentos: initialData?.documentos || [],
+        tipoDesinterdicao: initialData?.tipo_desinterdicao || initialData?.tipoDesinterdicao || 'Total',
+        assinaturaAgente: initialData?.assinatura_agente || initialData?.assinaturaAgente || null
     })
 
-    // Auto-populate user data when profile loads
+    // Auto-populate user data when profile loads ONLY for new records
     useEffect(() => {
-        if (userProfile) {
+        if (userProfile && !initialData) {
             setFormData(prev => ({
                 ...prev,
                 agente: userProfile.full_name || userProfile.name || '',
                 matricula: userProfile.registration || userProfile.matricula || ''
             }));
         }
-    }, [userProfile]);
+    }, [userProfile, initialData]);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
+    }
+
+    const handleSignatureSave = (signatureData) => {
+        handleChange('assinaturaAgente', signatureData)
+        setShowSignaturePad(false)
     }
 
     const handlePhotoSelect = (files) => {
@@ -100,11 +111,12 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
         setSaving(true)
         try {
             // 1. Save Desinterdicao record
-            await saveDesinterdicaoOffline({
+            const desintId = await saveDesinterdicaoOffline({
                 ...formData,
                 interdicao_id: formData.interdicaoId,
                 status_anterior: interdicao.status || 'Interditado',
-                tipo_desinterdicao: formData.tipoDesinterdicao
+                tipo_desinterdicao: formData.tipoDesinterdicao,
+                supabase_id: initialData?.supabase_id || initialData?.id // Keep the UUID if editing
             })
 
             // 2. Update Interdicao status
@@ -113,22 +125,18 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
                 await updateInterdicaoStatus(interdicao.id, newStatus)
             }
 
-            // 3. Generate PDF
-            const pdfResult = await generatePDF({
+            // 3. Generate PDF (Silent)
+            await generatePDF({
                 ...formData,
                 agente: formData.agente,
                 matricula: formData.matricula,
-                assinaturaAgente: userProfile?.signature,
+                assinaturaAgente: formData.assinaturaAgente || userProfile?.signature,
                 tipo_desinterdicao: formData.tipoDesinterdicao
-            }, 'desinterdicao')
+            }, 'desinterdicao', { autoOpen: false })
 
-            if (pdfResult.success) {
-                toast.success('Sucesso', 'Desinterdição registrada e PDF gerado!')
-            } else {
-                toast.success('Sucesso', 'Desinterdição registrada (Erro ao gerar PDF automaticamente).')
-            }
-
-            onBack()
+            setLastGeneratedId(desintId)
+            setShowSuccessModal(true)
+            toast.success('Sucesso', 'Desinterdição registrada com sucesso!')
         } catch (error) {
             console.error('Error saving desinterdicao:', error)
             toast.error('Erro ao Salvar', 'Não foi possível registrar a desinterdição.')
@@ -184,6 +192,35 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
                         <div>
                             <label className={labelClasses}>Matrícula</label>
                             <input type="text" value={formData.matricula} readOnly className={`${inputClasses} opacity-60 bg-slate-100 cursor-not-allowed`} />
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center mb-1.5">
+                            <label className={labelClasses} style={{ marginBottom: 0 }}>Assinatura do Agente</label>
+                            {userProfile?.signature && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleChange('assinaturaAgente', userProfile.signature)}
+                                    className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
+                                >
+                                    <CheckCircle size={12} />
+                                    Usar Assinatura Salva
+                                </button>
+                            )}
+                        </div>
+                        <div
+                            onClick={() => setShowSignaturePad(true)}
+                            className="h-32 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden group hover:border-blue-500 transition-colors"
+                        >
+                            {formData.assinaturaAgente ? (
+                                <img src={formData.assinaturaAgente} className="h-full w-auto object-contain p-2" />
+                            ) : (
+                                <div className="text-center">
+                                    <Edit2 size={24} className="mx-auto text-slate-300 dark:text-slate-600 group-hover:text-blue-500" />
+                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Coletar Assinatura</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -404,6 +441,46 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
                 <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4" onClick={() => setSelectedPhotoIndex(null)}>
                     <button className="absolute top-6 right-6 text-white p-2 bg-white/10 rounded-full"><X/></button>
                     <img src={formData.fotos[selectedPhotoIndex].data} className="max-w-full max-h-full object-contain" />
+                </div>
+            )}
+
+            {/* Signature Pad */}
+            {showSignaturePad && (
+                <SignaturePadComp
+                    onSave={handleSignatureSave}
+                    onClose={() => setShowSignaturePad(false)}
+                />
+            )}
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-300">
+                        <div className="w-20 h-20 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 dark:text-green-400">
+                            <CheckCircle size={48} />
+                        </div>
+                        
+                        <h2 className="text-2xl font-black text-slate-800 dark:text-white text-center mb-2 uppercase tracking-tight leading-tight">Desinterdição Registrada!</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-center mb-8 font-bold text-sm px-4">O registro foi salvo com sucesso. Como deseja prosseguir?</p>
+                        
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    window.open(`/desinterdicao/imprimir/${lastGeneratedId}`, '_blank');
+                                }}
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-200 dark:shadow-none active:scale-[0.98]"
+                            >
+                                <Printer size={18} /> Visualizar e Imprimir PDF
+                            </button>
+                            
+                            <button
+                                onClick={onBack}
+                                className="w-full py-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-[0.98]"
+                            >
+                                Sair sem abrir PDF
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

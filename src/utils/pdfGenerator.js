@@ -92,7 +92,8 @@ const normalizeData = (data, type) => {
             agente: data.agente || '---',
             matricula: data.matricula || '---',
             fotos: photos,
-            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null
+            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
+            tipoDesinterdicao: data.tipoDesinterdicao || data.tipo_desinterdicao || 'Total'
         };
     } else {
         return {
@@ -147,7 +148,7 @@ const normalizeData = (data, type) => {
     }
 };
 
-export const generatePDF = async (rawData, type) => {
+export const generatePDF = async (rawData, type, options = { autoOpen: true }) => {
     const urlToBase64 = (url) => {
         return new Promise((resolve) => {
             const img = new Image();
@@ -424,8 +425,8 @@ export const generatePDF = async (rawData, type) => {
             </div>` : ''}
 
             <div style="background: #eff6ff; border-radius: 12px; padding: 20px; border: 1px solid #dbeafe; text-align: center; margin-bottom: 30px;">
-                <h3 style="margin: 0; color: #1e40af; font-weight: 900; font-size: 16px; text-transform: uppercase;">PARECER: DESINTERDITADO</h3>
-                <p style="margin: 5px 0 0 0; font-size: 12px; color: #1e40af; font-weight: 600;">O imóvel/área encontra-se apto para uso conforme as condições verificadas.</p>
+                <h3 style="margin: 0; color: #1e40af; font-weight: 900; font-size: 16px; text-transform: uppercase;">PARECER: ${data.tipoDesinterdicao === 'Parcial' ? 'PARCIALMENTE DESINTERDITADO' : 'DESINTERDITADO'}</h3>
+                <p style="margin: 5px 0 0 0; font-size: 12px; color: #1e40af; font-weight: 600;">${data.tipoDesinterdicao === 'Parcial' ? 'O imóvel/área permanece com restrições parciais conforme avaliação.' : 'O imóvel/área encontra-se apto para uso conforme as condições verificadas.'}</p>
             </div>
 
             ${data.fotos.length > 0 ? `
@@ -649,7 +650,7 @@ export const generatePDF = async (rawData, type) => {
             }
         }
 
-        if (!shared) {
+        if (!shared && options.autoOpen) {
             const url = URL.createObjectURL(blob);
             window.open(url) || (location.href = url);
         }

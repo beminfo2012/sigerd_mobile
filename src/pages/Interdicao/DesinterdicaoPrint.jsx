@@ -154,7 +154,7 @@ const DesinterdicaoPrint = () => {
                                 </div>
                                 <div className="p-4 border-r border-slate-200">
                                     <p className="font-bold text-slate-400 uppercase text-[9px] mb-1">Proprietário / Responsável</p>
-                                    <p className="font-black text-slate-800 uppercase">{data.responsavelNome}</p>
+                                    <p className="font-black text-slate-800 uppercase">{data.responsavel_nome || data.responsavelNome}</p>
                                 </div>
                                 <div className="p-4">
                                     <p className="font-bold text-slate-400 uppercase text-[9px] mb-1">Localidade / Endereço</p>
@@ -168,12 +168,18 @@ const DesinterdicaoPrint = () => {
                             <div className="space-y-4">
                                 <div className="p-6 bg-green-50 rounded-2xl border-2 border-green-100 italic text-sm text-green-900">
                                     <p className="font-black text-[9px] text-green-600 uppercase mb-2 not-italic">Medidas Corretivas Executadas:</p>
-                                    "{data.medidasCorretivas}"
+                                    "{data.medidas_corretivas_executadas || data.medidasCorretivas}"
                                 </div>
                                 <div className="p-6 bg-slate-50 rounded-2xl border-2 border-slate-100 italic text-sm text-slate-800">
                                     <p className="font-black text-[9px] text-slate-500 uppercase mb-2 not-italic">Situação Verificada In Loco:</p>
-                                    "{data.situacaoVerificada}"
+                                    "{data.situacao_verificada || data.situacaoVerificada}"
                                 </div>
+                                {(data.observacoes_tecnicas || data.observacoes) && (
+                                    <div className="p-4 bg-white rounded-xl border border-slate-200 text-[11px] text-slate-500 mt-2">
+                                        <p className="font-black text-[9px] text-slate-400 uppercase mb-1">Observações:</p>
+                                        {data.observacoes_tecnicas || data.observacoes}
+                                    </div>
+                                )}
                             </div>
                         </section>
 

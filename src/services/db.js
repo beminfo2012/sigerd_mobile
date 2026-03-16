@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 25
+const DB_VERSION = 26
 
 
 let dbPromise = null;
@@ -172,8 +172,13 @@ export const initDB = async () => {
                 store.createIndex('interdicao_id', 'interdicao_id', { unique: false });
                 store.createIndex('synced', 'synced', { unique: false });
                 store.createIndex('created_at', 'created_at', { unique: false });
+                store.createIndex('supabase_id', 'supabase_id', { unique: false });
             } else {
                 ensureSyncedIndex('desinterdicoes');
+                const store = transaction.objectStore('desinterdicoes');
+                if (!store.indexNames.contains('supabase_id')) {
+                    store.createIndex('supabase_id', 'supabase_id', { unique: false });
+                }
             }
         },
     });
@@ -624,6 +629,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             }
         } else if (storeName === 'desinterdicoes') {
             payload = {
+                id: item.supabase_id || undefined,
                 interdicao_id: item.interdicao_id || item.interdicaoId,
                 data_nova_vistoria: item.data_nova_vistoria || item.dataNovaVistoria || new Date().toISOString().split('T')[0],
                 agente: item.agente || '',
@@ -638,7 +644,13 @@ export const syncSingleItem = async (storeName, item, db) => {
                 fotos: processedPhotos,
                 documentos: processedDocuments,
                 observacoes_tecnicas: item.observacoes_tecnicas || item.observacoes || '',
+                assinatura_agente: item.assinaturaAgente || item.assinatura_agente || null,
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
+            }
+            
+            // Process signature if it's base64
+            if (payload.assinatura_agente && payload.assinatura_agente.startsWith('data:image')) {
+                payload.assinatura_agente = await uploadSignature(payload.assinatura_agente, 'interdicoes', `${payload.interdicao_id}/desint_${item.id || Date.now()}_sig.png`);
             }
         } else if (storeName === 'redap_records') {
             // REDAP Signatures: Handle main signature and sector-specific signatures
@@ -875,6 +887,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                                                 storeName === 'despachos' ? 'despacho_id' :
                                                     storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
                                                     (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
+                                                    storeName === 'desinterdicoes' ? 'id' :
                                                         undefined
         }).select();
 
@@ -953,7 +966,7 @@ export const pullAllData = async (force = false) => {
             //{ table: 'despachos', store: 'despachos', key: 'despacho_id' },
             { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' },
             { table: 'agenda_vistorias', store: 'agenda_vistorias', key: 'id' },
-            { table: 'desinterdicoes', store: 'desinterdicoes', key: 'id' }
+            { table: 'desinterdicoes', store: 'desinterdicoes', key: null } // Use null to force supabase_id matching
         ];
 
         // Fetch tables sequentially to avoid overloading the DB pool and accurately identify bottlenecks
@@ -1597,6 +1610,38 @@ export const saveDesinterdicaoOffline = async (data) => {
     }
 
     return id;
+}
+
+export const deleteDesinterdicaoLocal = async (id, supabase_id = null) => {
+    const db = await initDB();
+    
+    // 1. Find the record reliably
+    let desint = null;
+    if (id) desint = await db.get('desinterdicoes', id);
+    if (!desint && supabase_id) desint = await db.getFromIndex('desinterdicoes', 'supabase_id', supabase_id);
+    if (!desint && id && typeof id === 'string') desint = await db.getFromIndex('desinterdicoes', 'supabase_id', id);
+
+    const targetSupId = desint?.supabase_id || supabase_id || (typeof id === 'string' && id.length > 20 ? id : null);
+
+    // 2. Delete from Supabase
+    if (targetSupId && navigator.onLine) {
+        try {
+            console.log(`[Sync] Deleting desinterdicao ${targetSupId} from Supabase...`);
+            await supabase.from('desinterdicoes').delete().eq('id', targetSupId);
+        } catch (e) {
+            console.error('[Sync] Error deleting from Supabase:', e);
+        }
+    }
+    
+    // 3. Delete from Local DB
+    if (desint) {
+        await db.delete('desinterdicoes', desint.id);
+    } else if (id && typeof id === 'number') {
+        await db.delete('desinterdicoes', id);
+    }
+    
+    triggerSync();
+    return true;
 }
 
 export const updateInterdicaoStatus = async (id, newStatus) => {

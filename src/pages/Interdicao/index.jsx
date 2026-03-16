@@ -6,25 +6,36 @@ import DesinterdicaoForm from './DesinterdicaoForm'
 const Interdicao = () => {
     const [view, setView] = useState('list') // 'list' | 'form' | 'desinterdicao'
     const [selectedInterdicao, setSelectedInterdicao] = useState(null)
+    const [selectedDesinterdicao, setSelectedDesinterdicao] = useState(null)
 
     const handleNew = () => {
         setSelectedInterdicao(null)
+        setSelectedDesinterdicao(null)
         setView('form')
     }
 
     const handleEdit = (interdicao) => {
         setSelectedInterdicao(interdicao)
+        setSelectedDesinterdicao(null)
         setView('form')
     }
 
     const handleDesinterdicao = (interdicao) => {
         setSelectedInterdicao(interdicao)
+        setSelectedDesinterdicao(null)
+        setView('desinterdicao')
+    }
+
+    const handleEditDesinterdicao = (desinterdicao, parentInterdicao) => {
+        setSelectedInterdicao(parentInterdicao)
+        setSelectedDesinterdicao(desinterdicao)
         setView('desinterdicao')
     }
 
     const handleBack = () => {
         setView('list')
         setSelectedInterdicao(null)
+        setSelectedDesinterdicao(null)
     }
 
     return (
@@ -33,7 +44,8 @@ const Interdicao = () => {
                 <InterdicaoList 
                     onNew={handleNew} 
                     onEdit={handleEdit} 
-                    onDesinterdicao={handleDesinterdicao} 
+                    onDesinterdicao={handleDesinterdicao}
+                    onEditDesinterdicao={handleEditDesinterdicao}
                 />
             )}
             {view === 'form' && (
@@ -41,10 +53,15 @@ const Interdicao = () => {
                     onBack={handleBack} 
                     initialData={selectedInterdicao} 
                     onDesinterdicao={handleDesinterdicao}
+                    onEditDesinterdicao={handleEditDesinterdicao}
                 />
             )}
             {view === 'desinterdicao' && (
-                <DesinterdicaoForm interdicao={selectedInterdicao} onBack={handleBack} />
+                <DesinterdicaoForm 
+                    interdicao={selectedInterdicao} 
+                    initialData={selectedDesinterdicao}
+                    onBack={handleBack} 
+                />
             )}
         </div>
     )

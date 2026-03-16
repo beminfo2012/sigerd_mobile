@@ -111,7 +111,7 @@ const SearchableInput = ({
 
 
 
-const InterdicaoForm = ({ onBack, initialData, onDesinterdicao }) => {
+const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdicao }) => {
     const userProfile = useContext(UserContext)
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
@@ -1123,14 +1123,23 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao }) => {
                                         </span>
                                         <span className="text-[9px] text-slate-400 font-bold uppercase">{d.agente || 'Agente'}</span>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => window.open(`/desinterdicao/imprimir/${d.id}`, '_blank')}
-                                        className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-black uppercase tracking-tighter text-xs shadow-md shadow-green-200 dark:shadow-none active:scale-95"
-                                    >
-                                        <Printer size={16} />
-                                        PDF
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => onEditDesinterdicao(d, initialData)}
+                                            className="flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-xl hover:bg-blue-100 hover:text-blue-600 transition-all shadow-sm"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.open(`/desinterdicao/imprimir/${d.id}`, '_blank')}
+                                            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-black uppercase tracking-tighter text-xs shadow-md shadow-green-200 dark:shadow-none active:scale-95"
+                                        >
+                                            <Printer size={16} />
+                                            PDF
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

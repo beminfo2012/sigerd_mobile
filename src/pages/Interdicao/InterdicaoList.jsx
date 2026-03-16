@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight, AlertOctagon, Sparkles } from 'lucide-react'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight, AlertOctagon, Sparkles, Edit2, Clock, CheckCircle, User } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
-import { deleteInterdicaoLocal, getAllInterdicoesLocal, getInterdicaoFull, initDB } from '../../services/db'
+import { deleteInterdicaoLocal, getAllInterdicoesLocal, getInterdicaoFull, initDB, deleteDesinterdicaoLocal } from '../../services/db'
 import ConfirmModal from '../../components/ConfirmModal'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 
-const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
+const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao }) => {
     const navigate = useNavigate()
     const [interdicoes, setInterdicoes] = useState([])
     const [loading, setLoading] = useState(true)
@@ -24,6 +24,7 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
     const [emailModal, setEmailModal] = useState({ open: false, interdicao: null })
     const [emailAddress, setEmailAddress] = useState('')
     const [deleteModal, setDeleteModal] = useState({ open: false, interdicao: null })
+    const [historyModal, setHistoryModal] = useState({ open: false, item: null })
 
     useEffect(() => {
         fetchInterdicoes()
@@ -48,42 +49,105 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
             // 2. Cloud Desinterdicoes
             const { data: cloudDesinterdicoes } = await supabase
                 .from('desinterdicoes')
-                .select('id, interdicao_id, created_at, tipo_desinterdicao')
+                .select('*')
 
             // 3. Local Data
             const localData = await getAllInterdicoesLocal().catch(() => [])
             const localDesinterdicoes = await (async () => {
                 const db = await initDB();
-                return db.getAll('desinterdicoes');
+                const all = await db.getAll('desinterdicoes');
+                return all.map(d => ({ ...d, isLocal: true }));
             })().catch(() => []);
 
             // 4. Merge Interdicoes
-            const merged = [...(cloudData || [])].map(item => ({
-                ...item,
-                synced: true,
-                desinterdicoes: (cloudDesinterdicoes || []).filter(d => d.interdicao_id === item.interdicao_id || d.interdicao_id === item.id),
-                riscoGrau: item.risco_grau || item.riscoGrau,
-                responsavelNome: item.responsavel_nome || item.responsavelNome,
-                medidaTipo: item.medida_tipo || item.medidaTipo,
-                dataHora: item.data_hora || item.dataHora,
-                endereco: item.endereco || item.logradouro || '',
-                bairro: item.bairro || item.localidade || ''
-            }))
+            const merged = [...(cloudData || [])].map(item => {
+                const itemDesinterdicoes = [
+                    ...(cloudDesinterdicoes || []).filter(d => d.interdicao_id === item.interdicao_id || d.interdicao_id === item.id),
+                    ...(localDesinterdicoes || []).filter(d => d.interdicao_id === item.interdicao_id || d.interdicao_id === item.id)
+                ];
+
+                // Deduplicate by Supabase ID if synced, or local ID if not
+                const desintMap = new Map();
+                itemDesinterdicoes.forEach(d => {
+                    const key = d.supabase_id || (typeof d.id === 'string' && d.id.length > 20 ? d.id : d.id);
+                    if (!desintMap.has(key) || d.isLocal) {
+                        desintMap.set(key, d);
+                    }
+                });
+                const uniqueDesinterdicoes = Array.from(desintMap.values())
+                    .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt));
+
+                // Calculate Status
+                let calculatedStatus = item.status || 'Interditado';
+                const hasTotal = uniqueDesinterdicoes.some(d => 
+                    (d.tipo_desinterdicao === 'Total') || 
+                    (d.tipoDesinterdicao === 'Total') || 
+                    (String(d.tipo_desinterdicao).toUpperCase() === 'TOTAL')
+                );
+
+                if (hasTotal) {
+                    calculatedStatus = 'Desinterditado';
+                } else if (uniqueDesinterdicoes.length > 0) {
+                    calculatedStatus = 'Parcialmente Desinterditado';
+                }
+
+                return {
+                    ...item,
+                    synced: true,
+                    status: calculatedStatus,
+                    desinterdicoes: uniqueDesinterdicoes,
+                    riscoGrau: item.risco_grau || item.riscoGrau,
+                    responsavelNome: item.responsavel_nome || item.responsavelNome,
+                    medidaTipo: item.medida_tipo || item.medidaTipo,
+                    dataHora: item.data_hora || item.dataHora,
+                    endereco: item.endereco || item.logradouro || '',
+                    bairro: item.bairro || item.localidade || ''
+                }
+            })
 
             localData.forEach(localItem => {
                 const iid = localItem.interdicaoId || localItem.interdicao_id;
-                const alreadyInCloud = merged.some(c =>
+                const cloudItem = merged.find(c =>
                     (iid && c.interdicao_id === iid) ||
                     (localItem.id && c.id === localItem.id) ||
                     (localItem.supabase_id && c.id === localItem.supabase_id)
                 )
 
-                if (!alreadyInCloud) {
+                const itemDesinterdicoes = [
+                    ...(cloudDesinterdicoes || []).filter(d => d.interdicao_id === iid),
+                    ...(localDesinterdicoes || []).filter(d => d.interdicao_id === iid || d.interdicaoId === iid)
+                ];
+                const desintMap = new Map();
+                itemDesinterdicoes.forEach(d => {
+                    const key = d.supabase_id || (typeof d.id === 'string' && d.id.length > 20 ? d.id : d.id);
+                    if (!desintMap.has(key) || d.isLocal) {
+                        desintMap.set(key, d);
+                    }
+                });
+                const uniqueDesinterdicoes = Array.from(desintMap.values())
+                    .sort((a, b) => new Date(b.created_at || b.createdAt) - new Date(a.created_at || a.createdAt));
+
+                const hasTotal = uniqueDesinterdicoes.some(d => 
+                    (d.tipo_desinterdicao === 'Total') || 
+                    (d.tipoDesinterdicao === 'Total') || 
+                    (String(d.tipo_desinterdicao).toUpperCase() === 'TOTAL')
+                );
+
+                if (!cloudItem) {
+                    // Calculate Status for local-only items
+                    let calculatedStatus = localItem.status || 'Interditado';
+                    if (hasTotal) {
+                        calculatedStatus = 'Desinterditado';
+                    } else if (uniqueDesinterdicoes.length > 0) {
+                        calculatedStatus = 'Parcialmente Desinterditado';
+                    }
+
                     merged.push({
                         ...localItem,
                         id: localItem.id,
                         interdicao_id: iid,
-                        desinterdicoes: localDesinterdicoes.filter(d => d.interdicao_id === iid || d.interdicaoId === iid),
+                        status: calculatedStatus,
+                        desinterdicoes: uniqueDesinterdicoes,
                         created_at: localItem.createdAt || localItem.created_at || new Date().toISOString(),
                         isLocal: true,
                         synced: localItem.synced,
@@ -91,6 +155,14 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                         responsavelNome: localItem.responsavelNome || localItem.responsavel_nome,
                         medidaTipo: localItem.medidaTipo || localItem.medida_tipo
                     })
+                } else {
+                    // Update cloud-synced item with local desinterdicoes/status
+                    cloudItem.desinterdicoes = uniqueDesinterdicoes;
+                    if (hasTotal) {
+                        cloudItem.status = 'Desinterditado';
+                    } else if (uniqueDesinterdicoes.length > 0) {
+                        cloudItem.status = 'Parcialmente Desinterditado';
+                    }
                 }
             })
 
@@ -389,15 +461,21 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                                                 #{item.interdicao_id || '---'}
                                             </span>
                                             {item.status === 'Desinterditado' ? (
-                                                <span className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); setHistoryModal({ open: true, item }); }}
+                                                    className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 uppercase tracking-wider shadow-sm hover:bg-emerald-100 transition-colors"
+                                                >
                                                     <Sparkles size={10} />
                                                     Desinterditado
-                                                </span>
+                                                </button>
                                             ) : item.status === 'Parcialmente Desinterditado' ? (
-                                                <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
-                                                    <FileText size={10} />
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); setHistoryModal({ open: true, item }); }}
+                                                    className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase tracking-wider shadow-sm hover:bg-orange-100 transition-colors"
+                                                >
+                                                    <Clock size={10} />
                                                     Desint. Parcial
-                                                </span>
+                                                </button>
                                             ) : (
                                                 <span className="bg-red-50 dark:bg-red-900/20 text-red-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-red-100 dark:border-red-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
                                                     <AlertOctagon size={10} />
@@ -443,35 +521,16 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                                             <span className="text-[10px] font-medium text-slate-400">{item.bairro || ''}</span>
                                         </p>
                                     </div>
-                                    {/* Status and History of De-interdictions */}
+                                    {/* Status and History Hint */}
                                     {item.desinterdicoes && item.desinterdicoes.length > 0 && (
-                                        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-800/20">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Sparkles size={14} className="text-green-600" />
-                                                <span className="text-[10px] font-black uppercase text-green-700 dark:text-green-400 tracking-wider">Histórico de Desinterdição</span>
-                                            </div>
-                                            <div className="space-y-2">
-                                                {item.desinterdicoes.map((d, idx) => (
-                                                    <div key={d.id || idx} className="flex items-center justify-between text-[10px] bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-green-50 dark:border-green-900/30">
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold text-slate-700 dark:text-slate-200">
-                                                                Data: {new Date(d.created_at).toLocaleDateString()}
-                                                            </span>
-                                                            <span className={`uppercase font-black ${d.tipo_desinterdicao === 'Parcial' ? 'text-orange-500' : 'text-green-600'}`}>
-                                                                {d.tipo_desinterdicao || 'Total'}
-                                                            </span>
-                                                        </div>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); window.open(`/desinterdicao/imprimir/${d.id}`, '_blank') }}
-                                                            className="flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-200 transition-colors font-black uppercase tracking-tighter"
-                                                        >
-                                                            <Eye size={12} />
-                                                            PDF
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setHistoryModal({ open: true, item }); }}
+                                            className="mt-4 w-full p-3 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-800/20 flex items-center justify-center gap-2 hover:bg-green-100 transition-all group/hist"
+                                        >
+                                            <Clock size={14} className="text-green-600" />
+                                            <span className="text-[10px] font-black uppercase text-green-700 dark:text-green-400 tracking-wider">Ver Histórico de Desinterdição</span>
+                                            <ChevronRight size={14} className="text-green-300 group-hover/hist:translate-x-1 transition-all" />
+                                        </button>
                                     )}
                                 </div>
 
@@ -591,6 +650,109 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                 confirmText="Sim, Excluir"
                 cancelText="Mantenha para mim"
             />
+
+            {/* History Modal */}
+            {historyModal.open && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300" onClick={() => setHistoryModal({ open: false, item: null })}>
+                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/20">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">
+                                    <Sparkles size={28} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">Histórico</h2>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px]">Desinterdições vinculadas</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setHistoryModal({ open: false, item: null })} className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-full transition-all text-slate-400">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4 bg-slate-50/30 dark:bg-slate-900/10">
+                            {historyModal.item?.desinterdicoes?.map((d, idx) => (
+                                <div key={d.id || idx} className="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 group hover:border-emerald-200 dark:hover:border-emerald-900 transition-all">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg ${d.tipo_desinterdicao === 'Parcial' ? 'bg-orange-100 text-orange-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                    {d.tipo_desinterdicao || 'Total'}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-slate-400">
+                                                    #{String(d.id || '').substring(0, 8) || '---'}
+                                                </span>
+                                            </div>
+                                            <h4 className="text-sm font-black text-slate-800 dark:text-white">
+                                                {new Date(d.created_at).toLocaleString('pt-BR')}
+                                            </h4>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1">
+                                                <User size={10} /> {d.agente || 'Agente não identificado'}
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setHistoryModal({ open: false, item: null });
+                                                    onEditDesinterdicao(d, historyModal.item);
+                                                }}
+                                                className="w-10 h-10 flex items-center justify-center bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all"
+                                                title="Editar Registro"
+                                            >
+                                                <Edit2 size={18} />
+                                            </button>
+                                            <button 
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (window.confirm('Deseja realmente excluir esta desinterdição?')) {
+                                                        await deleteDesinterdicaoLocal(d.id, d.supabase_id);
+                                                        fetchInterdicoes();
+                                                        setHistoryModal({ open: false, item: null });
+                                                    }
+                                                }}
+                                                className="w-10 h-10 flex items-center justify-center bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all"
+                                                title="Excluir Registro"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); window.open(`/desinterdicao/imprimir/${d.id}`, '_blank'); }}
+                                                className="w-10 h-10 flex items-center justify-center bg-emerald-600 text-white rounded-2xl hover:bg-emerald-500 shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95"
+                                                title="Ver PDF"
+                                            >
+                                                <Printer size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {(d.situacao_verificada || d.situacaoVerificada) && (
+                                        <div className="text-[10px] text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 italic">
+                                            "{String(d.situacao_verificada || d.situacaoVerificada || '').substring(0, 100)}{String(d.situacao_verificada || d.situacaoVerificada || '').length > 100 ? '...' : ''}"
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            {(!historyModal.item?.desinterdicoes || historyModal.item.desinterdicoes.length === 0) && (
+                                <div className="text-center py-12 space-y-4">
+                                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-300">
+                                        <Clock size={32} />
+                                    </div>
+                                    <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Nenhum registro encontrado</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800">
+                            <button 
+                                onClick={() => setHistoryModal({ open: false, item: null })}
+                                className="w-full py-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all"
+                            >
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
