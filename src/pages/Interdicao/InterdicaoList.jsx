@@ -8,7 +8,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 
-const InterdicaoList = ({ onNew, onEdit }) => {
+const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
     const navigate = useNavigate()
     const [interdicoes, setInterdicoes] = useState([])
     const [loading, setLoading] = useState(true)
@@ -377,6 +377,17 @@ const InterdicaoList = ({ onNew, onEdit }) => {
                                             <span className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[10px] font-black px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                                                 #{item.interdicao_id || '---'}
                                             </span>
+                                            {item.status === 'Desinterditado' ? (
+                                                <span className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 uppercase">
+                                                    <CheckCircle size={10} />
+                                                    Desinterditado
+                                                </span>
+                                            ) : (
+                                                <span className="bg-red-50 dark:bg-red-900/20 text-red-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-red-100 dark:border-red-800 flex items-center gap-1 uppercase">
+                                                    <AlertOctagon size={10} />
+                                                    Interditado
+                                                </span>
+                                            )}
                                             {item.isLocal && (item.synced === false || item.synced === undefined || item.synced === 0) && (
                                                 <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase">
                                                     <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
@@ -441,6 +452,15 @@ const InterdicaoList = ({ onNew, onEdit }) => {
                                         >
                                             <Printer size={18} />
                                         </button>
+                                        {(!item.status || item.status === 'Interditado') && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onDesinterdicao(item); }}
+                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-2xl transition-all active:scale-95"
+                                                title="Solicitar Desinterdição"
+                                            >
+                                                <Plus size={18} className="text-green-500" />
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <button

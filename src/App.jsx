@@ -29,6 +29,7 @@ const RiskDashboard = lazy(() => import('./pages/Monitoramento/RiskDashboard'))
 const ChecklistSaida = lazy(() => import('./pages/Checklist/ChecklistSaida'))
 const VistoriaPrint = lazy(() => import('./pages/Vistorias/VistoriaPrint'))
 const InterdicaoPrint = lazy(() => import('./pages/Interdicao/InterdicaoPrint'))
+const DesinterdicaoPrint = lazy(() => import('./pages/Interdicao/DesinterdicaoPrint'))
 const ManagementDashboard = lazy(() => import('./pages/Monitoramento/ManagementDashboard'))
 const MonitoramentoMenu = lazy(() => import('./pages/Monitoramento/MonitoramentoMenu'))
 const LegadoDashboard = lazy(() => import('./pages/Legado'))
@@ -253,6 +254,11 @@ const AppContent = ({
                                 <Route path="/interdicao/imprimir/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <InterdicaoPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/desinterdicao/imprimir/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <DesinterdicaoPrint />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/alerts" element={

@@ -63,6 +63,37 @@ const normalizeData = (data, type) => {
             })(),
             checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
         };
+    } else if (type === 'desinterdicao') {
+        const photos = (() => {
+            let p = data.fotos || [];
+            if (typeof p === 'string') {
+                try { p = JSON.parse(p); } catch (e) { p = []; }
+            }
+            return (Array.isArray(p) ? p : []).map(f => {
+                if (typeof f === 'string') return { data: f, legenda: '' };
+                return {
+                    ...f,
+                    data: f.data || f.url || f,
+                    legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
+                };
+            });
+        })();
+
+        return {
+            interdicaoId: data.interdicaoId || data.interdicao_id || '---',
+            dataHora: data.dataHora || data.data_hora || data.created_at,
+            dataNovaVistoria: data.data_nova_vistoria || data.dataNovaVistoria || '---',
+            responsavelNome: data.responsavelNome || data.responsavel_nome || '---',
+            endereco: data.endereco || '---',
+            bairro: data.bairro || '---',
+            medidasCorretivas: data.medidas_corretivas_executadas || data.medidasCorretivas || '---',
+            situacaoVerificada: data.situacao_verificada || data.situacaoVerificada || '---',
+            observacoes: data.observacoes_tecnicas || data.observacoes || '---',
+            agente: data.agente || '---',
+            matricula: data.matricula || '---',
+            fotos: photos,
+            assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null
+        };
     } else {
         return {
             interdicaoId: data.interdicaoId || data.interdicao_id || '---',
@@ -143,7 +174,11 @@ export const generatePDF = async (rawData, type) => {
 
     const data = normalizeData(rawData, type);
     const isVistoriaOuOcorrencia = type === 'vistoria' || type === 'ocorrencia';
-    const title = type === 'vistoria' ? 'RELATÓRIO DE VISTORIA TÉCNICA' : type === 'ocorrencia' ? 'RELATÓRIO DE OCORRÊNCIA' : 'RELATÓRIO DE INTERDIÇÃO';
+    const isDesinterdicao = type === 'desinterdicao';
+    const title = type === 'vistoria' ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 
+                  type === 'ocorrencia' ? 'RELATÓRIO DE OCORRÊNCIA' : 
+                  type === 'desinterdicao' ? 'AUTO DE DESINTERDIÇÃO' :
+                  'RELATÓRIO DE INTERDIÇÃO';
     const filename = `${type}_${(data.vistoriaId || data.interdicaoId || data.id || 'sem_id').replace(/[\/\\]/g, '_')}.pdf`;
 
     const container = document.createElement('div');
@@ -341,6 +376,66 @@ export const generatePDF = async (rawData, type) => {
                             <div style="padding: 12px; background: white;">
                                 <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
                                 <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: ${data.latitude}, ${data.longitude}</div>
+                                ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+    } else if (isDesinterdicao) {
+        contentHtml += `
+            ${sectionTitle('1. Identificação da Desinterdição')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                ${renderField('Interdição Referenciada', `#${data.interdicaoId}`)}
+                ${renderField('Data da Nova Vistoria', new Date(data.dataNovaVistoria).toLocaleString('pt-BR'))}
+                ${renderField('Agente Responsável', data.agente)}
+                ${renderField('Matrícula do Agente', data.matricula)}
+            </div>
+
+            ${sectionTitle('2. Localização e Responsável')}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="grid-column: span 2;">${renderField('Responsável / Proprietário', data.responsavelNome)}</div>
+                <div style="grid-column: span 2;">${renderField('Endereço', data.endereco)}</div>
+                ${renderField('Bairro / Localidade', data.bairro)}
+            </div>
+
+            ${sectionTitle('3. Avaliação Técnica')}
+            <div style="background: #f0fdf4; border-radius: 12px; padding: 20px; border: 1px solid #bbf7d0; margin-bottom: 25px;">
+                <div style="font-size: 10px; color: #166534; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">MEDIDAS CORRETIVAS EXECUTADAS</div>
+                <div style="font-size: 13px; color: #166534; font-weight: 600; line-height: 1.6;">
+                    ${data.medidasCorretivas}
+                </div>
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+                <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">SITUAÇÃO VERIFICADA</div>
+                <div style="font-size: 13px; color: #334155; font-weight: 600; line-height: 1.6;">
+                    ${data.situacaoVerificada}
+                </div>
+            </div>
+
+            ${data.observacoes && data.observacoes !== '---' ? `
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
+                <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">OBSERVAÇÕES TÉCNICAS</div>
+                <div style="font-size: 13px; color: #334155; font-style: italic; line-height: 1.6;">
+                    "${data.observacoes}"
+                </div>
+            </div>` : ''}
+
+            <div style="background: #eff6ff; border-radius: 12px; padding: 20px; border: 1px solid #dbeafe; text-align: center; margin-bottom: 30px;">
+                <h3 style="margin: 0; color: #1e40af; font-weight: 900; font-size: 16px; text-transform: uppercase;">PARECER: DESINTERDITADO</h3>
+                <p style="margin: 5px 0 0 0; font-size: 12px; color: #1e40af; font-weight: 600;">O imóvel/área encontra-se apto para uso conforme as condições verificadas.</p>
+            </div>
+
+            ${data.fotos.length > 0 ? `
+                ${sectionTitle('4. Anexo Fotográfico')}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    ${data.fotos.map((f, idx) => `
+                        <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
+                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
+                            <div style="padding: 12px; background: white;">
+                                <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
                                 ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
                             </div>
                         </div>

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 import { Camera, Paperclip, X } from 'lucide-react'
 
-const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
+const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAll = false, compact = false }) => {
     const cameraInputRef = useRef(null)
     const galleryInputRef = useRef(null)
 
@@ -22,6 +22,31 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
         }
     }
 
+    if (compact) {
+        return (
+            <div className="relative w-full">
+                <input
+                    type="file"
+                    ref={cameraInputRef}
+                    className="hidden"
+                    accept={acceptAll ? "*" : "image/*"}
+                    multiple
+                    onChange={(e) => handleChange(e, 'gallery')}
+                />
+                <button
+                    type="button"
+                    onClick={handleCameraClick}
+                    className="flex items-center justify-center gap-3 w-full p-4 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group"
+                >
+                    <div className="p-2 bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
+                        <Paperclip size={20} className="text-blue-500" />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-wider">{label}</span>
+                </button>
+            </div>
+        )
+    }
+
     return (
         <div className="relative">
             {/* Camera Input (Environment) */}
@@ -29,8 +54,8 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
                 type="file"
                 ref={cameraInputRef}
                 className="hidden"
-                accept="image/*"
-                capture="environment"
+                accept={acceptAll ? "*" : "image/*"}
+                capture={acceptAll ? undefined : "environment"}
                 multiple
                 onChange={(e) => handleChange(e, 'camera')}
             />
@@ -40,7 +65,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
                 type="file"
                 ref={galleryInputRef}
                 className="hidden"
-                accept="image/*"
+                accept={acceptAll ? "*" : "image/*"}
                 multiple
                 onChange={(e) => handleChange(e, 'gallery')}
             />
@@ -50,7 +75,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar' }) => {
                 onClick={handleCameraClick}
                 className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:bg-gray-50 hover:border-[#2a5299] hover:text-[#2a5299] transition-all w-full relative group ${type === 'photo' ? 'aspect-square' : ''}`}
             >
-                <Camera size={32} strokeWidth={1.5} />
+                {acceptAll ? <Paperclip size={32} strokeWidth={1.5} /> : <Camera size={32} strokeWidth={1.5} />}
                 <span className="text-[10px] font-bold uppercase mt-1">{label}</span>
 
                 {/* Hidden "Discreet" Gallery Button overlay or corner */}

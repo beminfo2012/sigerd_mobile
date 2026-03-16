@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 24
+const DB_VERSION = 25
 
 
 let dbPromise = null;
@@ -164,6 +164,16 @@ export const initDB = async () => {
                 store.createIndex('numero_processo', 'numero_processo', { unique: false });
             } else {
                 ensureSyncedIndex('agenda_vistorias');
+            }
+
+            // Desinterdicoes (v25)
+            if (!db.objectStoreNames.contains('desinterdicoes')) {
+                const store = db.createObjectStore('desinterdicoes', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('interdicao_id', 'interdicao_id', { unique: false });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('created_at', 'created_at', { unique: false });
+            } else {
+                ensureSyncedIndex('desinterdicoes');
             }
         },
     });
@@ -326,6 +336,7 @@ export const syncSingleItem = async (storeName, item, db) => {
         };
 
         let processedPhotos = []
+        let processedDocuments = []
         // Upload Photos
         const fotosToUpload = item.fotos || (item.data && item.data.evidencias) || [];
         if (fotosToUpload.length > 0) {
@@ -339,6 +350,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                         const folderMap = {
                             'vistorias': 'vistorias',
                             'interdicoes': 'interdicoes',
+                            'desinterdicoes': 'interdicoes',
                             'shelters': 'shelters',
                             'occupants': 'occupants',
                             'donations': 'donations',
@@ -366,6 +378,33 @@ export const syncSingleItem = async (storeName, item, db) => {
 
             if (item.fotos) processedPhotos = processed;
             if (item.data && item.data.evidencias) item.data.evidencias = processed;
+        }
+
+        // Upload Documents
+        const docsToUpload = item.documentos || [];
+        if (docsToUpload.length > 0) {
+            console.log(`[Sync] Uploading ${docsToUpload.length} documents for ${storeName}/${item.id}...`);
+            processedDocuments = await Promise.all(docsToUpload.map(async (doc) => {
+                if (doc.data && doc.data.startsWith('data:')) {
+                    const blob = base64ToBlob(doc.data)
+                    if (blob) {
+                        const folder = storeName === 'desinterdicoes' ? 'interdicoes' : (storeName || 'general')
+                        const entityId = (item.interdicao_id || item.interdicaoId || item.id)
+                        const fileName = `${entityId}/docs/${doc.id || crypto.randomUUID()}_${doc.name}`
+                        const { error: uploadError } = await supabase.storage
+                            .from(folder)
+                            .upload(fileName, blob, { upsert: true })
+
+                        if (!uploadError) {
+                            const { data: urlData } = supabase.storage
+                                .from(folder)
+                                .getPublicUrl(fileName)
+                            return { ...doc, data: urlData.publicUrl, url: urlData.publicUrl }
+                        }
+                    }
+                }
+                return doc
+            }))
         }
 
         const tableMap = {
@@ -580,6 +619,20 @@ export const syncSingleItem = async (storeName, item, db) => {
                     matricula: item.apoioTecnico?.matricula || item.apoio_tecnico?.matricula || '',
                     assinatura: signatureApoioUrl
                 },
+                created_at: item.createdAt || item.created_at || new Date().toISOString(),
+                status: item.status || 'Interditado'
+            }
+        } else if (storeName === 'desinterdicoes') {
+            payload = {
+                interdicao_id: item.interdicao_id || item.interdicaoId,
+                data_nova_vistoria: item.data_nova_vistoria || item.dataNovaVistoria || new Date().toISOString(),
+                agente: item.agente || '',
+                matricula: item.matricula || '',
+                medidas_corretivas_executadas: item.medidas_corretivas_executadas || item.medidasCorretivas || '',
+                situacao_verificada: item.situacao_verificada || item.situacaoVerificada || '',
+                fotos: processedPhotos,
+                documentos: processedDocuments,
+                observacoes_tecnicas: item.observacoes_tecnicas || item.observacoes || '',
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
         } else if (storeName === 'redap_records') {
@@ -894,7 +947,8 @@ export const pullAllData = async (force = false) => {
             { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
             //{ table: 'despachos', store: 'despachos', key: 'despacho_id' },
             { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' },
-            { table: 'agenda_vistorias', store: 'agenda_vistorias', key: 'id' }
+            { table: 'agenda_vistorias', store: 'agenda_vistorias', key: 'id' },
+            { table: 'desinterdicoes', store: 'desinterdicoes', key: 'id' }
         ];
 
         // Fetch tables sequentially to avoid overloading the DB pool and accurately identify bottlenecks
@@ -1523,4 +1577,40 @@ export const deleteAgendaLocal = async (id) => {
     await db.delete('agenda_vistorias', id);
     triggerSync();
 }
+
+export const saveDesinterdicaoOffline = async (data) => {
+    const db = await initDB();
+    const id = await db.put('desinterdicoes', {
+        ...data,
+        createdAt: data.createdAt || new Date().toISOString(),
+        synced: false
+    });
+
+    if (navigator.onLine) {
+        const item = await db.get('desinterdicoes', id);
+        await syncSingleItem('desinterdicoes', item, db);
+    }
+
+    return id;
+}
+
+export const updateInterdicaoStatus = async (id, newStatus) => {
+    const db = await initDB();
+    const tx = db.transaction('interdicoes', 'readwrite');
+    const store = tx.objectStore('interdicoes');
+    const record = await store.get(id);
+
+    if (record) {
+        record.status = newStatus;
+        record.synced = false;
+        record.updated_at = new Date().toISOString();
+        await store.put(record);
+        await tx.done;
+        triggerSync();
+        return true;
+    }
+    return false;
+}
+
+
 

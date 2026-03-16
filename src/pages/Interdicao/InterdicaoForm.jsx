@@ -111,7 +111,7 @@ const SearchableInput = ({
 
 
 
-const InterdicaoForm = ({ onBack, initialData = null }) => {
+const InterdicaoForm = ({ onBack, initialData, onDesinterdicao }) => {
     const userProfile = useContext(UserContext)
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
@@ -1110,6 +1110,16 @@ const InterdicaoForm = ({ onBack, initialData = null }) => {
                             <><Save size={24} /> Salvar Interdição</>
                         )}
                     </button>
+
+                    {initialData && (!formData.status || formData.status === 'Interditado') && (
+                        <button
+                            type="button"
+                            onClick={() => onDesinterdicao(formData)}
+                            className="w-full p-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-lg shadow-lg flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-4"
+                        >
+                            <Sparkles size={24} /> Solicitar Desinterdição
+                        </button>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4 mt-4">
                         <button 
