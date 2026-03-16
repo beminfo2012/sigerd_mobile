@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS public.desinterdicoes (
     tipo_desinterdicao TEXT DEFAULT 'Total', -- 'Total' or 'Parcial'
     fotos JSONB DEFAULT '[]'::jsonb,
     documentos JSONB DEFAULT '[]'::jsonb,
-    status_anterior TEXT
+    status_anterior TEXT,
+    assinatura_agente TEXT -- URL da assinatura armazenada no Supabase Storage
 );
 
 -- Ensure tipo_desinterdicao exists
@@ -23,6 +24,14 @@ DO $$
 BEGIN 
     IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='desinterdicoes' AND COLUMN_NAME='tipo_desinterdicao') THEN
         ALTER TABLE public.desinterdicoes ADD COLUMN tipo_desinterdicao TEXT DEFAULT 'Total';
+    END IF;
+END $$;
+
+-- Ensure assinatura_agente exists (para bancos já criados)
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='desinterdicoes' AND COLUMN_NAME='assinatura_agente') THEN
+        ALTER TABLE public.desinterdicoes ADD COLUMN assinatura_agente TEXT;
     END IF;
 END $$;
 

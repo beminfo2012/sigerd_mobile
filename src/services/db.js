@@ -629,7 +629,6 @@ export const syncSingleItem = async (storeName, item, db) => {
             }
         } else if (storeName === 'desinterdicoes') {
             payload = {
-                id: item.supabase_id || undefined,
                 interdicao_id: item.interdicao_id || item.interdicaoId,
                 data_nova_vistoria: item.data_nova_vistoria || item.dataNovaVistoria || new Date().toISOString().split('T')[0],
                 agente: item.agente || '',
@@ -644,14 +643,14 @@ export const syncSingleItem = async (storeName, item, db) => {
                 fotos: processedPhotos,
                 documentos: processedDocuments,
                 observacoes_tecnicas: item.observacoes_tecnicas || item.observacoes || '',
-                assinatura_agente: item.assinaturaAgente || item.assinatura_agente || null,
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
             }
-            
-            // Process signature if it's base64
-            if (payload.assinatura_agente && payload.assinatura_agente.startsWith('data:image')) {
-                payload.assinatura_agente = await uploadSignature(payload.assinatura_agente, 'interdicoes', `${payload.interdicao_id}/desint_${item.id || Date.now()}_sig.png`);
+            // Só inclui 'id' se for uma atualização (tem supabase_id)
+            if (item.supabase_id) {
+                payload.id = item.supabase_id;
             }
+            // TODO: reativar após executar o SQL do supabase_update_desinterdicao.sql:
+            // assinatura_agente: item.assinaturaAgente || item.assinatura_agente || null
         } else if (storeName === 'redap_records') {
             // REDAP Signatures: Handle main signature and sector-specific signatures
             const redapId = item.redap_id || crypto.randomUUID();
@@ -784,8 +783,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                 tem_danos_humanos: item.tem_danos_humanos || false,
                 categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
                 nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
-                subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : 
-                               (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
+                subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco :
+                    (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
                 subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
                 descricao_danos: item.descricao_danos || '',
@@ -799,7 +798,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     ...(item.apoioTecnico || item.apoio_tecnico || {}),
                     assinatura: signatureApoioUrl
                 },
-                status: item.status || 'Pendente', 
+                status: item.status || 'Pendente',
                 updated_at: new Date().toISOString()
             };
 
@@ -886,9 +885,9 @@ export const syncSingleItem = async (storeName, item, db) => {
                                             storeName === 'emergency_contracts' ? 'contract_id' :
                                                 storeName === 'despachos' ? 'despacho_id' :
                                                     storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
-                                                    (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
-                                                    storeName === 'desinterdicoes' ? 'id' :
-                                                        undefined
+                                                        (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
+                                                            (storeName === 'desinterdicoes' && payload.id) ? 'id' :
+                                                                undefined
         }).select();
 
         if (error) {
@@ -976,7 +975,7 @@ export const pullAllData = async (force = false) => {
         for (const mod of modules) {
             console.log(`[Pull] Fetching ${mod.table}...`);
             const tableStartTime = Date.now();
-            
+
             try {
                 let query = supabase.from(mod.table).select('*');
                 if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters'].includes(mod.table)) {
@@ -985,7 +984,7 @@ export const pullAllData = async (force = false) => {
 
                 // Individual timeout per table (30s each)
                 const tablePromise = query;
-                const tableTimeout = new Promise((_, reject) => 
+                const tableTimeout = new Promise((_, reject) =>
                     setTimeout(() => reject(new Error(`Timeout fetching ${mod.table}`)), 30000)
                 );
 
@@ -1579,10 +1578,10 @@ export const saveAgendaOffline = async (data) => {
 export const deleteAgendaLocal = async (id) => {
     const db = await initDB();
     const item = await db.get('agenda_vistorias', id);
-    
+
     // Attempt remote delete if it has a supabase_id or if the id itself is a UUID (linked directly)
     const remoteId = item?.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null);
-    
+
     if (remoteId && navigator.onLine) {
         try {
             console.log(`[Sync] Deleting agenda item ${remoteId} from Supabase...`);
@@ -1629,7 +1628,7 @@ export const saveDesinterdicaoOffline = async (data) => {
 
 export const deleteDesinterdicaoLocal = async (id, supabase_id = null) => {
     const db = await initDB();
-    
+
     // 1. Find the record reliably
     let desint = null;
     if (id) desint = await db.get('desinterdicoes', id);
@@ -1647,14 +1646,14 @@ export const deleteDesinterdicaoLocal = async (id, supabase_id = null) => {
             console.error('[Sync] Error deleting from Supabase:', e);
         }
     }
-    
+
     // 3. Delete from Local DB
     if (desint) {
         await db.delete('desinterdicoes', desint.id);
     } else if (id && typeof id === 'number') {
         await db.delete('desinterdicoes', id);
     }
-    
+
     triggerSync();
     return true;
 }
