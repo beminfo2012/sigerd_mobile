@@ -1,4 +1,3 @@
--- 1. Create desinterdicoes table
 CREATE TABLE IF NOT EXISTS public.desinterdicoes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     interdicao_id TEXT NOT NULL,
@@ -12,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.desinterdicoes (
     medidas_corretivas_executadas TEXT,
     situacao_verificada TEXT,
     observacoes_tecnicas TEXT,
+    tipo_desinterdicao TEXT DEFAULT 'Total', -- 'Total' or 'Parcial'
     fotos JSONB DEFAULT '[]'::jsonb,
     documentos JSONB DEFAULT '[]'::jsonb,
     status_anterior TEXT
@@ -25,9 +25,15 @@ BEGIN
     END IF;
 END $$;
 
--- 3. Enable RLS
+-- 3. Enable RLS and add policies
 ALTER TABLE public.desinterdicoes ENABLE ROW LEVEL SECURITY;
 
--- Note: Ensure policies are set correctly for your authentication flow.
--- Example for public access (not recommended for production):
--- CREATE POLICY "Enable read for all users" ON "public"."desinterdicoes" FOR SELECT USING (true);
+-- Drop existing if any to avoid conflicts during re-run
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.desinterdicoes;
+DROP POLICY IF EXISTS "Enable all actions for authenticated users" ON public.desinterdicoes;
+
+CREATE POLICY "Enable all actions for authenticated users" ON public.desinterdicoes
+    FOR ALL 
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);

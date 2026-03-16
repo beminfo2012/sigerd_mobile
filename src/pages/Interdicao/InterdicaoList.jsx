@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight, AlertOctagon } from 'lucide-react'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight, AlertOctagon, Sparkles } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
-import { deleteInterdicaoLocal, getAllInterdicoesLocal, getInterdicaoFull } from '../../services/db'
+import { deleteInterdicaoLocal, getAllInterdicoesLocal, getInterdicaoFull, initDB } from '../../services/db'
 import ConfirmModal from '../../components/ConfirmModal'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
@@ -39,19 +39,29 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
     const fetchInterdicoes = async () => {
         setLoading(true)
         try {
-            // 1. Cloud
+            // 1. Cloud Interdicoes
             const { data: cloudData, error } = await supabase
                 .from('interdicoes')
                 .select('*')
                 .order('created_at', { ascending: false })
 
-            // 2. Local
-            const localData = await getAllInterdicoesLocal().catch(() => [])
+            // 2. Cloud Desinterdicoes
+            const { data: cloudDesinterdicoes } = await supabase
+                .from('desinterdicoes')
+                .select('id, interdicao_id, created_at, tipo_desinterdicao')
 
-            // 3. Merge
+            // 3. Local Data
+            const localData = await getAllInterdicoesLocal().catch(() => [])
+            const localDesinterdicoes = await (async () => {
+                const db = await initDB();
+                return db.getAll('desinterdicoes');
+            })().catch(() => []);
+
+            // 4. Merge Interdicoes
             const merged = [...(cloudData || [])].map(item => ({
                 ...item,
                 synced: true,
+                desinterdicoes: (cloudDesinterdicoes || []).filter(d => d.interdicao_id === item.interdicao_id || d.interdicao_id === item.id),
                 riscoGrau: item.risco_grau || item.riscoGrau,
                 responsavelNome: item.responsavel_nome || item.responsavelNome,
                 medidaTipo: item.medida_tipo || item.medidaTipo,
@@ -73,6 +83,7 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                         ...localItem,
                         id: localItem.id,
                         interdicao_id: iid,
+                        desinterdicoes: localDesinterdicoes.filter(d => d.interdicao_id === iid || d.interdicaoId === iid),
                         created_at: localItem.createdAt || localItem.created_at || new Date().toISOString(),
                         isLocal: true,
                         synced: localItem.synced,
@@ -378,12 +389,17 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                                                 #{item.interdicao_id || '---'}
                                             </span>
                                             {item.status === 'Desinterditado' ? (
-                                                <span className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 uppercase">
-                                                    <CheckCircle size={10} />
+                                                <span className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
+                                                    <Sparkles size={10} />
                                                     Desinterditado
                                                 </span>
+                                            ) : item.status === 'Parcialmente Desinterditado' ? (
+                                                <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
+                                                    <FileText size={10} />
+                                                    Desint. Parcial
+                                                </span>
                                             ) : (
-                                                <span className="bg-red-50 dark:bg-red-900/20 text-red-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-red-100 dark:border-red-800 flex items-center gap-1 uppercase">
+                                                <span className="bg-red-50 dark:bg-red-900/20 text-red-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-red-100 dark:border-red-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
                                                     <AlertOctagon size={10} />
                                                     Interditado
                                                 </span>
@@ -427,6 +443,36 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                                             <span className="text-[10px] font-medium text-slate-400">{item.bairro || ''}</span>
                                         </p>
                                     </div>
+                                    {/* Status and History of De-interdictions */}
+                                    {item.desinterdicoes && item.desinterdicoes.length > 0 && (
+                                        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-800/20">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Sparkles size={14} className="text-green-600" />
+                                                <span className="text-[10px] font-black uppercase text-green-700 dark:text-green-400 tracking-wider">Histórico de Desinterdição</span>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {item.desinterdicoes.map((d, idx) => (
+                                                    <div key={d.id || idx} className="flex items-center justify-between text-[10px] bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-green-50 dark:border-green-900/30">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-slate-700 dark:text-slate-200">
+                                                                Data: {new Date(d.created_at).toLocaleDateString()}
+                                                            </span>
+                                                            <span className={`uppercase font-black ${d.tipo_desinterdicao === 'Parcial' ? 'text-orange-500' : 'text-green-600'}`}>
+                                                                {d.tipo_desinterdicao || 'Total'}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); window.open(`/desinterdicao/imprimir/${d.id}`, '_blank') }}
+                                                            className="flex items-center gap-1.5 px-2 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-200 transition-colors font-black uppercase tracking-tighter"
+                                                        >
+                                                            <Eye size={12} />
+                                                            PDF
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
@@ -452,13 +498,13 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao }) => {
                                         >
                                             <Printer size={18} />
                                         </button>
-                                        {(!item.status || item.status === 'Interditado') && (
+                                        {(!item.status || item.status === 'Interditado' || item.status === 'Parcialmente Desinterditado') && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onDesinterdicao(item); }}
                                                 className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-2xl transition-all active:scale-95"
                                                 title="Solicitar Desinterdição"
                                             >
-                                                <Plus size={18} className="text-green-500" />
+                                                <Sparkles size={18} />
                                             </button>
                                         )}
                                     </div>

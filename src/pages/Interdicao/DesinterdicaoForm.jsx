@@ -24,7 +24,8 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
         situacaoVerificada: '',
         observacoes: '',
         fotos: [],
-        documentos: []
+        documentos: [],
+        tipoDesinterdicao: 'Total' // 'Total' or 'Parcial'
     })
 
     // Auto-populate user data when profile loads
@@ -102,12 +103,14 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
             await saveDesinterdicaoOffline({
                 ...formData,
                 interdicao_id: formData.interdicaoId,
-                status_anterior: interdicao.status || 'Interditado'
+                status_anterior: interdicao.status || 'Interditado',
+                tipo_desinterdicao: formData.tipoDesinterdicao
             })
 
             // 2. Update Interdicao status
             if (updateInterdicaoStatus) {
-                await updateInterdicaoStatus(interdicao.id, 'Desinterditado')
+                const newStatus = formData.tipoDesinterdicao === 'Total' ? 'Desinterditado' : 'Parcialmente Desinterditado'
+                await updateInterdicaoStatus(interdicao.id, newStatus)
             }
 
             // 3. Generate PDF
@@ -115,7 +118,8 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
                 ...formData,
                 agente: formData.agente,
                 matricula: formData.matricula,
-                assinaturaAgente: userProfile?.signature
+                assinaturaAgente: userProfile?.signature,
+                tipo_desinterdicao: formData.tipoDesinterdicao
             }, 'desinterdicao')
 
             if (pdfResult.success) {
@@ -207,6 +211,37 @@ const DesinterdicaoForm = ({ interdicao, onBack }) => {
                     <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
                         <div className="w-1.5 h-6 bg-orange-500 rounded-full"></div>
                         <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">3. Avaliação Técnica</h2>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <label className={labelClasses}>Tipo de Desinterdição</label>
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                            <button
+                                type="button"
+                                onClick={() => handleChange('tipoDesinterdicao', 'Total')}
+                                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.tipoDesinterdicao === 'Total' 
+                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' 
+                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-400'}`}
+                            >
+                                <Sparkles size={20} />
+                                <span className="text-xs font-black uppercase tracking-widest">Total</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleChange('tipoDesinterdicao', 'Parcial')}
+                                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.tipoDesinterdicao === 'Parcial' 
+                                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' 
+                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-400'}`}
+                            >
+                                <FileText size={20} />
+                                <span className="text-xs font-black uppercase tracking-widest">Parcial</span>
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-bold mt-3 px-2">
+                            {formData.tipoDesinterdicao === 'Total' 
+                                ? '• Liberação total do imóvel. O processo será encerrado.' 
+                                : '• Liberação parcial de áreas específicas. A interdição continua ativa para o restante.'}
+                        </p>
                     </div>
 
                     <div>

@@ -124,7 +124,7 @@ const DesinterdicaoPrint = () => {
             <main className="flex flex-col items-center pt-20 print:pt-0 w-full">
                 <div className="w-[210mm] bg-white shadow-2xl min-h-[297mm] p-12 print:shadow-none print:p-0 print-container">
                     {/* Header */}
-                    <header className="flex flex-col items-center mb-10 border-b-4 border-green-600 pb-6">
+                    <header className={`flex flex-col items-center mb-10 border-b-4 pb-6 ${data.tipo_desinterdicao === 'Parcial' ? 'border-orange-500' : 'border-green-600'}`}>
                         <div className="w-full flex justify-between items-center mb-6">
                             <img src={LOGO_DEFESA_CIVIL} alt="Defesa Civil" className="h-20 w-auto" />
                             <div className="text-center flex-1">
@@ -133,9 +133,9 @@ const DesinterdicaoPrint = () => {
                             </div>
                             <img src={LOGO_SIGERD} alt="SIGERD" className="h-20 w-auto" />
                         </div>
-                        <h1 className="text-3xl font-black text-green-700 uppercase tracking-tight">Auto de Desinterdição</h1>
+                        <h1 className={`text-3xl font-black uppercase tracking-tight ${data.tipo_desinterdicao === 'Parcial' ? 'text-orange-700' : 'text-green-700'}`}>Auto de Desinterdição {data.tipo_desinterdicao || ''}</h1>
                         <div className="text-[10px] font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100 mt-4 uppercase tracking-[2px]">
-                            Referente à Interdição #{data.interdicaoId}
+                            Referente à Interdição #{data.interdicaoId || data.interdicao_id}
                         </div>
                     </header>
 
@@ -177,9 +177,15 @@ const DesinterdicaoPrint = () => {
                             </div>
                         </section>
 
-                        <div className="p-8 bg-green-100 border-2 border-green-200 rounded-3xl text-center avoid-break">
-                            <h3 className="text-xl font-black text-green-800 uppercase tracking-widest">Parecer: Desinterditado</h3>
-                            <p className="text-green-700 text-sm mt-2 font-bold">O referido imóvel / área encontra-se LIBERADO para uso regular por não apresentar riscos iminentes no momento da inspeção.</p>
+                        <div className={`p-8 border-2 rounded-3xl text-center avoid-break ${data.tipo_desinterdicao === 'Parcial' ? 'bg-orange-100 border-orange-200' : 'bg-green-100 border-green-200'}`}>
+                            <h3 className={`text-xl font-black uppercase tracking-widest ${data.tipo_desinterdicao === 'Parcial' ? 'text-orange-800' : 'text-green-800'}`}>
+                                Parecer: Desinterdição {data.tipo_desinterdicao || 'Total'}
+                            </h3>
+                            <p className={`${data.tipo_desinterdicao === 'Parcial' ? 'text-orange-700' : 'text-green-700'} text-sm mt-2 font-bold`}>
+                                {data.tipo_desinterdicao === 'Parcial' 
+                                    ? 'O referido imóvel / área encontra-se PARCIALMENTE LIBERADO. As restrições permanecem vigentes para as demais áreas não especificadas.' 
+                                    : 'O referido imóvel / área encontra-se LIBERADO para uso regular por não apresentar riscos iminentes no momento da inspeção.'}
+                            </p>
                         </div>
 
                         {photos.length > 0 && (
