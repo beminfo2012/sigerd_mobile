@@ -56,12 +56,15 @@ const processBreakdown = (records) => {
     const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
     const total = records.length;
 
-    return Object.keys(counts).map((label, idx) => ({
+    const breakdownItems = Object.keys(counts).map((label, idx) => ({
         label,
         count: counts[label],
         percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
         color: colorPalette[label] || defaultColors[idx % defaultColors.length]
     })).sort((a, b) => b.count - a.count);
+
+    // If sliced, the sum won't match. We'll handle slicing in the UI.
+    return breakdownItems;
 };
 
 const processLocations = (records) => {
@@ -82,7 +85,7 @@ const processLocations = (records) => {
             }
             if (isNaN(lat) || isNaN(lng)) return null
             const subtypes = v.subtipos_risco || v.subtiposRisco || []
-            const category = v.categoria_risco || v.categoriaRisco || 'Outros'
+            const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || 'Outros'
             return {
                 id: v.id,
                 formattedId: v.ocorrencia_id_format || v.ocorrencia_id || v.vistoria_id || v.vistoriaId || (v.id ? String(v.id).split('-')[0].toUpperCase() : ''),
@@ -329,9 +332,28 @@ const MobileDashboardView = ({
 }) => {
     const userProfile = useContext(UserContext);
     const isOperador = userProfile?.role === 'Operador';
-    const currentData = viewMode === 'vistorias' ? data.vistorias : data.ocorrencias;
-    const filteredLocations = mapFilter === 'Todas' ? currentData.locations : currentData.locations.filter(l => l.risk === mapFilter);
-    const typologies = ['Todas', ...currentData.breakdown.map(b => b.label)];
+    const currentData = viewMode === 'vistorias' ? data.vistorias : viewMode === 'ocorrencias' ? data.ocorrencias : (data.interdicoes || { stats: { total: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] });
+    const locations = currentData?.locations || [];
+    const filteredLocations = mapFilter === 'Todas' ? locations : locations.filter(l => l.risk === mapFilter);
+    const typologies = ['Todas', ...(currentData?.breakdown || []).map(b => b.label)];
+    const displayedBreakdown = currentData?.chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown;
+    
+    // Calculate "Outros" for the breakdown if more than 5 items
+    const breakdownToDisplay = (chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || [];
+    const topItems = breakdownToDisplay.slice(0, 5);
+    const otherItems = breakdownToDisplay.slice(5);
+    const othersCount = otherItems.reduce((acc, curr) => acc + curr.count, 0);
+    
+    if (othersCount > 0) {
+        const total = currentData?.stats?.total || 1;
+        topItems.push({
+            label: 'OUtros',
+            count: othersCount,
+            percentage: Math.round((othersCount / total) * 100),
+            color: 'bg-slate-300'
+        });
+    }
+
     return (
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans">
             <div className="p-5 space-y-8">
@@ -480,17 +502,21 @@ const MobileDashboardView = ({
                         </div>
                     </div>
                     <div className="space-y-6">
-                        {(chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown)?.slice(0, 5).map((item, idx) => (
+                        {topItems.map((item, idx) => (
                             <div key={idx}>
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
-                                    <span className="text-xs font-black text-slate-800 dark:text-slate-100">{item.count}</span>
+                                <div className="flex justify-between items-center mb-1.5 px-1">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase truncate max-w-[80%]">{item.label}</span>
+                                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 tabular-nums">{item.count}</span>
                                 </div>
-                                <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden">
+                                <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden shadow-inner">
                                     <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`} style={{ width: `${item.percentage}%` }} />
                                 </div>
                             </div>
                         ))}
+                        {breakdownToDisplay.length === 0 && (
+                             <div className="text-center py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Sem dados registrados</div>
+                        )}
+
                     </div>
                 </div>
 
@@ -514,15 +540,21 @@ const MobileDashboardView = ({
                         <div className="flex p-1 bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-[18px] border border-slate-100/50 dark:border-slate-700/50">
                             <button
                                 onClick={() => { setViewMode('vistorias'); setMapFilter('Todas'); }}
-                                className={`flex-1 py-3 text-xs font-black rounded-[14px] transition-all ${viewMode === 'vistorias' ? 'bg-white dark:bg-slate-700 shadow-lg text-blue-600 scale-[1.02]' : 'text-slate-500'}`}
+                                className={`flex-1 py-3 text-[10px] font-black rounded-[14px] transition-all flex items-center justify-center ${viewMode === 'vistorias' ? 'bg-white dark:bg-slate-700 shadow-lg text-blue-600 scale-[1.02]' : 'text-slate-500'}`}
                             >
                                 Vistorias
                             </button>
                             <button
                                 onClick={() => { setViewMode('ocorrencias'); setMapFilter('Todas'); }}
-                                className={`flex-1 py-3 text-xs font-black rounded-[14px] transition-all ${viewMode === 'ocorrencias' ? 'bg-white dark:bg-slate-700 shadow-lg text-blue-600 scale-[1.02]' : 'text-slate-500'}`}
+                                className={`flex-1 py-3 text-[10px] font-black rounded-[14px] transition-all flex items-center justify-center ${viewMode === 'ocorrencias' ? 'bg-white dark:bg-slate-700 shadow-lg text-blue-600 scale-[1.02]' : 'text-slate-500'}`}
                             >
                                 Ocorrências
+                            </button>
+                            <button
+                                onClick={() => { setViewMode('interdicoes'); setMapFilter('Todas'); }}
+                                className={`flex-1 py-3 text-[10px] font-black rounded-[14px] transition-all flex items-center justify-center ${viewMode === 'interdicoes' ? 'bg-white dark:bg-slate-700 shadow-lg text-blue-600 scale-[1.02]' : 'text-slate-500'}`}
+                            >
+                                Interdições
                             </button>
                         </div>
                     </div>
@@ -561,7 +593,9 @@ const MobileDashboardView = ({
                                                             loc.status === 'Atendido' ? '#3b82f6' :
                                                                 loc.status === 'Finalizada' ? '#10b981' :
                                                                     '#ef4444') // Pendente
-                                                : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
+                                                : viewMode === 'interdicoes'
+                                                    ? (loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b')
+                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
                                             fillOpacity: 0.9,
                                             weight: 2
                                         }}
@@ -570,7 +604,7 @@ const MobileDashboardView = ({
                                             <div className="p-1">
                                                 <div className="flex justify-between items-center mb-1">
                                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
-                                                        {viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
+                                                        {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
                                                     </span>
                                                     {viewMode === 'ocorrencias' && (
                                                         <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
@@ -597,10 +631,15 @@ const MobileDashboardView = ({
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>Pendente</div>
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-slate-500"></div>Cancelada</div>
                                     </>
-                                ) : (
+                                ) : viewMode === 'vistorias' ? (
                                     <>
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>Risco Alto</div>
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>Risco Baixo</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-600"></div>Interd. Total</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div>Interd. Parcial</div>
                                     </>
                                 )}
                             </div>
@@ -737,9 +776,10 @@ const WebViewDashboardView = ({
 }) => {
     const userProfile = useContext(UserContext);
     const isOperador = userProfile?.role === 'Operador';
-    const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : (data.ocorrencias || data);
-    const filteredLocations = mapFilter === 'Todas' ? (currentData.locations || []) : (currentData.locations || []).filter(l => l.risk === mapFilter);
-    const typologies = ['Todas', ...(currentData.breakdown || []).map(b => b.label)];
+    const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : viewMode === 'ocorrencias' ? (data.ocorrencias || data) : (data.interdicoes || data);
+    const locations = currentData?.locations || [];
+    const filteredLocations = mapFilter === 'Todas' ? locations : locations.filter(l => l.risk === mapFilter);
+    const typologies = ['Todas', ...(currentData?.breakdown || []).map(b => b.label)];
 
     const isTvMode = new URLSearchParams(window.location.search).get('tvMode') === 'true';
     if (isTvMode) {
@@ -982,7 +1022,9 @@ const WebViewDashboardView = ({
                                                             loc.status === 'Atendido' ? '#3b82f6' :
                                                                 loc.status === 'Finalizada' ? '#10b981' :
                                                                     '#ef4444') // Pendente
-                                                : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
+                                                : viewMode === 'interdicoes'
+                                                    ? (loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b')
+                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
                                             fillOpacity: 0.9,
                                             weight: 2
                                         }}
@@ -991,7 +1033,7 @@ const WebViewDashboardView = ({
                                             <div className="p-2">
                                                 <div className="flex justify-between items-center mb-1">
                                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
-                                                        {viewMode === 'vistorias' ? 'Vistoria' : 'Ocorrência'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
+                                                        {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
                                                     </span>
                                                     {viewMode === 'ocorrencias' && (
                                                         <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
@@ -1020,12 +1062,17 @@ const WebViewDashboardView = ({
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-500"></div>Pendente</div>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-slate-500"></div>Cancelada</div>
                                     </>
-                                ) : (
+                                ) : viewMode === 'vistorias' ? (
                                     <>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Risco Iminente</div>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Risco Alto</div>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-500"></div>Risco Médio</div>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-emerald-500"></div>Risco Baixo</div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Interd. Total</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Interd. Parcial</div>
                                     </>
                                 )}
                             </div>
@@ -1035,7 +1082,7 @@ const WebViewDashboardView = ({
                     {/* Resumo Situacional Column */}
                     <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
                         <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</h3>
+                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : viewMode === 'ocorrencias' ? 'Ocorrências' : 'Interdições'}</h3>
                             <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                                 <button
                                     onClick={() => setChartMode('tipologia')}
@@ -1052,20 +1099,34 @@ const WebViewDashboardView = ({
                             </div>
                         </div>
                         <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                            {(chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown)?.slice(0, 10).map((item, idx) => (
-                                <div key={idx} className="group cursor-default">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors tracking-tight">{item.label}</span>
-                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-100">{item.count}</span>
+                            {(() => {
+                                const list = (chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || [];
+                                const top = list.slice(0, 10);
+                                const rest = list.slice(10);
+                                const restCount = rest.reduce((acc, c) => acc + c.count, 0);
+                                if (restCount > 0) {
+                                    top.push({ label: 'Outros', count: restCount, percentage: Math.round((restCount / (currentData?.stats?.total || 1)) * 100), color: 'bg-slate-300' });
+                                }
+                                return top.map((item, idx) => (
+                                    <div key={idx} className="group cursor-default">
+                                        <div className="flex justify-between items-center mb-2 px-1">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors tracking-tight truncate max-w-[70%]">{item.label}</span>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-sm font-black text-slate-800 dark:text-slate-100 tabular-nums">{item.count}</span>
+                                                <span className="text-[9px] font-bold text-slate-300">({item.percentage}%)</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-full h-2 overflow-hidden shadow-inner border border-slate-100 dark:border-slate-800">
+                                            <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-600'} shadow-[0_0_5px_rgba(0,0,0,0.05)]`} style={{ width: `${item.percentage}%` }} />
+                                        </div>
                                     </div>
-                                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`}
-                                            style={{ width: `${item.percentage}%` }}
-                                        />
-                                    </div>
+                                ));
+                            })()}
+                            {((chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || []).length === 0 && (
+                                <div className="text-center py-10 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                    Sem dados registrados
                                 </div>
-                            ))}
+                            )}
                         </div>
 
                         {/* Pluviômetros (Relocado para o final da lista situacional) */}
@@ -1264,7 +1325,8 @@ const Dashboard = () => {
             setData({
                 vistorias: { stats: { total: initialAllV.length }, breakdown: processBreakdown(initialAllV), localidadeBreakdown: processLocalidadeBreakdown(initialAllV), locations: processLocations(initialAllV) },
                 ocorrencias: { stats: { total: initialAllO.length, today: todayOccurrences }, breakdown: processBreakdown(initialAllO), localidadeBreakdown: processLocalidadeBreakdown(initialAllO), locations: processLocations(initialAllO) },
-                stats: { totalVistorias: initialAllV.length, activeOccurrences: todayOccurrences, inmetAlertsCount: 0 },
+                interdicoes: { stats: { total: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] },
+                stats: { totalVistorias: initialAllV.length, activeOccurrences: todayOccurrences, totalOccurrences: initialAllO.length, totalInterdicoes: 0, inmetAlertsCount: 0 },
                 breakdown: processBreakdown(initialAllV),
                 locations: processLocations(initialAllV),
                 alerts: []
@@ -1407,7 +1469,7 @@ const Dashboard = () => {
             await pullAllData();
             await syncPendingData()
             const [newData, newDetail] = await Promise.all([api.getDashboardData(), getPendingSyncCount()])
-            setData(newData)
+            if (newData) setData(newData)
             setSyncDetail(newDetail)
             toast.success('Sincronizado', 'Dados atualizados com sucesso.')
         } catch (error) {

@@ -119,28 +119,49 @@ export const api = {
                 fetch('/api/inmet').catch(() => null)
             ]);
 
-            // 2. Process Vistorias
+            // 2. Process Vistorias (Improved deduplication to avoid data loss)
             const vData = remoteVistorias.data || [];
             if (navigator.onLine && vData.length > 0) await saveRemoteVistoriasCache(vData).catch(() => { });
             const vistoriasCache = (!vData.length) ? await getRemoteVistoriasCache() : vData;
 
+            // Use Map to merge, but prefer UUID/local ID to avoid collisions on possibly duplicate human-readable IDs
             const vMap = new Map();
-            vistoriasCache.forEach(v => vMap.set(v.vistoria_id || v.id, v));
-            localVistorias.filter(v => !v.synced).forEach(v => vMap.set(v.vistoriaId || v.id, v));
+            // First pass: add all remote/cached items
+            vistoriasCache.forEach(v => {
+                const key = v.id || v.vistoria_id || v.vistoriaId;
+                if (key) vMap.set(key, v);
+            });
+            // Second pass: add local unsynced items (they overwrite remote if same ID, or add new)
+            localVistorias.filter(v => !v.synced).forEach(v => {
+                const key = v.id || v.vistoriaId || v.vistoria_id;
+                if (key) vMap.set(key, v);
+            });
             const allVistorias = Array.from(vMap.values());
 
-            // 3. Process Ocorrencias
+            // 3. Process Ocorrencias (Improved deduplication)
             const oData = remoteOcorrencias.data || [];
             const oMap = new Map();
-            oData.forEach(o => oMap.set(o.ocorrencia_id || o.id, o));
-            localOcorrencias.filter(o => !o.synced).forEach(o => oMap.set(o.ocorrencia_id || o.id, o));
+            oData.forEach(o => {
+                const key = o.id || o.ocorrencia_id || o.ocorrencia_id_format;
+                if (key) oMap.set(key, o);
+            });
+            localOcorrencias.filter(o => !o.synced).forEach(o => {
+                const key = o.id || o.ocorrencia_id || o.ocorrencia_id_format;
+                if (key) oMap.set(key, o);
+            });
             const allOcorrencias = Array.from(oMap.values());
 
-            // 4. Process Interdicoes
+            // 4. Process Interdicoes (Improved deduplication)
             const iData = remoteInterdicoes.data || [];
             const iMap = new Map();
-            iData.forEach(i => iMap.set(i.interdicao_id || i.id, i));
-            localInterdicoes.filter(i => !i.synced).forEach(i => iMap.set(i.interdicaoId || i.id, i));
+            iData.forEach(i => {
+                const key = i.id || i.interdicao_id;
+                if (key) iMap.set(key, i);
+            });
+            localInterdicoes.filter(i => !i.synced).forEach(i => {
+                const key = i.id || i.interdicaoId || i.interdicao_id;
+                if (key) iMap.set(key, i);
+            });
             const allInterdicoes = Array.from(iMap.values());
 
             // 5. INMET
@@ -171,7 +192,7 @@ export const api = {
                     stats: { total: allInterdicoes.length },
                     breakdown: processBreakdown(allInterdicoes.map(i => ({ ...i, categoriaRisco: i.risco_grau }))),
                     localidadeBreakdown: processLocalidadeBreakdown(allInterdicoes),
-                    locations: processListToMapData(allInterdicoes)
+                    locations: processListToMapData(allInterdicoes.map(i => ({ ...i, categoriaRisco: i.risco_grau || i.riscoGrau })))
                 },
                 stats: {
                     totalVistorias: allVistorias.length,
