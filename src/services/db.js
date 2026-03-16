@@ -716,8 +716,10 @@ export const syncSingleItem = async (storeName, item, db) => {
                 nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
                 subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : 
                                (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
+                subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
                 descricao_danos: item.descricao_danos || '',
+                informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
                 observacoes: item.observacoes || '',
                 fotos: processedPhotos,
                 assinatura_agente: signatureAgenteUrl,
