@@ -15,21 +15,47 @@ const DesinterdicaoPrint = () => {
         const fetchData = async () => {
             if (!id) return;
             try {
-                // 1. Try Local DB
                 const db = await initDB();
-                const localMatch = await db.get('desinterdicoes', id);
 
-                if (localMatch) {
-                    setData(localMatch);
+                // 1. Try as local numeric ID
+                const numericId = parseInt(id);
+                if (!isNaN(numericId)) {
+                    const localById = await db.get('desinterdicoes', numericId);
+                    if (localById) {
+                        setData(localById);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                // 2. Try by supabase_id (UUID string)
+                try {
+                    const localBySupId = await db.getFromIndex('desinterdicoes', 'supabase_id', id);
+                    if (localBySupId) {
+                        setData(localBySupId);
+                        setLoading(false);
+                        return;
+                    }
+                } catch (e) { /* index may not exist in older DB versions */ }
+
+                // 3. Search all local records
+                const all = await db.getAll('desinterdicoes');
+                const found = all.find(d => 
+                    String(d.id) === String(id) || 
+                    d.supabase_id === id ||
+                    (d.interdicao_id && String(d.id) === String(id))
+                );
+                if (found) {
+                    setData(found);
                     setLoading(false);
                     return;
                 }
 
-                // 2. Fetch from Supabase
+                // 4. Fetch from Supabase
                 const { data: reportData, error } = await supabase
                     .from('desinterdicoes')
                     .select('*')
-                    .or(`id.eq.${id}`)
+                    .eq('id', id)
                     .single();
 
                 if (reportData) {
