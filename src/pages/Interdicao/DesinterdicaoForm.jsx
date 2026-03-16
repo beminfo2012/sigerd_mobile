@@ -17,7 +17,9 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
     const [lastGeneratedId, setLastGeneratedId] = useState(null)
 
     const [formData, setFormData] = useState({
-        id: initialData?.id || null,
+        // Only store local numeric ID for edits; UUIDs go into supabase_id
+        id: (initialData?.id && typeof initialData.id === 'number') ? initialData.id : undefined,
+        supabase_id: initialData?.supabase_id || (typeof initialData?.id === 'string' && initialData?.id?.length > 20 ? initialData.id : undefined),
         interdicaoId: initialData?.interdicao_id || initialData?.interdicaoId || interdicao?.interdicao_id || interdicao?.interdicaoId || interdicao?.id,
         dataNovaVistoria: initialData?.data_nova_vistoria || initialData?.dataNovaVistoria || new Date().toISOString().split('T')[0],
         agente: initialData?.agente || userProfile?.name || '',

@@ -1598,18 +1598,33 @@ export const deleteAgendaLocal = async (id) => {
 
 export const saveDesinterdicaoOffline = async (data) => {
     const db = await initDB();
-    const id = await db.put('desinterdicoes', {
-        ...data,
+
+    // Prepare a clean payload — strip UUID strings from 'id' for IndexedDB autoIncrement
+    const { id: rawId, supabase_id: rawSupId, ...rest } = data;
+
+    // Determine if this is an edit (has a local numeric id) or a new record
+    const isEdit = rawId && typeof rawId === 'number';
+    // If rawId is a UUID (string with length > 20), it's a supabase ID, not local
+    const localNumericId = isEdit ? rawId : undefined;
+    const supabaseId = rawSupId || (typeof rawId === 'string' && rawId.length > 20 ? rawId : undefined);
+
+    const payload = {
+        ...rest,
+        ...(localNumericId ? { id: localNumericId } : {}), // Only set id for edits
+        supabase_id: supabaseId || undefined,
+        interdicao_id: data.interdicao_id || data.interdicaoId,
         createdAt: data.createdAt || new Date().toISOString(),
         synced: false
-    });
+    };
+
+    const savedId = await db.put('desinterdicoes', payload);
 
     if (navigator.onLine) {
-        const item = await db.get('desinterdicoes', id);
+        const item = await db.get('desinterdicoes', savedId);
         await syncSingleItem('desinterdicoes', item, db);
     }
 
-    return id;
+    return savedId;
 }
 
 export const deleteDesinterdicaoLocal = async (id, supabase_id = null) => {
