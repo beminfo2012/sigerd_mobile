@@ -970,7 +970,7 @@ export const pullAllData = async (force = false) => {
             { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
             //{ table: 'despachos', store: 'despachos', key: 'despacho_id' },
             { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' },
-            { table: 'agenda_vistorias', store: 'agenda_vistorias', key: 'id' },
+            { table: 'agenda_vistorias', store: 'agenda_vistorias', key: null },
             { table: 'desinterdicoes', store: 'desinterdicoes', key: null } // Use null to force supabase_id matching
         ];
 

@@ -236,7 +236,8 @@ const Agenda = () => {
         data_atendimento: null,
         concluido: false,
         observacao_outro: '',
-        data_prevista: format(addDays(new Date(), 10), "yyyy-MM-dd")
+        data_prevista: format(addDays(new Date(), 10), "yyyy-MM-dd"),
+        supabase_id: null
     });
 
     const resetForm = () => {
@@ -253,7 +254,8 @@ const Agenda = () => {
             data_atendimento: null,
             concluido: false,
             observacao_outro: '',
-            data_prevista: format(addDays(new Date(), 10), "yyyy-MM-dd")
+            data_prevista: format(addDays(new Date(), 10), "yyyy-MM-dd"),
+            supabase_id: null
         });
     };
 
@@ -300,8 +302,26 @@ const Agenda = () => {
                     if (v.supabase_id) vistoriasMap.set(String(v.supabase_id), v);
                 });
 
+                // DE-DUPLICAÇÃO: Evitar mostrar o mesmo item duas vezes se houver colisão de supabase_id
+                // (Ocorre quando um item é baixado com UUID no campo 'id' mas já existe localmente com integer ID)
+                const uniqueAgendasMap = new Map();
+                dbAgendas.forEach(item => {
+                    const sid = item.supabase_id || item.id_supabase;
+                    if (sid) {
+                        const existing = uniqueAgendasMap.get(sid);
+                        if (!existing || (new Date(item.updated_at || 0) > new Date(existing.updated_at || 0))) {
+                            uniqueAgendasMap.set(sid, item);
+                        }
+                    } else {
+                        // Itens ainda não sincronizados usam o id local como chave
+                        uniqueAgendasMap.set(`local-${item.id}`, item);
+                    }
+                });
+
+                const agendasUnicas = Array.from(uniqueAgendasMap.values());
+
                 // NOVO: Mostra apenas o que está efetivamente na tabela de agenda
-                const processadas = dbAgendas.map(item => {
+                const processadas = agendasUnicas.map(item => {
                     const limitInfo = calculateLimit(item.data_abertura, item.categoria_risco, '', item.data_prevista);
                     
                     // Check linked vistoria using the Map (Optional/Manual and respect the new "concluido" flag)
@@ -489,6 +509,7 @@ const Agenda = () => {
 
     const handleEdit = (agenda) => {
         setFormData({
+            ...agenda,
             id: agenda.id || agenda.agenda_id,
             numero_processo: agenda.numero_processo || '',
             data_abertura: format(new Date(agenda.data_abertura), "yyyy-MM-dd'T'HH:mm"),
@@ -502,7 +523,8 @@ const Agenda = () => {
             data_atendimento: agenda.data_atendimento || null,
             concluido: agenda.concluido || false,
             observacao_outro: agenda.observacao_outro || '',
-            data_prevista: agenda.data_prevista || format(addDays(new Date(agenda.data_abertura), 10), "yyyy-MM-dd")
+            data_prevista: agenda.data_prevista || format(addDays(new Date(agenda.data_abertura), 10), "yyyy-MM-dd"),
+            supabase_id: agenda.supabase_id || agenda.id_supabase || null
         });
         setShowModal(true);
     };

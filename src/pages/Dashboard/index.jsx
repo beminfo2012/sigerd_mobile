@@ -348,9 +348,9 @@ const CATEGORIAS_RISCO = [
         emoji: '⛰️',
         subtipos: [
             { id: 'Deslizamento de Solo', label: 'Deslizamento', emoji: '⛰️', color: '#f97316' },
-            { id: 'Corrida de Massa',    label: 'Corrida de Massa', emoji: '🪨', color: '#dc2626' },
-            { id: 'Solapamento',         label: 'Solapamento', emoji: '🏗️', color: '#8b5cf6' },
-            { id: 'Erosão',              label: 'Erosão', emoji: '🌿', color: '#f59e0b' },
+            { id: 'Corrida de Massa', label: 'Corrida de Massa', emoji: '🪨', color: '#dc2626' },
+            { id: 'Solapamento', label: 'Solapamento', emoji: '🏗️', color: '#8b5cf6' },
+            { id: 'Erosão', label: 'Erosão', emoji: '🌿', color: '#f59e0b' },
         ]
     },
     {
@@ -359,8 +359,8 @@ const CATEGORIAS_RISCO = [
         color: '#3b82f6',
         emoji: '🌊',
         subtipos: [
-            { id: 'Inundação',           label: 'Inundação', emoji: '🌊', color: '#3b82f6' },
-            { id: 'Enxurrada',           label: 'Enxurrada', emoji: '💧', color: '#2563eb' },
+            { id: 'Inundação', label: 'Inundação', emoji: '🌊', color: '#3b82f6' },
+            { id: 'Enxurrada', label: 'Enxurrada', emoji: '💧', color: '#2563eb' },
         ]
     }
 ];
@@ -535,12 +535,12 @@ const CamadasControl = ({ tiposAtivos, setTiposAtivos, position = 'topleft' }) =
                             return (
                                 <div key={cat.id} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                                     {/* Categoria Header */}
-                                    <div 
+                                    <div
                                         onClick={() => toggleCategoria(cat.id)}
-                                        style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            gap: '8px', 
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
                                             cursor: 'pointer',
                                             background: '#f8fafc',
                                             padding: '4px 8px',
@@ -735,7 +735,7 @@ const MobileDashboardView = ({
                             <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
                                 <BarChart3 size={28} />
                             </div>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Monitoramento</span>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Pluviômetros</span>
                         </div>
                         {!isOperador && (
                             <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer">
@@ -879,11 +879,11 @@ const MobileDashboardView = ({
                                         }}
                                     >
                                         <Popup minWidth={160}>
-                                            <div style={{fontFamily:'sans-serif'}}>
-                                                <div style={{fontSize:'9px',fontWeight:900,color:'#3b82f6',textTransform:'uppercase',letterSpacing:'2px',marginBottom:'2px'}}>🌧️ Pluviômetro CEMADEN</div>
-                                                <div style={{fontSize:'12px',fontWeight:700,color:'#1e293b',marginBottom:'2px'}}>{station.name}</div>
-                                                <div style={{fontSize:'14px',fontWeight:900,color: getPluvioColor(station.level)}}>{(station.rainRaw||0).toFixed(1)} mm</div>
-                                                <div style={{fontSize:'9px',color:'#94a3b8',marginTop:'2px'}}>Acumulado 24h • {station.level}</div>
+                                            <div style={{ fontFamily: 'sans-serif' }}>
+                                                <div style={{ fontSize: '9px', fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '2px' }}>🌧️ Pluviômetro CEMADEN</div>
+                                                <div style={{ fontSize: '12px', fontWeight: 700, color: '#1e293b', marginBottom: '2px' }}>{station.name}</div>
+                                                <div style={{ fontSize: '14px', fontWeight: 900, color: getPluvioColor(station.level) }}>{(station.rainRaw || 0).toFixed(1)} mm</div>
+                                                <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '2px' }}>Acumulado 24h • {station.level}</div>
                                             </div>
                                         </Popup>
                                     </CircleMarker>
@@ -1362,11 +1362,11 @@ const WebViewDashboardView = ({
                                         }}
                                     >
                                         <Popup minWidth={180}>
-                                            <div style={{fontFamily:'sans-serif'}}>
-                                                <div style={{fontSize:'9px',fontWeight:900,color:'#3b82f6',textTransform:'uppercase',letterSpacing:'2px',marginBottom:'4px'}}>🌧️ Pluviômetro CEMADEN</div>
-                                                <div style={{fontSize:'13px',fontWeight:700,color:'#1e293b',marginBottom:'4px'}}>{station.name}</div>
-                                                <div style={{fontSize:'18px',fontWeight:900,color: getPluvioColor(station.level)}}>{(station.rainRaw||0).toFixed(1)} <span style={{fontSize:'12px'}}>mm</span></div>
-                                                <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'4px',fontWeight:600}}>Acumulado 24h • Nível: <strong style={{color: getPluvioColor(station.level)}}>{station.level}</strong></div>
+                                            <div style={{ fontFamily: 'sans-serif' }}>
+                                                <div style={{ fontSize: '9px', fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '4px' }}>🌧️ Pluviômetro CEMADEN</div>
+                                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>{station.name}</div>
+                                                <div style={{ fontSize: '18px', fontWeight: 900, color: getPluvioColor(station.level) }}>{(station.rainRaw || 0).toFixed(1)} <span style={{ fontSize: '12px' }}>mm</span></div>
+                                                <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>Acumulado 24h • Nível: <strong style={{ color: getPluvioColor(station.level) }}>{station.level}</strong></div>
                                             </div>
                                         </Popup>
                                     </CircleMarker>
