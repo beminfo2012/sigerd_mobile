@@ -817,7 +817,9 @@ const Agenda = () => {
                                             {v.solicitante && <div className="text-[9px] text-slate-400">Req: {v.solicitante}</div>}
                                         </td>
                                         <td className="p-4">
-                                            <div className="font-bold text-slate-700 dark:text-slate-300">{v.categoria_risco}</div>
+                                            <div className="font-bold text-slate-700 dark:text-slate-300">
+                                                {v.categoria_risco === 'Outros' && v.observacao_outro ? v.observacao_outro : (v.categoria_risco || 'Geral')}
+                                            </div>
                                             <div className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Regra: {v.prazoDias} dias</div>
                                         </td>
                                         <td className="p-4 text-xs text-slate-600 dark:text-slate-400">{format(new Date(v.data_abertura), 'dd/MM/yyyy HH:mm')}</td>
