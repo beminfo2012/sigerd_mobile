@@ -148,9 +148,16 @@ const PRAZOS = {
 };
 
 // Helper: Calculate limits based on category and start date
-const calculateLimit = (dataAbertura, categoriaRisco, subtipos = '') => {
+const calculateLimit = (dataAbertura, categoriaRisco, subtipos = '', dataPrevistaManual = null) => {
     const protocoloDate = dataAbertura ? new Date(dataAbertura) : new Date();
     
+    // Se for Outros e houver data manual, usa ela
+    if (categoriaRisco === 'Outros' && dataPrevistaManual) {
+        const dataLimite = new Date(dataPrevistaManual);
+        const prazoDias = differenceInDays(dataLimite, protocoloDate);
+        return { dataProtocolo: protocoloDate, prazoDias, dataLimite };
+    }
+
     // Default 10 days
     let prazoDias = PRAZOS.DEFAULT;
     
@@ -203,7 +210,7 @@ const Agenda = () => {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [agendaToDelete, setAgendaToDelete] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('todos'); // 'todos', 'integrados', 'pendentes'
+    const [filterStatus, setFilterStatus] = useState('todos'); // 'todos', 'pendentes'
     
     // Modal & Linking States
     const [showModal, setShowModal] = useState(false);
@@ -226,7 +233,10 @@ const Agenda = () => {
         informacoes_complementares: '',
         status: 'Protocolada',
         vistoria_id: '',
-        data_atendimento: null
+        data_atendimento: null,
+        concluido: false,
+        observacao_outro: '',
+        data_prevista: format(addDays(new Date(), 10), "yyyy-MM-dd")
     });
 
     const resetForm = () => {
@@ -240,7 +250,10 @@ const Agenda = () => {
             informacoes_complementares: '',
             status: 'Protocolada',
             vistoria_id: '',
-            data_atendimento: null
+            data_atendimento: null,
+            concluido: false,
+            observacao_outro: '',
+            data_prevista: format(addDays(new Date(), 10), "yyyy-MM-dd")
         });
     };
 
@@ -289,21 +302,19 @@ const Agenda = () => {
 
                 // NOVO: Mostra apenas o que está efetivamente na tabela de agenda
                 const processadas = dbAgendas.map(item => {
-                    const limitInfo = calculateLimit(item.data_abertura, item.categoria_risco, '');
+                    const limitInfo = calculateLimit(item.data_abertura, item.categoria_risco, '', item.data_prevista);
                     
-                    // Check linked vistoria using the Map (High Performance)
+                    // Check linked vistoria using the Map (Optional/Manual and respect the new "concluido" flag)
                     let linkedVistoria = null;
                     if (item.vistoria_id) {
                         linkedVistoria = vistoriasMap.get(String(item.vistoria_id));
                     }
-                    
-                    if (!linkedVistoria && item.numero_processo) {
-                        linkedVistoria = vistoriasMap.get(String(item.numero_processo));
-                    }
 
-                    // Se vinculou, parar contagem na data do protocolo/criação da vistoria
+                    // Se vinculou ou marcou como concluído manual, parar contagem
                     let targetDate = new Date();
-                    if (linkedVistoria) {
+                    if (item.concluido) {
+                        targetDate = item.data_conclusao ? new Date(item.data_conclusao) : new Date();
+                    } else if (linkedVistoria) {
                         const rawDate = linkedVistoria.data_hora || linkedVistoria.createdAt || linkedVistoria.created_at || today;
                         targetDate = new Date(rawDate);
                     }
@@ -317,8 +328,9 @@ const Agenda = () => {
                     const diasRestantes = differenceInDays(dLimite, dTarget);
                     const baseStatus = item.status || 'Protocolada';
                     
-                    // Vistoria completion check
-                    const isConcluido = linkedVistoria?.status === 'Finalizada' || 
+                    // Concluido check
+                    const isConcluido = item.concluido || 
+                                      linkedVistoria?.status === 'Finalizada' || 
                                       linkedVistoria?.status === 'Concluída';
                                       
                     const finalStatus = isConcluido ? 'Concluída' : baseStatus;
@@ -406,9 +418,7 @@ const Agenda = () => {
         let f = agendas;
         
         // Filtro por integração
-        if (filterStatus === 'integrados') {
-            f = f.filter(v => !!v.vistoria_id || v.is_legacy_vistoria);
-        } else if (filterStatus === 'pendentes') {
+        if (filterStatus === 'pendentes') {
             f = f.filter(v => !v.vistoria_id && !v.is_legacy_vistoria);
         }
 
@@ -452,7 +462,7 @@ const Agenda = () => {
             const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
             
             // Calcular data limite antes de salvar para persistir no banco
-            const { dataLimite } = calculateLimit(formData.data_abertura, formData.categoria_risco);
+            const { dataLimite } = calculateLimit(formData.data_abertura, formData.categoria_risco, '', formData.data_prevista);
 
             // Verificar se há uma vistoria vinculada selecionada para pegar a data de atendimento
             let dataAtendimento = formData.data_atendimento;
@@ -477,12 +487,22 @@ const Agenda = () => {
         }
     };
 
-    const handleEdit = (agenda, e) => {
-        if (e) e.stopPropagation();
+    const handleEdit = (agenda) => {
         setFormData({
-            ...agenda,
-            data_abertura: agenda.data_abertura ? format(new Date(agenda.data_abertura), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-            vistoria_id: agenda.vistoria_id || ''
+            id: agenda.id || agenda.agenda_id,
+            numero_processo: agenda.numero_processo || '',
+            data_abertura: format(new Date(agenda.data_abertura), "yyyy-MM-dd'T'HH:mm"),
+            categoria_risco: agenda.categoria_risco || '',
+            solicitante: agenda.solicitante || '',
+            endereco: agenda.endereco || '',
+            bairro: agenda.bairro || '',
+            informacoes_complementares: agenda.informacoes_complementares || '',
+            status: agenda.status || 'Protocolada',
+            vistoria_id: agenda.vistoria_id || '',
+            data_atendimento: agenda.data_atendimento || null,
+            concluido: agenda.concluido || false,
+            observacao_outro: agenda.observacao_outro || '',
+            data_prevista: agenda.data_prevista || format(addDays(new Date(agenda.data_abertura), 10), "yyyy-MM-dd")
         });
         setShowModal(true);
     };
@@ -531,12 +551,29 @@ const Agenda = () => {
             toast.success('Sucesso', 'Vistoria vinculada com sucesso!');
             setShowLinkModal(false);
             setAgendaToLink(null);
+            setRefreshCount(prev => prev + 1);
         } catch (e) {
             console.error(e);
             toast.error('Erro', 'Erro ao vincular.');
         }
     };
 
+    const handleToggleConcluido = async (agenda, e) => {
+        if (e) e.stopPropagation();
+        try {
+            await saveAgendaOffline({
+                ...agenda,
+                concluido: !agenda.concluido,
+                data_conclusao: !agenda.concluido ? new Date().toISOString() : null,
+                status: !agenda.concluido ? 'Concluída' : 'Protocolada'
+            });
+            toast.success('Sucesso', agenda.concluido ? 'Agendamento reaberto.' : 'Agendamento concluído!');
+            setRefreshCount(prev => prev + 1);
+        } catch (e) {
+            console.error(e);
+            toast.error('Erro', 'Falha ao atualizar status.');
+        }
+    };
 
     if (loading) {
         return <div className="p-8 text-center text-slate-500 font-bold tracking-widest uppercase">Carregando Agenda...</div>;
@@ -616,12 +653,7 @@ const Agenda = () => {
                     >
                         Todos
                     </button>
-                    <button 
-                        onClick={() => setFilterStatus('integrados')}
-                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === 'integrados' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
-                    >
-                        Vinculados
-                    </button>
+
                     <button 
                         onClick={() => setFilterStatus('pendentes')}
                         className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterStatus === 'pendentes' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700'}`}
@@ -672,40 +704,57 @@ const Agenda = () => {
                                 .filter(v => v.statusOperacional !== 'Concluída' && !v.linkedVistoria)
                                 .sort((a, b) => a.diasRestantes - b.diasRestantes)
                                 .map(v => (
-                                <div key={v.id || v.agenda_id} className={`flex justify-between items-center p-4 rounded-[16px] border ${v.riscoColor.border} ${v.riscoColor.bg} cursor-pointer hover:scale-[1.01] transition-transform shadow-sm group`} onClick={(e) => handleShowDetails(v, e)}>
-                                    <div>
+                                <div key={v.id || v.agenda_id} className={`flex justify-between items-center p-4 rounded-[16px] border ${v.concluido ? 'border-emerald-200 bg-emerald-50/30' : v.riscoColor.border + ' ' + v.riscoColor.bg} cursor-pointer hover:scale-[1.01] transition-transform shadow-sm group`} onClick={(e) => handleShowDetails(v, e)}>
+                                    <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className={`text-[10px] font-black uppercase tracking-widest ${v.riscoColor.text}`}>{v.riscoColor.label}</span>
+                                            {v.concluido ? (
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-1"><CheckCircle2 size={12}/> Concluído</span>
+                                            ) : (
+                                                <span className={`text-[10px] font-black uppercase tracking-widest ${v.riscoColor.text}`}>{v.riscoColor.label}</span>
+                                            )}
                                             <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/50 dark:bg-slate-950/30 text-slate-600 dark:text-slate-300 uppercase font-bold">{v.numero_processo}</span>
                                             {v.linkedVistoria && (
                                                 <span className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[8px] font-black uppercase flex items-center gap-1"><Link size={10}/> Integrada</span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h4 className={`font-black ${v.riscoColor.text}`}>{v.categoria_risco || 'Geral'}</h4>
-                                            {!v.linkedVistoria && !v.is_legacy_vistoria && isCoordinator && (
+                                            <h4 className={`font-black ${v.concluido ? 'text-emerald-700' : v.riscoColor.text}`}>
+                                                {v.categoria_risco === 'Outros' && v.observacao_outro ? v.observacao_outro : (v.categoria_risco || 'Geral')}
+                                            </h4>
+                                            {!v.concluido && !v.linkedVistoria && !v.is_legacy_vistoria && isCoordinator && (
                                                 <div className="flex gap-2">
                                                     <button onClick={(e) => handleOpenLinkModal(v, e)} className="text-[9px] font-black uppercase bg-slate-100 dark:bg-slate-800 px-2 rounded text-slate-500 hover:text-blue-600 transition-colors">Vincular</button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleEdit(v); }} className="p-1 text-slate-400 hover:text-blue-500"><Edit2 size={12}/></button>
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-xs opacity-70 mt-0.5">{v.endereco || 'Endereço não informado'}</p>
+                                        <p className="text-xs opacity-70 mt-0.5 truncate">{v.endereco || 'Endereço não informado'}</p>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <div className="text-right">
-                                            <div className={`text-2xl font-black ${v.riscoColor.text} leading-none truncate`}>
-                                                {v.diasRestantes}
+                                        {!v.concluido && (
+                                            <div className="text-right">
+                                                <div className={`text-2xl font-black ${v.riscoColor.text} leading-none truncate`}>
+                                                    {v.diasRestantes}
+                                                </div>
+                                                <div className="text-[9px] uppercase tracking-widest font-black opacity-70 whitespace-nowrap">
+                                                    {v.diasRestantes < 0 ? 'Dias em Atraso' : 'Dias Restantes'}
+                                                </div>
                                             </div>
-                                            <div className="text-[9px] uppercase tracking-widest font-black opacity-70 whitespace-nowrap">
-                                                {v.diasRestantes < 0 ? 'Dias em Atraso' : 'Dias Restantes'}
-                                            </div>
-                                        </div>
-                                        {isCoordinator && (
-                                            <button onClick={(e) => handleDeleteClick(v, e)} className="p-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Trash2 size={16} />
-                                            </button>
                                         )}
+                                        <div className="flex items-center gap-2">
+                                            <button 
+                                                onClick={(e) => handleToggleConcluido(v, e)}
+                                                className={`p-2 rounded-xl transition-all shadow-sm ${v.concluido ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-800 text-slate-300 hover:text-emerald-500 border border-slate-100 dark:border-slate-800'}`}
+                                                title={v.concluido ? 'Reabrir Agendamento' : 'Marcar como Concluído'}
+                                            >
+                                                <CheckCircle size={20} />
+                                            </button>
+                                            {isCoordinator && (
+                                                <button onClick={(e) => handleDeleteClick(v, e)} className="p-2 text-slate-300 hover:text-red-500 transition-opacity">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -780,10 +829,20 @@ const Agenda = () => {
                                         </td>
                                         {isCoordinator && (
                                             <td className="p-4">
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => handleEdit(v)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 size={16}/></button>
-                                                    <button onClick={() => handleDeleteClick(v)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16}/></button>
-                                                </div>
+                                            <div className="flex gap-2 items-center">
+                                                <button 
+                                                    onClick={(e) => handleToggleConcluido(v, e)}
+                                                    className={`p-2 rounded-lg transition-colors ${v.concluido ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-emerald-500'}`}
+                                                >
+                                                    <CheckCircle size={16} />
+                                                </button>
+                                                {isCoordinator && (
+                                                    <>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(v); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"><Edit2 size={16}/></button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(v); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16}/></button>
+                                                    </>
+                                                )}
+                                            </div>
                                             </td>
                                         )}
                                     </tr>
@@ -831,9 +890,11 @@ const Agenda = () => {
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
                                         {doDia.slice(0, 3).map(v => (
-                                            <div key={v.id || v.agenda_id} title={`${v.numero_processo} - ${v.categoria_risco}`} className={`text-[9px] px-1.5 py-1 rounded-md border font-bold flex justify-between items-center ${v.riscoColor.bg} ${v.riscoColor.border} ${v.riscoColor.text}`}>
-                                                <span className="truncate">{v.numero_processo || 'Novo'}</span>
-                                                {v.linkedVistoria ? (
+                                            <div key={v.id || v.agenda_id} title={`${v.numero_processo} - ${v.categoria_risco}`} className={`text-[9px] px-1.5 py-1 rounded-md border font-bold flex justify-between items-center ${v.concluido ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : v.riscoColor.bg + ' ' + v.riscoColor.border + ' ' + v.riscoColor.text}`}>
+                                                <span className="truncate">{v.categoria_risco === 'Outros' && v.observacao_outro ? v.observacao_outro : (v.numero_processo || 'Novo')}</span>
+                                                {v.concluido ? (
+                                                    <Check size={8} className="flex-shrink-0" />
+                                                ) : v.linkedVistoria ? (
                                                     <Link size={8} className="cursor-pointer flex-shrink-0" onClick={() => navigate('/vistorias', { state: { selectedVistoria: v.linkedVistoria } })} />
                                                 ) : !v.is_legacy_vistoria ? (
                                                     <button onClick={(e) => handleOpenLinkModal(v, e)} className="ml-1 text-slate-500 hover:text-blue-600 focus:outline-none flex-shrink-0"><Plus size={10}/></button>
@@ -894,7 +955,7 @@ const Agenda = () => {
                                 <select 
                                     value={formData.categoria_risco}
                                     onChange={(e) => setFormData({...formData, categoria_risco: e.target.value})}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="">Selecione...</option>
                                     <option value="Risco Estrutural">Risco Estrutural (Prazo 3 dias)</option>
@@ -902,9 +963,34 @@ const Agenda = () => {
                                     <option value="Risco Hidrológico">Risco Hidrológico (Prazo 2 dias)</option>
                                     <option value="Risco de Queda de Árvore">Queda de Árvore (Prazo 10 dias)</option>
                                     <option value="Avaliação Preventiva">Avaliação Preventiva (Prazo 10 dias)</option>
-                                    <option value="Outros">Outros</option>
+                                    <option value="Outros">Outros (Personalizar)</option>
                                 </select>
                             </div>
+
+                            {formData.categoria_risco === 'Outros' && (
+                                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 animate-in slide-in-from-top-2 duration-300 space-y-4">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">O que será feito?</label>
+                                        <input 
+                                            type="text" 
+                                            value={formData.observacao_outro}
+                                            onChange={(e) => setFormData({...formData, observacao_outro: e.target.value})}
+                                            className="w-full bg-white dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Ex: Vistoria técnica em tal lugar..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Data de Conclusão Prevista</label>
+                                        <input 
+                                            type="date" 
+                                            value={formData.data_prevista}
+                                            onChange={(e) => setFormData({...formData, data_prevista: e.target.value})}
+                                            className="w-full bg-white dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <p className="text-[9px] text-blue-600 font-bold mt-1 uppercase opacity-70">* O prazo será calculado com base nesta data</p>
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Solicitante</label>
@@ -912,7 +998,7 @@ const Agenda = () => {
                                     type="text" 
                                     value={formData.solicitante}
                                     onChange={(e) => setFormData({...formData, solicitante: e.target.value})}
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Nome do morador"
                                 />
                             </div>
@@ -935,7 +1021,7 @@ const Agenda = () => {
                                         .map(l => l.nome)
                                         .sort()}
                                     labelClasses="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1"
-                                    inputClasses="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                    inputClasses="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                 />
 
                                 <SearchableInput
@@ -945,36 +1031,19 @@ const Agenda = () => {
                                     onChange={val => setFormData({ ...formData, bairro: val })}
                                     options={bairrosData.map(b => b.nome).sort()}
                                     labelClasses="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1"
-                                    inputClasses="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                    inputClasses="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                 />
-
+                                
                                 <div>
                                     <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Informações Complementares</label>
                                     <input 
                                         type="text" 
                                         value={formData.informacoes_complementares}
                                         onChange={(e) => setFormData({...formData, informacoes_complementares: e.target.value})}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ex: Próximo à igreja, casa azul..."
                                     />
                                 </div>
-                            </div>
-
-                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-[16px] border border-blue-100 dark:border-blue-900/50">
-                                <SearchableInput
-                                    label="Vistoria Integrada (Opcional)"
-                                    placeholder="Não integrar no momento (avulsa)"
-                                    value={formData.vistoria_id}
-                                    onChange={val => setFormData({ ...formData, vistoria_id: val })}
-                                    options={vistoriasOptions.filter(opt => {
-                                        // Optional: filter only non-finished ones, or specific logic
-                                        return true;
-                                    })}
-                                    labelClasses="block text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2 flex items-center gap-1"
-                                    inputClasses="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 p-3 rounded-[12px] font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
-                                    icon={Link}
-                                />
-                                <p className="text-[9px] text-blue-600/70 mt-2 font-bold leading-tight">Você pode integrar com um processo de vistoria que já foi criado no sistema pela equipe operacional.</p>
                             </div>
                         </div>
                         
@@ -1067,8 +1136,13 @@ const Agenda = () => {
                                         <AlertTriangle size={14} className="text-slate-500" />
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Tipo de Risco</label>
-                                        <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{selectedAgenda.categoria_risco}</div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400">Tipo de Risco / Atendimento</label>
+                                        <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                            {selectedAgenda.categoria_risco}
+                                            {selectedAgenda.categoria_risco === 'Outros' && selectedAgenda.observacao_outro && (
+                                                <span className="ml-1 text-blue-600 dark:text-blue-400 font-black">({selectedAgenda.observacao_outro})</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1149,15 +1223,21 @@ const Agenda = () => {
 
                         <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex gap-3">
                             <button 
+                                onClick={() => handleToggleConcluido(selectedAgenda).then(() => setShowDetailsModal(false))}
+                                className={`flex-1 font-black uppercase tracking-widest p-4 rounded-2xl text-[10px] flex items-center justify-center gap-2 shadow-sm transition-all ${selectedAgenda.concluido ? 'bg-emerald-100 text-emerald-600 border border-emerald-200' : 'bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700'}`}
+                            >
+                                <CheckCircle size={16} /> {selectedAgenda.concluido ? 'Reabrir' : 'Concluir'}
+                            </button>
+                            <button 
                                 onClick={() => setShowDetailsModal(false)}
-                                className="flex-1 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-black uppercase tracking-widest p-4 rounded-2xl text-xs border border-slate-100 dark:border-slate-600"
+                                className="flex-1 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-black uppercase tracking-widest p-4 rounded-2xl text-[10px] border border-slate-100 dark:border-slate-600"
                             >
                                 Fechar
                             </button>
-                            {isCoordinator && (
+                            {isCoordinator && !selectedAgenda.concluido && (
                                 <button 
                                     onClick={() => { setShowDetailsModal(false); handleEdit(selectedAgenda); }}
-                                    className="px-6 bg-blue-600 text-white font-black uppercase tracking-widest p-4 rounded-2xl text-xs flex items-center justify-center gap-2"
+                                    className="px-6 bg-blue-600 text-white font-black uppercase tracking-widest p-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
                                 >
                                     <Edit2 size={16} />
                                 </button>

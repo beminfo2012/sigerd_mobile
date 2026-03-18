@@ -336,7 +336,7 @@ const VistoriaPrint = () => {
                                     </div>
                                     <div className="grid grid-cols-3 border-b border-slate-200 bg-slate-50">
                                         <div className="p-3 border-r border-slate-200 col-span-2">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Endereço da Ocorrência</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Endereço da Vistoria</p>
                                             <p className="font-bold text-slate-800">{data.endereco || '---'}</p>
                                         </div>
                                         <div className="p-3">

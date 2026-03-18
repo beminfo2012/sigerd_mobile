@@ -961,7 +961,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <SearchableInput
-                                    label="Endereço da Ocorrência"
+                                    label="Endereço da Vistoria"
                                     placeholder="Nome da rua, avenida..."
                                     value={formData.endereco}
                                     onChange={val => {

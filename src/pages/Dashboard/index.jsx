@@ -1258,7 +1258,7 @@ const WebViewDashboardView = ({
                     )}
 
                     {/* Blue Horizontal Nav Bar */}
-                    <div className="bg-[#2a5299] rounded-[18px] p-2 flex items-center justify-between overflow-x-auto custom-scrollbar gap-2">
+                    <div className="bg-[#2a5299] rounded-[12px] p-0.5 flex items-center justify-between overflow-x-auto custom-scrollbar gap-1.5">
                         {[
                             { label: 'Monitoramento', icon: BarChart3, path: '/monitoramento' },
                             { label: 'Ocorrências', icon: ClipboardList, path: '/ocorrencias' },
@@ -1269,10 +1269,10 @@ const WebViewDashboardView = ({
                             <button
                                 key={idx}
                                 onClick={item.action || (() => navigate(item.path))}
-                                className="flex flex-1 justify-center items-center gap-2.5 px-6 py-3 rounded-xl text-white/90 hover:bg-white/10 hover:text-white transition-all group shrink-0"
+                                className="flex flex-1 justify-center items-center gap-1.5 px-6 py-1 rounded-lg text-white/90 hover:bg-white/10 hover:text-white transition-all group shrink-0"
                             >
-                                <item.icon size={18} className={`opacity-70 group-hover:opacity-100 ${item.spin ? 'animate-spin' : ''}`} />
-                                <span className="text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">{item.label}</span>
+                                <item.icon size={14} className={`opacity-70 group-hover:opacity-100 ${item.spin ? 'animate-spin' : ''}`} />
+                                <span className="text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">{item.label}</span>
                             </button>
                         ))}
                     </div>
