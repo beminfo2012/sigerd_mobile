@@ -952,11 +952,11 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
                     </Card>
 
-                    {/* 4. SEÇÃO: Local da Ocorrência */}
+                    {/* 4. SEÇÃO: Local da Vistoria */}
                     <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
                             <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">4. Local da Ocorrência</h2>
+                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">4. Local da Vistoria</h2>
                         </div>
                         <div className="space-y-6">
                             <div className="space-y-2">
@@ -1665,9 +1665,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                 {userProfile?.signature && (
                                                     <button
                                                         type="button"
-                                                        onClick={() => setFormData(prev => ({ 
-                                                            ...prev, 
-                                                            apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature } 
+                                                        onClick={() => setFormData(prev => ({
+                                                            ...prev,
+                                                            apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature }
                                                         }))}
                                                         className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
                                                     >

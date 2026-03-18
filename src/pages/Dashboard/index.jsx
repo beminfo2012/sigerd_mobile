@@ -8,7 +8,7 @@ import {
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
     Download, ChevronDown, ExternalLink, Bell, MonitorPlay, Clock
 } from 'lucide-react'
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import {
@@ -322,6 +322,277 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
     );
 };
 
+// --- Função auxiliar de cor para áreas de risco ---
+const getRiscoColor = (nivelRisco = '') => {
+    const n = nivelRisco.toLowerCase();
+    if (n.includes('r4') || n.includes('muito alto')) return '#dc2626';
+    if (n.includes('r3') || n.includes('alto')) return '#f97316';
+    if (n.includes('r2') || n.includes('médio') || n.includes('medio')) return '#f59e0b';
+    return '#22c55e';
+};
+
+// --- Função auxiliar de cor para pluviômetros ---
+const getPluvioColor = (level) => {
+    if (level === 'Extremo') return '#ef4444';
+    if (level === 'Alerta') return '#f97316';
+    if (level === 'Atenção') return '#f59e0b';
+    return '#60a5fa';
+};
+
+// --- Tipos de risco disponíveis agrupados por categoria ---
+const CATEGORIAS_RISCO = [
+    {
+        id: 'geologico',
+        label: 'Riscos Geológicos',
+        color: '#f97316',
+        emoji: '⛰️',
+        subtipos: [
+            { id: 'Deslizamento de Solo', label: 'Deslizamento', emoji: '⛰️', color: '#f97316' },
+            { id: 'Corrida de Massa',    label: 'Corrida de Massa', emoji: '🪨', color: '#dc2626' },
+            { id: 'Solapamento',         label: 'Solapamento', emoji: '🏗️', color: '#8b5cf6' },
+            { id: 'Erosão',              label: 'Erosão', emoji: '🌿', color: '#f59e0b' },
+        ]
+    },
+    {
+        id: 'hidrologico',
+        label: 'Riscos Hidrológicos',
+        color: '#3b82f6',
+        emoji: '🌊',
+        subtipos: [
+            { id: 'Inundação',           label: 'Inundação', emoji: '🌊', color: '#3b82f6' },
+            { id: 'Enxurrada',           label: 'Enxurrada', emoji: '💧', color: '#2563eb' },
+        ]
+    }
+];
+
+// Flat list for easy lookup
+const TIPOS_RISCO_FLAT = CATEGORIAS_RISCO.flatMap(c => c.subtipos);
+
+// --- Componente inline para camada GeoJSON de áreas de risco ---
+// Aceita tiposAtivos: Set ou null (null = todos)
+const AreasRiscoLayer = ({ data, tiposAtivos }) => {
+    if (!data) return null;
+    // Filtra features pelos tipos selecionados
+    const filtered = {
+        ...data,
+        features: data.features.filter(f => {
+            if (!tiposAtivos || tiposAtivos.size === 0) return false;
+            const tiposFeature = (f.properties?.tipo_risco || '')
+                .split(',')
+                .map(t => t.trim());
+            return tiposFeature.some(t => tiposAtivos.has(t));
+        })
+    };
+    if (!filtered.features.length) return null;
+    return (
+        <GeoJSON
+            key={JSON.stringify([...tiposAtivos].sort())}
+            data={filtered}
+            style={(feature) => ({
+                color: getRiscoColor(feature?.properties?.nivel_risco || ''),
+                fillColor: getRiscoColor(feature?.properties?.nivel_risco || ''),
+                fillOpacity: 0.35,
+                weight: 2,
+                opacity: 0.9
+            })}
+            onEachFeature={(feature, layer) => {
+                const p = feature.properties || {};
+                layer.bindPopup(`
+                    <div style="font-family:sans-serif;min-width:190px">
+                        <div style="font-size:10px;font-weight:900;color:#f97316;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">${p.setor || 'Área de Risco'}</div>
+                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:2px">${p.nivel_risco || ''}</div>
+                        <div style="font-size:11px;color:#64748b;margin-bottom:4px">${p.tipo_risco || ''}</div>
+                        <div style="font-size:10px;color:#94a3b8">${p.localizacao || ''}</div>
+                        ${p.imoveis_risco ? `<div style="font-size:10px;color:#ef4444;font-weight:700;margin-top:4px">🏠 ${p.imoveis_risco} imóvel(is) em risco</div>` : ''}
+                    </div>
+                `);
+            }}
+        />
+    );
+};
+
+// --- Painel de controle de camadas dentro do mapa (estilo Leaflet) ---
+const CamadasControl = ({ tiposAtivos, setTiposAtivos, position = 'topleft' }) => {
+    const [open, setOpen] = useState(false);
+    const totalAtivo = tiposAtivos.size;
+
+    const toggleTipo = (id) => {
+        setTiposAtivos(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const toggleAll = () => {
+        if (totalAtivo === TIPOS_RISCO_FLAT.length) {
+            setTiposAtivos(new Set());
+        } else {
+            setTiposAtivos(new Set(TIPOS_RISCO_FLAT.map(t => t.id)));
+        }
+    };
+
+    const toggleCategoria = (catId) => {
+        const cat = CATEGORIAS_RISCO.find(c => c.id === catId);
+        if (!cat) return;
+        const subIds = cat.subtipos.map(s => s.id);
+        const allSet = subIds.every(id => tiposAtivos.has(id));
+
+        setTiposAtivos(prev => {
+            const next = new Set(prev);
+            if (allSet) subIds.forEach(id => next.delete(id));
+            else subIds.forEach(id => next.add(id));
+            return next;
+        });
+    };
+
+    return (
+        <div className="relative">
+            {/* Botão principal — mesmo estilo do botão Leaflet */}
+            <button
+                onClick={() => setOpen(v => !v)}
+                title="Camadas de risco"
+                style={{
+                    width: '34px',
+                    height: '34px',
+                    background: totalAtivo > 0 ? '#f97316' : 'white',
+                    border: '2px solid rgba(0,0,0,0.2)',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 5px rgba(0,0,0,.15)',
+                    color: totalAtivo > 0 ? 'white' : '#374151',
+                    transition: 'all 0.15s',
+                    position: 'relative',
+                }}
+            >
+                <ShieldAlert size={16} />
+                {totalAtivo > 0 && (
+                    <span style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        background: '#ef4444',
+                        color: 'white',
+                        fontSize: '8px',
+                        fontWeight: 900,
+                        width: '14px',
+                        height: '14px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1.5px solid white',
+                    }}>{totalAtivo}</span>
+                )}
+            </button>
+
+            {/* Painel expandido */}
+            {open && (
+                <div style={{
+                    position: 'absolute',
+                    top: '0',
+                    left: '42px',
+                    background: 'white',
+                    border: '2px solid rgba(0,0,0,0.15)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                    padding: '10px',
+                    minWidth: '200px',
+                    fontFamily: 'sans-serif',
+                }}>
+                    {/* Header do painel */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '9px', fontWeight: 900, color: '#f97316', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Áreas de Risco</span>
+                        <button
+                            onClick={toggleAll}
+                            style={{
+                                fontSize: '8px',
+                                fontWeight: 700,
+                                color: totalAtivo === TIPOS_RISCO_FLAT.length ? '#ef4444' : '#3b82f6',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                padding: '2px 4px',
+                            }}
+                        >
+                            {totalAtivo === TIPOS_RISCO_FLAT.length ? 'Desativar Todos' : 'Ativar Todos'}
+                        </button>
+                    </div>
+
+                    {/* Lista de Categorias e Subtipos */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto', paddingRight: '4px' }}>
+                        {CATEGORIAS_RISCO.map(cat => {
+                            const subIds = cat.subtipos.map(s => s.id);
+                            const totalCat = subIds.filter(id => tiposAtivos.has(id)).length;
+                            const isAllCat = totalCat === subIds.length;
+
+                            return (
+                                <div key={cat.id} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                    {/* Categoria Header */}
+                                    <div 
+                                        onClick={() => toggleCategoria(cat.id)}
+                                        style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '8px', 
+                                            cursor: 'pointer',
+                                            background: '#f8fafc',
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${totalCat > 0 ? cat.color + '40' : '#e2e8f0'}`,
+                                            transition: 'all 0.1s'
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: '12px', height: '12px', border: `1.5px solid ${cat.color}`,
+                                            borderRadius: '3px', background: isAllCat ? cat.color : (totalCat > 0 ? cat.color + '40' : 'transparent'),
+                                            position: 'relative'
+                                        }}>
+                                            {isAllCat && <div style={{ position: 'absolute', top: '1px', left: '3px', width: '3px', height: '6px', borderRight: '1.5px solid white', borderBottom: '1.5px solid white', transform: 'rotate(45deg)' }} />}
+                                        </div>
+                                        <span style={{ fontSize: '10px', color: '#475569', fontWeight: 900, textTransform: 'uppercase', flex: 1 }}>{cat.label}</span>
+                                        <span style={{ fontSize: '9px', fontWeight: 800, color: cat.color }}>{totalCat}/{subIds.length}</span>
+                                    </div>
+
+                                    {/* Subtipos */}
+                                    <div style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        {cat.subtipos.map(tipo => {
+                                            const ativo = tiposAtivos.has(tipo.id);
+                                            return (
+                                                <label key={tipo.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '3px' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={ativo}
+                                                        onChange={() => toggleTipo(tipo.id)}
+                                                        style={{ accentColor: tipo.color, width: '12px', height: '12px', cursor: 'pointer' }}
+                                                    />
+                                                    <span style={{ fontSize: '10px' }}>{tipo.emoji}</span>
+                                                    <span style={{ fontSize: '10px', fontWeight: ativo ? 700 : 400, color: ativo ? '#1e293b' : '#64748b' }}>{tipo.label}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Rodapé informativo */}
+                    <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', fontSize: '8px', color: '#94a3b8', textAlign: 'center' }}>
+                        {totalAtivo} de {TIPOS_RISCO_FLAT.length} subtipos ativos
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // --- SUB-COMPONENT: MOBILE VIEW ---
 const MobileDashboardView = ({
     data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
@@ -332,18 +603,27 @@ const MobileDashboardView = ({
 }) => {
     const userProfile = useContext(UserContext);
     const isOperador = userProfile?.role === 'Operador';
+    const [tiposRiscoAtivos, setTiposRiscoAtivos] = useState(new Set()); // inicia VAZIO (desativado)
+    const [areasRiscoData, setAreasRiscoData] = useState(null);
+
+    useEffect(() => {
+        fetch('/Areas_de_risco.json')
+            .then(r => r.json())
+            .then(d => setAreasRiscoData(d))
+            .catch(e => console.warn('[AreasRisco] Falha ao carregar JSON:', e));
+    }, []);
     const currentData = viewMode === 'vistorias' ? data.vistorias : viewMode === 'ocorrencias' ? data.ocorrencias : (data.interdicoes || { stats: { total: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] });
     const locations = currentData?.locations || [];
     const filteredLocations = mapFilter === 'Todas' ? locations : locations.filter(l => l.risk === mapFilter);
     const typologies = ['Todas', ...(currentData?.breakdown || []).map(b => b.label)];
     const displayedBreakdown = currentData?.chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown;
-    
+
     // Calculate "Outros" for the breakdown if more than 5 items
     const breakdownToDisplay = (chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || [];
     const topItems = breakdownToDisplay.slice(0, 5);
     const otherItems = breakdownToDisplay.slice(5);
     const othersCount = otherItems.reduce((acc, curr) => acc + curr.count, 0);
-    
+
     if (othersCount > 0) {
         const total = currentData?.stats?.total || 1;
         topItems.push({
@@ -514,7 +794,7 @@ const MobileDashboardView = ({
                             </div>
                         ))}
                         {breakdownToDisplay.length === 0 && (
-                             <div className="text-center py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Sem dados registrados</div>
+                            <div className="text-center py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Sem dados registrados</div>
                         )}
 
                     </div>
@@ -524,7 +804,7 @@ const MobileDashboardView = ({
                 <div className="space-y-4">
                     <div className="flex flex-col gap-4 px-2">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-[2px]">Mapa Situacional</h3>
+                            <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-[2px]">Mapa Interativo</h3>
                             <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
                                 <MapPin size={12} className="text-blue-500" />
                                 <select
@@ -563,13 +843,15 @@ const MobileDashboardView = ({
                         <div className="h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0">
                             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                                 {/* Map Style Toggle (Mobile - Absolute inside map) */}
-                                <div className="absolute top-4 left-4 z-[1000]">
+                                <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-1.5">
                                     <button
                                         onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
                                         className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700 active:scale-90 transition-transform"
                                     >
                                         <Layers size={20} />
                                     </button>
+                                    {/* Controle de camadas de risco — painel inline */}
+                                    <CamadasControl tiposAtivos={tiposRiscoAtivos} setTiposAtivos={setTiposRiscoAtivos} />
                                 </div>
 
 
@@ -579,6 +861,33 @@ const MobileDashboardView = ({
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
                                 <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                {/* Camada de Áreas de Risco (toggle por tipo) */}
+                                {tiposRiscoAtivos.size > 0 && areasRiscoData && (
+                                    <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
+                                )}
+                                {/* Pluviômetros CEMADEN - apenas os com leitura ativa */}
+                                {(rainfall || []).filter(s => s.lat && s.lon && s.rainRaw > 0).map((station, idx) => (
+                                    <CircleMarker
+                                        key={`pluvio-${idx}`}
+                                        center={[station.lat, station.lon]}
+                                        radius={8}
+                                        pathOptions={{
+                                            color: '#fff',
+                                            fillColor: getPluvioColor(station.level),
+                                            fillOpacity: 1,
+                                            weight: 2
+                                        }}
+                                    >
+                                        <Popup minWidth={160}>
+                                            <div style={{fontFamily:'sans-serif'}}>
+                                                <div style={{fontSize:'9px',fontWeight:900,color:'#3b82f6',textTransform:'uppercase',letterSpacing:'2px',marginBottom:'2px'}}>🌧️ Pluviômetro CEMADEN</div>
+                                                <div style={{fontSize:'12px',fontWeight:700,color:'#1e293b',marginBottom:'2px'}}>{station.name}</div>
+                                                <div style={{fontSize:'14px',fontWeight:900,color: getPluvioColor(station.level)}}>{(station.rainRaw||0).toFixed(1)} mm</div>
+                                                <div style={{fontSize:'9px',color:'#94a3b8',marginTop:'2px'}}>Acumulado 24h • {station.level}</div>
+                                            </div>
+                                        </Popup>
+                                    </CircleMarker>
+                                ))}
                                 {filteredLocations?.map((loc, idx) => (
                                     <CircleMarker
                                         key={idx}
@@ -640,6 +949,22 @@ const MobileDashboardView = ({
                                     <>
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-600"></div>Interd. Total</div>
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div>Interd. Parcial</div>
+                                    </>
+                                )}
+                                {(rainfall || []).some(s => s.lat && s.lon && s.rainRaw > 0) && (
+                                    <>
+                                        <div className="mt-1 pt-1 border-t border-slate-200 text-[7px] text-slate-400">PLUVIÔMETROS</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>Extremo</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div>Alerta</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-400"></div>Normal</div>
+                                    </>
+                                )}
+                                {tiposRiscoAtivos.size > 0 && (
+                                    <>
+                                        <div className="mt-1 pt-1 border-t border-slate-200 text-[7px] text-slate-400">ÁREAS DE RISCO</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-orange-500 opacity-60"></div>R3 - Alto</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-amber-500 opacity-60"></div>R2 - Médio</div>
+                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-green-500 opacity-60"></div>R1 - Baixo</div>
                                     </>
                                 )}
                             </div>
@@ -774,6 +1099,16 @@ const WebViewDashboardView = ({
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
     chartMode, setChartMode
 }) => {
+    const [tiposRiscoAtivos, setTiposRiscoAtivos] = useState(new Set()); // inicia VAZIO (desativado)
+    const [areasRiscoData, setAreasRiscoData] = useState(null);
+
+    useEffect(() => {
+        fetch('/Areas_de_risco.json')
+            .then(r => r.json())
+            .then(d => setAreasRiscoData(d))
+            .catch(e => console.warn('[AreasRisco] Falha ao carregar JSON:', e));
+    }, []);
+
     const userProfile = useContext(UserContext);
     const isOperador = userProfile?.role === 'Operador';
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : viewMode === 'ocorrencias' ? (data.ocorrencias || data) : (data.interdicoes || data);
@@ -949,11 +1284,11 @@ const WebViewDashboardView = ({
                     <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
                         <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                             <div className="flex flex-col">
-                                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 leading-tight">Mapa Situacional</h3>
+                                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 leading-tight">Mapa Interativo</h3>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-1 underline decoration-blue-500 decoration-2 underline-offset-4">Distribuição Geográfica</p>
                             </div>
 
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3 flex-wrap">
                                 {/* Toggle Mode */}
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                                     <button
@@ -992,7 +1327,7 @@ const WebViewDashboardView = ({
                         <div className="flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner">
                             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
                                 {/* Map Style Toggle (Web - Below Zoom) */}
-                                <div className="absolute top-[80px] left-[10px] z-[1000]">
+                                <div className="absolute top-[80px] left-[10px] z-[1000] flex flex-col gap-2">
                                     <button
                                         onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
                                         className="w-[34px] h-[34px] bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center rounded-[4px] shadow-sm border-2 border-[rgba(0,0,0,0.2)] text-slate-700 dark:text-slate-200 transition-colors"
@@ -1000,6 +1335,7 @@ const WebViewDashboardView = ({
                                     >
                                         <Layers size={18} />
                                     </button>
+                                    <CamadasControl tiposAtivos={tiposRiscoAtivos} setTiposAtivos={setTiposRiscoAtivos} />
                                 </div>
 
                                 {mapStyle === 'street' ? (
@@ -1008,6 +1344,33 @@ const WebViewDashboardView = ({
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
                                 <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                {/* Camada de Áreas de Risco (GeoJSON toggle por tipo) */}
+                                {tiposRiscoAtivos.size > 0 && areasRiscoData && (
+                                    <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
+                                )}
+                                {/* Pluviômetros CEMADEN - apenas os com leitura ativa e coordenadas */}
+                                {(rainfall || []).filter(s => s.lat && s.lon && s.rainRaw > 0).map((station, idx) => (
+                                    <CircleMarker
+                                        key={`pluvio-web-${idx}`}
+                                        center={[station.lat, station.lon]}
+                                        radius={10}
+                                        pathOptions={{
+                                            color: '#fff',
+                                            fillColor: getPluvioColor(station.level),
+                                            fillOpacity: 1,
+                                            weight: 2.5
+                                        }}
+                                    >
+                                        <Popup minWidth={180}>
+                                            <div style={{fontFamily:'sans-serif'}}>
+                                                <div style={{fontSize:'9px',fontWeight:900,color:'#3b82f6',textTransform:'uppercase',letterSpacing:'2px',marginBottom:'4px'}}>🌧️ Pluviômetro CEMADEN</div>
+                                                <div style={{fontSize:'13px',fontWeight:700,color:'#1e293b',marginBottom:'4px'}}>{station.name}</div>
+                                                <div style={{fontSize:'18px',fontWeight:900,color: getPluvioColor(station.level)}}>{(station.rainRaw||0).toFixed(1)} <span style={{fontSize:'12px'}}>mm</span></div>
+                                                <div style={{fontSize:'10px',color:'#94a3b8',marginTop:'4px',fontWeight:600}}>Acumulado 24h • Nível: <strong style={{color: getPluvioColor(station.level)}}>{station.level}</strong></div>
+                                            </div>
+                                        </Popup>
+                                    </CircleMarker>
+                                ))}
                                 {filteredLocations?.map((loc, idx) => (
                                     <CircleMarker
                                         key={idx}
@@ -1073,6 +1436,24 @@ const WebViewDashboardView = ({
                                     <>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Interd. Total</div>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Interd. Parcial</div>
+                                    </>
+                                )}
+                                {(rainfall || []).some(s => s.lat && s.lon && s.rainRaw > 0) && (
+                                    <>
+                                        <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">PLUVIÔMETROS</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-400"></div>Extremo (&gt;80mm)</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-400"></div>Alerta (&gt;50mm)</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-400"></div>Atenção (&gt;30mm)</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-400"></div>Normal</div>
+                                    </>
+                                )}
+                                {tiposRiscoAtivos.size > 0 && (
+                                    <>
+                                        <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">ÁREAS DE RISCO</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-red-700 opacity-70"></div>R4 - Muito Alto</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-orange-500 opacity-70"></div>R3 - Alto</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-amber-500 opacity-70"></div>R2 - Médio</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-green-500 opacity-70"></div>R1 - Baixo</div>
                                     </>
                                 )}
                             </div>
