@@ -1260,7 +1260,7 @@ const WebViewDashboardView = ({
                     {/* Blue Horizontal Nav Bar */}
                     <div className="bg-[#2a5299] rounded-[12px] p-0.5 flex items-center justify-between overflow-x-auto custom-scrollbar gap-1.5">
                         {[
-                            { label: 'Monitoramento', icon: BarChart3, path: '/monitoramento' },
+                            { label: 'Pluviômetros', icon: BarChart3, path: '/monitoramento' },
                             { label: 'Ocorrências', icon: ClipboardList, path: '/ocorrencias' },
                             { label: 'Assistência Humanitária', icon: Home, path: '/abrigos' },
                             { label: 'Relatórios', icon: FileText, action: () => setShowReportMenu(!showReportMenu) },
