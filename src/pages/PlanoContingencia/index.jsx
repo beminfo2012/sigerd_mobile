@@ -69,6 +69,12 @@ const PlanoContingencia = () => {
     const [activeTab, setActiveTab] = useState('Organograma')
     const [searchTerm, setSearchTerm] = useState('')
 
+    const filteredUsers = useMemo(() => {
+        return availableUsers.filter(u => 
+            u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    }, [availableUsers, searchTerm])
+
     useEffect(() => {
         loadData()
     }, [])
