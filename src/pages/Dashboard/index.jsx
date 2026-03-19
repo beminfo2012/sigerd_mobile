@@ -18,7 +18,7 @@ import {
 import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
 import { getShelters, getOccupants, getInventory } from '../../services/shelterDb'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
-import { cemadenService } from '../../services/cemaden'
+import { cemadenService, STATION_METADATA } from '../../services/cemaden'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 import { useToast } from '../../components/ToastNotification'
 import { APP_VERSION } from '../../version'
@@ -284,9 +284,31 @@ const TvModeDashboardView = ({ data, weather, cemadenAlerts, rainfall, statusInf
                             <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                         )}
                         <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 30, blur: 20, opacity: 0.8 }} />
+                        {/* Camada de Pluviômetros (TV Mode) */}
+                        {(rainfall || []).filter(s => s.lat && s.lon && s.rainRaw > 0).map((station, idx) => (
+                            <CircleMarker
+                                key={`pluvio-tv-${idx}`}
+                                center={[station.lat, station.lon]}
+                                radius={12}
+                                pathOptions={{
+                                    color: '#fff',
+                                    fillColor: getPluvioColor(station.level),
+                                    fillOpacity: 1,
+                                    weight: 4
+                                }}
+                            >
+                                <Popup>
+                                    <div className="font-bold text-center">
+                                        <div className="text-[10px] text-blue-500 uppercase">Pluviômetro</div>
+                                        <div className="text-lg">{station.rainRaw.toFixed(1)} mm</div>
+                                        <div className="text-[10px] text-slate-500">{station.name}</div>
+                                    </div>
+                                </Popup>
+                            </CircleMarker>
+                        ))}
                         {filteredLocations?.map((loc, idx) => (
                             <CircleMarker
-                                key={idx} center={[loc.lat, loc.lng]} radius={8}
+                                key={idx} center={[loc.lat, loc.lng]} radius={10}
                                 pathOptions={{
                                     color: '#fff',
                                     fillColor: viewMode === 'ocorrencias'
@@ -1854,13 +1876,25 @@ const Dashboard = () => {
                         apiData = await res.json()
                     }
 
-                    const formattedApi = apiData.map(st => ({
-                        id: st.id,
-                        name: st.name,
-                        rainRaw: st.acc24hr || 0,
-                    }))
+                    const formattedApi = apiData.map(st => {
+                        const meta = STATION_METADATA[st.id] || {};
+                        return {
+                            id: st.id,
+                            name: meta.name || st.name,
+                            lat: meta.lat || st.lat || null,
+                            lon: meta.lon || st.lon || null,
+                            rainRaw: st.acc24hr || 0,
+                        };
+                    })
 
-                    const combined = [manualStation, ...formattedApi].map(station => {
+                    const combined = [
+                        {
+                            ...manualStation,
+                            lat: STATION_METADATA['SEDE_DEFESA_CIVIL'].lat,
+                            lon: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon
+                        }, 
+                        ...formattedApi
+                    ].map(station => {
                         let level = 'Normal';
                         const acc24 = station.rainRaw;
                         if (acc24 >= 80) level = 'Extremo';
@@ -1868,7 +1902,7 @@ const Dashboard = () => {
                         else if (acc24 >= 30) level = 'Atenção';
 
                         return { ...station, level }
-                    }).filter(station => parseFloat(station.rainRaw) > 0);
+                    }).filter(station => parseFloat(station.rainRaw) > 0 && station.lat && station.lon);
 
                     setRainfall(combined);
                 } catch (e) {

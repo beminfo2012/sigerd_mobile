@@ -8,10 +8,11 @@ const MUNICIPIO_IBGE = '3204559';
 const API_BASE = 'https://sws.cemaden.gov.br/PED/rest';
 
 // Metadata for stations including human-readable names and coordinates
-const STATION_METADATA = {
+export const STATION_METADATA = {
     '320455902A': { name: 'Vila de Jetibá', lat: -19.974, lon: -40.697 },
     '320455901A': { name: 'Alto Rio Possmoser', lat: -19.912, lon: -40.735 },
-    '320455903A': { name: 'São Luis', lat: -20.015, lon: -40.758 }
+    '320455903A': { name: 'São Luis', lat: -20.015, lon: -40.758 },
+    'SEDE_DEFESA_CIVIL': { name: 'SEDE DEFESA CIVIL', lat: -20.0406, lon: -40.7456 }
 };
 
 export const cemadenService = {

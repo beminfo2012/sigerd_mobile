@@ -4,6 +4,7 @@ import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts'
 import html2canvas from 'html2canvas'
 import { saveManualReading, getManualReadings } from '../../services/db'
+import { STATION_METADATA } from '../../services/cemaden'
 
 // Mini Sparkline component for rain distribution
 const MiniSparkline = ({ station, riskColor }) => {
@@ -127,6 +128,7 @@ const Pluviometros = ({ hideHeader = false }) => {
 
             const lastManualDate = manualReadings.length > 0 ? manualReadings[0].date : null
 
+            const manualMeta = STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}
             const manualStation = {
                 id: 'SEDE_DEFESA_CIVIL',
                 name: 'SEDE DEFESA CIVIL (Manual)',
@@ -138,6 +140,8 @@ const Pluviometros = ({ hideHeader = false }) => {
                 acc96hr: manualAcc96h,
                 level: 0,
                 flow: 0,
+                lat: manualMeta.lat || -20.0406,
+                lng: manualMeta.lon || -40.7456,
                 lastUpdate: lastManualDate,
                 isManual: true
             }
@@ -146,7 +150,15 @@ const Pluviometros = ({ hideHeader = false }) => {
             const res = await fetch('/api/pluviometros')
             let apiData = []
             if (res.ok) {
-                apiData = await res.json()
+                const rawData = await res.json()
+                apiData = rawData.map(st => {
+                    const meta = STATION_METADATA[st.id] || {}
+                    return {
+                        ...st,
+                        lat: meta.lat || st.lat,
+                        lng: meta.lon || st.lng
+                    }
+                })
             } else {
                 console.warn("API fetch failed, showing only manual or cache")
             }
