@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 28
+const DB_VERSION = 29
 
 
 let dbPromise = null;
@@ -198,6 +198,30 @@ export const initDB = async () => {
                 const store = db.createObjectStore('plano_atribuicoes', { keyPath: 'id', autoIncrement: true });
                 store.createIndex('plano_id', 'plano_id', { unique: false });
                 store.createIndex('synced', 'synced', { unique: false });
+            }
+
+            // Advanced SCO (v29)
+            if (!db.objectStoreNames.contains('sco_setores')) {
+                const store = db.createObjectStore('sco_setores', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('plano_id', 'plano_id', { unique: false });
+                store.createIndex('parent_id', 'parent_id', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('sco_recursos')) {
+                const store = db.createObjectStore('sco_recursos', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('plano_id', 'plano_id', { unique: false });
+                store.createIndex('setor_id', 'setor_id', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('sco_tarefas')) {
+                const store = db.createObjectStore('sco_tarefas', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('setor_id', 'setor_id', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('sco_mensagens')) {
+                const store = db.createObjectStore('sco_mensagens', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('setor_id', 'setor_id', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('sco_logs')) {
+                const store = db.createObjectStore('sco_logs', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('plano_id', 'plano_id', { unique: false });
             }
         },
     });

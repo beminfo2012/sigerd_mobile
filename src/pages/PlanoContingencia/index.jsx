@@ -15,6 +15,7 @@ import { useToast } from '../../components/ToastNotification'
 
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet'
 import L from 'leaflet'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl
@@ -66,8 +67,30 @@ const PlanoContingencia = () => {
     })
     const [scoMembers, setScoMembers] = useState([])
     const [availableUsers, setAvailableUsers] = useState([])
-    const [activeTab, setActiveTab] = useState('Organograma')
+    const [activeTab, setActiveTab] = useState('Organograma') // Main Tab
+    const [sidebarTab, setSidebarTab] = useState('agentes') // Right sidebar tab
     const [searchTerm, setSearchTerm] = useState('')
+
+    // Advanced SCO States
+    const [setores, setSetores] = useState([])
+    const [recursos, setRecursos] = useState([])
+    const [tarefas, setTarefas] = useState([])
+    const [mensagens, setMensagens] = useState([])
+    const [logs, setLogs] = useState([])
+    const [selectedSetor, setSelectedSetor] = useState(null)
+    const [showSetorModal, setShowSetorModal] = useState(false)
+    const [chatInput, setChatInput] = useState('')
+
+    // Management Modals (Added)
+    const [showAddSetorModal, setShowAddSetorModal] = useState(false)
+    const [addSetorData, setAddSetorData] = useState({ parentId: null, type: 'child', title: '' })
+    const [showAddRecursoModal, setShowAddRecursoModal] = useState(false)
+    const [addRecursoData, setAddRecursoData] = useState({ name: '', type: 'Veículo' })
+    const [showAddTaskModal, setShowAddTaskModal] = useState(false)
+    const [addTaskData, setAddTaskData] = useState({ sectorId: null, text: '' })
+    const [showAllocateResourceModal, setShowAllocateResourceModal] = useState(false)
+    const [allocateResourceData, setAllocateResourceData] = useState({ sectorId: null, taskId: null })
+    const [orgScale, setOrgScale] = useState(1)
 
     const filteredUsers = useMemo(() => {
         return availableUsers.filter(u => 
@@ -75,9 +98,78 @@ const PlanoContingencia = () => {
         )
     }, [availableUsers, searchTerm])
 
+    const filteredRecursos = useMemo(() => {
+        return recursos.filter(r => 
+            r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            r.type?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    }, [recursos, searchTerm])
+
     useEffect(() => {
         loadData()
     }, [])
+
+    useEffect(() => {
+        if (selectedSetor) {
+            loadSetorDetails(selectedSetor.id)
+        }
+    }, [selectedSetor])
+
+    const handleOnDragEnd = async (result) => {
+        const { destination, source, draggableId } = result
+        if (!destination) return
+        if (destination.droppableId === source.droppableId) return
+
+        // Destination is a Setor ID (which we use as Title in droppableId)
+        const targetSetorTitle = destination.droppableId
+        
+        // Check if Draggable is Agent or Resource
+        if (draggableId.startsWith('agent_')) {
+            const uid = draggableId.replace('agent_', '')
+            await contingencyDb.updateScoMember(activePlan.id, targetSetorTitle, 'Equipe', uid, '')
+            addToast('Agente alocado.', 'success')
+        } else if (draggableId.startsWith('res_')) {
+            const rid = draggableId.replace('res_', '')
+            const set = setores.find(s => s.title === targetSetorTitle)
+            if (set) {
+                await handleAllocateRecurso(rid, set.id)
+            }
+        }
+        loadData()
+    }
+
+    const handleConfirmAddSetor = async () => {
+        if (!addSetorData.title) return
+        await contingencyDb.addSetor(activePlan.id, addSetorData.parentId, addSetorData.title)
+        setShowAddSetorModal(false)
+        setAddSetorData({ parentId: null, type: 'child', title: '' })
+        loadData()
+        addToast('Setor criado.', 'success')
+    }
+
+    const handleConfirmAddRecurso = async () => {
+        if (!addRecursoData.name) return
+        await contingencyDb.addRecurso(activePlan.id, addRecursoData.name, addRecursoData.type)
+        setShowAddRecursoModal(false)
+        setAddRecursoData({ name: '', type: 'Veículo' })
+        loadData()
+        addToast('Recurso cadastrado.', 'success')
+    }
+
+    const handleConfirmAddTask = async () => {
+        if (!addTaskData.text) return
+        await contingencyDb.addTarefa(addTaskData.sectorId, addTaskData.text)
+        loadSetorDetails(addTaskData.sectorId)
+        setShowAddTaskModal(false)
+        setAddTaskData({ sectorId: null, text: '' })
+        addToast('Tarefa adicionada!', 'success')
+    }
+
+    const handleConfirmAllocateRecurso = async (rid) => {
+        await handleAllocateRecurso(rid, allocateResourceData.sectorId, allocateResourceData.taskId)
+        setShowAllocateResourceModal(false)
+        setAllocateResourceData({ sectorId: null, taskId: null })
+    }
 
     const loadData = async () => {
         setLoading(true)
@@ -86,17 +178,62 @@ const PlanoContingencia = () => {
             setActivePlan(plan)
             const { data: users } = await supabase.from('profiles').select('*')
             if (users) setAvailableUsers(users)
+            
             if (plan) {
                 const members = await contingencyDb.loadScoStructure(plan.id)
                 setScoMembers(members || [])
                 const planAtribs = await contingencyDb.loadPlanoAtribuicoes(plan.id)
                 if (planAtribs) setAtribuicoesPlano(planAtribs)
+
+                // Advanced SCO data
+                let sets = await contingencyDb.loadSetores(plan.id)
+                let roots = sets.filter(s => s.parent_id === null)
+                
+                // Proactive Fix: If multiple roots exist, auto-clean redundant empty roots
+                if (roots.length > 1) {
+                    const primaryRootId = roots[0].id
+                    for (let i = 1; i < roots.length; i++) {
+                        const root = roots[i]
+                        const children = sets.filter(s => s.parent_id === root.id)
+                        // If it's a redundant root name and has no children, remove it
+                        if (children.length === 0 && (root.title === 'Comando' || root.title === 'Comando Geral')) {
+                            await contingencyDb.removeSetor(root.id)
+                        }
+                    }
+                    // Reload after cleaning
+                    sets = await contingencyDb.loadSetores(plan.id)
+                    roots = sets.filter(s => s.parent_id === null)
+                }
+
+                if (roots.length === 0) {
+                    // Init structure if empty or missing root
+                    await contingencyDb.addSetor(plan.id, null, 'Comando', 'bg-slate-900')
+                    sets = await contingencyDb.loadSetores(plan.id)
+                }
+                setSetores(sets)
+
+                const recs = await contingencyDb.loadRecursos(plan.id)
+                if (recs.length === 0) {
+                   // Mock resources if none
+                   await contingencyDb.addRecurso(plan.id, 'Ambulância UTI 01', 'Veículo')
+                   await contingencyDb.addRecurso(plan.id, 'Caminhão-Pipa 04', 'Veículo')
+                   setRecursos(await contingencyDb.loadRecursos(plan.id))
+                } else setRecursos(recs)
+
+                setLogs(await contingencyDb.loadLogs(plan.id))
             }
         } catch (error) {
             console.error('Error loading data:', error)
         } finally {
             setLoading(false)
         }
+    }
+
+    const loadSetorDetails = async (sid) => {
+        setTarefas(await contingencyDb.loadTarefas(sid))
+        setMensagens(await contingencyDb.loadMensagens(sid))
+        // Re-load resources to check for task links
+        setRecursos(await contingencyDb.loadRecursos(activePlan.id))
     }
 
     const handleActivate = async () => {
@@ -126,16 +263,9 @@ const PlanoContingencia = () => {
             return
         }
         try {
-            const result = await contingencyDb.updateScoMember(
+            await contingencyDb.updateScoMember(
                 activePlan.id, assignmentData.sessao, assignmentData.funcao, assignmentData.usuario_id, assignmentData.atribuicao
             )
-            setScoMembers(prev => {
-                if (assignmentData.funcao === 'Chefia') {
-                    const filtered = prev.filter(m => !(m.sessao === assignmentData.sessao && m.funcao === 'Chefia'))
-                    return [...filtered, result]
-                }
-                return [...prev, result]
-            })
             addToast('Designação concluída.', 'success')
             setShowAssignModal(false)
             setTimeout(() => loadData(), 500)
@@ -209,6 +339,50 @@ const PlanoContingencia = () => {
         }, 1500)
     }
 
+    const handleAddSetor = async (parentId, type = 'child') => {
+        const title = window.prompt(`Novo setor ${type === 'child' ? 'subordinado' : 'lateral'}:`)
+        if (!title?.trim()) return
+        await contingencyDb.addSetor(activePlan.id, parentId, title)
+        loadData()
+        addToast('Setor criado.', 'success')
+    }
+
+    const handleRemoveSetor = async (sid) => {
+        if (window.confirm('Excluir setor e subdivisões?')) {
+            await contingencyDb.removeSetor(sid)
+            loadData()
+            addToast('Setor removido.', 'info')
+        }
+    }
+
+    const handleAllocateRecurso = async (recursoId, setorId, taskId = null) => {
+        await contingencyDb.allocateRecurso(recursoId, setorId, taskId)
+        loadData()
+        addToast('Recurso alocado.', 'success')
+        if (setorId) {
+            const res = recursos.find(r => r.id === recursoId)
+            const set = setores.find(s => s.id === setorId)
+            await contingencyDb.addLog(activePlan.id, `${res?.name} em ${set?.title}${taskId ? ' (Tarefa)' : ''}`)
+        }
+    }
+
+    const handleAddTarefa = async (sid) => {
+        setAddTaskData({ sectorId: sid, text: '' })
+        setShowAddTaskModal(true)
+    }
+
+    const handleToggleTarefa = async (taskId, sid) => {
+        await contingencyDb.toggleTarefa(taskId)
+        loadSetorDetails(sid)
+    }
+
+    const handleSendMessage = async (sid) => {
+        if (!chatInput.trim()) return
+        await contingencyDb.addMensagem(sid, userProfile?.id, chatInput)
+        setChatInput('')
+        loadSetorDetails(sid)
+    }
+
     const getMemberByRole = (sessao, funcao) => {
         const m = scoMembers.find(m => m.sessao === sessao && m.funcao === (funcao || 'Chefia'))
         if (!m) return null
@@ -221,6 +395,104 @@ const PlanoContingencia = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
     )
+
+    const handleRenameSetor = async (sid, oldTitle) => {
+        const title = window.prompt('Novo nome para o setor:', oldTitle)
+        if (title && title !== oldTitle) {
+            const db = await initDB()
+            const s = await db.get('sco_setores', sid)
+            if (s) {
+                s.title = title
+                await db.put('sco_setores', s)
+                loadData()
+                addToast('Setor renomeado.', 'success')
+            }
+        }
+    }
+
+    const renderSetor = (setor, isRoot = false) => {
+        const chefia = scoMembers.find(m => m.sessao === setor.title && m.funcao === 'Chefia')
+        const p = chefia ? availableUsers.find(u => u.id === chefia.usuario_id) : null
+        const children = setores.filter(s => s.parent_id === setor.id)
+        const nodeRecursos = recursos.filter(r => r.setor_id === setor.id)
+        const equipe = scoMembers.filter(m => m.sessao === setor.title && m.funcao === 'Equipe')
+
+        // Fatigue check (12h)
+        const hoursActive = chefia?.assigned_at ? (new Date() - new Date(chefia.assigned_at)) / (1000 * 60 * 60) : 0
+        const isFatigued = hoursActive > 12
+        
+        return (
+            <div key={setor.id} className="flex flex-col items-center relative">
+                <Droppable droppableId={setor.title}>
+                    {(provided, snapshot) => (
+                        <div 
+                            ref={provided.innerRef} 
+                            {...provided.droppableProps}
+                            className="relative group flex flex-col items-center"
+                        >
+                            {/* Top Vertical Line (Linking to Parent) */}
+                            {!isRoot && (
+                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-px h-12 bg-slate-300 dark:bg-slate-700"></div>
+                            )}
+
+                            <div 
+                                onClick={() => { setSelectedSetor(setor); setShowSetorModal(true); }}
+                                className={`w-48 bg-white dark:bg-slate-900 border-2 rounded-[24px] p-4 shadow-lg transition-all cursor-pointer flex flex-col items-center gap-3 text-center ${snapshot.isDraggingOver ? 'ring-4 ring-blue-500/50 border-blue-500' : chefia ? 'border-slate-800 dark:border-blue-600/50' : 'border-slate-100 hover:border-blue-400 border-dashed'}`}
+                            >
+                                <div className={`p-2.5 ${setor.color_class || 'bg-slate-500'} rounded-xl text-white shadow-lg shadow-current/10 shrink-0 relative`}>
+                                    {isRoot ? <Shield size={16} /> : <Users size={16} />}
+                                    {isFatigued && (
+                                        <div className="absolute -top-1 -right-1 p-1 bg-amber-500 rounded-full animate-pulse border-2 border-white">
+                                            <Clock size={8} />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 overflow-hidden w-full">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-800 dark:text-white mb-1 truncate">{setor.title}</p>
+                                    <p className={`text-[9px] font-black uppercase truncate max-w-full ${chefia ? 'text-blue-500' : 'text-slate-300 italic'}`}>
+                                        {p ? p.full_name : 'DEFINIR'}
+                                    </p>
+                                </div>
+
+                                {/* Metrics / Counts on Node */}
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1">
+                                         <Users size={8} className="text-slate-300"/>
+                                         <span className="text-[8px] font-black text-slate-400">{equipe.length}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                         <Briefcase size={8} className="text-slate-300"/>
+                                         <span className="text-[8px] font-black text-slate-400">{nodeRecursos.length}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Node Actions */}
+                            <div className="absolute -right-12 top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                <button onClick={(e) => { e.stopPropagation(); setAddSetorData({ parentId: setor.id, type: 'child', title: '' }); setShowAddSetorModal(true); }} className="p-1.5 bg-white dark:bg-slate-800 rounded-lg shadow-md hover:text-blue-600 border border-slate-100 dark:border-slate-700" title="Subordinado"><Plus size={10}/></button>
+                                {!isRoot && <button onClick={(e) => { e.stopPropagation(); setAddSetorData({ parentId: setor.parent_id, type: 'sibling', title: '' }); setShowAddSetorModal(true); }} className="p-1.5 bg-white dark:bg-slate-800 rounded-lg shadow-md hover:text-blue-600 border border-slate-100 dark:border-slate-700" title="Lateral"><ChevronRight size={10}/></button>}
+                                <button onClick={(e) => { e.stopPropagation(); handleRenameSetor(setor.id, setor.title) }} className="p-1.5 bg-white dark:bg-slate-800 rounded-lg shadow-md hover:text-emerald-600 border border-slate-100 dark:border-slate-700" title="Renomear"><Menu size={10}/></button>
+                                {( !isRoot || setores.filter(s => !s.parent_id).length > 1 ) && (
+                                    <button onClick={(e) => { e.stopPropagation(); handleRemoveSetor(setor.id) }} className="p-1.5 bg-white dark:bg-slate-800 rounded-lg shadow-md hover:text-rose-600 border border-slate-100 dark:border-slate-700" title="Remover"><Trash2 size={10}/></button>
+                                )}
+                            </div>
+                            {provided.placeholder}
+                        </div>
+                    )}
+                </Droppable>
+
+                {children.length > 0 && (
+                    <div className="flex gap-12 mt-12 relative pt-12">
+                         {/* Horizontal Connector Line */}
+                         <div className="absolute top-0 h-px bg-slate-400 dark:bg-slate-600" style={{ left: `${100 / (2 * children.length)}%`, right: `${100 / (2 * children.length)}%` }}></div>
+                         {/* Main Vertical Stem down to horizontal line */}
+                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-12 bg-slate-300 dark:bg-slate-700 -translate-y-12"></div>
+                         {children.map(child => renderSetor(child))}
+                    </div>
+                )}
+            </div>
+        )
+    }
 
     if (!activePlan) {
         return (
@@ -262,215 +534,344 @@ const PlanoContingencia = () => {
         )
     }
 
+
     return (
-        <div className="bg-[#f8fafc] dark:bg-slate-950 min-h-screen flex flex-col overflow-hidden select-none">
-            {/* Header: More compact and elegant */}
-            <header className="bg-white dark:bg-slate-900 h-16 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 z-50 shrink-0 shadow-sm">
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-500/10">
-                            <Shield size={18} />
-                        </div>
-                        <h1 className="text-sm font-black tracking-tight uppercase">Sigerd <span className="text-blue-600">SCO</span></h1>
-                    </div>
-                    <div className="h-6 w-px bg-slate-100 dark:bg-slate-800"></div>
-                    <div className="flex gap-2">
-                        <div className="px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-rose-100 dark:border-rose-900/30 flex items-center gap-1.5">
-                            <Activity size={10} className="animate-pulse" /> Ativo
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${LEVELS.find(l => l.id === activePlan.nivel)?.color.replace('bg-', 'bg-opacity-10 text-').replace('-600', '-500')} border-current`}>
-                            {activePlan.nivel}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setShowAtribuicaoPlanoModal(true)} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                        <ClipboardList size={14} className="text-blue-500" />
-                        <span className="text-[10px] font-black uppercase tracking-wider">Matriz</span>
-                    </button>
-                    
-                    <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-1 pr-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                        <img src={availableUsers.find(u => u.id === activePlan?.comandante)?.photo_url || `https://ui-avatars.com/api/?name=C`} className="w-8 h-8 rounded-xl object-cover shadow-sm bg-slate-200" />
-                        <span className="text-[10px] font-black uppercase tracking-tight truncate max-w-[100px]">{availableUsers.find(u => u.id === activePlan?.comandante)?.full_name}</span>
-                        <button onClick={handleClosePlan} className="ml-2 p-1.5 bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all"><X size={12}/></button>
-                    </div>
-                </div>
-            </header>
-
-            <div className="flex-1 flex overflow-hidden">
-                {/* Sidebar Monitoring: Compact and clean */}
-                <div className="w-[260px] bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col shrink-0">
-                    <div className="p-6 border-b border-slate-50 dark:border-slate-800">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-[9px] font-black uppercase tracking-widest text-slate-400">Recursos Humanos</h3>
-                            <Activity size={10} className="text-blue-500"/>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                            <span className="text-[9px] font-black text-slate-500 uppercase">Mobilizados</span>
-                            <span className="text-lg font-black text-blue-600">{scoMembers.length}</span>
-                        </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3">
-                         {scoMembers.map(m => {
-                             const p = availableUsers.find(u => u.id === m.usuario_id)
-                             if (!p) return null
-                             return (
-                                 <div key={m.id} className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-50 dark:border-slate-800 group hover:shadow-md transition-all">
-                                     <img src={p.photo_url || `https://ui-avatars.com/api/?name=${p.full_name}`} className="w-8 h-8 rounded-lg object-cover ring-2 ring-slate-100 dark:ring-slate-700" />
-                                     <div className="flex-1 overflow-hidden">
-                                         <p className="text-[10px] font-black uppercase text-slate-800 dark:text-white truncate leading-tight">{p.full_name}</p>
-                                         <p className="text-[8px] font-bold text-slate-400 uppercase truncate mt-0.5">{m.sessao}</p>
-                                     </div>
-                                 </div>
-                             )
-                         })}
-                    </div>
-                </div>
-
-                {/* Dashboard Center: Professional grid feel */}
-                <div className="flex-1 overflow-auto flex flex-col bg-white dark:bg-slate-950">
-                    <div className="sticky top-0 p-4 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-900 flex items-center justify-between px-8 z-40">
-                         <div className="flex items-center gap-2">
-                             <button onClick={() => setActiveTab('Organograma')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Organograma' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Organograma</button>
-                             <button onClick={() => setActiveTab('Mapa')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Mapa' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Monitoramento</button>
-                         </div>
-                         <div className="text-[9px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2"><Clock size={10}/> Visualização Tática v2.4</div>
-                    </div>
-
-                    <div className="flex-1 p-6 flex flex-col items-center">
-                        {activeTab === 'Mapa' ? (
-                            <div className="w-full h-full bg-slate-50 dark:bg-slate-900 rounded-[32px] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl relative min-h-[500px]">
-                                <MapContainer center={[-20.0246, -40.7464]} zoom={15} style={{ height: '100%', width: '100%' }}>
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                    <Circle center={[-20.0246, -40.7464]} radius={400} pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.15 }} />
-                                    <Marker position={[-20.0246, -40.7464]}><Popup><div className="font-bold text-xs">PCP Regional</div></Popup></Marker>
-                                </MapContainer>
+        <>
+            <div className="bg-[#f8fafc] dark:bg-slate-950 min-h-screen flex flex-col overflow-hidden select-none">
+            <DragDropContext onDragEnd={handleOnDragEnd}>
+                {/* Header */}
+                <header className="bg-white dark:bg-slate-900 h-16 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 z-50 shrink-0 shadow-sm">
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-500/10">
+                                <Shield size={18} />
                             </div>
-                        ) : (
-                            <div className="w-full max-w-6xl flex flex-col items-center relative py-6 gap-12">
-                                
-                                {/* COMANDO: Balanced size */}
-                                <div className="relative z-10 w-80 bg-slate-900 text-white rounded-[28px] p-5 shadow-2xl flex items-center gap-4 border border-slate-800 group">
-                                    <img src={availableUsers.find(u => u.id === activePlan?.comandante)?.photo_url || `https://ui-avatars.com/api/?name=C`} className="w-14 h-14 rounded-2xl bg-slate-800 object-cover ring-2 ring-blue-500 shadow-inner group-hover:scale-105 transition-transform shrink-0" />
-                                    <div className="flex-1 overflow-hidden">
-                                        <h3 className="text-sm font-black uppercase tracking-tight truncate leading-tight">{availableUsers.find(u => u.id === activePlan?.comandante)?.full_name}</h3>
-                                        <div className="text-[9px] font-black uppercase text-blue-400 tracking-widest mt-1">Comandante Geral</div>
-                                    </div>
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 p-1.5 bg-blue-600 rounded-full text-white ring-4 ring-white dark:ring-slate-950">
-                                        <Shield size={14} />
-                                    </div>
+                            <h1 className="text-sm font-black tracking-tight uppercase">Sigerd <span className="text-blue-600">SCO</span></h1>
+                        </div>
+                        <div className="h-6 w-px bg-slate-100 dark:bg-slate-800"></div>
+                        <div className="flex gap-2">
+                            <div className="px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-rose-100 dark:border-rose-900/30 flex items-center gap-1.5">
+                                <Activity size={10} className="animate-pulse" /> Ativo
+                            </div>
+                            <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${LEVELS.find(l => l.id === activePlan.nivel)?.color.replace('bg-', 'bg-opacity-10 text-').replace('-600', '-500')} border-current`}>
+                                {activePlan.nivel}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        {/* Zoom Controls */}
+                        <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1">
+                            <button onClick={() => setOrgScale(s => Math.max(0.4, s - 0.1))} className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg text-slate-400"><Search size={12} className="rotate-180"/></button>
+                            <span className="text-[9px] font-black w-8 text-center text-slate-500">{Math.round(orgScale * 100)}%</span>
+                            <button onClick={() => setOrgScale(s => Math.min(1.5, s + 0.1))} className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg text-slate-400"><Search size={12}/></button>
+                        </div>
+
+                        <button onClick={() => setShowAtribuicaoPlanoModal(true)} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <ClipboardList size={14} className="text-blue-500" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">Matriz</span>
+                        </button>
+                        
+                        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-1 pr-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <img src={availableUsers.find(u => u.id === activePlan?.comandante)?.photo_url || `https://ui-avatars.com/api/?name=C`} className="w-8 h-8 rounded-xl object-cover shadow-sm bg-slate-200" />
+                            <span className="text-[10px] font-black uppercase tracking-tight truncate max-w-[100px]">{availableUsers.find(u => u.id === activePlan?.comandante)?.full_name}</span>
+                            <button onClick={handleClosePlan} className="ml-2 p-1.5 bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all"><X size={12}/></button>
+                        </div>
+                    </div>
+                </header>
+
+                <div className="flex-1 flex overflow-hidden">
+
+                    {/* MAIN DASHBOARD CENTER */}
+                    <div className="flex-1 overflow-hidden flex flex-col bg-[#f0f2f5] dark:bg-slate-950 relative">
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-1 rounded-2xl shadow-xl border border-white/5 flex gap-1">
+                             <button onClick={() => setActiveTab('Organograma')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Organograma' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Tático</button>
+                             <button onClick={() => setActiveTab('Mapa')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Mapa' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Mapa</button>
+                        </div>
+
+                        <div className="flex-1 overflow-auto custom-scrollbar p-10 flex flex-col items-center">
+                            {activeTab === 'Mapa' ? (
+                                <div className="w-full h-full bg-slate-50 dark:bg-slate-900 rounded-[32px] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl min-h-[500px]">
+                                    <MapContainer center={[-20.0246, -40.7464]} zoom={15} style={{ height: '100%', width: '100%' }}>
+                                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                        <Circle center={[-20.0246, -40.7464]} radius={400} pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.15 }} />
+                                    </MapContainer>
                                 </div>
-
-                                {/* STAFF: Compact cards */}
-                                <div className="flex flex-wrap justify-center gap-6 z-10 w-full px-6">
-                                    {SESSIONS.filter(s => ['Segurança', 'Informação', 'Ligação'].includes(s.id)).map(session => {
-                                         const member = getMemberByRole(session.id, 'Chefia')
-                                         return (
-                                            <div key={session.id} className="relative group w-44">
-                                                <div onClick={() => openAssignment(session.id, 'Chefia')} className={`bg-white dark:bg-slate-900 border-2 ${member ? 'border-slate-800 dark:border-blue-600/50' : 'border-slate-100 hover:border-blue-400 border-dashed'} rounded-[24px] p-4 shadow-lg transition-all cursor-pointer flex flex-col items-center gap-3 text-center`}>
-                                                    <div className={`p-2.5 ${session.color} rounded-xl text-white shadow-lg shadow-current/10`}>{session.icon}</div>
-                                                    <div>
-                                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-800 dark:text-white mb-1">{session.id}</p>
-                                                        <p className={`text-[9px] font-black uppercase truncate max-w-full ${member ? 'text-blue-500' : 'text-slate-300 italic'}`}>
-                                                            {member ? member.full_name : 'DEFINIR'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                {member && (
-                                                    <button onClick={(e) => {e.stopPropagation(); handleRemoveMember(member.id_vinculo)}} className="absolute -top-2 -right-2 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 rounded-full text-slate-400 hover:text-rose-500 shadow-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <X size={10} strokeWidth={4} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                         )
-                                    })}
+                            ) : (
+                                <div 
+                                    className="origin-top transition-transform duration-300 pointer-events-auto"
+                                    style={{ transform: `scale(${orgScale})` }}
+                                >
+                                    {setores.filter(s => s.parent_id === null).map(root => renderSetor(root, true))}
                                 </div>
+                            )}
+                        </div>
+                    </div>
 
-                                {/* GRID COMPONENTS: Dense and professional */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full px-6 z-10">
-                                    {SESSIONS.filter(s => !['Comando', 'Segurança', 'Informação', 'Ligação'].includes(s.id)).map(session => {
-                                        const chefia = getMemberByRole(session.id, 'Chefia')
-                                        const equipe = scoMembers.filter(m => m.sessao === session.id && m.funcao === 'Equipe')
-                                        return (
-                                            <div key={session.id} className="flex flex-col h-full">
-                                                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[30px] shadow-lg flex flex-col transition-all h-full group/card hover:border-blue-500/30">
-                                                    <div className={`${session.color} p-4 text-white flex items-center gap-3 shrink-0`}>
-                                                        <div className="bg-white/10 p-2 rounded-xl border border-white/5">{session.icon}</div>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest truncate">{session.id}</span>
-                                                    </div>
-                                                    
-                                                    <div className="p-4 flex flex-col flex-1 gap-5">
-                                                        {/* Head Slot */}
-                                                        <div className="relative group/chefia">
-                                                            <div onClick={() => openAssignment(session.id, 'Chefia')} className={`p-3 rounded-2xl border-2 ${chefia ? 'border-slate-800 dark:border-blue-500/40 bg-slate-50 dark:bg-slate-800/20' : 'border-dashed border-slate-50 italic text-slate-300'} flex items-center gap-3 cursor-pointer hover:bg-white transition-all`}>
-                                                                <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center overflow-hidden ring-2 ring-white dark:ring-slate-800 shadow-md shrink-0">
-                                                                    {chefia ? <img src={chefia.photo_url} className="w-full h-full object-cover" /> : <Shield size={16} className="text-slate-300" />}
-                                                                </div>
-                                                                <div className="flex-1 overflow-hidden">
-                                                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Responsável</p>
-                                                                    <p className={`text-[10px] font-black uppercase truncate ${chefia ? 'text-slate-800 dark:text-white' : ''}`}>{chefia ? chefia.full_name : 'Definir'}</p>
-                                                                </div>
-                                                            </div>
-                                                            {chefia && (
-                                                                <button onClick={(e) => {e.stopPropagation(); handleRemoveMember(chefia.id_vinculo)}} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white dark:bg-slate-700 border border-slate-200 rounded-full text-slate-400 hover:text-rose-500 shadow-md flex items-center justify-center opacity-0 group-hover/chefia:opacity-100 transition-opacity">
-                                                                    <Trash2 size={10} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Team Members */}
-                                                        <div className="flex flex-col flex-1 gap-3">
-                                                            <div className="flex items-center justify-between px-1">
-                                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Equipe Operativa</span>
-                                                                <span className="text-[9px] bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full font-black text-blue-600">{equipe.length}</span>
-                                                            </div>
-                                                            
-                                                            <div className="space-y-2 max-h-[140px] overflow-y-auto custom-scrollbar pr-1">
-                                                                {equipe.map(m => (
-                                                                    <div key={m.id} className="flex items-center gap-3 p-2 bg-slate-50/50 dark:bg-slate-800/30 group/item relative rounded-xl border border-transparent hover:border-blue-100 dark:hover:border-blue-900/40">
-                                                                        <img src={availableUsers.find(u => u.id === m.usuario_id)?.photo_url || `https://ui-avatars.com/api/?name=U`} className="w-7 h-7 rounded-lg object-cover ring-2 ring-white" />
-                                                                        <div className="flex-1 overflow-hidden">
-                                                                            <p className="text-[9px] font-black uppercase truncate text-slate-700 dark:text-slate-200">{availableUsers.find(u => u.id === m.usuario_id)?.full_name}</p>
-                                                                            <p className="text-[7px] text-slate-400 font-bold truncate uppercase">{m.atribuicao || 'Operacional'}</p>
-                                                                        </div>
-                                                                        <button onClick={() => handleRemoveMember(m.id)} className="w-6 h-6 bg-white dark:bg-slate-700 rounded-lg text-slate-400 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-all shadow-sm">
-                                                                            <X size={10} />
-                                                                        </button>
-                                                                    </div>
-                                                                ))}
-                                                                {equipe.length === 0 && (
-                                                                    <div className="text-center py-6 opacity-20 border-2 border-dashed border-slate-50 rounded-2xl">
-                                                                        <p className="text-[8px] font-black uppercase tracking-widest">Nenhum Membro</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            <button onClick={() => openAssignment(session.id, 'Equipe')} className="w-full mt-auto py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-[2px] transition-all hover:bg-blue-600 active:scale-95 flex items-center justify-center gap-2">
-                                                                <Plus size={14} /> Adicionar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
+                    {/* RIGHT SIDEBAR: LOGÍSTICA */}
+                    <div className="w-[300px] bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800 flex flex-col shrink-0">
+                        <div className="flex border-b border-slate-50 dark:border-slate-800">
+                         {['agentes', 'recursos', 'diário'].map(tab => (
+                            <button 
+                                key={tab} 
+                                onClick={() => setSidebarTab(tab)} 
+                                className={`flex-1 py-5 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 ${sidebarTab === tab ? 'border-blue-600 text-blue-600 bg-blue-50/10' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                            >
+                                {tab}
+                            </button>
+                         ))}
+                        </div>
+                        
+                        {sidebarTab !== 'diário' && (
+                            <div className="p-5 border-b border-slate-50 dark:border-slate-800">
+                                <div className="relative">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" size={12} />
+                                    <input 
+                                        type="text" 
+                                        placeholder={`Buscar ${sidebarTab}...`} 
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-black uppercase outline-none ring-1 ring-slate-100 dark:ring-slate-700" 
+                                    />
                                 </div>
                             </div>
                         )}
+
+                        <Droppable droppableId="logistics-source" isDropDisabled={true}>
+                            {(provided) => (
+                                <div 
+                                    ref={provided.innerRef} 
+                                    {...provided.droppableProps}
+                                    className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-4"
+                                >
+                                    {sidebarTab !== 'diário' && (
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Disponíveis</h4>
+                                            <button 
+                                                onClick={() => sidebarTab === 'agentes' ? setShowAssignModal(true) : setShowAddRecursoModal(true)} 
+                                                className="p-1.5 bg-slate-900 text-white rounded-lg hover:bg-blue-600 transition-all"
+                                            >
+                                                <Plus size={12}/>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {sidebarTab === 'agentes' ? (
+                                        filteredUsers.filter(u => !scoMembers.some(m => m.usuario_id === u.id)).map((p, index) => (
+                                            <Draggable key={p.id} draggableId={`agent_${p.id}`} index={index}>
+                                                {(provided, snapshot) => (
+                                                    <div 
+                                                        ref={provided.innerRef} 
+                                                        {...provided.draggableProps} 
+                                                        {...provided.dragHandleProps}
+                                                        className={`flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-50 dark:border-slate-800 group transition-all ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-500 scale-105 z-50' : 'hover:shadow-md'}`}
+                                                    >
+                                                        <img src={p.photo_url || `https://ui-avatars.com/api/?name=${p.full_name}`} className="w-8 h-8 rounded-lg object-cover ring-2 ring-slate-100" />
+                                                        <div className="flex-1 overflow-hidden">
+                                                            <p className="text-[10px] font-black uppercase text-slate-800 dark:text-white truncate leading-tight">{p.full_name}</p>
+                                                            <p className="text-[8px] font-bold text-slate-400 uppercase truncate mt-0.5">Agente de Campo</p>
+                                                        </div>
+                                                        <Menu size={12} className="text-slate-200 group-hover:text-slate-400" />
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))
+                                    ) : sidebarTab === 'recursos' ? (
+                                        filteredRecursos.filter(r => !r.setor_id).map((r, index) => (
+                                            <Draggable key={r.id} draggableId={`res_${r.id}`} index={index}>
+                                                {(provided, snapshot) => (
+                                                    <div 
+                                                        ref={provided.innerRef} 
+                                                        {...provided.draggableProps} 
+                                                        {...provided.dragHandleProps}
+                                                        className={`flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-800 group transition-all ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-500 scale-105 z-50' : 'hover:shadow-md'}`}
+                                                    >
+                                                        <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg shrink-0">
+                                                            <Briefcase size={14} />
+                                                        </div>
+                                                        <div className="flex-1 overflow-hidden">
+                                                            <p className="text-[10px] font-black uppercase text-slate-800 dark:text-white truncate leading-tight">{r.name}</p>
+                                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">{r.type}</p>
+                                                        </div>
+                                                        <Menu size={12} className="text-slate-200 group-hover:text-slate-400" />
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))
+                                    ) : (
+                                        <div className="flex-1 flex flex-col space-y-4">
+                                            {logs.length === 0 && <p className="text-[10px] text-slate-300 uppercase font-black text-center py-10 italic">Nenhum evento registrado.</p>}
+                                            {logs.map(log => (
+                                                <div key={log.id} className="flex gap-3 items-start group p-3 bg-slate-50/50 dark:bg-slate-800/10 rounded-2xl border border-transparent hover:border-slate-100 dark:hover:border-slate-800 transition-all">
+                                                    <span className="text-[9px] font-black font-mono text-slate-400 shrink-0 mt-0.5">{log.time}</span>
+                                                    <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 leading-relaxed uppercase">{log.text}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {provided.placeholder}
+                                </div>
+                            )}
+                        </Droppable>
+
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
+                             <div className="flex items-center justify-between">
+                                 <span className="text-[9px] font-black text-slate-400 uppercase">Mobilizados</span>
+                                 <span className="text-lg font-black text-blue-600">{scoMembers.length}</span>
+                             </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Footer: Compact and functional */}
-            <footer className="h-16 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between px-10 z-[100] shrink-0">
-                <div className="flex items-center gap-3">
-                     <button onClick={() => setActiveTab('Organograma')} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'Organograma' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 bg-slate-50 hover:bg-white'}`}>Estrutura</button>
-                     <button onClick={() => setActiveTab('Mapa')} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'Mapa' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 bg-slate-50 hover:bg-white'}`}>Monitoramento</button>
+                {/* Footer */}
+                <footer className="h-16 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end px-10 z-[100] shrink-0">
+                    <button onClick={handleGenerateReport} className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all active:scale-95 shadow-lg">
+                        <FileText size={16} className="text-blue-500" /> Exportar Relatório SCO
+                    </button>
+                </footer>
+            </DragDropContext>
+        </div>
+
+            {/* MODAL: ADVANCED SETOR DETAILS (Tactical Control) */}
+            {showSetorModal && selectedSetor && (
+                <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-white/5">
+                        <div className={`p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center ${selectedSetor.color_class || 'bg-slate-500'} text-white`}>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-white/20 rounded-xl">
+                                    <Activity size={22} />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black uppercase tracking-tight">{selectedSetor.title}</h3>
+                                    <p className="text-[9px] font-bold opacity-80 uppercase tracking-widest mt-0.5">Controle de Operações / Tático</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowSetorModal(false)} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all"><X size={24}/></button>
+                        </div>
+
+                        <div className="flex-1 flex overflow-hidden">
+                            {/* Left Col: Tasks & Resources */}
+                            <div className="flex-1 p-8 overflow-y-auto custom-scrollbar border-r border-slate-50 dark:border-slate-800 space-y-10">
+                                <section>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                            <CheckCircle size={14} className="text-blue-500" /> Quadro de Tarefas
+                                        </h4>
+                                        <button onClick={() => handleAddTarefa(selectedSetor.id)} className="p-1.5 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition-all shadow-md active:scale-90"><Plus size={14} /></button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {tarefas.length === 0 && <p className="text-[10px] text-slate-300 uppercase font-black py-4 text-center border-2 border-dashed border-slate-50 dark:border-slate-800 rounded-2xl italic">Nenhuma tarefa.</p>}
+                                        {tarefas.map(t => (
+                                            <div key={t.id} className={`flex flex-col gap-4 p-5 rounded-3xl transition-all border-2 ${t.done ? 'bg-slate-50/50 dark:bg-slate-800/10 border-transparent opacity-60' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 shadow-sm hover:border-blue-500'}`}>
+                                                <div className="flex items-center gap-4">
+                                                    <div onClick={() => handleToggleTarefa(t.id, selectedSetor.id)} className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center shrink-0 cursor-pointer ${t.done ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-200 text-transparent'}`}>
+                                                        <CheckCircle size={14} />
+                                                    </div>
+                                                    <span className={`flex-1 text-sm font-black uppercase tracking-tight ${t.done ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100'}`}>{t.text}</span>
+                                                    <button onClick={() => { setAllocateResourceData({ sectorId: selectedSetor.id, taskId: t.id }); setShowAllocateResourceModal(true); }} className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-lg">
+                                                        <Plus size={10} /> Recurso
+                                                    </button>
+                                                </div>
+                                                
+                                                {/* Resources linked to this task */}
+                                                <div className="flex flex-wrap gap-2 pl-11">
+                                                    {recursos.filter(r => r.tarefa_id === t.id).map(r => (
+                                                        <div key={r.id} className="px-3 py-1.5 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-lg flex items-center gap-2 group/res">
+                                                            <div className="p-1 bg-white dark:bg-slate-800 rounded-md">
+                                                                <Briefcase size={8} className="text-blue-500" />
+                                                            </div>
+                                                            <span className="text-[8px] font-black uppercase text-blue-600 dark:text-blue-400">{r.name}</span>
+                                                            <button onClick={() => handleAllocateRecurso(r.id, selectedSetor.id, null)} className="opacity-0 group-hover/res:opacity-100 transition-all text-slate-400 hover:text-rose-500"><X size={8}/></button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+                                        <Briefcase size={14} className="text-emerald-500" /> Recursos Alocados
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {recursos.filter(r => r.setor_id === selectedSetor.id && !r.tarefa_id).map(r => (
+                                            <div key={r.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Briefcase size={12} className="text-slate-400" />
+                                                    <span className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-300">{r.name}</span>
+                                                </div>
+                                                <button onClick={() => handleAllocateRecurso(r.id, null)} className="text-rose-500 hover:text-rose-600 transition-all"><Trash2 size={12}/></button>
+                                            </div>
+                                        ))}
+                                        <button onClick={() => { setAllocateResourceData({ sectorId: selectedSetor.id, taskId: null }); setShowAllocateResourceModal(true); }} className="p-3 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-[9px] font-black uppercase text-slate-400 items-center justify-center flex hover:border-blue-400 hover:text-blue-500 transition-all">
+                                            + Alocar Recurso
+                                        </button>
+                                    </div>
+                                </section>
+                            </div>
+
+                            {/* Right Col: Personnel & Chat */}
+                            <div className="w-[360px] bg-slate-50/50 dark:bg-slate-800/20 flex flex-col overflow-hidden">
+                                <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex-1 flex flex-col overflow-hidden">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+                                        <Users size={14} className="text-purple-500" /> Agentes Mobiliados
+                                    </h4>
+                                    <div className="space-y-3 mb-8">
+                                        {scoMembers.filter(m => m.sessao === selectedSetor.title).map(m => {
+                                            const agent = availableUsers.find(u => u.id === m.usuario_id)
+                                            return (
+                                                <div key={m.id} className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                                                    <img src={agent?.photo_url} className="w-10 h-10 rounded-xl object-cover" />
+                                                    <div className="flex-1 overflow-hidden">
+                                                        <p className="text-[10px] font-black uppercase text-slate-800 dark:text-white truncate leading-tight">{agent?.full_name}</p>
+                                                        <p className="text-[8px] font-bold text-slate-400 uppercase truncate mt-0.5">{m.funcao} // {m.atribuicao || 'Tático'}</p>
+                                                    </div>
+                                                    <button onClick={() => handleRemoveMember(m.id)} className="text-slate-300 hover:text-rose-500 transition-all p-1"><Trash2 size={12}/></button>
+                                                </div>
+                                            )
+                                        })}
+                                        <button 
+                                            onClick={() => { setShowSetorModal(false); openAssignment(selectedSetor.title, 'Chefia') }} 
+                                            className="w-full py-3 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 active:scale-95"
+                                        >
+                                            <UserPlus size={14} /> Designar Chefia
+                                        </button>
+                                    </div>
+
+                                    <div className="flex-1 flex flex-col overflow-hidden">
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                                            <Info size={14} className="text-orange-500" /> Comunicação Direta
+                                        </h4>
+                                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 p-4 bg-white/50 dark:bg-slate-900/50 rounded-[28px] border border-slate-100 dark:border-slate-800 mb-4">
+                                            {mensagens.length === 0 && <p className="text-[9px] text-slate-300 uppercase font-black text-center py-10">Canal Seguro Iniciado.</p>}
+                                            {mensagens.map(msg => (
+                                                <div key={msg.id} className={`flex flex-col ${msg.sender_id === userProfile?.id ? 'items-end' : 'items-start'}`}>
+                                                    <div className={`p-4 rounded-[22px] max-w-[90%] text-xs font-bold leading-relaxed shadow-sm uppercase ${msg.sender_id === userProfile?.id ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-tl-none'}`}>
+                                                        {msg.text}
+                                                    </div>
+                                                    <span className="text-[8px] font-black text-slate-300 mt-1 uppercase px-2">{msg.time}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="relative">
+                                            <input 
+                                                type="text" 
+                                                value={chatInput}
+                                                onChange={e => setChatInput(e.target.value)}
+                                                onKeyDown={e => e.key === 'Enter' && handleSendMessage(selectedSetor.id)}
+                                                placeholder="COMANDO..." 
+                                                className="w-full bg-white dark:bg-slate-800 rounded-2xl py-4 px-6 text-[10px] font-black uppercase outline-none shadow-xl border border-slate-100 dark:border-slate-800 ring-4 ring-slate-50 dark:ring-slate-900 pr-16" 
+                                            />
+                                            <button onClick={() => handleSendMessage(selectedSetor.id)} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600 font-black text-[10px] uppercase hover:text-blue-500 transition-all">Enviar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button onClick={handleGenerateReport} className="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all active:scale-95">
-                    <FileText size={16} className="text-blue-500" /> Exportar Relatório SCO
-                </button>
-            </footer>
+            )}
 
             {/* MODAL: COMPACT ASSIGNMENT */}
             {showAssignModal && (
@@ -590,8 +991,157 @@ const PlanoContingencia = () => {
                     </div>
                 </div>
             )}
-        </div>
+            {/* MODAL: ADD SETOR */}
+            {showAddSetorModal && (
+                <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-white/5 p-8 animate-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 className="text-sm font-black uppercase tracking-tight">Novo Comando / Setor</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Estruturação Hierárquica</p>
+                            </div>
+                            <button onClick={() => setShowAddSetorModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><X size={20}/></button>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome do Setor</label>
+                                <input 
+                                    type="text" 
+                                    value={addSetorData.title}
+                                    onChange={e => setAddSetorData(prev => ({ ...prev, title: e.target.value }))}
+                                    placeholder="Ex: Logística, Saúde, Segurança..." 
+                                    className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-xs font-bold uppercase outline-none ring-1 ring-slate-100 dark:ring-slate-700 focus:ring-blue-500"
+                                />
+                            </div>
+                            <button onClick={handleConfirmAddSetor} className="w-full py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                                Criar Setor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: ADD RECURSO */}
+            {showAddRecursoModal && (
+                <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-white/5 p-8 animate-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 className="text-sm font-black uppercase tracking-tight">Novo Recurso Operacional</h3>
+                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cadastro de Logística</p>
+                            </div>
+                            <button onClick={() => setShowAddRecursoModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><X size={20}/></button>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Identificação / Nome</label>
+                                <input 
+                                    type="text" 
+                                    value={addRecursoData.name}
+                                    onChange={e => setAddRecursoData(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Ex: Ambulância 04, Drone A, Viatura..." 
+                                    className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-xs font-bold uppercase outline-none ring-1 ring-slate-100 dark:ring-slate-700 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-1">Tipo de Recurso</label>
+                                <select 
+                                    value={addRecursoData.type}
+                                    onChange={e => setAddRecursoData(prev => ({ ...prev, type: e.target.value }))}
+                                    className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-xs font-bold uppercase outline-none ring-1 ring-slate-100 dark:ring-slate-700 focus:ring-blue-500"
+                                >
+                                    <option>Veículo</option>
+                                    <option>Equipamento</option>
+                                    <option>Suprimento</option>
+                                    <option>Comunicação</option>
+                                </select>
+                            </div>
+                            <button onClick={handleConfirmAddRecurso} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                                Cadastrar Recurso
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* MODAL: ADD TASK */}
+            {showAddTaskModal && (
+                <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl border border-white/5">
+                        <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/80">
+                            <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">Nova Tarefa</h3>
+                            <button onClick={() => setShowAddTaskModal(false)} className="text-slate-400 hover:text-rose-500 transition-all"><X size={20}/></button>
+                        </div>
+                        <div className="p-8">
+                            <textarea 
+                                value={addTaskData.text} 
+                                onChange={e => setAddTaskData({...addTaskData, text: e.target.value})} 
+                                placeholder="Descreva a missão..." 
+                                className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 text-xs font-bold text-slate-800 dark:text-white outline-none ring-2 ring-slate-100 dark:ring-slate-700 focus:ring-blue-500 min-h-[120px] mb-6 shadow-inner"
+                            />
+                            <div className="flex gap-4">
+                                <button onClick={() => setShowAddTaskModal(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest">Cancelar</button>
+                                <button onClick={handleConfirmAddTask} className="flex-[2] py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">Atribuir Missão</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: ALLOCATE RESOURCE */}
+            {showAllocateResourceModal && (
+                <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-white/5 h-[500px] flex flex-col">
+                        <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/80">
+                            <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">Alocar Estrutura</h3>
+                            <button onClick={() => setShowAllocateResourceModal(false)} className="text-slate-400 hover:text-rose-500 transition-all"><X size={20}/></button>
+                        </div>
+                        <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-3">
+                            <div className="relative mb-6">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" size={12} />
+                                <input 
+                                    type="text" 
+                                    placeholder="Pesquisar veículo / suporte..." 
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl py-3 pl-10 pr-4 text-[10px] font-black uppercase outline-none ring-1 ring-slate-100 dark:ring-slate-700" 
+                                />
+                            </div>
+
+                            {filteredRecursos.filter(r => r.status === 'Disponível').length === 0 && (
+                                <p className="text-[10px] text-slate-300 uppercase font-black py-10 text-center italic border-2 border-dashed border-slate-50 dark:border-slate-800 rounded-3xl">Nenhum suporte encontrado.</p>
+                            )}
+                            {filteredRecursos.filter(r => r.status === 'Disponível').map(r => (
+                                <div key={r.id} onClick={() => handleConfirmAllocateRecurso(r.id)} className="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-blue-500 cursor-pointer transition-all flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500">
+                                            <Briefcase size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-slate-800 dark:text-white tracking-tight">{r.name}</p>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">{r.type}</p>
+                                        </div>
+                                    </div>
+                                    <div className="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded-md text-[7px] font-black uppercase">Pronto</div>
+                                </div>
+                            ))}
+
+                            <h4 className="text-[8px] font-black text-slate-300 uppercase tracking-[.2em] pt-6 mb-2">Estruturas Engajadas</h4>
+                            {filteredRecursos.filter(r => r.status !== 'Disponível').map(r => (
+                                <div key={r.id} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-transparent opacity-60 flex items-center justify-between grayscale">
+                                    <div className="flex items-center gap-3">
+                                        <Briefcase size={14} className="text-slate-300" />
+                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-tight">{r.name}</p>
+                                    </div>
+                                    <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-md text-[7px] font-black uppercase">Empenhado</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     )
 }
+
 
 export default PlanoContingencia

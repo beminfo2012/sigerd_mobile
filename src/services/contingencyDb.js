@@ -242,5 +242,126 @@ export const contingencyDb = {
         if (navigator.onLine && !String(atribId).startsWith('temp_')) {
             await supabase.from('plano_atribuicoes').delete().eq('id', atribId)
         }
+    },
+
+    // ADVANCED SCO (DYNAMIC ORGANOGRAM)
+    async addSetor(planoId, parentId, title, colorClass = '') {
+        const db = await initDB()
+        const setor = {
+            id: `setor_${Date.now()}_${Math.random()}`,
+            plano_id: planoId,
+            parent_id: parentId,
+            title,
+            color_class: colorClass,
+            created_at: new Date().toISOString(),
+            synced: false
+        }
+        await db.put('sco_setores', setor)
+        // Auto Log
+        await this.addLog(planoId, `Novo setor criado: ${title}`)
+        return setor
+    },
+
+    async removeSetor(setorId) {
+        const db = await initDB()
+        // Find children to delete recursively
+        const sectors = await db.getAllFromIndex('sco_setores', 'parent_id', setorId)
+        for (const child of sectors) {
+            await this.removeSetor(child.id)
+        }
+        await db.delete('sco_setores', setorId)
+    },
+
+    async loadSetores(planoId) {
+        const db = await initDB()
+        return await db.getAllFromIndex('sco_setores', 'plano_id', planoId)
+    },
+
+    async addRecurso(planoId, name, type) {
+        const db = await initDB()
+        const res = {
+            id: `res_${Date.now()}`,
+            plano_id: planoId,
+            setor_id: null,
+            name,
+            type,
+            status: 'Disponível',
+            synced: false
+        }
+        await db.put('sco_recursos', res)
+        return res
+    },
+
+    async loadRecursos(planoId) {
+        const db = await initDB()
+        return await db.getAllFromIndex('sco_recursos', 'plano_id', planoId)
+    },
+
+    async allocateRecurso(recursoId, setorId, tarefaId = null) {
+        const db = await initDB()
+        const res = await db.get('sco_recursos', recursoId)
+        if (res) {
+            res.setor_id = setorId
+            res.tarefa_id = tarefaId
+            res.status = (setorId || tarefaId) ? 'Em campo' : 'Disponível'
+            await db.put('sco_recursos', res)
+        }
+    },
+
+    async addTarefa(setorId, text) {
+        const db = await initDB()
+        const t = { id: `task_${Date.now()}`, setor_id: setorId, text, done: false }
+        await db.put('sco_tarefas', t)
+        return t
+    },
+
+    async toggleTarefa(taskId) {
+        const db = await initDB()
+        const t = await db.get('sco_tarefas', taskId)
+        if (t) {
+            t.done = !t.done
+            await db.put('sco_tarefas', t)
+        }
+    },
+
+    async loadTarefas(setorId) {
+        const db = await initDB()
+        return await db.getAllFromIndex('sco_tarefas', 'setor_id', setorId)
+    },
+
+    async addMensagem(setorId, senderId, text) {
+        const db = await initDB()
+        const m = {
+            id: `msg_${Date.now()}`,
+            setor_id: setorId,
+            sender_id: senderId,
+            text,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+        await db.put('sco_mensagens', m)
+        return m
+    },
+
+    async loadMensagens(setorId) {
+        const db = await initDB()
+        return await db.getAllFromIndex('sco_mensagens', 'setor_id', setorId)
+    },
+
+    async addLog(planoId, text) {
+        const db = await initDB()
+        const l = {
+            id: `log_${Date.now()}`,
+            plano_id: planoId,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            text
+        }
+        await db.put('sco_logs', l)
+        return l
+    },
+
+    async loadLogs(planoId) {
+        const db = await initDB()
+        const logs = await db.getAllFromIndex('sco_logs', 'plano_id', planoId)
+        return logs.sort((a, b) => b.id.localeCompare(a.id))
     }
 }
