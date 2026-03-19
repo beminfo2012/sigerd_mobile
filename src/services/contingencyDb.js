@@ -72,7 +72,7 @@ export const contingencyDb = {
 
         await db.put('planos_contingencia', closedPlan)
 
-        if (navigator.onLine && typeof plan.id === 'number') {
+        if (navigator.onLine && plan.id && !String(plan.id).startsWith('temp_')) {
             await supabase
                 .from('planos_contingencia')
                 .update({ 
@@ -247,53 +247,67 @@ export const contingencyDb = {
     // ADVANCED SCO (DYNAMIC ORGANOGRAM)
     async addSetor(planoId, parentId, title, colorClass = '') {
         const db = await initDB()
-        const setor = {
-            id: `setor_${Date.now()}_${Math.random()}`,
-            plano_id: planoId,
-            parent_id: parentId,
-            title,
-            color_class: colorClass,
-            created_at: new Date().toISOString(),
-            synced: false
-        }
+        const tempId = `setor_${Date.now()}_${Math.random()}`
+        const setor = { id: tempId, plano_id: planoId, parent_id: parentId, title, color_class: colorClass, created_at: new Date().toISOString(), synced: false }
         await db.put('sco_setores', setor)
-        // Auto Log
+        
+        if (navigator.onLine && !String(planoId).startsWith('temp_') && (!parentId || !String(parentId).startsWith('temp_'))) {
+            const { data, error } = await supabase.from('sco_setores').insert([{ plano_id: planoId, parent_id: parentId, title, color_class: colorClass }]).select().single()
+            if (data && !error) {
+                await db.delete('sco_setores', tempId)
+                await db.put('sco_setores', { ...data, synced: true })
+                return data
+            }
+        }
         await this.addLog(planoId, `Novo setor criado: ${title}`)
         return setor
     },
 
     async removeSetor(setorId) {
         const db = await initDB()
-        // Find children to delete recursively
         const sectors = await db.getAllFromIndex('sco_setores', 'parent_id', setorId)
-        for (const child of sectors) {
-            await this.removeSetor(child.id)
-        }
+        for (const child of sectors) { await this.removeSetor(child.id) }
         await db.delete('sco_setores', setorId)
+        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
+            await supabase.from('sco_setores').delete().eq('id', setorId)
+        }
     },
 
     async loadSetores(planoId) {
         const db = await initDB()
+        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
+            const { data } = await supabase.from('sco_setores').select('*').eq('plano_id', planoId)
+            if (data) {
+                for (const item of data) { await db.put('sco_setores', { ...item, synced: true }) }
+                return data
+            }
+        }
         return await db.getAllFromIndex('sco_setores', 'plano_id', planoId)
     },
 
     async addRecurso(planoId, name, type) {
         const db = await initDB()
-        const res = {
-            id: `res_${Date.now()}`,
-            plano_id: planoId,
-            setor_id: null,
-            name,
-            type,
-            status: 'Disponível',
-            synced: false
-        }
+        const tempId = `res_${Date.now()}`
+        const res = { id: tempId, plano_id: planoId, setor_id: null, name, type, status: 'Disponível', synced: false }
         await db.put('sco_recursos', res)
+        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
+            const { data, error } = await supabase.from('sco_recursos').insert([{ plano_id: planoId, name, type, status: 'Disponível' }]).select().single()
+            if (data && !error) {
+                await db.delete('sco_recursos', tempId); await db.put('sco_recursos', { ...data, synced: true }); return data
+            }
+        }
         return res
     },
 
     async loadRecursos(planoId) {
         const db = await initDB()
+        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
+            const { data } = await supabase.from('sco_recursos').select('*').eq('plano_id', planoId)
+            if (data) {
+                for (const item of data) { await db.put('sco_recursos', { ...item, synced: true }) }
+                return data
+            }
+        }
         return await db.getAllFromIndex('sco_recursos', 'plano_id', planoId)
     },
 
@@ -301,17 +315,25 @@ export const contingencyDb = {
         const db = await initDB()
         const res = await db.get('sco_recursos', recursoId)
         if (res) {
-            res.setor_id = setorId
-            res.tarefa_id = tarefaId
-            res.status = (setorId || tarefaId) ? 'Em campo' : 'Disponível'
+            res.setor_id = setorId; res.tarefa_id = tarefaId; res.status = (setorId || tarefaId) ? 'Em campo' : 'Disponível'
             await db.put('sco_recursos', res)
+            if (navigator.onLine && !String(recursoId).startsWith('res_')) {
+                await supabase.from('sco_recursos').update({ setor_id: setorId, tarefa_id: tarefaId, status: res.status }).eq('id', recursoId)
+            }
         }
     },
 
     async addTarefa(setorId, text) {
         const db = await initDB()
-        const t = { id: `task_${Date.now()}`, setor_id: setorId, text, done: false }
+        const tempId = `task_${Date.now()}`
+        const t = { id: tempId, setor_id: setorId, text, done: false }
         await db.put('sco_tarefas', t)
+        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
+            const { data, error } = await supabase.from('sco_tarefas').insert([{ setor_id: setorId, text }]).select().single()
+            if (data && !error) {
+                await db.delete('sco_tarefas', tempId); await db.put('sco_tarefas', { ...data, synced: true }); return data
+            }
+        }
         return t
     },
 
@@ -319,48 +341,76 @@ export const contingencyDb = {
         const db = await initDB()
         const t = await db.get('sco_tarefas', taskId)
         if (t) {
-            t.done = !t.done
-            await db.put('sco_tarefas', t)
+            t.done = !t.done; await db.put('sco_tarefas', t)
+            if (navigator.onLine && !String(taskId).startsWith('task_')) {
+                await supabase.from('sco_tarefas').update({ done: t.done }).eq('id', taskId)
+            }
         }
     },
 
     async loadTarefas(setorId) {
         const db = await initDB()
+        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
+            const { data } = await supabase.from('sco_tarefas').select('*').eq('setor_id', setorId)
+            if (data) {
+                for (const item of data) { await db.put('sco_tarefas', { ...item, synced: true }) }
+                return data
+            }
+        }
         return await db.getAllFromIndex('sco_tarefas', 'setor_id', setorId)
     },
 
     async addMensagem(setorId, senderId, text) {
         const db = await initDB()
-        const m = {
-            id: `msg_${Date.now()}`,
-            setor_id: setorId,
-            sender_id: senderId,
-            text,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
+        const tempId = `msg_${Date.now()}`
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const m = { id: tempId, setor_id: setorId, sender_id: senderId, text, time }
         await db.put('sco_mensagens', m)
+        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
+            const { data } = await supabase.from('sco_mensagens').insert([{ setor_id: setorId, sender_id: senderId, text, time }]).select().single()
+            if (data) {
+                await db.delete('sco_mensagens', tempId); await db.put('sco_mensagens', { ...data, synced: true }); return data
+            }
+        }
         return m
     },
 
     async loadMensagens(setorId) {
         const db = await initDB()
+        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
+            const { data } = await supabase.from('sco_mensagens').select('*').eq('setor_id', setorId)
+            if (data) {
+                for (const item of data) { await db.put('sco_mensagens', { ...item, synced: true }) }
+                return data
+            }
+        }
         return await db.getAllFromIndex('sco_mensagens', 'setor_id', setorId)
     },
 
     async addLog(planoId, text) {
         const db = await initDB()
-        const l = {
-            id: `log_${Date.now()}`,
-            plano_id: planoId,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            text
-        }
+        const tempId = `log_${Date.now()}`
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const l = { id: tempId, plano_id: planoId, time, text }
         await db.put('sco_logs', l)
+        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
+            const { data } = await supabase.from('sco_logs').insert([{ plano_id: planoId, time, text }]).select().single()
+            if (data) {
+                await db.delete('sco_logs', tempId); await db.put('sco_logs', { ...data, synced: true }); return data
+            }
+        }
         return l
     },
 
     async loadLogs(planoId) {
         const db = await initDB()
+        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
+            const { data } = await supabase.from('sco_logs').select('*').eq('plano_id', planoId)
+            if (data) {
+                for (const item of data) { await db.put('sco_logs', { ...item, synced: true }) }
+                return data.sort((a, b) => b.created_at?.localeCompare(a.created_at))
+            }
+        }
         const logs = await db.getAllFromIndex('sco_logs', 'plano_id', planoId)
         return logs.sort((a, b) => b.id.localeCompare(a.id))
     }
