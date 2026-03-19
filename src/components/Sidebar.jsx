@@ -161,6 +161,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             icon: ClipboardCheck,
             path: '/redap',
             roles: REDAP_ROLES
+        },
+        {
+            label: 'Contingência',
+            icon: Shield,
+            path: '/contingencia',
+            roles: AGENT_ROLES
         }
     ];
 

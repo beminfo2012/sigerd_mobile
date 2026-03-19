@@ -6,7 +6,7 @@ import {
     ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
-    Download, ChevronDown, ExternalLink, Bell, MonitorPlay, Clock
+    Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield
 } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -22,6 +22,7 @@ import { cemadenService } from '../../services/cemaden'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 import { useToast } from '../../components/ToastNotification'
 import { APP_VERSION } from '../../version'
+import { contingencyDb } from '../../services/contingencyDb'
 
 // --- HELPER FUNCTIONS ---
 const processBreakdown = (records) => {
@@ -599,7 +600,7 @@ const MobileDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode
+    chartMode, setChartMode, activeContingencyPlan
 }) => {
     const userProfile = useContext(UserContext);
     const isOperador = userProfile?.role === 'Operador';
@@ -637,6 +638,30 @@ const MobileDashboardView = ({
     return (
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans">
             <div className="p-5 space-y-8">
+                {/* SCO BANNER (MOBILE) */}
+                {activeContingencyPlan && (
+                    <div 
+                        className={`p-6 rounded-[32px] border shadow-2xl flex items-center gap-5 cursor-pointer active:scale-95 transition-all overflow-hidden relative group mb-6 ${
+                            activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/20' : 
+                            activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500 shadow-orange-900/20' : 'bg-amber-500 border-amber-400 font-black'
+                        }`}
+                        onClick={() => navigate('/contingencia')}
+                    >
+                        <div className="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center text-white backdrop-blur-md shadow-inner shrink-0 scale-110">
+                            <ShieldAlert size={32} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="bg-white/10 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-white/20">SCO Ativo</span>
+                                <span className="bg-white text-slate-800 text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-sm">{activeContingencyPlan.nivel}</span>
+                            </div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none mb-1">Operação SCO</h3>
+                            <p className="text-white/80 text-xs font-bold truncate max-w-full">{activeContingencyPlan.motivo}</p>
+                        </div>
+                        <ChevronRight className="text-white opacity-40 group-active:translate-x-1 transition-transform" size={24} />
+                    </div>
+                )}
+
                 {/* 1. Weather Widget (Image 1 Style) */}
                 {weather?.current ? (
                     <div
@@ -1097,7 +1122,7 @@ const WebViewDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode
+    chartMode, setChartMode, activeContingencyPlan
 }) => {
     const [tiposRiscoAtivos, setTiposRiscoAtivos] = useState(new Set()); // inicia VAZIO (desativado)
     const [areasRiscoData, setAreasRiscoData] = useState(null);
@@ -1142,6 +1167,38 @@ const WebViewDashboardView = ({
                             </button>
                         </div>
                     </div>
+
+                    {/* CONTINGENCY BANNER (WEB) */}
+                    {activeContingencyPlan && (
+                        <div className="mt-4 animate-in slide-in-from-top-4 duration-500 px-2">
+                            <div 
+                                className={`overflow-hidden rounded-[26px] border shadow-2xl flex items-center cursor-pointer hover:scale-[1.01] transition-all group ${
+                                    activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/10' : 
+                                    activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
+                                }`}
+                                onClick={() => navigate('/contingencia')}
+                            >
+                                <div className="flex-1 p-6 flex items-center gap-6">
+                                    <div className="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center text-white backdrop-blur-md shadow-inner">
+                                        <ShieldAlert size={32} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="bg-white/10 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">SCO Ativo</span>
+                                            <span className="bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Nível {activeContingencyPlan.nivel}</span>
+                                        </div>
+                                        <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none mb-1">Operação em Andamento (SCO)</h3>
+                                        <p className="text-white/80 text-xs font-bold truncate max-w-lg">{activeContingencyPlan.motivo}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-black/10 backdrop-blur-sm p-6 flex items-center justify-center gap-4 text-white border-l border-white/10 group-hover:bg-black/20 transition-colors px-10">
+                                    <button className="bg-white text-slate-900 px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg flex items-center gap-2 whitespace-nowrap active:scale-95 transition-all">
+                                        Acessar Central SCO <Activity size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Top 5 Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -1628,6 +1685,7 @@ const Dashboard = () => {
     const [mapStyle, setMapStyle] = useState('street')
     const [climateLoading, setClimateLoading] = useState(true)
     const [pluvioLoading, setPluvioLoading] = useState(true)
+    const [activeContingencyPlan, setActiveContingencyPlan] = useState(null)
 
     const statusInfo = useMemo(() => {
         if (climateLoading) {
@@ -1689,6 +1747,8 @@ const Dashboard = () => {
 
     const load = async () => {
         try {
+            const plan = await contingencyDb.getActivePlan()
+            setActiveContingencyPlan(plan)
             const [pendingDetail, localVistorias, cachedVistorias, localOcorrencias] = await Promise.all([
                 getPendingSyncCount().catch(() => ({ total: 0, vistorias: 0, interdicoes: 0 })),
                 getAllVistoriasLocal().catch(() => []),
@@ -1983,7 +2043,8 @@ const Dashboard = () => {
         handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
         showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
         viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-        chartMode, setChartMode
+        chartMode, setChartMode,
+        activeContingencyPlan
     };
 
     return (

@@ -64,6 +64,9 @@ const UserManagement = lazy(() => import('./pages/UserManagement'))
 const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
 const RedapForm = lazy(() => import('./pages/Redap/RedapForm'))
 
+// Contingency Plan (Lazy)
+const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
+
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -423,6 +426,12 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
 
+
+                                <Route path="/contingencia" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <PlanoContingencia />
+                                    </ProtectedRoute>
+                                } />
 
                                 <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>

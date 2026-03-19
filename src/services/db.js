@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 26
+const DB_VERSION = 28
 
 
 let dbPromise = null;
@@ -179,6 +179,25 @@ export const initDB = async () => {
                 if (!store.indexNames.contains('supabase_id')) {
                     store.createIndex('supabase_id', 'supabase_id', { unique: false });
                 }
+            }
+
+            // Contingency Plans and SCO (v27)
+            if (!db.objectStoreNames.contains('planos_contingencia')) {
+                const store = db.createObjectStore('planos_contingencia', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('status', 'status', { unique: false });
+                store.createIndex('synced', 'synced', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('sco_estrutura')) {
+                const store = db.createObjectStore('sco_estrutura', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('plano_id', 'plano_id', { unique: false });
+                store.createIndex('sessao', 'sessao', { unique: false });
+                store.createIndex('usuario_id', 'usuario_id', { unique: false });
+                store.createIndex('synced', 'synced', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('plano_atribuicoes')) {
+                const store = db.createObjectStore('plano_atribuicoes', { keyPath: 'id', autoIncrement: true });
+                store.createIndex('plano_id', 'plano_id', { unique: false });
+                store.createIndex('synced', 'synced', { unique: false });
             }
         },
     });

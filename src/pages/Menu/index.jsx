@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData, pullAllData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
@@ -259,6 +259,27 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                         </button>
                     )}
                 </div>
+
+                {/* Strategic Module - Plano de Contingência */}
+                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
+                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <button
+                            onClick={() => window.location.href = '/contingencia'}
+                            className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
+                        >
+                            <div className="flex items-center">
+                                <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 rounded-2xl mr-4">
+                                    <Shield size={22} />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Plano de Contingência</span>
+                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest leading-tight">Módulo Estratégico SCO</span>
+                                </div>
+                            </div>
+                            <div className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">MÁXIMO</div>
+                        </button>
+                    </div>
+                )}
 
 
                 {/* REDAP Strategic Module - Access for Redap/S2id roles and Defesa Civil */}
