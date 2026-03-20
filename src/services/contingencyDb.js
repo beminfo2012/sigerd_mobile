@@ -4,24 +4,40 @@ import { supabase } from './supabase'
 export const contingencyDb = {
     async getActivePlan() {
         const db = await initDB()
-        const all = await db.getAll('planos_contingencia')
-        const activeLocal = all.find(p => p.status === 'Ativo')
-        
-        if (activeLocal) return activeLocal
 
         if (navigator.onLine) {
-            const { data, error } = await supabase
-                .from('planos_contingencia')
-                .select('*, sco_estrutura(*)')
-                .eq('status', 'Ativo')
-                .maybeSingle()
-            
-            if (data && !error) {
-                await db.put('planos_contingencia', data)
-                return data
+            try {
+                const { data, error } = await supabase
+                    .from('planos_contingencia')
+                    .select('*, sco_estrutura(*)')
+                    .eq('status', 'Ativo')
+                    .maybeSingle()
+                
+                if (!error) {
+                    if (data) {
+                        // Atualiza localmente com o que está no servidor
+                        await db.put('planos_contingencia', data)
+                        return data
+                    } else {
+                        // Se no servidor não há nada ativo, limpamos estados locais que ficaram "presos"
+                        const all = await db.getAll('planos_contingencia')
+                        const stuckActive = all.find(p => p.status === 'Ativo')
+                        if (stuckActive) {
+                            stuckActive.status = 'Encerrado'
+                            stuckActive.data_encerramento = new Date().toISOString()
+                            await db.put('planos_contingencia', stuckActive)
+                        }
+                        return null
+                    }
+                }
+            } catch (err) {
+                console.warn('[contingencyDb] Fetch failed, falling back to local storage', err)
             }
         }
-        return null
+
+        // Fallback para local (se offline ou erro na chamada)
+        const all = await db.getAll('planos_contingencia')
+        return all.find(p => p.status === 'Ativo') || null
     },
 
     async activatePlan(planData) {
