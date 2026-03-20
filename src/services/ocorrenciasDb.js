@@ -91,14 +91,18 @@ export const saveOcorrenciaLocal = async (data, skipSync = false) => {
         synced: data.synced || false
     };
 
-    // [FIX] Prevent unique constraint violation on ocorrencia_id when updating remote records locally
-    if (!toSave.id || isNaN(parseInt(toSave.id))) {
+    // [FIX] Robustly prevent unique constraint violation on ocorrencia_id
+    // We search by ocorrencia_id UNCONDITIONALLY if it exists
+    if (toSave.ocorrencia_id && toSave.ocorrencia_id.trim() !== '') {
         const existing = await db.getFromIndex('ocorrencias_operacionais', 'ocorrencia_id', toSave.ocorrencia_id);
         if (existing) {
-            toSave.id = existing.id; // Keep local integer ID
-        } else if (typeof toSave.id === 'string' && toSave.id.includes('-')) {
+            toSave.id = existing.id; // Ensure we overwrite the local record matching this business key
+        } else if (!toSave.id || isNaN(parseInt(toSave.id))) {
+            // If it's a new business key but has a non-integer local ID (e.g. from a pull), clear ID to let autoIncrement handle it
             delete toSave.id;
         }
+    } else if (!toSave.id || isNaN(parseInt(toSave.id))) {
+        delete toSave.id;
     }
 
     const id = await db.put('ocorrencias_operacionais', toSave);
@@ -281,19 +285,26 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             ...ocorrenciaHigienizada,
             categoria_risco: ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco,
             subtipos_risco: ocorrenciaHigienizada.subtiposRisco || ocorrenciaHigienizada.subtipos_risco,
+            subtipo_risco_outros: ocorrenciaHigienizada.subtipoRiscoOutros || ocorrenciaHigienizada.subtipo_risco_outros,
             nivel_risco: ocorrenciaHigienizada.nivelRisco || ocorrenciaHigienizada.nivel_risco,
             tem_apoio_tecnico: ocorrenciaHigienizada.temApoioTecnico || ocorrenciaHigienizada.tem_apoio_tecnico,
-            tem_solicitante_especifico: ocorrenciaHigienizada.temSolicitanteEspecifico || ocorrenciaHigienizada.tem_solicitante_especifico
+            apoio_tecnico: ocorrenciaHigienizada.apoioTecnico || ocorrenciaHigienizada.apoio_tecnico,
+            tem_solicitante_especifico: ocorrenciaHigienizada.temSolicitanteEspecifico || ocorrenciaHigienizada.tem_solicitante_especifico,
+            checklist_respostas: ocorrenciaHigienizada.checklistRespostas || ocorrenciaHigienizada.checklist_respostas,
+            medidas_tomadas: ocorrenciaHigienizada.medidasTomadas || ocorrenciaHigienizada.medidas_tomadas,
+            assinatura_agente: ocorrenciaHigienizada.assinaturaAgente || ocorrenciaHigienizada.assinatura_agente,
+            assinatura_assistido: ocorrenciaHigienizada.assinaturaAssistido || ocorrenciaHigienizada.assinatura_assistido,
         };
         
-        // Delete camelCase extra keys to keep DB clean
-        delete payload.categoriaRisco;
-        delete payload.subtiposRisco;
-        delete payload.subtipoRiscoOutros;
-        delete payload.nivelRisco;
-        delete payload.temApoioTecnico;
-        delete payload.temSolicitanteEspecifico;
-        delete payload.id; // Local IndexedDB key
+        // Delete all camelCase extra keys to keep DB clean and prevent schema errors
+        const keysToDelete = [
+            'categoriaRisco', 'subtiposRisco', 'subtipoRiscoOutros', 'nivelRisco', 
+            'temApoioTecnico', 'apoioTecnico', 'temSolicitanteEspecifico', 
+            'checklistRespostas', 'medidasTomadas', 'assinaturaAgente', 
+            'assinaturaAssistido', 'id'
+        ];
+        
+        keysToDelete.forEach(key => delete payload[key]);
 
         // 3. O INSERT / UPSERT FINAL NO BANCO DE DADOS
         console.log("Salvando formulário no banco de dados...");

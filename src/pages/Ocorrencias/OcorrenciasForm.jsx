@@ -588,22 +588,33 @@ const OcorrenciasForm = () => {
             
             // 1. Salvar Localmente (Garante que os dados não se percam se a internet cair no meio)
             // Pulamos o sync automático se estivermos online, pois chamaremos a função blindada logo abaixo
-            await saveOcorrenciaLocal(finalData, navigator.onLine);
+            const localId = await saveOcorrenciaLocal(finalData, navigator.onLine);
             
+            // BUSCA O REGISTRO SALVO PARA OBTER O UUID (ocorrencia_id) SE FOR NOVO
+            const db = await initDB();
+            const savedLocal = await db.get('ocorrencias_operacionais', localId);
+            
+            // Atualiza o estado do formulário para que cliques subsequentes no mesmo formulário 
+            // não gerem registros duplicados se o usuário não sair da tela.
+            if (savedLocal) {
+                setFormData(prev => ({
+                    ...prev,
+                    id: savedLocal.id,
+                    ocorrencia_id: savedLocal.ocorrencia_id
+                }));
+            }
+
             // 2. Acionamento Blindado para o Supabase (Se estiver Online)
             if (navigator.onLine) {
                 toast.info('Sincronizando fotos e dados...');
-                const result = await salvarOcorrenciaOperacional(finalData);
+                const result = await salvarOcorrenciaOperacional({ ...finalData, id: localId, ocorrencia_id: savedLocal?.ocorrencia_id });
                 
                 if (result.sucesso) {
                     // Atualiza o estado local para "sincronizado" e salva as URLs curtas das fotos
-                    const db = await initDB();
                     const tx = db.transaction('ocorrencias_operacionais', 'readwrite');
                     const store = tx.objectStore('ocorrencias_operacionais');
                     
-                    // Busca pelo ocorrencia_id para garantir que pegamos o registro certo
-                    const allLocal = await store.getAll();
-                    const localItem = allLocal.find(item => item.ocorrencia_id === finalData.ocorrencia_id || item.ocorrencia_id_format === currentId);
+                    const localItem = await store.get(localId);
                     
                     if (localItem) {
                         localItem.synced = true;
@@ -611,6 +622,9 @@ const OcorrenciasForm = () => {
                             localItem.fotos = result.dados[0].fotos;
                         }
                         await store.put(localItem);
+                        
+                        // Atualiza o formulário com a versão final sincada (URLs das imagens)
+                        setFormData(prev => ({ ...prev, fotos: localItem.fotos }));
                     }
                     await tx.done;
                     toast.success('Ocorrência salva e sincronizada com sucesso!');
