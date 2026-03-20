@@ -81,35 +81,47 @@ export const deleteOcorrenciaLocal = async (idOrUuid) => {
     }
 
     if (record || (navigator.onLine && typeof idOrUuid === 'string' && idOrUuid.includes('-'))) {
+        // Identifica o UUID para as operações remotas
         const uuid = record?.ocorrencia_id || (typeof idOrUuid === 'string' ? idOrUuid : null);
 
         if (navigator.onLine && uuid) {
             try {
-                // 1. LIMPEZA TOTAL DA PASTA NO STORAGE
-                console.log(`Limpando pasta do storage para ocorrência: ${uuid}`);
-                const { data: listData } = await supabase.storage
-                    .from('ocorrencias_fotos')
-                    .list(uuid);
-                
-                if (listData && listData.length > 0) {
-                    const filesToRemove = listData.map(f => `${uuid}/${f.name}`);
-                    await supabase.storage.from('ocorrencias_fotos').remove(filesToRemove);
+                // 1. LIMPEZA TOTAL DA PASTA NO STORAGE (Async/Silent)
+                // Fazemos em um bloco separado para que falhas de arquivos não impeçam a exclusão do registro
+                try {
+                    console.log(`Limpando pasta do storage para ocorrência: ${uuid}`);
+                    const { data: listData } = await supabase.storage
+                        .from('ocorrencias_fotos')
+                        .list(uuid);
+                    
+                    if (listData && listData.length > 0) {
+                        const filesToRemove = listData.map(f => `${uuid}/${f.name}`);
+                        await supabase.storage.from('ocorrencias_fotos').remove(filesToRemove);
+                    }
+                } catch (storageErr) {
+                    console.warn('Silent fail cleaning up storage during delete:', storageErr);
                 }
 
                 // 2. EXCLUSÃO DA LINHA NO BANCO DE DADOS (Supabase)
-                // Se o registro é synced ou estamos passando um UUID direto
-                const { error } = await supabase
+                // Tentamos por ocorrencia_id E por id (PK), para garantir
+                const { error: dbError } = await supabase
                     .from('ocorrencias_operacionais')
                     .delete()
-                    .eq('ocorrencia_id', uuid);
+                    .or(`ocorrencia_id.eq.${uuid},id.eq.${uuid}`);
                     
-                if (error) console.error('Error deleting from supabase:', error);
+                if (dbError) {
+                    console.error('Erro ao deletar no Supabase:', dbError.message);
+                    // Se estivermos online e falhar no banco, não deletamos localmente 
+                    // para manter a sincronia e permitir nova tentativa.
+                    throw new Error(`Erro Supabase: ${dbError.message}`);
+                }
             } catch (err) {
-                console.error('Failed to cleanup and delete occurrence remotely:', err);
+                console.error('Falha crítica na exclusão remota:', err);
+                throw err; // Repassa para o Dashboard tratar
             }
         }
         
-        // 3. EXCLUSÃO DO INDEXEDDB (Se existir localmente)
+        // 3. EXCLUSÃO DO INDEXEDDB (Se existir localmente e a etapa anterior passou)
         if (record && record.id) {
             await db.delete('ocorrencias_operacionais', record.id);
         }
