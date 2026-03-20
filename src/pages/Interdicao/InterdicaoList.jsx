@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
+import { UserContext } from '../../App'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight, AlertOctagon, Sparkles, Edit2, Clock, CheckCircle, User } from 'lucide-react'
 import { supabase } from '../../services/supabase'
@@ -10,6 +11,7 @@ import { Card } from '../../components/ui/Card'
 
 const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao }) => {
     const navigate = useNavigate()
+    const { userProfile } = useContext(UserContext)
     const [interdicoes, setInterdicoes] = useState([])
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
@@ -478,34 +480,28 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
                                             <span className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[10px] font-black px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                                                 #{item.interdicao_id || '---'}
                                             </span>
-                                            {item.status === 'Desinterditado' ? (
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setHistoryModal({ open: true, item }); }}
-                                                    className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 uppercase tracking-wider shadow-sm hover:bg-emerald-100 transition-colors"
-                                                >
+                                             {item.status === 'Desinterditado' ? (
+                                                <span className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-emerald-100 dark:border-emerald-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
                                                     <Sparkles size={10} />
                                                     Desinterditado
-                                                </button>
-                                            ) : item.status === 'Parcialmente Desinterditado' ? (
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setHistoryModal({ open: true, item }); }}
-                                                    className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase tracking-wider shadow-sm hover:bg-orange-100 transition-colors"
-                                                >
+                                                </span>
+                                             ) : item.status === 'Parcialmente Desinterditado' ? (
+                                                <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
                                                     <Clock size={10} />
                                                     Desint. Parcial
-                                                </button>
-                                            ) : (
+                                                </span>
+                                             ) : (
                                                 <span className="bg-red-50 dark:bg-red-900/20 text-red-600 text-[9px] font-black px-2.5 py-1 rounded-full border border-red-100 dark:border-red-800 flex items-center gap-1 uppercase tracking-wider shadow-sm">
                                                     <AlertOctagon size={10} />
                                                     Interditado
                                                 </span>
-                                            )}
-                                            {item.isLocal && (item.synced === false || item.synced === undefined || item.synced === 0) && (
+                                             )}
+                                             {item.isLocal && (item.synced === false || item.synced === undefined || item.synced === 0) && (
                                                 <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase">
                                                     <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
                                                     Pendente
                                                 </span>
-                                            )}
+                                             )}
                                         </div>
                                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 border border-slate-100 dark:border-slate-700 px-2 py-1 rounded-lg">
                                             <Calendar size={12} />
@@ -539,63 +535,30 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
                                             <span className="text-[10px] font-medium text-slate-400">{item.bairro || ''}</span>
                                         </p>
                                     </div>
-                                    {/* Status and History Hint */}
-                                    {item.desinterdicoes && item.desinterdicoes.length > 0 && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); setHistoryModal({ open: true, item }); }}
-                                            className="mt-4 w-full p-3 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-800/20 flex items-center justify-center gap-2 hover:bg-green-100 transition-all group/hist"
-                                        >
-                                            <Clock size={14} className="text-green-600" />
-                                            <span className="text-[10px] font-black uppercase text-green-700 dark:text-green-400 tracking-wider">Ver Histórico de Desinterdição</span>
-                                            <ChevronRight size={14} className="text-green-300 group-hover/hist:translate-x-1 transition-all" />
-                                        </button>
-                                    )}
                                 </div>
 
                                 <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
                                     <div className="flex gap-1.5 px-1">
                                         <button
-                                            onClick={(e) => handleEmailShare(item, e)}
-                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
-                                            title="Enviar Email"
-                                        >
-                                            <Mail size={18} />
-                                        </button>
-                                        <button
                                             onClick={(e) => { e.stopPropagation(); window.open(`/interdicao/imprimir/${item.id || item.interdicao_id}`, '_blank') }}
-                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-2xl transition-all active:scale-95"
+                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
                                             title="Visualizar Detalhes"
                                         >
                                             <Eye size={18} />
                                         </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); window.open(`/interdicao/imprimir/${item.id || item.interdicao_id}`, '_blank') }}
-                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all active:scale-95"
-                                            title="Imprimir Relatório"
-                                        >
-                                            <Printer size={18} />
-                                        </button>
-                                        {(!item.status || item.status === 'Interditado' || item.status === 'Parcialmente Desinterditado') && (
+
+                                        {userProfile?.role !== 'Operador' && (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); onDesinterdicao(item); }}
-                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-2xl transition-all active:scale-95"
-                                                title="Solicitar Desinterdição"
+                                                onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, interdicao: item }) }}
+                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all active:scale-95"
+                                                title="Excluir Registro"
                                             >
-                                                <Sparkles size={18} />
+                                                <Trash2 size={18} />
                                             </button>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={(e) => handleDelete(item, e)}
-                                            className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all active:scale-95"
-                                            title="Excluir"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                        <div className="w-8 h-8 flex items-center justify-center text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
-                                            <ChevronRight size={20} />
-                                        </div>
+                                    <div className="w-8 h-8 flex items-center justify-center text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+                                        <ChevronRight size={20} />
                                     </div>
                                 </div>
                             </Card>

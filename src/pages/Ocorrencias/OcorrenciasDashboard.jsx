@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { UserContext } from '../../App';
 import { useNavigate } from 'react-router-dom';
 import {
     Plus, ArrowLeft, Search, Clock, CheckCircle,
@@ -23,6 +24,7 @@ export const OCORRENCIA_STATUSES = {
 
 const OcorrenciasDashboard = () => {
     const navigate = useNavigate();
+    const { userProfile } = useContext(UserContext);
     const { toast } = useToast();
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -168,7 +170,7 @@ const OcorrenciasDashboard = () => {
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32 font-sans animate-in fade-in duration-500">
             {/* Header */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20 border-b border-slate-100 dark:border-slate-700 shadow-sm">
-                <div className="max-w-4xl mx-auto flex items-center justify-between">
+                <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/')}
@@ -199,9 +201,9 @@ const OcorrenciasDashboard = () => {
                 </div>
             </div>
 
-            <main className="max-w-4xl mx-auto p-5 sm:p-8 space-y-8">
+            <main className="max-w-6xl mx-auto p-5 sm:p-8 space-y-8">
                 {/* Search and Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 max-w-6xl mx-auto">
                     <div className="relative group md:col-span-8 lg:col-span-9">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                         <input
@@ -234,125 +236,102 @@ const OcorrenciasDashboard = () => {
                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 px-10">Tudo limpo por aqui. Nenhuma ocorrência nestes critérios.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filtered.map((record) => (
                                 <Card
                                     key={record.id}
-                                    className="group relative bg-white dark:bg-slate-800 p-6 border-slate-100 dark:border-slate-700 hover:shadow-xl hover:translate-y-[-4px] active:scale-[0.98] transition-all cursor-pointer overflow-hidden"
+                                    className="group relative bg-white dark:bg-slate-800 p-6 flex flex-col justify-between hover:shadow-xl hover:translate-y-[-4px] active:scale-[0.98] transition-all cursor-pointer border-slate-100 dark:border-slate-700"
                                     onClick={() => navigate(`/ocorrencias/editar/${record.id}`)}
                                 >
-                                    <div className="flex flex-col h-full justify-between gap-4">
-                                        <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex gap-2">
-                                                    {record.ocorrencia_id_format && (
-                                                        <span className="text-[10px] font-black bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-xl uppercase">
-                                                            ID: {record.ocorrencia_id_format}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {record.synced ? (
-                                                    <div className="flex items-center gap-1.5 text-emerald-500">
-                                                        <CheckCircle size={14} />
-                                                        <span className="text-[9px] font-black uppercase">Sincronizado</span>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center gap-1.5 text-orange-400 animate-pulse">
-                                                        <Clock size={14} />
-                                                        <span className="text-[9px] font-black uppercase tracking-wider">Local</span>
-                                                    </div>
+                                    <div>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex flex-wrap gap-2">
+                                                {record.ocorrencia_id_format && (
+                                                    <span className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[10px] font-black px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                                                        #{record.ocorrencia_id_format}
+                                                    </span>
+                                                )}
+                                                {!record.synced && (
+                                                    <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase">
+                                                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                                                        Pendente
+                                                    </span>
                                                 )}
                                             </div>
-
-                                            <div className="flex flex-col gap-1 items-start">
-                                                <h3 className="font-black text-slate-800 dark:text-white text-lg leading-tight group-hover:text-red-500 transition-colors">
-                                                    {record.categoriaRisco || record.categoria_risco || record.tipo_info || record.tipoInfo || record.riscoTipo || record.risco_tipo || 'Ocorrência sem título'}
-                                                </h3>
-                                                {(() => {
-                                                    let subtipos = record.subtiposRisco || record.subtipos_risco || [];
-                                                    if (typeof subtipos === 'string') {
-                                                        try { subtipos = JSON.parse(subtipos); } catch (e) { subtipos = [subtipos]; }
-                                                    }
-                                                    if (Array.isArray(subtipos) && subtipos.length > 0) {
-                                                        return (
-                                                            <p className="text-xs font-bold text-slate-400 dark:text-slate-500 line-clamp-2 leading-snug">
-                                                                {subtipos.join(', ')}
-                                                            </p>
-                                                        );
-                                                    }
-                                                    return null;
-                                                })()}
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 border border-slate-100 dark:border-slate-700 px-2 py-1 rounded-lg">
+                                                <Calendar size={12} />
+                                                {new Date(record.created_at).toLocaleDateString('pt-BR')}
                                             </div>
+                                        </div>
 
-                                            <div className="flex flex-col gap-2 pt-2">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                        <Clock size={12} />
-                                                        {new Date(record.created_at).toLocaleDateString('pt-BR')}
-                                                    </div>
-
-                                                    {/* Status Toggler Button */}
-                                                    <div className="relative">
-                                                        {(() => {
-                                                            const st = OCORRENCIA_STATUSES[record.status || 'Pendente'] || OCORRENCIA_STATUSES['Pendente'];
-                                                            return (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setStatusModalRecord(record);
-                                                                    }}
-                                                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${st.bg} ${st.text} ${st.border} hover:scale-105 active:scale-95 transition-all`}
-                                                                >
-                                                                    {st.label}
-                                                                </button>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                </div>
-                                                {record.bairro && (
-                                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-                                                        <MapPin size={14} className="text-red-500" />
-                                                        {record.bairro}
-                                                    </div>
+                                        <div className="mb-4">
+                                            <h3 className="font-black text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                                                {record.solicitante || 'Solicitante não informado'}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <p className="text-[10px] text-blue-500 dark:text-blue-400 font-black uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md">
+                                                    {record.categoriaRisco || record.categoria_risco || record.tipo_info || 'Geral'}
+                                                </p>
+                                                {record.status && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setStatusModalRecord(record);
+                                                        }}
+                                                        className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase border ${
+                                                            (OCORRENCIA_STATUSES[record.status] || OCORRENCIA_STATUSES['Pendente']).bg
+                                                        } ${
+                                                            (OCORRENCIA_STATUSES[record.status] || OCORRENCIA_STATUSES['Pendente']).text
+                                                        } ${
+                                                            (OCORRENCIA_STATUSES[record.status] || OCORRENCIA_STATUSES['Pendente']).border
+                                                        }`}
+                                                    >
+                                                        {record.status}
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
-                                            <div className="flex gap-2">
+                                        <div className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/50 mb-4 h-[72px] overflow-hidden">
+                                            <MapPin size={16} className="mt-0.5 shrink-0 text-red-500" />
+                                            <p className="line-clamp-2 font-bold leading-snug">
+                                                {record.endereco || 'Endereço não informado'} <br />
+                                                <span className="text-[10px] font-medium text-slate-400">{record.bairro || ''}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
+                                        <div className="flex gap-1.5 px-1">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(`/ocorrencias/imprimir/${record.id || record.ocorrencia_id}`, '_blank');
+                                                }}
+                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
+                                                title="Visualizar Detalhes"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
+
+                                            {userProfile?.role !== 'Operador' && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setRecordToDelete(record);
                                                         setShowDeleteModal(true);
                                                     }}
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all active:scale-95"
                                                     title="Excluir Ocorrência"
-                                                    className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        window.open(`/ocorrencias/imprimir/${record.id || record.ocorrencia_id_format}`, '_blank');
-                                                    }}
-                                                    title="Imprimir Relatório (PDF)"
-                                                    className="p-3 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all"
-                                                >
-                                                    <Printer size={18} />
-                                                </button>
-                                            </div>
-                                            <div className="w-10 h-10 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
-                                                <ChevronRight size={24} />
-                                            </div>
+                                            )}
+                                        </div>
+                                        <div className="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+                                            <ChevronRight size={20} />
                                         </div>
                                     </div>
-
-                                    {/* Decorator */}
-                                    {!record.synced && (
-                                        <div className="absolute top-0 right-0 w-2 h-full bg-orange-400 opacity-20"></div>
-                                    )}
                                 </Card>
                             ))}
                         </div>

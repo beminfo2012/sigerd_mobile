@@ -59,6 +59,8 @@ const OcorrenciasPrint = () => {
                 
                 if (reportData) {
                     setData(reportData);
+                    const docTitle = `Ocorrência nº ${reportData.ocorrencia_id_format || id} - ${reportData.solicitante || 'Sem Nome'}`;
+                    document.title = docTitle;
                 } else {
                     console.warn(`[OcorrenciasPrint] Não foi possível localizar a ocorrência com o identificador: ${id}`);
                 }
@@ -76,71 +78,7 @@ const OcorrenciasPrint = () => {
         setTimeout(() => window.print(), 800);
     };
 
-    const handleDownloadPDF = async () => {
-        const container = document.querySelector('.print-container');
-        if (!container) return;
 
-        // Force scale(1) and fixed width for stable measurement
-        const originalWidth = container.style.width;
-        const originalTransform = container.style.transform;
-        const originalTransformOrigin = container.style.transformOrigin;
-
-        container.style.width = '210mm';
-        container.style.transform = 'none';
-        container.style.transformOrigin = 'unset';
-
-        window.dispatchEvent(new Event('trigger-map-print-resize'));
-
-        const toast = document.createElement('div');
-        toast.innerHTML = `
-            <div style="position: fixed; top: 80px; right: 20px; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
-                <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                Gerando PDF Compacto...
-            </div>
-            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-        `;
-        document.body.appendChild(toast);
-
-        try {
-            // Wait longer for maps and signatures to fully render
-            await new Promise(resolve => setTimeout(resolve, 3500));
-
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = 210; // A4 standard width in mm
-            
-            // Generate Filename
-            const idLabel = (data.ocorrencia_id_format || id).toString().replace(/\//g, '-');
-            const fileName = `Ocorrencia_${idLabel}.pdf`;
-
-            await pdf.html(container, {
-                callback: (doc) => {
-                    doc.save(fileName);
-                    if (document.body.contains(toast)) document.body.removeChild(toast);
-                },
-                x: 0,
-                y: 0,
-                width: pageWidth,
-                windowWidth: 1200, // Fixed width during capture
-                autoPaging: 'text', // Better for preventing text cutting
-                margin: [10, 0, 10, 0], // Top, Left, Bottom, Right margins in mm
-                html2canvas: {
-                    scale: 0.2645833333, // High scale for better resolution
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                }
-            });
-
-        } catch (error) {
-            console.error('PDF Generation error:', error);
-            alert('Erro ao gerar PDF. Verifique se há imagens bloqueadas.');
-            if (document.body.contains(toast)) document.body.removeChild(toast);
-        } finally {
-            container.style.width = originalWidth;
-            container.style.transform = originalTransform;
-            container.style.transformOrigin = originalTransformOrigin;
-        }
-    };
 
     if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando Relatório...</div>;
     if (!data) return <div className="flex items-center justify-center min-h-screen">Relatório não encontrado.</div>;
@@ -238,12 +176,6 @@ const OcorrenciasPrint = () => {
                         className="px-4 py-2.5 hover:bg-slate-800 rounded-xl transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-slate-700"
                     >
                         <X size={16} /> Fechar
-                    </button>
-                    <button 
-                        onClick={handleDownloadPDF} 
-                        className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 rounded-xl text-white font-black uppercase tracking-widest text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20 shadow-inner"
-                    >
-                        <Download size={16} /> Baixar PDF
                     </button>
                     <button 
                         onClick={handlePrint} 

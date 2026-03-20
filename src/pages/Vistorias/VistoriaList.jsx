@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight } from 'lucide-react'
+import { UserContext } from '../../App'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getLightweightVistoriasLocal, getVistoriaFull } from '../../services/db'
@@ -10,6 +11,7 @@ import { Card } from '../../components/ui/Card'
 
 const VistoriaList = ({ onNew, onEdit }) => {
     const navigate = useNavigate()
+    const { userProfile } = useContext(UserContext)
     const [vistorias, setVistorias] = useState([])
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
@@ -439,38 +441,33 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                 <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
                                     <div className="flex gap-1.5 px-1">
                                         <button
-                                            onClick={(e) => handleEmailShare(vistoria, e)}
-                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
-                                            title="Enviar Email"
-                                        >
-                                            <Mail size={18} />
-                                        </button>
-                                        <button
                                             onClick={(e) => { e.stopPropagation(); window.open(`/vistorias/imprimir/${vistoria.id || vistoria.vistoria_id}`, '_blank') }}
-                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-2xl transition-all active:scale-95"
+                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
                                             title="Visualizar Detalhes"
                                         >
                                             <Eye size={18} />
                                         </button>
+                                        
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); window.open(`/vistorias/imprimir/${vistoria.id || vistoria.vistoria_id}`, '_blank') }}
+                                            onClick={(e) => { e.stopPropagation(); setEmailModal({ open: true, vistoria }) }}
                                             className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all active:scale-95"
-                                            title="Imprimir Relatório"
+                                            title="Enviar por Email"
                                         >
-                                            <Printer size={18} />
+                                            <Mail size={18} />
                                         </button>
+
+                                        {userProfile?.role !== 'Operador' && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, vistoria }) }}
+                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all active:scale-95"
+                                                title="Excluir Vistoria"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={(e) => handleDelete(vistoria, e)}
-                                            className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all active:scale-95"
-                                            title="Excluir"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                        <div className="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
-                                            <ChevronRight size={20} />
-                                        </div>
+                                    <div className="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+                                        <ChevronRight size={20} />
                                     </div>
                                 </div>
                             </Card>

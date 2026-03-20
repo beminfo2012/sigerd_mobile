@@ -176,11 +176,18 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
     const data = normalizeData(rawData, type);
     const isVistoriaOuOcorrencia = type === 'vistoria' || type === 'ocorrencia';
     const isDesinterdicao = type === 'desinterdicao';
+    const displayType = type === 'vistoria' ? 'Vistoria' : 
+                        type === 'ocorrencia' ? 'Ocorrência' : 
+                        type === 'desinterdicao' ? 'Desinterdição' :
+                        'Interdição';
+    const num = data.vistoriaId || data.interdicaoId || data.id || '---';
+    const applicant = data.solicitante || data.responsavelNome || 'Não especificado';
+    const filename = `${displayType} nº ${num} - ${applicant}.pdf`.replace(/[\/\\]/g, '_');
+
     const title = type === 'vistoria' ? 'RELATÓRIO DE VISTORIA TÉCNICA' : 
                   type === 'ocorrencia' ? 'RELATÓRIO DE OCORRÊNCIA' : 
                   type === 'desinterdicao' ? 'AUTO DE DESINTERDIÇÃO' :
                   'RELATÓRIO DE INTERDIÇÃO';
-    const filename = `${type}_${(data.vistoriaId || data.interdicaoId || data.id || 'sem_id').replace(/[\/\\]/g, '_')}.pdf`;
 
     const container = document.createElement('div');
     container.style.cssText = `position: absolute; left: -9999px; top: 0; width: 840px; background: white; font-family: 'Inter', Arial, sans-serif; color: #1a1a1a;`;

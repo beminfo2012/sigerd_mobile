@@ -23,6 +23,8 @@ const DesinterdicaoPrint = () => {
                     const localById = await db.get('desinterdicoes', numericId);
                     if (localById) {
                         setData(localById);
+                        const docTitle = `Desinterdição nº ${localById.interdicaoId || localById.interdicao_id || id} - ${localById.responsavel_nome || localById.responsavelNome || 'Proprietário'}`;
+                        document.title = docTitle;
                         setLoading(false);
                         return;
                     }
@@ -33,6 +35,8 @@ const DesinterdicaoPrint = () => {
                     const localBySupId = await db.getFromIndex('desinterdicoes', 'supabase_id', id);
                     if (localBySupId) {
                         setData(localBySupId);
+                        const docTitle = `Desinterdição nº ${localBySupId.interdicaoId || localBySupId.interdicao_id || id} - ${localBySupId.responsavel_nome || localBySupId.responsavelNome || 'Proprietário'}`;
+                        document.title = docTitle;
                         setLoading(false);
                         return;
                     }
@@ -47,6 +51,8 @@ const DesinterdicaoPrint = () => {
                 );
                 if (found) {
                     setData(found);
+                    const docTitle = `Desinterdição nº ${found.interdicaoId || found.interdicao_id || id} - ${found.responsavel_nome || found.responsavelNome || 'Proprietário'}`;
+                    document.title = docTitle;
                     setLoading(false);
                     return;
                 }
@@ -60,6 +66,8 @@ const DesinterdicaoPrint = () => {
 
                 if (reportData) {
                     setData(reportData);
+                    const docTitle = `Desinterdição nº ${reportData.interdicaoId || reportData.interdicao_id || id} - ${reportData.responsavel_nome || reportData.responsavelNome || 'Proprietário'}`;
+                    document.title = docTitle;
                 } else {
                     console.warn("Desinterdição não encontrada:", error);
                 }
@@ -76,44 +84,7 @@ const DesinterdicaoPrint = () => {
         window.print();
     };
 
-    const handleDownloadPDF = async () => {
-        const container = document.querySelector('.print-container');
-        if (!container) return;
 
-        const toast = document.createElement('div');
-        toast.innerHTML = `
-            <div style="position: fixed; top: 80px; right: 20px; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
-                <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                Gerando PDF...
-            </div>
-            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-        `;
-        document.body.appendChild(toast);
-
-        try {
-            const canvas = await html2canvas(container, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
-            });
-
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const ratio = pageWidth / canvas.width;
-            const finalHeight = canvas.height * ratio;
-
-            pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, finalHeight);
-            pdf.save(`Auto_Desinterdicao_${data.interdicaoId || id}.pdf`);
-        } catch (err) {
-            console.error('PDF Error:', err);
-            alert('Falha ao gerar o PDF.');
-        } finally {
-            if (document.body.contains(toast)) document.body.removeChild(toast);
-        }
-    };
 
     if (loading) return <div className="flex items-center justify-center min-h-screen font-bold text-slate-400">Carregando Relatório...</div>;
     if (!data) return <div className="flex items-center justify-center min-h-screen font-bold text-slate-400">Relatório não encontrado.</div>;
@@ -142,7 +113,6 @@ const DesinterdicaoPrint = () => {
                 <h1 className="font-bold text-lg">Auto de Desinterdição</h1>
                 <div className="flex gap-4">
                     <button onClick={() => window.close()} className="px-4 py-2 hover:bg-slate-700 rounded text-sm font-bold uppercase">Fechar</button>
-                    <button onClick={handleDownloadPDF} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-white font-bold uppercase text-sm">Baixar PDF</button>
                     <button onClick={handlePrint} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold uppercase text-sm">Imprimir</button>
                 </div>
             </div>

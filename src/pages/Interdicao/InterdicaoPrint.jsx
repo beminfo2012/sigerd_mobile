@@ -59,6 +59,8 @@ const InterdicaoPrint = () => {
 
                 if (localMatch) {
                     setData(localMatch);
+                    const docTitle = `Interdição nº ${localMatch.interdicaoId || localMatch.interdicao_id || id} - ${localMatch.responsavel_nome || localMatch.responsavelNome || 'Proprietário'}`;
+                    document.title = docTitle;
                     setLoading(false);
                     return;
                 }
@@ -72,6 +74,8 @@ const InterdicaoPrint = () => {
 
                 if (reportData) {
                     setData(reportData);
+                    const docTitle = `Interdição nº ${reportData.interdicaoId || reportData.interdicao_id || id} - ${reportData.responsavel_nome || reportData.responsavelNome || 'Proprietário'}`;
+                    document.title = docTitle;
                 } else {
                     console.warn("Interdição não encontrada:", error);
                 }
@@ -89,77 +93,7 @@ const InterdicaoPrint = () => {
         setTimeout(() => window.print(), 800);
     };
 
-    const handleDownloadPDF = async () => {
-        const container = document.querySelector('.print-container');
-        if (!container) return;
 
-        const originalWidth = container.style.width;
-        const originalTransform = container.style.transform;
-        const originalTransformOrigin = container.style.transformOrigin;
-
-        container.style.width = '210mm';
-        container.style.transform = 'none';
-        container.style.transformOrigin = 'unset';
-
-        window.dispatchEvent(new Event('trigger-map-print-resize'));
-
-        const toast = document.createElement('div');
-        toast.innerHTML = `
-            <div style="position: fixed; top: 80px; right: 20px; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 99999; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 12px;">
-                <div style="width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                Gerando PDF...
-            </div>
-            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-        `;
-        document.body.appendChild(toast);
-
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            const canvas = await html2canvas(container, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
-            });
-
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-
-            const ratio = pageWidth / imgWidth;
-            const finalHeight = imgHeight * ratio;
-
-            let heightLeft = finalHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft > 0) {
-                position -= pageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-                heightLeft -= pageHeight;
-            }
-
-            const interdicaoId = (data.interdicaoId || data.interdicao_id || id).toString().replace(/\//g, '-');
-            const responsavel = (data.responsavel_nome || data.responsavelNome || 'Proprietario').toString().replace(/\s+/g, '_').substring(0, 30);
-            pdf.save(`Relatório_Interdição_${interdicaoId}_${responsavel}.pdf`);
-        } catch (err) {
-            console.error('PDF Generation Error:', err);
-            alert('Falha ao gerar o PDF. Por favor, use a opção "Imprimir" do navegador.');
-        } finally {
-            container.style.width = originalWidth;
-            container.style.transform = originalTransform;
-            container.style.transformOrigin = originalTransformOrigin;
-            if (document.body.contains(toast)) document.body.removeChild(toast);
-        }
-    };
 
     if (loading) return <div className="flex items-center justify-center min-h-screen font-bold text-slate-400">Carregando Relatório...</div>;
     if (!data) return <div className="flex items-center justify-center min-h-screen font-bold text-slate-400">Relatório não encontrado.</div>;
@@ -219,9 +153,6 @@ const InterdicaoPrint = () => {
                 <h1 className="font-bold text-lg">Visualização de Impressão (Interdição)</h1>
                 <div className="flex gap-4">
                     <button onClick={() => window.close()} className="px-4 py-2 hover:bg-slate-700 rounded transition-colors text-sm font-bold uppercase">Fechar</button>
-                    <button onClick={handleDownloadPDF} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-white font-bold uppercase text-sm flex items-center gap-2 transition-colors">
-                        <span className="material-symbols-outlined text-sm">download</span> Baixar PDF
-                    </button>
                     <button onClick={handlePrint} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold uppercase text-sm flex items-center gap-2 transition-colors">
                         <span className="material-symbols-outlined text-sm">print</span> Imprimir / Salvar PDF
                     </button>
