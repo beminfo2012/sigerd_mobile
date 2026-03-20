@@ -186,7 +186,7 @@ const OcorrenciasPrint = () => {
     let secNum = 4;
     const numChecklist = hasChecklist ? secNum++ : null;
     const numMedidas = secNum++;
-    const numEncaj = secNum++;
+
     const numObs = hasObs ? secNum++ : null;
     const numFotos = hasPhotos ? secNum++ : null;
 
@@ -457,38 +457,21 @@ const OcorrenciasPrint = () => {
                         </section>
                     )}
 
-                    {/* 5. Medidas e 6. Encaminhamentos */}
+                    {/* 5. Medidas Adotadas */}
                     <section className="mb-8 avoid-break">
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-1 h-4 bg-emerald-600 rounded-full"></div>
-                                    <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest">{numMedidas}. Medidas Adotadas</h2>
-                                </div>
-                                <div className="border border-emerald-100 bg-emerald-50/50 rounded-lg p-4 h-full">
-                                    <ul className="space-y-2">
-                                        {(data.medidasTomadas || data.medidas_tomadas || ['Monitoramento']).map((m, i) => (
-                                            <li key={i} className="flex items-start gap-2 text-[10px] font-bold text-slate-700">
-                                                <span className="text-emerald-500 mt-0.5">✔</span> {m}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
+                        <div className="w-full">
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="w-1 h-4 bg-emerald-600 rounded-full"></div>
+                                <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest">{numMedidas}. Medidas Adotadas</h2>
                             </div>
-                            <div>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-1 h-4 bg-purple-600 rounded-full"></div>
-                                    <h2 className="text-xs font-black text-slate-800 uppercase tracking-widest">{numEncaj}. Encaminhamentos</h2>
-                                </div>
-                                <div className="border border-purple-100 bg-purple-50/50 rounded-lg p-4 h-full">
-                                    <ul className="space-y-2">
-                                        {(data.encaminhamentos || ['Sem encaminhamentos']).map((e, i) => (
-                                            <li key={i} className="flex items-start gap-2 text-[10px] font-bold text-slate-700">
-                                                <span className="text-purple-500 mt-0.5">➜</span> {e}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
+                            <div className="border border-emerald-100 bg-emerald-50/50 rounded-lg p-4 h-full">
+                                <ul className="space-y-2">
+                                    {(data.medidasTomadas || data.medidas_tomadas || ['Monitoramento']).map((m, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-[10px] font-bold text-slate-700">
+                                            <span className="text-emerald-500 mt-0.5">✔</span> {m}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
                     </section>

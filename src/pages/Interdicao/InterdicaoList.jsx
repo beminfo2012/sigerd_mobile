@@ -196,27 +196,45 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
     }
 
     const confirmDeletion = async () => {
-        const interdicao = deleteModal.interdicao
-        if (!interdicao) return
+        const interdicao = deleteModal.interdicao;
+        if (!interdicao) return;
 
-        const id = interdicao.id
-        const supabaseId = interdicao.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null)
+        const id = interdicao.id;
+        const supabaseId = interdicao.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null);
+        const formattedId = interdicao.interdicao_id || interdicao.interdicaoId;
 
-        let error = null
-        if (supabaseId) {
-            const { error: remoteError } = await supabase.from('interdicoes').delete().eq('id', supabaseId)
-            error = remoteError
+        // Try remote delete if it has a supabase ID or serial and we are online
+        if ((supabaseId || formattedId) && navigator.onLine) {
+            try {
+                let query = supabase.from('interdicoes').delete();
+                if (supabaseId) {
+                    query = query.eq('id', supabaseId);
+                } else if (formattedId) {
+                    query = query.eq('interdicao_id', formattedId);
+                }
+                
+                const { error: remoteError } = await query;
+                if (remoteError) {
+                    console.error('Remote delete error:', remoteError);
+                    alert('Atenção: O registro foi removido do aparelho, mas não foi possível excluir do servidor (Banco de Dados). Erro: ' + (remoteError.message || 'RLS/Permissão'));
+                }
+            } catch (err) {
+                console.error('Remote delete exception:', err);
+                alert('Erro de conexão ao tentar excluir do servidor.');
+            }
         }
 
-        if (!error) {
-            await deleteInterdicaoLocal(id)
-            setInterdicoes(prev => prev.filter(v => v.id !== id))
-            window.dispatchEvent(new CustomEvent('interdicao-deleted'))
-        } else {
-            console.error('Delete error:', error)
-            alert('Erro ao excluir do servidor. Verifique sua conexão.')
+        // Always delete locally to keep UI responsive and consistent
+        try {
+            await deleteInterdicaoLocal(id);
+            setInterdicoes(prev => prev.filter(v => v.id !== id));
+            window.dispatchEvent(new CustomEvent('interdicao-deleted'));
+            setDeleteModal({ open: false, interdicao: null });
+        } catch (err) {
+            console.error('Local delete error:', err);
+            alert('Erro ao excluir registro local.');
         }
-    }
+    };
 
     const handleClearFilters = () => {
         setFilters({

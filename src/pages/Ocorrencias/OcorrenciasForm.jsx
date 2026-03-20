@@ -376,6 +376,9 @@ const OcorrenciasForm = () => {
                     nivelRisco: record.nivel_risco || record.nivelRisco || '',
                     informacoes_complementares: record.informacoes_complementares || record.informacoesComplementares || '',
                     checklistRespostas: record.checklist_respostas || record.checklistRespostas || {},
+                    medidasTomadas: record.medidas_tomadas || record.medidasTomadas || [],
+                    encaminhamentos: record.encaminhamentos || record.encaminhamentos || [],
+                    unidade_consumidora: record.unidade_consumidora || '',
                     assinaturaAgente: record.assinatura_agente || record.assinaturaAgente || null,
                     assinaturaAssistido: record.assinatura_assistido || record.assinaturaAssistido || null,
                     temApoioTecnico: record.tem_apoio_tecnico !== undefined ? record.tem_apoio_tecnico : (record.temApoioTecnico || false),
@@ -1182,12 +1185,41 @@ const OcorrenciasForm = () => {
                     </div>
                 </Card>
 
-                {/* 8. SEÇÃO: Fotos */}
+                {/* 8. SEÇÃO: Medidas Adotadas */}
+                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
+                        <div className="w-1.5 h-6 bg-emerald-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">8. Medidas Adotadas</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[
+                            'Monitoramento do Local', 'Isolamento da Área', 
+                            'Interdição Parcial', 'Interdição Total', 
+                            'Evacuação Preventiva', 'Corte de Árvores', 
+                            'Limpeza de Via', 'Desobstrução de Drenagem',
+                            'Lona Plástica Instalada', 'Outros'
+                        ].map(m => (
+                            <button
+                                key={m}
+                                type="button"
+                                onClick={() => toggleArrayItem('medidasTomadas', m)}
+                                className={`p-4 rounded-xl text-left text-[11px] font-black uppercase border-2 transition-all flex items-center justify-between ${formData.medidasTomadas?.includes(m) ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
+                            >
+                                {m}
+                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${formData.medidasTomadas?.includes(m) ? 'bg-white border-white text-emerald-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                    {formData.medidasTomadas?.includes(m) && <CheckCircle2 size={14} />}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </Card>
+
+                {/* 9. SEÇÃO: Fotos */}
                 <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">8. Fotos</h2>
+                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">9. Fotos</h2>
                         </div>
                         <span className="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{formData.fotos?.length || 0} fotos</span>
                     </div>
@@ -1221,11 +1253,11 @@ const OcorrenciasForm = () => {
                     </div>
                 </Card>
 
-                {/* 9. SEÇÃO: Assinaturas (Auto-assinar e Apoio Técnico) */}
+                {/* 10. SEÇÃO: Assinaturas (Auto-assinar e Apoio Técnico) */}
                 <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="w-1.5 h-6 bg-emerald-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">9. Assinaturas</h2>
+                        <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">10. Assinaturas</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
