@@ -82,33 +82,29 @@ export const deleteOcorrenciaLocal = async (id) => {
 /**
  * Save Ocorrencia locally (IndexedDB)
  */
-export const saveOcorrenciaLocal = async (data) => {
+export const saveOcorrenciaLocal = async (data, skipSync = false) => {
     const db = await initDB();
     const toSave = {
         ...data,
         ocorrencia_id: data.ocorrencia_id || data.id_ocorrencia || crypto.randomUUID(),
         updated_at: new Date().toISOString(),
-        synced: false
+        synced: data.synced || false
     };
 
     // [FIX] Prevent unique constraint violation on ocorrencia_id when updating remote records locally
     if (!toSave.id || isNaN(parseInt(toSave.id))) {
-        // If id is missing or is not a number (e.g. UUID from Supabase), search by ocorrencia_id
         const existing = await db.getFromIndex('ocorrencias_operacionais', 'ocorrencia_id', toSave.ocorrencia_id);
         if (existing) {
             toSave.id = existing.id; // Keep local integer ID
         } else if (typeof toSave.id === 'string' && toSave.id.includes('-')) {
-            // It's a remote UUID but doesn't exist locally yet. 
-            // We should ideally NOT use it as PK if store is autoIncrement, 
-            // but db.put might handle it. Safer to delete id and let autoIncrement work.
             delete toSave.id;
         }
     }
 
     const id = await db.put('ocorrencias_operacionais', toSave);
 
-    if (navigator.onLine) {
-        triggerOcorrenciaSync(id).catch(err => console.error('Sync failed:', err));
+    if (navigator.onLine && !skipSync) {
+        triggerOcorrenciaSync(toSave.ocorrencia_id).catch(err => console.error('Sync failed:', err));
     }
     return id;
 };

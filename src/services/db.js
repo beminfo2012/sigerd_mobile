@@ -418,6 +418,9 @@ export const syncSingleItem = async (storeName, item, db) => {
                                 .from(folder)
                                 .getPublicUrl(fileName)
                             return { ...foto, [foto.data ? 'data' : 'url']: urlData.publicUrl }
+                        } else {
+                            // [CRITICAL] If upload fails, throw to prevent saving Base64 to database
+                            throw new Error(`Upload failed for ${fileName}: ${uploadError.message}`);
                         }
                     }
                 }

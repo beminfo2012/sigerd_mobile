@@ -587,7 +587,8 @@ const OcorrenciasForm = () => {
             };
             
             // 1. Salvar Localmente (Garante que os dados não se percam se a internet cair no meio)
-            await saveOcorrenciaLocal(finalData);
+            // Pulamos o sync automático se estivermos online, pois chamaremos a função blindada logo abaixo
+            await saveOcorrenciaLocal(finalData, navigator.onLine);
             
             // 2. Acionamento Blindado para o Supabase (Se estiver Online)
             if (navigator.onLine) {
