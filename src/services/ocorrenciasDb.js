@@ -204,3 +204,121 @@ export const syncAllOcorrencias = async () => {
         await triggerOcorrenciaSync(r.ocorrencia_id);
     }
 };
+/**
+ * Função Blindada para Salvar Ocorrências Operacionais
+ * @param {Object} ocorrencia - O objeto da ocorrência preenchido no formulário do celular
+ */
+export async function salvarOcorrenciaOperacional(ocorrencia) {
+    try {
+        console.log("Iniciando salvamento blindado da ocorrência...");
+        const fotosProcessadas = [];
+        
+        // 1. UPLOAD DE FOTOS PARA O STORAGE
+        if (ocorrencia.fotos && ocorrencia.fotos.length > 0) {
+            for (const foto of ocorrencia.fotos) {
+                // Se a foto tiver o prefixo gigante "data:image/...", ela precisa ir pro Storage
+                if (foto.data && String(foto.data).startsWith('data:image')) {
+                    console.log(`Enviando foto ${foto.id} para a nuvem...`);
+                    
+                    // Converte o texto Base64 em um Arquivo Binário (Blob)
+                    const base64Response = await fetch(foto.data);
+                    const blob = await base64Response.blob();
+                    
+                    // Caminho no bucket: pasta com o ID da ocorrência para manter organizado
+                    const caminhoStorage = `${ocorrencia.ocorrencia_id || ocorrencia.id}/${foto.id}.jpg`;
+                    
+                    // Bate na porta do Supabase Storage
+                    const { error: uploadError } = await supabase
+                        .storage
+                        .from('ocorrencias_fotos') // <-- NOME DO SEU BUCKET
+                        .upload(caminhoStorage, blob, {
+                            contentType: blob.type,
+                            upsert: true // Se a foto já existir lá, apenas substitui para evitar erros
+                        });
+                    
+                    if (uploadError) {
+                        throw new Error(`Falha no upload da foto ${foto.id}: ${uploadError.message}`);
+                    }
+                    
+                    // Puxa o Link (URL) limpo gerado
+                    const { data: linkInfo } = supabase
+                        .storage
+                        .from('ocorrencias_fotos')
+                        .getPublicUrl(caminhoStorage);
+                    
+                    // Salva apenas o Link no array novo!
+                    fotosProcessadas.push({
+                        id: foto.id,
+                        data: linkInfo.publicUrl // Ex: https://..../foto.jpg
+                    });
+                } else {
+                    // Se não for Base64 (ex: já era um Link de uma foto antiga editada), mantém como está
+                    fotosProcessadas.push(foto);
+                }
+            }
+        }
+        
+        // 2. HIGIENIZAÇÃO DE DADOS MATEMÁTICOS PARA O SUPABASE
+        const ocorrenciaHigienizada = {
+            ...ocorrencia,
+            
+            // Substitui as imagens gigantes pelas fotos tratadas acima
+            fotos: fotosProcessadas, 
+            
+            // Limpa textos vazios que virariam Crach de Syntax no Banco e converte pra Null ou 0
+            mortos: !ocorrencia.mortos || ocorrencia.mortos === "" ? 0 : Number(ocorrencia.mortos),
+            feridos: !ocorrencia.feridos || ocorrencia.feridos === "" ? 0 : Number(ocorrencia.feridos),
+            desalojados: !ocorrencia.desalojados || ocorrencia.desalojados === "" ? 0 : Number(ocorrencia.desalojados),
+            desabrigados: !ocorrencia.desabrigados || ocorrencia.desabrigados === "" ? 0 : Number(ocorrencia.desabrigados),
+            enfermos: !ocorrencia.enfermos || ocorrencia.enfermos === "" ? 0 : Number(ocorrencia.enfermos),
+            desaparecidos: !ocorrencia.desaparecidos || ocorrencia.desaparecidos === "" ? 0 : Number(ocorrencia.desaparecidos),
+            outros_afetados: !ocorrencia.outros_afetados || ocorrencia.outros_afetados === "" ? 0 : Number(ocorrencia.outros_afetados),
+            
+            // Trata as posições GPS para evitar o Erro Decimal Vazio
+            lat: ocorrencia.lat === "" || ocorrencia.lat === undefined ? null : Number(ocorrencia.lat),
+            lng: ocorrencia.lng === "" || ocorrencia.lng === undefined ? null : Number(ocorrencia.lng),
+            id_local: ocorrencia.id_local === "" || ocorrencia.id_local === undefined ? null : Number(ocorrencia.id_local)
+        };
+        
+        // Ensure some snake_case mapping for database compatibility
+        const payload = {
+            ...ocorrenciaHigienizada,
+            categoria_risco: ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco,
+            subtipos_risco: ocorrenciaHigienizada.subtiposRisco || ocorrenciaHigienizada.subtipos_risco,
+            nivel_risco: ocorrenciaHigienizada.nivelRisco || ocorrenciaHigienizada.nivel_risco,
+            tem_apoio_tecnico: ocorrenciaHigienizada.temApoioTecnico || ocorrenciaHigienizada.tem_apoio_tecnico,
+            tem_solicitante_especifico: ocorrenciaHigienizada.temSolicitanteEspecifico || ocorrenciaHigienizada.tem_solicitante_especifico
+        };
+        
+        // Delete camelCase extra keys to keep DB clean
+        delete payload.categoriaRisco;
+        delete payload.subtiposRisco;
+        delete payload.subtipoRiscoOutros;
+        delete payload.nivelRisco;
+        delete payload.temApoioTecnico;
+        delete payload.temSolicitanteEspecifico;
+        delete payload.id; // Local IndexedDB key
+
+        // 3. O INSERT / UPSERT FINAL NO BANCO DE DADOS
+        console.log("Salvando formulário no banco de dados...");
+        
+        const { data: dbData, error: dbError } = await supabase
+            .from('ocorrencias_operacionais')
+            .upsert(payload, {
+                // onConflict barra o Erro de "Ocorrência Duplicada" se o Agente clicar 2x sem querer!
+                onConflict: 'ocorrencia_id' 
+            })
+            .select();
+        
+        if (dbError) {
+            throw new Error(`Erro fatal no Supabase Database: ${dbError.message}`);
+        }
+        
+        console.log("Ocorrência salva com Sucesso Absoluto!");
+        return { sucesso: true, mensagem: "Salvo com sucesso", dados: dbData };
+    } catch (erro) {
+        // Se a Internet cair em qualquer etapa, a foto ou a ocorrência paralisam aqui de forma segura
+        console.error("Operação abortada. Erro encontrado:", erro.message);
+        return { sucesso: false, mensagem: erro.message };
+    }
+}

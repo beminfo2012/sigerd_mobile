@@ -7,7 +7,7 @@ import {
     X, Phone, User, Fingerprint, Siren, ClipboardList, Share,
     Download, ChevronLeft, ChevronRight, Printer
 } from 'lucide-react';
-import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
+import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE, salvarOcorrenciaOperacional } from '../../services/ocorrenciasDb';
 import { initDB, searchInstallations } from '../../services/db';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/ToastNotification';
@@ -585,11 +585,45 @@ const OcorrenciasForm = () => {
                 status: 'finalized',
                 updated_at: new Date().toISOString()
             };
+            
+            // 1. Salvar Localmente (Garante que os dados não se percam se a internet cair no meio)
             await saveOcorrenciaLocal(finalData);
-            toast.success('Ocorrência registrada com sucesso!');
+            
+            // 2. Acionamento Blindado para o Supabase (Se estiver Online)
+            if (navigator.onLine) {
+                toast.info('Sincronizando fotos e dados...');
+                const result = await salvarOcorrenciaOperacional(finalData);
+                
+                if (result.sucesso) {
+                    // Atualiza o estado local para "sincronizado" e salva as URLs curtas das fotos
+                    const db = await initDB();
+                    const tx = db.transaction('ocorrencias_operacionais', 'readwrite');
+                    const store = tx.objectStore('ocorrencias_operacionais');
+                    
+                    // Busca pelo ocorrencia_id para garantir que pegamos o registro certo
+                    const allLocal = await store.getAll();
+                    const localItem = allLocal.find(item => item.ocorrencia_id === finalData.ocorrencia_id || item.ocorrencia_id_format === currentId);
+                    
+                    if (localItem) {
+                        localItem.synced = true;
+                        if (result.dados?.[0]?.fotos) {
+                            localItem.fotos = result.dados[0].fotos;
+                        }
+                        await store.put(localItem);
+                    }
+                    await tx.done;
+                    toast.success('Ocorrência salva e sincronizada com sucesso!');
+                } else {
+                    toast.warning('Salvo localmente', 'Os dados estão seguros no celular, mas a sincronização falhou: ' + result.mensagem);
+                }
+            } else {
+                toast.success('Ocorrência registrada localmente (Offline)!');
+            }
+
             navigate('/ocorrencias');
         } catch (error) {
-            toast.error('Falha ao salvar.');
+            console.error('Save error:', error);
+            toast.error('Falha ao salvar ocorrencia.');
         } finally {
             setSaving(false);
         }

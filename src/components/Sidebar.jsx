@@ -175,7 +175,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     );
     return (
         <aside
-            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'} border-r border-white/10 shadow-xl`}
+            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16' : 'w-64'} border-r border-white/10 shadow-xl`}
             style={{
                 background: 'var(--web-sidebar-gradient)',
                 fontFamily: 'var(--web-font)'
@@ -198,7 +198,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                             key={item.path}
                             to={item.path}
                             title={isCollapsed ? item.label : ''}
-                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3 gap-3'} ${isActive(item.path)
+                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center py-4' : 'px-4 py-3 gap-3'} ${isActive(item.path)
                                 ? 'bg-white/10 text-white border-[#4CAF50]'
                                 : 'text-white/70 border-transparent hover:bg-white/5 hover:text-white'
                                 }`}
@@ -220,7 +220,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             </nav>
 
             {/* Footer / User Profile */}
-            <div className={`p-4 border-t border-white/10 bg-black/10 relative`} ref={userMenuRef}>
+            <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-white/10 bg-black/10 relative`} ref={userMenuRef}>
                 {/* User Dropdown Menu */}
                 {showUserMenu && (
                     <div className={`absolute bottom-20 left-4 ${isCollapsed ? 'w-64' : 'w-[calc(100%-32px)]'} bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-2 z-[60] animate-in slide-in-from-bottom-2 duration-200`}>

@@ -403,7 +403,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                             'occupants': 'occupants',
                             'donations': 'donations',
                             'redap_records': 'redap',
-                            'ocorrencias_operacionais': 'ocorrencias'
+                            'ocorrencias_operacionais': 'ocorrencias_fotos'
                         };
                         const folder = folderMap[storeName] || 'general'
 
@@ -822,13 +822,13 @@ export const syncSingleItem = async (storeName, item, db) => {
                 lng: item.longitude || item.lng || null,
                 accuracy: item.accuracy || null,
                 gps_timestamp: item.gps_timestamp || null,
-                mortos: parseInt(item.mortos) || 0,
-                feridos: parseInt(item.feridos) || 0,
-                enfermos: parseInt(item.enfermos) || 0,
-                desalojados: parseInt(item.desalojados) || 0,
-                desabrigados: parseInt(item.desabrigados) || 0,
-                desaparecidos: parseInt(item.desaparecidos) || 0,
-                outros_afetados: parseInt(item.outros_afetados) || 0,
+                mortos: !item.mortos || item.mortos === "" ? 0 : Number(item.mortos),
+                feridos: !item.feridos || item.feridos === "" ? 0 : Number(item.feridos),
+                enfermos: !item.enfermos || item.enfermos === "" ? 0 : Number(item.enfermos),
+                desalojados: !item.desalojados || item.desalojados === "" ? 0 : Number(item.desalojados),
+                desabrigados: !item.desabrigados || item.desabrigados === "" ? 0 : Number(item.desabrigados),
+                desaparecidos: !item.desaparecidos || item.desaparecidos === "" ? 0 : Number(item.desaparecidos),
+                outros_afetados: !item.outros_afetados || item.outros_afetados === "" ? 0 : Number(item.outros_afetados),
                 tem_danos_humanos: item.tem_danos_humanos || false,
                 categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
                 nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
@@ -849,6 +849,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     ...(item.apoioTecnico || item.apoio_tecnico || {}),
                     assinatura: signatureApoioUrl
                 },
+                id_local: item.id_local === "" || item.id_local === undefined ? null : Number(item.id_local),
                 status: item.status || 'Pendente',
                 updated_at: new Date().toISOString()
             };
