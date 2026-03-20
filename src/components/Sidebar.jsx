@@ -175,7 +175,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     );
     return (
         <aside
-            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16' : 'w-64'} border-r border-white/10 shadow-xl`}
+            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-12' : 'w-64'} border-r border-white/10 shadow-xl`}
             style={{
                 background: 'var(--web-sidebar-gradient)',
                 fontFamily: 'var(--web-font)'
@@ -198,12 +198,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                             key={item.path}
                             to={item.path}
                             title={isCollapsed ? item.label : ''}
-                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center py-4' : 'px-4 py-3 gap-3'} ${isActive(item.path)
+                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center py-3' : 'px-4 py-3 gap-3'} ${isActive(item.path)
                                 ? 'bg-white/10 text-white border-[#4CAF50]'
                                 : 'text-white/70 border-transparent hover:bg-white/5 hover:text-white'
                                 }`}
                         >
-                            <item.icon size={20} className={`${isActive(item.path) ? '' : 'group-hover:scale-110 transition-transform'} shrink-0`} />
+                            <item.icon size={18} className={`${isActive(item.path) ? '' : 'group-hover:scale-110 transition-transform'} shrink-0`} />
 
                             {!isCollapsed && (
                                 <span className="text-sm font-semibold truncate animate-in fade-in duration-300">
@@ -274,7 +274,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className={`w-full flex items-center rounded-xl bg-white/10 border border-white/10 shadow-sm transition-all hover:bg-white/20 p-2 ${isCollapsed ? 'justify-center' : 'gap-3 px-3'}`}
                 >
-                    <div className="user-avatar !w-10 !h-10 !bg-white !text-[#10346E] !border-white/20 shrink-0 shadow-sm shadow-black/10 transition-transform active:scale-90">
+                    <div className={`user-avatar ${isCollapsed ? '!w-8 !h-8' : '!w-10 !h-10'} !bg-white !text-[#10346E] !border-white/20 shrink-0 shadow-sm shadow-black/10 transition-transform active:scale-90`}>
                         {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
                     </div>
                     {!isCollapsed && (
