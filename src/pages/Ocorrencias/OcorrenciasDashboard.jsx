@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Plus, ArrowLeft, Search, Clock, CheckCircle,
     AlertTriangle, ShieldAlert, ChevronRight, MapPin, Trash2,
-    Eye, ShieldCheck, RefreshCw, Loader2, FileText, Calendar
+    Eye, ShieldCheck, RefreshCw, Loader2, FileText, Calendar, Printer
 } from 'lucide-react';
 import { generateConsolidatedReport } from '../../utils/ocorrenciaConsolidadoGenerator';
 import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal } from '../../services/ocorrenciasDb';
@@ -187,7 +187,7 @@ const OcorrenciasDashboard = () => {
                             className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 px-4 h-12"
                             title="Gerar Relatório Consolidado"
                         >
-                            <FileText size={18} className="sm:mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Relatório</span>
+                            <Printer size={18} className="sm:mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Relatório</span>
                         </Button>
                         <Button
                             onClick={() => navigate('/ocorrencias/novo')}
@@ -337,10 +337,10 @@ const OcorrenciasDashboard = () => {
                                                         e.stopPropagation();
                                                         window.open(`/ocorrencias/imprimir/${record.id || record.ocorrencia_id_format}`, '_blank');
                                                     }}
-                                                    title="Visualizar Relatório (PDF)"
-                                                    className="p-3 text-slate-300 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all"
+                                                    title="Imprimir Relatório (PDF)"
+                                                    className="p-3 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all"
                                                 >
-                                                    <Eye size={18} />
+                                                    <Printer size={18} />
                                                 </button>
                                             </div>
                                             <div className="w-10 h-10 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">

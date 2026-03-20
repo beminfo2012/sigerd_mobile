@@ -143,18 +143,27 @@ export const getOcorrenciaById = async (id) => {
     if (!localRecord) {
         // Tenta achar buscando de outra forma no DB local
         const allLocal = await db.getAll('ocorrencias_operacionais');
-        localRecord = allLocal.find(r => String(r.id) === String(id) || r.ocorrencia_id === id);
+        localRecord = allLocal.find(r => 
+            String(r.id) === String(id) || 
+            r.ocorrencia_id === id || 
+            r.ocorrencia_id_format === id
+        );
     }
 
     // Se não encontrou ou onLine, vamos sempre tentar puxar o online para garantir dados completos se não for registro 100% não syncado
     if (navigator.onLine && (!localRecord || localRecord.synced)) {
         try {
             const { supabase } = await import('./supabase');
-            const { data } = await supabase
-                .from('ocorrencias_operacionais')
-                .select('*')
-                .eq('id', id)
-                .single();
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+            
+            let query = supabase.from('ocorrencias_operacionais').select('*');
+            if (isUuid) {
+                query = query.or(`id.eq.${id},ocorrencia_id.eq.${id}`);
+            } else {
+                query = query.eq('ocorrencia_id_format', id);
+            }
+            
+            const { data } = await query.single();
             if (data) return data;
         } catch (e) {
             console.warn('Erro ao buscar ocorrencia remotamente, usando fallback', e);

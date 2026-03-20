@@ -3,8 +3,9 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import { Printer, Download, X, FileText } from 'lucide-react';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
-import { getOcorrenciasLocal } from '../../services/ocorrenciasDb';
+import { getOcorrenciaById } from '../../services/ocorrenciasDb';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -53,44 +54,16 @@ const OcorrenciasPrint = () => {
         const fetchData = async () => {
             if (!id) return;
             try {
-                // 1. Try to fetch from Local DB first (support offline usage)
-                const localOcorrencias = await getOcorrenciasLocal().catch(() => []);
-                const localMatch = localOcorrencias.find(v =>
-                    String(v.id) === String(id) ||
-                    String(v.ocorrencia_id) === String(id) ||
-                    v.ocorrencia_id_format === id
-                );
-
-                if (localMatch) {
-                    setData(localMatch);
-                    setLoading(false);
-                    return;
-                }
-
-                // 2. Fetch from Supabase if not local
-                // Try to find by UUID id, formatted ID string, or the serial id_local
-                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
-                const isNumeric = /^\d+$/.test(id);
-
-                let query = supabase.from('ocorrencias_operacionais').select('*');
-
-                if (isUuid) {
-                    query = query.eq('ocorrencia_id', id);
-                } else if (isNumeric) {
-                    query = query.or(`id_local.eq.${id},ocorrencia_id_format.eq.${id}`);
-                } else {
-                    query = query.eq('ocorrencia_id_format', id);
-                }
-
-                const { data: reportData, error } = await query.single();
-
+                // Centralized service handling both local and cloud with correct logic
+                const reportData = await getOcorrenciaById(id);
+                
                 if (reportData) {
                     setData(reportData);
                 } else {
-                    console.warn("Ocorrencia not found:", error);
+                    console.warn(`[OcorrenciasPrint] Não foi possível localizar a ocorrência com o identificador: ${id}`);
                 }
             } catch (error) {
-                console.error('Error fetching report:', error);
+                console.error('[OcorrenciasPrint] Erro na busca do relatório:', error);
             } finally {
                 setLoading(false);
             }
@@ -129,55 +102,43 @@ const OcorrenciasPrint = () => {
         document.body.appendChild(toast);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Wait longer for maps and signatures to fully render
+            await new Promise(resolve => setTimeout(resolve, 3500));
 
-            const canvas = await html2canvas(container, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = 210; // A4 standard width in mm
+            
+            // Generate Filename
+            const idLabel = (data.ocorrencia_id_format || id).toString().replace(/\//g, '-');
+            const fileName = `Ocorrencia_${idLabel}.pdf`;
+
+            await pdf.html(container, {
+                callback: (doc) => {
+                    doc.save(fileName);
+                    if (document.body.contains(toast)) document.body.removeChild(toast);
+                },
+                x: 0,
+                y: 0,
+                width: pageWidth,
+                windowWidth: 1200, // Fixed width during capture
+                autoPaging: 'text', // Better for preventing text cutting
+                margin: [10, 0, 10, 0], // Top, Left, Bottom, Right margins in mm
+                html2canvas: {
+                    scale: 0.2645833333, // High scale for better resolution
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                }
             });
 
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-
-            // Calculate height in mm to fit width exactly
-            const ratio = pageWidth / imgWidth;
-            const finalHeight = imgHeight * ratio;
-
-            let heightLeft = finalHeight;
-            let position = 0;
-
-            // Page 1
-            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-            heightLeft -= pageHeight;
-
-            // Additional pages
-            while (heightLeft > 0) {
-                position -= pageHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, finalHeight);
-                heightLeft -= pageHeight;
-            }
-
-            // Generated filename: ID + Solicitante
-            const ocorrencia_id_format = (data.ocorrencia_id_format || data.ocorrencia_id_format || id).toString().replace(/\//g, '-');
-            const solicitante = (data.solicitante || 'Sem_Nome').toString().replace(/\s+/g, '_').substring(0, 30);
-            pdf.save(`Relatório_Ocorrencia_${ocorrencia_id_format}_${solicitante}.pdf`);
-        } catch (err) {
-            console.error('PDF Generation Error:', err);
-            alert('Falha ao gerar o PDF. Por favor, use a option "Imprimir" do navegador.');
+        } catch (error) {
+            console.error('PDF Generation error:', error);
+            alert('Erro ao gerar PDF. Verifique se há imagens bloqueadas.');
+            if (document.body.contains(toast)) document.body.removeChild(toast);
         } finally {
-            // Restore original styles
             container.style.width = originalWidth;
             container.style.transform = originalTransform;
             container.style.transformOrigin = originalTransformOrigin;
-            if (document.body.contains(toast)) document.body.removeChild(toast);
         }
     };
 
@@ -261,15 +222,34 @@ const OcorrenciasPrint = () => {
             `}</style>
 
             {/* Top Bar for Screen Only */}
-            <div className="no-print fixed top-0 left-0 right-0 bg-[#0f172a] text-white p-4 flex justify-between items-center z-[9999] shadow-md">
-                <h1 className="font-bold text-lg">Visualização de Impressão</h1>
-                <div className="flex gap-4">
-                    <button onClick={() => window.close()} className="px-4 py-2 hover:bg-slate-700 rounded transition-colors text-sm font-bold uppercase">Fechar</button>
-                    <button onClick={handleDownloadPDF} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-white font-bold uppercase text-sm flex items-center gap-2 transition-colors">
-                        <span className="material-symbols-outlined text-sm">download</span> Baixar PDF
+            <div className="no-print fixed top-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md text-white p-4 flex justify-between items-center z-[9999] shadow-xl border-b border-slate-700/50">
+                <div className="flex items-center gap-3">
+                    <div className="bg-blue-600/20 p-2 rounded-xl border border-blue-500/30">
+                        <Printer className="text-blue-400" size={20} />
+                    </div>
+                    <div>
+                        <h1 className="font-black text-sm uppercase tracking-wider">Visualização de Relatório</h1>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{data.ocorrencia_id_format || id}</p>
+                    </div>
+                </div>
+                <div className="flex gap-3">
+                    <button 
+                        onClick={() => window.close()} 
+                        className="px-4 py-2.5 hover:bg-slate-800 rounded-xl transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-slate-700"
+                    >
+                        <X size={16} /> Fechar
                     </button>
-                    <button onClick={handlePrint} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold uppercase text-sm flex items-center gap-2 transition-colors">
-                        <span className="material-symbols-outlined text-sm">print</span> Imprimir / Salvar PDF
+                    <button 
+                        onClick={handleDownloadPDF} 
+                        className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 rounded-xl text-white font-black uppercase tracking-widest text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20 shadow-inner"
+                    >
+                        <Download size={16} /> Baixar PDF
+                    </button>
+                    <button 
+                        onClick={handlePrint} 
+                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 active:scale-95 rounded-xl text-white font-black uppercase tracking-widest text-xs flex items-center gap-2 transition-all shadow-lg shadow-blue-900/20 shadow-inner"
+                    >
+                        <Printer size={16} /> Imprimir / Salvar
                     </button>
                 </div>
             </div>
