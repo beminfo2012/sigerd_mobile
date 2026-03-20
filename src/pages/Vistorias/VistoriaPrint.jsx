@@ -59,7 +59,8 @@ const VistoriaPrint = () => {
 
                 if (localMatch) {
                     setData(localMatch);
-                    const docTitle = `Vistoria nº ${localMatch.vistoriaId || localMatch.vistoria_id || id} - ${localMatch.solicitante || 'Sem Nome'}`;
+                    const docId = (localMatch.vistoriaId || localMatch.vistoria_id || id).replace('/', '-');
+                    const docTitle = `Vistoria nº ${docId} - ${localMatch.solicitante || 'Sem Nome'}`;
                     document.title = docTitle;
                     setLoading(false);
                     return;
@@ -74,7 +75,8 @@ const VistoriaPrint = () => {
 
                 if (reportData) {
                     setData(reportData);
-                    const docTitle = `Vistoria nº ${reportData.vistoriaId || reportData.vistoria_id || id} - ${reportData.solicitante || 'Sem Nome'}`;
+                    const docId = (reportData.vistoriaId || reportData.vistoria_id || id).replace('/', '-');
+                    const docTitle = `Vistoria nº ${docId} - ${reportData.solicitante || 'Sem Nome'}`;
                     document.title = docTitle;
                 } else {
                     console.warn("Vistoria not found:", error);

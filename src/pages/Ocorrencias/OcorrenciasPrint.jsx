@@ -59,7 +59,8 @@ const OcorrenciasPrint = () => {
                 
                 if (reportData) {
                     setData(reportData);
-                    const docTitle = `Ocorrência nº ${reportData.ocorrencia_id_format || id} - ${reportData.solicitante || 'Sem Nome'}`;
+                    const docId = (reportData.ocorrencia_id_format || id).replace('/', '-');
+                    const docTitle = `Ocorrência nº ${docId} - ${reportData.solicitante || 'Sem Nome'}`;
                     document.title = docTitle;
                 } else {
                     console.warn(`[OcorrenciasPrint] Não foi possível localizar a ocorrência com o identificador: ${id}`);

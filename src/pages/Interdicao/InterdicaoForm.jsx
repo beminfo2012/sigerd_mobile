@@ -445,7 +445,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 })
             }
 
-            const formattedId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`
+            const formattedId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`
             setFormData(prev => ({ ...prev, interdicaoId: formattedId }))
         } catch (e) {
             console.error(e)

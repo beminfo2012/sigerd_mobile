@@ -397,8 +397,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                         // Correct folder mapping
                         const folderMap = {
                             'vistorias': 'vistorias',
-                            'interdicoes': 'interdicoes',
-                            'desinterdicoes': 'interdicoes',
+                            'interdicoes': 'interdicoes_fotos',
+                            'desinterdicoes': 'interdicoes_fotos',
                             'shelters': 'shelters',
                             'occupants': 'occupants',
                             'donations': 'donations',
@@ -439,7 +439,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 if (doc.data && doc.data.startsWith('data:')) {
                     const blob = base64ToBlob(doc.data)
                     if (blob) {
-                        const folder = storeName === 'desinterdicoes' ? 'interdicoes' : (storeName || 'general')
+                        const folder = (storeName === 'desinterdicoes' || storeName === 'interdicoes') ? 'interdicoes_fotos' : (storeName || 'general')
                         const entityId = (item.interdicao_id || item.interdicaoId || item.id)
                         const fileName = `${entityId}/docs/${doc.id || crypto.randomUUID()}_${doc.name}`
                         const { error: uploadError } = await supabase.storage
@@ -613,7 +613,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     }
                 });
 
-                officialId = `${(maxNum + 1).toString().padStart(2, '0')}/${currentYear}`;
+                officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
                 console.log(`[Sync] Assigned NEW Interdicao ID: ${officialId} (Max was ${maxNum})`);
             }
 
@@ -621,7 +621,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             let signatureAgenteUrl = item.assinaturaAgente || item.assinatura_agente || null;
             let signatureApoioUrl = item.apoioTecnico?.assinatura || item.apoio_tecnico?.assinatura || null;
 
-            const folder = 'interdicoes';
+            const folder = 'interdicoes_fotos';
             const iid = officialId || item.id;
 
             if (signatureAgenteUrl && signatureAgenteUrl.startsWith('data:image')) {
@@ -1179,6 +1179,21 @@ export const deleteInterdicaoLocal = async (id) => {
         const all = await db.getAll('interdicoes')
         const found = all.find(i => i.id === id || i.interdicao_id === id || i.supabase_id === id)
         if (found) localId = found.id
+    }
+    if (navigator.onLine) {
+        try {
+            const all = await db.getAll('interdicoes')
+            const item = all.find(i => i.id === id || i.interdicao_id === id || i.supabase_id === id)
+            const uuid = item?.interdicao_id || item?.supabase_id || (typeof id === 'string' && id.includes('-') ? id : null)
+            
+            if (uuid) {
+                const { data: listData } = await supabase.storage.from('interdicoes_fotos').list(uuid)
+                if (listData && listData.length > 0) {
+                    const filesToRemove = listData.map(f => `${uuid}/${f.name}`)
+                    await supabase.storage.from('interdicoes_fotos').remove(filesToRemove)
+                }
+            }
+        } catch (sE) { console.warn("Interdicao storage cleanup failed", sE) }
     }
     await db.delete('interdicoes', localId)
 }

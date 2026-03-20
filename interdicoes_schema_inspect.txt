@@ -1,4 +1,4 @@
-Columns found: id, interdicao_id, data_hora, municipio, bairro, endereco, tipo_alvo, tipo_alvo_especificar, latitude, longitude, coordenadas, responsavel_nome, responsavel_cpf, responsavel_telefone, responsavel_email, risco_tipo, risco_grau, situacao_observada, medida_tipo, medida_prazo, medida_prazo_data, evacuacao_necessaria, fotos, videos, documentos, relatorio_tecnico, recomendacoes, orgaos_acionados, created_at, assinatura_agente, apoio_tecnico, agente, matricula, tipo_info
+Columns found: id, interdicao_id, data_hora, municipio, bairro, endereco, tipo_alvo, tipo_alvo_especificar, latitude, longitude, coordenadas, responsavel_nome, responsavel_cpf, responsavel_telefone, responsavel_email, risco_tipo, risco_grau, situacao_observada, medida_tipo, medida_prazo, medida_prazo_data, evacuacao_necessaria, fotos, videos, documentos, relatorio_tecnico, recomendacoes, orgaos_acionados, created_at, assinatura_agente, apoio_tecnico, agente, matricula, tipo_info, informacoes_complementares, checklist_respostas, status
 
 Sample record:
 {
@@ -68,5 +68,8 @@ Sample record:
   },
   "agente": "Marcelo Dias Pereira",
   "matricula": "53541",
-  "tipo_info": null
+  "tipo_info": null,
+  "informacoes_complementares": null,
+  "checklist_respostas": {},
+  "status": "Interditado"
 }
