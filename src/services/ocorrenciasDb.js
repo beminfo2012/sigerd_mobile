@@ -60,36 +60,59 @@ export const INITIAL_OCORRENCIA_STATE = {
 /**
  * Delete Ocorrencia local (soft delete)
  */
-export const deleteOcorrenciaLocal = async (id) => {
+/**
+ * Delete Ocorrencia local (soft delete) e remota
+ * @param {string|number} idOrUuid - ID numérico local ou UUID remoto
+ */
+export const deleteOcorrenciaLocal = async (idOrUuid) => {
     const db = await initDB();
-    const record = await db.get('ocorrencias_operacionais', parseInt(id));
-    if (record) {
-        if (navigator.onLine && record.ocorrencia_id) {
+    let record;
+
+    // 1. Tenta achar o registro localmente (por ID numérico ou UUID)
+    if (!isNaN(parseInt(idOrUuid)) && typeof idOrUuid !== 'string') {
+        record = await db.get('ocorrencias_operacionais', parseInt(idOrUuid));
+    } else {
+        record = await db.getFromIndex('ocorrencias_operacionais', 'ocorrencia_id', idOrUuid);
+    }
+
+    // Se não achou ainda, pode ser que idOrUuid seja o ID local passado como string
+    if (!record && !isNaN(parseInt(idOrUuid))) {
+        record = await db.get('ocorrencias_operacionais', parseInt(idOrUuid));
+    }
+
+    if (record || (navigator.onLine && typeof idOrUuid === 'string' && idOrUuid.includes('-'))) {
+        const uuid = record?.ocorrencia_id || (typeof idOrUuid === 'string' ? idOrUuid : null);
+
+        if (navigator.onLine && uuid) {
             try {
-                // 1. LIMPEZA TOTAL DA PASTA NO STORAGE (Arraste todos os arquivos da ocorrência)
-                console.log(`Limpando pasta do storage para ocorrência: ${record.ocorrencia_id}`);
+                // 1. LIMPEZA TOTAL DA PASTA NO STORAGE
+                console.log(`Limpando pasta do storage para ocorrência: ${uuid}`);
                 const { data: listData } = await supabase.storage
                     .from('ocorrencias_fotos')
-                    .list(record.ocorrencia_id);
+                    .list(uuid);
                 
                 if (listData && listData.length > 0) {
-                    const filesToRemove = listData.map(f => `${record.ocorrencia_id}/${f.name}`);
+                    const filesToRemove = listData.map(f => `${uuid}/${f.name}`);
                     await supabase.storage.from('ocorrencias_fotos').remove(filesToRemove);
                 }
 
-                // 2. EXCLUSÃO DA LINHA NO BANCO DE DADOS
-                if (record.synced) {
-                    const { error } = await supabase
-                        .from('ocorrencias_operacionais')
-                        .delete()
-                        .eq('ocorrencia_id', record.ocorrencia_id);
-                    if (error) console.error('Error deleting from supabase:', error);
-                }
+                // 2. EXCLUSÃO DA LINHA NO BANCO DE DADOS (Supabase)
+                // Se o registro é synced ou estamos passando um UUID direto
+                const { error } = await supabase
+                    .from('ocorrencias_operacionais')
+                    .delete()
+                    .eq('ocorrencia_id', uuid);
+                    
+                if (error) console.error('Error deleting from supabase:', error);
             } catch (err) {
                 console.error('Failed to cleanup and delete occurrence remotely:', err);
             }
         }
-        await db.delete('ocorrencias_operacionais', parseInt(id));
+        
+        // 3. EXCLUSÃO DO INDEXEDDB (Se existir localmente)
+        if (record && record.id) {
+            await db.delete('ocorrencias_operacionais', record.id);
+        }
     }
 };
 
