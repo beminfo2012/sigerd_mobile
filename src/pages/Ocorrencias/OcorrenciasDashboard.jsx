@@ -201,8 +201,8 @@ const OcorrenciasDashboard = () => {
 
             <main className="max-w-4xl mx-auto p-5 sm:p-8 space-y-8">
                 {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
-                    <div className="relative group flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 max-w-4xl mx-auto">
+                    <div className="relative group md:col-span-8 lg:col-span-9">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                         <input
                             type="text"
@@ -212,11 +212,11 @@ const OcorrenciasDashboard = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="relative shrink-0">
+                    <div className="relative md:col-span-4 lg:col-span-3">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                         <input
                             type="date"
-                            className="w-full sm:w-auto h-full pl-12 pr-4 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white"
+                            className="w-full h-full pl-12 pr-4 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
                         />
