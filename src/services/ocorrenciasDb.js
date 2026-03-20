@@ -329,3 +329,27 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
         return { sucesso: false, mensagem: erro.message };
     }
 }
+
+/**
+ * Exclui uma foto permanentemente do Storage para liberar espaço
+ * @param {string} ocorrencia_id - UUID da ocorrência
+ * @param {string} foto_id - ID único da foto
+ */
+export async function deletarFotoStorage(ocorrencia_id, foto_id) {
+    if (!navigator.onLine || !ocorrencia_id || !foto_id) return { sucesso: false, erro: "offline ou dados insuficientes" };
+    
+    try {
+        const caminhoStorage = `${ocorrencia_id}/${foto_id}.jpg`;
+        console.log(`Deletando foto ${caminhoStorage} do Storage para liberar espaço...`);
+        
+        const { error } = await supabase.storage
+            .from('ocorrencias_fotos')
+            .remove([caminhoStorage]);
+
+        if (error) throw error;
+        return { sucesso: true };
+    } catch (err) {
+        console.error("Erro ao deletar foto do storage:", err.message);
+        return { sucesso: false, erro: err.message };
+    }
+}

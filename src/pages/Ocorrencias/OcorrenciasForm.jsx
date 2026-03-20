@@ -7,7 +7,7 @@ import {
     X, Phone, User, Fingerprint, Siren, ClipboardList, Share,
     Download, ChevronLeft, ChevronRight, Printer
 } from 'lucide-react';
-import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE, salvarOcorrenciaOperacional } from '../../services/ocorrenciasDb';
+import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE, salvarOcorrenciaOperacional, deletarFotoStorage } from '../../services/ocorrenciasDb';
 import { initDB, searchInstallations } from '../../services/db';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/ToastNotification';
@@ -509,7 +509,13 @@ const OcorrenciasForm = () => {
     };
 
 
-    const removePhoto = (id) => {
+    const removePhoto = async (id) => {
+        const foto = formData.fotos.find(f => f.id === id);
+        if (foto && foto.data && foto.data.startsWith('http')) {
+            // Se já tem URL, significa que está na nuvem e precisamos deletar do Storage
+            // Usamos o UUID (ocorrencia_id) se existir, ou o id local.
+            await deletarFotoStorage(formData.ocorrencia_id || formData.id, id);
+        }
         setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(f => f.id !== id) }));
     };
 
