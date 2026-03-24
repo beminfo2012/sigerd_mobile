@@ -16,6 +16,7 @@ import { pullAllData } from './services/db'
 import { getLatestDraftRedap } from './services/redapDb'
 import Sidebar from './components/Sidebar'
 import DesktopHeader from './components/DesktopHeader'
+import { ativarSincronizacaoOfflineAutomatica } from './services/SincronizacaoVistorias'
 
 
 // Lazy loaded components
@@ -557,6 +558,9 @@ function App() {
         } else {
             setIsLoading(false)
         }
+
+        // Ativa a sincronização "blindada" de vistorias proposta pelo usuário
+        ativarSincronizacaoOfflineAutomatica();
 
         return () => clearTimeout(safetyTimer);
     }, [])

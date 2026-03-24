@@ -388,15 +388,17 @@ export const syncSingleItem = async (storeName, item, db) => {
         // Upload Photos
         const fotosToUpload = item.fotos || (item.data && item.data.evidencias) || [];
         if (fotosToUpload.length > 0) {
-            console.log(`[Sync] Uploading ${fotosToUpload.length} photos for ${storeName}/${item.id}...`);
-            const processed = await Promise.all(fotosToUpload.map(async (foto) => {
-                const imageData = foto.data || foto.url; // 'evidencias' uses url
+            console.log(`[Sync] Processing ${fotosToUpload.length} photos for ${storeName}/${item.id}...`);
+            
+            // [FIX] Sequential upload instead of Promise.all to avoid memory overhead
+            const processed = [];
+            for (const foto of fotosToUpload) {
+                const imageData = foto.data || foto.url;
                 if (imageData && imageData.startsWith('data:image')) {
-                    const blob = base64ToBlob(imageData)
+                    const blob = base64ToBlob(imageData);
                     if (blob) {
-                        // Correct folder mapping
                         const folderMap = {
-                            'vistorias': 'vistorias',
+                            'vistorias': 'vistorias_fotos', // [UPDATED] Use specific bucket
                             'interdicoes': 'interdicoes_fotos',
                             'desinterdicoes': 'interdicoes_fotos',
                             'shelters': 'shelters',
@@ -405,27 +407,30 @@ export const syncSingleItem = async (storeName, item, db) => {
                             'redap_records': 'redap',
                             'ocorrencias_operacionais': 'ocorrencias_fotos'
                         };
-                        const folder = folderMap[storeName] || 'general'
+                        const folder = folderMap[storeName] || 'general';
 
-                        const entityId = (item.vistoria_id || item.interdicao_id || item.redap_id || item.ocorrencia_id || item.id)
-                        const fileName = `${entityId}/${foto.id || crypto.randomUUID()}.jpg`
+                        const entityId = (item.vistoria_id || item.vistoriaId || item.interdicao_id || item.redap_id || item.ocorrencia_id || item.id);
+                        const fileName = `${entityId}/foto_${foto.id || crypto.randomUUID().substring(0, 8)}.jpg`;
+                        
                         const { error: uploadError } = await supabase.storage
                             .from(folder)
-                            .upload(fileName, blob, { upsert: true })
+                            .upload(fileName, blob, { upsert: true });
 
                         if (!uploadError) {
                             const { data: urlData } = supabase.storage
                                 .from(folder)
-                                .getPublicUrl(fileName)
-                            return { ...foto, [foto.data ? 'data' : 'url']: urlData.publicUrl }
+                                .getPublicUrl(fileName);
+                            processed.push({ ...foto, [foto.data ? 'data' : 'url']: urlData.publicUrl });
                         } else {
-                            // [CRITICAL] If upload fails, throw to prevent saving Base64 to database
                             throw new Error(`Upload failed for ${fileName}: ${uploadError.message}`);
                         }
+                    } else {
+                        processed.push(foto);
                     }
+                } else {
+                    processed.push(foto);
                 }
-                return foto
-            }))
+            }
 
             if (item.fotos) processedPhotos = processed;
             if (item.data && item.data.evidencias) item.data.evidencias = processed;
@@ -478,7 +483,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             let signatureAgenteUrl = item.assinaturaAgente || item.assinatura_agente || null;
             let signatureApoioUrl = item.apoioTecnico?.assinatura || item.apoio_tecnico?.assinatura || null;
 
-            const folder = 'vistorias';
+            const folder = 'vistorias_fotos'; // [UPDATED] Unified bucket
             const vid = officialId || item.id;
 
             if (signatureAgenteUrl && signatureAgenteUrl.startsWith('data:image')) {
@@ -491,48 +496,39 @@ export const syncSingleItem = async (storeName, item, db) => {
                 signatureApoioUrl = await uploadSignature(signatureApoioUrl, folder, `${vid}/signature_apoio.png`);
             }
 
-            // [FIX] Robust Numeric Max ID Fetching
-            // Fetch multiple records to find the TRUE numeric maximum, avoiding string sorting issues
-            const { data: recentData, error: maxError } = await supabase
-                .from('vistorias')
-                .select('vistoria_id')
-                .filter('vistoria_id', 'like', `%/${currentYear}`)
-                .order('created_at', { ascending: false })
-                .limit(50);
+            if (!officialId) {
+                // Fetch multiple records to find the TRUE numeric maximum
+                const { data: recentData, error: maxError } = await supabase
+                    .from('vistorias')
+                    .select('vistoria_id')
+                    .filter('vistoria_id', 'like', `%/${currentYear}`)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
 
-            if (maxError) {
-                console.error(`[Sync] Error fetching max sequence for vistorias:`, maxError);
-            }
+                let maxNum = 0;
+                if (recentData && recentData.length > 0) {
+                    recentData.forEach(r => {
+                        if (r.vistoria_id && r.vistoria_id.includes('/')) {
+                            const num = parseInt(r.vistoria_id.split('/')[0]);
+                            if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                        }
+                    });
+                }
 
-            let maxNum = 0;
-            // Scan remote recent records
-            if (recentData && recentData.length > 0) {
-                recentData.forEach(r => {
-                    if (r.vistoria_id && r.vistoria_id.includes('/')) {
-                        const num = parseInt(r.vistoria_id.split('/')[0]);
-                        if (!isNaN(num)) maxNum = Math.max(maxNum, num);
+                // Safety check local data
+                const localItems = await db.getAll('vistorias');
+                localItems.forEach(vi => {
+                    const vid = vi.vistoriaId || vi.vistoria_id;
+                    if (vid && vid.includes(`/${currentYear}`)) {
+                        const n = parseInt(vid.split('/')[0]);
+                        if (!isNaN(n)) maxNum = Math.max(maxNum, n);
                     }
                 });
-            }
 
-            // [FIX] Safety check local data too (including unsynced and already synced)
-            const localItems = await db.getAll('vistorias');
-            localItems.forEach(vi => {
-                const vid = vi.vistoriaId || vi.vistoria_id;
-                if (vid && vid.includes(`/${currentYear}`)) {
-                    const n = parseInt(vid.split('/')[0]);
-                    if (!isNaN(n)) maxNum = Math.max(maxNum, n);
-                }
-            });
-
-            // If we are assigning a NEW ID (was null), use max+1
-            if (!officialId) {
                 officialId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
-                console.log(`[Sync] Assigned NEW Vistoria ID: ${officialId} (Max found was ${maxNum})`);
-            } else {
-                console.log(`[Sync] Keeping existing Vistoria ID: ${officialId}`);
             }
 
+            // Normalização e Higienização (Proteção Química)
             payload = {
                 vistoria_id: officialId,
                 processo: item.processo || '',
@@ -544,33 +540,32 @@ export const syncSingleItem = async (storeName, item, db) => {
                 endereco: item.endereco || '',
                 bairro: item.bairro || '',
                 informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
-                latitude: item.latitude ? parseFloat(item.latitude) : null,
-                longitude: item.longitude ? parseFloat(item.longitude) : null,
+                latitude: (item.latitude === "" || item.latitude == null) ? null : Number(item.latitude),
+                longitude: (item.longitude === "" || item.longitude == null) ? null : Number(item.longitude),
                 coordenadas: item.coordenadas || (item.latitude && item.longitude ? `${item.latitude},${item.longitude}` : ''),
                 data_hora: item.dataHora || item.data_hora || new Date().toISOString(),
                 tipo_info: item.tipo_info || item.tipoInfo || item.categoriaRisco || 'Vistoria Geral',
 
-                // Bloco 5 - Riscos e Detalhes (Strict Mapping)
                 categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
                 subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
                 nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
                 situacao_observada: item.situacaoObservada || item.situacao_observada || 'Estabilizado',
 
-                // Bloco 5.5 - População
                 populacao_estimada: item.populacaoEstimada || item.populacao_estimada || '',
                 grupos_vulneraveis: Array.isArray(item.gruposVulneraveis) ? item.gruposVulneraveis : (Array.isArray(item.grupos_vulneraveis) ? item.grupos_vulneraveis : []),
 
-                // Observações e Medidas
                 observacoes: item.observacoes || '',
                 medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
                 encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (Array.isArray(item.encaminhamentos) ? item.encaminhamentos : []),
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
 
                 fotos: processedPhotos,
-                documentos: Array.isArray(item.documentos) ? item.documentos : (Array.isArray(item.documentos) ? item.documentos : []),
+                documentos: Array.isArray(item.documentos) ? item.documentos : [],
                 assinatura_agente: signatureAgenteUrl,
                 apoio_tecnico: {
-                    ...(item.apoioTecnico || item.apoio_tecnico || {}),
+                    crea: item.apoio_tecnico?.crea || item.apoioTecnico?.crea || '',
+                    nome: item.apoio_tecnico?.nome || item.apoioTecnico?.nome || '',
+                    matricula: item.apoio_tecnico?.matricula || item.apoioTecnico?.matricula || '',
                     assinatura: signatureApoioUrl
                 },
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
