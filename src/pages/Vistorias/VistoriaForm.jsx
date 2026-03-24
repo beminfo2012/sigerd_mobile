@@ -305,6 +305,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     })
 
     const [docType, setDocType] = useState('CPF')
+    const [processoType, setProcessoType] = useState('Digital')
 
     const [showSignaturePad, setShowSignaturePad] = useState(false)
     const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' ou 'apoio'
@@ -814,20 +815,54 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className={labelClasses}>Nº Processo</label>
+                                <div className="flex justify-between items-center pr-1">
+                                    <label className={labelClasses}>Nº Processo</label>
+                                    <div className="flex bg-slate-100 dark:bg-slate-700/50 p-1 rounded-lg border border-slate-200 dark:border-slate-600">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setProcessoType('Digital')
+                                                setFormData(prev => ({ ...prev, processo: '' }))
+                                            }}
+                                            className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${processoType === 'Digital' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                        >
+                                            DIGITAL
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setProcessoType('Físico')
+                                                setFormData(prev => ({ ...prev, processo: '' }))
+                                            }}
+                                            className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${processoType === 'Físico' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                        >
+                                            FÍSICO
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="relative group">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm select-none pointer-events-none group-focus-within:text-blue-500 transition-colors">
-                                        {new Date().getFullYear()}-
-                                    </span>
                                     <input
                                         type="text"
-                                        className={`${inputClasses} pl-[68px] uppercase font-mono tracking-widest`}
-                                        placeholder="XXXXX"
-                                        maxLength={8}
-                                        value={formData.processo.replace(`${new Date().getFullYear()}-`, '')}
+                                        className={inputClasses}
+                                        placeholder={processoType === 'Digital' ? "YYYY/XXXXX" : "000000/YYYY"}
+                                        value={formData.processo}
                                         onChange={e => {
-                                            const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                            setFormData({ ...formData, processo: `${new Date().getFullYear()}-${val}` })
+                                            let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                            if (processoType === 'Digital') {
+                                                // YYYY/XXXXX (4 Year / 5 Serial)
+                                                if (v.length > 9) v = v.slice(0, 9);
+                                                if (v.length > 4) {
+                                                    v = v.replace(/^(\d{4})/, '$1/');
+                                                }
+                                            } else {
+                                                // 000000/YYYY (6 Serial / 4 Year)
+                                                v = v.replace(/[^0-9]/g, ''); // Physical is just digits as per "0" notation
+                                                if (v.length > 10) v = v.slice(0, 10);
+                                                if (v.length > 6) {
+                                                    v = v.replace(/^(\d{6})/, '$1/');
+                                                }
+                                            }
+                                            setFormData({ ...formData, processo: v });
                                         }}
                                     />
                                 </div>
