@@ -476,6 +476,27 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         }
     }
 
+    const handleRiskDetection = (lat, lng) => {
+        if (!lat || !lng) return;
+        const riskInfo = checkRiskArea(parseFloat(lat), parseFloat(lng));
+        setDetectedRiskArea(riskInfo);
+
+        if (riskInfo) {
+            setShowRiskModal(true);
+            // Auto-append to observations
+            setFormData(prev => {
+                const riskNote = `[SISTEMA] Vistoria realizada em área de risco mapeada: ${riskInfo.name} (${riskInfo.source}).`;
+                if (!prev.observacoes.includes(riskNote)) {
+                    return {
+                        ...prev,
+                        observacoes: riskNote + (prev.observacoes ? '\n\n' + prev.observacoes : '')
+                    }
+                }
+                return prev;
+            });
+        }
+    };
+
     const getLocation = async () => {
         if (!navigator.geolocation) return alert("GPS não suportado.")
 
@@ -504,25 +525,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     coordenadas: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
                 }))
 
-                // Check Risk Area
-                const riskInfo = checkRiskArea(lat, lng);
-                setDetectedRiskArea(riskInfo);
-
-                if (riskInfo) {
-                    setShowRiskModal(true);
-
-                    // Auto-append to observations if not already there
-                    setFormData(prev => {
-                        const riskNote = `[SISTEMA] Vistoria realizada em área de risco mapeada: ${riskInfo.name} (${riskInfo.source}).`;
-                        if (!prev.observacoes.includes(riskNote)) {
-                            return {
-                                ...prev,
-                                observacoes: riskNote + (prev.observacoes ? '\n\n' + prev.observacoes : '')
-                            }
-                        }
-                        return prev;
-                    });
-                }
+                handleRiskDetection(lat, lng);
+                setGettingLoc(false);
 
                 setGettingLoc(false)
             },
@@ -1061,6 +1065,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                         if (!isNaN(lat) && !isNaN(lng)) {
                                                             updates.latitude = parts[0].trim();
                                                             updates.longitude = parts[1].trim();
+                                                            // Trigger risk detection for manual input (debounced by length check)
+                                                            if (updates.latitude.length > 5 && updates.longitude.length > 5) {
+                                                                handleRiskDetection(lat, lng);
+                                                            }
                                                         }
                                                     }
                                                     setFormData(prev => ({ ...prev, ...updates }));
