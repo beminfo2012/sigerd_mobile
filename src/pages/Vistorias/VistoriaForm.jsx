@@ -187,7 +187,7 @@ const SearchableInput = ({
                     onClick={() => setIsOpen(true)}
                     className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[56px] flex items-center justify-between pr-4`}
                 >
-                    <span className={value ? 'text-slate-800 dark:text-white' : 'text-slate-300 dark:text-slate-600'}>
+                    <span className={value ? 'text-slate-800 dark:text-black' : 'text-slate-300 dark:text-slate-600'}>
                         {value || placeholder}
                     </span>
                     <Search size={16} className="text-slate-300" />
