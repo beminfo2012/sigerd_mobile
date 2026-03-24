@@ -18,6 +18,7 @@ import { Card } from '../../components/ui/Card'
 import { refineReportText } from '../../services/ai'
 import ConfirmModal from '../../components/ConfirmModal'
 import DespachoModal from '../../components/DespachoModal'
+import RiskAreaModal from '../../components/RiskAreaModal'
 import bairrosDataRaw from '../../../Bairros.json'
 import logradourosDataRaw from '../../../nomesderuas.json'
 
@@ -319,6 +320,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [refining, setRefining] = useState(false)
     const [gettingLoc, setGettingLoc] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
+    const [showRiskModal, setShowRiskModal] = useState(false)
 
     // Update agent info when user profile loads (if fields are empty)
     useEffect(() => {
@@ -507,7 +509,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 setDetectedRiskArea(riskInfo);
 
                 if (riskInfo) {
-                    alert(`⚠️ ALERTA: Você está em uma Área de Risco Mapeada!\n\nLocal: ${riskInfo.name}\nFonte: ${riskInfo.source}`);
+                    setShowRiskModal(true);
 
                     // Auto-append to observations if not already there
                     setFormData(prev => {
@@ -2036,6 +2038,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     onCancel={() => setEditingPhotoIndex(null)}
                 />
             )}
+
+            <RiskAreaModal 
+                isOpen={showRiskModal}
+                onClose={() => setShowRiskModal(false)}
+                riskInfo={detectedRiskArea}
+            />
         </div >
     )
 }
