@@ -844,19 +844,19 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     <input
                                         type="text"
                                         className={inputClasses}
-                                        placeholder={processoType === 'Digital' ? "YYYY/XXXXX" : "000000/YYYY"}
+                                        placeholder={processoType === 'Digital' ? "202X-XXXXXX" : "XXXXXX/202X"}
                                         value={formData.processo}
                                         onChange={e => {
                                             let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
                                             if (processoType === 'Digital') {
-                                                // YYYY/XXXXX (4 Year / 5 Serial)
-                                                if (v.length > 9) v = v.slice(0, 9);
+                                                // 202X-XXXXXX (4 Year - up to 6 Serial)
+                                                if (v.length > 10) v = v.slice(0, 10);
                                                 if (v.length > 4) {
-                                                    v = v.replace(/^(\d{4})/, '$1/');
+                                                    v = v.replace(/^(\d{4})/, '$1-');
                                                 }
                                             } else {
-                                                // 000000/YYYY (6 Serial / 4 Year)
-                                                v = v.replace(/[^0-9]/g, ''); // Physical is just digits as per "0" notation
+                                                // XXXXXX/202X (up to 6 Serial / 4 Year)
+                                                v = v.replace(/[^0-9]/g, '');
                                                 if (v.length > 10) v = v.slice(0, 10);
                                                 if (v.length > 6) {
                                                     v = v.replace(/^(\d{6})/, '$1/');
