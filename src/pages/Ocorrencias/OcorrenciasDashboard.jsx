@@ -266,7 +266,7 @@ const OcorrenciasDashboard = () => {
 
                                         <div className="mb-4">
                                             <h3 className="font-black text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-blue-600 transition-colors">
-                                                {record.solicitante || 'Solicitante não informado'}
+                                                {(!record.solicitante || record.solicitante === 'Solicitante não informado') ? 'Coordenadoria Municipal de Proteção e Defesa Civil' : record.solicitante}
                                             </h3>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <p className="text-[10px] text-blue-500 dark:text-blue-400 font-black uppercase tracking-widest bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md">

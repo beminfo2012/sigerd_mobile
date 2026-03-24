@@ -152,11 +152,11 @@ const Pluviometros = ({ hideHeader = false }) => {
             if (res.ok) {
                 const rawData = await res.json()
                 apiData = rawData.map(st => {
-                    const meta = STATION_METADATA[st.id] || {}
+                    const meta = STATION_METADATA[st.id] || STATION_METADATA[st.id + 'A'] || {}
                     return {
                         ...st,
-                        lat: meta.lat || st.lat,
-                        lng: meta.lon || st.lng
+                        lat: meta.lat || st.lat || null,
+                        lng: meta.lon || st.lng || st.lon || null
                     }
                 })
             } else {

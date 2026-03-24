@@ -248,7 +248,11 @@ const OcorrenciasPrint = () => {
                                     <div className="grid grid-cols-3 border-b border-slate-200">
                                         <div className="p-3 border-r border-slate-200 col-span-2">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Solicitante</p>
-                                            <p className="font-bold text-slate-800 capitalize">{data.solicitante || 'Não Identificado'}</p>
+                                            <p className="font-bold text-slate-800 capitalize">
+                                                {(!data.solicitante || data.solicitante === 'Solicitante não informado' || data.solicitante === 'Não Identificado') 
+                                                    ? 'Coordenadoria Municipal de Proteção e Defesa Civil' 
+                                                    : data.solicitante}
+                                            </p>
                                         </div>
                                         <div className="p-3">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Telefone</p>

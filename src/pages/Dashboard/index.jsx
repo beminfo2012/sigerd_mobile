@@ -451,10 +451,10 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon }) => {
             <div className="col-span-8 bg-white border border-slate-200 rounded-[48px] overflow-hidden relative shadow-xl">
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                    {(rainfall || []).filter(s => s.lat && s.lon).map((station, idx) => (
+                    {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                         <CircleMarker
                             key={idx}
-                            center={[station.lat, station.lon]}
+                            center={[station.lat, station.lon || station.lng]}
                             radius={18}
                             pathOptions={{ color: '#fff', fillColor: getPluvioColor(station.level), fillOpacity: 0.9, weight: 6 }}
                         >
@@ -1222,11 +1222,11 @@ const MobileDashboardView = ({
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
                                 )}
-                                {/* Pluviômetros CEMADEN - apenas os com leitura ativa */}
-                                {(rainfall || []).filter(s => s.lat && s.lon && s.rainRaw > 0).map((station, idx) => (
+                                {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
+                                {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                                     <CircleMarker
                                         key={`pluvio-${idx}`}
-                                        center={[station.lat, station.lon]}
+                                        center={[station.lat, station.lon || station.lng]}
                                         radius={8}
                                         pathOptions={{
                                             color: '#fff',
@@ -1308,7 +1308,7 @@ const MobileDashboardView = ({
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div>Interd. Parcial</div>
                                     </>
                                 )}
-                                {(rainfall || []).some(s => s.lat && s.lon && s.rainRaw > 0) && (
+                                {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (
                                     <>
                                         <div className="mt-1 pt-1 border-t border-slate-200 text-[7px] text-slate-400">PLUVIÔMETROS</div>
                                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>Extremo</div>
@@ -1751,11 +1751,11 @@ const WebViewDashboardView = ({
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
                                 )}
-                                {/* Pluviômetros CEMADEN - apenas os com leitura ativa e coordenadas */}
-                                {(rainfall || []).filter(s => s.lat && s.lon && s.rainRaw > 0).map((station, idx) => (
+                                {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
+                                {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                                     <CircleMarker
                                         key={`pluvio-web-${idx}`}
-                                        center={[station.lat, station.lon]}
+                                        center={[station.lat, station.lon || station.lng]}
                                         radius={10}
                                         pathOptions={{
                                             color: '#fff',
@@ -1841,7 +1841,7 @@ const WebViewDashboardView = ({
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Interd. Parcial</div>
                                     </>
                                 )}
-                                {(rainfall || []).some(s => s.lat && s.lon && s.rainRaw > 0) && (
+                                {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (
                                     <>
                                         <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">PLUVIÔMETROS</div>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-400"></div>Extremo (&gt;80mm)</div>
@@ -2201,13 +2201,16 @@ const Dashboard = () => {
                     }
 
                     const formattedApi = apiData.map(st => {
-                        const meta = STATION_METADATA[st.id] || {};
+                        // Support both numeric and 'A' suffixed IDs from local metadata
+                        const meta = STATION_METADATA[st.id] || STATION_METADATA[st.id + 'A'] || {};
                         return {
                             id: st.id,
                             name: meta.name || st.name,
                             lat: meta.lat || st.lat || null,
-                            lon: meta.lon || st.lon || null,
+                            lon: meta.lon || st.lon || st.lng || null,
+                            lng: meta.lon || st.lon || st.lng || null,
                             rainRaw: st.acc24hr || 0,
+                            lastUpdate: st.lastUpdate || null
                         };
                     })
 
@@ -2215,7 +2218,8 @@ const Dashboard = () => {
                         {
                             ...manualStation,
                             lat: STATION_METADATA['SEDE_DEFESA_CIVIL'].lat,
-                            lon: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon
+                            lon: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon,
+                            lng: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon
                         }, 
                         ...formattedApi
                     ].map(station => {
@@ -2226,7 +2230,7 @@ const Dashboard = () => {
                         else if (acc24 >= 30) level = 'Atenção';
 
                         return { ...station, level }
-                    }).filter(station => parseFloat(station.rainRaw) > 0 && station.lat && station.lon);
+                    }).filter(station => parseFloat(station.rainRaw) > 0 && station.lat && (station.lon || station.lng));
 
                     setRainfall(combined);
                 } catch (e) {

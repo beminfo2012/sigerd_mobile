@@ -46,6 +46,7 @@ export const cemadenService = {
                     name: metadata.name || station.nomeestacao || 'Estação Cemaden',
                     lat: metadata.lat || null,
                     lon: metadata.lon || null,
+                    lng: metadata.lon || null, // Alias for compatibility
                     rain: `${station.acum24h || 0}mm`,
                     rainRaw: station.acum24h || 0,
                     level: this.calculateLevel(station.acum24h || 0),

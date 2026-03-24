@@ -271,7 +271,8 @@ export default async function handler(request, response) {
         return {
             ...station,
             lat: coords?.lat || null,
-            lng: coords?.lng || null
+            lng: coords?.lng || null,
+            lon: coords?.lng || null // Alias for frontend compatibility
         };
     };
 
