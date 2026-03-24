@@ -21,6 +21,7 @@ import FileInput from '../../components/FileInput';
 import { refineReportText } from '../../services/ai';
 import { generatePDF } from '../../utils/pdfGenerator';
 import { compressImage, extractMetadata } from '../../utils/imageOptimizer';
+import ImageEditor from '../../components/ImageEditor';
 
 const SearchableInput = ({
     label,
@@ -260,6 +261,7 @@ const OcorrenciasForm = () => {
     const [showSignaturePad, setShowSignaturePad] = useState(false);
     const [activeSignatureType, setActiveSignatureType] = useState('agente');
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
+    const [editingPhotoIndex, setEditingPhotoIndex] = useState(null);
 
     const RISK_DATA = {
         'Outros': ['Outros'],
@@ -1288,13 +1290,24 @@ const OcorrenciasForm = () => {
                                     className="w-full h-full object-cover cursor-zoom-in"
                                     onClick={() => setSelectedPhotoIndex(idx)}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => removePhoto(foto.id)}
-                                    className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
+                                <div className="absolute top-2 inset-x-2 flex justify-between opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingPhotoIndex(idx)}
+                                        className="bg-blue-600 text-white p-2 rounded-xl shadow-lg hover:bg-blue-500 transition-colors"
+                                        title="Editar imagem"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => removePhoto(foto.id)}
+                                        className="bg-red-600 text-white p-2 rounded-xl shadow-lg hover:bg-red-500 transition-colors"
+                                        title="Remover imagem"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                                 <div className="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur-md p-2">
                                     <input
                                         className="w-full bg-transparent border-none text-[9px] text-white placeholder-white/60 focus:ring-0 p-0 font-bold uppercase tracking-tight"
@@ -1607,6 +1620,20 @@ const OcorrenciasForm = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {editingPhotoIndex !== null && (
+                <ImageEditor
+                    imageUrl={formData.fotos[editingPhotoIndex].data}
+                    onSave={(newData) => {
+                        const updatedFotos = [...formData.fotos];
+                        updatedFotos[editingPhotoIndex].data = newData;
+                        setFormData({ ...formData, fotos: updatedFotos });
+                        setEditingPhotoIndex(null);
+                        toast.success('Imagem editada com sucesso!');
+                    }}
+                    onCancel={() => setEditingPhotoIndex(null)}
+                />
             )}
         </div>
     );

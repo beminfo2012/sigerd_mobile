@@ -13,6 +13,7 @@ import { supabase } from '../../services/supabase'
 import { UserContext } from '../../App'
 import { refineReportText } from '../../services/ai'
 import ConfirmModal from '../../components/ConfirmModal'
+import ImageEditor from '../../components/ImageEditor'
 import bairrosData from '../../../Bairros.json'
 import logradourosDataRaw from '../../../nomesderuas.json'
 
@@ -165,6 +166,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [refining, setRefining] = useState(false)
+    const [editingPhotoIndex, setEditingPhotoIndex] = useState(null)
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null)
 
     useEffect(() => {
@@ -914,18 +916,24 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                                     className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
                                     onClick={() => setSelectedPhotoIndex(idx)}
                                 />
-                                <div
-                                    className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none flex items-center justify-center"
-                                >
-                                    <Maximize2 size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                                <div className="absolute top-2 inset-x-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all z-20">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingPhotoIndex(idx)}
+                                        className="bg-blue-600/90 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-blue-600 transition-all scale-90 group-hover:scale-100"
+                                        title="Editar imagem"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => removePhoto(foto.id)}
+                                        className="bg-red-600/80 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-red-600 transition-all scale-90 group-hover:scale-100"
+                                        title="Remover imagem"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => removePhoto(foto.id)}
-                                    className="absolute top-2 right-2 z-10 bg-red-600/80 backdrop-blur-md text-white p-1.5 rounded-xl shadow-lg hover:bg-red-600 transition-all opacity-0 group-hover:opacity-100"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
                                 <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-2 z-10">
                                     <input
                                         className="w-full bg-transparent border-none text-[10px] text-white placeholder-white/70 focus:ring-0 p-0 font-bold"
@@ -1327,6 +1335,27 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                         </div>
                     </div>
                 </div>
+            )}
+
+            {editingPhotoIndex !== null && (
+                <ImageEditor
+                    imageUrl={formData.fotos[editingPhotoIndex].data || formData.fotos[editingPhotoIndex]}
+                    onSave={(newData) => {
+                        const updatedFotos = [...formData.fotos];
+                        if (typeof updatedFotos[editingPhotoIndex] === 'string') {
+                            updatedFotos[editingPhotoIndex] = {
+                                id: crypto.randomUUID(),
+                                data: newData,
+                                legenda: ''
+                            };
+                        } else {
+                            updatedFotos[editingPhotoIndex].data = newData;
+                        }
+                        handleChange('fotos', updatedFotos);
+                        setEditingPhotoIndex(null);
+                    }}
+                    onCancel={() => setEditingPhotoIndex(null)}
+                />
             )}
         </div>
     )
