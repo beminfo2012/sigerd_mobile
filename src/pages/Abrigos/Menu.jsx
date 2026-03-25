@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
     Building2, Package, Truck, Gift, FileText, ArrowLeft, ChevronRight,
     BarChart3, Users, Cloud, CheckCircle2, RefreshCcw, LayoutDashboard,
-    Home, Info, AlertTriangle, TrendingUp, Heart
+    Home, Info, AlertTriangle, TrendingUp
 } from 'lucide-react';
+import HumanitarianIcon from '../../components/HumanitarianIcon';
 import { UserContext } from '../../App';
 import { getShelters, getOccupants, getDonations, getDistributions, getGlobalInventory, getDataConsistencyReport } from '../../services/shelterDb.js';
 import { shelterSyncService } from '../../services/shelterSyncService';
@@ -347,7 +348,7 @@ export default function ShelterMenu() {
                             {/* Families vs Capacity */}
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2">
-                                    <Heart className="text-rose-500" size={20} />
+                                    <HumanitarianIcon className="text-rose-500" size={20} />
                                     <div className={`text-[10px] font-black ${stats.occupancyRate > 90 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>
                                         {stats.occupancyRate}% LOTAÇÃO
                                     </div>

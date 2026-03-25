@@ -27,9 +27,9 @@ import {
     CheckCircle,
     RefreshCcw,
     History,
-    Heart,
     Calendar
 } from 'lucide-react';
+import HumanitarianIcon from './HumanitarianIcon';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
 import ProfileModal from './ProfileModal';
 import ConfirmModal from './ConfirmModal';
@@ -142,7 +142,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         },
         {
             label: 'Assist. Humanitária',
-            icon: Heart,
+            icon: HumanitarianIcon,
             path: '/abrigos',
             roles: HUMANITARIAN_ROLES
         },

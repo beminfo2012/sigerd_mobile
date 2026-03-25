@@ -891,7 +891,13 @@ export const syncSingleItem = async (storeName, item, db) => {
         } else {
             // Generic payload for other tables
             payload = { ...item };
-            delete payload.id; // Remove local IDBK key
+            
+            // For new REDAP architecture, the 'id' IS the UUID used in Supabase
+            // We only delete it if it's a local auto-increment integer
+            if (!['redap_eventos', 'redap_registros'].includes(storeName)) {
+                delete payload.id; // Remove local IDBK key
+            }
+            
             delete payload.synced; // Remove sync flag
             delete payload.supabase_id; // Clean up mapping field if any
 
@@ -950,7 +956,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                                                     storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
                                                         (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
                                                             (storeName === 'desinterdicoes' && payload.id) ? 'id' :
-                                                                undefined
+                                                                ['redap_eventos', 'redap_registros'].includes(storeName) ? 'id' :
+                                                                    undefined
         }).select();
 
         if (error) {

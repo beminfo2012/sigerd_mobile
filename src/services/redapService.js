@@ -331,31 +331,43 @@ export const saveRegistration = async (reg) => {
 };
 
 export const getRegistrationsByEvent = async (eventId) => {
+    const db = await initDB();
+    
+    // Always start with local data to be fast and show pending changes
+    const localAll = await db.getAll('redap_registros');
+    let regs = localAll.filter(r => r.evento_id === eventId);
+
     if (navigator.onLine) {
         try {
-            const { data, error } = await supabase
+            const { data: remoteData, error } = await supabase
                 .from('redap_registros')
                 .select('*')
                 .eq('evento_id', eventId)
                 .order('created_at', { ascending: false });
             
-            if (!error && data) {
-                const db = await initDB();
+            if (!error && remoteData) {
                 const tx = db.transaction('redap_registros', 'readwrite');
-                for (const r of data) {
-                    await tx.store.put({ ...r, synced: true });
+                
+                // Merge logic: only update local if local is ALREADY synced or remote is newer
+                for (const remote of remoteData) {
+                    const local = regs.find(l => l.id === remote.id);
+                    // If local doesn't exist or is already synced, remote is the source of truth
+                    if (!local || local.synced) {
+                        await tx.store.put({ ...remote, synced: true });
+                    }
                 }
                 await tx.done;
-                return data;
+                
+                // Refresh list after merge
+                const updatedLocal = await db.getAll('redap_registros');
+                regs = updatedLocal.filter(r => r.evento_id === eventId);
             }
         } catch (e) {
             console.error('Supabase fetch failed:', e);
         }
     }
     
-    const db = await initDB();
-    const all = await db.getAll('redap_registros');
-    return all.filter(r => r.evento_id === eventId);
+    return regs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
 export const updateRegistrationStatus = async (id, status) => {

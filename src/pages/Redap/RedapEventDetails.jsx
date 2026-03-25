@@ -12,6 +12,8 @@ import { UserContext } from '../../App';
 import * as redapService from '../../services/redapService';
 import { useToast } from '../../components/ToastNotification';
 import { generateRedapReport } from '../../utils/redapReportGenerator';
+import SectorProgressModal from './components/SectorProgressModal';
+import RedapMapModal from './components/RedapMapModal';
 
 const RedapEventDetails = () => {
     const { id } = useParams();
@@ -23,6 +25,8 @@ const RedapEventDetails = () => {
     const [event, setEvent] = useState(null);
     const [registrations, setRegistrations] = useState([]);
     const [stats, setStats] = useState({ total: 0, count: 0, approved: 0 });
+    const [showMapModal, setShowMapModal] = useState(false);
+    const [showSectorModal, setShowSectorModal] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -116,6 +120,21 @@ const RedapEventDetails = () => {
                         </div>
                     </div>
 
+                    <div 
+                        className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between group cursor-pointer hover:border-blue-200 transition-all active:scale-[0.98]"
+                        onClick={() => setShowSectorModal(true)}
+                    >
+                        <div className="flex items-center gap-5">
+                            <div className="bg-blue-50 dark:bg-blue-900/40 p-5 rounded-[2rem] text-blue-600 dark:text-blue-400">
+                                <ClipboardList size={32} />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">Status de Preenchimento</p>
+                                <h3 className="text-sm font-black uppercase leading-tight text-slate-800 dark:text-white">Histórico dos<br/>Setores</h3>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-slate-900 dark:bg-blue-600 rounded-[2.5rem] p-7 text-white shadow-xl flex items-center justify-between transition-all">
                         <div>
                             <p className="text-[10px] font-black text-blue-400 dark:text-white/60 uppercase tracking-widest mb-1">Ações do Gestor</p>
@@ -134,11 +153,27 @@ const RedapEventDetails = () => {
                             <p className="text-[10px] font-black text-emerald-200 dark:text-white/60 uppercase tracking-widest mb-1">Visualização Geográfica</p>
                             <h3 className="text-lg font-black uppercase leading-tight">Mapa de<br/>Danos</h3>
                         </div>
-                        <button className="bg-emerald-700 dark:bg-white/20 p-4 rounded-2xl shadow-lg active:scale-95 transition-all hover:bg-emerald-800 dark:hover:bg-white/30">
+                        <button 
+                            className="bg-emerald-700 dark:bg-white/20 p-4 rounded-2xl shadow-lg active:scale-95 transition-all hover:bg-emerald-800 dark:hover:bg-white/30"
+                            onClick={() => setShowMapModal(true)}
+                        >
                             <MapIcon size={24} />
                         </button>
                     </div>
                 </div>
+
+                <RedapMapModal 
+                    isOpen={showMapModal}
+                    onClose={() => setShowMapModal(false)}
+                    registrations={registrations}
+                    eventName={event?.nome_evento}
+                />
+
+                <SectorProgressModal 
+                    isOpen={showSectorModal}
+                    onClose={() => setShowSectorModal(false)}
+                    registrations={registrations}
+                />
 
                 {/* Kanban Board */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
