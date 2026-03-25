@@ -44,6 +44,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     const [showClearCacheModal, setShowClearCacheModal] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [syncDetail, setSyncDetail] = useState({ total: 0 });
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     const userMenuRef = useRef(null);
 
     const isActive = (path) => location.pathname === path;
@@ -95,6 +96,19 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         setTimeout(() => window.location.reload(), 1500);
     };
 
+    const handleLogoutConfirm = () => {
+        onLogout();
+    };
+
+    const handleLogoutClick = () => {
+        if (!navigator.onLine) {
+            toast.warning('Você está offline. Não é seguro sair agora sem sincronizar seus dados.');
+            return;
+        }
+        setShowLogoutModal(true);
+        setShowUserMenu(false);
+    };
+
     const navItems = [
         {
             label: 'Dashboard',
@@ -139,12 +153,6 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
-            label: 'Contingência',
-            icon: Shield,
-            path: '/contingencia',
-            roles: AGENT_ROLES
-        },
-        {
             label: 'GeoRescue',
             icon: Map,
             path: '/georescue',
@@ -154,12 +162,6 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'Legado',
             icon: History,
             path: '/monitoramento/legado',
-            roles: AGENT_ROLES
-        },
-        {
-            label: 'Agenda',
-            icon: Calendar,
-            path: '/agenda',
             roles: AGENT_ROLES
         },
         {
@@ -262,7 +264,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
 
                             <div className="h-[1px] bg-slate-50 dark:bg-slate-800 my-1" />
 
-                            <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-black text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left">
+                            <button onClick={handleLogoutClick} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-black text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left">
                                 <LogOut size={18} />
                                 Sair do Sistema
                             </button>
@@ -302,6 +304,17 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                 message="Deseja limpar o cache de histórico? Isso não apaga vistorias pendentes e melhora a velocidade do app."
                 confirmText="Limpar Agora"
                 type="info"
+            />
+
+            <ConfirmModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={handleLogoutConfirm}
+                title="Sair do Sistema?"
+                message="Você terá que entrar novamente para acessar seus dados. Certifique-se de que seus registros foram sincronizados."
+                confirmText="Sair Agora"
+                cancelText="Voltar"
+                type="danger"
             />
         </aside>
     );

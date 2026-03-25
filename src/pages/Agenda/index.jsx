@@ -829,7 +829,7 @@ const Agenda = () => {
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-col gap-1 items-start">
-                                                <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-black ${v.statusOperacional === 'Concluída' ? 'bg-slate-100 text-slate-500' : v.statusOperacional === 'Agendada' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-black ${v.statusOperacional === 'Concluída' ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' : v.statusOperacional === 'Agendada' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                                                     {v.statusOperacional}
                                                 </span>
                                                 {v.linkedVistoria && (
@@ -909,7 +909,7 @@ const Agenda = () => {
                             
                             return (
                                 <div key={i} className={`min-h-[100px] p-2 border border-slate-100 dark:border-slate-800 rounded-xl flex flex-col gap-1 transition-all ${isSameDay(date, new Date()) ? 'ring-2 ring-blue-500 bg-blue-50/20 shadow-md' : 'bg-white dark:bg-slate-900'} hover:shadow-md hover:border-blue-300`}>
-                                    <div className={`text-xs font-black self-end ${isSameDay(date, new Date()) ? 'text-blue-600' : 'text-slate-400'}`}>
+                                    <div className={`text-xs font-black self-end ${isSameDay(date, new Date()) ? 'text-blue-600' : 'text-slate-400 dark:text-slate-600'}`}>
                                         {format(date, 'd')}
                                     </div>
                                     <div className="flex-1 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
@@ -958,7 +958,7 @@ const Agenda = () => {
                                         type="text" 
                                         value={formData.numero_processo}
                                         onChange={(e) => setFormData({...formData, numero_processo: handleProcessoMask(e.target.value)})}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ex: 2026-A001"
                                         maxLength={10}
                                     />
@@ -969,7 +969,7 @@ const Agenda = () => {
                                         type="datetime-local" 
                                         value={formData.data_abertura}
                                         onChange={(e) => setFormData({...formData, data_abertura: e.target.value})}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none p-3 rounded-[12px] font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500"
                                     />
                                 </div>
                             </div>

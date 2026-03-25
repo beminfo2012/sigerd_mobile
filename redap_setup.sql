@@ -29,7 +29,11 @@ CREATE TABLE IF NOT EXISTS public.redap_registros (
     latitude double precision NULL,
     longitude double precision NULL,
     fotos jsonb NULL DEFAULT '[]'::jsonb,
+    extra_parameters jsonb NULL DEFAULT '{}'::jsonb,
     status_validacao text NOT NULL DEFAULT 'Enviado',
+    assinatura_url text NULL,
+    responsavel_nome text NULL,
+    responsavel_cargo text NULL,
     usuario_id uuid NULL,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -37,10 +41,23 @@ CREATE TABLE IF NOT EXISTS public.redap_registros (
     CONSTRAINT fk_redap_evento FOREIGN KEY (evento_id) REFERENCES redap_eventos (id) ON DELETE CASCADE
 );
 
--- 3. ÍNDICES
+-- 3. TABELA DE REGISTROS CONSOLIDADOS (MASTER/LEGACY)
+CREATE TABLE IF NOT EXISTS public.redap_records (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    redap_id uuid NULL,
+    id_local text NULL,
+    status text NOT NULL DEFAULT 'draft',
+    data jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT redap_records_pkey PRIMARY KEY (id)
+);
+
+-- 4. ÍNDICES
 CREATE INDEX IF NOT EXISTS idx_redap_eventos_data ON public.redap_eventos (data_inicio DESC);
 CREATE INDEX IF NOT EXISTS idx_redap_registros_evento ON public.redap_registros (evento_id);
 CREATE INDEX IF NOT EXISTS idx_redap_registros_sec ON public.redap_registros (secretaria_responsavel);
+CREATE INDEX IF NOT EXISTS idx_redap_records_id ON public.redap_records (redap_id);
 
 -- 4. STORAGE BUCKET
 INSERT INTO storage.buckets (id, name, public) 
@@ -76,7 +93,20 @@ FOR ALL USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND profiles.role LIKE 'Redap_%')
 );
 
--- 7. STORAGE RLS (Bucket redap_fotos)
+-- 7. RLS POLICIES (Records/Legacy)
+ALTER TABLE public.redap_records ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Redap Records: Defesa Civil Tudo" ON public.redap_records;
+CREATE POLICY "Redap Records: Defesa Civil Tudo" ON public.redap_records 
+FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND profiles.role IN ('Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'))
+);
+
+DROP POLICY IF EXISTS "Redap Records: Ver Próprios" ON public.redap_records;
+CREATE POLICY "Redap Records: Ver Próprios" ON public.redap_records 
+FOR SELECT USING (true);
+
+-- 8. STORAGE RLS (Bucket redap_fotos)
 DROP POLICY IF EXISTS "Redap Fotos: Acesso Público" ON storage.objects;
 CREATE POLICY "Redap Fotos: Acesso Público" ON storage.objects 
 FOR SELECT USING (bucket_id = 'redap_fotos');
@@ -103,3 +133,6 @@ CREATE TRIGGER update_redap_eventos_updated_at BEFORE UPDATE ON public.redap_eve
 
 DROP TRIGGER IF EXISTS update_redap_registros_updated_at ON public.redap_registros;
 CREATE TRIGGER update_redap_registros_updated_at BEFORE UPDATE ON public.redap_registros FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_redap_records_updated_at ON public.redap_records;
+CREATE TRIGGER update_redap_records_updated_at BEFORE UPDATE ON public.redap_records FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();

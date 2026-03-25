@@ -630,12 +630,11 @@ function App() {
             alert('🚫 Você está offline!\n\nNão é seguro sair agora...')
             return
         }
-        if (window.confirm("Tem certeza que deseja sair?")) {
-            localStorage.removeItem('auth')
-            localStorage.removeItem('userProfile')
-            setIsAuthenticated(false)
-            setUserProfile(null)
-        }
+        // custom modal confirmation is handled at triggering components (Menu, Sidebar)
+        localStorage.removeItem('auth')
+        localStorage.removeItem('userProfile')
+        setIsAuthenticated(false)
+        setUserProfile(null)
     }
 
     if (isLoading) {

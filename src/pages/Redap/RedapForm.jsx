@@ -85,7 +85,7 @@ const RedapForm = () => {
     });
     const [showCamera, setShowCamera] = useState(false);
     const [showSignature, setShowSignature] = useState(false);
-    const [generatingIA, setGeneratingIA] = useState({ introducao: false, consideracoes: false });
+    const [generatingIA, setGeneratingIA] = useState({ consideracoes: false });
     const isDirty = React.useRef(false); // Track if there are actual unsaved changes
 
     // Load record if editing
@@ -231,9 +231,7 @@ const RedapForm = () => {
                 setorial: formData.data.setorial[activeSector]
             });
 
-            const textInput = field === 'introducao'
-                ? `Gerar introdução para desastre ${cobradeContext}`
-                : `Gerar considerações finais para o setor ${activeSector} com os dados fornecidos.`;
+            const textInput = `Gerar considerações finais para o setor ${activeSector} com os dados fornecidos.`;
 
             const generated = await refineReportText(
                 textInput,
@@ -703,27 +701,6 @@ const RedapForm = () => {
                             <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
                                 {activeSector && (
                                     <div className="space-y-4">
-                                        {/* 1. INTRODUÇÃO IA */}
-                                        <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100/50">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest">2. Introdução Técnica</label>
-                                                <button
-                                                    onClick={() => handleGenerateIA('introducao')}
-                                                    disabled={generatingIA.introducao}
-                                                    className="text-[9px] font-black bg-blue-600 text-white px-3 py-1.5 rounded-lg uppercase tracking-tighter flex items-center gap-1.5 shadow-sm active:scale-95 transition-all disabled:opacity-50"
-                                                >
-                                                    {generatingIA.introducao ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={12} />}
-                                                    Gerar com IA
-                                                </button>
-                                            </div>
-                                            <textarea
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm min-h-[120px] focus:ring-2 focus:ring-blue-500/20 outline-none"
-                                                placeholder="A introdução técnica será gerada aqui..."
-                                                value={formData.data.setorial[activeSector].introducao}
-                                                onChange={(e) => updateSetorialField(activeSector, 'introducao', e.target.value)}
-                                            />
-                                        </div>
-
                                         {/* LAYOUT RENDERER */}
                                         <div className="space-y-4">
                                             {(() => {

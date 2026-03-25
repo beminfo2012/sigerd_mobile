@@ -12,6 +12,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
     const [showProfileModal, setShowProfileModal] = useState(false)
     const [showClearCacheModal, setShowClearCacheModal] = useState(false)
     const [showResetDBModal, setShowResetDBModal] = useState(false)
+    const [showLogoutModal, setShowLogoutModal] = useState(false)
     const [editName, setEditName] = useState(userProfile?.full_name || '')
     const [editMatricula, setEditMatricula] = useState(userProfile?.matricula || '')
     const [editSignature, setEditSignature] = useState(userProfile?.signature || null)
@@ -146,6 +147,14 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
         }
     }
 
+    const handleLogoutClick = () => {
+        if (!navigator.onLine) {
+            toast.warning('🚫 Você está offline!', 'Não é seguro sair agora sem sincronizar seus dados.')
+            return
+        }
+        setShowLogoutModal(true)
+    }
+
     const handleConfirmClearCache = async () => {
         await clearLocalData()
         toast.info('Cache Limpo', 'O histórico foi removido para liberar espaço.')
@@ -262,7 +271,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Strategic Module - Plano de Contingência */}
                 {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/contingencia'}
                             className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
@@ -282,7 +291,6 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 )}
 
 
-                {/* REDAP Strategic Module - Access for Redap/S2id roles and Defesa Civil */}
                 {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin',
                     'Redap_Geral', 'Redap_Setorial', 'Redap_Saude', 'Redap_Educacao', 'Redap_Obras', 'Redap_Agricultura',
                     'Redap_Social', 'Redap_Interior', 'Redap_Administracao', 'Redap_CDL', 'Redap_Cesan', 'Redap_DefesaSocial',
@@ -291,7 +299,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
                     'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
                 ].includes(userProfile?.role)) && (
-                        <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                             <button
                                 onClick={() => window.location.href = '/redap'}
                                 className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
@@ -352,7 +360,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Agenda Section */}
                 {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Operador'].includes(userProfile?.role) && (
-                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/agenda'}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
@@ -372,7 +380,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Logout Card */}
                 <button
-                    onClick={onLogout}
+                    onClick={handleLogoutClick}
                     className="w-full bg-white dark:bg-slate-800 p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
                 >
                     <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-2xl mr-4">
@@ -494,6 +502,17 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 type="danger"
                 requireTypedConfirmation={true}
                 typedConfirmationWord="RESETAR"
+            />
+
+            <ConfirmModal 
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={onLogout}
+                title="Sair do Sistema?"
+                message="Você terá que entrar novamente para acessar seus dados. Certifique-se de que seus registros foram sincronizados."
+                confirmText="Sair Agora"
+                cancelText="Voltar"
+                type="danger"
             />
         </div>
     )

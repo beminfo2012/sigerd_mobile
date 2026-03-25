@@ -1,11 +1,13 @@
 import React, { useRef } from 'react'
-import { Camera, Paperclip, X } from 'lucide-react'
+import { Camera, Paperclip, X, Image as ImageIcon } from 'lucide-react'
 
 const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAll = false, compact = false }) => {
     const cameraInputRef = useRef(null)
     const galleryInputRef = useRef(null)
 
-    const handleCameraClick = () => {
+    const handleCameraClick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
         if (cameraInputRef.current) cameraInputRef.current.click()
     }
 
@@ -27,7 +29,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
             <div className="relative w-full">
                 <input
                     type="file"
-                    ref={cameraInputRef}
+                    ref={galleryInputRef}
                     className="hidden"
                     accept={acceptAll ? "*" : "image/*"}
                     multiple
@@ -35,7 +37,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                 />
                 <button
                     type="button"
-                    onClick={handleCameraClick}
+                    onClick={handleGalleryClick}
                     className="flex items-center justify-center gap-3 w-full p-4 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-500 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group"
                 >
                     <div className="p-2 bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 group-hover:scale-110 transition-transform">
@@ -48,7 +50,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
     }
 
     return (
-        <div className="relative">
+        <div className="grid grid-cols-2 gap-2 w-full">
             {/* Camera Input (Environment) */}
             <input
                 type="file"
@@ -73,24 +75,23 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
             <button
                 type="button"
                 onClick={handleCameraClick}
-                className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:bg-gray-50 hover:border-[#2a5299] hover:text-[#2a5299] transition-all w-full relative group ${type === 'photo' ? 'aspect-square' : ''}`}
+                className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-[#2a5299] hover:text-[#2a5299] transition-all relative group ${type === 'photo' ? 'aspect-square' : ''}`}
             >
-                {acceptAll ? <Paperclip size={32} strokeWidth={1.5} /> : <Camera size={32} strokeWidth={1.5} />}
-                <span className="text-[10px] font-bold uppercase mt-1">{label}</span>
+                <Camera size={28} strokeWidth={1.5} />
+                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center">Câmera</span>
+            </button>
 
-                {/* Hidden "Discreet" Gallery Button overlay or corner */}
-                {type === 'photo' && (
-                    <div
-                        onClick={handleGalleryClick}
-                        className="absolute bottom-2 right-2 p-1.5 bg-white rounded-full shadow-sm border border-gray-200 text-gray-400 hover:text-[#2a5299] hover:border-[#2a5299] z-10"
-                        title="Importar da Galeria"
-                    >
-                        <Paperclip size={14} />
-                    </div>
-                )}
+            <button
+                type="button"
+                onClick={handleGalleryClick}
+                className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-emerald-500 hover:text-emerald-500 transition-all relative group ${type === 'photo' ? 'aspect-square' : ''}`}
+            >
+                <ImageIcon size={28} strokeWidth={1.5} />
+                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center">Galeria</span>
             </button>
         </div>
     )
 }
 
 export default FileInput
+

@@ -33,7 +33,10 @@ const RedapSectorForm = () => {
         longitude: null,
         fotos: [],
         status_validacao: 'Enviado',
-        usuario_id: user?.id
+        usuario_id: user?.id,
+        assinatura_url: null,
+        responsavel_nome: '',
+        responsavel_cargo: ''
     });
 
     const [extraData, setExtraData] = useState({});
@@ -73,16 +76,14 @@ const RedapSectorForm = () => {
                 const current = regs.find(r => r.id === id);
                 if (current) {
                     setFormData(current);
-                    // Try to parse extra columns if they were prefix-encoded in description
-                    try {
-                        if (current.descricao_detalhada.includes('--- INFO EXTRA ---')) {
-                            const [desc, extra] = current.descricao_detalhada.split('--- INFO EXTRA ---');
-                            // Simple parsing could be added here if needed
-                        }
-                    } catch(e) {}
+                    setExtraData(current.extra_parameters || {});
                 }
             } else {
-                setFormData(prev => ({ ...prev, secretaria_responsavel: sector }));
+                setFormData(prev => ({ 
+                    ...prev, 
+                    secretaria_responsavel: sector,
+                    extra_parameters: {} 
+                }));
                 navigator.geolocation.getCurrentPosition(
                     (pos) => setFormData(prev => ({ ...prev, latitude: pos.coords.latitude, longitude: pos.coords.longitude })),
                     () => console.warn('GPS fail')
@@ -101,18 +102,10 @@ const RedapSectorForm = () => {
 
         setSaving(true);
         try {
-            // Merge extraData into description
-            let finalDescription = formData.descricao_detalhada;
-            if (Object.keys(extraData).length > 0) {
-                const extraString = Object.entries(extraData)
-                    .map(([key, val]) => `${key.replace(/_/g, ' ').toUpperCase()}: ${val}`)
-                    .join(' | ');
-                finalDescription = `${finalDescription}\n\n--- INFO EXTRA ---\n${extraString}`;
-            }
-
+            // Use structural extra_parameters field (JSONB)
             await redapService.saveRegistration({
                 ...formData,
-                descricao_detalhada: finalDescription
+                extra_parameters: extraData
             });
             toast.success('Dano registrado com sucesso!');
             navigate(`/redap/evento/${eventoId}`);
@@ -137,15 +130,15 @@ const RedapSectorForm = () => {
     );
 
     return (
-        <div className="bg-slate-50 min-h-screen pb-24 text-slate-800">
-            <header className="bg-white border-b border-slate-200 px-4 h-16 flex items-center justify-between sticky top-0 z-20">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100 transition-colors duration-300">
+            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between sticky top-0 z-20 transition-colors">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(`/redap/evento/${eventoId}`)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600">
+                    <button onClick={() => navigate(`/redap/evento/${eventoId}`)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-base font-black text-slate-800 leading-tight tracking-tight">Registro de Dano</h1>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate max-w-[150px]">
+                        <h1 className="text-base font-black text-slate-800 dark:text-white leading-tight tracking-tight">Registro de Dano</h1>
+                        <p className="text-[10px] text-slate-400 dark:text-emerald-400/80 font-bold uppercase tracking-widest truncate max-w-[150px]">
                             {event?.nome_evento}
                         </p>
                     </div>
@@ -153,7 +146,7 @@ const RedapSectorForm = () => {
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="bg-blue-600 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 active:scale-95 transition-all flex items-center gap-2"
+                    className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
                 >
                     {saving ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />} Enviar
                 </button>
@@ -161,7 +154,7 @@ const RedapSectorForm = () => {
 
             <main className="p-4 max-w-2xl mx-auto space-y-6">
                 {/* Sector Info */}
-                <div className="bg-blue-600 rounded-[2rem] p-6 text-white shadow-xl flex items-center justify-between">
+                <div className="bg-blue-600 dark:bg-blue-700 rounded-[2rem] p-6 text-white shadow-xl flex items-center justify-between transition-all">
                     <div>
                         <p className="text-[10px] uppercase font-black tracking-widest opacity-80 mb-1">Responsabilidade Setorial</p>
                         <h2 className="text-xl font-black uppercase">{formData.secretaria_responsavel}</h2>
@@ -170,11 +163,11 @@ const RedapSectorForm = () => {
                 </div>
 
                 {/* Form Body */}
-                <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 space-y-6">
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 transition-colors">
                     <div className="space-y-4">
                         {/* Type Selection */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                 <List size={12} className="text-blue-500" /> Classificação do Impacto
                             </label>
                             <div className="flex flex-wrap gap-2">
@@ -185,8 +178,8 @@ const RedapSectorForm = () => {
                                         onClick={() => setFormData(prev => ({ ...prev, classificacao_dano: t, instalacao_afetada: '' }))}
                                         className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${
                                             formData.classificacao_dano === t 
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg' 
-                                            : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'
+                                            ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-lg' 
+                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                                         }`}
                                     >
                                         {t}
@@ -197,14 +190,14 @@ const RedapSectorForm = () => {
 
                         {/* Item Selection (Assisted) */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                 <Shield size={12} className="text-blue-500" /> Item / Instalação Afetada
                             </label>
                             <div className="relative">
                                 <input
                                     list="sector-items"
                                     type="text"
-                                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700"
+                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100"
                                     placeholder={formData.classificacao_dano === 'Dano Humano' ? 'Descreva o impacto humano...' : "Ex: Ponte, Escola, Lavoura..."}
                                     value={formData.instalacao_afetada}
                                     onChange={(e) => setFormData(prev => ({ ...prev, instalacao_afetada: e.target.value }))}
@@ -217,11 +210,11 @@ const RedapSectorForm = () => {
 
                         {/* Financial Value (only if not human damage, or optional) */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                 <DollarSign size={12} className="text-blue-500" /> Valor Estimado (R$)
                             </label>
                             <CurrencyInput
-                                className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700"
+                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100"
                                 value={formData.valor_estimado}
                                 onChange={(val) => setFormData(prev => ({ ...prev, valor_estimado: val }))}
                             />
@@ -229,27 +222,44 @@ const RedapSectorForm = () => {
 
                         {/* Extra Fields Section (Dynamic based on FIDE Models) */}
                         {extraFields.length > 0 && (
-                            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-4">
-                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                            <div className="p-5 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30 space-y-4">
+                                <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
                                     <Shield size={12} /> Dados Técnicos do Setor
                                 </p>
                                 <div className="grid grid-cols-2 gap-4">
                                     {extraFields.map(field => (
                                         <div key={field.name} className="space-y-1.5">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-tight">
                                                 {field.label}
                                             </label>
                                             {field.type === 'number' ? (
                                                 <input
                                                     type="number"
-                                                    className="w-full px-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 text-sm"
+                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm"
                                                     value={extraData[field.name] || ''}
                                                     onChange={(e) => setExtraData(prev => ({ ...prev, [field.name]: e.target.value }))}
                                                 />
+                                            ) : field.type === 'boolean' ? (
+                                                <div className="flex gap-2">
+                                                    {['Sim', 'Não'].map(opt => (
+                                                        <button
+                                                            key={opt}
+                                                            type="button"
+                                                            onClick={() => setExtraData(prev => ({ ...prev, [field.name]: opt }))}
+                                                            className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase border transition-all ${
+                                                                extraData[field.name] === opt 
+                                                                ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-sm' 
+                                                                : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-700'
+                                                            }`}
+                                                        >
+                                                            {opt}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             ) : (
                                                 <input
                                                     type="text"
-                                                    className="w-full px-3 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 text-sm"
+                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm"
                                                     value={extraData[field.name] || ''}
                                                     onChange={(e) => setExtraData(prev => ({ ...prev, [field.name]: e.target.value }))}
                                                 />
@@ -261,28 +271,41 @@ const RedapSectorForm = () => {
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
                                 <Info size={12} className="text-blue-500" /> Descrição Técnica Adicional
                             </label>
                             <textarea
-                                className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 min-h-[100px]"
-                                placeholder="Detalhes específicos, endereços atingidos..."
+                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 dark:text-slate-200 min-h-[100px]"
+                                placeholder="Detalhes específicos, logradouros, ruas e pontos de referência..."
                                 value={formData.descricao_detalhada}
                                 onChange={(e) => setFormData(prev => ({ ...prev, descricao_detalhada: e.target.value }))}
                             />
+                        </div>
+
+                        {/* FIDE Narrative Sections */}
+                        <div className="grid grid-cols-1 gap-4 pt-4 border-t border-slate-50 dark:border-slate-800">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Considerações Finais</label>
+                                <textarea
+                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/10 outline-none transition-all font-medium text-slate-600 dark:text-slate-400 text-xs min-h-[80px]"
+                                    placeholder="Parecer técnico final e conclusões do setor..."
+                                    value={extraData.consideracoes || ''}
+                                    onChange={(e) => setExtraData(prev => ({ ...prev, consideracoes: e.target.value }))}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* GPS Card */}
-                <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex items-center justify-between">
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-4">
-                        <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600">
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-2xl text-emerald-600 dark:text-emerald-400 transition-colors">
                             <MapPin size={24} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Coordenadas GPS</p>
-                            <p className="text-xs font-bold text-slate-700 tracking-tight">
+                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Coordenadas GPS</p>
+                            <p className="text-xs font-bold text-slate-700 dark:text-slate-100 tracking-tight">
                                 {formData.latitude ? `${formData.latitude.toFixed(6)}, ${formData.longitude.toFixed(6)}` : 'Buscando Localização...'}
                             </p>
                         </div>
@@ -290,8 +313,8 @@ const RedapSectorForm = () => {
                 </div>
 
                 {/* Photo Capture Section using App Standard FileInput */}
-                <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2 block">
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-colors">
+                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2 block">
                         Fotos de Evidência ({formData.fotos.length})
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -303,7 +326,7 @@ const RedapSectorForm = () => {
                             />
                         </div>
                         {formData.fotos.map((foto, idx) => (
-                            <div key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden border border-slate-100 group shadow-sm bg-slate-50">
+                            <div key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 group shadow-sm bg-slate-50 dark:bg-slate-800 transition-all">
                                 <img src={foto.url || foto.data} className="w-full h-full object-cover" />
                                 <button
                                     onClick={() => setFormData(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== idx) }))}

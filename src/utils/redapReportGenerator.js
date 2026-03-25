@@ -113,11 +113,6 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
     let contentHtml = `<div class="pdf-page-container">`;
     contentHtml += headerHtml;
 
-    // Introduction
-    contentHtml += `<div class="report-section">${sectionTitle('2', 'Introdução')}`;
-    const introText = isSectoral ? (data.setorial[activeSector].introducao || '') : '';
-    contentHtml += `<div style="background: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10px; line-height: 1.6; color: #334155;">${introText || 'O presente relatório detalha os danos e prejuízos identificados em decorrência do evento adverso registrado.'}</div></div>`;
-
     // Danos
     const danoPrefix = isSectoral ? '3' : '6';
     contentHtml += `<div class="report-section">${sectionTitle(danoPrefix, `Danos no Setor: ${isSectoral ? sectorName : 'Geral'}`)}`;
@@ -172,7 +167,7 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
         }
 
         // 2. Outros campos numéricos (Pontes, Bueiros, Cestas, etc)
-        const skipFields = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'introducao', 'consideracoes', 'observacoes'];
+        const skipFields = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'consideracoes', 'observacoes'];
 
         // Mapeamento de pares Item -> Valor
         const ITEM_VALUE_MAP = {
@@ -245,7 +240,7 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
 
         // 2. Agregação de Danos Setoriais
         if (data.setorial) {
-            const skipFieldsGlobal = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'introducao', 'consideracoes', 'observacoes'];
+            const skipFieldsGlobal = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'consideracoes', 'observacoes'];
 
             Object.entries(data.setorial).forEach(([sectorName, sData]) => {
                 // Adicionar Instalações do Setor se houver
