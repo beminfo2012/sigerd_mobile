@@ -64,6 +64,8 @@ const UserManagement = lazy(() => import('./pages/UserManagement'))
 // Redap Module (Lazy)
 const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
 const RedapForm = lazy(() => import('./pages/Redap/RedapForm'))
+const RedapEventDetails = lazy(() => import('./pages/Redap/RedapEventDetails'))
+const RedapSectorForm = lazy(() => import('./pages/Redap/RedapSectorForm'))
 
 // Contingency Plan (Lazy)
 const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
@@ -416,12 +418,23 @@ const AppContent = ({
                                         <RedapDashboard />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/redap/novo" element={
+                                <Route path="/redap/evento/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
-                                        <RedapForm />
+                                        <RedapEventDetails />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/redap/editar/:id" element={
+                                <Route path="/redap/registro/novo/:eventoId" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapSectorForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/registro/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapSectorForm />
+                                    </ProtectedRoute>
+                                } />
+                                {/* Legado - To be removed later */}
+                                <Route path="/redap/v1/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
                                         <RedapForm />
                                     </ProtectedRoute>

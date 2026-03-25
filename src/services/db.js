@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 29
+const DB_VERSION = 30
 
 
 let dbPromise = null;
@@ -136,6 +136,18 @@ export const initDB = async () => {
                 } catch (e) {
                     console.error('[Migration] Redap migration failed:', e);
                 }
+            }
+
+            // REDAP NEW ARCHITECTURE (v30)
+            if (!db.objectStoreNames.contains('redap_eventos')) {
+                const eventStore = db.createObjectStore('redap_eventos', { keyPath: 'id' });
+                eventStore.createIndex('synced', 'synced', { unique: false });
+                eventStore.createIndex('data_inicio', 'data_inicio', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('redap_registros')) {
+                const regStore = db.createObjectStore('redap_registros', { keyPath: 'id', autoIncrement: true });
+                regStore.createIndex('synced', 'synced', { unique: false });
+                regStore.createIndex('evento_id', 'evento_id', { unique: false });
             }
 
             // Despachos (v15) - New Feature
@@ -341,7 +353,7 @@ export const getPendingSyncCount = async () => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'despachos', 'ocorrencias_operacionais', 'agenda_vistorias'];
+    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'despachos', 'ocorrencias_operacionais', 'agenda_vistorias', 'redap_eventos', 'redap_registros'];
     let syncedCount = 0
 
     for (const storeName of stores) {
@@ -405,6 +417,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                             'occupants': 'occupants',
                             'donations': 'donations',
                             'redap_records': 'redap',
+                            'redap_registros': 'redap_fotos',
                             'ocorrencias_operacionais': 'ocorrencias_fotos'
                         };
                         const folder = folderMap[storeName] || 'general';

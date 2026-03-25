@@ -103,27 +103,9 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
-            label: 'Monitoramento',
-            icon: BarChart3,
-            path: '/monitoramento',
-            roles: AGENT_ROLES
-        },
-        {
-            label: 'Legado',
-            icon: History,
-            path: '/monitoramento/legado',
-            roles: AGENT_ROLES
-        },
-        {
             label: 'Vistorias',
             icon: ClipboardList,
             path: '/vistorias',
-            roles: AGENT_ROLES
-        },
-        {
-            label: 'Agenda',
-            icon: Calendar,
-            path: '/agenda',
             roles: AGENT_ROLES
         },
         {
@@ -139,10 +121,28 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
+            label: 'REDAP',
+            icon: ClipboardCheck,
+            path: '/redap',
+            roles: REDAP_ROLES
+        },
+        {
             label: 'Assist. Humanitária',
             icon: Heart,
             path: '/abrigos',
             roles: HUMANITARIAN_ROLES
+        },
+        {
+            label: 'Monitoramento',
+            icon: BarChart3,
+            path: '/monitoramento',
+            roles: AGENT_ROLES
+        },
+        {
+            label: 'Contingência',
+            icon: Shield,
+            path: '/contingencia',
+            roles: AGENT_ROLES
         },
         {
             label: 'GeoRescue',
@@ -151,22 +151,22 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES.filter(r => r !== 'Operador')
         },
         {
+            label: 'Legado',
+            icon: History,
+            path: '/monitoramento/legado',
+            roles: AGENT_ROLES
+        },
+        {
+            label: 'Agenda',
+            icon: Calendar,
+            path: '/agenda',
+            roles: AGENT_ROLES
+        },
+        {
             label: 'Configurações',
             icon: Settings,
             path: '/menu',
             roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin']
-        },
-        {
-            label: 'REDAP',
-            icon: ClipboardCheck,
-            path: '/redap',
-            roles: REDAP_ROLES
-        },
-        {
-            label: 'Contingência',
-            icon: Shield,
-            path: '/contingencia',
-            roles: AGENT_ROLES
         }
     ];
 
@@ -247,8 +247,8 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                                 </button>
                             )}
 
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setShowClearCacheModal(true); setShowUserMenu(false); }} 
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowClearCacheModal(true); setShowUserMenu(false); }}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors text-left"
                             >
                                 <Trash2 size={18} className="text-red-400" />
@@ -294,7 +294,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                 />
             )}
 
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={showClearCacheModal}
                 onClose={() => setShowClearCacheModal(false)}
                 onConfirm={handleConfirmClearCache}
