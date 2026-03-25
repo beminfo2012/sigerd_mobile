@@ -177,46 +177,43 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     );
     return (
         <aside
-            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-12' : 'w-64'} border-r border-white/10 shadow-xl`}
+            onMouseEnter={() => setIsCollapsed(false)}
+            onMouseLeave={() => setIsCollapsed(true)}
+            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16' : 'w-64'} border-r border-white/10 shadow-xl`}
             style={{
                 background: 'var(--web-sidebar-gradient)',
                 fontFamily: 'var(--web-font)'
             }}
         >
-            {/* Toggle Button */}
-            <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute right-0 top-[24px] translate-x-1/2 w-7 h-7 bg-[var(--web-bg)] border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-[var(--web-primary)] shadow-md hover:scale-110 transition-transform cursor-pointer z-[100]"
-                title={isCollapsed ? 'Expandir Menu' : 'Retrair Menu'}
-            >
-                {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-            </button>
+
 
             {/* Navigation */}
             <nav className={`flex-1 overflow-y-auto space-y-1 py-6 ${isCollapsed ? 'px-2' : 'px-4'}`}>
                 <div className="space-y-1">
                     {filteredItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            title={isCollapsed ? item.label : ''}
-                            className={`flex items-center rounded-r-none transition-all duration-200 group relative border-l-4 ${isCollapsed ? 'justify-center py-3' : 'px-4 py-3 gap-3'} ${isActive(item.path)
-                                ? 'bg-white/10 text-white border-[#4CAF50]'
-                                : 'text-white/70 border-transparent hover:bg-white/5 hover:text-white'
-                                }`}
-                        >
-                            <item.icon size={18} className={`${isActive(item.path) ? '' : 'group-hover:scale-110 transition-transform'} shrink-0`} />
+                        <React.Fragment key={item.path}>
+                            <Link
+                                to={item.path}
+                                title={isCollapsed ? item.label : ''}
+                                className={`flex items-center rounded-xl transition-all duration-200 group relative ${isCollapsed ? 'justify-center py-3' : 'px-4 py-3 gap-3'} ${isActive(item.path)
+                                    ? 'bg-white/20 text-white'
+                                    : 'text-white/70 hover:bg-white/5 hover:text-white'
+                                    }`}
+                            >
+                                <item.icon size={18} className={`${isActive(item.path) ? '' : 'group-hover:scale-110 transition-transform'} shrink-0`} />
 
-                            {!isCollapsed && (
-                                <span className="text-sm font-semibold truncate animate-in fade-in duration-300">
-                                    {item.label}
-                                </span>
+                                {!isCollapsed && (
+                                    <span className="text-sm font-semibold truncate animate-in fade-in duration-300">
+                                        {item.label}
+                                    </span>
+                                )}
+                            </Link>
+                            
+                            {/* Separador abaixo do ícone de Interdição */}
+                            {item.label === 'Interdições' && (
+                                <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
-
-                            {isActive(item.path) && (
-                                <div className="absolute left-0 w-1 h-6 bg-white rounded-r-full" />
-                            )}
-                        </Link>
+                        </React.Fragment>
                     ))}
                 </div>
             </nav>
