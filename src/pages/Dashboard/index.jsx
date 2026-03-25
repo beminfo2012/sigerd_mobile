@@ -205,9 +205,9 @@ const EventLogCard = ({ data, rainfall, cemadenAlerts }) => {
 };
 
 // --- SUB-COMPONENT: TV MODE VIEW ---
-const TvModeDashboardView = ({ 
-    data, weather, cemadenAlerts, rainfall, statusInfo, 
-    viewMode, setViewMode, mapFilter, mapStyle, 
+const TvModeDashboardView = ({
+    data, weather, cemadenAlerts, rainfall, statusInfo,
+    viewMode, setViewMode, mapFilter, mapStyle,
     navigate, activeContingencyPlan, load, getWeatherIcon
 }) => {
     const [currentView, setCurrentView] = useState('menu');
@@ -310,7 +310,7 @@ const TvModeDashboardView = ({
                             </div>
                         </div>
                     )}
-                    
+
                     <div className="text-right flex items-center gap-10 border-l border-slate-200 pl-10">
                         <div className="flex flex-col items-end">
                             <span className="text-6xl font-black text-slate-800 leading-none tracking-tighter tabular-nums mb-2">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -394,8 +394,8 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
 
 // --- 2. TV CLIMATE CENTER (Monitoramento Climático) ---
 const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon }) => {
-    const sortedRain = [...(rainfall || [])].sort((a,b) => (b.rainRaw || 0) - (a.rainRaw || 0));
-    
+    const sortedRain = [...(rainfall || [])].sort((a, b) => (b.rainRaw || 0) - (a.rainRaw || 0));
+
     return (
         <div className="grid grid-cols-12 gap-6 h-full">
             <div className="col-span-4 flex flex-col gap-6 overflow-hidden">
@@ -475,7 +475,7 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon }) => {
 // --- 3. TV OPERATIONS CENTER (Centro de Ocorrências) ---
 const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco }) => {
     const list = [...(data.ocorrencias?.locations || []), ...(data.vistorias?.locations || [])]
-        .sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
+        .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
 
     return (
         <div className="grid grid-cols-12 gap-6 h-full">
@@ -496,9 +496,8 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                                     {new Date(e.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                             </div>
-                            <div className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-[2px] inline-block shadow-md ${
-                                String(e.risk).includes('Iminente') || String(e.risk).includes('Alto') ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'
-                            }`}>
+                            <div className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-[2px] inline-block shadow-md ${String(e.risk).includes('Iminente') || String(e.risk).includes('Alto') ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'
+                                }`}>
                                 {e.nivelRisco || e.status}
                             </div>
                         </div>
@@ -559,7 +558,7 @@ const TV_HumanitarianStrategic = () => {
                     <h3 className="text-2xl text-slate-400 uppercase tracking-[6px] mb-2 font-black">Capacidade</h3>
                     <h2 className="text-8xl text-slate-800 tracking-tighter mb-4 font-black">OCUPADO</h2>
                 </div>
-                
+
                 <div className="space-y-8">
                     <div className="flex justify-between items-end">
                         <span className="text-sm font-black text-emerald-600 uppercase tracking-[4px]">Taxa de Ocupação</span>
@@ -600,9 +599,8 @@ const TV_HumanitarianStrategic = () => {
 
 // --- 5. TV SCO STRATEGIC (Gestão de Crise) ---
 const TV_SCOStrategic = ({ plan }) => (
-    <div className={`h-full w-full rounded-[48px] border-8 transition-all duration-1000 flex flex-col items-center justify-center text-center p-20 shadow-xl ${
-        plan ? (plan.nivel === 'Calamidade' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') : 'bg-white border-slate-200'
-    }`}>
+    <div className={`h-full w-full rounded-[48px] border-8 transition-all duration-1000 flex flex-col items-center justify-center text-center p-20 shadow-xl ${plan ? (plan.nivel === 'Calamidade' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') : 'bg-white border-slate-200'
+        }`}>
         {plan ? (
             <div className="max-w-5xl space-y-12">
                 <div className="flex justify-center mb-8">
@@ -611,14 +609,13 @@ const TV_SCOStrategic = ({ plan }) => (
                     </div>
                 </div>
                 <h2 className="text-3xl font-black text-slate-400 uppercase tracking-[20px] mb-4">SISTEMA DE COMANDO ATIVO</h2>
-                <div className={`inline-block px-16 py-6 rounded-[32px] text-white text-9xl font-black uppercase tracking-tighter shadow-2xl mb-12 ${
-                    plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
-                }`}>
+                <div className={`inline-block px-16 py-6 rounded-[32px] text-white text-9xl font-black uppercase tracking-tighter shadow-2xl mb-12 ${plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
+                    }`}>
                     {plan.nivel}
                 </div>
                 <h3 className="text-6xl font-black text-slate-800 uppercase tracking-tight leading-none mb-10">{plan.motivo || 'Mobilização Geral'}</h3>
                 <p className="text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed">{plan.descricao || 'Células de comando centralizadas para resposta tática imediata.'}</p>
-                
+
                 <div className="pt-20 flex justify-center gap-12 text-slate-400">
                     <div className="flex items-center gap-4 uppercase tracking-widest font-black">
                         <Timer className="animate-spin opacity-50" /> TEMPO DE RESPOSTA ATIVO
@@ -950,17 +947,17 @@ const MobileDashboardView = ({
 
     const isTvMode = new URLSearchParams(window.location.search).get('tvMode') === 'true';
     if (isTvMode) {
-        return <TvModeDashboardView 
-            data={data} 
-            weather={weather} 
-            cemadenAlerts={cemadenAlerts} 
-            rainfall={rainfall} 
-            statusInfo={statusInfo} 
-            viewMode={viewMode} 
-            setViewMode={setViewMode} 
-            mapFilter={mapFilter} 
-            mapStyle={mapStyle} 
-            navigate={navigate} 
+        return <TvModeDashboardView
+            data={data}
+            weather={weather}
+            cemadenAlerts={cemadenAlerts}
+            rainfall={rainfall}
+            statusInfo={statusInfo}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            mapFilter={mapFilter}
+            mapStyle={mapStyle}
+            navigate={navigate}
             activeContingencyPlan={activeContingencyPlan}
             load={load}
             getWeatherIcon={getWeatherIcon}
@@ -972,11 +969,10 @@ const MobileDashboardView = ({
             <div className="p-5 space-y-8">
                 {/* SCO BANNER (MOBILE) */}
                 {activeContingencyPlan && (
-                    <div 
-                        className={`p-6 rounded-[32px] border shadow-2xl flex items-center gap-5 cursor-pointer active:scale-95 transition-all overflow-hidden relative group mb-6 ${
-                            activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/20' : 
-                            activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500 shadow-orange-900/20' : 'bg-amber-500 border-amber-400 font-black'
-                        }`}
+                    <div
+                        className={`p-6 rounded-[32px] border shadow-2xl flex items-center gap-5 cursor-pointer active:scale-95 transition-all overflow-hidden relative group mb-6 ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/20' :
+                                activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500 shadow-orange-900/20' : 'bg-amber-500 border-amber-400 font-black'
+                            }`}
                         onClick={() => navigate('/contingencia')}
                     >
                         <div className="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center text-white backdrop-blur-md shadow-inner shrink-0 scale-110">
@@ -1475,17 +1471,17 @@ const WebViewDashboardView = ({
 
     const isTvMode = new URLSearchParams(window.location.search).get('tvMode') === 'true';
     if (isTvMode) {
-        return <TvModeDashboardView 
-            data={data} 
-            weather={weather} 
-            cemadenAlerts={cemadenAlerts} 
-            rainfall={rainfall} 
-            statusInfo={statusInfo} 
-            viewMode={viewMode} 
-            setViewMode={setViewMode} 
-            mapFilter={mapFilter} 
-            mapStyle={mapStyle} 
-            navigate={navigate} 
+        return <TvModeDashboardView
+            data={data}
+            weather={weather}
+            cemadenAlerts={cemadenAlerts}
+            rainfall={rainfall}
+            statusInfo={statusInfo}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            mapFilter={mapFilter}
+            mapStyle={mapStyle}
+            navigate={navigate}
             activeContingencyPlan={activeContingencyPlan}
             load={load}
             getWeatherIcon={getWeatherIcon}
@@ -1517,11 +1513,10 @@ const WebViewDashboardView = ({
                     {/* CONTINGENCY BANNER (WEB) */}
                     {activeContingencyPlan && (
                         <div className="mt-4 animate-in slide-in-from-top-4 duration-500 px-2">
-                            <div 
-                                className={`overflow-hidden rounded-[26px] border shadow-2xl flex items-center cursor-pointer hover:scale-[1.01] transition-all group ${
-                                    activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/10' : 
-                                    activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
-                                }`}
+                            <div
+                                className={`overflow-hidden rounded-[26px] border shadow-2xl flex items-center cursor-pointer hover:scale-[1.01] transition-all group ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/10' :
+                                        activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
+                                    }`}
                                 onClick={() => navigate('/contingencia')}
                             >
                                 <div className="flex-1 p-6 flex items-center gap-6">
@@ -1549,8 +1544,7 @@ const WebViewDashboardView = ({
                     {/* Top 5 Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {/* Card 1: Risk Level */}
-                        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden group shadow-sm">
-                            <div className={`absolute top-0 left-0 w-1.5 h-full ${statusInfo.color}`} />
+                        <div className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden group shadow-lg shadow-blue-500/20">
                             <div className="flex justify-between items-start mb-6">
                                 <span className={`text-xl font-black ${statusInfo.text}`}>{statusInfo.label}</span>
                                 <div className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest leading-none ${statusInfo.text} ${statusInfo.bg}`}>Status</div>
@@ -1565,7 +1559,7 @@ const WebViewDashboardView = ({
 
                         {/* Card 2: INMET Alerts */}
                         {!isOperador && (
-                            <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                            <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden text-center">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
                                         <Zap size={20} />
@@ -1577,7 +1571,7 @@ const WebViewDashboardView = ({
                         )}
 
                         {/* Card 3: Ocorrências Hoje */}
-                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden text-center">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl text-purple-500">
                                     <AlertTriangle size={20} />
@@ -1588,7 +1582,7 @@ const WebViewDashboardView = ({
                         </div>
 
                         {/* Card 4: Vistorias Totais */}
-                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden text-center">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500">
                                     <ClipboardList size={20} />
@@ -1599,7 +1593,7 @@ const WebViewDashboardView = ({
                         </div>
 
                         {/* Card 5: Média Pluviométrica */}
-                        <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 rounded-3xl flex flex-col justify-between group cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+                        <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col justify-between group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden">
                             <div className="flex justify-between items-start">
                                 <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-500 group-hover:scale-110 transition-transform">
                                     <Droplets size={24} />
@@ -2220,7 +2214,7 @@ const Dashboard = () => {
                             lat: STATION_METADATA['SEDE_DEFESA_CIVIL'].lat,
                             lon: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon,
                             lng: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon
-                        }, 
+                        },
                         ...formattedApi
                     ].map(station => {
                         let level = 'Normal';

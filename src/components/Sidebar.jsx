@@ -208,9 +208,19 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                                     </span>
                                 )}
                             </Link>
-                            
+
+                            {/* Separador após o ícone de Dashboard */}
+                            {item.label === 'Dashboard' && (
+                                <div className="h-[1px] bg-white/10 my-4 mx-2" />
+                            )}
+
                             {/* Separador abaixo do ícone de Interdição */}
                             {item.label === 'Interdições' && (
+                                <div className="h-[1px] bg-white/10 my-4 mx-2" />
+                            )}
+
+                            {/* Separador separando Legado e Configurações */}
+                            {item.label === 'Legado' && (
                                 <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
                         </React.Fragment>
