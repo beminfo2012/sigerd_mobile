@@ -9,8 +9,8 @@ export const REDAP_SECTORS = {
     'Redap_Saude': 'Saúde',
     'Redap_Educacao': 'Educação',
     'Redap_Obras': 'Obras',
-    'Redap_Agricultura': 'Agricultura',
-    'Redap_Social': 'Social',
+    'Redap_Agropecuaria': 'Agropecuária',
+    'Redap_Social': 'Assistência Social',
     'Redap_Interior': 'Interior',
     'Redap_Administracao': 'Administração',
     'Redap_CDL': 'CDL',
@@ -20,23 +20,144 @@ export const REDAP_SECTORS = {
     'Redap_ServicosUrbanos': 'Serviços Urbanos',
     'Redap_Transportes': 'Transportes',
     'Redap_Geral': 'Defesa Civil',
-    'Admin': 'Defesa Civil',
-    'Coordenador': 'Defesa Civil',
-    'Coordenador de Proteção e Defesa Civil': 'Defesa Civil'
+    'Admin': 'Defesa Civil'
+};
+
+// Mapeamento extraído dos modelos oficiais em Relatórios_Fide
+export const REDAP_ITEM_MAPPING = {
+    'Saúde': {
+        'Dano Material': {
+            items: ['Instalações públicas de saúde (Hospital, Unidade Básica, Pronto Atendimento)', 'Equipamentos médicos', 'Ambulâncias e Veículos'],
+            extraFields: [
+                { name: 'qtd_danificada', label: 'Qtd. Danificada', type: 'number' },
+                { name: 'qtd_destruida', label: 'Qtd. Destruída', type: 'number' }
+            ]
+        },
+        'Prejuízo Econômico': {
+            items: ['Assistência médica / Saúde pública', 'Vigilância Epidemiológica', 'Vigilância Sanitária', 'Control de pragas e vetores'],
+            extraFields: [
+                { name: 'servico_interrompido', label: 'Serviço Interrompido?', type: 'boolean' }
+            ]
+        },
+        'Dano Humano': {
+            items: ['Mortes, Feridos, Enfermos'],
+            extraFields: [
+                { name: 'mortos', label: 'Mortos', type: 'number' },
+                { name: 'feridos', label: 'Feridos', type: 'number' },
+                { name: 'enfermos', label: 'Enfermos', type: 'number' }
+            ]
+        }
+    },
+    'Educação': {
+        'Dano Material': {
+            items: ['Instalações públicas de ensino (Escola, Creche)', 'Equipamentos educacionais', 'Transporte Escolar'],
+            extraFields: [
+                { name: 'qtd_danificada', label: 'Qtd. Danificada', type: 'number' },
+                { name: 'qtd_destruida', label: 'Qtd. Destruída', type: 'number' }
+            ]
+        },
+        'Prejuízo Econômico': {
+            items: ['Interrupção do Ensino Público', 'Limpeza e Sanitização de Prédios Escolares']
+        }
+    },
+    'Agropecuária': {
+        'Dano Material': {
+            items: ['Instalações públicas prestadoras de serviço (Secretaria, Galpões)', 'Estrutura Rural Pública'],
+            extraFields: [
+                { name: 'qtd_danificada', label: 'Qtd. Danificada', type: 'number' }
+            ]
+        },
+        'Prejuízo Econômico': {
+            items: ['Agricultura (Lavoura, Cultivo)', 'Pecuária (Criação, Rebanho)', 'Armazenamento e Silos'],
+            extraFields: [
+                { name: 'area_afetada', label: 'Área Afetada (HA)', type: 'number' },
+                { name: 'producao_perdida', label: 'Produção Perdida (Ton/L)', type: 'number' }
+            ]
+        }
+    },
+    'Interior': {
+        'Dano Material': {
+            items: ['Ponte de Madeira', 'Ponte de Concreto', 'Bueiros', 'Galerias de Drenagem', 'Estradas Vicinais (KM afetados)'],
+            extraFields: [
+                { name: 'qtd_danificada', label: 'Qtd. Danificada', type: 'number' },
+                { name: 'qtd_destruida', label: 'Qtd. Destruída', type: 'number' },
+                { name: 'extensao_km', label: 'Extensão em KM (se estrada)', type: 'number' }
+            ]
+        }
+    },
+    'Meio Ambiente': {
+        'Dano Material': {
+            items: ['Instalações públicas de uso comunitário (Praças, Parques)', 'Obras de infraestrutura pública urbana'],
+            extraFields: [
+                { name: 'qtd_danificada', label: 'Qtd. Danificada', type: 'number' }
+            ]
+        },
+        'Dano Ambiental': {
+            items: ['Poluição da Água', 'Contaminação do Solo', 'Impacto na Fauna/Flora', 'Incêndio em APP/APA'],
+            extraFields: [
+                { name: 'populacao_atingida_perc', label: '% População Atingida', type: 'number' },
+                { name: 'area_atingida_ha', label: 'Área Atingida (Hectares)', type: 'number' },
+                { name: 'servico_ecossistemico', label: 'Perda de Serviço Ecossistêmico', type: 'text' }
+            ]
+        }
+    },
+    'Serviços Urbanos': {
+        'Dano Material': {
+            items: ['Instalações de uso comunitário', 'Obras de infraestrutura pública urbana', 'Rede de Drenagem Urbana'],
+            extraFields: [
+                { name: 'qtd_danificada', label: 'Qtd. Danificada', type: 'number' },
+                { name: 'qtd_destruida', label: 'Qtd. Destruída', type: 'number' }
+            ]
+        },
+        'Prejuízo Econômico': {
+            items: ['Sistema de limpeza urbana e coleta de lixo', 'Manutenção de vias urbanas']
+        }
+    },
+    'Assistência Social': {
+        'Dano Material': {
+            items: ['Centros de Referência (CRAS/CREAS)', 'Abrigos Institucionais']
+        },
+        'Dano Humano': {
+            items: ['Impacto Social'],
+            extraFields: [
+                { name: 'desabrigados', label: 'Desabrigados', type: 'number' },
+                { name: 'desalojados', label: 'Desalojados', type: 'number' },
+                { name: 'desaparecidos', label: 'Desaparecidos', type: 'number' }
+            ]
+        }
+    },
+    'Defesa Civil': {
+        'Dano Material': {
+            items: ['Todas as Categorias'],
+            extraFields: [
+                { name: 'qtd_danificada', label: 'Qtd. Danificada', type: 'number' },
+                { name: 'qtd_destruida', label: 'Qtd. Destruída', type: 'number' }
+            ]
+        },
+        'Prejuízo Econômico': {
+            items: ['Custo de Resposta e Socorro', 'Custo de Reabilitação do Cenário']
+        },
+        'Dano Humano': {
+            items: ['Impacto Humano'],
+            extraFields: [
+                { name: 'mortos', label: 'Mortos', type: 'number' },
+                { name: 'feridos', label: 'Feridos', type: 'number' },
+                { name: 'desabrigados', label: 'Desabrigados', type: 'number' },
+                { name: 'desalojados', label: 'Desalojados', type: 'number' }
+            ]
+        }
+    }
 };
 
 const COBRADES = [
-    { code: '1.1.1.1.0', label: 'Incêndio Florestal' },
-    { code: '1.1.3.1.1', label: 'Erosão de Margem Fluvial' },
     { code: '1.2.1.0.0', label: 'Inundações' },
     { code: '1.2.2.0.0', label: 'Enxurradas' },
     { code: '1.2.3.0.0', label: 'Alagamentos' },
-    { code: '1.3.1.1.1', label: 'Queda, Tombamento ou Rolamento de Blocos' },
     { code: '1.3.2.1.1', label: 'Deslizamentos' },
     { code: '1.3.2.1.2', label: 'Corridas de Solo / Lama' },
-    { code: '1.3.2.1.3', label: 'Rastejos' },
     { code: '1.4.1.1.0', label: 'Vendaval / Ciclone' },
-    { code: '1.4.1.2.1', label: 'Granizo' }
+    { code: '1.4.1.2.1', label: 'Granizo' },
+    { code: '13214', label: 'Tempestade Local/Convectiva – Chuvas Intensas' }
 ];
 
 export const getCobrades = () => COBRADES;
