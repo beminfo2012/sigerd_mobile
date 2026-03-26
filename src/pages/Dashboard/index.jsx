@@ -971,7 +971,7 @@ const MobileDashboardView = ({
                 {activeContingencyPlan && (
                     <div
                         className={`p-6 rounded-[32px] border shadow-2xl flex items-center gap-5 cursor-pointer active:scale-95 transition-all overflow-hidden relative group mb-6 ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/20' :
-                                activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500 shadow-orange-900/20' : 'bg-amber-500 border-amber-400 font-black'
+                            activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500 shadow-orange-900/20' : 'bg-amber-500 border-amber-400 font-black'
                             }`}
                         onClick={() => navigate('/contingencia')}
                     >
@@ -1515,7 +1515,7 @@ const WebViewDashboardView = ({
                         <div className="mt-4 animate-in slide-in-from-top-4 duration-500 px-2">
                             <div
                                 className={`overflow-hidden rounded-[26px] border shadow-2xl flex items-center cursor-pointer hover:scale-[1.01] transition-all group ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/10' :
-                                        activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
+                                    activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
                                     }`}
                                 onClick={() => navigate('/contingencia')}
                             >
@@ -1813,7 +1813,7 @@ const WebViewDashboardView = ({
                             </MapContainer>
                             {/* Standard Web Legend */}
                             <div className="absolute bottom-4 right-4 z-[1000] bg-white/5 dark:bg-slate-900/5 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-white/10 dark:border-slate-700/30 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
-                                <div className="mb-1 text-[8px] text-slate-400">LEGENDA DO MAPA</div>
+                                <div className="mb-1 text-[8px] text-slate-400">LEGENDA</div>
                                 {viewMode === 'ocorrencias' ? (
                                     <>
                                         <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Atendido</div>
@@ -1824,24 +1824,24 @@ const WebViewDashboardView = ({
                                     </>
                                 ) : viewMode === 'vistorias' ? (
                                     <>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Risco Iminente</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Risco Alto</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-500"></div>Risco Médio</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-emerald-500"></div>Risco Baixo</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>R4</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>R3</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-500"></div>R2</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-emerald-500"></div>R1</div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Interd. Total</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Interd. Parcial</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Total</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Parcial</div>
                                     </>
                                 )}
                                 {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (
                                     <>
                                         <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">PLUVIÔMETROS</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-400"></div>Extremo (&gt;80mm)</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-400"></div>Alerta (&gt;50mm)</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-400"></div>Atenção (&gt;30mm)</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-400"></div>Normal</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-400"></div>(&gt;80mm)</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-400"></div>(&gt;50mm)</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-400"></div>(&gt;30mm)</div>
+                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-400"></div>(&lt;30mm)</div>
                                     </>
                                 )}
                                 {tiposRiscoAtivos.size > 0 && (

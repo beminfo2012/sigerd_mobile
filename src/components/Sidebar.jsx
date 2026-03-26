@@ -176,15 +176,17 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         item.roles.includes(userProfile?.role) || userProfile?.role === 'Admin'
     );
     return (
-        <aside
-            onMouseEnter={() => setIsCollapsed(false)}
-            onMouseLeave={() => setIsCollapsed(true)}
-            className={`hidden md:flex flex-col relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16' : 'w-64'} border-r border-white/10 shadow-xl`}
-            style={{
-                background: 'var(--web-sidebar-gradient)',
-                fontFamily: 'var(--web-font)'
-            }}
-        >
+        <div className="hidden md:block w-16 h-full shrink-0 relative z-50">
+            <aside
+                onMouseEnter={() => setIsCollapsed(false)}
+                onMouseLeave={() => setIsCollapsed(true)}
+                className={`flex flex-col absolute left-0 top-0 h-full transition-all duration-300 ease-in-out ${isCollapsed ? 'w-16' : 'w-64'} border-r border-white/10 shadow-xl overflow-hidden`}
+                style={{
+                    background: 'var(--web-sidebar-gradient)',
+                    fontFamily: 'var(--web-font)',
+                    boxShadow: !isCollapsed ? '10px 0 30px rgba(0,0,0,0.2)' : 'none'
+                }}
+            >
 
 
             {/* Navigation */}
@@ -324,6 +326,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                 type="danger"
             />
         </aside>
+        </div>
     );
 };
 
