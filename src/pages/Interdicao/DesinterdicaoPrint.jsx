@@ -216,7 +216,7 @@ const DesinterdicaoPrint = () => {
                                 </div>
                                 <div className="w-64 border-b border-slate-900 mb-2"></div>
                                 <p className="text-[10px] font-black uppercase text-slate-900">{data.agente}</p>
-                                <p className="text-[8px] font-bold text-slate-500 uppercase">Agente de Defesa Civil - Matrícula {data.matricula}</p>
+                                <p className="text-[8px] font-bold text-slate-500 uppercase">{data.cargo || 'Agente de Defesa Civil'} - Matrícula {data.matricula}</p>
                             </div>
                         </div>
                         <p className="text-[8px] font-bold text-slate-300 uppercase tracking-[0.2em] mt-10">SIGERD Mobile - Santa Maria de Jetibá / ES</p>

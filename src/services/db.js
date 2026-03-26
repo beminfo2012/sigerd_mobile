@@ -547,6 +547,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 processo: item.processo || '',
                 agente: item.agente || '',
                 matricula: item.matricula || '',
+                cargo: item.cargo || '', // [ADDED]
                 solicitante: item.solicitante || '',
                 cpf: item.cpf || '',
                 telefone: item.telefone || '',
@@ -579,6 +580,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                     crea: item.apoio_tecnico?.crea || item.apoioTecnico?.crea || '',
                     nome: item.apoio_tecnico?.nome || item.apoioTecnico?.nome || '',
                     matricula: item.apoio_tecnico?.matricula || item.apoioTecnico?.matricula || '',
+                    cargo: item.apoio_tecnico?.cargo || item.apoioTecnico?.cargo || '', // [ADDED]
                     assinatura: signatureApoioUrl
                 },
                 created_at: item.createdAt || item.created_at || new Date().toISOString()
@@ -671,11 +673,13 @@ export const syncSingleItem = async (storeName, item, db) => {
                 orgaos_acionados: item.orgaosAcionados || item.orgaos_acionados || '',
                 agente: item.agente || '',
                 matricula: item.matricula || '',
+                cargo: item.cargo || '', // [ADDED]
                 assinatura_agente: signatureAgenteUrl,
                 apoio_tecnico: {
                     nome: item.apoioTecnico?.nome || item.apoio_tecnico?.nome || '',
                     crea: item.apoioTecnico?.crea || item.apoio_tecnico?.crea || '',
                     matricula: item.apoioTecnico?.matricula || item.apoio_tecnico?.matricula || '',
+                    cargo: item.apoioTecnico?.cargo || item.apoio_tecnico?.cargo || '', // [ADDED]
                     assinatura: signatureApoioUrl
                 },
                 created_at: item.createdAt || item.created_at || new Date().toISOString(),
@@ -821,6 +825,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 ocorrencia_id_format: officialIdFormat,
                 agente: item.agente || '',
                 matricula: item.matricula || '',
+                cargo: item.cargo || '', // [ADDED]
                 solicitante: item.solicitante || '',
                 cpf: item.cpf || '',
                 telefone: item.telefone || '',

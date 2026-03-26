@@ -205,9 +205,13 @@ const InterdicaoPrint = () => {
                                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Agente Responsável</p>
                                 <p className="font-bold text-slate-800">{data.agente || '---'}</p>
                             </div>
-                            <div className="p-3 bg-slate-50">
+                            <div className="p-3 bg-slate-50 border-r border-slate-200">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Matrícula</p>
                                 <p className="font-bold text-slate-800">{data.matricula || '---'}</p>
+                            </div>
+                            <div className="p-3 bg-white">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Cargo / Função</p>
+                                <p className="font-bold text-slate-800 uppercase">{data.cargo || 'Agente de Defesa Civil'}</p>
                             </div>
                         </div>
                     </section>
@@ -426,7 +430,7 @@ const InterdicaoPrint = () => {
                                 </div>
                                 <div className="w-64 border-b border-slate-800 mb-2"></div>
                                 <p className="text-[11px] uppercase font-black text-slate-900">{data.agente}</p>
-                                <p className="text-[9px] uppercase font-bold text-slate-500">Agente de Defesa Civil</p>
+                                <p className="text-[9px] uppercase font-bold text-slate-500">{data.cargo || 'Agente de Defesa Civil'}</p>
                                 <p className="text-[9px] uppercase text-slate-400">Matrícula: {data.matricula}</p>
                             </div>
 
@@ -437,7 +441,7 @@ const InterdicaoPrint = () => {
                                     </div>
                                     <div className="w-64 border-b border-slate-800 mb-2"></div>
                                     <p className="text-[11px] uppercase font-black text-slate-900">{apoioTecnico.nome}</p>
-                                    <p className="text-[9px] uppercase font-bold text-slate-500">Apoio Técnico Esp.</p>
+                                    <p className="text-[9px] uppercase font-bold text-slate-500">{apoioTecnico.cargo || 'Apoio Técnico Esp.'}</p>
                                     <p className="text-[9px] uppercase text-slate-400">CREA/Registro: {apoioTecnico.crea}</p>
                                 </div>
                             )}

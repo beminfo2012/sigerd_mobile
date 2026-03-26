@@ -3,10 +3,12 @@ import { Users, UserPlus, ArrowLeft, Search, Shield, UserCheck, UserX } from 'lu
 import { useNavigate } from 'react-router-dom'
 import { listUsers } from '../../services/userService'
 import { isAdmin } from '../../utils/permissions'
+import { useToast } from '../../components/ToastNotification'
 import UserForm from './UserForm'
 
 const UserManagement = () => {
     const navigate = useNavigate()
+    const { toast } = useToast()
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -21,7 +23,7 @@ const UserManagement = () => {
     const checkAccess = async () => {
         const admin = await isAdmin()
         if (!admin) {
-            alert('Acesso negado. Apenas administradores podem acessar esta página.')
+            toast.error('Acesso Negado', 'Apenas administradores podem acessar esta página.')
             navigate('/menu')
             return
         }
@@ -35,13 +37,13 @@ const UserManagement = () => {
             const { data, error } = await listUsers()
             if (error) {
                 console.error('Error loading users:', error)
-                alert('Erro ao carregar usuários: ' + (error.message || JSON.stringify(error)))
+                toast.error('Erro de Carregamento', error.message || 'Não foi possível carregar a lista de usuários.')
             } else {
                 setUsers(data || [])
             }
         } catch (error) {
             console.error('Exception loading users:', error)
-            alert('Falha na tentativa de carregar usuários: ' + error.message)
+            toast.error('Falha Crítica', error.message)
         } finally {
             setLoading(false)
         }

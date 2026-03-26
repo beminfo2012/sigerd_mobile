@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { ArrowLeft, Save, Trash2, Eye, EyeOff, Shield, User, Mail, Lock, Hash, ToggleLeft, ToggleRight } from 'lucide-react'
 import { createUser, updateUser, deactivateUser, reactivateUser, updateUserPassword } from '../../services/userService'
+import { useToast } from '../../components/ToastNotification'
 
 const UserForm = ({ user, onClose }) => {
     const isEditMode = !!user
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const { toast } = useToast()
 
     const [formData, setFormData] = useState({
         full_name: user?.full_name || '',
@@ -68,7 +70,7 @@ const UserForm = ({ user, onClose }) => {
                 const { error } = await updateUser(user.id, updates)
 
                 if (error) {
-                    alert(`Erro ao atualizar usuário: ${error.message}`)
+                    toast.error("Erro", `Não foi possível atualizar o usuário: ${error.message}`)
                     return
                 }
 
@@ -80,17 +82,17 @@ const UserForm = ({ user, onClose }) => {
                     }
                 }
 
-                alert('Usuário atualizado com sucesso!')
+                toast.success("Sucesso", "Dados do usuário atualizados!")
             } else {
                 // Create new user
                 const { error } = await createUser(formData)
 
                 if (error) {
-                    alert(`Erro ao criar usuário: ${error.message}`)
+                    toast.error("Erro ao criar", error.message)
                     return
                 }
 
-                alert('Usuário criado com sucesso!')
+                toast.success("Sucesso", "Novo usuário cadastrado!")
             }
 
             onClose(true)
@@ -124,10 +126,10 @@ const UserForm = ({ user, onClose }) => {
             }
 
             setFormData({ ...formData, is_active: !formData.is_active })
-            alert(`Usuário ${formData.is_active ? 'desativado' : 'reativado'} com sucesso!`)
+            toast.success("Status Alterado", `Usuário ${formData.is_active ? 'desativado' : 'reativado'} com sucesso!`)
         } catch (error) {
             console.error('Error toggling status:', error)
-            alert('Erro ao alterar status.')
+            toast.error("Erro", "Não foi possível alterar o status do usuário.")
         } finally {
             setLoading(false)
         }

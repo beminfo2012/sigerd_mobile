@@ -12,6 +12,7 @@ import VoiceInput from '../../components/VoiceInput'
 import { supabase } from '../../services/supabase'
 import { UserContext } from '../../App'
 import { refineReportText } from '../../services/ai'
+import { useToast } from '../../components/ToastNotification'
 import ConfirmModal from '../../components/ConfirmModal'
 import ImageEditor from '../../components/ImageEditor'
 import bairrosData from '../../../Bairros.json'
@@ -114,6 +115,7 @@ const SearchableInput = ({
 
 const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdicao }) => {
     const userProfile = useContext(UserContext)
+    const { toast } = useToast()
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
         interdicaoId: '',
@@ -271,7 +273,8 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
     const getLocation = () => {
         if (!navigator.geolocation) {
-            alert("GPS não suportado neste dispositivo.")
+            toast.error("GPS não suportado", "Seu dispositivo não suporta geolocalização.");
+            return;
             return
         }
 
@@ -291,7 +294,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 setDetectedRiskArea(riskInfo);
 
                 if (riskInfo) {
-                    alert(`⚠️ ALERTA: Esta localidade está em uma Área de Risco Mapeada!\n\nLocal: ${riskInfo.name}\nFonte: ${riskInfo.source}`);
+                    toast.warning("Área de Risco", `Esta localidade está em uma área mapeada: ${riskInfo.name}`);
 
                     // Auto-append to technical report if not already there
                     setFormData(prev => {
@@ -307,12 +310,12 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 }
 
                 setGettingLoc(false)
-                if (!riskInfo) alert("Coordenadas atualizadas com sucesso!")
+                if (!riskInfo) toast.success("Sucesso", "Coordenadas atualizadas!");
             },
             (err) => {
                 console.error("Erro GPS:", err)
                 setGettingLoc(false)
-                alert("Erro ao obter localização. Verifique se o GPS está ativado.")
+                toast.error("Erro GPS", "Não foi possível obter a localização.");
             },
             { enableHighAccuracy: true, timeout: 10000 }
         )
@@ -323,7 +326,10 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
     }
 
     const handleAIRefine = async () => {
-        if (!formData.situacaoObservada.trim()) return alert("Digite algo na situação observada primeiro.");
+        if (!formData.situacaoObservada.trim()) {
+            toast.warning("Aviso", "Descreva a situação observada primeiro.");
+            return;
+        }
         setRefining(true);
         try {
             const refinedText = await refineReportText(
@@ -338,11 +344,11 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 }
             } else {
                 const errorMsg = refinedText ? refinedText.replace('ERROR:', '') : 'Serviço de IA indisponível no momento.';
-                alert(`Erro ao refinar com IA: ${errorMsg}`);
+                toast.error("Erro IA", errorMsg);
             }
         } catch (e) {
             console.error("AI Refine error:", e);
-            alert(`Erro ao refinar com IA: ${e.message}`);
+            toast.error("Erro", e.message);
         } finally {
             setRefining(false);
         }
@@ -478,10 +484,10 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 window.dispatchEvent(new CustomEvent('interdicao-deleted'))
                 onBack()
             } else {
-                alert('Erro ao excluir do servidor.')
+                toast.error("Erro Servidor", "Não foi possível excluir do banco de dados remoto.");
             }
         } catch (e) {
-            alert('Falha ao excluir.')
+            toast.error("Falha", "Não foi possível realizar a exclusão.");
         } finally {
             setSaving(false)
         }
@@ -492,11 +498,11 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
         setSaving(true)
         try {
             await saveInterdicaoOffline(formData)
-            alert('Interdição salva com sucesso!')
+            toast.success("Sucesso", "Interdição salva com sucesso!");
             onBack()
         } catch (error) {
             console.error(error)
-            alert('Erro ao salvar interdição.')
+            toast.error("Erro", "Houve um problema ao salvar a interdição.");
         } finally {
             setSaving(false)
         }
@@ -598,15 +604,16 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                             />
                         </div>
                         <div className="sm:col-span-2">
-                            <label className={labelClasses}>Cargo do Agente</label>
+                            <label className={labelClasses}>Cargo / Função</label>
                             <input
                                 type="text"
                                 className={inputClasses}
                                 value={formData.cargo}
                                 onChange={e => handleChange('cargo', e.target.value)}
-                                placeholder="Ex: Agente de Defesa Civil, Engenheiro, etc."
+                                placeholder="Cargo do Agente"
                             />
                         </div>
+
                     </div>
                 </section>
 

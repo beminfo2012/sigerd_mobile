@@ -510,7 +510,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             try {
                 const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
                 if (permissionStatus.state === 'denied') {
-                    return alert("🚫 Permissão de GPS negada.\n\nVá em Configurações do navegador e permita o acesso à localização para este site.");
+                    toast.error("Permissão Negada", "🚫 Acesso ao GPS foi negado. Por favor, permita o acesso nas configurações do seu navegador.");
+                    return;
                 }
             } catch (e) {
                 console.warn("Permissions API not fully supported, proceeding with geolocation request:", e);
@@ -553,7 +554,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         errorMsg = `❌ Erro desconhecido ao obter GPS.\n\nCódigo: ${error.code}\nMensagem: ${error.message}`;
                 }
 
-                alert(errorMsg);
+                toast.error("Erro GPS", errorMsg);
                 console.error("Geolocation error:", error);
             },
             { enableHighAccuracy: true, timeout: 10000 }
@@ -624,7 +625,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     const handleAIRefine = async () => {
         if (!formData.observacoes.trim()) {
-            return alert("Digite algo nas observações primeiro."); // Simple alert is fine for empty check
+            toast.warning("Aviso", "Digite algo nas observações primeiro.");
+            return;
         }
 
         setRefining(true);
@@ -644,7 +646,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             } else {
                 // FAILURE: Show specific error for debugging
                 const errorMsg = refinedText ? refinedText.replace('ERROR:', '') : 'Resposta vazia.';
-                alert(`⚠️ DIAGNÓSTICO DE ERRO:\n\n${errorMsg}\n\n(Tire um print desta tela)`);
+                toast.error("Erro na IA", errorMsg);
             }
         } catch (e) {
             console.error("Critical Safety Catch:", e);
@@ -680,10 +682,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 window.dispatchEvent(new CustomEvent('vistoria-deleted'))
                 onBack()
             } else {
-                alert('Erro ao excluir do servidor.')
+                toast.error("Erro no Servidor", "Não foi possível excluir do banco de dados remoto.");
             }
         } catch (e) {
-            alert('Falha ao excluir.')
+            toast.error("Falha", "Não foi possível realizar a exclusão.");
         } finally {
             setSaving(false)
         }
@@ -733,22 +735,24 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
         // Validation for Risco Iminente
         if (formData.nivelRisco === 'Iminente' && formData.fotos.length === 0) {
-            alert("⚠️ Para Risco Iminente, é obrigatório anexar no mínimo 1 foto.")
+            toast.warning("Atenção", "⚠️ Para Risco Iminente, é obrigatório anexar no mínimo 1 foto.")
+            return
             return
         }
         if (formData.nivelRisco === 'Iminente' && !formData.observacoes.trim()) {
-            alert("⚠️ Para Risco Iminente, descreva as Observações Técnicas com as recomendações.")
+            toast.warning("Atenção", "⚠️ Para Risco Iminente, descreva as Observações Técnicas com as recomendações.")
+            return
             return
         }
 
         setSaving(true)
         try {
             await saveVistoriaOffline(formData)
-            alert('Vistoria salva com sucesso!')
+            toast.success("Sucesso", "Vistoria salva com sucesso!")
             onBack()
         } catch (error) {
             console.error(error)
-            alert('Erro ao salvar vistoria.')
+            toast.error("Erro", "Houve um problema ao salvar a vistoria.")
         } finally {
             setSaving(false)
         }
@@ -898,7 +902,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     placeholder="Nome do Agente"
                                 />
                             </div>
-                            <div className="space-y-2 col-span-1 sm:col-span-2">
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Matrícula</label>
+                                <input
+                                    type="text"
+                                    className={inputClasses}
+                                    value={formData.matricula}
+                                    onChange={e => setFormData({ ...formData, matricula: e.target.value })}
+                                    placeholder="00000"
+                                />
+                            </div>
+                            <div className="space-y-2 sm:col-span-2">
                                 <label className={labelClasses}>Cargo do Agente</label>
                                 <input
                                     type="text"
