@@ -33,7 +33,8 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
         fotos: initialData?.fotos || [],
         documentos: initialData?.documentos || [],
         tipoDesinterdicao: initialData?.tipo_desinterdicao || initialData?.tipoDesinterdicao || 'Total',
-        assinaturaAgente: initialData?.assinatura_agente || initialData?.assinaturaAgente || null
+        assinaturaAgente: initialData?.assinatura_agente || initialData?.assinaturaAgente || null,
+        cargo: initialData?.cargo || userProfile?.cargo || localStorage.getItem('lastAgentCargo') || ''
     })
 
     // Auto-populate user data when profile loads ONLY for new records
@@ -42,7 +43,8 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
             setFormData(prev => ({
                 ...prev,
                 agente: userProfile.full_name || userProfile.name || '',
-                matricula: userProfile.registration || userProfile.matricula || ''
+                matricula: userProfile.registration || userProfile.matricula || '',
+                cargo: userProfile.cargo || ''
             }));
         }
     }, [userProfile, initialData]);
@@ -132,8 +134,9 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                 ...formData,
                 agente: formData.agente,
                 matricula: formData.matricula,
+                cargo: formData.cargo,
                 assinaturaAgente: formData.assinaturaAgente || userProfile?.signature,
-                tipo_desinterdicao: formData.tipoDesinterdicao
+                tipo_desinterdicao: formData.tipo_desinterdicao
             }, 'desinterdicao', { autoOpen: false })
 
             setLastGeneratedId(desintId)
@@ -194,6 +197,10 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                         <div>
                             <label className={labelClasses}>Matrícula</label>
                             <input type="text" value={formData.matricula} readOnly className={`${inputClasses} opacity-60 bg-slate-100 cursor-not-allowed`} />
+                        </div>
+                        <div className="col-span-2">
+                            <label className={labelClasses}>Cargo do Agente</label>
+                            <input type="text" value={formData.cargo} onChange={e => handleChange('cargo', e.target.value)} className={inputClasses} placeholder="Ex: Agente de Defesa Civil" />
                         </div>
                     </div>
 

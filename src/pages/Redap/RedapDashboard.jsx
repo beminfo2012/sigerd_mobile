@@ -58,6 +58,20 @@ const RedapDashboard = () => {
         }
     };
 
+    const handleDeleteEvent = async () => {
+        if (!eventToDelete) return;
+        try {
+            await redapService.deleteEvent(eventToDelete.id);
+            setEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
+            setShowDeleteModal(false);
+            setEventToDelete(null);
+            toast.success('Evento excluído com sucesso!');
+        } catch (error) {
+            console.error('Delete error:', error);
+            toast.error('Erro ao excluir evento.');
+        }
+    };
+
     const handleManualSync = async () => {
         if (syncing) return;
         setSyncing(true);
@@ -172,8 +186,23 @@ const RedapDashboard = () => {
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl group-hover:bg-blue-600 group-hover:text-white transition-all text-slate-400 dark:text-slate-500">
-                                    <ChevronRight size={24} />
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl group-hover:bg-blue-600 group-hover:text-white transition-all text-slate-400 dark:text-slate-500">
+                                        <ChevronRight size={24} />
+                                    </div>
+                                    {isDC && (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEventToDelete(event);
+                                                setShowDeleteModal(true);
+                                            }}
+                                            className="p-4 rounded-3xl bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-600 hover:text-white transition-all active:scale-90"
+                                            title="Excluir Evento"
+                                        >
+                                            <Trash2 size={24} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -199,9 +228,14 @@ const RedapDashboard = () => {
             <ConfirmModal
                 isOpen={showDeleteModal}
                 title="Excluir Evento"
-                message="Tem certeza? Todos os registros vinculados serão perdidos."
-                onConfirm={() => {}} // Handle event delete if needed
-                onCancel={() => setShowDeleteModal(false)}
+                message={`Tem certeza que deseja excluir "${eventToDelete?.nome_evento}"? Todos os lançamentos e informações vinculadas serão removidos permanentemente.`}
+                onConfirm={handleDeleteEvent}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setEventToDelete(null);
+                }}
+                confirmText="Excluir Agora"
+                cancelText="Cancelar"
                 type="danger"
             />
         </div>

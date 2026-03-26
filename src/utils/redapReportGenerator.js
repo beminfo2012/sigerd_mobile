@@ -404,7 +404,7 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
     const sectorSub = isSectoral ? data.submissoes_setoriais[activeSector] : null;
     const finalSignature = isSectoral ? sectorSub?.assinatura_url : data.assinatura.data_url;
     const finalName = isSectoral ? sectorSub?.responsavel : data.assinatura.responsavel;
-    const finalRole = isSectoral ? sectorSub?.cargo : 'Agente Municipal de Defesa Civil';
+    const finalRole = isSectoral ? sectorSub?.cargo : (userProfile?.cargo || 'Agente de Defesa Civil');
 
     contentHtml += `
         <div class="report-section signature-block">

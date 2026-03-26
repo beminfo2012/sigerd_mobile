@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { ArrowLeft, Save, Camera, MapPin, Search, Plus, X, Siren, Clock, FileText, CheckCircle, Edit2, User, Phone, Mail, Crosshair, AlertTriangle, Info, RefreshCw, Upload, Sparkles, Mic, Type, Activity, ChevronRight, Share, Trash2, Download, ChevronLeft, Maximize2, Printer } from 'lucide-react'
+import { ArrowLeft, Save, Camera, MapPin, Search, Plus, X, Siren, Clock, FileText, CheckCircle, Edit2, User, Phone, Mail, Crosshair, AlertTriangle, Info, RefreshCw, Upload, Sparkles, Mic, Type, Activity, ChevronRight, Share, Trash2, Download, ChevronLeft, Maximize2, Printer, Briefcase } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { checkRiskArea } from '../../services/riskAreas'
@@ -153,8 +153,9 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
         orgaosAcionados: '',
         agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
         matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
+        cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || '',
         assinaturaAgente: null,
-        apoioTecnico: { nome: '', crea: '', matricula: '', assinatura: null },
+        apoioTecnico: { nome: '', crea: '', matricula: '', cargo: '', assinatura: null },
         temApoioTecnico: false
     })
 
@@ -211,11 +212,12 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 orgaosAcionados: initialData.orgaos_acionados || initialData.orgaosAcionados,
                 agente: initialData.agente || initialData.agente || '',
                 matricula: initialData.matricula || initialData.matricula || '',
+                cargo: initialData.cargo || initialData.cargo || '',
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
                 apoioTecnico: (() => {
-                    let a = initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null };
+                    let a = initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', cargo: '', assinatura: null };
                     if (typeof a === 'string') {
-                        try { a = JSON.parse(a); } catch (e) { a = { nome: '', crea: '', matricula: '', assinatura: null }; }
+                        try { a = JSON.parse(a); } catch (e) { a = { nome: '', crea: '', matricula: '', cargo: '', assinatura: null }; }
                     }
                     return a;
                 })(),
@@ -243,7 +245,8 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
             setFormData(prev => ({
                 ...prev,
                 agente: prev.agente || userProfile.full_name || '',
-                matricula: prev.matricula || userProfile.matricula || ''
+                matricula: prev.matricula || userProfile.matricula || '',
+                cargo: prev.cargo || userProfile.cargo || ''
             }))
         }
     }, [userProfile])
@@ -252,7 +255,8 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
     useEffect(() => {
         if (formData.agente) localStorage.setItem('lastAgentName', formData.agente)
         if (formData.matricula) localStorage.setItem('lastAgentMatricula', formData.matricula)
-    }, [formData.agente, formData.matricula])
+        if (formData.cargo) localStorage.setItem('lastAgentCargo', formData.cargo)
+    }, [formData.agente, formData.matricula, formData.cargo])
 
     // Listen for deletion events to recalculate ID
     useEffect(() => {
@@ -591,6 +595,16 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                                 value={formData.matricula}
                                 onChange={e => handleChange('matricula', e.target.value)}
                                 placeholder="Matrícula"
+                            />
+                        </div>
+                        <div className="sm:col-span-2">
+                            <label className={labelClasses}>Cargo do Agente</label>
+                            <input
+                                type="text"
+                                className={inputClasses}
+                                value={formData.cargo}
+                                onChange={e => handleChange('cargo', e.target.value)}
+                                placeholder="Ex: Agente de Defesa Civil, Engenheiro, etc."
                             />
                         </div>
                     </div>
@@ -1061,6 +1075,16 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                                                 onChange={e => setFormData(prev => ({
                                                     ...prev,
                                                     apoioTecnico: { ...prev.apoioTecnico, matricula: e.target.value }
+                                                }))}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Cargo/Função"
+                                                className={`${inputClasses} text-sm py-2 col-span-2`}
+                                                value={formData.apoioTecnico.cargo}
+                                                onChange={e => setFormData(prev => ({
+                                                    ...prev,
+                                                    apoioTecnico: { ...prev.apoioTecnico, cargo: e.target.value }
                                                 }))}
                                             />
                                         </div>

@@ -5,7 +5,7 @@ import {
     RefreshCw, ShieldCheck, AlertTriangle, Sparkles, Trash2, Maximize2,
     FileText, Edit2, CheckCircle, CheckCircle2, Circle, Camera, Search,
     X, Phone, User, Fingerprint, Siren, ClipboardList, Share,
-    Download, ChevronLeft, ChevronRight, Printer
+    Download, ChevronLeft, ChevronRight, Printer, Briefcase
 } from 'lucide-react';
 import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE, salvarOcorrenciaOperacional, deletarFotoStorage } from '../../services/ocorrenciasDb';
 import { initDB, searchInstallations } from '../../services/db';
@@ -314,7 +314,8 @@ const OcorrenciasForm = () => {
                     data_ocorrencia: now.toLocaleDateString('pt-BR'),
                     horario_ocorrencia: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                     agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
-                    matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || ''
+                    matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
+                    cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Defesa Civil'
                 }));
                 await getNextId();
                 captureGPS(true);
@@ -384,7 +385,8 @@ const OcorrenciasForm = () => {
                     assinaturaAgente: record.assinatura_agente || record.assinaturaAgente || null,
                     assinaturaAssistido: record.assinatura_assistido || record.assinaturaAssistido || null,
                     temApoioTecnico: record.tem_apoio_tecnico !== undefined ? record.tem_apoio_tecnico : (record.temApoioTecnico || false),
-                    apoioTecnico: record.apoio_tecnico || record.apoioTecnico || { nome: '', crea: '', matricula: '', assinatura: null }
+                    cargo: record.cargo || record.cargo_agente || 'Agente de Defesa Civil',
+                    apoioTecnico: record.apoio_tecnico || record.apoioTecnico || { nome: '', crea: '', matricula: '', cargo: '', assinatura: null }
                 };
 
                 setFormData({
@@ -774,6 +776,19 @@ const OcorrenciasForm = () => {
                                     value={formData.matricula}
                                     onChange={e => setFormData({ ...formData, matricula: e.target.value })}
                                     placeholder="Matrícula"
+                                />
+                            </div>
+                        </div>
+                        <div className="sm:col-span-2">
+                            <label className={labelClasses}>Cargo do Agente</label>
+                            <div className="relative">
+                                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    className={`${inputClasses} pl-12 bg-blue-50/30 dark:bg-blue-900/10`}
+                                    value={formData.cargo}
+                                    onChange={e => setFormData({ ...formData, cargo: e.target.value })}
+                                    placeholder="Ex: Agente de Defesa Civil, Engenheiro, etc."
                                 />
                             </div>
                         </div>
@@ -1435,6 +1450,22 @@ const OcorrenciasForm = () => {
                                             }))}
                                             placeholder="Matrícula"
                                         />
+                                    </div>
+                                    <div className="space-y-2 sm:col-span-3">
+                                        <label className={labelClasses}>Cargo/Função</label>
+                                        <div className="relative">
+                                            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                            <input
+                                                type="text"
+                                                className={`${inputClasses} pl-12`}
+                                                value={formData.apoioTecnico.cargo}
+                                                onChange={e => setFormData(prev => ({
+                                                    ...prev,
+                                                    apoioTecnico: { ...prev.apoioTecnico, cargo: e.target.value }
+                                                }))}
+                                                placeholder="Engenheiro, Arquiteto, etc."
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">

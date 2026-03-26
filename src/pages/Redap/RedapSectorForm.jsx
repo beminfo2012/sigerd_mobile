@@ -34,9 +34,9 @@ const RedapSectorForm = () => {
         fotos: [],
         status_validacao: 'Enviado',
         usuario_id: user?.id,
-        assinatura_url: null,
-        responsavel_nome: '',
-        responsavel_cargo: ''
+        assinatura_url: user?.signature || null,
+        responsavel_nome: user?.full_name || '',
+        responsavel_cargo: user?.cargo || 'Agente de Defesa Civil'
     });
 
     const [extraData, setExtraData] = useState({});
@@ -82,6 +82,8 @@ const RedapSectorForm = () => {
                 setFormData(prev => ({ 
                     ...prev, 
                     secretaria_responsavel: sector,
+                    responsavel_nome: user?.full_name || '',
+                    responsavel_cargo: user?.cargo || 'Agente de Defesa Civil',
                     extra_parameters: {} 
                 }));
                 navigator.geolocation.getCurrentPosition(

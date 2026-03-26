@@ -21,6 +21,7 @@ export const listUsers = async () => {
                 full_name,
                 matricula,
                 role,
+                cargo,
                 is_active,
                 created_at,
                 updated_at,
@@ -55,7 +56,7 @@ export const createUser = async (userData) => {
             return { data: null, error: { message: 'Acesso negado. Apenas administradores podem criar usuários.' } }
         }
 
-        const { email, password, full_name, role, matricula } = userData
+        const { email, password, full_name, role, matricula, cargo } = userData
 
         // Validate required fields
         if (!email || !password || !full_name || !role) {
@@ -90,6 +91,7 @@ export const createUser = async (userData) => {
                 id: authData.user.id,
                 full_name,
                 matricula: matricula || null,
+                cargo: cargo || null,
                 role,
                 is_active: true,
                 created_by: currentUser?.id,

@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase'
 const ProfileModal = ({ userProfile, setUserProfile, onClose }) => {
     const [editName, setEditName] = useState(userProfile?.full_name || '')
     const [editMatricula, setEditMatricula] = useState(userProfile?.matricula || '')
+    const [editCargo, setEditCargo] = useState(userProfile?.cargo || '')
     const [editSignature, setEditSignature] = useState(userProfile?.signature || null)
     const [savingProfile, setSavingProfile] = useState(false)
 
@@ -19,6 +20,7 @@ const ProfileModal = ({ userProfile, setUserProfile, onClose }) => {
                     .update({
                         full_name: editName,
                         matricula: editMatricula,
+                        cargo: editCargo,
                         signature: editSignature,
                         updated_at: new Date().toISOString()
                     })
@@ -29,6 +31,7 @@ const ProfileModal = ({ userProfile, setUserProfile, onClose }) => {
                         ...userProfile,
                         full_name: editName,
                         matricula: editMatricula,
+                        cargo: editCargo,
                         signature: editSignature
                     }
                     setUserProfile(updatedProfile)
@@ -79,6 +82,16 @@ const ProfileModal = ({ userProfile, setUserProfile, onClose }) => {
                             onChange={e => setEditMatricula(e.target.value)}
                             className="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800 dark:text-slate-100 transition-all"
                             placeholder="Número da matrícula"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Cargo / Função</label>
+                        <input
+                            type="text"
+                            value={editCargo}
+                            onChange={e => setEditCargo(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800 dark:text-slate-100 transition-all"
+                            placeholder="Ex: Agente de Defesa Civil"
                         />
                     </div>
 

@@ -54,6 +54,7 @@ const normalizeData = (data, type) => {
                 });
             })(),
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
+            cargo: data.cargo || data.cargo_agente || 'Agente de Defesa Civil',
             apoioTecnico: (() => {
                 let apoio = data.apoioTecnico || data.apoio_tecnico || null;
                 if (typeof apoio === 'string') {
@@ -91,6 +92,7 @@ const normalizeData = (data, type) => {
             observacoes: data.observacoes_tecnicas || data.observacoes || '---',
             agente: data.agente || '---',
             matricula: data.matricula || '---',
+            cargo: data.cargo || data.cargo_agente || 'Agente de Defesa Civil',
             fotos: photos,
             assinaturaAgente: data.assinaturaAgente || data.assinatura_agente || null,
             tipoDesinterdicao: data.tipoDesinterdicao || data.tipo_desinterdicao || 'Total'
@@ -117,6 +119,7 @@ const normalizeData = (data, type) => {
             longitude: data.longitude || '---',
             agente: data.agente || '---',
             matricula: data.matricula || '---',
+            cargo: data.cargo || data.cargo_agente || 'Agente de Defesa Civil',
             responsavelTelefone: data.responsavelTelefone || data.responsavel_telefone || '---',
             responsavelEmail: data.responsavelEmail || data.responsavel_email || '---',
             tipoAlvoEspecificar: data.tipoAlvoEspecificar || data.tipo_alvo_especificar || '',
@@ -557,7 +560,7 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                         ${data.assinaturaAgente ? `<img src="${data.assinaturaAgente}" style="max-height: 90px; width: auto; max-width: 300px;" />` : ''}
                     </div>
                     <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.agente}</p>
-                    <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">Agente de Defesa Civil</p>
+                    <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">${data.cargo || 'Agente de Defesa Civil'}</p>
                     <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">Matrícula: ${data.matricula}</p>
                 </div>
                 ${hasApoio ? `
@@ -566,8 +569,8 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                         <img src="${data.apoioTecnico.assinatura}" style="max-height: 90px; width: auto; max-width: 300px;" />
                     </div>
                     <p style="margin: 0; font-size: 14px; font-weight: 900; color: #1e3a8a; text-transform: uppercase;">${data.apoioTecnico.nome}</p>
-                    <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">Apoio Técnico (Obras/Eng)</p>
-                    <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">CREA: ${data.apoioTecnico.crea} | Mat: ${data.apoioTecnico.matricula}</p>
+                    <p style="margin: 4px 0; font-size: 10px; color: #475569; font-weight: 700; text-transform: uppercase;">${data.apoioTecnico.cargo || 'Apoio Técnico (Obras/Eng)'}</p>
+                    <p style="margin: 0; font-size: 9px; color: #94a3b8; font-weight: 600;">CREA: ${data.apoioTecnico.crea}${data.apoioTecnico.matricula ? ` | Mat: ${data.apoioTecnico.matricula}` : ''}</p>
                 </div>` : ''}
             </div>
             <p style="margin-top: 40px; font-size: 9px; color: #94a3b8; text-align: center; font-weight: 500; opacity: 0.8;">

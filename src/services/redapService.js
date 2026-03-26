@@ -314,6 +314,37 @@ export const createEvent = async (event) => {
     return newEvent;
 };
 
+export const deleteEvent = async (eventId) => {
+    const db = await initDB();
+    
+    // 1. Delete from local IDB
+    await db.delete('redap_eventos', eventId);
+    
+    // Also delete registrations linked to this event in local DB
+    const allRegs = await db.getAll('redap_registros');
+    for (const reg of allRegs) {
+        if (reg.evento_id === eventId) {
+            await db.delete('redap_registros', reg.id);
+        }
+    }
+
+    // 2. Delete from Supabase if online
+    if (navigator.onLine) {
+        const { error } = await supabase
+            .from('redap_eventos')
+            .delete()
+            .eq('id', eventId);
+        
+        if (error) {
+            console.error('Error deleting from Supabase:', error);
+            // We don't throw here to allow local deletion to persist, 
+            // but in a real app you might want to handle sync conflicts
+        }
+    }
+    
+    return { success: true };
+};
+
 /**
  * REGISTRATIONS (Sector Damages)
  */

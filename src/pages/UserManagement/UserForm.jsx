@@ -12,6 +12,7 @@ const UserForm = ({ user, onClose }) => {
         email: user?.email || '',
         password: '',
         matricula: user?.matricula || '',
+        cargo: user?.cargo || '',
         role: user?.role || 'Operador',
         is_active: user?.is_active !== false
     })
@@ -59,6 +60,7 @@ const UserForm = ({ user, onClose }) => {
                 const updates = {
                     full_name: formData.full_name,
                     matricula: formData.matricula,
+                    cargo: formData.cargo,
                     role: formData.role,
                     is_active: formData.is_active
                 }
@@ -232,6 +234,21 @@ const UserForm = ({ user, onClose }) => {
                         onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
                         className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800"
                         placeholder="Ex: 12345"
+                    />
+                </div>
+                
+                {/* Cargo */}
+                <div className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1 flex items-center gap-2">
+                        <Shield size={12} />
+                        Cargo / Função (opcional)
+                    </label>
+                    <input
+                        type="text"
+                        value={formData.cargo}
+                        onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
+                        className="w-full bg-slate-50 p-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800"
+                        placeholder="Ex: Agente de Defesa Civil"
                     />
                 </div>
 

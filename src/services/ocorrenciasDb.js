@@ -10,6 +10,7 @@ export const INITIAL_OCORRENCIA_STATE = {
     ocorrencia_id_format: '', // format: 001/2026
     agente: '',              // Responsável Técnico
     matricula: '',
+    cargo: '',               // Cargo do Agente
     solicitante: '',
     cpf: '',
     telefone: '',
@@ -49,6 +50,7 @@ export const INITIAL_OCORRENCIA_STATE = {
         nome: '',
         crea: '',
         matricula: '',
+        cargo: '',
         assinatura: null
     },
     status: 'Pendente',

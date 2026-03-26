@@ -255,6 +255,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         processo: '',
         agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
         matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
+        cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Defesa Civil',
         solicitante: '',
         cpf: '',
         telefone: '',
@@ -299,6 +300,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             nome: '',
             crea: '',
             matricula: '',
+            cargo: '',
             assinatura: null
         },
         checklistRespostas: {}, // { "pergunta": true/false }
@@ -324,11 +326,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
     // Update agent info when user profile loads (if fields are empty)
     useEffect(() => {
-        if (userProfile && (!formData.agente || !formData.matricula)) {
+        if (userProfile && (!formData.agente || !formData.matricula || !formData.cargo)) {
             setFormData(prev => ({
                 ...prev,
                 agente: prev.agente || userProfile.full_name || '',
-                matricula: prev.matricula || userProfile.matricula || ''
+                matricula: prev.matricula || userProfile.matricula || '',
+                cargo: prev.cargo || userProfile.cargo || 'Agente de Defesa Civil'
             }))
         }
     }, [userProfile])
@@ -337,7 +340,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     useEffect(() => {
         if (formData.agente) localStorage.setItem('lastAgentName', formData.agente)
         if (formData.matricula) localStorage.setItem('lastAgentMatricula', formData.matricula)
-    }, [formData.agente, formData.matricula])
+        if (formData.cargo) localStorage.setItem('lastAgentCargo', formData.cargo)
+    }, [formData.agente, formData.matricula, formData.cargo])
 
     useEffect(() => {
         if (initialData) {
@@ -348,7 +352,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 return val || fallback;
             };
 
-            const apoio = parseJSON(initialData.apoio_tecnico || initialData.apoioTecnico, { nome: '', crea: '', matricula: '', assinatura: null });
+            const apoio = parseJSON(initialData.apoio_tecnico || initialData.apoioTecnico, { nome: '', crea: '', matricula: '', cargo: '', assinatura: null });
 
             const formatDateTime = (val) => {
                 if (!val) return '';
@@ -379,6 +383,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     nome: apoio?.nome || '',
                     crea: apoio?.crea || '',
                     matricula: apoio?.matricula || '',
+                    cargo: apoio?.cargo || '',
                     assinatura: apoio?.assinatura || null
                 },
                 checklistRespostas: parseJSON(initialData.checklist_respostas || initialData.checklistRespostas, {}),
@@ -893,14 +898,14 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     placeholder="Nome do Agente"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className={labelClasses}>Matrícula</label>
+                            <div className="space-y-2 col-span-1 sm:col-span-2">
+                                <label className={labelClasses}>Cargo do Agente</label>
                                 <input
                                     type="text"
                                     className={inputClasses}
-                                    value={formData.matricula}
-                                    onChange={e => setFormData({ ...formData, matricula: e.target.value })}
-                                    placeholder="Matrícula"
+                                    value={formData.cargo}
+                                    onChange={e => setFormData({ ...formData, cargo: e.target.value })}
+                                    placeholder="Ex: Agente de Defesa Civil, Engenheiro, etc."
                                 />
                             </div>
                         </div>
@@ -1702,6 +1707,19 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                         apoioTecnico: { ...prev.apoioTecnico, matricula: e.target.value }
                                                     }))}
                                                     placeholder="Matrícula"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Cargo/Função</label>
+                                                <input
+                                                    type="text"
+                                                    className={inputClasses}
+                                                    value={formData.apoioTecnico.cargo}
+                                                    onChange={e => setFormData(prev => ({
+                                                        ...prev,
+                                                        apoioTecnico: { ...prev.apoioTecnico, cargo: e.target.value }
+                                                    }))}
+                                                    placeholder="Engenheiro, Arquiteto, etc."
                                                 />
                                             </div>
                                         </div>

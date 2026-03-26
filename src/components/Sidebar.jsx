@@ -214,8 +214,8 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                                 <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
 
-                            {/* Separador abaixo do ícone de Interdição */}
-                            {item.label === 'Interdições' && (
+                            {/* Separador abaixo do ícone de REDAP */}
+                            {item.label === 'REDAP' && (
                                 <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
 
