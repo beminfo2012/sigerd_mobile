@@ -207,16 +207,27 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                     <div className="space-y-4">
                         <div className="flex justify-between items-center mb-1.5">
                             <label className={labelClasses} style={{ marginBottom: 0 }}>Assinatura do Agente</label>
-                            {userProfile?.signature && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleChange('assinaturaAgente', userProfile.signature)}
-                                    className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
-                                >
-                                    <CheckCircle size={12} />
-                                    Usar Assinatura Salva
-                                </button>
-                            )}
+                            <div className="flex gap-2">
+                                {userProfile?.signature && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange('assinaturaAgente', userProfile.signature)}
+                                        className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
+                                    >
+                                        <CheckCircle size={12} />
+                                        Usar Assinatura Salva
+                                    </button>
+                                )}
+                                {formData.assinaturaAgente && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleChange('assinaturaAgente', null)}
+                                        className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-800/30"
+                                    >
+                                        <Trash2 size={12} /> Limpar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div
                             onClick={() => setShowSignaturePad(true)}

@@ -1008,16 +1008,27 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                         <div>
                             <div className="flex justify-between items-center mb-1.5">
                                 <label className={labelClasses} style={{ marginBottom: 0 }}>Assinatura do Agente</label>
-                                {userProfile?.signature && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
-                                        className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
-                                    >
-                                        <CheckCircle size={12} />
-                                        Usar Assinatura Salva
-                                    </button>
-                                )}
+                                <div className="flex gap-2">
+                                    {userProfile?.signature && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
+                                            className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
+                                        >
+                                            <CheckCircle size={12} />
+                                            Usar Assinatura Salva
+                                        </button>
+                                    )}
+                                    {formData.assinaturaAgente && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: null }))}
+                                            className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-800/30"
+                                        >
+                                            <Trash2 size={12} /> Limpar
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             <div
                                 onClick={() => {
@@ -1040,7 +1051,26 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                         <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
                             <div className="flex items-center justify-between mb-4 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/30">
                                 <div>
-                                    <div className="text-xs font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">Apoio Técnico</div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-xs font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest">Apoio Técnico</div>
+                                        {formData.temApoioTecnico && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (window.confirm("Deseja realmente limpar todos os dados do Apoio Técnico?")) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            temApoioTecnico: false,
+                                                            apoioTecnico: { nome: '', crea: '', matricula: '', cargo: '', assinatura: null }
+                                                        }));
+                                                    }
+                                                }}
+                                                className="text-[9px] font-black text-red-500 uppercase flex items-center gap-1 hover:text-red-700 transition-colors ml-2"
+                                            >
+                                                <Trash2 size={10} /> Limpar Bloco
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="text-[10px] font-bold text-blue-400 dark:text-blue-500">Houve participação de técnico/engenheiro?</div>
                                 </div>
                                 <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl shadow-inner border border-blue-100 dark:border-blue-800/50">
@@ -1099,19 +1129,33 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center mb-1.5">
                                                 <label className={labelClasses} style={{ marginBottom: 0 }}>Assinatura do Apoio</label>
-                                                {userProfile?.signature && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setFormData(prev => ({ 
-                                                            ...prev, 
-                                                            apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature } 
-                                                        }))}
-                                                        className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
-                                                    >
-                                                        <CheckCircle size={12} />
-                                                        Usar Assinatura Salva
-                                                    </button>
-                                                )}
+                                                <div className="flex gap-2">
+                                                    {userProfile?.signature && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({ 
+                                                                ...prev, 
+                                                                apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature } 
+                                                            }))}
+                                                            className="text-[10px] font-black text-white uppercase tracking-wider bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"
+                                                        >
+                                                            <CheckCircle size={12} />
+                                                            Usar Assinatura Salva
+                                                        </button>
+                                                    )}
+                                                    {formData.apoioTecnico.assinatura && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({
+                                                                ...prev,
+                                                                apoioTecnico: { ...prev.apoioTecnico, assinatura: null }
+                                                            }))}
+                                                            className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-800/30"
+                                                        >
+                                                            <Trash2 size={12} /> Limpar
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div
                                                 onClick={() => {

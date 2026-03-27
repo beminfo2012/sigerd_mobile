@@ -1613,15 +1613,26 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center px-1">
                                     <label className={labelClasses}>Assinatura do Agente</label>
-                                    {userProfile?.signature && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
-                                            className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
-                                        >
-                                            <Sparkles size={12} /> Auto-assinar
-                                        </button>
-                                    )}
+                                    <div className="flex gap-2">
+                                        {userProfile?.signature && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
+                                                className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
+                                            >
+                                                <Sparkles size={12} /> Auto-assinar
+                                            </button>
+                                        )}
+                                        {formData.assinaturaAgente && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: null }))}
+                                                className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors"
+                                            >
+                                                <Trash2 size={12} /> Limpar
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 <div
                                     onClick={() => { setActiveSignatureType('agente'); setShowSignaturePad(true); }}
@@ -1639,7 +1650,18 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             </div>
 
                             <div className="space-y-3">
-                                <label className={labelClasses}>Assinatura do Assistido</label>
+                                <div className="flex justify-between items-center px-1">
+                                    <label className={labelClasses}>Assinatura do Assistido</label>
+                                    {formData.assinaturaAssistido && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, assinaturaAssistido: null }))}
+                                            className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors"
+                                        >
+                                            <Trash2 size={12} /> Limpar
+                                        </button>
+                                    )}
+                                </div>
                                 <div
                                     onClick={() => { setActiveSignatureType('assistido'); setShowSignaturePad(true); }}
                                     className="h-40 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500/50 hover:bg-blue-50/30 transition-all"
@@ -1677,9 +1699,27 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         {formData.temApoioTecnico && (
                             <div className="border-t border-slate-50 dark:border-slate-700/50 pt-8 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
                                 <div className="bg-slate-50/50 dark:bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700/50">
-                                    <h3 className="font-black text-slate-800 dark:text-slate-100 text-[10px] uppercase tracking-[2px] mb-6 flex items-center gap-2">
-                                        <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
-                                        Apoio Técnico (Obras/Engenharia)
+                                    <h3 className="font-black text-slate-800 dark:text-slate-100 text-[10px] uppercase tracking-[2px] mb-6 flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
+                                            Apoio Técnico (Obras/Engenharia)
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (window.confirm("Deseja realmente limpar todos os dados do Apoio Técnico?")) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        temApoioTecnico: false,
+                                                        apoioTecnico: { nome: '', crea: '', matricula: '', cargo: '', assinatura: null }
+                                                    }));
+                                                }
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-colors"
+                                        >
+                                            <Trash2 size={12} />
+                                            Limpar Dados
+                                        </button>
                                     </h3>
 
                                     <div className="space-y-6">
@@ -1741,18 +1781,32 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-center px-1">
                                                 <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Assinatura do Apoio</label>
-                                                {userProfile?.signature && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setFormData(prev => ({
-                                                            ...prev,
-                                                            apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature }
-                                                        }))}
-                                                        className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
-                                                    >
-                                                        <Sparkles size={12} /> Auto-assinar
-                                                    </button>
-                                                )}
+                                                <div className="flex gap-2">
+                                                    {userProfile?.signature && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({
+                                                                ...prev,
+                                                                apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature }
+                                                            }))}
+                                                            className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
+                                                        >
+                                                            <Sparkles size={12} /> Auto-assinar
+                                                        </button>
+                                                    )}
+                                                    {formData.apoioTecnico.assinatura && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({
+                                                                ...prev,
+                                                                apoioTecnico: { ...prev.apoioTecnico, assinatura: null }
+                                                            }))}
+                                                            className="text-[9px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors"
+                                                        >
+                                                            <Trash2 size={12} /> Limpar
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div
                                                 onClick={() => { setActiveSignatureType('apoio'); setShowSignaturePad(true); }}
