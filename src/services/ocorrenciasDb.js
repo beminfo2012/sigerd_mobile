@@ -358,12 +358,12 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             assinatura_assistido: ocorrenciaHigienizada.assinaturaAssistido || ocorrenciaHigienizada.assinatura_assistido,
         };
         
-        // Delete all camelCase extra keys to keep DB clean and prevent schema errors
+        // Delete all extra keys to keep DB clean and prevent schema errors
         const keysToDelete = [
             'categoriaRisco', 'subtiposRisco', 'subtipoRiscoOutros', 'nivelRisco', 
             'temApoioTecnico', 'apoioTecnico', 'temSolicitanteEspecifico', 
             'checklistRespostas', 'medidasTomadas', 'assinaturaAgente', 
-            'assinaturaAssistido', 'id'
+            'assinaturaAssistido', 'id', 'synced'
         ];
         
         keysToDelete.forEach(key => delete payload[key]);
@@ -388,7 +388,15 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
     } catch (erro) {
         // Se a Internet cair em qualquer etapa, a foto ou a ocorrência paralisam aqui de forma segura
         console.error("Operação abortada. Erro encontrado:", erro.message);
-        return { sucesso: false, mensagem: erro.message };
+        
+        let userMessage = erro.message;
+        if (erro.message.includes('upload') || erro.message.includes('storage')) {
+            userMessage = "Ocorreu um problema ao enviar as fotos para a nuvem. A ocorrência foi salva apenas no seu celular e precisará ser sincronizada manualmente mais tarde quando a conexão estiver melhor.";
+        } else if (erro.message.includes('Database') || erro.message.includes('column') || erro.message.includes('synced')) {
+            userMessage = "Problema técnico na sincronização dos dados com o servidor. A ocorrência está salva com segurança no seu celular.";
+        }
+
+        return { sucesso: false, mensagem: userMessage };
     }
 }
 
