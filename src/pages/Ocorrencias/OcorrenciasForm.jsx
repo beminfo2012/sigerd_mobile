@@ -384,6 +384,7 @@ const OcorrenciasForm = () => {
                     unidade_consumidora: record.unidade_consumidora || '',
                     assinaturaAgente: record.assinatura_agente || record.assinaturaAgente || null,
                     assinaturaAssistido: record.assinatura_assistido || record.assinaturaAssistido || null,
+                    temSolicitanteEspecifico: record.tem_solicitante_especifico !== undefined ? record.tem_solicitante_especifico : (record.temSolicitanteEspecifico || (record.solicitante && record.solicitante !== "Coordenadoria Municipal de Proteção e Defesa Civil" && record.solicitante !== "Solicitante não informado")),
                     temApoioTecnico: record.tem_apoio_tecnico !== undefined ? record.tem_apoio_tecnico : (record.temApoioTecnico || false),
                     cargo: record.cargo || record.cargo_agente || 'Agente de Defesa Civil',
                     apoioTecnico: record.apoio_tecnico || record.apoioTecnico || { nome: '', crea: '', matricula: '', cargo: '', assinatura: null }
@@ -591,7 +592,9 @@ const OcorrenciasForm = () => {
             const finalData = {
                 ...formData,
                 ocorrencia_id_format: currentId,
-                solicitante: formData.temSolicitanteEspecifico ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil",
+                solicitante: (formData.temSolicitanteEspecifico && formData.solicitante) 
+                    ? formData.solicitante 
+                    : (formData.solicitante && formData.solicitante !== "Coordenadoria Municipal de Proteção e Defesa Civil" && formData.solicitante !== "Solicitante não informado" ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil"),
                 status: 'finalized',
                 updated_at: new Date().toISOString()
             };
@@ -655,7 +658,7 @@ const OcorrenciasForm = () => {
     };
 
 
-    const inputClasses = "w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-red-500/5 focus:border-red-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
+    const inputClasses = "w-full px-4 sm:px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-red-500/5 focus:border-red-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
     const labelClasses = "block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1 text-left"
 
     if (loading) {
@@ -697,7 +700,7 @@ const OcorrenciasForm = () => {
             <main className="p-5 max-w-2xl mx-auto space-y-6">
 
                 {/* 1. SEÇÃO: Identificação (Processo removido) */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
+                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
                         <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">1. Identificação</h2>
@@ -720,7 +723,7 @@ const OcorrenciasForm = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
                             <div>
                                 <label className={labelClasses}>Data</label>
                                 <input
@@ -746,7 +749,7 @@ const OcorrenciasForm = () => {
                 </Card>
 
                 {/* 2. SEÇÃO: Responsável Técnico (Valores automáticos editáveis) */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
+                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
                         <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">2. Responsável Técnico</h2>
@@ -795,7 +798,7 @@ const OcorrenciasForm = () => {
                     </div>
                 </Card>
 
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
+                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
@@ -910,7 +913,7 @@ const OcorrenciasForm = () => {
 
 
                 {/* 4. SEÇÃO: Localização (Refresh Coords e Accuracy) */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
+                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
