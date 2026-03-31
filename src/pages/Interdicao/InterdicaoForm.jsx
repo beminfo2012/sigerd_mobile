@@ -15,8 +15,8 @@ import { refineReportText } from '../../services/ai'
 import { useToast } from '../../components/ToastNotification'
 import ConfirmModal from '../../components/ConfirmModal'
 import ImageEditor from '../../components/ImageEditor'
-import bairrosData from '../../../Bairros.json'
-import logradourosDataRaw from '../../../nomesderuas.json'
+import bairrosData from '../../data/Bairros.json'
+import logradourosDataRaw from '../../data/nomesderuas.json'
 
 // Normalize logradouros data
 const logradourosData = logradourosDataRaw

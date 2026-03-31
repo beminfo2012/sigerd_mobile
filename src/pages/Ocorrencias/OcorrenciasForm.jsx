@@ -226,8 +226,8 @@ const AsyncSearchableInput = ({
 
 
 // Address Data Imports
-import logradourosDataRaw from '../../../nomesderuas.json';
-import bairrosDataRaw from '../../../Bairros.json';
+import logradourosDataRaw from '../../data/nomesderuas.json';
+import bairrosDataRaw from '../../data/Bairros.json';
 
 // Normalize Address Data
 const logradourosData = logradourosDataRaw

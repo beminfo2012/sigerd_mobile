@@ -19,8 +19,8 @@ import { refineReportText } from '../../services/ai'
 import ConfirmModal from '../../components/ConfirmModal'
 import DespachoModal from '../../components/DespachoModal'
 import RiskAreaModal from '../../components/RiskAreaModal'
-import bairrosDataRaw from '../../../Bairros.json'
-import logradourosDataRaw from '../../../nomesderuas.json'
+import bairrosDataRaw from '../../data/Bairros.json'
+import logradourosDataRaw from '../../data/nomesderuas.json'
 
 // Normalize logradouros data
 const logradourosData = logradourosDataRaw

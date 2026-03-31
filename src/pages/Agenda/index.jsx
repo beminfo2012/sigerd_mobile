@@ -7,8 +7,8 @@ import { getAllVistoriasLocal, getAllAgendaLocal, saveAgendaOffline, deleteAgend
 import { toast } from '../../components/ToastNotification';
 import { format, addDays, differenceInDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import bairrosDataRaw from '../../../Bairros.json';
-import logradourosDataRaw from '../../../nomesderuas.json';
+import bairrosDataRaw from '../../data/Bairros.json';
+import logradourosDataRaw from '../../data/nomesderuas.json';
 
 // Normalize data for searchable inputs
 const logradourosData = logradourosDataRaw
