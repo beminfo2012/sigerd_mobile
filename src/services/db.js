@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 30
+const DB_VERSION = 31
 
 
 let dbPromise = null;
@@ -58,6 +58,9 @@ export const initDB = async () => {
                     if (['occupants', 'donations', 'inventory', 'distributions', 'shelters'].includes(name)) {
                         store.createIndex('shelter_id', 'shelter_id', { unique: false });
                     }
+                    if (name === 'inventory') {
+                        store.createIndex('item_id', 'item_id', { unique: false });
+                    }
                     if (name === 'shelters') {
                         store.createIndex('supabase_id', 'supabase_id', { unique: false });
                     }
@@ -68,6 +71,12 @@ export const initDB = async () => {
                         const store = transaction.objectStore(name);
                         if (!store.indexNames.contains('shelter_id')) {
                             store.createIndex('shelter_id', 'shelter_id', { unique: false });
+                        }
+                    }
+                    if (name === 'inventory') {
+                        const store = transaction.objectStore(name);
+                        if (!store.indexNames.contains('item_id')) {
+                            store.createIndex('item_id', 'item_id', { unique: false });
                         }
                     }
                     if (name === 'shelters') {

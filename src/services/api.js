@@ -28,31 +28,43 @@ const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
 
 const processListToMapData = (list) => {
     return list
-        .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude) || (v.lat && v.lng))
         .map(v => {
-            let lat, lng;
+            let lat = null, lng = null;
             if (v.coordenadas && String(v.coordenadas).includes(',')) {
                 const parts = String(v.coordenadas).split(',')
-                lat = parseFloat(parts[0])
-                lng = parseFloat(parts[1])
-            } else {
-                lat = parseFloat(v.latitude || v.lat)
-                lng = parseFloat(v.longitude || v.lng)
+                lat = parseFloat(parts[0].replace(',', '.'))
+                lng = parseFloat(parts[1].replace(',', '.'))
+            } else if (v.latitude && v.longitude) {
+                lat = typeof v.latitude === 'string' ? parseFloat(v.latitude.replace(',', '.')) : parseFloat(v.latitude)
+                lng = typeof v.longitude === 'string' ? parseFloat(v.longitude.replace(',', '.')) : parseFloat(v.longitude)
+            } else if (v.lat && v.lng) {
+                lat = typeof v.lat === 'string' ? parseFloat(v.lat.replace(',', '.')) : parseFloat(v.lat)
+                lng = typeof v.lng === 'string' ? parseFloat(v.lng.replace(',', '.')) : parseFloat(v.lng)
             }
 
-            if (isNaN(lat) || isNaN(lng)) return null
+            if (isNaN(lat) || isNaN(lng) || lat === null) return null
+
+            let type = 'v';
+            if (v.ocorrencia_id_format || v.ocorrencia_id || v.id_ocorrencia) type = 'o';
+            else if (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao) type = 'i';
 
             const subtypes = v.subtipos_risco || v.subtiposRisco || []
-            const category = v.categoria_risco || v.categoriaRisco || 'Outros'
+            const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || 'Interdição') : 'Vistoria')
 
             return {
                 id: v.id,
-                formattedId: v.ocorrencia_id_format || v.ocorrencia_id || v.vistoria_id || v.vistoriaId || (v.id ? String(v.id).split('-')[0].toUpperCase() : ''),
+                formattedId: v.ocorrencia_id_format || v.ocorrencia_id || v.vistoria_id || v.vistoriaId || v.interdicao_id || v.interdicaoId || (v.id ? String(v.id).split('-')[0].toUpperCase() : ''),
                 lat, lng,
                 risk: category,
                 status: v.status || 'Pendente',
-                details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : category,
-                date: v.created_at || v.data_hora || v.dataHora || new Date().toISOString()
+                details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : (category || ''),
+                date: v.created_at || v.data_hora || v.dataHora || new Date().toISOString(),
+                type,
+                // Interdiction specific fields to ensure they reach the report from api data
+                risco_tipo: v.risco_tipo || v.riscoTipo,
+                medida_tipo: v.medida_tipo || v.medidaTipo,
+                coordenadas: v.coordenadas,
+                interdicao_id: v.interdicao_id || v.interdicaoId
             }
         })
         .filter(loc => loc !== null);
@@ -124,15 +136,15 @@ export const api = {
             if (navigator.onLine && vData.length > 0) await saveRemoteVistoriasCache(vData).catch(() => { });
             const vistoriasCache = (!vData.length) ? await getRemoteVistoriasCache() : vData;
 
-            // Use Map to merge, but prefer UUID/local ID to avoid collisions on possibly duplicate human-readable IDs
+            // Use Map to merge to avoid duplicates but keep local entries if remote query is limited
             const vMap = new Map();
             // First pass: add all remote/cached items
             vistoriasCache.forEach(v => {
                 const key = v.id || v.vistoria_id || v.vistoriaId;
                 if (key) vMap.set(key, v);
             });
-            // Second pass: add local unsynced items (they overwrite remote if same ID, or add new)
-            localVistorias.filter(v => !v.synced).forEach(v => {
+            // Second pass: add ALL local items (local is source of truth for presence)
+            localVistorias.forEach(v => {
                 const key = v.id || v.vistoriaId || v.vistoria_id;
                 if (key) vMap.set(key, v);
             });
@@ -145,7 +157,7 @@ export const api = {
                 const key = o.id || o.ocorrencia_id || o.ocorrencia_id_format;
                 if (key) oMap.set(key, o);
             });
-            localOcorrencias.filter(o => !o.synced).forEach(o => {
+            localOcorrencias.forEach(o => {
                 const key = o.id || o.ocorrencia_id || o.ocorrencia_id_format;
                 if (key) oMap.set(key, o);
             });
@@ -158,7 +170,7 @@ export const api = {
                 const key = i.id || i.interdicao_id;
                 if (key) iMap.set(key, i);
             });
-            localInterdicoes.filter(i => !i.synced).forEach(i => {
+            localInterdicoes.forEach(i => {
                 const key = i.id || i.interdicaoId || i.interdicao_id;
                 if (key) iMap.set(key, i);
             });

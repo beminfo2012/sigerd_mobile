@@ -29,6 +29,7 @@ const GeoDashboard = lazy(() => import('./pages/Monitoramento/GeoDashboard'))
 const RiskDashboard = lazy(() => import('./pages/Monitoramento/RiskDashboard'))
 const ChecklistSaida = lazy(() => import('./pages/Checklist/ChecklistSaida'))
 const VistoriaPrint = lazy(() => import('./pages/Vistorias/VistoriaPrint'))
+const RelatorioSituacionalPrint = lazy(() => import('./pages/Dashboard/RelatorioSituacionalPrint'))
 const InterdicaoPrint = lazy(() => import('./pages/Interdicao/InterdicaoPrint'))
 const DesinterdicaoPrint = lazy(() => import('./pages/Interdicao/DesinterdicaoPrint'))
 const ManagementDashboard = lazy(() => import('./pages/Monitoramento/ManagementDashboard'))
@@ -136,7 +137,7 @@ const AppContent = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const isPrintPage = location.pathname.includes('/imprimir/') || location.search.includes('fullscreen=true');
+    const isPrintPage = location.pathname.includes('/imprimir/') || location.pathname.includes('/relatorio-situacional/imprimir') || location.search.includes('fullscreen=true');
     const isTvMode = location.search.includes('tvMode=true');
 
     useEffect(() => {
@@ -312,6 +313,11 @@ const AppContent = ({
                                 <Route path="/ocorrencias/imprimir/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <OcorrenciasPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/relatorio-situacional/imprimir" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <RelatorioSituacionalPrint />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/ocorrencias/novo" element={

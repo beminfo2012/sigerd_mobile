@@ -8,12 +8,13 @@ import {
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
     Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield
 } from 'lucide-react'
-import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import {
     getPendingSyncCount, syncPendingData, getAllVistoriasLocal,
-    getRemoteVistoriasCache, pullAllData, resetDatabase, getManualReadings
+    getRemoteVistoriasCache, pullAllData, resetDatabase, getManualReadings,
+    getAllInterdicoesLocal
 } from '../../services/db'
 import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
 import { getShelters, getOccupants, getInventory } from '../../services/shelterDb'
@@ -68,33 +69,67 @@ const processBreakdown = (records) => {
     return breakdownItems;
 };
 
-const processLocations = (records) => {
-    return records
-        .filter(v => (v.coordenadas && String(v.coordenadas).includes(',')) || (v.latitude && v.longitude) || (v.lat && v.lng))
+const processLocations = (records, forcedType = null) => {
+    return (records || [])
         .map(v => {
-            let lat, lng;
-            if (v.coordenadas && String(v.coordenadas).includes(',')) {
-                const parts = String(v.coordenadas).split(',')
-                lat = parseFloat(parts[0])
-                lng = parseFloat(parts[1])
-            } else if (v.latitude && v.longitude) {
-                lat = parseFloat(v.latitude)
-                lng = parseFloat(v.longitude)
-            } else if (v.lat && v.lng) {
-                lat = parseFloat(v.lat)
-                lng = parseFloat(v.lng)
+            const parseCoords = (input) => {
+                const s = String(input || '');
+                if (!s) return [null, null];
+                const matches = s.match(/-?\d+[,.]\d+/g) || s.match(/-?\d+/g) || [];
+                if (matches.length >= 2) {
+                    return [
+                        parseFloat(matches[0].replace(',', '.')),
+                        parseFloat(matches[1].replace(',', '.'))
+                    ];
+                }
+                return [null, null];
+            };
+
+            const [pLat, pLng] = v.coordenadas ? parseCoords(v.coordenadas) : [null, null];
+            const [fLat, fLng] = (v.latitude || v.lat) ? parseCoords(`${v.latitude || v.lat}, ${v.longitude || v.lng}`) : [null, null];
+
+            let lat = pLat || fLat;
+            let lng = pLng || fLng;
+            
+            // Advanced type detection
+            let type = forcedType;
+            if (!type) {
+                if (v.ocorrencia_id_format || v.ocorrencia_id || v.id_ocorrencia) type = 'o';
+                else if (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao || v.status_interdicao) type = 'i';
+                else if (v.vistoria_id || v.vistoriaId) type = 'v';
+                else type = 'v';
             }
-            if (isNaN(lat) || isNaN(lng)) return null
-            const subtypes = v.subtipos_risco || v.subtiposRisco || []
-            const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || 'Outros'
+
+            const formattedId = type === 'o' ? (v.ocorrencia_id_format || v.ocorrencia_id || (v.id ? `OC-${String(v.id).split('-')[0].toUpperCase()}` : '---'))
+                : type === 'i' ? (v.interdicao_id || v.interdicaoId || (v.id ? `INT-${String(v.id).split('-')[0].toUpperCase()}` : '---'))
+                    : (v.vistoria_id || v.vistoriaId || (v.id ? `VST-${String(v.id).split('-')[0].toUpperCase()}` : '---'));
+
+            const details = Array.isArray(v.subtipos_risco) ? v.subtipos_risco.join(', ') : (v.subtipos_risco || v.detalhes || v.details || v.subtipo || v.risco_descricao || v.motivo_interdicao || '');
+            const dateMatch = v.data_ocorrencia || v.data_hora || v.data_vistoria || v.dataHora || v.created_at;
+
+            // STRIP DATA: Only keep what is essential for the report UI to avoid QuotaExceededError in sessionStorage
             return {
                 id: v.id,
-                formattedId: v.ocorrencia_id_format || v.ocorrencia_id || v.vistoria_id || v.vistoriaId || (v.id ? String(v.id).split('-')[0].toUpperCase() : ''),
-                lat, lng, risk: category,
-                nivelRisco: v.nivel_risco || v.nivelRisco || 'Baixo',
-                status: v.status || 'Pendente',
-                details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : category,
-                date: v.created_at || v.data_hora || new Date().toISOString()
+                formattedId,
+                lat,
+                lng,
+                risk: v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || 'Interdição') : 'Vistoria'),
+                status: v.status || (v.synced ? 'Sincronizado' : 'Não Sincronizado'),
+                details,
+                date: dateMatch || new Date().toISOString(),
+                type,
+                // Interdiction specific fields
+                risco_tipo: v.risco_tipo || v.riscoTipo,
+                medida_tipo: v.medida_tipo || v.medidaTipo,
+                coordenadas: v.coordenadas,
+                interdicao_id: v.interdicao_id || v.interdicaoId,
+                // Ocorrencia specific
+                solicitante: v.solicitante,
+                natureza: v.natureza,
+                // Address/Location info
+                bairro: v.bairro,
+                logradouro: v.logradouro,
+                comunidade: v.comunidade
             }
         })
         .filter(loc => loc !== null) || [];
@@ -121,6 +156,19 @@ const processLocalidadeBreakdown = (records) => {
         percentage: total > 0 ? Math.round((counts[label] / total) * 100) : 0,
         color: colors[idx % colors.length]
     })).sort((a, b) => b.count - a.count);
+};
+
+// --- SUB-COMPONENT: MAP AUTO BOUNDS ---
+const MapAutoBounds = ({ locations }) => {
+    const map = useMap();
+    useEffect(() => {
+        const validLocs = (locations || []).filter(l => l.lat && l.lng && !isNaN(l.lat));
+        if (validLocs.length > 0) {
+            const bounds = validLocs.map(l => [l.lat, l.lng]);
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+        }
+    }, [locations, map]);
+    return null;
 };
 
 // --- SUB-COMPONENT: EVENT LOG CARD ---
@@ -382,6 +430,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
                 <span className="text-xs font-black text-slate-800 uppercase tracking-[3px]">Mancha de Calor Geral</span>
             </div>
             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                <MapAutoBounds locations={data.ocorrencias?.locations || []} />
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 <HeatmapLayer points={data.ocorrencias?.locations || []} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
             </MapContainer>
@@ -450,6 +499,7 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon }) => {
 
             <div className="col-span-8 bg-white border border-slate-200 rounded-[48px] overflow-hidden relative shadow-xl">
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                    <MapAutoBounds locations={(rainfall || []).filter(s => s.lat && (s.lon || s.lng))} />
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                     {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                         <CircleMarker
@@ -513,6 +563,7 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                     </div>
                 </div>
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                    <MapAutoBounds locations={list} />
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                     <HeatmapLayer points={list} show={true} options={{ radius: 35, blur: 20, opacity: 0.7 }} />
                     <AreasRiscoLayer data={areasRisco} tiposAtivos={null} />
@@ -1195,6 +1246,7 @@ const MobileDashboardView = ({
                     <div className="bg-white dark:bg-slate-800 p-2 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
                         <div className="h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0">
                             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                                <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Mobile - Absolute inside map) */}
                                 <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-1.5">
                                     <button
@@ -1723,6 +1775,7 @@ const WebViewDashboardView = ({
                         </div>
                         <div className="flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner">
                             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
+                                <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Web - Below Zoom) */}
                                 <div className="absolute top-[80px] left-[10px] z-[1000] flex flex-col gap-2">
                                     <button
@@ -1740,7 +1793,7 @@ const WebViewDashboardView = ({
                                 ) : (
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
-                                <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && Math.abs(l.lat) > 0.01 && !isNaN(l.lat))} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
                                 {/* Camada de Áreas de Risco (GeoJSON toggle por tipo) */}
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
@@ -1768,7 +1821,7 @@ const WebViewDashboardView = ({
                                         </Popup>
                                     </CircleMarker>
                                 ))}
-                                {filteredLocations?.map((loc, idx) => (
+                                {filteredLocations?.filter(loc => loc.lat && loc.lng && Math.abs(loc.lat) > 0.01 && !isNaN(loc.lat)).map((loc, idx) => (
                                     <CircleMarker
                                         key={idx}
                                         center={[loc.lat, loc.lng]}
@@ -2005,7 +2058,7 @@ const WebViewDashboardView = ({
 // --- MAIN DASHBOARD COMPONENT ---
 const Dashboard = () => {
     const navigate = useNavigate()
-    const toast = useToast()
+    const { toast } = useToast()
 
     // UI State
     const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
@@ -2087,54 +2140,85 @@ const Dashboard = () => {
 
     const load = async () => {
         try {
-            const plan = await contingencyDb.getActivePlan()
-            setActiveContingencyPlan(plan)
-            const [pendingDetail, localVistorias, cachedVistorias, localOcorrencias] = await Promise.all([
+            const plan = await contingencyDb.getActivePlan().catch(e => {
+                console.error('[Dash] Plano cont error:', e);
+                return null;
+            });
+            setActiveContingencyPlan(plan);
+
+            const [pendingDetail, localVistorias, cachedVistorias, localOcorrencias, localInterdicoes] = await Promise.all([
                 getPendingSyncCount().catch(() => ({ total: 0, vistorias: 0, interdicoes: 0 })),
                 getAllVistoriasLocal().catch(() => []),
                 getRemoteVistoriasCache().catch(() => []),
-                getOcorrenciasLocal().catch(() => [])
+                getOcorrenciasLocal().catch(() => []),
+                getAllInterdicoesLocal().catch(() => [])
             ]);
 
             const todayStr = new Date().toLocaleDateString('pt-BR');
-            const todayOccurrences = localOcorrencias.filter(o => o.data_ocorrencia === todayStr).length;
+            const todayOccurrences = (localOcorrencias || []).filter(o => o.data_ocorrencia === todayStr).length;
 
             setSyncDetail(pendingDetail);
-            const initialAllV = [...cachedVistorias, ...localVistorias];
-            const initialAllO = localOcorrencias; // Ocorrencias mostly local for now or updated by api
+            const initialAllV = [...(cachedVistorias || []), ...(localVistorias || [])];
+            const initialAllO = localOcorrencias || []; 
+            
+            // Extract interdicoes from vistorias AND combine with local interdicoes table
+            const vistoriasWithI = (initialAllV || []).filter(v => 
+                v && (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao)
+            );
+            const initialAllI = [...(localInterdicoes || []), ...vistoriasWithI];
+
+            const vProcessed = processLocations(initialAllV, 'v');
+            const oProcessed = processLocations(initialAllO, 'o');
+            const iProcessed = processLocations(initialAllI, 'i');
 
             setData({
-                vistorias: { stats: { total: initialAllV.length }, breakdown: processBreakdown(initialAllV), localidadeBreakdown: processLocalidadeBreakdown(initialAllV), locations: processLocations(initialAllV) },
-                ocorrencias: { stats: { total: initialAllO.length, today: todayOccurrences }, breakdown: processBreakdown(initialAllO), localidadeBreakdown: processLocalidadeBreakdown(initialAllO), locations: processLocations(initialAllO) },
-                interdicoes: { stats: { total: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] },
-                stats: { totalVistorias: initialAllV.length, activeOccurrences: todayOccurrences, totalOccurrences: initialAllO.length, totalInterdicoes: 0, inmetAlertsCount: 0 },
-                breakdown: processBreakdown(initialAllV),
-                locations: processLocations(initialAllV),
-                alerts: []
+                vistorias: { stats: { total: initialAllV.length }, breakdown: processBreakdown(initialAllV), localidadeBreakdown: processLocalidadeBreakdown(initialAllV), locations: vProcessed },
+                ocorrencias: { stats: { total: initialAllO.length, today: todayOccurrences }, breakdown: processBreakdown(initialAllO), localidadeBreakdown: processLocalidadeBreakdown(initialAllO), locations: oProcessed },
+                interdicoes: { stats: { total: initialAllI.length }, breakdown: processBreakdown(initialAllI), localidadeBreakdown: processLocalidadeBreakdown(initialAllI), locations: iProcessed },
+                stats: { totalVistorias: initialAllV.length, activeOccurrences: todayOccurrences, totalOccurrences: initialAllO.length, totalInterdicoes: initialAllI.length, inmetAlertsCount: 0 },
+                alerts: [],
+                locations: [...vProcessed, ...oProcessed, ...iProcessed]
             });
             setLoading(false);
 
-            // Refetch in background - IMPORTANT: Merge with existing states
+            // Refetch in background - IMPORTANT: Merge with existing structure
             api.getDashboardData().then(dashResult => {
                 if (dashResult) {
-                    setData(prev => {
-                        const merged = {
-                            ...dashResult,
-                            // Ensure local sync counts are preserved if API doesn't return them
-                            syncDetail: prev?.syncDetail || pendingDetail
-                        };
-                        // Explicitly sync the count if it's missing or inconsistent
-                        if (merged.alerts && (!merged.stats.inmetAlertsCount || merged.stats.inmetAlertsCount === 0)) {
-                            merged.stats.inmetAlertsCount = merged.alerts.length;
+                    const processed = {
+                        ...dashResult,
+                        vistorias: { 
+                            stats: { total: (dashResult.vistorias || []).length }, 
+                            breakdown: processBreakdown(dashResult.vistorias || []), 
+                            localidadeBreakdown: processLocalidadeBreakdown(dashResult.vistorias || []), 
+                            locations: processLocations(dashResult.vistorias || [], 'v') 
+                        },
+                        ocorrencias: { 
+                            stats: { total: (dashResult.ocorrencias || []).length }, 
+                            breakdown: processBreakdown(dashResult.ocorrencias || []), 
+                            localidadeBreakdown: processLocalidadeBreakdown(dashResult.ocorrencias || []), 
+                            locations: processLocations(dashResult.ocorrencias || [], 'o') 
+                        },
+                        interdicoes: { 
+                            stats: { total: (dashResult.interdicoes || []).length || (dashResult.vistorias || []).filter(v => v && (v.interdicao_id || v.interdicaoId)).length }, 
+                            breakdown: processBreakdown(dashResult.interdicoes || []), 
+                            localidadeBreakdown: processLocalidadeBreakdown(dashResult.interdicoes || []), 
+                            locations: processLocations(dashResult.interdicoes || (dashResult.vistorias || []).filter(v => v && (v.interdicao_id || v.interdicaoId)), 'i') 
                         }
-                        return merged;
-                    });
+                    };
+                    setData(prev => ({
+                        ...processed,
+                        syncDetail: prev?.syncDetail || pendingDetail,
+                        stats: {
+                            ...processed.stats,
+                            totalInterdicoes: processed.interdicoes.stats.total,
+                            inmetAlertsCount: (processed.alerts || []).length
+                        },
+                        locations: [...processed.vistorias.locations, ...processed.ocorrencias.locations, ...processed.interdicoes.locations]
+                    }));
                 }
-            }).catch(() => { });
+            }).catch(e => console.error('[Dash] Background refetch error:', e));
 
-            // 4. Fetch Weather, Cemaden Rainfall & Alerts (Parallel & Persistent)
             const fetchClimate = async () => {
-                setClimateLoading(true);
                 try {
                     const lat = -20.0246, lon = -40.7464;
                     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FSao_Paulo`;
@@ -2169,12 +2253,12 @@ const Dashboard = () => {
                     setPluvioLoading(true);
 
                     // Fetch Manual Readings (SEDE) from DB
-                    const manualReadings = await getManualReadings()
+                    const manualReadings = await getManualReadings().catch(() => [])
                     const now = new Date()
                     const getLatestForPeriod = (period, hours) => {
                         const windowStart = new Date(now.getTime() - hours * 60 * 60 * 1000)
-                        const relevant = manualReadings.filter(r =>
-                            (r.period === period || (!r.period && period === '1h')) &&
+                        const relevant = (manualReadings || []).filter(r =>
+                            r && (r.period === period || (!r.period && period === '1h')) &&
                             new Date(r.date) > windowStart &&
                             new Date(r.date) <= now
                         )
@@ -2188,13 +2272,13 @@ const Dashboard = () => {
                         rainRaw: manualAcc24h,
                     }
 
-                    const res = await fetch('/api/pluviometros')
+                    const res = await fetch('/api/pluviometros').catch(() => null)
                     let apiData = []
-                    if (res.ok) {
+                    if (res && res.ok) {
                         apiData = await res.json()
                     }
 
-                    const formattedApi = apiData.map(st => {
+                    const formattedApi = (apiData || []).map(st => {
                         // Support both numeric and 'A' suffixed IDs from local metadata
                         const meta = STATION_METADATA[st.id] || STATION_METADATA[st.id + 'A'] || {};
                         return {
@@ -2211,9 +2295,9 @@ const Dashboard = () => {
                     const combined = [
                         {
                             ...manualStation,
-                            lat: STATION_METADATA['SEDE_DEFESA_CIVIL'].lat,
-                            lon: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon,
-                            lng: STATION_METADATA['SEDE_DEFESA_CIVIL'].lon
+                            lat: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lat,
+                            lon: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon,
+                            lng: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon
                         },
                         ...formattedApi
                     ].map(station => {
@@ -2224,12 +2308,12 @@ const Dashboard = () => {
                         else if (acc24 >= 30) level = 'Atenção';
 
                         return { ...station, level }
-                    }).filter(station => parseFloat(station.rainRaw) > 0 && station.lat && (station.lon || station.lng));
+                    }).filter(station => station && parseFloat(station.rainRaw) > 0 && station.lat && (station.lon || station.lng));
 
                     setRainfall(combined);
                 } catch (e) {
                     console.warn('[Pluviometros] Fetch failed, using fallback:', e);
-                    const rain = await cemadenService.getRainfallData();
+                    const rain = await cemadenService.getRainfallData().catch(() => []);
                     setRainfall(rain || []);
                 } finally {
                     setPluvioLoading(false);
@@ -2237,11 +2321,11 @@ const Dashboard = () => {
 
                 // Fallback direct INMET fetch if data.alerts is empty
                 try {
-                    const inmetResp = await fetch('https://apiprevmet3.inmet.gov.br/avisos/municipio/3204559');
-                    if (inmetResp.ok) {
+                    const inmetResp = await fetch('https://apiprevmet3.inmet.gov.br/avisos/municipio/3204559').catch(() => null);
+                    if (inmetResp && inmetResp.ok) {
                         const inmetData = await inmetResp.json();
                         if (Array.isArray(inmetData) && inmetData.length > 0) {
-                            setData(prev => ({ ...prev, alerts: inmetData }));
+                            setData(prev => prev ? ({ ...prev, alerts: inmetData }) : prev);
                         }
                     }
                 } catch (e) { console.warn('[INMET] Direct catch failed:', e); }
@@ -2252,7 +2336,17 @@ const Dashboard = () => {
             fetchClimate();
 
         } catch (error) {
-            setLoading(false)
+            console.error('[Dashboard] Fatal load error:', error);
+            // Fallback: Provide at least an empty data structure to stop the "Error loading" screen
+            setData({
+                vistorias: { stats: { total: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] },
+                ocorrencias: { stats: { total: 0, today: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] },
+                interdicoes: { stats: { total: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] },
+                stats: { totalVistorias: 0, activeOccurrences: 0, totalOccurrences: 0, totalInterdicoes: 0, inmetAlertsCount: 0 },
+                alerts: [],
+                locations: []
+            });
+            setLoading(false);
         }
     }
 
@@ -2265,8 +2359,31 @@ const Dashboard = () => {
         try {
             await pullAllData();
             await syncPendingData()
-            const [newData, newDetail] = await Promise.all([api.getDashboardData(), getPendingSyncCount()])
-            if (newData) setData(newData)
+            const [newData, newDetail] = await Promise.all([api.getDashboardData(), getPendingSyncCount()]);
+            if (newData) {
+                const processed = {
+                    ...newData,
+                    vistorias: { 
+                        stats: { total: (newData.vistorias || []).length }, 
+                        breakdown: processBreakdown(newData.vistorias || []), 
+                        localidadeBreakdown: processLocalidadeBreakdown(newData.vistorias || []), 
+                        locations: processLocations(newData.vistorias || [], 'v') 
+                    },
+                    ocorrencias: { 
+                        stats: { total: (newData.ocorrencias || []).length }, 
+                        breakdown: processBreakdown(newData.ocorrencias || []), 
+                        localidadeBreakdown: processLocalidadeBreakdown(newData.ocorrencias || []), 
+                        locations: processLocations(newData.ocorrencias || [], 'o') 
+                    },
+                    interdicoes: { 
+                        stats: { total: (newData.interdicoes || []).length || (newData.vistorias || []).filter(v => v.interdicao_id || v.interdicaoId).length }, 
+                        breakdown: processBreakdown(newData.interdicoes || []), 
+                        localidadeBreakdown: processLocalidadeBreakdown(newData.interdicoes || []), 
+                        locations: processLocations(newData.interdicoes || (newData.vistorias || []).filter(v => v.interdicao_id || v.interdicaoId), 'i') 
+                    }
+                };
+                setData(processed);
+            }
             setSyncDetail(newDetail)
             toast.success('Sincronizado', 'Dados atualizados com sucesso.')
         } catch (error) {
@@ -2305,20 +2422,21 @@ const Dashboard = () => {
             }
             const label = labels[hours] || 'Todo o Período';
 
-            // Filter context based on viewMode
-            const sourceData = viewMode === 'vistorias' ? data.vistorias : data.ocorrencias;
-            let finalLocations = sourceData.locations || [];
+            const limitDate = hours > 0 ? new Date(Date.now() - hours * 60 * 60 * 1000) : null;
 
-            if (hours > 0) {
-                const limitDate = new Date();
-                limitDate.setHours(limitDate.getHours() - hours);
-                finalLocations = finalLocations.filter(loc => {
-                    if (!loc.date) return false;
-                    return new Date(loc.date) >= limitDate;
-                });
-            }
+            const filterByTime = (locations) => {
+                if (!limitDate || !locations) return locations || [];
+                return locations.filter(loc => loc.date && new Date(loc.date) >= limitDate);
+            };
 
-            // Recalculate Breakdown
+            // Filter ALL categories for the report
+            const filteredVistorias = filterByTime(data.vistorias?.locations);
+            const filteredOcorrencias = filterByTime(data.ocorrencias?.locations);
+            const filteredInterdicoes = filterByTime(data.interdicoes?.locations);
+
+            const reportLocations = [...filteredVistorias, ...filteredOcorrencias, ...filteredInterdicoes];
+
+            // Recalculate Breakdown for the specific timeframe
             const colorPalette = {
                 'Geológico / Geotécnico': '#f97316',
                 'Risco Geológico': '#f97316',
@@ -2342,7 +2460,7 @@ const Dashboard = () => {
             };
 
             const counts = {};
-            finalLocations.forEach(loc => {
+            reportLocations.forEach(loc => {
                 const cat = loc.risk || 'Outros';
                 counts[cat] = (counts[cat] || 0) + 1;
             });
@@ -2350,20 +2468,31 @@ const Dashboard = () => {
             const finalBreakdown = Object.keys(counts).map(catLabel => ({
                 label: catLabel,
                 count: counts[catLabel],
-                percentage: finalLocations.length > 0 ? Math.round((counts[catLabel] / finalLocations.length) * 100) : 0,
+                percentage: reportLocations.length > 0 ? Math.round((counts[catLabel] / reportLocations.length) * 100) : 0,
                 color: colorPalette[catLabel] || '#94a3b8'
             })).sort((a, b) => b.count - a.count);
 
+            // Group back into categorized objects for the report
+            const finalVistorias = reportLocations.filter(l => l.type === 'v');
+            const finalOcorrencias = reportLocations.filter(l => l.type === 'o');
+            const finalInterdicoes = reportLocations.filter(l => l.type === 'i');
+
             const reportData = {
                 stats: {
-                    totalVistorias: finalLocations.length,
-                    activeOccurrences: data.stats?.activeOccurrences || 0
+                    totalVistorias: finalVistorias.length,
+                    totalOcorrencias: finalOcorrencias.length,
+                    totalInterdicoes: finalInterdicoes.length,
+                    activeOccurrences: finalOcorrencias.length
                 },
                 breakdown: finalBreakdown,
-                locations: finalLocations
+                locations: reportLocations,
+                vistorias: { locations: finalVistorias, stats: { total: finalVistorias.length } },
+                ocorrencias: { locations: finalOcorrencias, stats: { total: finalOcorrencias.length } },
+                interdicoes: { locations: finalInterdicoes, stats: { total: finalInterdicoes.length } },
+                alerts: cemadenAlerts || [],
+                weather: weather // Pass full weather object
             };
 
-            // Fetch Humanitarian Data for complete report
             const [shelters, occupants, inventory] = await Promise.all([
                 getShelters().catch(() => []),
                 getOccupants().catch(() => []),
@@ -2371,11 +2500,44 @@ const Dashboard = () => {
             ]);
             const humanitarianData = { shelters, occupants, inventory };
 
-            // Generate report with current dashboard data
-            await generateSituationalReport(reportData, weather, rainfall || [], humanitarianData, label, null, false, viewMode);
+            // Logic shared with the new preview page
+            const now = new Date();
+            const emissionDate = now.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' -');
+
+            const hasHighAlerts = (reportData.locations || []).some(l => 
+                String(l.risk).includes('Alto') || String(l.risk).includes('Crítico') || String(l.risk).includes('Perigo')
+            );
+            const hasMediumAlerts = (reportData.locations || []).some(l => 
+                String(l.risk).includes('Médio') || String(l.risk).includes('Média') || String(l.risk).includes('Atenção')
+            );
+
+            let currentStatus = { label: 'NORMAL', bg: '#10b981', text: 'white' };
+            if (hasHighAlerts) currentStatus = { label: 'ALERTA', bg: '#ef4444', text: 'white' };
+            else if (hasMediumAlerts || (weather?.daily?.[0]?.rainProb > 50)) currentStatus = { label: 'ATENÇÃO', bg: '#f59e0b', text: 'white' };
+
+            const validStations = (rainfall || []).filter(p => (p.acc24hr || p.rainRaw || 0) > 0);
+            const avgAcc = validStations.length > 0 
+                ? (validStations.reduce((acc, p) => acc + (p.acc24hr || p.rainRaw || 0), 0) / validStations.length).toFixed(1)
+                : '0.0';
+
+            const finalPreviewData = {
+                dashboardData: reportData,
+                weatherData: weather,
+                pluviometerData: rainfall || [],
+                humanitarianData,
+                timeframeLabel: label,
+                emissionDate,
+                currentStatus,
+                avgAcc,
+                activeWarnings: cemadenAlerts || []
+            };
+
+            // Save to session for the print component and open route
+            sessionStorage.setItem('lastSituationalReport', JSON.stringify(finalPreviewData));
+            window.open('/relatorio-situacional/imprimir', '_blank');
 
             setShowReportMenu(false);
-            toast.success('Pronto!', 'Relatório gerado.');
+            toast.success('Pronto!', 'Relatório carregado na nova aba.');
         } catch (error) {
             console.error('Error generating report:', error);
             toast.error('Erro', 'Erro ao gerar relatório.');
