@@ -186,16 +186,16 @@ const OcorrenciasDashboard = () => {
                     <div className="flex items-center gap-2">
                         <Button
                             onClick={handleGenerateDailyReport}
-                            className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 px-4 h-12"
+                            className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 px-3 sm:px-4 h-10 sm:h-12"
                             title="Gerar Relatório Consolidado"
                         >
                             <Printer size={18} className="sm:mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Relatório</span>
                         </Button>
                         <Button
                             onClick={() => navigate('/ocorrencias/novo')}
-                            className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20 px-6 h-12"
+                            className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20 px-4 sm:px-6 h-10 sm:h-12"
                         >
-                            <Plus size={18} className="mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo</span>
+                            <Plus size={18} className="sm:mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo</span>
                         </Button>
                     </div>
                 </div>
@@ -205,20 +205,20 @@ const OcorrenciasDashboard = () => {
                 {/* Search and Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 max-w-6xl mx-auto">
                     <div className="relative group md:col-span-8 lg:col-span-9">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
+                        <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                         <input
                             type="text"
-                            placeholder="Buscar por nome, logradouro, bairro ou ID..."
-                            className="w-full pl-14 pr-6 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
+                            placeholder="Buscar por nome, endereço ou ID..."
+                            className="w-full pl-12 sm:pl-14 pr-6 py-4 sm:py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <div className="relative md:col-span-4 lg:col-span-3">
-                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={18} />
                         <input
                             type="date"
-                            className="w-full h-full pl-12 pr-4 py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white"
+                            className="w-full pl-12 pr-4 py-4 sm:py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white appearance-none min-h-[56px]"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
                         />
