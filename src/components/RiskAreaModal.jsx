@@ -10,7 +10,7 @@ const RiskAreaModal = ({
 
     return (
         <div 
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[150] flex items-center justify-center p-6 animate-in fade-in duration-300"
+            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-6 animate-in fade-in duration-300"
             onClick={onClose}
         >
             <div 

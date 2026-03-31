@@ -176,7 +176,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         item.roles.includes(userProfile?.role) || userProfile?.role === 'Admin'
     );
     return (
-        <div className="hidden md:block w-16 h-full shrink-0 relative z-50">
+        <div className="hidden md:block w-16 h-full shrink-0 relative z-[5000]">
             <aside
                 onMouseEnter={() => setIsCollapsed(false)}
                 onMouseLeave={() => setIsCollapsed(true)}

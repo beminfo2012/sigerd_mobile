@@ -8,7 +8,7 @@ const DesktopHeader = ({ userProfile }) => {
 
     return (
         <header
-            className="hidden md:flex h-10 shrink-0 z-40 px-6 items-center justify-between shadow-lg transition-all"
+            className="hidden md:flex h-10 shrink-0 z-[4500] px-6 items-center justify-between shadow-lg transition-all"
             style={{
                 background: 'var(--web-header-gradient)',
                 color: '#fff',
