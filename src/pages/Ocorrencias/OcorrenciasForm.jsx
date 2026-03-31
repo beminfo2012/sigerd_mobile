@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE, salvarOcorrenciaOperacional, deletarFotoStorage } from '../../services/ocorrenciasDb';
 import { initDB, searchInstallations } from '../../services/db';
+import { checkRiskArea } from '../../services/riskAreas';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/ToastNotification';
+import RiskAreaModal from '../../components/RiskAreaModal';
 import { CHECKLIST_DATA } from '../../data/checklists';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -263,6 +265,10 @@ const OcorrenciasForm = () => {
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
     const [editingPhotoIndex, setEditingPhotoIndex] = useState(null);
 
+    // Risk Area States
+    const [detectedRiskArea, setDetectedRiskArea] = useState(null);
+    const [showRiskModal, setShowRiskModal] = useState(false);
+
     const RISK_DATA = {
         'Outros': ['Outros'],
         'Incêndios': [
@@ -405,6 +411,27 @@ const OcorrenciasForm = () => {
         }
     };
 
+    const handleRiskDetection = (lat, lng) => {
+        if (!lat || !lng) return;
+        const riskInfo = checkRiskArea(parseFloat(lat), parseFloat(lng));
+        setDetectedRiskArea(riskInfo);
+
+        if (riskInfo) {
+            setShowRiskModal(true);
+            // Auto-append to observations if not already there
+            setFormData(prev => {
+                const riskNote = `[SISTEMA] Ocorrência em área de risco: ${riskInfo.name} (${riskInfo.source}).`;
+                if (!prev.observacoes.includes(riskNote)) {
+                    return {
+                        ...prev,
+                        observacoes: (prev.observacoes ? prev.observacoes + '\n\n' : '') + riskNote
+                    };
+                }
+                return prev;
+            });
+        }
+    };
+
     const captureGPS = (isInitial = false) => {
         if (!navigator.geolocation) {
             setGpsStatus('error');
@@ -423,6 +450,7 @@ const OcorrenciasForm = () => {
                     gps_timestamp: new Date().toISOString()
                 }));
                 setGpsStatus('success');
+                handleRiskDetection(latitude, longitude);
                 if (!isInitial) toast.success(`Localização atualizada! Precisão: ${accuracy.toFixed(1)}m`);
             },
             (err) => {
@@ -991,14 +1019,21 @@ const OcorrenciasForm = () => {
                                     }));
                                 }}
                                 onChange={opt => {
+                                    const lat = opt.data?.lat || opt.data?.pee_lat || opt.data?.client_lat || null;
+                                    const lng = opt.data?.lng || opt.data?.pee_lng || opt.data?.client_lng || null;
+                                    
                                     setFormData(prev => ({
                                         ...prev,
                                         unidade_consumidora: opt.label,
                                         // Auto-preencher endereço se vazio
-                                        endereco: prev.endereco ? prev.endereco : (opt.data?.address || ''),
-                                        lat: prev.lat ? prev.lat : (opt.data?.lat || null),
-                                        lng: prev.lng ? prev.lng : (opt.data?.lng || null),
+                                        endereco: prev.endereco ? prev.endereco : (opt.data?.address || opt.data?.LOGRADOURO || ''),
+                                        lat: prev.lat ? prev.lat : lat,
+                                        lng: prev.lng ? prev.lng : lng,
                                     }));
+
+                                    if (lat && lng) {
+                                        handleRiskDetection(lat, lng);
+                                    }
                                 }}
                                 icon={Search}
                                 labelClasses={labelClasses}
@@ -1713,6 +1748,8 @@ const OcorrenciasForm = () => {
                 </div>
             )}
 
+            )}
+
             {editingPhotoIndex !== null && (
                 <ImageEditor
                     imageUrl={formData.fotos[editingPhotoIndex].data}
@@ -1726,6 +1763,12 @@ const OcorrenciasForm = () => {
                     onCancel={() => setEditingPhotoIndex(null)}
                 />
             )}
+
+            <RiskAreaModal 
+                isOpen={showRiskModal}
+                onClose={() => setShowRiskModal(false)}
+                riskInfo={detectedRiskArea}
+            />
         </div>
     );
 };

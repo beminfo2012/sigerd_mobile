@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { Search, Loader2, Navigation, MapPin, RefreshCw } from 'lucide-react'
+import { Search, Loader2, Navigation, MapPin, RefreshCw, UploadCloud } from 'lucide-react'
 import { georescue } from '../../services/supabase'
 import { searchInstallations, getInstallationsCount, importInstallations } from '../../services/db'
+import { useToast } from '../../components/ToastNotification'
 
 // Fix for default marker icon in React-Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -31,10 +32,12 @@ const MapUpdater = ({ center }) => {
 }
 
 const GeoRescue = () => {
+    const { toast } = useToast()
     const [position, setPosition] = useState([-20.3155, -40.3128]) // Default ES coords
     const [hasPosition, setHasPosition] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchResults, setSearchResults] = useState([])
+    const [importSuccess, setImportSuccess] = useState(null)
     const [selectedInstallation, setSelectedInstallation] = useState(null)
     const [searching, setSearching] = useState(false)
     const [totalInstallations, setTotalInstallations] = useState(0)
@@ -87,15 +90,19 @@ const GeoRescue = () => {
             setTotalInstallations(updatedCount)
 
             // Mark as updated
-            localStorage.setItem('geo_db_version', 'v4')
+            localStorage.setItem('geo_db_version', 'v4');
 
-            alert(`Banco de dados atualizado com sucesso!\n${updatedCount} unidades carregadas.`)
+            // Show success popup with the loaded count
+            setImportSuccess({
+                title: 'Banco Atualizado!',
+                message: `${updatedCount} unidades consumidoras carregadas e prontas para uso offline.`
+            });
 
         } catch (e) {
-            console.error('Import failed:', e)
-            alert('Falha ao importar dados: ' + e.message)
+            console.error('Import failed:', e);
+            toast.error('Falha na atualização', 'Erro ao importar dados: ' + e.message);
         } finally {
-            setIsImporting(false)
+            setIsImporting(false);
         }
     }
 
@@ -396,6 +403,28 @@ const GeoRescue = () => {
                     </Marker>
                 )}
             </MapContainer>
+            {/* Import Success Modal */}
+            {importSuccess && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-700 text-center space-y-6 scale-in-center">
+                        <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <UploadCloud size={40} className="text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight">{importSuccess.title}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                                {importSuccess.message}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setImportSuccess(null)}
+                            className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-[2px] hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg active:scale-95"
+                        >
+                            ENTENDIDO
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
