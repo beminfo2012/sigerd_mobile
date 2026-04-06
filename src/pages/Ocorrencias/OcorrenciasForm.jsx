@@ -1748,8 +1748,6 @@ const OcorrenciasForm = () => {
                 </div>
             )}
 
-            )}
-
             {editingPhotoIndex !== null && (
                 <ImageEditor
                     imageUrl={formData.fotos[editingPhotoIndex].data}
