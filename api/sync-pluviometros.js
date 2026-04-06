@@ -2,14 +2,17 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-    process.env.SUPABASE_URL, 
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    process.env.SUPABASE_URL || "", 
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
 export default async function handler(request, response) {
-    console.log("[SYNC] Iniciando sincronização automática...");
+    console.log("[SYNC] Iniciando sincronização em paralelo...");
     
-    // Lista completa de 22 estações mapeadas no sistema para garantir o cadastro
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return response.status(500).json({ error: "Variáveis de ambiente do Supabase não configuradas na Vercel." });
+    }
+
     const ESTACOES_METADATA = [
         // CEMADEN
         { id: '320455901', nome: 'Alto Rio Possmoser', tipo: 'pluviometric', fonte: 'CEMADEN', lat: -20.067, lng: -40.840 },
@@ -41,84 +44,61 @@ export default async function handler(request, response) {
     try {
         const results = { stationsUpdated: 0, readingsSynced: 0, errors: [] };
 
-        // 1. Atualizar Metadados das Estações no Supabase
-        const { error: errStat } = await supabase
-            .from('pluviometros_estacoes')
-            .upsert(ESTACOES_METADATA, { onConflict: 'id' });
-        
-        if (!errStat) results.stationsUpdated = ESTACOES_METADATA.length;
-        else results.errors.push(`Stations Upsert Error: ${errStat.message}`);
+        // 1. Atualizar Metadados (Upsert)
+        await supabase.from('pluviometros_estacoes').upsert(ESTACOES_METADATA, { onConflict: 'id' });
+        results.stationsUpdated = ESTACOES_METADATA.length;
 
-        // 2. CEMADEN - Buscar leituras recentes
-        try {
-            const resCemaden = await fetch("https://sws.cemaden.gov.br/PED/rest/pcds/pcds-dados-recentes");
-            if (resCemaden.ok) {
+        // 2. CEMADEN
+        const cemadenTask = async () => {
+            try {
+                const resCemaden = await fetch("https://sws.cemaden.gov.br/PED/rest/pcds/pcds-dados-recentes");
+                if (!resCemaden.ok) return 0;
                 const cemadenRaw = await resCemaden.json();
                 const cemadenReadings = cemadenRaw
                     .filter(s => s.municipio?.toLowerCase().includes("maria de jetib"))
-                    .map(s => ({
-                        station_id: s.codestacao,
-                        data_hora: s.datahora,
-                        chuva: parseFloat(s.chuva) || 0
-                    }));
-
+                    .map(s => ({ station_id: s.codestacao, data_hora: s.datahora, chuva: parseFloat(s.chuva) || 0 }));
+                
                 if (cemadenReadings.length > 0) {
-                    const { error } = await supabase.from('pluviometros_leituras').upsert(cemadenReadings, { onConflict: 'station_id, data_hora' });
-                    if (!error) results.readingsSynced += cemadenReadings.length;
+                    await supabase.from('pluviometros_leituras').upsert(cemadenReadings, { onConflict: 'station_id, data_hora' });
                 }
-            }
-        } catch (e) { results.errors.push(`CEMADEN Fetch: ${e.message}`); }
+                return cemadenReadings.length;
+            } catch (e) { results.errors.push(`CEMADEN: ${e.message}`); return 0; }
+        };
 
-        // 3. ANA - Buscar leituras das últimas 24h para cada estação
-        for (const station of ESTACOES_METADATA.filter(e => e.fonte === 'ANA')) {
+        // 3. ANA (Em paralelo)
+        const anaTasks = ESTACOES_METADATA.filter(e => e.fonte === 'ANA').map(async (station) => {
             try {
                 const now = new Date();
                 const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-                
-                // Formatação BR para a API da ANA
                 const dI = `${String(yesterday.getDate()).padStart(2, '0')}/${String(yesterday.getMonth() + 1).padStart(2, '0')}/${yesterday.getFullYear()}`;
                 const dF = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
                 const soapUrl = `https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=${station.id}&dataInicio=${dI}&dataFim=${dF}`;
                 const resAna = await fetch(soapUrl);
-                
-                if (resAna.ok) {
-                    const xml = await resAna.text();
-                    const matches = [...xml.matchAll(/<DadosHidrometereologicos[^>]*>([\s\S]*?)<\/DadosHidrometereologicos>/g)];
-                    
-                    const anaReadings = matches.map(m => {
-                        const content = m[1];
-                        const get = tag => (content.match(new RegExp(`<${tag}>(.*?)</${tag}>`)) || [])[1]?.trim() || "";
-                        return {
-                            station_id: station.id,
-                            data_hora: get("DataHora"),
-                            chuva: parseFloat(get("Chuva")) || 0,
-                            nivel: parseFloat(get("Nivel")) || null,
-                            vazao: parseFloat(get("Vazao")) || null
-                        };
-                    }).filter(i => i.data_hora);
+                if (!resAna.ok) return 0;
 
-                    if (anaReadings.length > 0) {
-                        const { error } = await supabase.from('pluviometros_leituras').upsert(anaReadings, { onConflict: 'station_id, data_hora' });
-                        if (!error) results.readingsSynced += anaReadings.length;
-                    }
+                const xml = await resAna.text();
+                const matches = [...xml.matchAll(/<DadosHidrometereologicos[^>]*>([\s\S]*?)<\/DadosHidrometereologicos>/g)];
+                const readings = matches.map(m => {
+                    const content = m[1];
+                    const get = tag => (content.match(new RegExp(`<${tag}>(.*?)</${tag}>`)) || [])[1]?.trim() || "";
+                    return { station_id: station.id, data_hora: get("DataHora"), chuva: parseFloat(get("Chuva")) || 0, nivel: parseFloat(get("Nivel")) || null, vazao: parseFloat(get("Vazao")) || null };
+                }).filter(i => i.data_hora);
+
+                if (readings.length > 0) {
+                    await supabase.from('pluviometros_leituras').upsert(readings, { onConflict: 'station_id, data_hora' });
                 }
-            } catch (e) { results.errors.push(`ANA ${station.id} Fetch: ${e.message}`); }
-        }
+                return readings.length;
+            } catch (e) { results.errors.push(`ANA ${station.id}: ${e.message}`); return 0; }
+        });
 
-        console.log("[SYNC] Sincronização concluída com sucesso:", results);
-        return response.status(200).json({ 
-            success: true, 
-            message: "Sincronização realizada com sucesso!",
-            timestamp: new Date().toISOString(),
-            ...results 
-        });
+        // Executar tudo em paralelo!
+        const [cemadenCount, ...anaCounts] = await Promise.all([cemadenTask(), ...anaTasks]);
+        results.readingsSynced = cemadenCount + anaCounts.reduce((acc, current) => acc + current, 0);
+
+        return response.status(200).json({ success: true, timestamp: new Date().toISOString(), ...results });
+
     } catch (err) {
-        console.error("[SYNC] Erro crítico:", err);
-        return response.status(500).json({ 
-            success: false, 
-            error: 'Erro crítico na rotina', 
-            details: err.message 
-        });
+        return response.status(500).json({ success: false, error: err.message });
     }
 }
