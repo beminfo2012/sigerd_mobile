@@ -7,6 +7,8 @@ const supabase = createClient(
 );
 
 export default async function handler(request, response) {
+    console.log("[SYNC] Iniciando sincronização automática...");
+    
     // Lista completa de 22 estações mapeadas no sistema para garantir o cadastro
     const ESTACOES_METADATA = [
         // CEMADEN
@@ -104,8 +106,19 @@ export default async function handler(request, response) {
             } catch (e) { results.errors.push(`ANA ${station.id} Fetch: ${e.message}`); }
         }
 
-        return response.status(200).json(results);
+        console.log("[SYNC] Sincronização concluída com sucesso:", results);
+        return response.status(200).json({ 
+            success: true, 
+            message: "Sincronização realizada com sucesso!",
+            timestamp: new Date().toISOString(),
+            ...results 
+        });
     } catch (err) {
-        return response.status(500).json({ error: 'Erro crítico na rotina', details: err.message });
+        console.error("[SYNC] Erro crítico:", err);
+        return response.status(500).json({ 
+            success: false, 
+            error: 'Erro crítico na rotina', 
+            details: err.message 
+        });
     }
 }
