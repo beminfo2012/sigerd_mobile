@@ -390,7 +390,9 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
                     <div class="photo-card">
                         <img src="${photo.url}" style="width: 100%; height: 180px; object-fit: cover;" />
                         <div style="padding: 8px; background: #f8fafc;">
-                            <div style="font-size: 7px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">Coordenadas: ${photo.lat.toFixed(6)}, ${photo.lng.toFixed(6)}</div>
+                            <div style="font-size: 7px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">
+                                Coordenadas: <span class="pdf-coord-link" data-lat="${photo.lat}" data-lng="${photo.lng}" style="color: #1e3a8a; text-decoration: underline; cursor: pointer;">${photo.lat.toFixed(6)}, ${photo.lng.toFixed(6)}</span>
+                            </div>
                             <div style="font-size: 8px; font-weight: 700; color: #334155;">${new Date(photo.timestamp).toLocaleString()}</div>
                         </div>
                     </div>
@@ -490,6 +492,34 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
 
             if (pageNum > 1) pdf.addPage();
             pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pdfWidth, sliceHeightMm);
+
+            // --- ADD LINKS FOR THIS PAGE ---
+            try {
+                const coordElements = container.querySelectorAll('.pdf-coord-link');
+                coordElements.forEach(el => {
+                    const lat = el.getAttribute('data-lat');
+                    const lng = el.getAttribute('data-lng');
+                    const rect = el.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    const elTopPx = rect.top - containerRect.top;
+                    const elLeftPx = rect.left - containerRect.left;
+                    
+                    // Check if this element belongs to the current page slice
+                    if (elTopPx >= currentTopPx && elTopPx < cutPointPx) {
+                        const x_mm = elLeftPx * pxToMm;
+                        const y_mm = (elTopPx - currentTopPx) * pxToMm;
+                        const w_mm = rect.width * pxToMm;
+                        const h_mm = rect.height * pxToMm;
+                        
+                        pdf.link(x_mm, y_mm, w_mm, h_mm, {
+                            url: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+                        });
+                    }
+                });
+            } catch (err) {
+                console.warn('Erro ao processar links no REDAP:', err);
+            }
 
             // Add page numbering
             pdf.setFontSize(8);

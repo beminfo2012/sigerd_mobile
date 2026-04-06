@@ -289,10 +289,21 @@ const InterdicaoPrint = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="mt-2 text-center">
+                                <div className="mt-2 text-center flex flex-col gap-1 items-center">
                                     <p className="text-[9px] font-mono font-bold text-slate-500 bg-slate-50 rounded border border-slate-200 inline-block px-2 py-1 uppercase">
                                         TIPO ALVO: {data.tipo_alvo || data.tipoAlvo || '---'} {data.tipo_alvo_especificar || data.tipoAlvoEspecificar ? `(${data.tipo_alvo_especificar || data.tipoAlvoEspecificar})` : ''}
                                     </p>
+                                    {hasMap && (
+                                        <a
+                                            href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[9px] font-mono font-bold text-blue-600 hover:text-blue-800 bg-blue-50 rounded border border-blue-200 inline-block px-2 py-1 transition-colors no-underline"
+                                            title="Ver no Google Maps"
+                                        >
+                                            LAT: {lat.toFixed(6)} / LNG: {lng.toFixed(6)}
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         </div>

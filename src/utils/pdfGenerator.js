@@ -216,10 +216,19 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
     `;
 
     const renderField = (label, value) => {
+        // Check if value is coordinates and wrap it if it is not already wrapped
+        let displayValue = value || '---';
+        if (label === 'Coordenadas' && value && value !== '---' && !value.includes('pdf-coord-link')) {
+            const coords = value.split(',').map(c => c.trim());
+            if (coords.length === 2 && !isNaN(parseFloat(coords[0])) && !isNaN(parseFloat(coords[1]))) {
+                displayValue = `<span class="pdf-coord-link" data-lat="${coords[0]}" data-lng="${coords[1]}" style="color: #2a5299; text-decoration: underline; cursor: pointer;">${value}</span>`;
+            }
+        }
+
         return `
             <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9; margin-bottom: 4px;">
                 <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">${label}</div>
-                <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.4;">${value || '---'}</div>
+                <div style="font-size: 12px; color: #1e293b; font-weight: 600; line-height: 1.4;">${displayValue}</div>
             </div>
         `;
     };
@@ -386,7 +395,7 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                             <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
                             <div style="padding: 12px; background: white;">
                                 <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
-                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: ${data.latitude}, ${data.longitude}</div>
+                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: <span class="pdf-coord-link" data-lat="${data.latitude}" data-lng="${data.longitude}" style="color: #2a5299; text-decoration: underline;">${data.latitude}, ${data.longitude}</span></div>
                                 ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
                             </div>
                         </div>
@@ -540,7 +549,7 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                             <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
                             <div style="padding: 12px; background: white;">
                                 <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
-                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: ${data.latitude}, ${data.longitude}</div>
+                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: <span class="pdf-coord-link" data-lat="${data.latitude}" data-lng="${data.longitude}" style="color: #2a5299; text-decoration: underline;">${data.latitude}, ${data.longitude}</span></div>
                                 ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
                             </div>
                         </div>
@@ -646,6 +655,43 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
             pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
             heightLeft -= pdfHeight;
         }
+
+        // --- NEW: Handle Clickable Coordinates ---
+        try {
+            const pdfScale = pdfWidth / 840;
+            const coordElements = container.querySelectorAll('.pdf-coord-link');
+            
+            coordElements.forEach(el => {
+                const lat = el.getAttribute('data-lat');
+                const lng = el.getAttribute('data-lng');
+                
+                if (lat && lng && lat !== '---' && lng !== '---') {
+                    const rect = el.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    const elTop = rect.top - containerRect.top;
+                    const elLeft = rect.left - containerRect.left;
+                    
+                    const x_mm = elLeft * pdfScale;
+                    const y_total_mm = elTop * pdfScale;
+                    const w_mm = rect.width * pdfScale;
+                    const h_mm = rect.height * pdfScale;
+                    
+                    const pageNum = Math.floor(y_total_mm / pdfHeight) + 1;
+                    const y_on_page = y_total_mm % pdfHeight;
+                    
+                    if (pageNum <= pdf.internal.getNumberOfPages()) {
+                        pdf.setPage(pageNum);
+                        pdf.link(x_mm, y_on_page, w_mm, h_mm, {
+                            url: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+                        });
+                    }
+                }
+            });
+        } catch (linkErr) {
+            console.warn('Erro ao adicionar links de coordenadas ao PDF:', linkErr);
+        }
+        // -----------------------------------------
 
         const blob = pdf.output('blob');
         const file = new File([blob], filename, { type: 'application/pdf' });

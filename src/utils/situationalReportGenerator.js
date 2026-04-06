@@ -235,7 +235,9 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
                                     <td style="padding: 10px 15px; font-weight: 800; color: #1e293b;">${l.risk}</td>
                                     <td style="padding: 10px 15px; color: #64748b;">${l.details || l.subtype || '-'}</td>
                                     <td style="padding: 10px 15px; text-align: center; font-family: monospace; color: #94a3b8; font-size: 9px;">
-                                        ${l.lat?.toFixed(5)}, ${l.lng?.toFixed(5)}
+                                        <span class="pdf-coord-link" data-lat="${l.lat}" data-lng="${l.lng}" style="color: #3b82f6; text-decoration: underline; cursor: pointer;">
+                                            ${l.lat?.toFixed(5)}, ${l.lng?.toFixed(5)}
+                                        </span>
                                     </td>
                                 </tr>
                             `).join('') : `<tr><td colspan="4" style="padding: 30px; text-align: center; color: #94a3b8; font-style: italic;">Nenhum registro no período.</td></tr>`}
@@ -325,6 +327,43 @@ export const generateSituationalReport = async (dashboardData, weatherData, pluv
             pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pdfHeight;
         }
+
+        // --- NEW: Handle Clickable Coordinates ---
+        try {
+            const pdfScale = pdfWidth / 840;
+            const coordElements = container.querySelectorAll('.pdf-coord-link');
+            
+            coordElements.forEach(el => {
+                const lat = el.getAttribute('data-lat');
+                const lng = el.getAttribute('data-lng');
+                
+                if (lat && lng && lat !== '---' && lng !== '---') {
+                    const rect = el.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    const elTop = rect.top - containerRect.top;
+                    const elLeft = rect.left - containerRect.left;
+                    
+                    const x_mm = elLeft * pdfScale;
+                    const y_total_mm = elTop * pdfScale;
+                    const w_mm = rect.width * pdfScale;
+                    const h_mm = rect.height * pdfScale;
+                    
+                    const pageNum = Math.floor(y_total_mm / pdfHeight) + 1;
+                    const y_on_page = y_total_mm % pdfHeight;
+                    
+                    if (pageNum <= pdf.internal.getNumberOfPages()) {
+                        pdf.setPage(pageNum);
+                        pdf.link(x_mm, y_on_page, w_mm, h_mm, {
+                            url: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+                        });
+                    }
+                }
+            });
+        } catch (linkErr) {
+            console.warn('Erro ao adicionar links de coordenadas ao PDF:', linkErr);
+        }
+        // -----------------------------------------
 
         const blob = pdf.output('blob');
         const timestamp = now.toLocaleDateString('pt-BR').replace(/\//g, '_');
