@@ -27,29 +27,49 @@ const colorPalette = {
 const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
 
 const processListToMapData = (list) => {
-    return list
+    return (list || [])
         .map(v => {
+            if (!v) return null;
+            
+            const parseCoords = (input) => {
+                const s = String(input || '');
+                if (!s) return [null, null];
+                // Support various formats: "-20,123 -40,123", "-20.123, -40.123", etc.
+                const matches = s.match(/-?\d+[,.]\d+/g) || s.match(/-?\d+/g) || [];
+                if (matches.length >= 2) {
+                    return [
+                        parseFloat(matches[0].replace(',', '.')),
+                        parseFloat(matches[1].replace(',', '.'))
+                    ];
+                }
+                return [null, null];
+            };
+
             let lat = null, lng = null;
-            if (v.coordenadas && String(v.coordenadas).includes(',')) {
-                const parts = String(v.coordenadas).split(',')
-                lat = parseFloat(parts[0].replace(',', '.'))
-                lng = parseFloat(parts[1].replace(',', '.'))
-            } else if (v.latitude && v.longitude) {
-                lat = typeof v.latitude === 'string' ? parseFloat(v.latitude.replace(',', '.')) : parseFloat(v.latitude)
-                lng = typeof v.longitude === 'string' ? parseFloat(v.longitude.replace(',', '.')) : parseFloat(v.longitude)
+            
+            // Try explicit fields first
+            if (v.latitude && v.longitude) {
+                lat = typeof v.latitude === 'string' ? parseFloat(v.latitude.replace(',', '.')) : parseFloat(v.latitude);
+                lng = typeof v.longitude === 'string' ? parseFloat(v.longitude.replace(',', '.')) : parseFloat(v.longitude);
             } else if (v.lat && v.lng) {
-                lat = typeof v.lat === 'string' ? parseFloat(v.lat.replace(',', '.')) : parseFloat(v.lat)
-                lng = typeof v.lng === 'string' ? parseFloat(v.lng.replace(',', '.')) : parseFloat(v.lng)
+                lat = typeof v.lat === 'string' ? parseFloat(v.lat.replace(',', '.')) : parseFloat(v.lat);
+                lng = typeof v.lng === 'string' ? parseFloat(v.lng.replace(',', '.')) : parseFloat(v.lng);
+            }
+            
+            // Fallback to coordinates string parsing if still null or invalid
+            if ((!lat || !lng || isNaN(lat) || isNaN(lng)) && v.coordenadas) {
+                [lat, lng] = parseCoords(v.coordenadas);
             }
 
-            if (isNaN(lat) || isNaN(lng) || lat === null) return null
+            if (!lat || !lng || isNaN(lat) || isNaN(lng) || Math.abs(lat) < 0.01) return null;
 
             let type = 'v';
             if (v.ocorrencia_id_format || v.ocorrencia_id || v.id_ocorrencia) type = 'o';
-            else if (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao) type = 'i';
+            else if (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao || v.status_interdicao) type = 'i';
+            else if (v.vistoria_id || v.vistoriaId) type = 'v';
 
-            const subtypes = v.subtipos_risco || v.subtiposRisco || []
-            const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || 'Interdição') : 'Vistoria')
+            const subtypes = v.subtipos_risco || v.subtiposRisco || [];
+            const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || 'Interdição') : 'Vistoria');
 
             return {
                 id: v.id,
@@ -57,15 +77,14 @@ const processListToMapData = (list) => {
                 lat, lng,
                 risk: category,
                 status: v.status || 'Pendente',
-                details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : (category || ''),
+                details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : (String(category || '')),
                 date: v.created_at || v.data_hora || v.dataHora || new Date().toISOString(),
                 type,
-                // Interdiction specific fields to ensure they reach the report from api data
                 risco_tipo: v.risco_tipo || v.riscoTipo,
                 medida_tipo: v.medida_tipo || v.medidaTipo,
-                coordenadas: v.coordenadas,
+                coordenadas: v.coordenadas || `${lat},${lng}`,
                 interdicao_id: v.interdicao_id || v.interdicaoId
-            }
+            };
         })
         .filter(loc => loc !== null);
 };
@@ -184,24 +203,28 @@ export const api = {
             const todayStr = new Date().toLocaleDateString('pt-BR');
             const todayOccurrences = allOcorrencias.filter(o => o.data_ocorrencia === todayStr).length;
 
+            const vistoriasLocations = processListToMapData(allVistorias);
+            const ocorrenciasLocations = processListToMapData(allOcorrencias);
+            const interdicoesLocations = processListToMapData(allInterdicoes.map(i => ({ ...i, categoriaRisco: i.risco_grau || i.riscoGrau })));
+
             return {
                 vistorias: {
                     stats: { total: allVistorias.length },
                     breakdown: processBreakdown(allVistorias),
                     localidadeBreakdown: processLocalidadeBreakdown(allVistorias),
-                    locations: processListToMapData(allVistorias)
+                    locations: vistoriasLocations
                 },
                 ocorrencias: {
                     stats: { total: allOcorrencias.length, today: todayOccurrences },
                     breakdown: processBreakdown(allOcorrencias),
                     localidadeBreakdown: processLocalidadeBreakdown(allOcorrencias),
-                    locations: processListToMapData(allOcorrencias)
+                    locations: ocorrenciasLocations
                 },
                 interdicoes: {
                     stats: { total: allInterdicoes.length },
-                    breakdown: processBreakdown(allInterdicoes.map(i => ({ ...i, categoriaRisco: i.risco_grau }))),
+                    breakdown: processBreakdown(allInterdicoes.map(i => ({ ...i, categoriaRisco: i.risco_grau || i.riscoGrau }))),
                     localidadeBreakdown: processLocalidadeBreakdown(allInterdicoes),
-                    locations: processListToMapData(allInterdicoes.map(i => ({ ...i, categoriaRisco: i.risco_grau || i.riscoGrau })))
+                    locations: interdicoesLocations
                 },
                 stats: {
                     totalVistorias: allVistorias.length,
@@ -212,7 +235,7 @@ export const api = {
                 },
                 // Maintaining top level for backward compat if needed
                 breakdown: processBreakdown(allVistorias),
-                locations: processListToMapData(allVistorias),
+                locations: [...vistoriasLocations, ...ocorrenciasLocations, ...interdicoesLocations],
                 alerts: inmetAlerts
             };
 
