@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { UserContext } from '../../App'
 import { api } from '../../services/api'
 import {
-    ClipboardList, AlertTriangle, Timer, CloudRain, Map, BarChart3,
+    ClipboardList, AlertTriangle, Timer, CloudRain, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
     Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield
@@ -400,9 +400,11 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
 
             <div className="grid grid-cols-2 gap-6">
                 <div className="bg-white border border-slate-200 p-8 rounded-[32px] flex flex-col justify-center shadow-md">
-                    <div className="flex items-center gap-3 mb-4 text-blue-600">
-                        <AlertTriangle size={32} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Ocorrências</span>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                            <AlertTriangle size={32} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ocorrências</span>
                     </div>
                     <div className="flex items-baseline gap-2">
                         <span className="text-7xl font-black text-slate-800 tabular-nums leading-none tracking-tighter">{data.stats.activeOccurrences}</span>
@@ -410,9 +412,11 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
                     </div>
                 </div>
                 <div className="bg-white border border-slate-200 p-8 rounded-[32px] flex flex-col justify-center shadow-md">
-                    <div className="flex items-center gap-3 mb-4 text-emerald-600">
-                        <Droplets size={32} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Média Chuva</span>
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                            <Droplets size={32} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Média Chuva</span>
                     </div>
                     <div className="flex items-baseline gap-2">
                         <span className="text-7xl font-black text-slate-800 tabular-nums leading-none tracking-tighter">
@@ -1110,7 +1114,7 @@ const MobileDashboardView = ({
                         <div className="grid grid-cols-2 gap-4">
                             {/* Sync Card */}
                             <div onClick={handleSync} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 relative active:scale-95 transition-all group">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-transform group-active:scale-95 ${(syncDetail.vistorias + syncDetail.interdicoes) > 0 ? 'bg-orange-500/10 text-orange-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
                                     {syncing ? <CloudUpload size={20} className="animate-bounce" /> : <CloudUpload size={20} />}
                                 </div>
                                 <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">
@@ -1121,7 +1125,7 @@ const MobileDashboardView = ({
 
                             {/* INMET Alerts */}
                             <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-all">
-                                <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl flex items-center justify-center mb-3">
+                                <div className="bg-orange-500/10 text-orange-600 w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-transform group-active:scale-95">
                                     <Zap size={20} />
                                 </div>
                                 <div className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-1 tabular-nums">{data.stats.inmetAlertsCount || 0}</div>
@@ -1136,28 +1140,28 @@ const MobileDashboardView = ({
                     <h2 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-6 px-1 uppercase tracking-widest text-center">Acesso Rápido</h2>
                     <div className="grid grid-cols-4 gap-2 px-1 justify-items-center">
                         <div onClick={() => navigate('/monitoramento')} className="flex flex-col items-center gap-2.5 cursor-pointer">
-                            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
+                            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-all">
                                 <BarChart3 size={28} />
                             </div>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Pluviômetros</span>
                         </div>
                         {!isOperador && (
                             <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer">
-                                <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
+                                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-all">
                                     <Home size={28} />
                                 </div>
                                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Assisit. Humanitária</span>
                             </div>
                         )}
                         <div onClick={() => navigate('/ocorrencias')} className="flex flex-col items-center gap-2.5 cursor-pointer">
-                            <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all">
+                            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-all">
                                 <ClipboardList size={28} />
                             </div>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Ocorrências</span>
                         </div>
                         {!isOperador && (
                             <div className="flex flex-col items-center gap-2.5 relative">
-                                <div onClick={() => setShowReportMenu(!showReportMenu)} className="w-16 h-16 bg-white dark:bg-slate-800 rounded-full shadow-md flex items-center justify-center text-blue-600 active:scale-90 transition-all cursor-pointer">
+                                <div onClick={() => setShowReportMenu(!showReportMenu)} className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-all cursor-pointer">
                                     <FileText size={28} />
                                 </div>
                                 <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Relatórios</span>
@@ -1469,9 +1473,9 @@ const BoletinsCard = () => {
                                         : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:border-slate-100 dark:hover:border-slate-800'
                                         }`}
                                 >
-                                    <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center mr-2 shadow-sm ${isMet
-                                        ? (isFirst ? 'bg-blue-500 text-white' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-500 border border-blue-100 dark:border-blue-800/50')
-                                        : (isFirst ? 'bg-orange-500 text-white' : 'bg-orange-50 dark:bg-orange-900/30 text-orange-500 border border-orange-100 dark:border-orange-800/50')
+                                    <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center mr-2 shadow-sm ${isMet
+                                        ? (isFirst ? 'bg-blue-500 text-white' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20')
+                                        : (isFirst ? 'bg-orange-500 text-white' : 'bg-orange-500/10 text-orange-500 border border-orange-500/20')
                                         }`}>
                                         <FileText size={14} />
                                     </div>
@@ -1596,72 +1600,74 @@ const WebViewDashboardView = ({
                     {/* Top 5 Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {/* Card 1: Risk Level */}
-                        <div className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col justify-between relative overflow-hidden group shadow-lg shadow-blue-500/20">
-                            <div className="flex justify-between items-start mb-6">
-                                <span className={`text-xl font-black ${statusInfo.text}`}>{statusInfo.label}</span>
-                                <div className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest leading-none ${statusInfo.text} ${statusInfo.bg}`}>Status</div>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                                    <div className={`h-full rounded-full w-full transition-all duration-1000 ${statusInfo.color} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
+                        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group shadow-sm hover:shadow-xl transition-all h-full min-h-[140px]">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Status Civil</span>
+                                <span className={`text-2xl font-black ${statusInfo.text} uppercase tracking-tighter`}>{statusInfo.label}</span>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 opacity-70">Condição Geral</p>
+                                <div className="mt-4 flex flex-col gap-2 max-w-[70%]">
+                                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden shadow-inner">
+                                        <div className={`h-full rounded-full transition-all duration-1000 ${statusInfo.color}`} style={{ width: '100%' }} />
+                                    </div>
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Plataforma INMET / CEMADEN</p>
+                            </div>
+                            <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${statusInfo.bg} flex items-center justify-center ${statusInfo.text} group-hover:scale-110 transition-transform`}>
+                                <Shield size={24} />
                             </div>
                         </div>
 
                         {/* Card 2: INMET Alerts */}
                         {!isOperador && (
-                            <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden text-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-500">
-                                        <Zap size={20} />
-                                    </div>
-                                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
+                            <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Avisos Ativos</span>
+                                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Novos Alertas</p>
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2">Avisos INMET</span>
+                                <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
+                                    <Zap size={24} />
+                                </div>
                             </div>
                         )}
 
-                        {/* Card 3: Ocorrências Hoje */}
-                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden text-center">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl text-purple-500">
-                                    <AlertTriangle size={20} />
-                                </div>
-                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.activeOccurrences}</span>
+                        {/* Card 3: Ocorrências */}
+                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Ocorrências</span>
+                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{data.stats.activeOccurrences}</span>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Em Andamento</p>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Ocorrências</span>
+                            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                                <AlertTriangle size={24} />
+                            </div>
                         </div>
 
-                        {/* Card 4: Vistorias Totais */}
-                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col items-center justify-center gap-1 group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden text-center">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-500">
-                                    <ClipboardList size={20} />
-                                </div>
-                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.stats.totalVistorias}</span>
+                        {/* Card 4: Vistorias */}
+                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Vistorias</span>
+                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{data.stats.totalVistorias}</span>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Total Registrado</p>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] mt-2 text-center leading-none">Vistorias</span>
+                            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                                <ClipboardList size={24} />
+                            </div>
                         </div>
 
-                        {/* Card 5: Média Pluviométrica */}
-                        <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-[#10346E]/20 dark:border-[#10346E]/30 p-5 rounded-3xl flex flex-col justify-between group cursor-pointer hover:bg-slate-50 transition-all shadow-lg shadow-blue-500/20 relative overflow-hidden">
-                            <div className="flex justify-between items-start">
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-500 group-hover:scale-110 transition-transform">
-                                    <Droplets size={24} />
+                        {/* Card 5: Pluviometria */}
+                        <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Pluviometria</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">
+                                        {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : 0}
+                                    </span>
+                                    <span className="text-xs font-black text-slate-400 uppercase">mm</span>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums">
-                                        {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : 0}<span className="text-lg text-slate-400 font-bold ml-0.5">mm</span>
-                                    </div>
-                                    <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">MÉDIA 24H</div>
-                                </div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Média 24h</p>
                             </div>
-                            <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-50 dark:border-slate-700/50">
-                                <div className="flex items-center gap-1.5 overflow-hidden">
-                                    <Gauge size={12} className="text-indigo-400 shrink-0" />
-                                    <span className="text-[9px] font-bold text-slate-500 truncate">Estações: <span className="text-slate-600 dark:text-slate-300 font-black">{rainfall?.length || 0}</span> ativas</span>
-                                </div>
+                            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                                <Droplets size={24} />
                             </div>
                         </div>
                     </div>
@@ -2158,14 +2164,28 @@ const Dashboard = () => {
             const todayOccurrences = (localOcorrencias || []).filter(o => o.data_ocorrencia === todayStr).length;
 
             setSyncDetail(pendingDetail);
-            const initialAllV = [...(cachedVistorias || []), ...(localVistorias || [])];
-            const initialAllO = localOcorrencias || []; 
+            const deduplicate = (list) => {
+                const uniqueMap = new window.Map();
+                (list || []).forEach(item => {
+                    if (!item) return;
+                    // PRIORITIZE Business ID (formatted number like 001/2026) for true deduplication
+                    const businessId = item.vistoria_id || item.vistoriaId || item.id_vistoria || item.ocorrencia_id_format || item.ocorrencia_id || item.id_ocorrencia || item.interdicao_id || item.interdicaoId || item.id_interdicao;
+                    
+                    const key = businessId ? String(businessId) : (item.id ? `tech-${item.id}` : `rnd-${Math.random()}`);
+                    
+                    if (key && key !== 'undefined' && key !== 'null') uniqueMap.set(key, item);
+                });
+                return Array.from(uniqueMap.values());
+            };
+
+            const initialAllV = deduplicate([...(cachedVistorias || []), ...(localVistorias || [])]);
+            const initialAllO = deduplicate(localOcorrencias || []); 
             
             // Extract interdicoes from vistorias AND combine with local interdicoes table
             const vistoriasWithI = (initialAllV || []).filter(v => 
                 v && (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao)
             );
-            const initialAllI = [...(localInterdicoes || []), ...vistoriasWithI];
+            const initialAllI = deduplicate([...(localInterdicoes || []), ...vistoriasWithI]);
 
             const vProcessed = processLocations(initialAllV, 'v');
             const oProcessed = processLocations(initialAllO, 'o');
@@ -2184,36 +2204,15 @@ const Dashboard = () => {
             // Refetch in background - IMPORTANT: Merge with existing structure
             api.getDashboardData().then(dashResult => {
                 if (dashResult) {
-                    const processed = {
-                        ...dashResult,
-                        vistorias: { 
-                            stats: { total: (dashResult.vistorias || []).length }, 
-                            breakdown: processBreakdown(dashResult.vistorias || []), 
-                            localidadeBreakdown: processLocalidadeBreakdown(dashResult.vistorias || []), 
-                            locations: processLocations(dashResult.vistorias || [], 'v') 
-                        },
-                        ocorrencias: { 
-                            stats: { total: (dashResult.ocorrencias || []).length }, 
-                            breakdown: processBreakdown(dashResult.ocorrencias || []), 
-                            localidadeBreakdown: processLocalidadeBreakdown(dashResult.ocorrencias || []), 
-                            locations: processLocations(dashResult.ocorrencias || [], 'o') 
-                        },
-                        interdicoes: { 
-                            stats: { total: (dashResult.interdicoes || []).length || (dashResult.vistorias || []).filter(v => v && (v.interdicao_id || v.interdicaoId)).length }, 
-                            breakdown: processBreakdown(dashResult.interdicoes || []), 
-                            localidadeBreakdown: processLocalidadeBreakdown(dashResult.interdicoes || []), 
-                            locations: processLocations(dashResult.interdicoes || (dashResult.vistorias || []).filter(v => v && (v.interdicao_id || v.interdicaoId)), 'i') 
-                        }
-                    };
+                    // dashResult is already structured: { vistorias: { stats, breakdown, locations... }, stats: { ... }, locations: [...] }
                     setData(prev => ({
-                        ...processed,
+                        ...dashResult,
                         syncDetail: prev?.syncDetail || pendingDetail,
                         stats: {
-                            ...processed.stats,
-                            totalInterdicoes: processed.interdicoes.stats.total,
-                            inmetAlertsCount: (processed.alerts || []).length
-                        },
-                        locations: [...processed.vistorias.locations, ...processed.ocorrencias.locations, ...processed.interdicoes.locations]
+                            ...dashResult.stats,
+                            totalInterdicoes: dashResult.interdicoes.stats.total,
+                            inmetAlertsCount: (dashResult.alerts || []).length
+                        }
                     }));
                 }
             }).catch(e => console.error('[Dash] Background refetch error:', e));

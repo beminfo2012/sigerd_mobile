@@ -138,28 +138,25 @@ export const api = {
 
             // Use Map to merge to avoid duplicates but keep local entries if remote query is limited
             const vMap = new Map();
-            // First pass: add all remote/cached items
-            vistoriasCache.forEach(v => {
-                const key = v.id || v.vistoria_id || v.vistoriaId;
-                if (key) vMap.set(key, v);
-            });
-            // Second pass: add ALL local items (local is source of truth for presence)
-            localVistorias.forEach(v => {
-                const key = v.id || v.vistoriaId || v.vistoria_id;
-                if (key) vMap.set(key, v);
+            // First pass: add all items. IMPORTANT: Prioritize the formatted Business ID for deduplication
+            [...vistoriasCache, ...localVistorias].forEach(v => {
+                if (!v) return;
+                // Formatted ID is the strongest key for deduplication across local and remote
+                const businessId = v.vistoria_id || v.vistoriaId || v.id_vistoria;
+                // If we have a business ID, use it. Otherwise fall back to technical ID or random
+                const key = businessId ? String(businessId) : (v.id ? `tech-${v.id}` : `rnd-${Math.random()}`);
+                vMap.set(key, v);
             });
             const allVistorias = Array.from(vMap.values());
 
             // 3. Process Ocorrencias (Improved deduplication)
             const oData = remoteOcorrencias.data || [];
             const oMap = new Map();
-            oData.forEach(o => {
-                const key = o.id || o.ocorrencia_id || o.ocorrencia_id_format;
-                if (key) oMap.set(key, o);
-            });
-            localOcorrencias.forEach(o => {
-                const key = o.id || o.ocorrencia_id || o.ocorrencia_id_format;
-                if (key) oMap.set(key, o);
+            [...oData, ...localOcorrencias].forEach(o => {
+                if (!o) return;
+                const businessId = o.ocorrencia_id_format || o.ocorrencia_id || o.id_ocorrencia;
+                const key = businessId ? String(businessId) : (o.id ? `tech-${o.id}` : `rnd-${Math.random()}`);
+                oMap.set(key, o);
             });
             const allOcorrencias = Array.from(oMap.values());
 
