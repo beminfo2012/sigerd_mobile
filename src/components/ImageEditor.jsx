@@ -3,7 +3,7 @@ import * as fabric from 'fabric';
 import { 
     X, Check, Undo, RotateCcw, MousePointer2, 
     ArrowUpRight, Square, Circle as CircleIcon, PenTool,
-    Trash2, Palette, Minus, Type
+    Trash2, Palette, Minus, Type, RotateCw, Sun, Zap, Sliders
 } from 'lucide-react';
 
 const COLORS = [
@@ -23,11 +23,13 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }) => {
     const containerRef = useRef(null);
     const isUndoing = useRef(false);
     
-    const [mode, setMode] = useState('arrow'); // 'select', 'arrow', 'rect', 'circle', 'pen'
+    const [mode, setMode] = useState('arrow'); // 'select', 'arrow', 'rect', 'circle', 'pen', 'adjust'
     const [color, setColor] = useState('#EF4444');
     const [thickness, setThickness] = useState(4);
     const [selectedObject, setSelectedObject] = useState(null);
     const [history, setHistory] = useState([]);
+    const [adjustments, setAdjustments] = useState({ brightness: 0, contrast: 0, saturation: 0 });
+    const [rotation, setRotation] = useState(0);
 
     const modeRef = useRef(mode);
     const colorRef = useRef(color);
@@ -303,10 +305,10 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }) => {
     return (
         <div 
             ref={containerRef}
-            className="fixed inset-0 z-[120] bg-slate-950 flex flex-col items-center overflow-hidden"
+            className="fixed inset-0 z-[6000] bg-slate-950 flex flex-col items-center overflow-hidden"
         >
             {/* Slim Header Toolbar */}
-            <div className="w-full bg-slate-900/90 backdrop-blur-md border-b border-white/5 px-2 py-2 flex items-center justify-between">
+            <div className="w-full bg-slate-900/90 backdrop-blur-md border-b border-white/5 px-2 py-4 pt-12 sm:pt-4 flex items-center justify-between">
                 <button onClick={onCancel} className="p-2 text-white/50 hover:text-white"><X size={20} /></button>
                 
                 <div className="flex bg-white/5 p-0.5 rounded-xl border border-white/10">
@@ -315,7 +317,8 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }) => {
                         { id: 'arrow', icon: ArrowUpRight },
                         { id: 'rect', icon: Square },
                         { id: 'circle', icon: CircleIcon },
-                        { id: 'pen', icon: PenTool }
+                        { id: 'pen', icon: PenTool },
+                        { id: 'adjust', icon: Sliders }
                     ].map(t => (
                         <button 
                             key={t.id}
@@ -328,6 +331,23 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }) => {
                 </div>
 
                 <div className="flex gap-2">
+                    <button 
+                        onClick={() => {
+                            const canvas = fabricRef.current;
+                            if (!canvas) return;
+                            const mainImg = canvas.getObjects().find(obj => obj.get('type') === 'image');
+                            if (mainImg) {
+                                const newRotation = (rotation + 90) % 360;
+                                mainImg.set('angle', newRotation);
+                                setRotation(newRotation);
+                                canvas.requestRenderAll();
+                            }
+                        }}
+                        className="p-2 text-white/50 hover:text-white"
+                        title="Rotacionar"
+                    >
+                        <RotateCw size={20} />
+                    </button>
                     <button onClick={handleUndo} disabled={history.length <= 1} className={`p-2 rounded-lg ${history.length <= 1 ? 'text-white/5' : 'text-white/40'}`}>
                         <Undo size={18} />
                     </button>
@@ -379,6 +399,51 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }) => {
                             ))}
                         </div>
                     </div>
+
+                    {mode === 'adjust' && (
+                        <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2">
+                            {[
+                                { id: 'brightness', icon: Sun, label: 'Brilho', min: -1, max: 1, step: 0.1 },
+                                { id: 'contrast', icon: Zap, label: 'Contraste', min: -1, max: 1, step: 0.1 },
+                                { id: 'saturation', icon: Palette, label: 'Saturação', min: -1, max: 1, step: 0.1 }
+                            ].map(adj => (
+                                <div key={adj.id} className="flex items-center gap-4">
+                                    <adj.icon size={14} className="text-white/40 shrink-0" />
+                                    <input 
+                                        type="range"
+                                        min={adj.min}
+                                        max={adj.max}
+                                        step={adj.step}
+                                        value={adjustments[adj.id]}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            setAdjustments(prev => ({ ...prev, [adj.id]: val }));
+                                            const canvas = fabricRef.current;
+                                            const img = canvas.getObjects().find(o => o.get('type') === 'image');
+                                            if (img) {
+                                                if (adj.id === 'brightness') {
+                                                    img.filters = img.filters.filter(f => !(f instanceof fabric.filters.Brightness));
+                                                    img.filters.push(new fabric.filters.Brightness({ brightness: val }));
+                                                } else if (adj.id === 'contrast') {
+                                                    img.filters = img.filters.filter(f => !(f instanceof fabric.filters.Contrast));
+                                                    img.filters.push(new fabric.filters.Contrast({ contrast: val }));
+                                                } else if (adj.id === 'saturation') {
+                                                    img.filters = img.filters.filter(f => !(f instanceof fabric.filters.Saturation));
+                                                    img.filters.push(new fabric.filters.Saturation({ saturation: val }));
+                                                }
+                                                img.applyFilters();
+                                                canvas.requestRenderAll();
+                                            }
+                                        }}
+                                        className="flex-1 accent-indigo-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                    <span className="text-[10px] font-black text-white/40 w-8 text-right">
+                                        {(adjustments[adj.id] * 100).toFixed(0)}%
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">

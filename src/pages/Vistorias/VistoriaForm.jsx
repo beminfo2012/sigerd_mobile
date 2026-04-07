@@ -2033,7 +2033,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             {/* Foto Lightbox / Popup */}
             {selectedPhotoIndex !== null && (
                 <div
-                    className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
+                    className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[6001] flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
                     onClick={() => setSelectedPhotoIndex(null)}
                 >
                     {/* Toolbar Superior */}
@@ -2074,7 +2074,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         <>
                             <button
                                 onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
+                                className="absolute left-4 sm:left-24 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
                             >
                                 <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
                             </button>
