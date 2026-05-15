@@ -574,6 +574,7 @@ function App() {
             notificationService.requestPermission();
 
             // Background refresh happens via SyncBackground component
+            refreshProfileFromServer();
         } else {
             setIsLoading(false)
         }
@@ -593,6 +594,11 @@ function App() {
             return supabase.from('profiles').select('*').eq('id', data.user.id).single();
         }).then(result => {
             if (result?.data) {
+                if (result.data.is_active === false) {
+                    console.warn('[Profile] Usuário inativo detectado no background, deslogando...');
+                    handleLogout();
+                    return;
+                }
                 const fresh = { ...result.data, role: result.data.role || 'Agente de Defesa Civil' };
                 setUserProfile(fresh);
                 localStorage.setItem('userProfile', JSON.stringify(fresh));

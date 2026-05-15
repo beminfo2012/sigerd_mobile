@@ -337,7 +337,24 @@ const Login = ({ onLogin }) => {
                 try { const d = await verifyError.response?.json(); if (d?.error) msg = d.error; } catch (_) { }
                 throw new Error(msg);
             }
-            if (verifyResult.verified && verifyResult.loginUrl) onLogin()
+            if (verifyResult.verified && verifyResult.loginUrl) {
+                // Verificar se o usuário está ativo
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('is_active')
+                        .eq('id', user.id)
+                        .single()
+
+                    if (profile && profile.is_active === false) {
+                        await supabase.auth.signOut()
+                        setError('Sua conta está inativa. Entre em contato com o administrador.')
+                        return
+                    }
+                }
+                onLogin()
+            }
             else setError('Falha na verificação biométrica')
         } catch (err) {
             setError('Erro na biometria: ' + (err.message || 'Tente novamente'))
@@ -361,6 +378,21 @@ const Login = ({ onLogin }) => {
                 setLoading(false)
                 return
             }
+
+            // Verificar se o usuário está ativo
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('is_active')
+                .eq('id', data.user.id)
+                .single()
+
+            if (profile && profile.is_active === false) {
+                await supabase.auth.signOut()
+                setError('Sua conta está inativa. Entre em contato com o administrador.')
+                setLoading(false)
+                return
+            }
+
             onLogin()
         } catch (err) {
             setError('Erro ao conectar. Verifique sua conexão.')

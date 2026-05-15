@@ -1,14 +1,15 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { Camera, Paperclip, X, Image as ImageIcon } from 'lucide-react'
+import CameraModal from './CameraModal'
 
 const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAll = false, compact = false }) => {
-    const cameraInputRef = useRef(null)
     const galleryInputRef = useRef(null)
+    const [isCameraOpen, setIsCameraOpen] = useState(false)
 
     const handleCameraClick = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        if (cameraInputRef.current) cameraInputRef.current.click()
+        setIsCameraOpen(true)
     }
 
     const handleGalleryClick = (e) => {
@@ -22,6 +23,11 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
         if (files.length > 0) {
             onFileSelect(files, source)
         }
+    }
+
+    const handleCameraCapture = (files) => {
+        onFileSelect(files, 'camera')
+        setIsCameraOpen(false)
     }
 
     if (compact) {
@@ -51,15 +57,10 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
 
     return (
         <div className="grid grid-cols-2 gap-2 w-full">
-            {/* Camera Input (Environment) */}
-            <input
-                type="file"
-                ref={cameraInputRef}
-                className="hidden"
-                accept={acceptAll ? "*" : "image/*"}
-                capture={acceptAll ? undefined : "environment"}
-                multiple
-                onChange={(e) => handleChange(e, 'camera')}
+            <CameraModal 
+                isOpen={isCameraOpen} 
+                onClose={() => setIsCameraOpen(false)} 
+                onCapture={handleCameraCapture} 
             />
 
             {/* Gallery Input (Standard) */}
