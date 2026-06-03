@@ -153,6 +153,8 @@ export async function sincronizarVistoriasPendentes(vistoriasLoteOffline) {
                 nivel_risco: vistoria.nivel_risco || vistoria.nivelRisco || 'Baixo',
                 situacao_observada: vistoria.situacao_observada || vistoria.situacaoObservada || 'Estabilizado',
                 populacao_estimada: vistoria.populacao_estimada || vistoria.populacaoEstimada || '',
+                residencias_em_risco: (vistoria.residenciasEmRisco === "" || vistoria.residenciasEmRisco == null) ? null : Number(vistoria.residenciasEmRisco),
+                area_afetada: (vistoria.areaAfetada === "" || vistoria.areaAfetada == null) ? null : Number(vistoria.areaAfetada),
                 grupos_vulneraveis: Array.isArray(vistoria.grupos_vulneraveis) ? vistoria.grupos_vulneraveis : (Array.isArray(vistoria.gruposVulneraveis) ? vistoria.gruposVulneraveis : []),
                 medidas_tomadas: Array.isArray(vistoria.medidas_tomadas) ? vistoria.medidas_tomadas : (Array.isArray(vistoria.medidasTomadas) ? vistoria.medidasTomadas : []),
                 encaminhamentos: Array.isArray(vistoria.encaminhamentos) ? vistoria.encaminhamentos : [],
@@ -179,6 +181,8 @@ export async function sincronizarVistoriasPendentes(vistoriasLoteOffline) {
             delete cleanPayload.nivelRisco;
             delete cleanPayload.situacaoObservada;
             delete cleanPayload.populacaoEstimada;
+            delete cleanPayload.residenciasEmRisco;
+            delete cleanPayload.areaAfetada;
             delete cleanPayload.gruposVulneraveis;
             delete cleanPayload.medidasTomadas;
             delete cleanPayload.checklistRespostas;

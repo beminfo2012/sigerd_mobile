@@ -575,6 +575,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                 situacao_observada: item.situacaoObservada || item.situacao_observada || 'Estabilizado',
 
                 populacao_estimada: item.populacaoEstimada || item.populacao_estimada || '',
+                residencias_em_risco: (item.residenciasEmRisco === "" || item.residenciasEmRisco == null) ? null : Number(item.residenciasEmRisco),
+                area_afetada: (item.areaAfetada === "" || item.areaAfetada == null) ? null : Number(item.areaAfetada),
                 grupos_vulneraveis: Array.isArray(item.gruposVulneraveis) ? item.gruposVulneraveis : (Array.isArray(item.grupos_vulneraveis) ? item.grupos_vulneraveis : []),
 
                 observacoes: item.observacoes || '',

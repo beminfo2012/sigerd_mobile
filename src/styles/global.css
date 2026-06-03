@@ -257,4 +257,14 @@
 
 .dark .leaflet-control-attribution {
   @apply !bg-slate-900/50 !text-slate-500;
+}
+
+/* Prevent dark mode filter on print preview/reports */
+.print-container .leaflet-container {
+  filter: none !important;
+  background: #f5f7fa !important;
+  background-color: #f5f7fa !important;
+}
+.print-container .leaflet-tile {
+  filter: none !important;
 }

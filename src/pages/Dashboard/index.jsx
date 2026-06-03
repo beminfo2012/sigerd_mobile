@@ -2510,9 +2510,7 @@ const Dashboard = () => {
                 String(l.risk).includes('Médio') || String(l.risk).includes('Média') || String(l.risk).includes('Atenção')
             );
 
-            let currentStatus = { label: 'NORMAL', bg: '#10b981', text: 'white' };
-            if (hasHighAlerts) currentStatus = { label: 'ALERTA', bg: '#ef4444', text: 'white' };
-            else if (hasMediumAlerts || (weather?.daily?.[0]?.rainProb > 50)) currentStatus = { label: 'ATENÇÃO', bg: '#f59e0b', text: 'white' };
+            const currentStatus = statusInfo || { label: 'NORMAL', bg: '#10b981', text: 'white' };
 
             const validStations = (rainfall || []).filter(p => (p.acc24hr || p.rainRaw || 0) > 0);
             const avgAcc = validStations.length > 0 

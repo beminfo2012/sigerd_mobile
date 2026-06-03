@@ -374,6 +374,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 nivelRisco: initialData.nivel_risco || initialData.nivelRisco || 'Baixo',
                 situacaoObservada: initialData.situacao_observada || initialData.situacaoObservada || 'Estabilizado',
                 populacaoEstimada: initialData.populacao_estimada || initialData.populacaoEstimada || '',
+                residenciasEmRisco: initialData.residencias_em_risco || initialData.residenciasEmRisco || '',
+                areaAfetada: initialData.area_afetada || initialData.areaAfetada || '',
                 gruposVulneraveis: Array.isArray(initialData.grupos_vulneraveis || initialData.gruposVulneraveis) ? (initialData.grupos_vulneraveis || initialData.gruposVulneraveis) : [],
                 medidasTomadas: Array.isArray(initialData.medidas_tomadas || initialData.medidasTomadas) ? (initialData.medidas_tomadas || initialData.medidasTomadas) : [],
                 encaminhamentos: Array.isArray(initialData.encaminhamentos) ? initialData.encaminhamentos : [],
@@ -571,6 +573,39 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             }
         })
     }
+
+    const hasOrganSelected = (organ) => {
+        return (formData.encaminhamentos || []).some(item => {
+            if (typeof item === 'string') {
+                return item === organ || item.startsWith(organ + ':');
+            }
+            return false;
+        });
+    };
+
+    const removeOrgan = (organ) => {
+        setFormData(prev => ({
+            ...prev,
+            encaminhamentos: (prev.encaminhamentos || []).filter(item => {
+                if (typeof item === 'string') {
+                    return item !== organ && !item.startsWith(organ + ':');
+                }
+                return true;
+            })
+        }));
+    };
+
+    const updateOrganDetail = (organ, detail) => {
+        setFormData(prev => ({
+            ...prev,
+            encaminhamentos: (prev.encaminhamentos || []).map(item => {
+                if (typeof item === 'string' && (item === organ || item.startsWith(organ + ':'))) {
+                    return detail ? `${organ}: ${detail}` : organ;
+                }
+                return item;
+            })
+        }));
+    };
 
     const handlePhotoSelect = async (files) => {
         // Prepare current form coords as fallback
@@ -1475,16 +1510,40 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     <h3 className="font-black text-slate-800 dark:text-slate-200 text-[10px] uppercase tracking-[2px]">População Exposta</h3>
                                 </div>
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Nº Estimado de Pessoas</label>
-                                        <input
-                                            type="number"
-                                            inputMode="numeric"
-                                            placeholder="Ex: 5"
-                                            className={inputClasses}
-                                            value={formData.populacaoEstimada}
-                                            onChange={e => setFormData({ ...formData, populacaoEstimada: e.target.value })}
-                                        />
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Nº Estimado de Pessoas</label>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="Ex: 5"
+                                                className={inputClasses}
+                                                value={formData.populacaoEstimada || ''}
+                                                onChange={e => setFormData({ ...formData, populacaoEstimada: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Residências em Risco</label>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                placeholder="Ex: 2"
+                                                className={inputClasses}
+                                                value={formData.residenciasEmRisco || ''}
+                                                onChange={e => setFormData({ ...formData, residenciasEmRisco: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Área Estimada (m²)</label>
+                                            <input
+                                                type="number"
+                                                inputMode="decimal"
+                                                placeholder="Ex: 150"
+                                                className={inputClasses}
+                                                value={formData.areaAfetada || ''}
+                                                onChange={e => setFormData({ ...formData, areaAfetada: e.target.value })}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         {['Crianças', 'Idosos', 'PCD'].map(g => (
@@ -1567,7 +1626,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     value=""
                                     onChange={(e) => {
                                         const val = e.target.value;
-                                        if (val && !formData.encaminhamentos.includes(val)) {
+                                        if (val && !hasOrganSelected(val)) {
                                             setFormData(prev => ({
                                                 ...prev,
                                                 encaminhamentos: [...(prev.encaminhamentos || []), val]
@@ -1577,25 +1636,47 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 >
                                     <option value="">Selecione para adicionar...</option>
                                     {ENCAMINHAMENTOS_LIST.map(enc => (
-                                        <option key={enc} value={enc} disabled={formData.encaminhamentos.includes(enc)}>
+                                        <option key={enc} value={enc} disabled={hasOrganSelected(enc)}>
                                             {enc}
                                         </option>
                                     ))}
                                 </select>
 
-                                {formData.encaminhamentos.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.encaminhamentos.map(enc => (
-                                            <button
-                                                key={enc}
-                                                type="button"
-                                                onClick={() => toggleArrayItem('encaminhamentos', enc)}
-                                                className="px-4 py-2 rounded-xl text-xs font-black bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-800 flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900 transition-colors group"
-                                            >
-                                                {enc}
-                                                <Trash2 size={12} className="text-blue-400 group-hover:text-red-500" />
-                                            </button>
-                                        ))}
+                                {formData.encaminhamentos && formData.encaminhamentos.length > 0 && (
+                                    <div className="space-y-3 mt-4">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Detalhes dos Encaminhamentos por Órgão</label>
+                                        <div className="space-y-3">
+                                            {formData.encaminhamentos.map(item => {
+                                                let organ = item;
+                                                let detail = '';
+                                                if (typeof item === 'string' && item.includes(':')) {
+                                                    const parts = item.split(':');
+                                                    organ = parts[0].trim();
+                                                    detail = parts.slice(1).join(':').trim();
+                                                }
+                                                return (
+                                                    <div key={organ} className="p-4 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">{organ}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeOrgan(organ)}
+                                                                className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+                                                            >
+                                                                <Trash2 size={12} /> Remover
+                                                            </button>
+                                                        </div>
+                                                        <textarea
+                                                            rows={2}
+                                                            placeholder={`Descreva os encaminhamentos solicitados para ${organ}...`}
+                                                            className={`${inputClasses} h-auto py-3`}
+                                                            value={detail}
+                                                            onChange={(e) => updateOrganDetail(organ, e.target.value)}
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                             </div>
