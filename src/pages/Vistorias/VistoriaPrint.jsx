@@ -837,7 +837,27 @@ const VistoriaPrint = () => {
                                         {(() => {
                                             const structural = checklistItems.filter(k => k.startsWith('structural:'));
                                             const standard = checklistItems.filter(k => !k.startsWith('structural:'));
-                                            const okOptions = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
+                                            
+                                            const okOptions = [
+                                                "não apresenta patologia",
+                                                "não observado",
+                                                "sem problemas",
+                                                "não identificado",
+                                                "adequada",
+                                                "adequado",
+                                                "adequadas",
+                                                "desobstruídas",
+                                                "desobstruída",
+                                                "ok",
+                                                "funcionando",
+                                                "sem alterações"
+                                            ];
+
+                                            const isOptionOk = (val) => {
+                                                if (!val) return true;
+                                                const lowerVal = val.toLowerCase().trim();
+                                                return okOptions.some(ok => lowerVal.includes(ok) || ok.includes(lowerVal));
+                                            };
 
                                             const allRows = [];
 
@@ -845,37 +865,56 @@ const VistoriaPrint = () => {
                                                 const sections = {};
                                                 structural.forEach(k => {
                                                     const parts = k.split(':');
-                                                    const sec = parts[1];
+                                                    const sec = parts[1]; // Ex: "1. TERRENO E ENTORNO"
                                                     if (!sections[sec]) sections[sec] = [];
-                                                    sections[sec].push(parts.length === 4 ? { name: parts[2], value: parts[3] } : { name: parts[2], value: '' });
+                                                    
+                                                    if (parts.length === 4) {
+                                                        sections[sec].push({ group: parts[2], value: parts[3] });
+                                                    } else if (parts.length === 3) {
+                                                        sections[sec].push({ group: null, value: parts[2] });
+                                                    }
                                                 });
 
-                                                Object.keys(sections).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sec => {
-                                                    sections[sec].forEach((item, idx) => {
-                                                        const opt = item.value.trim();
-                                                        const isAlert = !okOptions.includes(opt);
-                                                        allRows.push(
-                                                            <tr key={`struc-${sec}-${idx}`}>
-                                                                <td style={{ fontWeight: '700' }}>{sec} — {item.name}</td>
-                                                                <td>
-                                                                    <span className={`badge-status ${isAlert ? 'badge-risk-alto' : 'badge-risk-baixo'}`}>
-                                                                        {opt || 'CONFIRMADO'}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    });
+                                                Object.keys(sections).sort((a, b) => {
+                                                    const numA = parseInt(a) || 0;
+                                                    const numB = parseInt(b) || 0;
+                                                    return numA - numB;
+                                                }).forEach(sec => {
+                                                    const items = sections[sec];
+                                                    allRows.push(
+                                                        <tr key={`struc-${sec}`}>
+                                                            <td style={{ fontWeight: '800', color: '#1e293b', fontSize: '11px', verticalAlign: 'top', width: '55%' }}>
+                                                                {sec}
+                                                            </td>
+                                                            <td style={{ verticalAlign: 'top', width: '45%' }}>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                                    {items.map((item, idx) => {
+                                                                        const isAlert = !isOptionOk(item.value);
+                                                                        const badgeClass = isAlert ? 'badge-risk-alto' : 'badge-risk-baixo';
+                                                                        const textToShow = item.group ? `${item.group}: ${item.value}` : item.value;
+                                                                        return (
+                                                                            <div key={idx} style={{ display: 'block', margin: '2px 0' }}>
+                                                                                <span className={`badge-status ${badgeClass}`} style={{ display: 'inline-block', fontSize: '9px', fontWeight: '900', padding: '3px 6px', borderRadius: '3px' }}>
+                                                                                    {textToShow.toUpperCase()}
+                                                                                </span>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
                                                 });
                                             }
 
                                             if (standard.length > 0) {
                                                 standard.forEach((item, idx) => {
-                                                    const isAlert = !okOptions.includes(item);
+                                                    const isAlert = !isOptionOk(item);
                                                     allRows.push(
                                                         <tr key={`std-${idx}`}>
-                                                            <td style={{ fontWeight: '700' }}>{item}</td>
-                                                            <td>
-                                                                <span className={`badge-status ${isAlert ? 'badge-risk-alto' : 'badge-risk-baixo'}`}>
+                                                            <td style={{ fontWeight: '800', color: '#1e293b', fontSize: '11px', verticalAlign: 'top', width: '55%' }}>{item}</td>
+                                                            <td style={{ verticalAlign: 'top', width: '45%' }}>
+                                                                <span className={`badge-status ${isAlert ? 'badge-risk-alto' : 'badge-risk-baixo'}`} style={{ display: 'inline-block', fontSize: '9px', fontWeight: '900', padding: '3px 6px', borderRadius: '3px' }}>
                                                                     {isAlert ? 'RISCO PRESENTE' : 'ADEQUADA'}
                                                                 </span>
                                                             </td>
