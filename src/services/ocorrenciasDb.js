@@ -41,6 +41,7 @@ export const INITIAL_OCORRENCIA_STATE = {
     descricao_danos: '',
     observacoes: '',
     medidasTomadas: [],
+    encaminhamentos: [],
     unidade_consumidora: '',
     fotos: [],               // Photos array [ { id, data, legenda } ]
     assinaturaAgente: null,

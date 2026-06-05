@@ -239,10 +239,24 @@ const logradourosData = logradourosDataRaw
         bairro: item["Bairro"] ? item["Bairro"].trim() : ""
     }));
 
-const bairrosData = bairrosDataRaw
-    .filter(b => b.nome)
-    .map(b => ({ nome: b.nome.trim() }))
-    .sort((a, b) => a.nome.localeCompare(b.nome));
+const ENCAMINHAMENTOS_LIST = [
+    'Secretaria de Interior',
+    'Secretaria de Ação Social',
+    'Secretaria de Serviços Urbanos',
+    'Secretaria de Saúde',
+    'Secretaria de Defesa Social',
+    'Secretaria de Educação',
+    'Secretaria de Meio Ambiente',
+    'Secretaria de Agropecuária',
+    'Secretaria de Obras',
+    'Bombeiros Voluntários',
+    'Bombeiros Militar',
+    'Policia Militar',
+    'Policia Militar Ambiental',
+    'SAMU',
+    'Defesa Civil Estadual',
+    'Outros'
+];
 
 const OcorrenciasForm = () => {
     const { id } = useParams();
@@ -572,6 +586,39 @@ const OcorrenciasForm = () => {
             }
             return { ...prev, [field]: [...current, item] };
         });
+    };
+
+    const hasOrganSelected = (organ) => {
+        return (formData.encaminhamentos || []).some(item => {
+            if (typeof item === 'string') {
+                return item === organ || item.startsWith(organ + ':');
+            }
+            return false;
+        });
+    };
+
+    const removeOrgan = (organ) => {
+        setFormData(prev => ({
+            ...prev,
+            encaminhamentos: (prev.encaminhamentos || []).filter(item => {
+                if (typeof item === 'string') {
+                    return item !== organ && !item.startsWith(organ + ':');
+                }
+                return true;
+            })
+        }));
+    };
+
+    const updateOrganDetail = (organ, detail) => {
+        setFormData(prev => ({
+            ...prev,
+            encaminhamentos: (prev.encaminhamentos || []).map(item => {
+                if (typeof item === 'string' && (item === organ || item.startsWith(organ + ':'))) {
+                    return detail ? `${organ}: ${detail}` : organ;
+                }
+                return item;
+            })
+        }));
     };
 
     const downloadPhoto = (dataUrl, filename) => {
@@ -1324,12 +1371,82 @@ const OcorrenciasForm = () => {
                     </div>
                 </Card>
 
-                {/* 9. SEÇÃO: Fotos */}
+                {/* 9. SEÇÃO: Encaminhamentos e Responsabilidades */}
+                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
+                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">9. Encaminhamentos e Responsabilidades</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                        <label className={labelClasses}>Órgão para Encaminhamento</label>
+                        <select
+                            className={inputClasses}
+                            value=""
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val && !hasOrganSelected(val)) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        encaminhamentos: [...(prev.encaminhamentos || []), val]
+                                    }));
+                                }
+                            }}
+                        >
+                            <option value="">Selecione para adicionar...</option>
+                            {ENCAMINHAMENTOS_LIST.map(enc => (
+                                <option key={enc} value={enc} disabled={hasOrganSelected(enc)}>
+                                    {enc}
+                                </option>
+                            ))}
+                        </select>
+
+                        {formData.encaminhamentos && formData.encaminhamentos.length > 0 && (
+                            <div className="space-y-3 mt-4">
+                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Detalhes por Órgão Destinatário</label>
+                                <div className="space-y-3">
+                                    {formData.encaminhamentos.map(item => {
+                                        let organ = item;
+                                        let detail = '';
+                                        if (typeof item === 'string' && item.includes(':')) {
+                                            const parts = item.split(':');
+                                            organ = parts[0].trim();
+                                            detail = parts.slice(1).join(':').trim();
+                                        }
+                                        return (
+                                            <div key={organ} className="p-4 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">{organ}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeOrgan(organ)}
+                                                        className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+                                                    >
+                                                        <Trash2 size={12} /> Remover
+                                                    </button>
+                                                </div>
+                                                <textarea
+                                                    rows={2}
+                                                    placeholder={`Descreva a solicitação ou encaminhamento para ${organ}...`}
+                                                    className={`${inputClasses} h-auto py-3`}
+                                                    value={detail}
+                                                    onChange={(e) => updateOrganDetail(organ, e.target.value)}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+
+                {/* 10. SEÇÃO: Fotos */}
                 <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">9. Fotos</h2>
+                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">10. Fotos</h2>
                         </div>
                         <span className="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{formData.fotos?.length || 0} fotos</span>
                     </div>
@@ -1374,11 +1491,11 @@ const OcorrenciasForm = () => {
                     </div>
                 </Card>
 
-                {/* 10. SEÇÃO: Assinaturas (Auto-assinar e Apoio Técnico) */}
+                {/* 11. SEÇÃO: Assinaturas (Auto-assinar e Apoio Técnico) */}
                 <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6">
                     <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
                         <div className="w-1.5 h-6 bg-emerald-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">10. Assinaturas</h2>
+                        <h2 className="font-black text-slate-800 dark:text-slate-100 text-xs uppercase tracking-[3px]">11. Assinaturas</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

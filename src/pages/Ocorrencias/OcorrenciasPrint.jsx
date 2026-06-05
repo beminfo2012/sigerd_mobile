@@ -157,6 +157,39 @@ const OcorrenciasPrint = () => {
         return details[medida] || 'Ações executadas conforme protocolo de atendimento da Defesa Civil.';
     };
 
+    const getEncaminhamentoDetails = (e) => {
+        const mapping = {
+            'Secretaria de Interior': {
+                action: 'Manutenção de vias, limpeza de bueiros e desobstrução de estradas.',
+                responsible: 'Secretaria de Interior'
+            },
+            'Secretaria de Obras': {
+                action: 'Execução de intervenções estruturais, drenagem ou contenção de talude.',
+                responsible: 'Secretaria de Obras (SECOBR)'
+            },
+            'Secretaria de Ação Social': {
+                action: 'Atendimento social, concessão de benefícios eventuais ou aluguel social.',
+                responsible: 'Secretaria de Assistência Social'
+            },
+            'Secretaria de Meio Ambiente': {
+                action: 'Avaliação de risco fitossanitário e supressão de árvores condenadas.',
+                responsible: 'Secretaria de Meio Ambiente'
+            },
+            'Defesa Civil Municipal': {
+                action: 'Notificação formal ao proprietário e monitoramento preventivo da evolução do risco.',
+                responsible: 'Defesa Civil Municipal'
+            },
+            'Outros': {
+                action: 'Ações conjuntas de fiscalização e mitigação de riscos estruturais.',
+                responsible: 'Órgão Competente'
+            }
+        };
+        return mapping[e] || {
+            action: `Avaliação e providências cabíveis dentro das atribuições da pasta.`,
+            responsible: e
+        };
+    };
+
     // Dynamic section numbers
     const hasChecklist = checklistItems.length > 0;
     const hasObs = !!(data.observacoes && data.observacoes !== '---');
@@ -170,6 +203,7 @@ const OcorrenciasPrint = () => {
     const numDanosHumanos = secNum++;
     const numDanosMateriais = (data.descricao_danos && data.descricao_danos.trim() !== '' && data.descricao_danos !== '---') ? secNum++ : null;
     const numMedidas = secNum++;
+    const numEncaj = secNum++;
     const numObs = hasObs ? secNum++ : null;
     const numFotos = hasPhotos ? secNum++ : null;
 
@@ -794,19 +828,53 @@ const OcorrenciasPrint = () => {
                                 <div className="section-header-line"></div>
                             </div>
                             <table className="report-table">
-                                <thead>
-                                    <tr>
-                                        <th style={{ width: '40%', backgroundColor: '#0B1F3A', color: 'white' }}>Medida</th>
-                                        <th style={{ width: '60%', backgroundColor: '#0B1F3A', color: 'white' }}>Detalhamento</th>
-                                    </tr>
-                                </thead>
                                 <tbody>
                                     {(data.medidasTomadas || data.medidas_tomadas || ['Monitoramento do Local']).map((m, i) => (
                                         <tr key={i}>
-                                            <td style={{ fontWeight: 'bold' }}>{m}</td>
-                                            <td>{getMedidaDetail(m)}</td>
+                                            <td style={{ fontWeight: 'bold', width: '40%' }}>{m}</td>
+                                            <td style={{ width: '60%' }}>{getMedidaDetail(m)}</td>
                                         </tr>
                                     ))}
+                                </tbody>
+                            </table>
+                        </section>
+
+                        {/* Encaminhamentos e Responsabilidades */}
+                        <section className="mb-6 avoid-break">
+                            <div className="section-header">
+                                <span className="section-header-title">{numEncaj}. Encaminhamentos e Responsabilidades</span>
+                                <div className="section-header-line"></div>
+                            </div>
+                            <table className="report-table">
+                                <thead>
+                                    <tr>
+                                        <th style={{ width: '40%', backgroundColor: '#0B1F3A', color: 'white' }}>Destinatário</th>
+                                        <th style={{ width: '60%', backgroundColor: '#0B1F3A', color: 'white' }}>Ações / Responsabilidades</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(data.encaminhamentos || []).length > 0 ? (
+                                        (data.encaminhamentos || []).map((e, i) => {
+                                            const parts = typeof e === 'string' ? e.split(':') : [];
+                                            const organ = parts[0]?.trim() || '';
+                                            const specDetail = parts.slice(1).join(':')?.trim();
+
+                                            const standard = getEncaminhamentoDetails(organ);
+                                            const finalAction = specDetail || standard.action;
+                                            const finalResponsible = standard.responsible;
+
+                                            return (
+                                                <tr key={i}>
+                                                    <td style={{ fontWeight: 'bold' }}>{finalResponsible}</td>
+                                                    <td>{finalAction}</td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="2" className="text-slate-400 italic text-center py-4">Nenhum encaminhamento registrado para esta ocorrência.</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </section>
