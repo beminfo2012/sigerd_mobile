@@ -284,9 +284,15 @@ const OcorrenciasPrint = () => {
 
                             {/* Map Column */}
                             <div className="w-full md:w-5/12 print:w-5/12">
-                                <div className="border border-slate-200 rounded-xl bg-slate-100 relative overflow-hidden print-map-wrapper h-[185px] shadow-sm w-full">
+                                <div className="border border-slate-200 rounded-xl bg-slate-100 relative overflow-hidden print-map-wrapper h-[185px] shadow-sm w-full" style={{ perspective: '800px' }}>
                                     {hasMap ? (
-                                        <MapContainer
+                                            <div style={{
+                                                transform: 'rotateX(30deg) rotateZ(-4deg) scale(1.22)',
+                                                transformOrigin: 'center center',
+                                                height: '100%',
+                                                width: '100%'
+                                            }}>
+                                                <MapContainer
                                             center={[lat, lng]}
                                             zoom={17}
                                             style={{ height: '100%', width: '100%' }}
@@ -300,6 +306,7 @@ const OcorrenciasPrint = () => {
                                             <Marker position={[lat, lng]} />
                                             <MapController lat={lat} lng={lng} />
                                         </MapContainer>
+                                            </div>
                                     ) : (
                                         <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
                                             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">location_off</span>
