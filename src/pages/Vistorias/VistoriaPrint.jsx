@@ -881,22 +881,50 @@ const VistoriaPrint = () => {
                                                     return numA - numB;
                                                 }).forEach(sec => {
                                                     const items = sections[sec];
+                                                    
+                                                    // Agrupar itens da seção pelo subtipo (group)
+                                                    const subGroups = {};
+                                                    items.forEach(item => {
+                                                        const groupKey = item.group || '';
+                                                        if (!subGroups[groupKey]) subGroups[groupKey] = [];
+                                                        subGroups[groupKey].push(item.value);
+                                                    });
+
+                                                    const groupKeys = Object.keys(subGroups);
+
                                                     allRows.push(
                                                         <tr key={`struc-${sec}`}>
                                                             <td style={{ fontWeight: '800', color: '#1e293b', fontSize: '11px', verticalAlign: 'top', width: '55%' }}>
                                                                 {sec}
                                                             </td>
                                                             <td style={{ verticalAlign: 'top', width: '45%' }}>
-                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                                                    {items.map((item, idx) => {
-                                                                        const isAlert = !isOptionOk(item.value);
-                                                                        const badgeClass = isAlert ? 'badge-risk-alto' : 'badge-risk-baixo';
-                                                                        const textToShow = item.group ? `${item.group}: ${item.value}` : item.value;
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                                    {groupKeys.map((gKey, gIdx) => {
+                                                                        const values = subGroups[gKey];
                                                                         return (
-                                                                            <div key={idx} style={{ display: 'block', margin: '2px 0' }}>
-                                                                                <span className={`badge-status ${badgeClass}`} style={{ display: 'inline-block', fontSize: '9px', fontWeight: '900', padding: '3px 6px', borderRadius: '3px' }}>
-                                                                                    {textToShow.toUpperCase()}
-                                                                                </span>
+                                                                            <div key={gKey || gIdx} style={{ 
+                                                                                display: 'flex', 
+                                                                                flexDirection: 'column', 
+                                                                                gap: '4px',
+                                                                                paddingTop: gIdx > 0 ? '6px' : '0',
+                                                                                borderTop: gIdx > 0 ? '1px dashed #e2e8f0' : 'none'
+                                                                            }}>
+                                                                                {gKey && (
+                                                                                    <div style={{ fontSize: '8px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.05em' }}>
+                                                                                        {gKey}
+                                                                                    </div>
+                                                                                )}
+                                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                                                    {values.map((val, vIdx) => {
+                                                                                        const isAlert = !isOptionOk(val);
+                                                                                        const badgeClass = isAlert ? 'badge-risk-alto' : 'badge-risk-baixo';
+                                                                                        return (
+                                                                                            <span key={vIdx} className={`badge-status ${badgeClass}`} style={{ display: 'inline-block', fontSize: '9px', fontWeight: '900', padding: '3px 6px', borderRadius: '3px' }}>
+                                                                                                {val.toUpperCase()}
+                                                                                            </span>
+                                                                                        );
+                                                                                    })}
+                                                                                </div>
                                                                             </div>
                                                                         );
                                                                     })}
