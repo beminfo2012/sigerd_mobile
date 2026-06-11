@@ -10,10 +10,12 @@ import {
 } from 'lucide-react';
 import { UserContext } from '../../App';
 import * as redapService from '../../services/redapService';
+import { consolidateEventFide } from '../../services/redapDb';
 import { useToast } from '../../components/ToastNotification';
 import { generateRedapReport } from '../../utils/redapReportGenerator';
 import SectorProgressModal from './components/SectorProgressModal';
 import RedapMapModal from './components/RedapMapModal';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const RedapEventDetails = () => {
     const { id } = useParams();
@@ -27,6 +29,10 @@ const RedapEventDetails = () => {
     const [stats, setStats] = useState({ total: 0, count: 0, approved: 0 });
     const [showMapModal, setShowMapModal] = useState(false);
     const [showSectorModal, setShowSectorModal] = useState(false);
+    const [showConsolidateModal, setShowConsolidateModal] = useState(false);
+    const [consolidating, setConsolidating] = useState(false);
+
+    const isDefesaCivil = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role);
 
     useEffect(() => {
         loadData();
@@ -61,6 +67,21 @@ const RedapEventDetails = () => {
             loadData();
         } catch (error) {
             toast.error('Erro ao atualizar status.');
+        }
+    };
+
+    const handleConsolidateFide = async () => {
+        setConsolidating(true);
+        try {
+            const savedId = await consolidateEventFide(id);
+            toast.success('FIDE consolidada com sucesso!');
+            setShowConsolidateModal(false);
+            navigate(`/redap/v1/${id}`);
+        } catch (error) {
+            console.error(error);
+            toast.error('Erro ao consolidar FIDE: ' + error.message);
+        } finally {
+            setConsolidating(false);
         }
     };
 
@@ -101,7 +122,7 @@ const RedapEventDetails = () => {
 
             <main className="p-4 space-y-6 max-w-[1600px] mx-auto">
                 {/* Event Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className={`grid grid-cols-1 ${isDefesaCivil ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4`}>
                     <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-6 transition-all">
                         <div className="bg-blue-600 dark:bg-blue-500 p-5 rounded-[2rem] text-white shadow-xl shadow-blue-100 dark:shadow-blue-900/30">
                             <TrendingUp size={32} />
@@ -135,18 +156,20 @@ const RedapEventDetails = () => {
                         </div>
                     </div>
 
-                    <div className="bg-slate-900 dark:bg-blue-600 rounded-[2.5rem] p-7 text-white shadow-xl flex items-center justify-between transition-all">
-                        <div>
-                            <p className="text-[10px] font-black text-blue-400 dark:text-white/60 uppercase tracking-widest mb-1">Ações do Gestor</p>
-                            <h3 className="text-lg font-black uppercase leading-tight">Fechar Pasta<br/>Gerar FIDE</h3>
+                    {isDefesaCivil && (
+                        <div className="bg-slate-900 dark:bg-blue-600 rounded-[2.5rem] p-7 text-white shadow-xl flex items-center justify-between transition-all">
+                            <div>
+                                <p className="text-[10px] font-black text-blue-400 dark:text-white/60 uppercase tracking-widest mb-1">Ações do Gestor</p>
+                                <h3 className="text-lg font-black uppercase leading-tight">Fechar Pasta<br/>Gerar FIDE</h3>
+                            </div>
+                            <button 
+                                className="bg-blue-600 dark:bg-white/20 p-4 rounded-2xl shadow-lg active:scale-95 transition-all hover:bg-blue-500 dark:hover:bg-white/30"
+                                onClick={() => setShowConsolidateModal(true)}
+                            >
+                                <Download size={24} />
+                            </button>
                         </div>
-                        <button 
-                            className="bg-blue-600 dark:bg-white/20 p-4 rounded-2xl shadow-lg active:scale-95 transition-all hover:bg-blue-500 dark:hover:bg-white/30"
-                            onClick={() => toast.info('Funcionalidade de encerramento em triagem final.')}
-                        >
-                            <Download size={24} />
-                        </button>
-                    </div>
+                    )}
 
                     <div className="bg-emerald-600 dark:bg-emerald-500 rounded-[2.5rem] p-7 text-white shadow-xl flex items-center justify-between transition-all">
                         <div>
@@ -203,32 +226,34 @@ const RedapEventDetails = () => {
                                                     {reg.secretaria_responsavel?.replace(/_/g, ' ')}
                                                 </p>
                                             </div>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {col.id === 'Enviado' && (
-                                                    <>
+                                            {isDefesaCivil && (
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {col.id === 'Enviado' && (
+                                                        <>
+                                                            <button 
+                                                                onClick={() => handleUpdateStatus(reg.id, 'Aprovado')}
+                                                                className="p-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all"
+                                                            >
+                                                                <CheckCircle size={14} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => handleUpdateStatus(reg.id, 'Rejeitado')}
+                                                                className="p-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white transition-all"
+                                                            >
+                                                                <XCircle size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {col.id !== 'Enviado' && (
                                                         <button 
-                                                            onClick={() => handleUpdateStatus(reg.id, 'Aprovado')}
-                                                            className="p-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all"
+                                                            onClick={() => handleUpdateStatus(reg.id, 'Enviado')}
+                                                            className="p-1.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-600 dark:hover:bg-slate-700 hover:text-white transition-all"
                                                         >
-                                                            <CheckCircle size={14} />
+                                                            <Clock size={14} />
                                                         </button>
-                                                        <button 
-                                                            onClick={() => handleUpdateStatus(reg.id, 'Rejeitado')}
-                                                            className="p-1.5 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg hover:bg-rose-600 dark:hover:bg-rose-500 hover:text-white transition-all"
-                                                        >
-                                                            <XCircle size={14} />
-                                                        </button>
-                                                    </>
-                                                )}
-                                                {col.id !== 'Enviado' && (
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(reg.id, 'Enviado')}
-                                                        className="p-1.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-600 dark:hover:bg-slate-700 hover:text-white transition-all"
-                                                    >
-                                                        <Clock size={14} />
-                                                    </button>
-                                                )}
-                                            </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-tight mb-2">
@@ -279,6 +304,17 @@ const RedapEventDetails = () => {
                     ))}
                 </div>
             </main>
+
+            <ConfirmModal
+                isOpen={showConsolidateModal}
+                onClose={() => setShowConsolidateModal(false)}
+                onConfirm={handleConsolidateFide}
+                title="Consolidar FIDE?"
+                message="Deseja consolidar todos os lançamentos setoriais APROVADOS deste desastre em um único relatório FIDE?"
+                confirmText={consolidating ? "Consolidando..." : "Consolidar"}
+                cancelText="Cancelar"
+                type="info"
+            />
         </div>
     );
 };

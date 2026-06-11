@@ -209,7 +209,7 @@ const LegadoDashboard = () => {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
-                        {filteredData.map(item => (
+                        {filteredData.filter(item => item.lat != null && item.lon != null && !isNaN(Number(item.lat))).map(item => (
                             <CircleMarker
                                 key={item.id}
                                 center={[item.lat, item.lon]}

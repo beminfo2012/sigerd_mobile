@@ -436,7 +436,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <MapAutoBounds locations={data.ocorrencias?.locations || []} />
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                <HeatmapLayer points={data.ocorrencias?.locations || []} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
+                <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
             </MapContainer>
             <div className="absolute bottom-8 right-8 z-[1000] bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-slate-200 text-[9px] font-black text-slate-700 uppercase tracking-widest shadow-lg">
                 <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
@@ -569,9 +569,9 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                     <MapAutoBounds locations={list} />
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                    <HeatmapLayer points={list} show={true} options={{ radius: 35, blur: 20, opacity: 0.7 }} />
+                    <HeatmapLayer points={list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 35, blur: 20, opacity: 0.7 }} />
                     <AreasRiscoLayer data={areasRisco} tiposAtivos={null} />
-                    {list.map((loc, idx) => (
+                    {list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
                         <CircleMarker
                             key={idx} center={[loc.lat, loc.lng]} radius={14}
                             pathOptions={{
@@ -1269,7 +1269,7 @@ const MobileDashboardView = ({
                                 ) : (
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
-                                <HeatmapLayer points={filteredLocations || []} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
                                 {/* Camada de Áreas de Risco (toggle por tipo) */}
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
@@ -1297,7 +1297,7 @@ const MobileDashboardView = ({
                                         </Popup>
                                     </CircleMarker>
                                 ))}
-                                {filteredLocations?.map((loc, idx) => (
+                                {filteredLocations?.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
                                     <CircleMarker
                                         key={idx}
                                         center={[loc.lat, loc.lng]}

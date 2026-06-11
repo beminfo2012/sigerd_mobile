@@ -26,31 +26,68 @@ export const INITIAL_REDAP_STATE = {
             ano: '',
             horario: ''
         },
+        identificacao_evento: {
+            secretaria_orgao: '',
+            responsavel_preenchimento: '',
+            cargo_funcao: '',
+            telefone: '',
+            email: '',
+            data_preenchimento: '',
+            municipio_uf: 'Santa Maria de Jetibá / ES',
+            area_afetada_localidade: '',
+            decreto_municipal: ''
+        },
         danos_humanos: {
-            mortos: 0,
-            feridos: 0,
-            enfermos: 0,
-            desabrigados: 0,
-            desalojados: 0,
-            desaparecidos: 0,
-            outros_afetados: 0,
+            mortos_confirmados: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            desaparecidos: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            feridos_graves: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            feridos_leves: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            enfermos: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            desabrigados: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            desalojados: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            deslocados_temporariamente: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
+            diretamente_afetados: { total: 0, homens: 0, mulheres: 0, criancas: 0 },
             descricao: ''
         },
         danos_materiais: {
-            unidades_habitacionais: { danificadas: 0, destruidas: 0, valor: 0 },
-            instalacoes_saude: { danificadas: 0, destruidas: 0, valor: 0 },
-            instalacoes_ensino: { danificadas: 0, destruidas: 0, valor: 0 },
-            prestadoras_servicos: { danificadas: 0, destruidas: 0, valor: 0 },
-            uso_comunitario: { danificadas: 0, destruidas: 0, valor: 0 },
-            infraestrutura_publica: { danificadas: 0, destruidas: 0, valor: 0 }
+            residencias_urbanas: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 },
+            residencias_rurais: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 },
+            escolas_creches: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 },
+            unidades_saude: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 },
+            edificacoes_publicas: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 },
+            templos_culto: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 },
+            comercio: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 },
+            industria: { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 }
+        },
+        danos_infraestrutura: {
+            estradas_rodovias: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'km' },
+            pontes_viadutos: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'unidade(s)' },
+            bueiros_galerias: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'unidade(s)' },
+            abastecimento_agua: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'km' },
+            rede_esgoto: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'km' },
+            drenagem_urbana: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'km' },
+            rede_eletrica: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'km / postes' },
+            comunicacoes_telefonia: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'km' },
+            muros_arrimo: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'm' },
+            drenagem_canais: { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: 'm' }
+        },
+        danos_agricolas: {
+            nao_se_aplica: true,
+            itens: [] // array of { cultura_produto: '', area: 0, produtores: 0, animais: 0, perda: 0, prejuizo: 0 }
         },
         danos_ambientais: {
-            contaminacao_agua: { sim: false, populacao: '' },
-            contaminacao_ar: { sim: false, populacao: '' },
-            contaminacao_solo: { sim: false, populacao: '' },
-            exaurimento_hidrico: { sim: false, populacao: '' },
-            incendios: { sim: false, area: '' },
+            vegetacao_nativa: { quantidade: 0, prejuizo: 0, unidade: 'hectares (ha)' },
+            contaminacao_agua: { quantidade: 0, prejuizo: 0, unidade: 'km de curso d\'água' },
+            erosao_app: { quantidade: 0, prejuizo: 0, unidade: 'm²' },
+            animais_silvestres: { quantidade: 0, prejuizo: 0, unidade: 'indivíduos' },
             descricao: ''
+        },
+        prejuizos_economicos_consolidados: {
+            edificacoes: { danos: 0, prejuizos: 0 },
+            infraestrutura: { danos: 0, prejuizos: 0 },
+            agricola: { danos: 0, prejuizos: 0 },
+            comercial_industrial: { danos: 0, prejuizos: 0 },
+            meio_ambiente: { danos: 0, prejuizos: 0 }
         },
         prejuizos_publicos: {
             assistencia_medica: 0,
@@ -86,7 +123,10 @@ export const INITIAL_REDAP_STATE = {
             esporte_turismo: { consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_total: 0, observacoes: '' },
             interior: { consideracoes: '', ponte_madeira: 0, valor_ponte_madeira: 0, ponte_concreto: 0, valor_ponte_concreto: 0, bueiros: 0, valor_bueiros: 0, galerias: 0, valor_galerias: 0, estradas_vicinais: 0, valor_estradas: 0, inst_danificadas: 0, total_valor: 0, prejuizo_total: 0, observacoes: '' },
             servicos_urbanos: { consideracoes: '', inst_prestadoras: 0, valor_inst_prestadoras: 0, inst_comunitarias: 0, valor_inst_comunitarias: 0, infra_urbana: 0, valor_infra_urbana: 0, prejuizo_limpeza: 0, prejuizo_total: 0, observacoes: '' },
-            transportes: { consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_transportes: 0, prejuizo_combustiveis: 0, prejuizo_total: 0, observacoes: '' }
+            transportes: { consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_transportes: 0, prejuizo_combustiveis: 0, prejuizo_total: 0, observacoes: '' },
+            cultura: { consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_total: 0, observacoes: '' },
+            meio_ambiente: { consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_total: 0, observacoes: '' },
+            defesa_civil: { consideracoes: '', inst_danificadas: 0, inst_destruidas: 0, inst_valor: 0, prejuizo_total: 0, observacoes: '' }
         },
         // Controle de quem já preencheu
         submissoes_setoriais: {
@@ -102,7 +142,10 @@ export const INITIAL_REDAP_STATE = {
             esporte_turismo: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
             interior: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
             servicos_urbanos: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
-            transportes: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null }
+            transportes: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            cultura: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            meio_ambiente: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null },
+            defesa_civil: { preenchido: false, data: null, usuario: '', responsavel: '', cargo: '', assinatura_url: null }
         },
         evidencias: [], // Array de { url, lat, lng, timestamp, sector }
         metadata_oficial: {
@@ -135,16 +178,25 @@ export const INITIAL_REDAP_STATE = {
             cargo: '',
             data_url: null,
             data_assinatura: null
-        }
+        },
+        fluxo_aprovacao: {
+            etapa1: { concluida: false, data: '', ator: '' },
+            etapa2: { concluida: false, data: '', ator: '' },
+            etapa3: { concluida: false, data: '', ator: '' },
+            etapa4: { concluida: false, data: '', ator: '' },
+            etapa5: { concluida: false, data: '', ator: '' }
+        },
+        historico_acoes: [],
+        observacoes_complementares: ''
     }
 };
 
 /**
- * Pull S2ID records from Supabase and merge into local IndexedDB.
+ * Pull REDAP records from Supabase and merge into local IndexedDB.
  * Returns merged array of all records.
  */
 /**
- * Merges two S2ID data objects, prioritizing non-empty values and merging sectoral data.
+ * Merges two REDAP data objects, prioritizing non-empty values and merging sectoral data.
  */
 export const mergeRedapData = (local, remote) => {
     if (!local) return remote;
@@ -162,6 +214,21 @@ export const mergeRedapData = (local, remote) => {
         if (l === null || l === undefined || l === '') return r;
         if (r === null || r === undefined || r === '') return l;
         return l;
+    };
+
+    // Deep merge helper for structured forms
+    const deepMerge = (l, r) => {
+        if (l === null || l === undefined) return r;
+        if (r === null || r === undefined) return l;
+        if (typeof l !== 'object' || typeof r !== 'object') return bestValue(l, r);
+        if (Array.isArray(l) || Array.isArray(r)) {
+            return (l && l.length >= (r ? r.length : 0)) ? l : r;
+        }
+        const merged = { ...r, ...l };
+        for (const key in merged) {
+            merged[key] = deepMerge(l[key], r[key]);
+        }
+        return merged;
     };
 
     // Deep merge helper for submissoes_setoriais (True wins, Data wins)
@@ -211,12 +278,25 @@ export const mergeRedapData = (local, remote) => {
         data: {
             ...remote.data,
             ...local.data,
+            tipificacao: deepMerge(local.data?.tipificacao, remote.data?.tipificacao),
+            data_ocorrencia: deepMerge(local.data?.data_ocorrencia, remote.data?.data_ocorrencia),
+            identificacao_evento: deepMerge(local.data?.identificacao_evento, remote.data?.identificacao_evento),
+            danos_humanos: deepMerge(local.data?.danos_humanos, remote.data?.danos_humanos),
+            danos_materiais: deepMerge(local.data?.danos_materiais, remote.data?.danos_materiais),
+            danos_infraestrutura: deepMerge(local.data?.danos_infraestrutura, remote.data?.danos_infraestrutura),
+            danos_agricolas: deepMerge(local.data?.danos_agricolas, remote.data?.danos_agricolas),
+            danos_ambientais: deepMerge(local.data?.danos_ambientais, remote.data?.danos_ambientais),
+            prejuizos_economicos_consolidados: deepMerge(local.data?.prejuizos_economicos_consolidados, remote.data?.prejuizos_economicos_consolidados),
+            prejuizos_publicos: deepMerge(local.data?.prejuizos_publicos, remote.data?.prejuizos_publicos),
+            prejuizos_privados: deepMerge(local.data?.prejuizos_privados, remote.data?.prejuizos_privados),
             setorial: mergeSetorial(local.data?.setorial, remote.data?.setorial),
             submissoes_setoriais: mergeSubmissoes(local.data?.submissoes_setoriais, remote.data?.submissoes_setoriais),
-            metadata_oficial: {
-                ...(remote.data?.metadata_oficial || {}),
-                ...(local.data?.metadata_oficial || {})
-            },
+            metadata_oficial: deepMerge(local.data?.metadata_oficial, remote.data?.metadata_oficial),
+            localizacao: deepMerge(local.data?.localizacao, remote.data?.localizacao),
+            assinatura: deepMerge(local.data?.assinatura, remote.data?.assinatura),
+            fluxo_aprovacao: deepMerge(local.data?.fluxo_aprovacao, remote.data?.fluxo_aprovacao),
+            historico_acoes: deepMerge(local.data?.historico_acoes, remote.data?.historico_acoes),
+            observacoes_complementares: bestValue(local.data?.observacoes_complementares, remote.data?.observacoes_complementares),
             evidencias: [
                 ...(remote.data?.evidencias || []),
                 ...(local.data?.evidencias || [])
@@ -526,7 +606,7 @@ export const getRedapById = async (id) => {
 
     // Support both numeric local ID and UUID redap_id
     let record = null;
-    if (!isNaN(parseInt(id))) {
+    if (typeof id === 'number' || /^\d+$/.test(String(id))) {
         record = await db.get('redap_records', parseInt(id));
     }
 
@@ -539,7 +619,7 @@ export const getRedapById = async (id) => {
     if (!record && navigator.onLine) {
         await pullRedapFromCloud();
         // Retry search
-        if (!isNaN(parseInt(id))) {
+        if (typeof id === 'number' || /^\d+$/.test(String(id))) {
             record = await db.get('redap_records', parseInt(id));
         }
         if (!record) {
@@ -576,4 +656,293 @@ export const syncAllRedap = async () => {
     if (navigator.onLine) {
         await syncPendingData();
     }
+};
+
+/**
+ * Consolidate event sector reports into a master FIDE redap_records entry
+ */
+export const consolidateEventFide = async (eventId) => {
+    const db = await initDB();
+    
+    // 1. Get Event Info
+    let eventObj = await db.get('redap_eventos', eventId);
+    if (!eventObj && navigator.onLine) {
+        const { data, error } = await supabase.from('redap_eventos').select('*').eq('id', eventId).single();
+        if (!error && data) {
+            eventObj = data;
+        }
+    }
+    if (!eventObj) throw new Error("Desastre não encontrado.");
+    
+    // 2. Get Approved Registrations (Sector damages)
+    let regs = [];
+    if (navigator.onLine) {
+        const { data, error } = await supabase.from('redap_registros').select('*').eq('evento_id', eventId).eq('status_validacao', 'Aprovado');
+        if (!error && data) {
+            regs = data;
+        }
+    } else {
+        const allRegs = await db.getAll('redap_registros');
+        regs = allRegs.filter(r => r.evento_id === eventId && r.status_validacao === 'Aprovado');
+    }
+    
+    if (regs.length === 0) {
+        throw new Error("Nenhum lançamento setorial Aprovado para consolidar.");
+    }
+    
+    // 3. Find if there's already a redap_records entry for this event
+    const allRecords = await db.getAll('redap_records');
+    let fideRecord = allRecords.find(r => r.redap_id === eventId || r.supabase_id === eventId);
+    
+    if (!fideRecord && navigator.onLine) {
+        const { data, error } = await supabase.from('redap_records').select('*').eq('redap_id', eventId).maybeSingle();
+        if (!error && data) {
+            fideRecord = data;
+        }
+    }
+    
+    // 4. Initialize or Reset FIDE Data
+    const baseData = JSON.parse(JSON.stringify(INITIAL_REDAP_STATE.data));
+    
+    // Set Event Metadata
+    baseData.tipificacao.cobrade = eventObj.cobrade || '';
+    baseData.tipificacao.denominacao = eventObj.nome_evento || '';
+    
+    const eventDate = new Date(eventObj.data_inicio);
+    baseData.data_ocorrencia = {
+        dia: String(eventDate.getDate()).padStart(2, '0'),
+        mes: String(eventDate.getMonth() + 1).padStart(2, '0'),
+        ano: String(eventDate.getFullYear()),
+        horario: `${String(eventDate.getHours()).padStart(2, '0')}:${String(eventDate.getMinutes()).padStart(2, '0')}`
+    };
+    
+    baseData.identificacao_evento.area_afetada_localidade = eventObj.bairros_afetados ? eventObj.bairros_afetados.join(', ') : '';
+    
+    if (fideRecord) {
+        // Keep user-entered metadata, localizacao, assinatura, etc.
+        baseData.metadata_oficial = { ...baseData.metadata_oficial, ...fideRecord.data?.metadata_oficial };
+        baseData.localizacao = { ...baseData.localizacao, ...fideRecord.data?.localizacao };
+        baseData.assinatura = { ...baseData.assinatura, ...fideRecord.data?.assinatura };
+        baseData.fluxo_aprovacao = { ...baseData.fluxo_aprovacao, ...fideRecord.data?.fluxo_aprovacao };
+        baseData.observacoes_complementares = fideRecord.data?.observacoes_complementares || '';
+    }
+    
+    // Helper mapping functions:
+    const mapSectorKey = (secName) => {
+        const map = {
+            'Saúde': 'saude',
+            'Educação': 'educacao',
+            'Agropecuária': 'agricultura',
+            'Agricultura': 'agricultura',
+            'Interior': 'interior',
+            'Obras': 'obras',
+            'Meio Ambiente': 'meio_ambiente',
+            'Assistência Social': 'social',
+            'Serviços Urbanos': 'servicos_urbanos',
+            'Administração': 'administracao',
+            'Defesa Social': 'defesa_social',
+            'Esporte e Turismo': 'esporte_turismo',
+            'Cesan': 'cesan',
+            'Transportes': 'transportes',
+            'CDL': 'cdl',
+            'Cultura': 'cultura',
+            'Defesa Civil': 'defesa_civil'
+        };
+        return map[secName] || secName.toLowerCase().replace(/ /g, '_');
+    };
+    
+    // Process registrations
+    regs.forEach(reg => {
+        const secKey = mapSectorKey(reg.secretaria_responsavel);
+        const p = reg.extra_parameters || {};
+        const valor = Number(reg.valor_estimado) || 0;
+        
+        // 1. Sector level
+        if (baseData.setorial[secKey]) {
+            const sObj = baseData.setorial[secKey];
+            
+            // Sum up standard fields
+            if (p.mortos) sObj.mortos = (sObj.mortos || 0) + Number(p.mortos);
+            if (p.feridos) sObj.feridos = (sObj.feridos || 0) + Number(p.feridos);
+            if (p.enfermos) sObj.enfermos = (sObj.enfermos || 0) + Number(p.enfermos);
+            if (p.desabrigados) sObj.familias_desabrigadas = (sObj.familias_desabrigadas || 0) + Number(p.desabrigados);
+            if (p.desalojados) sObj.familias_desalojadas = (sObj.familias_desalojadas || 0) + Number(p.desalojados);
+            
+            if (p.qtd_danificada) sObj.inst_danificadas = (sObj.inst_danificadas || 0) + Number(p.qtd_danificada);
+            if (p.qtd_destruida) sObj.inst_destruidas = (sObj.inst_destruidas || 0) + Number(p.qtd_destruida);
+            if (valor > 0) sObj.inst_valor = (sObj.inst_valor || 0) + valor;
+            
+            // Sector specific fields (dynamic attributes)
+            Object.keys(p).forEach(key => {
+                if (!['mortos', 'feridos', 'enfermos', 'qtd_danificada', 'qtd_destruida', 'desabrigados', 'desalojados'].includes(key)) {
+                    if (typeof p[key] === 'number') {
+                        sObj[key] = (sObj[key] || 0) + p[key];
+                    } else if (typeof p[key] === 'string' && !isNaN(Number(p[key]))) {
+                        sObj[key] = (sObj[key] || 0) + Number(p[key]);
+                    } else {
+                        sObj[key] = p[key]; // string / boolean
+                    }
+                }
+            });
+            sObj.prejuizo_total = (sObj.prejuizo_total || 0) + valor;
+        }
+        
+        // Mark sector submission
+        if (baseData.submissoes_setoriais[secKey]) {
+            baseData.submissoes_setoriais[secKey] = {
+                preenchido: true,
+                data: reg.created_at || new Date().toISOString(),
+                usuario: reg.responsavel_nome || '',
+                responsavel: reg.responsavel_nome || '',
+                cargo: reg.responsavel_cargo || '',
+                assinatura_url: reg.assinatura_url || null
+            };
+        }
+        
+        // Collect evidences
+        if (reg.fotos && reg.fotos.length > 0) {
+            reg.fotos.forEach(f => {
+                const photoUrl = f.url || f.data;
+                if (photoUrl && !baseData.evidencias.some(e => e.url === photoUrl)) {
+                    baseData.evidencias.push({
+                        url: photoUrl,
+                        lat: f.lat != null ? f.lat : (reg.latitude != null ? reg.latitude : null),
+                        lng: f.lng != null ? f.lng : (reg.longitude != null ? reg.longitude : null),
+                        timestamp: f.timestamp || reg.created_at || new Date().toISOString(),
+                        sector: secKey
+                    });
+                }
+            });
+        }
+        
+        // 2. Global FIDE level
+        const descLower = ((reg.instalacao_afetada || '') + ' ' + (reg.descricao_detalhada || '')).toLowerCase();
+        
+        if (reg.classificacao_dano === 'Dano Humano') {
+            const dh = baseData.danos_humanos;
+            if (p.mortos) dh.mortos_confirmados.total += Number(p.mortos);
+            if (p.feridos) dh.feridos_graves.total += Number(p.feridos);
+            if (p.enfermos) dh.enfermos.total += Number(p.enfermos);
+            if (p.desabrigados) dh.desabrigados.total += Number(p.desabrigados);
+            if (p.desalojados) dh.desalojados.total += Number(p.desalojados);
+            if (p.desaparecidos) dh.desaparecidos.total += Number(p.desaparecidos);
+            
+            if (reg.descricao_detalhada) {
+                dh.descricao = (dh.descricao ? dh.descricao + '; ' : '') + reg.descricao_detalhada;
+            }
+        } 
+        else if (reg.classificacao_dano === 'Dano Material') {
+            // Determine if infrastructure or building
+            const isInfra = descLower.match(/(estrada|rodovia|vicinal|rua|pavimento|pavimentação|calçada|via|ponte|viaduto|pontilhão|passarela|bueiro|galeria|água|abastecimento|esgoto|drenagem|elétrica|poste|energia|comunicação|telefonia|internet|arrimo|contenção|canal)/);
+            
+            if (isInfra) {
+                // Map to danos_infraestrutura
+                let key = 'estradas_rodovias';
+                if (descLower.match(/(ponte|viaduto|pontilhão|passarela)/)) key = 'pontes_viadutos';
+                else if (descLower.match(/(bueiro|galeria)/)) key = 'bueiros_galerias';
+                else if (descLower.match(/(água|abastecimento)/)) key = 'abastecimento_agua';
+                else if (descLower.match(/esgoto/)) key = 'rede_esgoto';
+                else if (descLower.match(/drenagem.*urbana/)) key = 'drenagem_urbana';
+                else if (descLower.match(/(elétrica|poste|energia)/)) key = 'rede_eletrica';
+                else if (descLower.match(/(comunicação|telefonia|internet)/)) key = 'comunicacoes_telefonia';
+                else if (descLower.match(/(arrimo|contenção)/)) key = 'muros_arrimo';
+                else if (descLower.match(/canal/)) key = 'drenagem_canais';
+                
+                const infraObj = baseData.danos_infraestrutura[key];
+                infraObj.qtd += (Number(p.qtd_danificada) || 0) + (Number(p.qtd_destruida) || 0) || 1;
+                if (p.extensao_km) infraObj.extensao_area += Number(p.extensao_km);
+                else if (p.area_afetada_m2) infraObj.extensao_area += Number(p.area_afetada_m2);
+                infraObj.prejuizo += valor;
+            } else {
+                // Map to danos_materiais (buildings)
+                let key = 'edificacoes_publicas';
+                if (descLower.match(/(casa|residência|lar|moradia)/)) {
+                    key = secKey === 'interior' ? 'residencias_rurais' : 'residencias_urbanas';
+                } else if (descLower.match(/(escola|creche|cmei|colégio)/)) key = 'escolas_creches';
+                else if (descLower.match(/(hospital|posto de saúde|ubs|pa|clínica)/)) key = 'unidades_saude';
+                else if (descLower.match(/(igreja|templo|capela|culto)/)) key = 'templos_culto';
+                else if (descLower.match(/(loja|comércio|mercado)/)) key = 'comercio';
+                else if (descLower.match(/(indústria|fábrica)/)) key = 'industria';
+                
+                const matObj = baseData.danos_materiais[key];
+                matObj.danificadas += Number(p.qtd_danificada) || 0;
+                matObj.destruidas += Number(p.qtd_destruida) || 0;
+                matObj.total += (Number(p.qtd_danificada) || 0) + (Number(p.qtd_destruida) || 0) || 1;
+                matObj.prejuizo += valor;
+            }
+        }
+        else if (reg.classificacao_dano === 'Dano Ambiental' || secKey === 'meio_ambiente') {
+            let key = 'vegetacao_nativa';
+            if (descLower.match(/(água|rio|córrego|nascente|lago)/)) key = 'contaminacao_agua';
+            else if (descLower.match(/(erosão|assoreamento|app)/)) key = 'erosao_app';
+            else if (descLower.match(/(animal|fauna|silvestre)/)) key = 'animais_silvestres';
+            
+            const ambObj = baseData.danos_ambientais[key];
+            ambObj.quantidade += Number(p.area_atingida_ha) || Number(p.quantidade) || 1;
+            ambObj.prejuizo += valor;
+            
+            if (reg.descricao_detalhada) {
+                baseData.danos_ambientais.descricao = (baseData.danos_ambientais.descricao ? baseData.danos_ambientais.descricao + '; ' : '') + reg.descricao_detalhada;
+            }
+        }
+        else if (reg.classificacao_dano === 'Prejuízo Econômico') {
+            // Map to public/private damage
+            if (descLower.match(/(saúde|médica|ubs|hospital)/)) baseData.prejuizos_publicos.assistencia_medica += valor;
+            else if (descLower.match(/(água|abastecimento)/)) baseData.prejuizos_publicos.abastecimento_agua += valor;
+            else if (descLower.match(/esgoto/)) baseData.prejuizos_publicos.esgoto_sanitario += valor;
+            else if (descLower.match(/(limpeza|entulho|desobstrução)/)) baseData.prejuizos_publicos.limpeza_urbana += valor;
+            else if (descLower.match(/(desinfecção|desinfestação|praga)/)) baseData.prejuizos_publicos.desinfestacao += valor;
+            else if (descLower.match(/(energia|eletricidade|postes)/)) baseData.prejuizos_publicos.energia_eletrica += valor;
+            else if (descLower.match(/(telecomunicações|telefonia|internet)/)) baseData.prejuizos_publicos.telecomunicacoes += valor;
+            else if (descLower.match(/(ensino|escola|educação)/)) baseData.prejuizos_publicos.ensino += valor;
+            else if (descLower.match(/(segurança|polícia|guarda)/)) baseData.prejuizos_publicos.seguranca_publica += valor;
+            else if (descLower.match(/(combustível|posto)/)) baseData.prejuizos_publicos.combustiveis += valor;
+            else if (descLower.match(/(transporte|rodoviário)/)) baseData.prejuizos_publicos.transportes += valor;
+            
+            // Privados
+            else if (descLower.match(/(agricultura|cultura|plantação|lavoura)/)) baseData.prejuizos_privados.agricultura += valor;
+            else if (descLower.match(/(pecuária|gado|animais)/)) baseData.prejuizos_privados.pecuaria += valor;
+            else if (descLower.match(/(indústria|fábrica)/)) baseData.prejuizos_privados.industria += valor;
+            else if (descLower.match(/(loja|comércio|cdl)/)) baseData.prejuizos_privados.comercio += valor;
+            else baseData.prejuizos_privados.servicos += valor;
+        }
+    });
+    
+    // 3. Populate Prejuízos Econômicos Consolidados
+    const dm = baseData.danos_materiais;
+    baseData.prejuizos_economicos_consolidados.edificacoes.danos = 
+        (dm.residencias_urbanas.prejuizo || 0) + 
+        (dm.residencias_rurais.prejuizo || 0) + 
+        (dm.escolas_creches.prejuizo || 0) + 
+        (dm.unidades_saude.prejuizo || 0) + 
+        (dm.edificacoes_publicas.prejuizo || 0) + 
+        (dm.templos_culto.prejuizo || 0);
+    
+    let infraTotal = 0;
+    Object.values(baseData.danos_infraestrutura).forEach(val => {
+        if (typeof val === 'object' && val.prejuizo) infraTotal += val.prejuizo;
+    });
+    baseData.prejuizos_economicos_consolidados.infraestrutura.danos = infraTotal;
+    
+    baseData.prejuizos_economicos_consolidados.comercial_industrial.danos = 
+        (dm.comercio.prejuizo || 0) + 
+        (dm.industria.prejuizo || 0);
+        
+    let envTotal = 0;
+    Object.values(baseData.danos_ambientais).forEach(val => {
+        if (typeof val === 'object' && val.prejuizo) envTotal += val.prejuizo;
+    });
+    baseData.prejuizos_economicos_consolidados.meio_ambiente.danos = envTotal;
+    
+    const consolidatedRecord = {
+        ...(fideRecord || {}),
+        id: fideRecord ? fideRecord.id : undefined,
+        redap_id: eventId,
+        status: fideRecord ? fideRecord.status : 'draft',
+        data: baseData,
+        updated_at: new Date().toISOString()
+    };
+    
+    const savedId = await saveRedapLocal(consolidatedRecord);
+    return savedId;
 };

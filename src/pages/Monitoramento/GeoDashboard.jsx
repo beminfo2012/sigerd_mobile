@@ -230,9 +230,9 @@ const GeoDashboard = () => {
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                     />
 
-                    <HeatmapLayer points={filteredPoints} show={viewMode === 'heat'} />
+                    <HeatmapLayer points={filteredPoints.filter(l => l && l.lat && l.lng && !isNaN(Number(l.lat)))} show={viewMode === 'heat'} />
 
-                    {viewMode === 'points' && filteredPoints.map((loc, idx) => (
+                    {viewMode === 'points' && filteredPoints.filter(l => l && l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
                         <CircleMarker
                             key={idx}
                             center={[loc.lat, loc.lng]}

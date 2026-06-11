@@ -115,50 +115,24 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
 
     // Danos
     const danoPrefix = isSectoral ? '3' : '6';
-    contentHtml += `<div class="report-section">${sectionTitle(danoPrefix, `Danos no Setor: ${isSectoral ? sectorName : 'Geral'}`)}`;
+    contentHtml += `<div class="report-section">${sectionTitle(danoPrefix, `Danos no Setor: ${isSectoral ? sectorName : 'Geral (FIDE)'}`)}`;
 
-    // 3.1 Danos Humanos
-    const humanoData = isSectoral ? data.setorial[activeSector] : data.danos_humanos;
-
-    // Se for consolidado, tentar enriquecer com dados da saúde/social se disponível
-    if (!isSectoral && data.setorial) {
-        // Exemplo simples: Se saúde reportou mais feridos que o global, usar saúde (ou somar, dependendo da regra de negócio. Aqui vamos priorizar o maior valor para segurança)
-        if (data.setorial.saude) {
-            humanoData.mortos = Math.max(humanoData.mortos || 0, data.setorial.saude.mortos || 0);
-            humanoData.feridos = Math.max(humanoData.feridos || 0, data.setorial.saude.feridos || 0);
-            humanoData.enfermos = Math.max(humanoData.enfermos || 0, data.setorial.saude.enfermos || 0);
-        }
-        // Social pode ter desabrigados/desalojados, que não estão no array padrão de exibição simplificada, mas poderiam ser adicionados
-    }
-
-    const humanoRows = [
-        ['Mortos', humanoData.mortos || 0],
-        ['Feridos', humanoData.feridos || 0],
-        ['Enfermos', humanoData.enfermos || 0]
-    ];
-
-    if (!isSectoral) {
-        if (data.danos_humanos.desabrigados > 0) humanoRows.push(['Desabrigados', data.danos_humanos.desabrigados]);
-        if (data.danos_humanos.desalojados > 0) humanoRows.push(['Desalojados', data.danos_humanos.desalojados]);
-    }
-
-    // Mostrar Danos Humanos apenas se houver dados ou se for consolidado
-    if (!isSectoral || humanoRows.some(r => r[1] > 0)) {
-        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 15px 0 8px 0;">${danoPrefix}.1 Danos Humanos</div>`;
-        contentHtml += renderTable(['Discriminação', 'Quantidade'], humanoRows, ['70%', '30%']);
-    }
-
-    // 3.2 Danos à Infraestrutura / Materiais / Levantamento Detalhado
-    contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 25px 0 8px 0;">${danoPrefix}.2 Levantamento de Danos e Necessidades</div>`;
-
-    let infraRows = [];
     if (isSectoral) {
-        const sData = data.setorial[activeSector];
-        let specificRows = [];
+        // Sectoral flow (remains identical to ensure backward compatibility for specific department submissions)
+        const sData = (data.setorial && data.setorial[activeSector]) || {};
+        const humanoRows = [
+            ['Mortos', sData.mortos || 0],
+            ['Feridos', sData.feridos || 0],
+            ['Enfermos', sData.enfermos || 0]
+        ];
+        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 15px 0 8px 0;">3.1 Danos Humanos</div>`;
+        contentHtml += renderTable(['Discriminação', 'Quantidade'], humanoRows, ['70%', '30%']);
 
-        // 1. Campos Padrão de Infraestrutura do Setor
+        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 25px 0 8px 0;">3.2 Levantamento de Danos e Necessidades</div>`;
+        let infraRows = [];
+        
         if (sData.inst_danificadas !== undefined || sData.inst_destruidas !== undefined) {
-            specificRows.push([
+            infraRows.push([
                 'Instalações do Setor',
                 sData.inst_danificadas || 0,
                 sData.inst_destruidas || 0,
@@ -166,10 +140,7 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
             ]);
         }
 
-        // 2. Outros campos numéricos (Pontes, Bueiros, Cestas, etc)
         const skipFields = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'consideracoes', 'observacoes'];
-
-        // Mapeamento de pares Item -> Valor
         const ITEM_VALUE_MAP = {
             'pontes_danificadas': 'valor_pontes',
             'bueiros_obstruidos': 'valor_bueiros',
@@ -186,191 +157,220 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
             'inst_comunitarias': 'valor_inst_comunitarias',
             'infra_urbana': 'valor_infra_urbana'
         };
-
         const valueFields = Object.values(ITEM_VALUE_MAP);
 
         Object.entries(sData).forEach(([key, value]) => {
-            // Se for um item numérico, não estiver na lista de ignore, E NÃO FOR um campo de valor isolado
             if (!skipFields.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0 && !valueFields.includes(key) && !key.startsWith('valor_') && !key.startsWith('custo_')) {
-
                 let label = key.replace(/_/g, ' ').toUpperCase();
-
-                // Distinção de Pontes Rural vs Urbana
                 if (key.includes('ponte')) {
                     if (activeSector === 'interior') label += ' (ÁREA RURAL)';
                     if (activeSector === 'obras' || activeSector === 'servicos_urbanos') label += ' (ÁREA URBANA)';
                 }
-
-                // Buscar valor correspondente no mapa ou por convenção
                 let valorEstimado = '-';
                 const valueKey = ITEM_VALUE_MAP[key];
-
                 if (valueKey && sData[valueKey] > 0) {
                     valorEstimado = `R$ ${sData[valueKey].toLocaleString('pt-BR')}`;
                 }
-
-                specificRows.push([label, value, '-', valorEstimado]);
+                infraRows.push([label, value, '-', valorEstimado]);
             }
         });
 
-        // Adicionar Total de Prejuízos do Setor no final
         if (sData.prejuizo_total > 0) {
-            specificRows.push(['<span style="color: #1e3a8a; font-weight: 900;">TOTAL DE PREJUÍZOS DO SETOR</span>', '-', '-', `<span style="color: #1e3a8a; font-weight: 900;">R$ ${sData.prejuizo_total.toLocaleString('pt-BR')}</span>`]);
+            infraRows.push(['<span style="color: #1e3a8a; font-weight: 900;">TOTAL DE PREJUÍZOS DO SETOR</span>', '-', '-', `<span style="color: #1e3a8a; font-weight: 900;">R$ ${sData.prejuizo_total.toLocaleString('pt-BR')}</span>`]);
         }
 
-        if (specificRows.length > 0) {
-            infraRows = specificRows;
+        if (infraRows.length > 0) {
+            contentHtml += renderTable(['Discriminação / Item Setorial', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor Estimado (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
         } else {
             contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic;">Não há registros de danos específicos.</p>`;
         }
     } else {
-        // Consolidado
+        // Consolidated report FIDE flow
+        // 6.1 Danos Humanos
+        const MAP_HUMANO = {
+            mortos_confirmados: 'Mortos confirmados',
+            desaparecidos: 'Desaparecidos',
+            feridos_graves: 'Feridos graves',
+            feridos_leves: 'Feridos leves',
+            enfermos: 'Enfermos',
+            desabrigados: 'Desabrigados',
+            desalojados: 'Desalojados',
+            deslocados_temporariamente: 'Deslocados temporariamente',
+            diretamente_afetados: 'Diretamente afetados'
+        };
+        const humanoRows = Object.entries(MAP_HUMANO).map(([key, label]) => {
+            const val = data.danos_humanos?.[key] || { total: 0, homens: 0, mulheres: 0, criancas: 0 };
+            return [label, val.homens || 0, val.mulheres || 0, val.criancas || 0, val.total || 0];
+        });
+        
+        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 15px 0 8px 0;">6.1 Danos Humanos</div>`;
+        contentHtml += renderTable(['Classificação dos Danos', 'Homens', 'Mulheres', 'Crianças', 'Total'], humanoRows, ['40%', '15%', '15%', '15%', '15%']);
+        if (data.danos_humanos?.descricao) {
+            contentHtml += `<div style="font-size: 8px; color: #475569; margin-bottom: 15px; padding: 8px; background: #f8fafc; border-left: 2px solid #cbd5e1; font-style: italic;"><strong>Descrição complementar / Memória de cálculo:</strong> ${data.danos_humanos.descricao}</div>`;
+        }
 
-        // 1. Danos Materiais Globais (FIDE Padrão)
-        Object.keys(data.danos_materiais).forEach(key => {
-            if (data.danos_materiais[key].danificadas > 0 || data.danos_materiais[key].destruidas > 0 || data.danos_materiais[key].valor > 0) {
-                infraRows.push([
-                    key.replace(/_/g, ' ').toUpperCase(),
-                    data.danos_materiais[key].danificadas,
-                    data.danos_materiais[key].destruidas,
-                    `R$ ${data.danos_materiais[key].valor.toLocaleString('pt-BR')}`
+        // 6.2 Danos em Edificações
+        const MAP_MATERIAL_LABELS = {
+            residencias_urbanas: 'Residências urbanas',
+            residencias_rurais: 'Residências rurais',
+            escolas_creches: 'Escolas / creches',
+            unidades_saude: 'Unidades de saúde',
+            edificacoes_publicas: 'Edificações administrativas públicas',
+            templos_culto: 'Templos / igrejas / locais de culto',
+            comercio: 'Estabelecimentos comerciais',
+            industria: 'Estabelecimentos industriais'
+        };
+        const materialRows = [];
+        Object.entries(MAP_MATERIAL_LABELS).forEach(([key, label]) => {
+            const val = data.danos_materiais?.[key] || { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 };
+            if (val.destruidas > 0 || val.danificadas > 0 || (val.prejuizo || val.valor || 0) > 0) {
+                materialRows.push([
+                    label,
+                    val.destruidas || 0,
+                    val.danificadas || 0,
+                    val.total || 0,
+                    `R$ ${(val.prejuizo || val.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                 ]);
             }
         });
-
-        // 2. Agregação de Danos Setoriais
-        if (data.setorial) {
-            const skipFieldsGlobal = ['mortos', 'feridos', 'enfermos', 'inst_danificadas', 'inst_destruidas', 'inst_valor', 'consideracoes', 'observacoes'];
-
-            Object.entries(data.setorial).forEach(([sectorName, sData]) => {
-                // Adicionar Instalações do Setor se houver
-                if (sData.inst_danificadas > 0 || sData.inst_destruidas > 0 || sData.inst_valor > 0) {
-                    infraRows.push([
-                        `INSTALAÇÕES - ${sectorName.toUpperCase()}`,
-                        sData.inst_danificadas || 0,
-                        sData.inst_destruidas || 0,
-                        `R$ ${(sData.inst_valor || 0).toLocaleString('pt-BR')}`
-                    ]);
-                }
-
-                // Mapeamento de pares Item -> Valor (Reutilizado)
-                const ITEM_VALUE_MAP = {
-                    'pontes_danificadas': 'valor_pontes',
-                    'bueiros_obstruidos': 'valor_bueiros',
-                    'pavimentacao_m2': 'valor_pavimentacao',
-                    'ponte_madeira': 'valor_ponte_madeira',
-                    'ponte_concreto': 'valor_ponte_concreto',
-                    'bueiros': 'valor_bueiros',
-                    'galerias': 'valor_galerias',
-                    'estradas_vicinais': 'valor_estradas',
-                    'cestas_basicas': 'custo_cestas',
-                    'kits_higiene': 'custo_kits',
-                    'colchoes_entregues': 'custo_colchoes',
-                    'inst_prestadoras': 'valor_inst_prestadoras',
-                    'inst_comunitarias': 'valor_inst_comunitarias',
-                    'infra_urbana': 'valor_infra_urbana'
-                };
-                const valueFields = Object.values(ITEM_VALUE_MAP);
-
-                // Adicionar Itens Específicos do Setor
-                Object.entries(sData).forEach(([key, value]) => {
-                    if (!skipFieldsGlobal.includes(key) && !key.startsWith('prejuizo_') && typeof value === 'number' && value > 0 && !valueFields.includes(key) && !key.startsWith('valor_') && !key.startsWith('custo_')) {
-
-                        let label = key.replace(/_/g, ' ').toUpperCase();
-
-                        // Distinção de Pontes Rural vs Urbana no Consolidado
-                        if (key.includes('ponte')) {
-                            if (sectorName === 'interior') label += ' (ÁREA RURAL)';
-                            if (sectorName === 'obras' || sectorName === 'servicos_urbanos') label += ' (ÁREA URBANA)';
-                        }
-
-                        const displaySectorName = sectorName === 'obras' ? 'SECURB' : sectorName.toUpperCase();
-                        label = `${label} (${displaySectorName})`;
-
-                        // Buscar valor correspondente
-                        let valorEstimado = '-';
-                        const valueKey = ITEM_VALUE_MAP[key];
-
-                        if (valueKey && sData[valueKey] > 0) {
-                            valorEstimado = `R$ ${sData[valueKey].toLocaleString('pt-BR')}`;
-                        }
-
-                        infraRows.push([label, value, '-', valorEstimado]);
-                    }
-                });
-
-                // Adicionar Subtotal do Setor no Consolidado (opcional mas melhora clareza)
-                if (sData.prejuizo_total > 0) {
-                    const displayName = sectorName === 'obras' ? 'SECURB' : sectorName.toUpperCase();
-                    infraRows.push([
-                        `<span style="color: #1e3a8a; font-weight: 900;">SUBTOTAL: ${displayName}</span>`,
-                        '-',
-                        '-',
-                        `<span style="color: #1e3a8a; font-weight: 900;">R$ ${sData.prejuizo_total.toLocaleString('pt-BR')}</span>`
-                    ]);
-                }
-            });
-
+        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 25px 0 8px 0;">6.2 Danos em Edificações</div>`;
+        if (materialRows.length > 0) {
+            contentHtml += renderTable(['Discriminação das Edificações', 'Destruídas', 'Danificadas', 'Total Unid.', 'Prejuízo (R$)'], materialRows, ['40%', '15%', '15%', '15%', '15%']);
+        } else {
+            contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic; margin-bottom: 15px;">Nenhuma edificação destruída ou danificada reportada.</p>`;
         }
 
-        if (infraRows.length === 0) {
-            contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic;">Não há danos consolidados.</p>`;
+        // 6.3 Danos em Infraestrutura Pública
+        const MAP_INFRA_LABELS = {
+            estradas_rodovias: { label: 'Estradas / rodovias danificadas', unit: 'km' },
+            pontes_viadutos: { label: 'Pontes / viadutos danificados', unit: 'unidade(s)' },
+            bueiros_galerias: { label: 'Bueiros / galerias comprometidos', unit: 'unidade(s)' },
+            abastecimento_agua: { label: 'Rede de abastecimento de água', unit: 'km' },
+            rede_esgoto: { label: 'Rede de esgoto', unit: 'km' },
+            drenagem_urbana: { label: 'Drenagem urbana', unit: 'km' },
+            rede_eletrica: { label: 'Rede elétrica', unit: 'km / postes' },
+            comunicacoes_telefonia: { label: 'Rede de comunicações / telefonia', unit: 'km' },
+            muros_arrimo: { label: 'Muros de arrimo / contenção', unit: 'm' },
+            drenagem_canais: { label: 'Obras de drenagem / canais', unit: 'm' }
+        };
+        const infraRows = [];
+        Object.entries(MAP_INFRA_LABELS).forEach(([key, info]) => {
+            const val = data.danos_infraestrutura?.[key] || { qtd: 0, extensao_area: 0, prejuizo: 0 };
+            if (val.qtd > 0 || val.extensao_area > 0 || val.prejuizo > 0) {
+                infraRows.push([
+                    info.label,
+                    info.unit,
+                    val.qtd || 0,
+                    val.extensao_area || 0,
+                    `R$ ${(val.prejuizo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                ]);
+            }
+        });
+        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 25px 0 8px 0;">6.3 Danos em Infraestrutura Pública</div>`;
+        if (infraRows.length > 0) {
+            contentHtml += renderTable(['Descrição da Infraestrutura', 'Unidade', 'Qtd. Afetada', 'Extensão / Área', 'Prejuízo (R$)'], infraRows, ['35%', '15%', '15%', '15%', '20%']);
+        } else {
+            contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic; margin-bottom: 15px;">Nenhum dano em infraestrutura pública reportado.</p>`;
+        }
+
+        // 6.4 Danos Agrícolas e de Produção
+        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 25px 0 8px 0;">6.4 Danos Agrícolas e de Produção</div>`;
+        if (data.danos_agricolas && !data.danos_agricolas.nao_se_aplica && data.danos_agricolas.itens && data.danos_agricolas.itens.length > 0) {
+            const agricolaRows = data.danos_agricolas.itens.map(item => [
+                item.cultura_produto,
+                item.area || 0,
+                item.produtores || 0,
+                item.animais || 0,
+                `${item.perda || 0}%`,
+                `R$ ${(item.prejuizo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            ]);
+            contentHtml += renderTable(['Cultura / Produto', 'Área (ha)', 'Produtores', 'Animais', 'Perda (%)', 'Prejuízo (R$)'], agricolaRows, ['30%', '12%', '13%', '13%', '12%', '20%']);
+        } else {
+            contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic; margin-bottom: 15px;">Sem danos agrícolas reportados ou não se aplica.</p>`;
+        }
+
+        // 6.5 Danos Ambientais
+        const MAP_AMBIENTAL_LABELS = {
+            vegetacao_nativa: { label: 'Área de vegetação nativa destruída', unit: 'hectares (ha)' },
+            contaminacao_agua: { label: 'Contaminação de corpos d\'água', unit: 'km de curso d\'água' },
+            erosao_app: { label: 'Erosão / assoreamento de APP', unit: 'm²' },
+            animais_silvestres: { label: 'Animais silvestres afetados', unit: 'indivíduos' }
+        };
+        const ambientalRows = [];
+        Object.entries(MAP_AMBIENTAL_LABELS).forEach(([key, info]) => {
+            const val = data.danos_ambientais?.[key] || { quantidade: 0, prejuizo: 0 };
+            if (val.quantidade > 0 || val.prejuizo > 0) {
+                ambientalRows.push([
+                    info.label,
+                    info.unit,
+                    val.quantidade || 0,
+                    `R$ ${(val.prejuizo || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                ]);
+            }
+        });
+        contentHtml += `<div style="font-size: 9px; font-weight: 900; color: #1e3a8a; text-transform: uppercase; margin: 25px 0 8px 0;">6.5 Danos Ambientais</div>`;
+        if (ambientalRows.length > 0) {
+            contentHtml += renderTable(['Tipo de Dano Ambiental', 'Unidade', 'Qtd / Extensão', 'Prejuízo (R$)'], ambientalRows, ['40%', '20%', '20%', '20%']);
+        } else {
+            contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic; margin-bottom: 15px;">Nenhum dano ambiental significativo reportado.</p>`;
+        }
+        if (data.danos_ambientais?.descricao) {
+            contentHtml += `<div style="font-size: 8px; color: #475569; margin-bottom: 15px; padding: 8px; background: #f8fafc; border-left: 2px solid #cbd5e1; font-style: italic;"><strong>Descrição complementar dos impactos ambientais:</strong> ${data.danos_ambientais.descricao}</div>`;
         }
     }
-    if (infraRows.length > 0) {
-        contentHtml += renderTable(['Discriminação / Item Setorial', 'Qtd. Danificada', 'Qtd. Destruída', 'Valor Estimado (R$)'], infraRows, ['40%', '20%', '20%', '20%']);
-    }
-    contentHtml += `</div>`; // Close Section 3
+    contentHtml += `</div>`; // Close Section 3/6
 
-    // 4. PREJUÍZOS ECONÔMICOS
-    const prejuPrefix = isSectoral ? '4' : '7';
-    contentHtml += `<div class="report-section">${sectionTitle(prejuPrefix, `Prejuízos Econômicos`)}`;
-
-    let prejuRows = [];
-    if (isSectoral) {
-        const sData = data.setorial[activeSector];
+    // 7. PREJUÍZOS ECONÔMICOS CONSOLIDADOS (FIDE Padrão)
+    if (!isSectoral) {
+        contentHtml += `<div class="report-section">${sectionTitle('7', 'Prejuízos Econômicos Consolidados')}`;
+        const MAP_CONSOLIDADO_LABELS = {
+            edificacoes: 'Edificações (públicas + privadas)',
+            infraestrutura: 'Infraestrutura pública',
+            agricola: 'Setor agrícola / produção rural',
+            comercial_industrial: 'Setor comercial / industrial',
+            meio_ambiente: 'Meio ambiente'
+        };
+        let totalDanos = 0;
+        let totalPrejuizos = 0;
+        const consolidadoRows = Object.entries(MAP_CONSOLIDADO_LABELS).map(([key, label]) => {
+            const val = data.prejuizos_economicos_consolidados?.[key] || { danos: 0, prejuizos: 0 };
+            totalDanos += (val.danos || 0);
+            totalPrejuizos += (val.prejuizos || 0);
+            return [
+                label,
+                `R$ ${(val.danos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                `R$ ${(val.prejuizos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            ];
+        });
+        consolidadoRows.push([
+            '<strong style="color: #1e3a8a;">TOTAL GERAL</strong>',
+            `<strong style="color: #1e3a8a;">R$ ${totalDanos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>`,
+            `<strong style="color: #1e3a8a;">R$ ${totalPrejuizos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>`
+        ]);
+        contentHtml += renderTable(['Setor Afetado', 'Danos Materiais (R$)', 'Prejuízos (R$)'], consolidadoRows, ['50%', '25%', '25%']);
+        contentHtml += `</div>`;
+    } else {
+        // Sectoral Prejuízos (Section 4)
+        const prejuPrefix = '4';
+        contentHtml += `<div class="report-section">${sectionTitle(prejuPrefix, `Prejuízos Econômicos (Setorial)`)}`;
+        let prejuRows = [];
+        const sData = (data.setorial && data.setorial[activeSector]) || {};
         Object.entries(sData).forEach(([k, v]) => {
             if (k.startsWith('prejuizo_') && k !== 'prejuizo_total' && v > 0) {
                 prejuRows.push([k.replace('prejuizo_', '').replace(/_/g, ' ').toUpperCase(), `R$ ${v.toLocaleString('pt-BR')}`]);
             }
         });
-    } else {
-        // Consolidado
-        // 1. Prejuízos Globais
-        Object.keys(data.prejuizos_publicos).forEach(key => {
-            if (data.prejuizos_publicos[key] > 0) {
-                prejuRows.push([key.replace(/_/g, ' ').toUpperCase(), `R$ ${data.prejuizos_publicos[key].toLocaleString('pt-BR')}`]);
-            }
-        });
-        Object.keys(data.prejuizos_privados).forEach(key => {
-            if (data.prejuizos_privados[key] > 0) {
-                prejuRows.push([`PRIVADO: ${key.replace(/_/g, ' ').toUpperCase()}`, `R$ ${data.prejuizos_privados[key].toLocaleString('pt-BR')}`]);
-            }
-        });
-
-        // 2. Agregação de Prejuízos Setoriais
-        if (data.setorial) {
-            Object.entries(data.setorial).forEach(([sectorName, sData]) => {
-                Object.entries(sData).forEach(([k, v]) => {
-                    if (k.startsWith('prejuizo_') && k !== 'prejuizo_total' && v > 0) {
-                        const label = `${k.replace('prejuizo_', '').replace(/_/g, ' ').toUpperCase()} (${sectorName.toUpperCase()})`;
-                        prejuRows.push([label, `R$ ${v.toLocaleString('pt-BR')}`]);
-                    }
-                });
-            });
+        if (prejuRows.length > 0) {
+            contentHtml += renderTable(['Serviço Essencial / Atividade', 'Valor do Prejuízo (R$)'], prejuRows, ['70%', '30%']);
+        } else {
+            contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic;">Nenhum prejuízo quantificado.</p>`;
         }
+        contentHtml += `</div>`;
     }
-
-    if (prejuRows.length > 0) {
-        contentHtml += renderTable(['Serviço Essencial / Atividade', 'Valor do Prejuízo (R$)'], prejuRows, ['70%', '30%']);
-    } else {
-        contentHtml += `<p style="font-size: 9px; color: #94a3b8; font-style: italic;">Nenhum prejuízo quantificado.</p>`;
-    }
-    contentHtml += `</div>`; // Close Section 4
 
     // 5. CONSIDERAÇÕES FINAIS
     contentHtml += `<div class="report-section">${sectionTitle('5', 'Considerações Finais')}`;
-    const considerText = isSectoral ? (data.setorial[activeSector].consideracoes || '') : '';
+    const considerText = isSectoral ? ((data.setorial && data.setorial[activeSector]?.consideracoes) || '') : (data.observacoes_complementares || '');
     contentHtml += `
             <div style="background: #ffffff; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 10px; line-height: 1.6; color: #334155; font-style: italic;">
                 ${considerText || 'Com base no exposto, conclui-se que os danos observados impactam a normalidade local.'}
@@ -391,9 +391,9 @@ export const generateRedapReport = async (record, userProfile, activeSector = nu
                         <img src="${photo.url}" style="width: 100%; height: 180px; object-fit: cover;" />
                         <div style="padding: 8px; background: #f8fafc;">
                             <div style="font-size: 7px; font-weight: 800; color: #1e3a8a; text-transform: uppercase;">
-                                Coordenadas: <span class="pdf-coord-link" data-lat="${photo.lat}" data-lng="${photo.lng}" style="color: #1e3a8a; text-decoration: underline; cursor: pointer;">${photo.lat.toFixed(6)}, ${photo.lng.toFixed(6)}</span>
+                                Coordenadas: ${photo.lat != null && photo.lng != null ? `<span class="pdf-coord-link" data-lat="${photo.lat}" data-lng="${photo.lng}" style="color: #1e3a8a; text-decoration: underline; cursor: pointer;">${Number(photo.lat).toFixed(6)}, ${Number(photo.lng).toFixed(6)}</span>` : 'Sem GPS'}
                             </div>
-                            <div style="font-size: 8px; font-weight: 700; color: #334155;">${new Date(photo.timestamp).toLocaleString()}</div>
+                            <div style="font-size: 8px; font-weight: 700; color: #334155;">${photo.timestamp ? new Date(photo.timestamp).toLocaleString() : 'Sem data'}</div>
                         </div>
                     </div>
                 `;

@@ -64,7 +64,9 @@ export const generateRedapDoc = async (type, data) => {
         if (type === "decreto") {
             templateData.desastre_nome_cobrade = `${data.tipificacao.cobrade} - ${data.tipificacao.denominacao}`;
             templateData.descricao_fatos = `evento adverso ocorrido em ${data.data_ocorrencia.dia}/${data.data_ocorrencia.mes}/${data.data_ocorrencia.ano} às ${data.data_ocorrencia.horario}`;
-            templateData.resumo_danos = `Danos Humanos (${data.danos_humanos.mortos} mortos, ${data.danos_humanos.feridos} feridos), Danos Materiais em habitações e infraestrutura, e Danos Ambientais diversos.`;
+            const mortos = data.danos_humanos?.mortos_confirmados?.total || 0;
+            const feridos = (data.danos_humanos?.feridos_graves?.total || 0) + (data.danos_humanos?.feridos_leves?.total || 0);
+            templateData.resumo_danos = `Danos Humanos (${mortos} mortos, ${feridos} feridos), Danos Materiais em habitações e infraestrutura, e Danos Ambientais diversos.`;
             templateData.vigencia_dias = data.metadata_oficial.decreto_vigencia;
         }
 

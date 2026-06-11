@@ -8,27 +8,29 @@ const RedapIntensityModal = ({ isOpen, onClose, formData, onSave }) => {
 
     // 1. Calculate Human Impacts
     const humanImpacts = useMemo(() => {
-        const d = formData.data.danos_humanos;
+        const d = formData.data.danos_humanos || {};
+        const mortos = d.mortos_confirmados?.total || 0;
+        const feridos = (d.feridos_graves?.total || 0) + (d.feridos_leves?.total || 0);
+        const enfermos = d.enfermos?.total || 0;
+        const desabrigados = d.desabrigados?.total || 0;
+        const desalojados = d.desalojados?.total || 0;
         return {
-            mortos: d.mortos || 0,
-            feridos: d.feridos || 0,
-            enfermos: d.enfermos || 0,
-            desabrigados: d.desabrigados || 0,
-            desalojados: d.desalojados || 0,
-            total: (d.mortos || 0) + (d.feridos || 0) + (d.enfermos || 0) + (d.desabrigados || 0) + (d.desalojados || 0)
+            mortos,
+            feridos,
+            enfermos,
+            desabrigados,
+            desalojados,
+            total: mortos + feridos + enfermos + desabrigados + desalojados
         };
     }, [formData.data.danos_humanos]);
 
     // 2. Calculate Economic Impacts (Material + Public + Private)
     const economicImpacts = useMemo(() => {
         // Material Damages (6.2)
-        const materialValue = Object.values(formData.data.danos_materiais).reduce((acc, curr) => acc + (curr.valor || 0), 0);
+        const materialValue = Object.values(formData.data.danos_materiais || {}).reduce((acc, curr) => acc + (curr.prejuizo || curr.valor || 0), 0);
 
-        // Public Losses (7.1)
-        const publicValue = Object.values(formData.data.prejuizos_publicos).reduce((acc, curr) => acc + (curr || 0), 0);
-
-        // Private Losses (7.2)
-        const privateValue = Object.values(formData.data.prejuizos_privados).reduce((acc, curr) => acc + (curr || 0), 0);
+        // Consolidated public + private damages/losses (7)
+        const consolidatedValue = Object.values(formData.data.prejuizos_economicos_consolidados || {}).reduce((acc, curr) => acc + (curr.danos || 0) + (curr.prejuizos || 0), 0);
 
         // Sectoral additions (if not already counted)
         let sectoralValue = 0;
@@ -46,12 +48,12 @@ const RedapIntensityModal = ({ isOpen, onClose, formData, onSave }) => {
 
         return {
             material: materialValue,
-            public: publicValue,
-            private: privateValue,
+            public: consolidatedValue,
+            private: 0,
             sectoral: sectoralValue,
-            total: materialValue + publicValue + privateValue + sectoralValue
+            total: Math.max(materialValue + sectoralValue, consolidatedValue)
         };
-    }, [formData.data.danos_materiais, formData.data.prejuizos_publicos, formData.data.prejuizos_privados, formData.data.setorial]);
+    }, [formData.data.danos_materiais, formData.data.prejuizos_economicos_consolidados, formData.data.setorial]);
 
     // 3. Logic based on Portaria 260/2022
     const intensitySugerida = useMemo(() => {

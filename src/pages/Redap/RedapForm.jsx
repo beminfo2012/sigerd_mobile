@@ -46,6 +46,9 @@ const RedapForm = () => {
         'Redap_EsporteTurismo': 'esporte_turismo',
         'Redap_ServicosUrbanos': 'servicos_urbanos',
         'Redap_Transportes': 'transportes',
+        'Redap_Cultura': 'cultura',
+        'Redap_MeioAmbiente': 'meio_ambiente',
+        'Redap_Geral': 'defesa_civil',
         // Backward compatibility
         'S2id_Saude': 'saude',
         'S2id_Obras': 'obras',
@@ -59,7 +62,10 @@ const RedapForm = () => {
         'S2id_DefesaSocial': 'defesa_social',
         'S2id_EsporteTurismo': 'esporte_turismo',
         'S2id_ServicosUrbanos': 'servicos_urbanos',
-        'S2id_Transportes': 'transportes'
+        'S2id_Transportes': 'transportes',
+        'S2id_Cultura': 'cultura',
+        'S2id_MeioAmbiente': 'meio_ambiente',
+        'S2id_Geral': 'defesa_civil'
     };
 
     const activeSector = ROLE_MAP[user?.role] ||
@@ -74,6 +80,8 @@ const RedapForm = () => {
         tipificacao: true,
         danos_humanos: false,
         danos_materiais: false,
+        danos_infraestrutura: false,
+        danos_agricolas: false,
         danos_ambientais: false,
         prejuizos_publicos: false,
         prejuizos_privados: false,
@@ -193,6 +201,7 @@ const RedapForm = () => {
 
     // Role-based permissions
     const canEditSection = (section) => {
+        if (formData?.status === 'submitted') return false; // Block all editing when submitted
         if (!user) return false;
         const role = user.role;
         const isDC = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(role);
@@ -217,7 +226,8 @@ const RedapForm = () => {
     };
 
     const isDC = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role);
-    const isGlobalReadOnly = !(isDC || user?.role?.startsWith('Redap_') || user?.role?.startsWith('S2id_'));
+    const isEditableByDC = isDC && formData?.status !== 'submitted';
+    const isGlobalReadOnly = formData?.status === 'submitted' || !(isDC || user?.role?.startsWith('Redap_') || user?.role?.startsWith('S2id_'));
 
     // AI Generation Logic
     const handleGenerateIA = async (field) => {
@@ -399,6 +409,197 @@ const RedapForm = () => {
         }));
     };
 
+    const addAgricolaItem = () => {
+        setFormData(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                danos_agricolas: {
+                    ...prev.data.danos_agricolas,
+                    itens: [
+                        ...(prev.data.danos_agricolas.itens || []),
+                        { cultura_produto: '', area: 0, produtores: 0, animais: 0, perda: 0, prejuizo: 0 }
+                    ]
+                }
+            }
+        }));
+    };
+
+    const updateAgricolaItem = (index, field, value) => {
+        setFormData(prev => {
+            const newItens = [...(prev.data.danos_agricolas.itens || [])];
+            newItens[index] = { ...newItens[index], [field]: value };
+            return {
+                ...prev,
+                data: {
+                    ...prev.data,
+                    danos_agricolas: {
+                        ...prev.data.danos_agricolas,
+                        itens: newItens
+                    }
+                }
+            };
+        });
+    };
+
+    const removeAgricolaItem = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                danos_agricolas: {
+                    ...prev.data.danos_agricolas,
+                    itens: (prev.data.danos_agricolas.itens || []).filter((_, i) => i !== index)
+                }
+            }
+        }));
+    };
+
+    const handleHumanChange = (catKey, subfield, value) => {
+        isDirty.current = true;
+        setFormData(prev => {
+            const catObj = { ...(prev.data.danos_humanos[catKey] || { total: 0, homens: 0, mulheres: 0, criancas: 0 }), [subfield]: value };
+            catObj.total = (catObj.homens || 0) + (catObj.mulheres || 0) + (catObj.criancas || 0);
+            return {
+                ...prev,
+                data: {
+                    ...prev.data,
+                    danos_humanos: {
+                        ...prev.data.danos_humanos,
+                        [catKey]: catObj
+                    }
+                }
+            };
+        });
+    };
+
+    const handleMaterialChange = (itemKey, subfield, value) => {
+        isDirty.current = true;
+        setFormData(prev => {
+            const itemObj = { ...(prev.data.danos_materiais[itemKey] || { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 }), [subfield]: value };
+            itemObj.total = (itemObj.destruidas || 0) + (itemObj.danificadas || 0);
+            return {
+                ...prev,
+                data: {
+                    ...prev.data,
+                    danos_materiais: {
+                        ...prev.data.danos_materiais,
+                        [itemKey]: itemObj
+                    }
+                }
+            };
+        });
+    };
+
+    const handleInfraChange = (itemKey, subfield, value) => {
+        isDirty.current = true;
+        setFormData(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                danos_infraestrutura: {
+                    ...prev.data.danos_infraestrutura,
+                    [itemKey]: {
+                        ...(prev.data.danos_infraestrutura[itemKey] || {}),
+                        [subfield]: value
+                    }
+                }
+            }
+        }));
+    };
+
+    const handleAmbientalChange = (itemKey, subfield, value) => {
+        isDirty.current = true;
+        setFormData(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                danos_ambientais: {
+                    ...prev.data.danos_ambientais,
+                    [itemKey]: {
+                        ...(prev.data.danos_ambientais[itemKey] || {}),
+                        [subfield]: value
+                    }
+                }
+            }
+        }));
+    };
+
+    const handleConsolidadoChange = (itemKey, subfield, value) => {
+        isDirty.current = true;
+        setFormData(prev => ({
+            ...prev,
+            data: {
+                ...prev.data,
+                prejuizos_economicos_consolidados: {
+                    ...prev.data.prejuizos_economicos_consolidados,
+                    [itemKey]: {
+                        ...(prev.data.prejuizos_economicos_consolidados[itemKey] || {}),
+                        [subfield]: value
+                    }
+                }
+            }
+        }));
+    };
+
+    const autoConsolidatePrejuizos = () => {
+        setFormData(prev => {
+            const dm = prev.data.danos_materiais || {};
+            const di = prev.data.danos_infraestrutura || {};
+            const da = prev.data.danos_agricolas || {};
+            const dam = prev.data.danos_ambientais || {};
+
+            // Edificações (públicas + privadas): residencial, saúde, educação, templos
+            const edificacoesDanos = 
+                (dm.residencias_urbanas?.prejuizo || dm.residencias_urbanas?.valor || 0) +
+                (dm.residencias_rurais?.prejuizo || dm.residencias_rurais?.valor || 0) +
+                (dm.escolas_creches?.prejuizo || dm.escolas_creches?.valor || 0) +
+                (dm.unidades_saude?.prejuizo || dm.unidades_saude?.valor || 0) +
+                (dm.edificacoes_publicas?.prejuizo || dm.edificacoes_publicas?.valor || 0) +
+                (dm.templos_culto?.prejuizo || dm.templos_culto?.valor || 0);
+
+            // Infraestrutura pública
+            let infraDanos = 0;
+            Object.values(di).forEach(item => {
+                infraDanos += (item?.prejuizo || 0);
+            });
+
+            // Agrícola
+            let agricolaDanos = 0;
+            (da.itens || []).forEach(item => {
+                agricolaDanos += (item?.prejuizo || 0);
+            });
+
+            // Comercial / Industrial
+            const comercialIndustrialDanos = 
+                (dm.comercio?.prejuizo || dm.comercio?.valor || 0) +
+                (dm.industria?.prejuizo || dm.industria?.valor || 0);
+
+            // Meio ambiente
+            let meioAmbienteDanos = 0;
+            Object.keys(dam).forEach(key => {
+                if (key !== 'descricao' && dam[key]) {
+                    meioAmbienteDanos += (dam[key]?.prejuizo || 0);
+                }
+            });
+
+            return {
+                ...prev,
+                data: {
+                    ...prev.data,
+                    prejuizos_economicos_consolidados: {
+                        edificacoes: { danos: edificacoesDanos, prejuizos: prev.data.prejuizos_economicos_consolidados?.edificacoes?.prejuizos || 0 },
+                        infraestrutura: { danos: infraDanos, prejuizos: prev.data.prejuizos_economicos_consolidados?.infraestrutura?.prejuizos || 0 },
+                        agricola: { danos: agricolaDanos, prejuizos: prev.data.prejuizos_economicos_consolidados?.agricola?.prejuizos || 0 },
+                        comercial_industrial: { danos: comercialIndustrialDanos, prejuizos: prev.data.prejuizos_economicos_consolidados?.comercial_industrial?.prejuizos || 0 },
+                        meio_ambiente: { danos: meioAmbienteDanos, prejuizos: prev.data.prejuizos_economicos_consolidados?.meio_ambiente?.prejuizos || 0 }
+                    }
+                }
+            };
+        });
+        toast.success('Calculado', 'Valores de danos consolidados a partir das seções anteriores.');
+    };
+
     const toggleSection = (section) => {
         setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
@@ -437,16 +638,35 @@ const RedapForm = () => {
                     >
                         <FileText size={18} />
                     </button>
-                    <button
-                        onClick={() => {
-                            setFormData(prev => ({ ...prev, status: 'submitted' }));
-                            toast.success('Finalizado', 'Formulário marcado como finalizado.');
-                        }}
-                        disabled={saving || !['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)}
-                        className="bg-emerald-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all"
-                    >
-                        Finalizar
-                    </button>
+                    {formData?.status === 'submitted' ? (
+                        <button
+                            onClick={async () => {
+                                const updated = { ...formData, status: 'draft' };
+                                setFormData(updated);
+                                isDirty.current = true;
+                                await saveRedapLocal(updated);
+                                toast.info('Reaberto', 'Pasta reaberta para edições.');
+                            }}
+                            disabled={saving || !['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)}
+                            className="bg-amber-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all animate-in fade-in duration-200"
+                        >
+                            Reabrir Pasta
+                        </button>
+                    ) : (
+                        <button
+                            onClick={async () => {
+                                const updated = { ...formData, status: 'submitted' };
+                                setFormData(updated);
+                                isDirty.current = true;
+                                await saveRedapLocal(updated);
+                                toast.success('Finalizado', 'Pasta fechada e finalizada com sucesso.');
+                            }}
+                            disabled={saving || !['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)}
+                            className="bg-emerald-600 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all animate-in fade-in duration-200"
+                        >
+                            Finalizar
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -536,26 +756,75 @@ const RedapForm = () => {
                             color="slate"
                         />
                         {openSections.danos_humanos && (
-                            <div className="p-4 bg-white grid grid-cols-2 sm:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-300">
-                                {['mortos', 'feridos', 'enfermos', 'desabrigados', 'desalojados', 'desaparecidos', 'outros_afetados'].map(field => (
-                                    <div key={field}>
-                                        <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">{field.replace('_', ' ')}</label>
-                                        <NumberInput
-                                            disabled={!canEditSection('danos_humanos')}
-                                            className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm font-bold disabled:opacity-60"
-                                            value={formData.data.danos_humanos[field]}
-                                            onChange={(val) => updateData('danos_humanos', field, val)}
-                                        />
-                                    </div>
-                                ))}
-                                <div className="col-span-full">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">6.1.1 Descrição</label>
+                            <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300 overflow-x-auto">
+                                <table className="w-full text-left min-w-[600px]">
+                                    <thead>
+                                        <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                            <th className="pb-3 pl-2">Classificação dos Danos</th>
+                                            <th className="pb-3 text-center">Qtd. Total</th>
+                                            <th className="pb-3 text-center">Homens</th>
+                                            <th className="pb-3 text-center">Mulheres</th>
+                                            <th className="pb-3 text-center">Crianças (&lt;12)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            { key: 'mortos_confirmados', label: 'Mortos confirmados' },
+                                            { key: 'desaparecidos', label: 'Desaparecidos' },
+                                            { key: 'feridos_graves', label: 'Feridos graves' },
+                                            { key: 'feridos_leves', label: 'Feridos leves' },
+                                            { key: 'enfermos', label: 'Enfermos' },
+                                            { key: 'desabrigados', label: 'Desabrigados' },
+                                            { key: 'desalojados', label: 'Desalojados' },
+                                            { key: 'deslocados_temporariamente', label: 'Deslocados temporariamente' },
+                                            { key: 'diretamente_afetados', label: 'Diretamente afetados' }
+                                        ].map(item => {
+                                            const val = formData.data.danos_humanos[item.key] || { total: 0, homens: 0, mulheres: 0, criancas: 0 };
+                                            return (
+                                                <tr key={item.key} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                    <td className="py-3 pl-2 font-bold text-slate-700 text-xs">
+                                                        {item.label}
+                                                    </td>
+                                                    <td className="py-2 text-center font-extrabold text-slate-900 bg-slate-50/50 rounded-lg text-xs w-20">
+                                                        {val.total}
+                                                    </td>
+                                                    <td className="py-2 text-center">
+                                                        <NumberInput
+                                                            disabled={!canEditSection('danos_humanos')}
+                                                            className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                            value={val.homens}
+                                                            onChange={(n) => handleHumanChange(item.key, 'homens', n)}
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 text-center">
+                                                        <NumberInput
+                                                            disabled={!canEditSection('danos_humanos')}
+                                                            className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                            value={val.mulheres}
+                                                            onChange={(n) => handleHumanChange(item.key, 'mulheres', n)}
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 text-center">
+                                                        <NumberInput
+                                                            disabled={!canEditSection('danos_humanos')}
+                                                            className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                            value={val.criancas}
+                                                            onChange={(n) => handleHumanChange(item.key, 'criancas', n)}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                <div className="pt-4">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">6.1.1 Descrição complementar / Memória de cálculo</label>
                                     <textarea
                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm min-h-[100px] disabled:opacity-60"
                                         disabled={!canEditSection('danos_humanos')}
                                         value={formData.data.danos_humanos.descricao}
                                         onChange={(e) => updateData('danos_humanos', 'descricao', e.target.value)}
-                                        placeholder="Descreva os danos humanos..."
+                                        placeholder="Descreva as fontes dos dados humanos, detalhando comunidades atingidas..."
                                     />
                                 </div>
                             </div>
@@ -564,124 +833,471 @@ const RedapForm = () => {
                         {/* 6.2 DANOS MATERIAIS */}
                         <SectionHeader
                             icon={Home}
-                            title="6.2 Danos Materiais"
+                            title="6.2 Danos em Edificações"
                             isOpen={openSections.danos_materiais}
                             onToggle={() => toggleSection('danos_materiais')}
                             color="slate"
                         />
                         {openSections.danos_materiais && (
                             <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300 overflow-x-auto">
-                                <table className="w-full text-left min-w-[500px]">
+                                <table className="w-full text-left min-w-[600px]">
                                     <thead>
-                                        <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
-                                            <th className="pb-4 pl-2">Discriminação</th>
-                                            <th className="pb-4 text-center">Danificadas</th>
-                                            <th className="pb-4 text-center">Destruídas</th>
-                                            <th className="pb-4 text-right pr-2">Valor (R$)</th>
+                                        <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                            <th className="pb-3 pl-2">Discriminação das Edificações</th>
+                                            <th className="pb-3 text-center">Destruídas</th>
+                                            <th className="pb-3 text-center">Danificadas</th>
+                                            <th className="pb-3 text-center">Total Unid.</th>
+                                            <th className="pb-3 text-right pr-2">Prejuízo (R$)</th>
                                         </tr>
                                     </thead>
                                     <tbody className="text-sm">
-                                        {Object.keys(formData.data.danos_materiais).map(key => (
-                                            <tr key={key} className="border-t border-slate-50 group hover:bg-slate-50/50 transition-colors">
-                                                <td className="py-4 pl-2 font-bold text-slate-700 capitalize text-xs">
-                                                    {key.replace(/_/g, ' ')}
-                                                </td>
-                                                <td className="py-2 text-center">
-                                                    <NumberInput
-                                                        disabled={!canEditSection('danos_materiais')}
-                                                        className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
-                                                        value={formData.data.danos_materiais[key].danificadas}
-                                                        onChange={(val) => updateDeepData('danos_materiais', key, 'danificadas', val)}
-                                                    />
-                                                </td>
-                                                <td className="py-2 text-center">
-                                                    <NumberInput
-                                                        disabled={!canEditSection('danos_materiais')}
-                                                        className="w-16 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
-                                                        value={formData.data.danos_materiais[key].destruidas}
-                                                        onChange={(val) => updateDeepData('danos_materiais', key, 'destruidas', val)}
-                                                    />
-                                                </td>
-                                                <td className="py-2 pr-2 text-right">
-                                                    <CurrencyInput
-                                                        disabled={!canEditSection('danos_materiais')}
-                                                        className="w-24 p-1.5 bg-slate-50 border border-slate-100 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
-                                                        value={formData.data.danos_materiais[key].valor}
-                                                        onChange={(val) => updateDeepData('danos_materiais', key, 'valor', val)}
-                                                    />
-                                                </td>
-                                            </tr>
+                                        {[
+                                            {
+                                                title: 'Residenciais',
+                                                items: [
+                                                    { key: 'residencias_urbanas', label: 'Residências urbanas' },
+                                                    { key: 'residencias_rurais', label: 'Residências rurais' }
+                                                ]
+                                            },
+                                            {
+                                                title: 'Públicas e de Uso Coletivo',
+                                                items: [
+                                                    { key: 'escolas_creches', label: 'Escolas / creches' },
+                                                    { key: 'unidades_saude', label: 'Unidades de saúde' },
+                                                    { key: 'edificacoes_publicas', label: 'Edificações administrativas públicas' },
+                                                    { key: 'templos_culto', label: 'Templos / igrejas / locais de culto' }
+                                                ]
+                                            },
+                                            {
+                                                title: 'Comerciais e Industriais',
+                                                items: [
+                                                    { key: 'comercio', label: 'Estabelecimentos comerciais' },
+                                                    { key: 'industria', label: 'Estabelecimentos industriais' }
+                                                ]
+                                            }
+                                        ].map(group => (
+                                            <React.Fragment key={group.title}>
+                                                <tr className="bg-slate-50/50">
+                                                    <td colSpan={5} className="py-2 pl-2 text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                                        {group.title}
+                                                    </td>
+                                                </tr>
+                                                {group.items.map(item => {
+                                                    const val = formData.data.danos_materiais[item.key] || { destruidas: 0, danificadas: 0, total: 0, prejuizo: 0 };
+                                                    return (
+                                                        <tr key={item.key} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                            <td className="py-3 pl-4 font-bold text-slate-700 text-xs">
+                                                                {item.label}
+                                                            </td>
+                                                            <td className="py-2 text-center">
+                                                                <NumberInput
+                                                                    disabled={!canEditSection('danos_materiais')}
+                                                                    className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                                    value={val.destruidas}
+                                                                    onChange={(n) => handleMaterialChange(item.key, 'destruidas', n)}
+                                                                />
+                                                            </td>
+                                                            <td className="py-2 text-center">
+                                                                <NumberInput
+                                                                    disabled={!canEditSection('danos_materiais')}
+                                                                    className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                                    value={val.danificadas}
+                                                                    onChange={(n) => handleMaterialChange(item.key, 'danificadas', n)}
+                                                                />
+                                                            </td>
+                                                            <td className="py-2 text-center font-bold text-slate-600 text-xs w-20">
+                                                                {val.total}
+                                                            </td>
+                                                            <td className="py-2 pr-2 text-right">
+                                                                <CurrencyInput
+                                                                    disabled={!canEditSection('danos_materiais')}
+                                                                    className="w-28 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                                    value={val.prejuizo || val.valor || 0}
+                                                                    onChange={(n) => handleMaterialChange(item.key, 'prejuizo', n)}
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </React.Fragment>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
                         )}
 
-                        {/* 6.3 DANOS AMBIENTAIS */}
+                        {/* 6.3 DANOS EM INFRAESTRUTURA */}
+                        <SectionHeader
+                            icon={Globe}
+                            title="6.3 Danos em Infraestrutura Pública"
+                            isOpen={openSections.danos_infraestrutura}
+                            onToggle={() => toggleSection('danos_infraestrutura')}
+                            color="slate"
+                        />
+                        {openSections.danos_infraestrutura && (
+                            <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300 overflow-x-auto">
+                                <table className="w-full text-left min-w-[600px]">
+                                    <thead>
+                                        <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                            <th className="pb-3 pl-2">Descrição da Infraestrutura</th>
+                                            <th className="pb-3 text-center">Unidade</th>
+                                            <th className="pb-3 text-center">Qtd. Afetada</th>
+                                            <th className="pb-3 text-center">Extensão / Área</th>
+                                            <th className="pb-3 text-right pr-2">Prejuízo (R$)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            {
+                                                title: 'Viária / Transporte',
+                                                items: [
+                                                    { key: 'estradas_rodovias', label: 'Estradas / rodovias danificadas', unit: 'km' },
+                                                    { key: 'pontes_viadutos', label: 'Pontes / viadutos danificados', unit: 'unidade(s)' },
+                                                    { key: 'bueiros_galerias', label: 'Bueiros / galerias comprometidos', unit: 'unidade(s)' }
+                                                ]
+                                            },
+                                            {
+                                                title: 'Saneamento e Abastecimento',
+                                                items: [
+                                                    { key: 'abastecimento_agua', label: 'Rede de abastecimento de água', unit: 'km' },
+                                                    { key: 'rede_esgoto', label: 'Rede de esgoto', unit: 'km' },
+                                                    { key: 'drenagem_urbana', label: 'Drenagem urbana', unit: 'km' }
+                                                ]
+                                            },
+                                            {
+                                                title: 'Energia e Comunicações',
+                                                items: [
+                                                    { key: 'rede_eletrica', label: 'Rede elétrica', unit: 'km / postes' },
+                                                    { key: 'comunicacoes_telefonia', label: 'Rede de comunicações / telefonia', unit: 'km' }
+                                                ]
+                                            },
+                                            {
+                                                title: 'Contenção e Proteção',
+                                                items: [
+                                                    { key: 'muros_arrimo', label: 'Muros de arrimo / contenção', unit: 'm' },
+                                                    { key: 'drenagem_canais', label: 'Obras de drenagem / canais', unit: 'm' }
+                                                ]
+                                            }
+                                        ].map(group => (
+                                            <React.Fragment key={group.title}>
+                                                <tr className="bg-slate-50/50">
+                                                    <td colSpan={5} className="py-2 pl-2 text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                                        {group.title}
+                                                    </td>
+                                                </tr>
+                                                {group.items.map(item => {
+                                                    const val = formData.data.danos_infraestrutura[item.key] || { qtd: 0, extensao_area: 0, prejuizo: 0, unidade: item.unit };
+                                                    return (
+                                                        <tr key={item.key} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                            <td className="py-3 pl-4 font-bold text-slate-700 text-xs">
+                                                                {item.label}
+                                                            </td>
+                                                            <td className="py-2 text-center text-slate-400 font-bold text-[10px] uppercase">
+                                                                {item.unit}
+                                                            </td>
+                                                            <td className="py-2 text-center">
+                                                                <NumberInput
+                                                                    disabled={!isEditableByDC}
+                                                                    className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                                    value={val.qtd}
+                                                                    onChange={(n) => handleInfraChange(item.key, 'qtd', n)}
+                                                                />
+                                                            </td>
+                                                            <td className="py-2 text-center">
+                                                                <NumberInput
+                                                                    disabled={!isEditableByDC}
+                                                                    className="w-20 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                                    value={val.extensao_area}
+                                                                    onChange={(n) => handleInfraChange(item.key, 'extensao_area', n)}
+                                                                />
+                                                            </td>
+                                                            <td className="py-2 pr-2 text-right">
+                                                                <CurrencyInput
+                                                                    disabled={!isEditableByDC}
+                                                                    className="w-28 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
+                                                                    value={val.prejuizo}
+                                                                    onChange={(n) => handleInfraChange(item.key, 'prejuizo', n)}
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </React.Fragment>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* 6.4 DANOS AGRÍCOLAS E DE PRODUÇÃO */}
+                        <SectionHeader
+                            icon={Shield}
+                            title="6.4 Danos Agrícolas e de Produção"
+                            isOpen={openSections.danos_agricolas}
+                            onToggle={() => toggleSection('danos_agricolas')}
+                            color="slate"
+                        />
+                        {openSections.danos_agricolas && (
+                            <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            disabled={!isEditableByDC}
+                                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-60"
+                                            checked={formData.data.danos_agricolas?.nao_se_aplica}
+                                            onChange={(e) => updateDeepData('danos_agricolas', 'nao_se_aplica', null, e.target.checked)}
+                                        />
+                                        <span className="text-[10px] font-black uppercase text-slate-600 tracking-wider">Não se aplica / Sem danos agrícolas reportados neste evento</span>
+                                    </label>
+                                </div>
+
+                                {!formData.data.danos_agricolas?.nao_se_aplica && (
+                                    <div className="space-y-4 overflow-x-auto">
+                                        <table className="w-full text-left min-w-[600px]">
+                                            <thead>
+                                                <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                                    <th className="pb-3 pl-2">Cultura / Produto</th>
+                                                    <th className="pb-3 text-center">Área (ha)</th>
+                                                    <th className="pb-3 text-center">Produtores Afetados</th>
+                                                    <th className="pb-3 text-center">Animais Afetados</th>
+                                                    <th className="pb-3 text-center">Perda (%)</th>
+                                                    <th className="pb-3 text-right pr-2">Prejuízo (R$)</th>
+                                                    <th className="pb-3 text-center">Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-sm">
+                                                {(formData.data.danos_agricolas?.itens || []).map((item, index) => (
+                                                    <tr key={index} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                        <td className="py-2 pl-2">
+                                                            <input
+                                                                type="text"
+                                                                disabled={!isEditableByDC}
+                                                                className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg font-bold text-xs outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
+                                                                value={item.cultura_produto}
+                                                                onChange={(e) => updateAgricolaItem(index, 'cultura_produto', e.target.value)}
+                                                                placeholder="Ex: Café, Tomate, etc."
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 text-center">
+                                                            <NumberInput
+                                                                disabled={!isEditableByDC}
+                                                                className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                                value={item.area}
+                                                                onChange={(n) => updateAgricolaItem(index, 'area', n)}
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 text-center">
+                                                            <NumberInput
+                                                                disabled={!isEditableByDC}
+                                                                className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                                value={item.produtores}
+                                                                onChange={(n) => updateAgricolaItem(index, 'produtores', n)}
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 text-center">
+                                                            <NumberInput
+                                                                disabled={!isEditableByDC}
+                                                                className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                                value={item.animais}
+                                                                onChange={(n) => updateAgricolaItem(index, 'animais', n)}
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 text-center">
+                                                            <NumberInput
+                                                                disabled={!isEditableByDC}
+                                                                className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                                value={item.perda}
+                                                                onChange={(n) => updateAgricolaItem(index, 'perda', n)}
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 pr-2 text-right">
+                                                            <CurrencyInput
+                                                                disabled={!isEditableByDC}
+                                                                className="w-24 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                                value={item.prejuizo}
+                                                                onChange={(n) => updateAgricolaItem(index, 'prejuizo', n)}
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 text-center">
+                                                            <button
+                                                                disabled={!isEditableByDC}
+                                                                onClick={() => removeAgricolaItem(index)}
+                                                                className="text-red-500 hover:text-red-700 p-1 bg-red-50 hover:bg-red-100 rounded-lg transition-colors active:scale-95 disabled:opacity-50"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {(!formData.data.danos_agricolas?.itens || formData.data.danos_agricolas.itens.length === 0) && (
+                                                    <tr>
+                                                        <td colSpan={7} className="py-6 text-center text-slate-400 font-bold text-xs">
+                                                            Nenhum item agrícola adicionado. Clique no botão abaixo para adicionar.
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                        <button
+                                            disabled={!isEditableByDC}
+                                            onClick={addAgricolaItem}
+                                            className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl font-black text-[10px] text-slate-500 hover:text-slate-800 hover:bg-slate-50 tracking-widest uppercase transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            <Calculator size={14} />
+                                            Adicionar Item Agrícola
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 6.5 DANOS AMBIENTAIS */}
                         <SectionHeader
                             icon={Leaf}
-                            title="6.3 Danos Ambientais"
+                            title="6.5 Danos Ambientais"
                             isOpen={openSections.danos_ambientais}
                             onToggle={() => toggleSection('danos_ambientais')}
                             color="slate"
                         />
                         {openSections.danos_ambientais && (
-                            <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300">
-                                {Object.keys(formData.data.danos_ambientais).filter(k => k !== 'descricao').map(key => (
-                                    <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <div className="flex-1 font-bold text-slate-700 text-xs capitalize">{key.replace(/_/g, ' ')}</div>
-                                        <div className="flex items-center gap-4">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    disabled={!canEditSection('danos_ambientais')}
-                                                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-60"
-                                                    checked={formData.data.danos_ambientais[key].sim}
-                                                    onChange={(e) => updateDeepData('danos_ambientais', key, 'sim', e.target.checked)}
-                                                />
-                                                <span className="text-[10px] font-black uppercase text-slate-400">Sim</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                placeholder={key === 'incendios' ? "Área" : "População"}
-                                                className="w-32 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
-                                                value={formData.data.danos_ambientais[key][key === 'incendios' ? 'area' : 'populacao']}
-                                                onChange={(e) => updateDeepData('danos_ambientais', key, key === 'incendios' ? 'area' : 'populacao', e.target.value)}
-                                                disabled={!formData.data.danos_ambientais[key].sim || !canEditSection('danos_ambientais')}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="p-4 bg-white space-y-4 animate-in slide-in-from-top-2 duration-300 overflow-x-auto">
+                                <table className="w-full text-left min-w-[600px]">
+                                    <thead>
+                                        <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                            <th className="pb-3 pl-2">Tipo de Dano Ambiental</th>
+                                            <th className="pb-3 text-center">Unidade</th>
+                                            <th className="pb-3 text-center">Quantidade / Extensão</th>
+                                            <th className="pb-3 text-right pr-2">Prejuízo Estimado (R$)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            { key: 'vegetacao_nativa', label: 'Área de vegetação nativa destruída', unit: 'hectares (ha)' },
+                                            { key: 'contaminacao_agua', label: 'Contaminação de corpos d\'água', unit: 'km de curso d\'água' },
+                                            { key: 'erosao_app', label: 'Erosão / assoreamento de APP', unit: 'm²' },
+                                            { key: 'animais_silvestres', label: 'Animais silvestres afetados', unit: 'indivíduos' }
+                                        ].map(item => {
+                                            const val = formData.data.danos_ambientais[item.key] || { quantidade: 0, prejuizo: 0, unidade: item.unit };
+                                            return (
+                                                <tr key={item.key} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                    <td className="py-3 pl-2 font-bold text-slate-700 text-xs">
+                                                        {item.label}
+                                                    </td>
+                                                    <td className="py-2 text-center text-slate-400 font-bold text-[10px] uppercase">
+                                                        {item.unit}
+                                                    </td>
+                                                    <td className="py-2 text-center">
+                                                        <NumberInput
+                                                            disabled={!isEditableByDC}
+                                                            className="w-20 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                            value={val.quantidade}
+                                                            onChange={(n) => handleAmbientalChange(item.key, 'quantidade', n)}
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 pr-2 text-right">
+                                                        <CurrencyInput
+                                                            disabled={!isEditableByDC}
+                                                            className="w-28 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                            value={val.prejuizo}
+                                                            onChange={(n) => handleAmbientalChange(item.key, 'prejuizo', n)}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                <div className="pt-4">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">6.5.1 Descrição complementar dos impactos ambientais</label>
+                                    <textarea
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none text-sm min-h-[100px]"
+                                        disabled={!isEditableByDC}
+                                        value={formData.data.danos_ambientais.descricao}
+                                        onChange={(e) => updateData('danos_ambientais', 'descricao', e.target.value)}
+                                        placeholder="Descreva detalhes dos impactos ambientais constatados..."
+                                    />
+                                </div>
                             </div>
                         )}
 
-                        {/* 7. PREJUÍZOS */}
+                        {/* 7. PREJUÍZOS ECONÔMICOS CONSOLIDADOS */}
                         <SectionHeader
                             icon={FileText}
-                            title="7. Prejuízos Públicos & Privados"
+                            title="7. Prejuízos Econômicos Consolidados"
                             isOpen={openSections.prejuizos_publicos}
                             onToggle={() => toggleSection('prejuizos_publicos')}
                             color="slate"
                         />
                         {openSections.prejuizos_publicos && (
-                            <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300">
-                                {/* Públicos */}
-                                <div className="space-y-3">
-                                    <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">7.1 Públicos</h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {Object.keys(formData.data.prejuizos_publicos).map(key => (
-                                            <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                                <span className="text-[10px] font-bold text-slate-600 uppercase capitalize">{key.replace(/_/g, ' ')}</span>
-                                                <CurrencyInput
-                                                    disabled={!canEditSection('prejuizos_publicos')}
-                                                    className="w-24 p-1.5 bg-white border border-slate-200 rounded-lg text-right font-bold text-xs outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
-                                                    value={formData.data.prejuizos_publicos[key]}
-                                                    onChange={(val) => updateData('prejuizos_publicos', key, val)}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
+                            <div className="p-4 bg-white space-y-6 animate-in slide-in-from-top-2 duration-300 overflow-x-auto">
+                                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                    <span className="text-[10px] font-bold text-slate-600 uppercase">Auxílio de Preenchimento</span>
+                                    <button
+                                        disabled={!isEditableByDC}
+                                        onClick={autoConsolidatePrejuizos}
+                                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 shadow-sm disabled:opacity-50"
+                                    >
+                                        <Calculator size={12} />
+                                        Consolidar a partir de Danos
+                                    </button>
                                 </div>
+
+                                <table className="w-full text-left min-w-[600px]">
+                                    <thead>
+                                        <tr className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                            <th className="pb-3 pl-2">Setor Afetado</th>
+                                            <th className="pb-3 text-right">Danos Materiais (R$)</th>
+                                            <th className="pb-3 text-right pr-2">Prejuízos (R$)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {[
+                                            { key: 'edificacoes', label: 'Edificações (públicas + privadas)' },
+                                            { key: 'infraestrutura', label: 'Infraestrutura pública' },
+                                            { key: 'agricola', label: 'Setor agrícola / produção rural' },
+                                            { key: 'comercial_industrial', label: 'Setor comercial / industrial' },
+                                            { key: 'meio_ambiente', label: 'Meio ambiente' }
+                                        ].map(item => {
+                                            const val = formData.data.prejuizos_economicos_consolidados[item.key] || { danos: 0, prejuizos: 0 };
+                                            return (
+                                                <tr key={item.key} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                    <td className="py-3 pl-2 font-bold text-slate-700 text-xs">
+                                                        {item.label}
+                                                    </td>
+                                                    <td className="py-2 text-right">
+                                                        <CurrencyInput
+                                                            disabled={!isEditableByDC}
+                                                            className="w-32 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                            value={val.danos}
+                                                            onChange={(n) => handleConsolidadoChange(item.key, 'danos', n)}
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 pr-2 text-right">
+                                                        <CurrencyInput
+                                                            disabled={!isEditableByDC}
+                                                            className="w-32 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                            value={val.prejuizos}
+                                                            onChange={(n) => handleConsolidadoChange(item.key, 'prejuizos', n)}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {/* Total Row */}
+                                        <tr className="bg-slate-50 border-t border-slate-200">
+                                            <td className="py-3 pl-2 font-black text-slate-800 text-xs uppercase tracking-wider">
+                                                TOTAL GERAL DO EVENTO
+                                            </td>
+                                            <td className="py-3 text-right font-black text-slate-900 text-xs pr-4">
+                                                R$ {Object.values(formData.data.prejuizos_economicos_consolidados || {}).reduce((acc, curr) => acc + (curr.danos || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                            <td className="py-3 text-right font-black text-slate-900 text-xs pr-2">
+                                                R$ {Object.values(formData.data.prejuizos_economicos_consolidados || {}).reduce((acc, curr) => acc + (curr.prejuizos || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </>
@@ -1029,8 +1645,16 @@ const RedapForm = () => {
                                     <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 group shadow-sm">
                                         <img src={photo.url} className="w-full h-full object-cover" alt="Evidência" />
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end">
-                                            <p className="text-[8px] text-white font-bold flex items-center gap-1"><MapPin size={10} /> {photo.lat.toFixed(4)}, {photo.lng.toFixed(4)}</p>
-                                            <p className="text-[8px] text-white/70 flex items-center gap-1"><ClockIcon size={10} /> {new Date(photo.timestamp).toLocaleTimeString()}</p>
+                                            <p className="text-[8px] text-white font-bold flex items-center gap-1">
+                                                <MapPin size={10} /> 
+                                                {photo && photo.lat != null && photo.lng != null 
+                                                    ? `${Number(photo.lat).toFixed(4)}, ${Number(photo.lng).toFixed(4)}` 
+                                                    : 'Sem GPS'}
+                                            </p>
+                                            <p className="text-[8px] text-white/70 flex items-center gap-1">
+                                                <ClockIcon size={10} /> 
+                                                {photo.timestamp ? new Date(photo.timestamp).toLocaleTimeString() : 'Sem data'}
+                                            </p>
                                             {photo.sector && <p className="text-[7px] text-blue-300 font-black uppercase mt-1">Setor: {photo.sector}</p>}
                                         </div>
                                         <button

@@ -371,7 +371,7 @@ const RiskDashboard = ({ hideHeader = false }) => {
                                 />
 
                                 {/* 1. Rendering Residences Risk Markers */}
-                                {filteredData.slice(0, 1000).map((v, i) => (
+                                {filteredData.slice(0, 1000).filter(v => v && v.lat != null && v.lon != null && !isNaN(Number(v.lat))).map((v, i) => (
                                     <CircleMarker
                                         key={`risk-${i}`}
                                         center={[v.lat, v.lon]}

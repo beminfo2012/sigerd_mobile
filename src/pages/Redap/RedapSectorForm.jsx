@@ -97,8 +97,10 @@ const RedapSectorForm = () => {
             setLoading(false);
         }
     };
+    const isReadOnly = event?.status_evento === 'Finalizado' || ['Aprovado', 'Rejeitado'].includes(formData.status_validacao);
 
     const handleSave = async () => {
+        if (isReadOnly) return;
         if (!formData.instalacao_afetada) return toast.error('Informe o item afetado.');
         if (formData.fotos.length === 0) return toast.error('Adicione fotos da evidência.');
 
@@ -145,13 +147,15 @@ const RedapSectorForm = () => {
                         </p>
                     </div>
                 </div>
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
-                >
-                    {saving ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />} Enviar
-                </button>
+                {!isReadOnly && (
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                        {saving ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />} Enviar
+                    </button>
+                )}
             </header>
 
             <main className="p-4 max-w-2xl mx-auto space-y-6">
@@ -177,12 +181,13 @@ const RedapSectorForm = () => {
                                     <button
                                         key={t}
                                         type="button"
+                                        disabled={isReadOnly}
                                         onClick={() => setFormData(prev => ({ ...prev, classificacao_dano: t, instalacao_afetada: '' }))}
                                         className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${
                                             formData.classificacao_dano === t 
                                             ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-lg' 
                                             : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                        }`}
+                                        } disabled:opacity-60`}
                                     >
                                         {t}
                                     </button>
@@ -199,7 +204,8 @@ const RedapSectorForm = () => {
                                 <input
                                     list="sector-items"
                                     type="text"
-                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100"
+                                    disabled={isReadOnly}
+                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 disabled:opacity-60"
                                     placeholder={formData.classificacao_dano === 'Dano Humano' ? 'Descreva o impacto humano...' : "Ex: Ponte, Escola, Lavoura..."}
                                     value={formData.instalacao_afetada}
                                     onChange={(e) => setFormData(prev => ({ ...prev, instalacao_afetada: e.target.value }))}
@@ -216,7 +222,8 @@ const RedapSectorForm = () => {
                                 <DollarSign size={12} className="text-blue-500" /> Valor Estimado (R$)
                             </label>
                             <CurrencyInput
-                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100"
+                                disabled={isReadOnly}
+                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 disabled:opacity-60"
                                 value={formData.valor_estimado}
                                 onChange={(val) => setFormData(prev => ({ ...prev, valor_estimado: val }))}
                             />
@@ -237,7 +244,8 @@ const RedapSectorForm = () => {
                                             {field.type === 'number' ? (
                                                 <input
                                                     type="number"
-                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm"
+                                                    disabled={isReadOnly}
+                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm disabled:opacity-60"
                                                     value={extraData[field.name] || ''}
                                                     onChange={(e) => setExtraData(prev => ({ ...prev, [field.name]: e.target.value }))}
                                                 />
@@ -247,12 +255,13 @@ const RedapSectorForm = () => {
                                                         <button
                                                             key={opt}
                                                             type="button"
+                                                            disabled={isReadOnly}
                                                             onClick={() => setExtraData(prev => ({ ...prev, [field.name]: opt }))}
                                                             className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase border transition-all ${
                                                                 extraData[field.name] === opt 
                                                                 ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-sm' 
                                                                 : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-700'
-                                                            }`}
+                                                            } disabled:opacity-60`}
                                                         >
                                                             {opt}
                                                         </button>
@@ -261,7 +270,8 @@ const RedapSectorForm = () => {
                                             ) : (
                                                 <input
                                                     type="text"
-                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm"
+                                                    disabled={isReadOnly}
+                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm disabled:opacity-60"
                                                     value={extraData[field.name] || ''}
                                                     onChange={(e) => setExtraData(prev => ({ ...prev, [field.name]: e.target.value }))}
                                                 />
@@ -277,7 +287,8 @@ const RedapSectorForm = () => {
                                 <Info size={12} className="text-blue-500" /> Descrição Técnica Adicional
                             </label>
                             <textarea
-                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 dark:text-slate-200 min-h-[100px]"
+                                disabled={isReadOnly}
+                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 dark:text-slate-200 min-h-[100px] disabled:opacity-60"
                                 placeholder="Detalhes específicos, logradouros, ruas e pontos de referência..."
                                 value={formData.descricao_detalhada}
                                 onChange={(e) => setFormData(prev => ({ ...prev, descricao_detalhada: e.target.value }))}
@@ -289,7 +300,8 @@ const RedapSectorForm = () => {
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Considerações Finais</label>
                                 <textarea
-                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/10 outline-none transition-all font-medium text-slate-600 dark:text-slate-400 text-xs min-h-[80px]"
+                                    disabled={isReadOnly}
+                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/10 outline-none transition-all font-medium text-slate-600 dark:text-slate-400 text-xs min-h-[80px] disabled:opacity-60"
                                     placeholder="Parecer técnico final e conclusões do setor..."
                                     value={extraData.consideracoes || ''}
                                     onChange={(e) => setExtraData(prev => ({ ...prev, consideracoes: e.target.value }))}
@@ -320,22 +332,26 @@ const RedapSectorForm = () => {
                         Fotos de Evidência ({formData.fotos.length})
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div className="aspect-square">
-                            <FileInput 
-                                label="Adicionar"
-                                onFileSelect={handleFileSelect}
-                                type="photo"
-                            />
-                        </div>
+                        {!isReadOnly && (
+                            <div className="aspect-square">
+                                <FileInput 
+                                    label="Adicionar"
+                                    onFileSelect={handleFileSelect}
+                                    type="photo"
+                                />
+                            </div>
+                        )}
                         {formData.fotos.map((foto, idx) => (
                             <div key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 group shadow-sm bg-slate-50 dark:bg-slate-800 transition-all">
                                 <img src={foto.url || foto.data} className="w-full h-full object-cover" />
-                                <button
-                                    onClick={() => setFormData(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== idx) }))}
-                                    className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <X size={14} />
-                                </button>
+                                {!isReadOnly && (
+                                    <button
+                                        onClick={() => setFormData(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== idx) }))}
+                                        className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
