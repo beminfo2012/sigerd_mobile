@@ -4,8 +4,8 @@ import { Printer, X, Download, FileText, Calendar, MapPin, Wind, CloudRain, Aler
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { UserContext } from '../../App';
-const LOGO_DEFESA_CIVIL_SITUACIONAL = '/logo-defesa-civil-branco.png';
-const LOGO_SIGERD_SITUACIONAL = '/logo_sigerd_new.png';
+const LOGO_DEFESA_CIVIL_SITUACIONAL = '/logo_defesa_civil.png';
+const LOGO_SIGERD_SITUACIONAL = '/logo_sigerd.png';
 
 // Utility component to recalibrate map size and center
 const MapController = ({ center, markers }) => {
@@ -477,16 +477,14 @@ const RelatorioSituacionalPrint = () => {
                         {/* CABEÇALHO */}
                         <header style={{ padding: '0 0 16px', borderBottom: '2px solid var(--navy)', background: 'var(--white)', color: 'var(--text)', position: 'relative' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                <img src={LOGO_DEFESA_CIVIL_SITUACIONAL} alt="Defesa Civil" className="logo-dc" style={{ objectFit: 'contain', height: '56px', width: '56px', filter: 'brightness(0) saturate(100%) invert(8%) sepia(35%) saturate(2321%) hue-rotate(196deg) brightness(93%) contrast(97%)' }} onError={(e) => {
-                                    e.target.style.filter = 'none';
-                                }} />
+                                <img src={LOGO_DEFESA_CIVIL_SITUACIONAL} alt="Defesa Civil" className="logo-dc" style={{ objectFit: 'contain', height: '56px', width: '56px' }} />
                                 
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: 1, padding: '0 16px' }}>
                                     <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text2)' }}>Prefeitura Municipal de Santa Maria de Jetibá</span>
                                     <span style={{ fontSize: '13px', fontWeight: '800', letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--navy)' }}>Coordenadoria Municipal de Proteção e Defesa Civil</span>
                                 </div>
 
-                                <img src={LOGO_SIGERD_SITUACIONAL} alt="SIGERD" className="sigerd-logo" style={{ objectFit: 'contain', height: '48px', width: '48px' }} />
+                                <img src={LOGO_SIGERD_SITUACIONAL} alt="SIGERD" className="sigerd-logo" style={{ objectFit: 'contain', height: '48px', maxWidth: '80px' }} />
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
