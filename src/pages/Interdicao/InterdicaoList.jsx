@@ -27,6 +27,7 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
     const [emailAddress, setEmailAddress] = useState('')
     const [deleteModal, setDeleteModal] = useState({ open: false, interdicao: null })
     const [historyModal, setHistoryModal] = useState({ open: false, item: null })
+    const [deleteDesintModal, setDeleteDesintModal] = useState({ open: false, desint: null, interdicaoItem: null })
 
     useEffect(() => {
         fetchInterdicoes()
@@ -547,6 +548,19 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
                                             <Eye size={18} />
                                         </button>
 
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setHistoryModal({ open: true, item }) }}
+                                            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all active:scale-95 relative"
+                                            title="Ver Desinterdições"
+                                        >
+                                            <Sparkles size={18} />
+                                            {item.desinterdicoes?.length > 0 && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                                                    {item.desinterdicoes.length}
+                                                </span>
+                                            )}
+                                        </button>
+
                                         {userProfile?.role !== 'Operador' && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, interdicao: item }) }}
@@ -621,7 +635,7 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
                 </div>
             )}
 
-            {/* Deletion Safety Modal */}
+            {/* Deletion Safety Modal - Interdição */}
             <ConfirmModal
                 isOpen={deleteModal.open}
                 onClose={() => setDeleteModal({ open: false, interdicao: null })}
@@ -630,6 +644,23 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
                 message={`Tem certeza que deseja excluir a interdição #${deleteModal.interdicao?.interdicao_id}? Esta ação não pode ser desfeita.`}
                 confirmText="Sim, Excluir"
                 cancelText="Mantenha para mim"
+            />
+
+            {/* Deletion Safety Modal - Desinterdição */}
+            <ConfirmModal
+                isOpen={deleteDesintModal.open}
+                onClose={() => setDeleteDesintModal({ open: false, desint: null, interdicaoItem: null })}
+                onConfirm={async () => {
+                    const { desint } = deleteDesintModal;
+                    await deleteDesinterdicaoLocal(desint.id, desint.supabase_id);
+                    await fetchInterdicoes();
+                    setDeleteDesintModal({ open: false, desint: null, interdicaoItem: null });
+                    setHistoryModal({ open: false, item: null });
+                }}
+                title="Excluir Desinterdição"
+                message={`Tem certeza que deseja excluir este registro de desinterdição? Esta ação não pode ser desfeita.`}
+                confirmText="Sim, Excluir"
+                cancelText="Cancelar"
             />
 
             {/* History Modal */}
@@ -684,13 +715,9 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
                                                 <Edit2 size={18} />
                                             </button>
                                             <button 
-                                                onClick={async (e) => {
+                                                onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (window.confirm('Deseja realmente excluir esta desinterdição?')) {
-                                                        await deleteDesinterdicaoLocal(d.id, d.supabase_id);
-                                                        fetchInterdicoes();
-                                                        setHistoryModal({ open: false, item: null });
-                                                    }
+                                                    setDeleteDesintModal({ open: true, desint: d, interdicaoItem: historyModal.item });
                                                 }}
                                                 className="w-10 h-10 flex items-center justify-center bg-slate-50 dark:bg-slate-700 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all"
                                                 title="Excluir Registro"

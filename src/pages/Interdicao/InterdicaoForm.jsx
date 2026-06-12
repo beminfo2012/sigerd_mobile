@@ -526,7 +526,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
             </div>
 
             {detectedRiskArea && (
-                <div className="bg-red-50 mx-5 mt-5 mb-0 p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+                <div className="bg-red-50 max-w-5xl mx-auto mt-5 mb-0 px-5 p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
                     <div className="bg-red-100 p-2 rounded-full">
                         <Siren className="text-red-600 animate-pulse" size={24} />
                     </div>
@@ -538,7 +538,11 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-xl mx-auto">
+            <form onSubmit={handleSubmit} className="p-5 max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* ===== COLUNA ESQUERDA: Identificação, Responsável Técnico, Localização, Proprietário ===== */}
+                <div className="space-y-6">
 
                 {/* 1. SEÇÃO: Identificação */}
                 <section className={sectionClasses}>
@@ -791,6 +795,12 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                         </div>
                     </section>
                 )}
+
+                {/* ===== FIM COLUNA ESQUERDA ===== */}
+                </div>
+
+                {/* ===== COLUNA DIREITA: Risco, Medida, Fotos, Relatório, Assinaturas ===== */}
+                <div className="space-y-6">
 
                 {/* 5. SEÇÃO: Caracterização do Risco */}
                 <section className={sectionClasses}>
@@ -1179,8 +1189,11 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                         </div>
                     </div>
                 </section>
+                {/* ===== FIM COLUNA DIREITA ===== */}
+                </div>
+                </div> {/* fim grid 2 colunas */}
 
-                {/* Histórico de Desinterdição */}
+                {/* Histórico de Desinterdição - Largura total */}
                 {initialData?.desinterdicoes && initialData.desinterdicoes.length > 0 && (
                     <div className="mt-8 bg-green-50 dark:bg-green-900/10 rounded-[2rem] p-6 border border-green-100 dark:border-green-800/20 shadow-inner">
                         <div className="flex items-center gap-3 mb-6">
