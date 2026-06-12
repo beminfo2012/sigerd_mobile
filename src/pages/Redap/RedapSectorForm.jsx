@@ -32,8 +32,12 @@ const RedapSectorForm = () => {
     const [event, setEvent] = useState(null);
     const [secaoRecord, setSecaoRecord] = useState(null);
 
-    // Identifica secretaria do usuário
-    const userSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
+    // Identifica secretaria do usuário a partir da URL ou pelo papel
+    const queryParams = new URLSearchParams(window.location.search);
+    const urlSecretaria = queryParams.get('secretaria');
+    const userRealSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
+    const userSecretaria = urlSecretaria || userRealSecretaria;
+    const isDefesaCivil = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role);
     const config = SECAO_MAP[secaoId];
 
     // Estados dos formulários de acordo com a seção
@@ -66,7 +70,9 @@ const RedapSectorForm = () => {
 
             // Carrega seções deste evento
             const secoes = await redapService.getSecoesByEvento(eventoId);
-            const currentSecao = secoes.find(s => s.secao === config.enum && s.secretaria_id === userSecretaria);
+            const currentSecao = config.enum === 'DANOS_EDIFICACOES'
+                ? secoes.find(s => s.secao === config.enum && s.secretaria_id === userSecretaria)
+                : secoes.find(s => s.secao === config.enum);
             
             if (currentSecao) {
                 setSecaoRecord(currentSecao);
@@ -192,7 +198,10 @@ const RedapSectorForm = () => {
         }
     };
 
-    const isReadOnly = event?.status_evento === 'Finalizado' || secaoRecord?.status_secao === 'ENVIADO' || secaoRecord?.status_secao === 'VALIDADO';
+    const isReadOnly = event?.status_evento === 'Finalizado' || 
+                       secaoRecord?.status_secao === 'ENVIADO' || 
+                       secaoRecord?.status_secao === 'VALIDADO' ||
+                       (!isDefesaCivil && userRealSecretaria !== userSecretaria);
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100 transition-colors duration-300">
