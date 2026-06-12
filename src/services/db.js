@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 32
+const DB_VERSION = 33
 
 
 let dbPromise = null;
@@ -950,7 +950,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             
             // For new REDAP architecture, the 'id' IS the UUID used in Supabase
             // We only delete it if it's a local auto-increment integer
-            if (!['redap_eventos', 'redap_registros'].includes(storeName)) {
+            if (!['redap_eventos', 'redap_registros', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(storeName)) {
                 delete payload.id; // Remove local IDBK key
             }
             
