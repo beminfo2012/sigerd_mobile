@@ -538,11 +538,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="p-5 max-w-5xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                {/* ===== COLUNA ESQUERDA: Identificação, Responsável Técnico, Localização, Proprietário ===== */}
-                <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-4xl mx-auto">
 
                 {/* 1. SEÇÃO: Identificação */}
                 <section className={sectionClasses}>
@@ -796,11 +792,6 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                     </section>
                 )}
 
-                {/* ===== FIM COLUNA ESQUERDA ===== */}
-                </div>
-
-                {/* ===== COLUNA DIREITA: Risco, Medida, Fotos, Relatório, Assinaturas ===== */}
-                <div className="space-y-6">
 
                 {/* 5. SEÇÃO: Caracterização do Risco */}
                 <section className={sectionClasses}>
@@ -1189,9 +1180,6 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                         </div>
                     </div>
                 </section>
-                {/* ===== FIM COLUNA DIREITA ===== */}
-                </div>
-                </div> {/* fim grid 2 colunas */}
 
                 {/* Histórico de Desinterdição - Largura total */}
                 {initialData?.desinterdicoes && initialData.desinterdicoes.length > 0 && (

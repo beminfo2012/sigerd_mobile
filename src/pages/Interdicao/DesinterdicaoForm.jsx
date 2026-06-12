@@ -4,9 +4,10 @@ import SignaturePadComp from '../../components/SignaturePad'
 import { UserContext } from '../../App'
 import { useContext } from 'react'
 import FileInput from '../../components/FileInput'
-import { saveDesinterdicaoOffline, updateInterdicaoStatus } from '../../services/db'
+import { saveDesinterdicaoOffline, updateInterdicaoStatus, deleteDesinterdicaoLocal } from '../../services/db'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { toast } from '../../components/ToastNotification'
+import ConfirmModal from '../../components/ConfirmModal'
 
 const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
     const userProfile = useContext(UserContext)
@@ -15,6 +16,7 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
     const [showSignaturePad, setShowSignaturePad] = useState(false)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [lastGeneratedId, setLastGeneratedId] = useState(null)
+    const [confirmDeleteModal, setConfirmDeleteModal] = useState(false)
 
     const [formData, setFormData] = useState({
         // Only store local numeric ID for edits; UUIDs go into supabase_id
@@ -433,7 +435,7 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                     </div>
                 </section>
 
-                <div className="pt-6">
+                <div className="pt-6 space-y-3">
                     <button
                         type="submit"
                         disabled={saving}
@@ -449,12 +451,45 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                     <button
                         type="button"
                         onClick={onBack}
-                        className="w-full p-4 rounded-xl text-slate-500 font-bold text-sm mt-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="w-full p-4 rounded-xl text-slate-500 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                         Cancelar e Voltar
                     </button>
+
+                    {initialData && (
+                        <button
+                            type="button"
+                            onClick={() => setConfirmDeleteModal(true)}
+                            className="w-full p-4 rounded-xl border-2 border-red-200 dark:border-red-900/50 text-red-500 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                            <Trash2 size={18} /> Excluir este Registro de Desinterdição
+                        </button>
+                    )}
                 </div>
             </form>
+
+            {/* Modal de Confirmação de Exclusão */}
+            <ConfirmModal
+                isOpen={confirmDeleteModal}
+                onClose={() => setConfirmDeleteModal(false)}
+                onConfirm={async () => {
+                    try {
+                        await deleteDesinterdicaoLocal(
+                            formData.id || initialData?.id,
+                            formData.supabase_id || initialData?.supabase_id
+                        );
+                        toast.success('Excluído', 'Registro de desinterdição removido com sucesso.');
+                        setConfirmDeleteModal(false);
+                        onBack();
+                    } catch (e) {
+                        toast.error('Erro', 'Não foi possível excluir o registro.');
+                    }
+                }}
+                title="Excluir Desinterdição"
+                message="Tem certeza que deseja excluir este registro de desinterdição? Esta ação não pode ser desfeita."
+                confirmText="Sim, Excluir"
+                cancelText="Cancelar"
+            />
 
             {/* Lightbox Implementation simplified here */}
             {selectedPhotoIndex !== null && (
