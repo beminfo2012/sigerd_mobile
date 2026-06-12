@@ -476,11 +476,17 @@ const RelatorioSituacionalPrint = () => {
                     <div>
                         {/* CABEÇALHO */}
                         <header style={{ padding: '0 0 16px', borderBottom: '2px solid var(--navy)', background: 'var(--white)', color: 'var(--text)', position: 'relative' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                <img src={LOGO_DEFESA_CIVIL_SITUACIONAL} alt="Defesa Civil" className="logo-dc" style={{ objectFit: 'contain', height: '56px', width: '56px', filter: 'brightness(0) saturate(100%) invert(8%) sepia(35%) saturate(2321%) hue-rotate(196deg) brightness(93%) contrast(97%)' }} onError={(e) => {
+                                    e.target.style.filter = 'none';
+                                }} />
+                                
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: 1, padding: '0 16px' }}>
                                     <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text2)' }}>Prefeitura Municipal de Santa Maria de Jetibá</span>
                                     <span style={{ fontSize: '13px', fontWeight: '800', letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--navy)' }}>Coordenadoria Municipal de Proteção e Defesa Civil</span>
                                 </div>
+
+                                <img src={LOGO_SIGERD_SITUACIONAL} alt="SIGERD" className="sigerd-logo" style={{ objectFit: 'contain', height: '48px', width: '48px' }} />
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
@@ -492,8 +498,8 @@ const RelatorioSituacionalPrint = () => {
                                     </span>
                                     <span style={{ color: 'var(--gray3)' }}>•</span>
                                     <span>ID:</span>
-                                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)', borderBottom: '1px dashed var(--gray3)' }}>
-                                        <span contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setReportId(e.target.innerText)}>{reportId}</span>
+                                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)' }}>
+                                        <span>{reportId}</span>
                                     </span>
                                     <span style={{ color: 'var(--gray3)' }}>•</span>
                                     <span>PERÍODO:</span>
@@ -510,21 +516,21 @@ const RelatorioSituacionalPrint = () => {
                                     <tr>
                                         <td style={{ width: '20%', background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>EMITIDO POR</td>
                                         <td style={{ width: '30%', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setEmitidoPor(e.target.innerText)}>{emitidoPor}</div>
+                                            <div>{emitidoPor}</div>
                                         </td>
                                         <td style={{ width: '20%', background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>MATRÍCULA</td>
                                         <td style={{ width: '30%', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setMatricula(e.target.innerText)}>{matricula}</div>
+                                            <div>{matricula}</div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>NÍVEL DE PERIGO</td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setNivelPerigo(e.target.innerText)}>{nivelPerigo}</div>
+                                            <div>{nivelPerigo}</div>
                                         </td>
                                         <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>STATUS OPERACIONAL</td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setStatusOperacional(e.target.innerText)}>{statusOperacional}</div>
+                                            <div>{statusOperacional}</div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -550,36 +556,36 @@ const RelatorioSituacionalPrint = () => {
                                 <tbody>
                                     <tr>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiVistoriasVal(e.target.innerText)}>{kpiVistoriasVal}</div>
+                                            <div>{kpiVistoriasVal}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiOcorrenciasVal(e.target.innerText)}>{kpiOcorrenciasVal}</div>
+                                            <div>{kpiOcorrenciasVal}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInterdicoesVal(e.target.innerText)}>{kpiInterdicoesVal}</div>
+                                            <div>{kpiInterdicoesVal}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiChuvaVal(e.target.innerText)}>{kpiChuvaVal}</div>
+                                            <div>{kpiChuvaVal}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInmetVal(e.target.innerText)}>{kpiInmetVal}</div>
+                                            <div>{kpiInmetVal}</div>
                                         </td>
                                     </tr>
                                     <tr style={{ background: 'var(--gray1)' }}>
                                         <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiVistoriasDesc(e.target.innerText)}>{kpiVistoriasDesc}</div>
+                                            <div>{kpiVistoriasDesc}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiOcorrenciasDesc(e.target.innerText)}>{kpiOcorrenciasDesc}</div>
+                                            <div>{kpiOcorrenciasDesc}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInterdicoesDesc(e.target.innerText)}>{kpiInterdicoesDesc}</div>
+                                            <div>{kpiInterdicoesDesc}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiChuvaDesc(e.target.innerText)}>{kpiChuvaDesc}</div>
+                                            <div>{kpiChuvaDesc}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInmetDesc(e.target.innerText)}>{kpiInmetDesc}</div>
+                                            <div>{kpiInmetDesc}</div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -599,10 +605,10 @@ const RelatorioSituacionalPrint = () => {
                                 <tbody>
                                     <tr>
                                         <td style={{ border: '1px solid var(--border)', padding: '8px 10px', verticalAlign: 'top', fontSize: '10px', lineHeight: '1.5' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field min-h-[60px]" onBlur={e => setPluviometerText(e.target.innerHTML)} dangerouslySetInnerHTML={{ __html: pluviometerText }} />
+                                            <div dangerouslySetInnerHTML={{ __html: pluviometerText }} />
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '8px 10px', verticalAlign: 'top', fontSize: '10px', lineHeight: '1.5' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field min-h-[60px]" onBlur={e => setInmetAlertsText(e.target.innerHTML)} dangerouslySetInnerHTML={{ __html: inmetAlertsText }} />
+                                            <div dangerouslySetInnerHTML={{ __html: inmetAlertsText }} />
                                         </td>
                                     </tr>
                                 </tbody>
@@ -624,16 +630,16 @@ const RelatorioSituacionalPrint = () => {
                                 <tbody>
                                     <tr>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiAbrigos(e.target.innerText)}>{kpiAbrigos}</div>
+                                            <div>{kpiAbrigos}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiPessoas(e.target.innerText)}>{kpiPessoas}</div>
+                                            <div>{kpiPessoas}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiKits(e.target.innerText)}>{kpiKits}</div>
+                                            <div>{kpiKits}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', color: 'var(--text)' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field text-left" onBlur={e => setKpiLogisticaSocial(e.target.innerText)}>{kpiLogisticaSocial}</div>
+                                            <div className="text-left">{kpiLogisticaSocial}</div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -655,16 +661,16 @@ const RelatorioSituacionalPrint = () => {
                                 <tbody>
                                     <tr>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setTempAtual(e.target.innerText)}>{tempAtual}</div>
+                                            <div>{tempAtual}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setUmidade(e.target.innerText)}>{umidade}</div>
+                                            <div>{umidade}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setProbChuva(e.target.innerText)}>{probChuva}</div>
+                                            <div>{probChuva}</div>
                                         </td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setVento(e.target.innerText)}>{vento}</div>
+                                            <div>{vento}</div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -676,11 +682,7 @@ const RelatorioSituacionalPrint = () => {
                                     <tr style={{ background: 'var(--ice2)' }}>
                                         {forecastDays.map((fd, i) => (
                                             <th key={i} style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
-                                                <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => {
-                                                    const newDays = [...forecastDays];
-                                                    newDays[i] = e.target.innerText;
-                                                    setForecastDays(newDays);
-                                                }}>{fd}</div>
+                                                <div>{fd}</div>
                                             </th>
                                         ))}
                                     </tr>
@@ -689,22 +691,14 @@ const RelatorioSituacionalPrint = () => {
                                     <tr>
                                         {forecastTemps.map((ft, i) => (
                                             <td key={i} style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: '500' }}>
-                                                <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => {
-                                                    const newTemps = [...forecastTemps];
-                                                    newTemps[i] = e.target.innerText;
-                                                    setForecastTemps(newTemps);
-                                                }}>{ft}</div>
+                                                <div>{ft}</div>
                                             </td>
                                         ))}
                                     </tr>
                                     <tr style={{ background: 'var(--gray1)' }}>
                                         {forecastProbs.map((fp, i) => (
                                             <td key={i} style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--blue)', fontFamily: 'IBM Plex Mono, monospace', fontWeight: '500' }}>
-                                                <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => {
-                                                    const newProbs = [...forecastProbs];
-                                                    newProbs[i] = e.target.innerText;
-                                                    setForecastProbs(newProbs);
-                                                }}>{fp}</div>
+                                                <div>{fp}</div>
                                             </td>
                                         ))}
                                     </tr>
@@ -723,13 +717,13 @@ const RelatorioSituacionalPrint = () => {
                                     <tr>
                                         <td style={{ width: '20%', background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ESTADO ATUAL</td>
                                         <td style={{ width: '80%', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', lineHeight: '1.5' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setProtocolEstadoAtual(e.target.innerText)}>{protocolEstadoAtual}</div>
+                                            <div>{protocolEstadoAtual}</div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ACIONAMENTO</td>
                                         <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', lineHeight: '1.5' }}>
-                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setProtocolAcionamento(e.target.innerText)}>{protocolAcionamento}</div>
+                                            <div>{protocolAcionamento}</div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -771,21 +765,21 @@ const RelatorioSituacionalPrint = () => {
                                         activities.map((act, i) => (
                                             <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
-                                                    <div contentEditable suppressContentEditableWarning className="editable-field text-center">{act.id}</div>
+                                                    <div className="text-center">{act.id}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center' }}>
-                                                    <div contentEditable suppressContentEditableWarning className="editable-field text-center">
+                                                    <div className="text-center">
                                                         {act.date ? new Date(act.date).toLocaleDateString('pt-BR') + ' ' + new Date(act.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---'}
                                                     </div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center' }}>
-                                                    <div contentEditable suppressContentEditableWarning className="editable-field text-center">{`${act.type} - ${act.risk}`}</div>
+                                                    <div className="text-center">{`${act.type} - ${act.risk}`}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontStyle: 'italic' }}>
-                                                    <div contentEditable suppressContentEditableWarning className="editable-field">{act.details}</div>
+                                                    <div>{act.details}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center', color: 'var(--text3)' }}>
-                                                    <div contentEditable suppressContentEditableWarning className="editable-field">
+                                                    <div>
                                                         {act.lat != null && act.lng != null ? `${act.lat.toFixed(5)}, ${act.lng.toFixed(5)}` : '---'}
                                                     </div>
                                                 </td>
@@ -809,7 +803,7 @@ const RelatorioSituacionalPrint = () => {
                         <div className="avoid-break">
                             <div className="section-title-new">9. Considerações Finais</div>
                             <div style={{ fontSize: '10px', lineHeight: '1.5', background: 'var(--white)', minHeight: '60px', marginBottom: '24px' }}>
-                                <div contentEditable suppressContentEditableWarning className="editable-field min-h-[60px]" onBlur={e => setConsideracoesFinais(e.target.innerText)} style={{ outline: 'none', padding: '4px 0' }}>
+                                <div style={{ outline: 'none', padding: '4px 0' }}>
                                     {consideracoesFinais}
                                 </div>
                             </div>
