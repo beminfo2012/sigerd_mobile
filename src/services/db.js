@@ -309,6 +309,8 @@ export const saveVistoriaOffline = async (data) => {
 
     const localId = await db.put('vistorias', {
         ...data,
+        vistoria_id: data.vistoriaId || data.vistoria_id,
+        vistoriaId: data.vistoriaId || data.vistoria_id,
         createdAt: data.createdAt || data.created_at || new Date().toISOString(),
         synced: false
     })
@@ -1097,12 +1099,64 @@ export const pullAllData = async (force = false) => {
                     const tx = db.transaction(mod.store, 'readwrite');
                     const store = tx.objectStore(mod.store);
                     const allLocal = await store.getAll();
-                    const localBySupId = new Map(allLocal.filter(l => l.supabase_id).map(l => [l.supabase_id, l]));
-                    const localByKey = new Map(mod.key ? allLocal.filter(l => l[mod.key]).map(l => [l[mod.key], l]) : []);
+
+                    const getKeyValue = (obj, key) => {
+                        if (!key) return undefined;
+                        if (obj[key] !== undefined) return obj[key];
+                        const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+                        if (obj[camelKey] !== undefined) return obj[camelKey];
+                        return undefined;
+                    };
+
+                    // Clean pre-existing local duplicates (by supabase_id or by business key)
+                    const seenSupabaseIds = new Set();
+                    const seenBusinessKeys = new Set();
+                    const duplicateLocalIds = [];
+
+                    for (const l of allLocal) {
+                        let isDuplicate = false;
+                        if (l.supabase_id) {
+                            if (seenSupabaseIds.has(l.supabase_id)) {
+                                isDuplicate = true;
+                            } else {
+                                seenSupabaseIds.add(l.supabase_id);
+                            }
+                        }
+                        if (mod.key) {
+                            const bKeyVal = getKeyValue(l, mod.key);
+                            if (bKeyVal) {
+                                if (seenBusinessKeys.has(bKeyVal)) {
+                                    isDuplicate = true;
+                                } else {
+                                    seenBusinessKeys.add(bKeyVal);
+                                }
+                            }
+                        }
+                        if (isDuplicate && l.id) {
+                            duplicateLocalIds.push(l.id);
+                        }
+                    }
+
+                    if (duplicateLocalIds.length > 0) {
+                        console.log(`[Pull] Cleaned ${duplicateLocalIds.length} pre-existing local duplicates from ${mod.store}.`);
+                        for (const dupId of duplicateLocalIds) {
+                            await store.delete(dupId);
+                        }
+                    }
+
+                    // Reload clean list to build the maps
+                    const cleanLocal = await store.getAll();
+                    const localBySupId = new Map(cleanLocal.filter(l => l.supabase_id).map(l => [l.supabase_id, l]));
+                    const localByKey = new Map(
+                        mod.key 
+                            ? cleanLocal.filter(l => getKeyValue(l, mod.key) !== undefined).map(l => [getKeyValue(l, mod.key), l]) 
+                            : []
+                    );
 
                     for (const item of data) {
                         const { id: supabaseId, ...rest } = item;
-                        const localMatch = localBySupId.get(supabaseId) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
+                        const itemKeyVal = getKeyValue(item, mod.key);
+                        const localMatch = localBySupId.get(supabaseId) || (mod.key && itemKeyVal ? localByKey.get(itemKeyVal) : null);
 
                         if (localMatch) {
                             const remoteDate = new Date(item.updated_at || item.created_at || 0).getTime();
@@ -1118,6 +1172,14 @@ export const pullAllData = async (force = false) => {
                             supabase_id: supabaseId,
                             synced: true
                         };
+
+                        // Ensure we always save BOTH snake_case and camelCase for key identifiers
+                        if (mod.key) {
+                            const val = getKeyValue(item, mod.key);
+                            toStore[mod.key] = val;
+                            const camelKey = mod.key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+                            toStore[camelKey] = val;
+                        }
 
                         if (!localMatch) delete toStore.id;
 
@@ -1326,6 +1388,8 @@ export const saveInterdicaoOffline = async (data) => {
     // Use .put instead of .add
     const localId = await db.put('interdicoes', {
         ...data,
+        interdicao_id: data.interdicaoId || data.interdicao_id,
+        interdicaoId: data.interdicaoId || data.interdicao_id,
         createdAt: data.createdAt || new Date().toISOString(),
         synced: false
     })

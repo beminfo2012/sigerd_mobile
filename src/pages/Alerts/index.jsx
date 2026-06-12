@@ -406,7 +406,7 @@ const Alerts = () => {
                                     </option>
                                     {alerts.map((alert, index) => (
                                         <option key={index} value={index}>
-                                            [{alert.severidade}] {alert.aviso_tipo}
+                                            [{alert.severidade}] {alert.tipo || alert.descricao}
                                         </option>
                                     ))}
                                 </select>

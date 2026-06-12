@@ -40,43 +40,67 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
 });
 
+const getNivelPerigoColor = (nivel) => {
+    const val = String(nivel || '').toUpperCase();
+    if (val.includes('NORMAL')) return '#1A7A48'; // Verde (var(--green))
+    if (val.includes('ATENÇÃO') || val.includes('ATENCAO')) return '#D48A0C'; // Amarelo/Laranja (var(--amber))
+    if (val.includes('PERIGO') && !val.includes('GRANDE')) return '#B83232'; // Vermelho (var(--red))
+    if (val.includes('GRANDE') || val.includes('G. PERIGO')) return '#800000'; // Vermelho Escuro
+    return 'var(--navy)';
+};
+
+const formatAlertDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} às ${hours}:${minutes}h`;
+    } catch (e) {
+        return dateStr;
+    }
+};
+
 const RelatorioSituacionalPrint = () => {
-    const navigate = useNavigate();
     const userProfile = useContext(UserContext);
-    const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [reportData, setReportData] = useState(null);
     const [zoom, setZoom] = useState(1.0);
 
-    // Editable states
+    // Section 1
     const [reportId, setReportId] = useState('');
     const [emitidoPor, setEmitidoPor] = useState('');
     const [matricula, setMatricula] = useState('');
     const [nivelPerigo, setNivelPerigo] = useState('');
     const [statusOperacional, setStatusOperacional] = useState('');
-    
-    // Section 2 - KPI
-    const [kpiVistoriasVal, setKpiVistoriasVal] = useState('');
+
+    // KPIs
+    const [kpiVistoriasVal, setKpiVistoriasVal] = useState('0');
     const [kpiVistoriasDesc, setKpiVistoriasDesc] = useState('');
-    const [kpiOcorrenciasVal, setKpiOcorrenciasVal] = useState('');
+    const [kpiOcorrenciasVal, setKpiOcorrenciasVal] = useState('0');
     const [kpiOcorrenciasDesc, setKpiOcorrenciasDesc] = useState('');
-    const [kpiInterdicoesVal, setKpiInterdicoesVal] = useState('');
+    const [kpiInterdicoesVal, setKpiInterdicoesVal] = useState('0');
     const [kpiInterdicoesDesc, setKpiInterdicoesDesc] = useState('');
-    const [kpiChuvaVal, setKpiChuvaVal] = useState('');
+    const [kpiChuvaVal, setKpiChuvaVal] = useState('0 mm');
     const [kpiChuvaDesc, setKpiChuvaDesc] = useState('');
-    const [kpiInmetVal, setKpiInmetVal] = useState('');
+    const [kpiInmetVal, setKpiInmetVal] = useState('0');
     const [kpiInmetDesc, setKpiInmetDesc] = useState('');
 
-    // Section 3
+    // Pluviometers & INMET
     const [pluviometerText, setPluviometerText] = useState('');
     const [inmetAlertsText, setInmetAlertsText] = useState('');
 
-    // Section 4
-    const [kpiAbrigos, setKpiAbrigos] = useState('');
-    const [kpiPessoas, setKpiPessoas] = useState('');
-    const [kpiKits, setKpiKits] = useState('');
+    // Humanitarian
+    const [kpiAbrigos, setKpiAbrigos] = useState('0');
+    const [kpiPessoas, setKpiPessoas] = useState('0');
+    const [kpiKits, setKpiKits] = useState('0');
     const [kpiLogisticaSocial, setKpiLogisticaSocial] = useState('');
 
-    // Section 5
+    // Weather
     const [tempAtual, setTempAtual] = useState('');
     const [umidade, setUmidade] = useState('');
     const [probChuva, setProbChuva] = useState('');
@@ -85,12 +109,15 @@ const RelatorioSituacionalPrint = () => {
     const [forecastTemps, setForecastTemps] = useState([]);
     const [forecastProbs, setForecastProbs] = useState([]);
 
-    // Section 6
+    // Operational Protocol
     const [protocolEstadoAtual, setProtocolEstadoAtual] = useState('');
     const [protocolAcionamento, setProtocolAcionamento] = useState('');
 
     // Section 8
     const [activities, setActivities] = useState([]);
+    const [vistoriasList, setVistoriasList] = useState([]);
+    const [ocorrenciasList, setOcorrenciasList] = useState([]);
+    const [interdicoesList, setInterdicoesList] = useState([]);
 
     // Section 9
     const [consideracoesFinais, setConsideracoesFinais] = useState('');
@@ -179,7 +206,14 @@ const RelatorioSituacionalPrint = () => {
 
             // INMET warning list
             const inmetList = activeWarnings && activeWarnings.length > 0
-                ? activeWarnings.map(a => `• <strong>${a.categoria || 'ALERTA'}:</strong> ${a.descricao}`).join('<br/>')
+                ? activeWarnings.map(a => {
+                    const sev = a.severidade || a.aviso_severidade || 'ALERTA';
+                    const tipo = a.tipo || a.descricao || 'Meteorológico';
+                    const inicioStr = formatAlertDate(a.inicio);
+                    const fimStr = formatAlertDate(a.fim);
+                    const periodo = (inicioStr && fimStr) ? ` (de ${inicioStr} até ${fimStr})` : '';
+                    return `• <strong>[${sev}] ${tipo}</strong>${period}`;
+                }).join('<br/>')
                 : 'Céu limpo e condições estáveis — 0 aviso(s) ativo(s)';
             setInmetAlertsText(inmetList);
 
@@ -236,11 +270,15 @@ const RelatorioSituacionalPrint = () => {
             setProtocolEstadoAtual(defaultProtocolText);
             setProtocolAcionamento("Canal de emergência: 199 (Defesa Civil) / Outros canais aplicáveis");
 
-            // Section 8 - Combined activities
+            // Section 8 - Combined and split activities
             const combined = [];
+            const vists = [];
+            const ocos = [];
+            const inters = [];
+
             if (dashboardData.vistorias?.locations) {
                 dashboardData.vistorias.locations.forEach(l => {
-                    combined.push({
+                    const item = {
                         type: 'Vistoria',
                         id: l.formattedId || l.id || '---',
                         date: l.date,
@@ -248,12 +286,14 @@ const RelatorioSituacionalPrint = () => {
                         details: l.details || l.subtype || '---',
                         lat: l.lat,
                         lng: l.lng
-                    });
+                    };
+                    combined.push(item);
+                    vists.push(item);
                 });
             }
             if (dashboardData.ocorrencias?.locations) {
                 dashboardData.ocorrencias.locations.forEach(l => {
-                    combined.push({
+                    const item = {
                         type: 'Ocorrência',
                         id: l.formattedId || l.id || '---',
                         date: l.date,
@@ -261,12 +301,14 @@ const RelatorioSituacionalPrint = () => {
                         details: l.details || l.subtype || '---',
                         lat: l.lat,
                         lng: l.lng
-                    });
+                    };
+                    combined.push(item);
+                    ocos.push(item);
                 });
             }
             if (dashboardData.interdicoes?.locations) {
                 dashboardData.interdicoes.locations.forEach(l => {
-                    combined.push({
+                    const item = {
                         type: 'Interdição',
                         id: l.formattedId || l.id || '---',
                         date: l.date,
@@ -274,11 +316,26 @@ const RelatorioSituacionalPrint = () => {
                         details: l.medida_tipo || l.details || l.subtype || '---',
                         lat: l.lat,
                         lng: l.lng
-                    });
+                    };
+                    combined.push(item);
+                    inters.push(item);
                 });
             }
+
+            // Keep combined sorted by date for the Map markers/flow
             combined.sort((a, b) => new Date(b.date) - new Date(a.date));
             setActivities(combined);
+
+            // Sort split lists by their formatted business ID in ascending order
+            const sortByIdAsc = (a, b) => String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true, sensitivity: 'base' });
+            
+            vists.sort(sortByIdAsc);
+            ocos.sort(sortByIdAsc);
+            inters.sort(sortByIdAsc);
+
+            setVistoriasList(vists);
+            setOcorrenciasList(ocos);
+            setInterdicoesList(inters);
 
             // Considerações Finais
             setConsideracoesFinais("Síntese da situação geral do município no período: o monitoramento meteorológico e geológico indica estabilidade relativa nas últimas horas. Recomenda-se a manutenção da atenção por parte das equipes de plantão para o período subsequente, especialmente nas áreas de risco previamente mapeadas. Não há indicação de necessidade emergencial de reforço de pessoal ou suprimentos no momento, permanecendo o efetivo em escala de prontidão padrão.");
@@ -477,14 +534,14 @@ const RelatorioSituacionalPrint = () => {
                         {/* CABEÇALHO */}
                         <header style={{ padding: '0 0 16px', borderBottom: '2px solid var(--navy)', background: 'var(--white)', color: 'var(--text)', position: 'relative' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                <img src={LOGO_DEFESA_CIVIL_SITUACIONAL} alt="Defesa Civil" className="logo-dc" style={{ objectFit: 'contain', height: '56px', width: '56px' }} />
+                                <img src={LOGO_DEFESA_CIVIL_SITUACIONAL} alt="Defesa Civil" className="logo-dc" style={{ objectFit: 'contain', height: '68px', width: '68px' }} />
                                 
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: 1, padding: '0 16px' }}>
                                     <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text2)' }}>Prefeitura Municipal de Santa Maria de Jetibá</span>
                                     <span style={{ fontSize: '13px', fontWeight: '800', letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--navy)' }}>Coordenadoria Municipal de Proteção e Defesa Civil</span>
                                 </div>
 
-                                <img src={LOGO_SIGERD_SITUACIONAL} alt="SIGERD" className="sigerd-logo" style={{ objectFit: 'contain', height: '48px', maxWidth: '80px' }} />
+                                <img src={LOGO_SIGERD_SITUACIONAL} alt="SIGERD" className="sigerd-logo" style={{ objectFit: 'contain', height: '60px', maxWidth: '100px' }} />
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
@@ -523,7 +580,7 @@ const RelatorioSituacionalPrint = () => {
                                     </tr>
                                     <tr>
                                         <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>NÍVEL DE PERIGO</td>
-                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', fontWeight: 'bold' }}>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', fontWeight: 'bold', color: getNivelPerigoColor(nivelPerigo) }}>
                                             <div>{nivelPerigo}</div>
                                         </td>
                                         <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>STATUS OPERACIONAL</td>
@@ -731,9 +788,6 @@ const RelatorioSituacionalPrint = () => {
                         {/* 7. DISTRIBUIÇÃO GEOGRÁFICA — SANTA MARIA DE JETIBÁ */}
                         <div className="avoid-break">
                             <div className="section-title-new">7. Distribuição Geográfica — Santa Maria de Jetibá</div>
-                            <div style={{ fontSize: '10px', color: 'var(--text3)', fontStyle: 'italic', marginBottom: '8px' }}>
-                                Inserir imagem de mapa/satélite com a distribuição geográfica das ocorrências, vistorias e interdições registradas no período, com marcadores georreferenciados.
-                            </div>
                             <div style={{ height: '320px', width: '100%', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)', marginBottom: '24px', position: 'relative' }}>
                                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%', background: '#1C2D42' }} zoomControl={false} attributionControl={false} dragging={false} scrollWheelZoom={false} doubleClickZoom={false}>
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
@@ -748,7 +802,10 @@ const RelatorioSituacionalPrint = () => {
                         {/* 8. DETALHAMENTO DE VISTORIAS, OCORRÊNCIAS E INTERDIÇÕES */}
                         <div className="avoid-break">
                             <div className="section-title-new">8. Detalhamento de Vistorias, Ocorrências e Interdições</div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6px', border: '1px solid var(--border)' }}>
+                            
+                            {/* 8.1. VISTORIAS */}
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px', marginTop: '12px' }}>8.1. Detalhamento de Vistorias</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', border: '1px solid var(--border)' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
                                         <th style={{ width: '15%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>Nº</th>
@@ -759,8 +816,8 @@ const RelatorioSituacionalPrint = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {activities.length > 0 ? (
-                                        activities.map((act, i) => (
+                                    {vistoriasList.length > 0 ? (
+                                        vistoriasList.map((act, i) => (
                                             <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
                                                     <div className="text-center">{act.id}</div>
@@ -771,30 +828,121 @@ const RelatorioSituacionalPrint = () => {
                                                     </div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center' }}>
-                                                    <div className="text-center">{`${act.type} - ${act.risk}`}</div>
+                                                    <div className="text-center">{act.risk}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontStyle: 'italic' }}>
                                                     <div>{act.details}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center', color: 'var(--text3)' }}>
                                                     <div>
-                                                        {act.lat != null && act.lng != null ? `${act.lat.toFixed(5)}, ${act.lng.toFixed(5)}` : '---'}
+                                                        {act.lat != null && act.lng != null ? `${Number(act.lat).toFixed(5)}, ${Number(act.lng).toFixed(5)}` : '---'}
                                                     </div>
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={5} style={{ border: '1px solid var(--border)', padding: '12px', textAlign: 'center', color: 'var(--text3)', fontSize: '10px', textTransform: 'uppercase', fontWeight: '500', fontStyle: 'italic' }}>
-                                                Sem registros no período
+                                            <td colSpan={5} style={{ border: '1px solid var(--border)', padding: '8px', textAlign: 'center', color: 'var(--text3)', fontSize: '9px', textTransform: 'uppercase', fontWeight: '500', fontStyle: 'italic' }}>
+                                                Sem registros de vistorias no período
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
-                            <div style={{ fontSize: '9px', color: 'var(--text3)', fontStyle: 'italic', marginBottom: '24px' }}>
-                                Observação: replicar a linha acima para cada registro do período. Caso não haja registros em uma categoria, indicar "Sem registros no período".
-                            </div>
+
+                            {/* 8.2. OCORRÊNCIAS */}
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>8.2. Detalhamento de Ocorrências</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', border: '1px solid var(--border)' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        <th style={{ width: '15%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>Nº</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>CRONOLOGIA</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>RISCO / TIPOLOGIA</th>
+                                        <th style={{ width: '30%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>OBSERVAÇÕES</th>
+                                        <th style={{ width: '15%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>COORDENADAS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {ocorrenciasList.length > 0 ? (
+                                        ocorrenciasList.map((act, i) => (
+                                            <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
+                                                    <div className="text-center">{act.id}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center' }}>
+                                                    <div className="text-center">
+                                                        {act.date ? new Date(act.date).toLocaleDateString('pt-BR') + ' ' + new Date(act.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---'}
+                                                    </div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center' }}>
+                                                    <div className="text-center">{act.risk}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontStyle: 'italic' }}>
+                                                    <div>{act.details}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center', color: 'var(--text3)' }}>
+                                                    <div>
+                                                        {act.lat != null && act.lng != null ? `${Number(act.lat).toFixed(5)}, ${Number(act.lng).toFixed(5)}` : '---'}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={5} style={{ border: '1px solid var(--border)', padding: '8px', textAlign: 'center', color: 'var(--text3)', fontSize: '9px', textTransform: 'uppercase', fontWeight: '500', fontStyle: 'italic' }}>
+                                                Sem registros de ocorrências no período
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {/* 8.3. INTERDIÇÕES */}
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>8.3. Detalhamento de Interdições</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', border: '1px solid var(--border)' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        <th style={{ width: '15%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>Nº</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>CRONOLOGIA</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>TIPO / GRAU</th>
+                                        <th style={{ width: '30%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>MOTIVO / MEDIDAS</th>
+                                        <th style={{ width: '15%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>COORDENADAS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {interdicoesList.length > 0 ? (
+                                        interdicoesList.map((act, i) => (
+                                            <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
+                                                    <div className="text-center">{act.id}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center' }}>
+                                                    <div className="text-center">
+                                                        {act.date ? new Date(act.date).toLocaleDateString('pt-BR') + ' ' + new Date(act.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---'}
+                                                    </div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center' }}>
+                                                    <div className="text-center">{act.risk}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontStyle: 'italic' }}>
+                                                    <div>{act.details}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center', color: 'var(--text3)' }}>
+                                                    <div>
+                                                        {act.lat != null && act.lng != null ? `${Number(act.lat).toFixed(5)}, ${Number(act.lng).toFixed(5)}` : '---'}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={5} style={{ border: '1px solid var(--border)', padding: '8px', textAlign: 'center', color: 'var(--text3)', fontSize: '9px', textTransform: 'uppercase', fontWeight: '500', fontStyle: 'italic' }}>
+                                                Sem registros de interdições no período
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
 
                         {/* 9. CONSIDERAÇÕES FINAIS */}
@@ -814,7 +962,7 @@ const RelatorioSituacionalPrint = () => {
                             COMPDEC / SIGERD — Coordenadoria Municipal de Proteção e Defesa Civil de Santa Maria de Jetibá — ES
                         </span>
                         <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text3)' }}>
-                            Gerado automaticamente em {emissionDate || '---'} &nbsp;|&nbsp; SIGERD Mobile v1.46.24
+                            Gerado automaticamente em {emissionDate || '---'} &nbsp;|&nbsp; SIGERD
                         </span>
                     </footer>
 
