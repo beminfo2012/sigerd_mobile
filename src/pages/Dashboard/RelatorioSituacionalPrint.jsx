@@ -47,6 +47,54 @@ const RelatorioSituacionalPrint = () => {
     const [loading, setLoading] = useState(true);
     const [zoom, setZoom] = useState(1.0);
 
+    // Editable states
+    const [reportId, setReportId] = useState('');
+    const [emitidoPor, setEmitidoPor] = useState('');
+    const [matricula, setMatricula] = useState('');
+    const [nivelPerigo, setNivelPerigo] = useState('');
+    const [statusOperacional, setStatusOperacional] = useState('');
+    
+    // Section 2 - KPI
+    const [kpiVistoriasVal, setKpiVistoriasVal] = useState('');
+    const [kpiVistoriasDesc, setKpiVistoriasDesc] = useState('');
+    const [kpiOcorrenciasVal, setKpiOcorrenciasVal] = useState('');
+    const [kpiOcorrenciasDesc, setKpiOcorrenciasDesc] = useState('');
+    const [kpiInterdicoesVal, setKpiInterdicoesVal] = useState('');
+    const [kpiInterdicoesDesc, setKpiInterdicoesDesc] = useState('');
+    const [kpiChuvaVal, setKpiChuvaVal] = useState('');
+    const [kpiChuvaDesc, setKpiChuvaDesc] = useState('');
+    const [kpiInmetVal, setKpiInmetVal] = useState('');
+    const [kpiInmetDesc, setKpiInmetDesc] = useState('');
+
+    // Section 3
+    const [pluviometerText, setPluviometerText] = useState('');
+    const [inmetAlertsText, setInmetAlertsText] = useState('');
+
+    // Section 4
+    const [kpiAbrigos, setKpiAbrigos] = useState('');
+    const [kpiPessoas, setKpiPessoas] = useState('');
+    const [kpiKits, setKpiKits] = useState('');
+    const [kpiLogisticaSocial, setKpiLogisticaSocial] = useState('');
+
+    // Section 5
+    const [tempAtual, setTempAtual] = useState('');
+    const [umidade, setUmidade] = useState('');
+    const [probChuva, setProbChuva] = useState('');
+    const [vento, setVento] = useState('');
+    const [forecastDays, setForecastDays] = useState([]);
+    const [forecastTemps, setForecastTemps] = useState([]);
+    const [forecastProbs, setForecastProbs] = useState([]);
+
+    // Section 6
+    const [protocolEstadoAtual, setProtocolEstadoAtual] = useState('');
+    const [protocolAcionamento, setProtocolAcionamento] = useState('');
+
+    // Section 8
+    const [activities, setActivities] = useState([]);
+
+    // Section 9
+    const [consideracoesFinais, setConsideracoesFinais] = useState('');
+
     const handleZoomIn = () => {
         setZoom(prev => Math.min(1.5, prev + 0.1));
     };
@@ -58,8 +106,7 @@ const RelatorioSituacionalPrint = () => {
     const handleResetZoom = () => {
         setZoom(1.0);
     };
-    
-    // Icon helper function for weather
+
     const getWeatherIcon = (code) => {
         if (code === undefined) return '🌡️';
         if (code === 0) return '☀️';
@@ -84,7 +131,6 @@ const RelatorioSituacionalPrint = () => {
     useEffect(() => {
         if (reportData) {
             const { timeframeLabel, emissionDate } = reportData;
-            
             let safeDateStr = "";
             if (emissionDate) {
                 safeDateStr = emissionDate
@@ -94,12 +140,148 @@ const RelatorioSituacionalPrint = () => {
             } else {
                 safeDateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '_');
             }
-            
-            const safeTimeframe = timeframeLabel 
-                ? timeframeLabel.replace(/\s+/g, '_') 
-                : '24h';
-                
+            const safeTimeframe = timeframeLabel ? timeframeLabel.replace(/\s+/g, '_') : '24h';
             document.title = `Relatório Situacional - ${safeDateStr} (${safeTimeframe})`;
+        }
+    }, [reportData]);
+
+    useEffect(() => {
+        if (reportData) {
+            const { dashboardData, weatherData, pluviometerData, humanitarianData, timeframeLabel, emissionDate, currentStatus, avgAcc, activeWarnings } = reportData;
+
+            // Initialize values
+            setReportId(`001/${new Date().getFullYear()}`);
+            setEmitidoPor(userProfile?.full_name || 'Defesa Civil SMJ');
+            setMatricula(userProfile?.matricula || '---');
+            setNivelPerigo(currentStatus?.label || 'NORMAL');
+            setStatusOperacional('Ativo — Atualização Automática via SIGERD');
+
+            setKpiVistoriasVal(String(dashboardData.vistorias?.stats?.total || 0));
+            setKpiVistoriasDesc(`${dashboardData.vistorias?.stats?.total || 0} registradas`);
+
+            setKpiOcorrenciasVal(String(dashboardData.ocorrencias?.stats?.total || 0));
+            setKpiOcorrenciasDesc(dashboardData.ocorrencias?.stats?.total > 0 ? `${dashboardData.ocorrencias.stats.total} ativas` : 'Sem ocorrências');
+
+            setKpiInterdicoesVal(String(dashboardData.interdicoes?.stats?.total || 0));
+            setKpiInterdicoesDesc(dashboardData.interdicoes?.stats?.total > 0 ? `${dashboardData.interdicoes.stats.total} ativas` : 'Nenhuma ativa');
+
+            setKpiChuvaVal(`${avgAcc} mm`);
+            setKpiChuvaDesc('Acumulado no período');
+
+            setKpiInmetVal(String(activeWarnings?.length || 0));
+            setKpiInmetDesc(activeWarnings?.length > 0 ? `${activeWarnings.length} vigente(s)` : 'Nenhum vigente');
+
+            // Pluviometer bullet list
+            const pluvioList = pluviometerData && pluviometerData.length > 0 
+                ? pluviometerData.map(p => `• <strong>${p.name}:</strong> ${(p.acc24hr || p.rainRaw || 0).toFixed(1)} mm (Acumulado 24h)`).join('<br/>')
+                : 'Sem registros mapeados no período';
+            setPluviometerText(pluvioList);
+
+            // INMET warning list
+            const inmetList = activeWarnings && activeWarnings.length > 0
+                ? activeWarnings.map(a => `• <strong>${a.categoria || 'ALERTA'}:</strong> ${a.descricao}`).join('<br/>')
+                : 'Céu limpo e condições estáveis — 0 aviso(s) ativo(s)';
+            setInmetAlertsText(inmetList);
+
+            // Humanitarian Data
+            setKpiAbrigos(String(humanitarianData?.shelters?.length || 0));
+            setKpiPessoas(String(humanitarianData?.occupants?.length || 0));
+            
+            const kitsDist = (humanitarianData?.inventory || []).filter(item => String(item.item_name).toLowerCase().includes('kit')).length;
+            setKpiKits(String(kitsDist));
+            setKpiLogisticaSocial('Ativa — abrigos e famílias integrados no período');
+
+            // Weather
+            setTempAtual(`${Math.round(weatherData?.current?.temp || 22)} °C`);
+            setUmidade(`${weatherData?.current?.humidity || 75} %`);
+            setProbChuva(`${weatherData?.daily?.[0]?.rainProb || 0} %`);
+            setVento(`${Math.round(weatherData?.current?.wind || 8)} km/h`);
+
+            // Forecast days (5 days)
+            const days = [];
+            const temps = [];
+            const probs = [];
+            (weatherData?.daily || []).slice(1, 6).forEach(day => {
+                const dateString = day.date.includes('T') ? day.date : `${day.date}T12:00:00`;
+                const dailyDate = new Date(dateString);
+                const weekday = dailyDate.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+                const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                
+                days.push(capitalizedWeekday);
+                temps.push(`${Math.round(day.tempMax)}° / ${Math.round(day.tempMin)}°`);
+                probs.push(`${day.rainProb}%`);
+            });
+            if (days.length === 0) {
+                for(let i=1; i<=5; i++) {
+                    days.push(`Dia ${i}`);
+                    temps.push(`--° / --°`);
+                    probs.push(`--%`);
+                }
+            }
+            setForecastDays(days);
+            setForecastTemps(temps);
+            setForecastProbs(probs);
+
+            // Operational Protocol
+            let defaultProtocolText = "Monitoramento contínuo ativo. Em cenários de incidentes geológicos ou hidrológicos, equipes permanecem em prontidão para acionamento imediato.";
+            if (currentStatus?.label === 'NORMAL') {
+                defaultProtocolText = "Monitoramento contínuo ativo. Condições de normalidade. Equipes em rotina de vigilância preventiva e atividades ordinárias.";
+            } else if (currentStatus?.label === 'ATENÇÃO') {
+                defaultProtocolText = "Vigilância de riscos. Possibilidade de ocorrências devido a condições meteorológicas adversas. Equipes em prontidão para pronta resposta.";
+            } else if (currentStatus?.label === 'PERIGO') {
+                defaultProtocolText = "Alerta de risco elevado. Risco de incidentes devido a chuvas intensas ou acumuladas. Equipes de prontidão e monitoramento intensificado.";
+            } else if (currentStatus?.label === 'G. PERIGO') {
+                defaultProtocolText = "Mobilização geral ativa. Alto risco de incidentes geológicos ou hidrológicos. Equipes em campo para atendimento emergencial imediato.";
+            }
+            setProtocolEstadoAtual(defaultProtocolText);
+            setProtocolAcionamento("Canal de emergência: 199 (Defesa Civil) / Outros canais aplicáveis");
+
+            // Section 8 - Combined activities
+            const combined = [];
+            if (dashboardData.vistorias?.locations) {
+                dashboardData.vistorias.locations.forEach(l => {
+                    combined.push({
+                        type: 'Vistoria',
+                        id: l.formattedId || l.id || '---',
+                        date: l.date,
+                        risk: l.risk || '---',
+                        details: l.details || l.subtype || '---',
+                        lat: l.lat,
+                        lng: l.lng
+                    });
+                });
+            }
+            if (dashboardData.ocorrencias?.locations) {
+                dashboardData.ocorrencias.locations.forEach(l => {
+                    combined.push({
+                        type: 'Ocorrência',
+                        id: l.formattedId || l.id || '---',
+                        date: l.date,
+                        risk: l.risk || '---',
+                        details: l.details || l.subtype || '---',
+                        lat: l.lat,
+                        lng: l.lng
+                    });
+                });
+            }
+            if (dashboardData.interdicoes?.locations) {
+                dashboardData.interdicoes.locations.forEach(l => {
+                    combined.push({
+                        type: 'Interdição',
+                        id: l.formattedId || l.id || '---',
+                        date: l.date,
+                        risk: l.risco_tipo || l.risk || '---',
+                        details: l.medida_tipo || l.details || l.subtype || '---',
+                        lat: l.lat,
+                        lng: l.lng
+                    });
+                });
+            }
+            combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setActivities(combined);
+
+            // Considerações Finais
+            setConsideracoesFinais("Síntese da situação geral do município no período: o monitoramento meteorológico e geológico indica estabilidade relativa nas últimas horas. Recomenda-se a manutenção da atenção por parte das equipes de plantão para o período subsequente, especialmente nas áreas de risco previamente mapeadas. Não há indicação de necessidade emergencial de reforço de pessoal ou suprimentos no momento, permanecendo o efetivo em escala de prontidão padrão.");
         }
     }, [reportData]);
 
@@ -138,39 +320,7 @@ const RelatorioSituacionalPrint = () => {
         );
     }
 
-    const { dashboardData, weatherData, pluviometerData, humanitarianData, timeframeLabel, emissionDate, currentStatus, avgAcc, activeWarnings } = reportData;
-
-    const emittedBy = userProfile?.full_name || 'SIGERD Mobile — Defesa Civil SMJ';
-
-    // Status mapping variables
-    const isNormal = currentStatus?.label === 'NORMAL';
-    const isAtencao = currentStatus?.label === 'ATENÇÃO';
-    const isPerigo = currentStatus?.label === 'PERIGO';
-    const isGPerigo = currentStatus?.label === 'G. PERIGO';
-
-    // Status Banner class modifier
-    const statusBannerClass = isNormal ? 'banner-green' : isAtencao ? 'banner-amber' : isPerigo ? 'banner-orange' : 'banner-red';
-    
-    // Status State active modifiers
-    const normalStateActive = isNormal ? 'active active-green' : '';
-    const atencaoStateActive = isAtencao ? 'active active-amber' : '';
-    const perigoStateActive = isPerigo ? 'active active-orange' : '';
-    const gperigoStateActive = isGPerigo ? 'active active-red' : '';
-
-    // Active Status pulse color modifier
-    const activePulseColor = isNormal ? 'pulse-green' : isAtencao ? 'pulse-amber' : isPerigo ? 'pulse-orange' : 'pulse-red';
-
-    // Dynamic protocol text based on status
-    let protocolText = "Monitoramento contínuo ativo. Em cenários de incidentes geológicos ou hidrológicos, equipes permanecem em prontidão para acionamento imediato.";
-    if (isNormal) {
-        protocolText = "Monitoramento contínuo ativo. Condições de normalidade. Equipes em rotina de vigilância preventiva e atividades ordinárias.";
-    } else if (isAtencao) {
-        protocolText = "Vigilância de riscos. Possibilidade de ocorrências devido a condições meteorológicas adversas. Equipes em prontidão para pronta resposta.";
-    } else if (isPerigo) {
-        protocolText = "Alerta de risco elevado. Risco de incidentes devido a chuvas intensas ou acumuladas. Equipes de prontidão e monitoramento intensificado.";
-    } else if (isGPerigo) {
-        protocolText = "Mobilização geral ativa. Alto risco de incidentes geológicos ou hidrológicos. Equipes em campo para atendimento emergencial imediato.";
-    }
+    const { timeframeLabel, emissionDate } = reportData;
 
     return (
         <div className="bg-[#f1f5f9] min-h-screen text-slate-800 print:bg-white print:p-0 p-8 flex flex-col items-center selection:bg-blue-100">
@@ -179,15 +329,12 @@ const RelatorioSituacionalPrint = () => {
                 
                 :root {
                     --navy:   #0B1F3A;
-                    --navy2:  #122848;
-                    --navy3:  #1B3A5E;
                     --blue:   #1A6FBF;
                     --blue2:  #2484D9;
                     --ice:    #E8F1FA;
                     --ice2:   #D4E5F5;
                     --amber:  #D48A0C;
                     --amber2: #F5A623;
-                    --amber-bg: #FFF8E8;
                     --red:    #B83232;
                     --red-bg: #FDEAEA;
                     --green:  #1A7A48;
@@ -196,12 +343,11 @@ const RelatorioSituacionalPrint = () => {
                     --gray1:  #F4F6F9;
                     --gray2:  #E8ECF2;
                     --gray3:  #C8D0DC;
-                    --gray4:  #8A95A5;
                     --text:   #1A2332;
                     --text2:  #4A5568;
                     --text3:  #718096;
                     --white:  #FFFFFF;
-                    --border: #DDE3ED;
+                    --border: #C8D0DC;
                 }
 
                 .print-container * {
@@ -209,669 +355,40 @@ const RelatorioSituacionalPrint = () => {
                     box-sizing: border-box;
                 }
 
-                /* ── CABEÇALHO ── */
-                .header {
-                    background: var(--navy);
-                    color: var(--white);
-                    padding: 0;
-                }
-
-                .header-top {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 20px 32px;
-                    border-bottom: 1px solid rgba(255,255,255,0.08);
-                }
-
-                .header-brand {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                }
-
-                .logo-dc {
-                    width: 56px;
-                    height: 56px;
-                    flex-shrink: 0;
-                }
-
-                .brand-text {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-align: center;
-                    flex: 1;
-                    gap: 2px;
-                }
-
-                .brand-title {
-                    font-size: 11px;
-                    font-weight: 500;
-                    letter-spacing: 0.12em;
-                    text-transform: uppercase;
-                    color: rgba(255,255,255,0.65);
-                    line-height: 1.3;
-                }
-
-                .brand-subtitle {
-                    font-size: 15px;
-                    font-weight: 700;
-                    color: var(--white);
-                    letter-spacing: 0.03em;
-                    text-transform: uppercase;
-                }
-
-                .header-sigerd {
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                }
-
-                .sigerd-logo {
-                    width: 48px;
-                    height: 48px;
-                    opacity: 0.9;
-                }
-
-                .header-bottom {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 14px 32px;
-                    background: rgba(0,0,0,0.18);
-                }
-
-                .doc-title {
+                /* ── TITULO DE SEÇÃO ── */
+                .section-title-new {
                     font-size: 13px;
                     font-weight: 700;
-                    letter-spacing: 0.2em;
+                    color: var(--navy);
+                    border-bottom: 2px solid var(--navy);
+                    padding-bottom: 4px;
+                    margin-top: 24px;
+                    margin-bottom: 12px;
                     text-transform: uppercase;
-                    color: rgba(255,255,255,0.95);
-                }
-
-                .doc-meta {
-                    display: flex;
-                    gap: 24px;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .meta-item {
-                    display: flex;
-                    gap: 6px;
-                    align-items: center;
-                    font-size: 11px;
-                }
-                .meta-item span.label {
-                    color: rgba(255,255,255,0.4);
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    font-size: 10px;
-                }
-                .meta-item span.value {
-                    color: rgba(255,255,255,0.85);
-                    font-family: 'IBM Plex Mono', monospace;
-                    font-size: 11px;
-                    font-weight: 500;
-                }
-
-                .sep { color: rgba(255,255,255,0.15); }
-
-                /* ── FAIXA DE STATUS ── */
-                .status-banner {
-                    background: var(--navy2);
-                    border-bottom: 3px solid var(--amber2);
-                    padding: 14px 32px 10px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 10px;
-                }
-                
-                .status-banner.banner-green  { border-bottom-color: var(--green2); }
-                .status-banner.banner-amber  { border-bottom-color: var(--amber2); }
-                .status-banner.banner-orange { border-bottom-color: #f97316; }
-                .status-banner.banner-red    { border-bottom-color: var(--red); }
-
-                .status-states {
-                    display: flex;
-                    gap: 0;
-                    align-items: stretch;
-                    justify-content: center;
-                    width: 100%;
-                }
-
-                .status-state {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    padding: 8px 20px;
-                    border: 1px solid rgba(255,255,255,0.08);
-                    cursor: default;
-                    opacity: 0.35;
-                    transition: opacity 0.2s;
-                }
-
-                .status-state:first-child { border-radius: 4px 0 0 4px; }
-                .status-state:last-child  { border-radius: 0 4px 4px 0; }
-
-                .status-state.active {
-                    opacity: 1;
-                }
-                
-                .status-state.active.active-green {
-                    background: rgba(26,122,72,0.14);
-                    border-color: var(--green2);
-                }
-                .status-state.active.active-amber {
-                    background: rgba(244,162,35,0.14);
-                    border-color: var(--amber2);
-                }
-                .status-state.active.active-orange {
-                    background: rgba(249,115,22,0.14);
-                    border-color: #f97316;
-                }
-                .status-state.active.active-red {
-                    background: rgba(184,50,50,0.14);
-                    border-color: var(--red);
-                }
-
-                .status-dot {
-                    width: 8px; height: 8px;
-                    border-radius: 50%;
-                    flex-shrink: 0;
-                }
-                .dot-green  { background: var(--green2); }
-                .dot-amber  { background: var(--amber2); }
-                .dot-orange { background: #f97316; }
-                .dot-red    { background: #E05252; }
-
-                .status-label {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .status-tag {
-                    font-size: 9px;
-                    letter-spacing: 0.12em;
-                    text-transform: uppercase;
-                    color: rgba(255,255,255,0.4);
-                    font-weight: 400;
-                }
-                .status-name {
-                    font-size: 12px;
-                    font-weight: 600;
-                    letter-spacing: 0.06em;
-                    color: var(--white);
-                }
-
-                .status-active-label {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    font-size: 9px;
-                    color: rgba(255,255,255,0.4);
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                }
-                .pulse {
-                    width: 6px; height: 6px;
-                    border-radius: 50%;
-                    animation: pulse 2s infinite;
-                    flex-shrink: 0;
-                }
-                .pulse-green  { background: var(--green2); }
-                .pulse-amber  { background: var(--amber2); }
-                .pulse-orange { background: #f97316; }
-                .pulse-red    { background: var(--red); }
-                
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; transform: scale(1); }
-                    50% { opacity: 0.5; transform: scale(0.85); }
-                }
-
-                /* ── LAYOUT PRINCIPAL ── */
-                .main {
-                    max-width: 100%;
-                    margin: 0 auto;
-                    padding: 28px 32px 48px;
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr;
-                    gap: 20px;
-                }
-
-                /* ── SEÇÃO GENÉRICA ── */
-                .section {
-                    background: var(--white);
-                    border: 1px solid var(--border);
-                    border-radius: 6px;
-                    overflow: hidden;
-                }
-
-                .section-header {
-                    padding: 10px 16px;
-                    background: var(--gray1);
-                    border-bottom: 1px solid var(--border);
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .section-icon {
-                    width: 16px; height: 16px;
-                    color: var(--blue);
-                    flex-shrink: 0;
-                }
-
-                .section-title {
-                    font-size: 10px;
-                    font-weight: 600;
-                    letter-spacing: 0.14em;
-                    text-transform: uppercase;
-                    color: var(--text2);
-                }
-
-                .section-body {
-                    padding: 16px;
-                }
-
-                /* ── INDICADORES PRIMÁRIOS ── */
-                .col-span-3 { grid-column: span 3; }
-                .col-span-2 { grid-column: span 2; }
-                .col-span-1 { grid-column: span 1; }
-
-                .kpi-grid {
-                    display: grid;
-                    grid-template-columns: repeat(5, 1fr);
-                    gap: 1px;
-                    background: var(--border);
-                }
-
-                .kpi-card {
-                    background: var(--white);
-                    padding: 18px 16px 14px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-align: center;
-                    gap: 6px;
-                }
-
-                .kpi-label {
-                    font-size: 9px;
-                    font-weight: 600;
-                    letter-spacing: 0.14em;
-                    text-transform: uppercase;
-                    color: var(--text3);
-                }
-
-                .kpi-value {
-                    font-size: 28px;
-                    font-weight: 300;
-                    font-family: 'IBM Plex Mono', monospace;
-                    color: var(--text);
-                    line-height: 1;
-                }
-
-                .kpi-unit {
-                    font-size: 12px;
-                    font-weight: 400;
-                    color: var(--text3);
-                    margin-left: 3px;
-                }
-
-                .kpi-badge {
-                    display: inline-flex;
-                    align-items: center;
-                    padding: 2px 7px;
-                    border-radius: 3px;
-                    font-size: 10px;
-                    font-weight: 500;
-                    letter-spacing: 0.04em;
-                    width: fit-content;
-                    margin-top: 2px;
-                }
-
-                .badge-ok     { background: var(--green-bg); color: var(--green); }
-                .badge-warn   { background: var(--amber-bg); color: #8A5800; }
-                .badge-alert  { background: var(--red-bg);   color: var(--red); }
-                .badge-info   { background: var(--ice); color: var(--blue); }
-                .badge-neutral{ background: var(--gray2); color: var(--text3); }
-
-                .kpi-accent-top {
-                    height: 3px;
-                    border-radius: 3px 3px 0 0;
-                    margin: -18px -16px 12px;
-                    align-self: stretch;
-                }
-                .accent-ok    { background: var(--green2); }
-                .accent-warn  { background: var(--amber2); }
-                .accent-red   { background: var(--red); }
-                .accent-blue  { background: var(--blue2); }
-                .accent-neutral { background: var(--gray3); }
-
-                /* ── PLUVIÔMETROS ── */
-                .gauge-row {
-                    margin-bottom: 14px;
-                }
-                .gauge-row:last-child { margin-bottom: 0; }
-
-                .gauge-top {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: baseline;
-                    margin-bottom: 5px;
-                }
-                .gauge-name {
-                    font-size: 11px;
-                    color: var(--text2);
-                    font-weight: 500;
-                    font-family: 'IBM Plex Mono', monospace;
                     letter-spacing: 0.03em;
                 }
-                .gauge-val {
-                    font-size: 13px;
-                    font-weight: 600;
-                    font-family: 'IBM Plex Mono', monospace;
-                    color: var(--blue);
-                }
 
-                .gauge-track {
-                    height: 6px;
-                    background: var(--gray2);
-                    border-radius: 3px;
-                    overflow: hidden;
+                /* ── CAMPOS EDITÁVEIS ── */
+                .editable-field {
+                    outline: none;
+                    transition: background-color 0.2s;
+                    border-radius: 2px;
+                    padding: 2px 4px;
+                    min-height: 18px;
                 }
-                .gauge-fill {
-                    height: 100%;
-                    border-radius: 3px;
-                    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+                .editable-field:hover {
+                    background-color: rgba(26, 111, 191, 0.08);
+                    cursor: text;
                 }
-
-                .gauge-meta {
-                    font-size: 10px;
-                    color: var(--text3);
-                    margin-top: 4px;
-                    letter-spacing: 0.02em;
-                }
-
-                /* ── ALERTAS INMET ── */
-                .alert-box {
-                    padding: 12px 14px;
-                    border-radius: 4px;
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 10px;
-                }
-                .alert-box.no-alert {
-                    background: var(--green-bg);
-                    border: 1px solid #B2DFC5;
-                }
-                .alert-dot {
-                    width: 7px; height: 7px;
-                    border-radius: 50%;
-                    background: var(--green2);
-                    flex-shrink: 0;
-                    margin-top: 4px;
-                }
-                .alert-text {
-                    font-size: 12px;
-                    color: var(--green);
-                    font-weight: 500;
-                    line-height: 1.4;
-                }
-                .alert-sub {
-                    font-size: 10px;
-                    color: var(--green);
-                    opacity: 0.7;
-                    margin-top: 2px;
-                }
-
-                /* ── PREVISÃO DO TEMPO ── */
-                .weather-now {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding-bottom: 16px;
-                    border-bottom: 1px solid var(--border);
-                    margin-bottom: 14px;
-                }
-
-                .temp-big {
-                    font-size: 38px;
-                    font-weight: 300;
-                    font-family: 'IBM Plex Mono', monospace;
-                    color: var(--text);
-                    line-height: 1;
-                }
-                .temp-big sup {
-                    font-size: 16px;
-                    font-weight: 400;
-                    vertical-align: super;
-                    color: var(--text3);
-                }
-
-                .weather-stats {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr;
-                    gap: 8px;
-                    flex: 1;
-                }
-
-                .ws-item {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 2px;
-                }
-                .ws-label {
-                    font-size: 9px;
-                    letter-spacing: 0.10em;
-                    text-transform: uppercase;
-                    color: var(--text3);
-                }
-                .ws-value {
-                    font-size: 15px;
-                    font-weight: 500;
-                    font-family: 'IBM Plex Mono', monospace;
-                    color: var(--text);
-                }
-
-                .forecast-row {
-                    display: grid;
-                    grid-template-columns: repeat(5, 1fr);
-                    gap: 6px;
-                    margin-top: 4px;
-                }
-
-                .fc-day {
-                    background: var(--gray1);
-                    border: 1px solid var(--border);
-                    border-radius: 4px;
-                    padding: 8px 6px;
-                    text-align: center;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-
-                .fc-weekday {
-                    font-size: 9px;
-                    font-weight: 600;
-                    letter-spacing: 0.10em;
-                    text-transform: uppercase;
-                    color: var(--text3);
-                }
-
-                .fc-symbol {
-                    font-size: 16px;
-                    line-height: 1;
-                }
-
-                .fc-temps {
-                    font-size: 10px;
-                    font-family: 'IBM Plex Mono', monospace;
-                    color: var(--text2);
-                    font-weight: 500;
-                }
-
-                .fc-prob {
-                    font-size: 9px;
-                    color: var(--blue);
-                    font-weight: 500;
-                }
-
-                /* ── ASSISTÊNCIA HUMANITÁRIA ── */
-                .assist-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr;
-                    gap: 10px;
-                }
-
-                .assist-card {
-                    background: var(--gray1);
-                    border: 1px solid var(--border);
-                    border-radius: 4px;
-                    padding: 12px;
-                    text-align: center;
-                }
-
-                .assist-num {
-                    font-size: 26px;
-                    font-weight: 300;
-                    font-family: 'IBM Plex Mono', monospace;
-                    color: var(--text);
-                    line-height: 1;
-                }
-                .assist-label {
-                    font-size: 9px;
-                    letter-spacing: 0.10em;
-                    text-transform: uppercase;
-                    color: var(--text3);
-                    margin-top: 4px;
-                    font-weight: 600;
-                }
-
-                .assist-body-split {
-                    display: grid;
-                    grid-template-columns: 1fr 2fr;
-                    gap: 20px;
-                }
-                .assist-column-numbers {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                }
-                .assist-column-records {
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: stretch;
-                }
-                .no-records.fill-height {
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-sizing: border-box;
-                    padding: 20px;
-                }
-
-                /* ── PROTOCOLO ── */
-                .protocol-box {
-                    background: var(--navy);
-                    border-radius: 4px;
-                    padding: 16px;
-                    color: var(--white);
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-
-                .protocol-title {
-                    font-size: 10px;
-                    letter-spacing: 0.14em;
-                    text-transform: uppercase;
-                    color: rgba(255,255,255,0.45);
-                    font-weight: 600;
-                }
-
-                .protocol-text {
-                    font-size: 12px;
-                    color: rgba(255,255,255,0.75);
-                    line-height: 1.6;
-                }
-
-                .protocol-cta {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    margin-top: 4px;
-                    font-size: 11px;
-                    font-weight: 600;
-                    color: var(--amber2);
-                    letter-spacing: 0.06em;
-                    text-transform: uppercase;
-                }
-
-                .cta-num {
-                    font-family: 'IBM Plex Mono', monospace;
-                    font-size: 14px;
-                    background: rgba(244,162,35,0.15);
-                    padding: 2px 8px;
-                    border-radius: 3px;
-                    border: 1px solid rgba(244,162,35,0.3);
-                }
-
-                /* ── RODAPÉ ── */
-                .footer {
-                    background: var(--navy);
-                    border-top: 1px solid rgba(255,255,255,0.06);
-                    padding: 14px 32px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 6px;
-                    text-align: center;
-                }
-
-                .footer-left {
-                    font-size: 10px;
-                    color: rgba(255,255,255,0.3);
-                    letter-spacing: 0.06em;
-                }
-
-                .footer-right {
-                    font-size: 10px;
-                    font-family: 'IBM Plex Mono', monospace;
-                    color: rgba(255,255,255,0.25);
-                    letter-spacing: 0.08em;
-                }
-
-                /* ── SEÇÃO SEM REGISTROS ── */
-                .no-records {
-                    padding: 18px;
-                    text-align: center;
-                    color: var(--text3);
-                    font-size: 11px;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    background: var(--gray1);
-                    border-radius: 4px;
-                    border: 1px dashed var(--gray3);
-                    font-weight: 500;
-                }
-
-                /* ── DIVISOR VERTICAL ── */
-                .vdivider {
-                    width: 1px;
-                    background: var(--border);
-                    margin: 0 2px;
+                .editable-field:focus {
+                    background-color: rgba(26, 111, 191, 0.15);
+                    box-shadow: 0 0 0 1px rgba(26, 111, 191, 0.3);
                 }
 
                 /* ── PRINT & SCREEN PREVIEW OVERRIDES ── */
                 .print-container {
                     zoom: var(--report-zoom, 1.0);
+                    padding: 40px 48px;
                 }
                 
                 @media screen and (max-width: 1024px) {
@@ -880,26 +397,18 @@ const RelatorioSituacionalPrint = () => {
                 }
                 
                 @media print {
-                    @page { margin: 20mm 0 0 0; size: A4; }
-                    @page :first { margin: 0; }
+                    @page { margin: 15mm 15mm; size: A4; }
                     html, body {
                         height: 100% !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                    }
-                    .print-main-area {
-                        height: 100% !important;
                     }
                     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white !important; }
                     .no-print { display: none !important; }
                     .page-break { page-break-before: always; }
                     .avoid-break { break-inside: avoid !important; page-break-inside: avoid !important; }
                     .print-container { 
-                        width: 210mm !important; 
-                        min-height: 100% !important;
-                        height: auto !important;
-                        display: flex !important;
-                        flex-direction: column !important;
+                        width: 100% !important; 
                         padding: 0 !important; 
                         margin: 0 !important; 
                         box-shadow: none !important; 
@@ -908,24 +417,23 @@ const RelatorioSituacionalPrint = () => {
                         border: none !important;
                         zoom: 1 !important;
                     }
-                    .footer {
-                        margin-top: auto !important;
+                    .editable-field:hover, .editable-field:focus {
+                        background-color: transparent !important;
+                        box-shadow: none !important;
                     }
                 }
             `}</style>
 
-            {/* Options Bar - Fixed at top, 100% width */}
+            {/* Options Bar */}
             <div className="no-print fixed top-0 left-0 right-0 w-full bg-slate-900 border-b border-white/10 z-[9999] px-6 py-3 flex justify-between items-center shadow-lg">
-                {/* Left Section */}
                 <div className="flex items-center gap-3">
                     <Activity className="text-blue-400" size={18} />
                     <div>
-                        <h1 className="font-black text-[11px] uppercase tracking-wider leading-none mb-1 text-white">Visualização de Impressão</h1>
+                        <h1 className="font-black text-[11px] uppercase tracking-wider leading-none mb-1 text-white">Visualização do Relatório</h1>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{timeframeLabel}</p>
                     </div>
                 </div>
 
-                {/* Middle Section - Zoom Controls */}
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={handleZoomOut} 
@@ -952,7 +460,6 @@ const RelatorioSituacionalPrint = () => {
                     </button>
                 </div>
                 
-                {/* Right Section */}
                 <div className="flex items-center gap-3">
                     <button onClick={() => window.close()} className="h-10 px-5 hover:bg-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-2">
                         <X size={16} /> Fechar
@@ -964,523 +471,358 @@ const RelatorioSituacionalPrint = () => {
             </div>
 
             <main className="flex flex-col items-center pt-20 print:pt-0 w-full print-preview-wrapper transition-all">
-                <div className="w-[210mm] bg-white shadow-2xl min-h-[297mm] p-0 mb-20 print:mb-0 relative print-container rounded-[8px] border border-slate-200 overflow-hidden flex flex-col justify-between" style={{ '--report-zoom': zoom }}>
+                <div className="w-[210mm] bg-white shadow-2xl min-h-[297mm] mb-20 print:mb-0 relative print-container rounded-[8px] border border-slate-200 overflow-hidden flex flex-col justify-between" style={{ '--report-zoom': zoom }}>
                     
                     <div>
                         {/* CABEÇALHO */}
-                        <header className="header">
-                            <div className="header-top">
-                                <div className="header-brand">
-                                    {/* Logo Defesa Civil Real */}
-                                    <img src={LOGO_DEFESA_CIVIL_SITUACIONAL} alt="Defesa Civil" className="logo-dc" style={{ objectFit: 'contain' }} />
-                                </div>
-
-                                <div className="brand-text">
-                                    <span className="brand-title">Prefeitura Municipal de Santa Maria de Jetibá — ES</span>
-                                    <span className="brand-subtitle">Coordenadoria Municipal de Proteção e Defesa Civil</span>
-                                </div>
-
-                                <div className="header-sigerd">
-                                    {/* Logo SIGERD Real */}
-                                    <img src={LOGO_SIGERD_SITUACIONAL} alt="SIGERD" className="sigerd-logo" style={{ objectFit: 'contain' }} />
+                        <header style={{ padding: '0 0 16px', borderBottom: '2px solid var(--navy)', background: 'var(--white)', color: 'var(--text)', position: 'relative' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', flex: 1, padding: '0 16px' }}>
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text2)' }}>Prefeitura Municipal de Santa Maria de Jetibá</span>
+                                    <span style={{ fontSize: '13px', fontWeight: '800', letterSpacing: '0.02em', textTransform: 'uppercase', color: 'var(--navy)' }}>Coordenadoria Municipal de Proteção e Defesa Civil</span>
                                 </div>
                             </div>
 
-                            <div className="header-bottom">
-                                <span className="doc-title">Relatório Situacional</span>
-                                <div className="doc-meta">
-                                    <div className="meta-item">
-                                        <span className="label">Emissão</span>
-                                        <span className="value">{emissionDate}</span>
-                                    </div>
-                                    <span className="sep">|</span>
-                                    <div className="meta-item">
-                                        <span className="label">Período</span>
-                                        <span className="value">{timeframeLabel}</span>
-                                    </div>
-                                    <span className="sep">|</span>
-                                    <div className="meta-item">
-                                        <span className="label">Emitido por</span>
-                                        <span className="value">{emittedBy}</span>
-                                    </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                                <span style={{ fontSize: '20px', fontWeight: '900', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--blue)' }}>Relatório Situacional</span>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: 'var(--text2)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    <span>EMISSÃO:</span>
+                                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)' }}>
+                                        {emissionDate ? emissionDate.replace(' -', ' ÀS') : '---'}
+                                    </span>
+                                    <span style={{ color: 'var(--gray3)' }}>•</span>
+                                    <span>ID:</span>
+                                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)', borderBottom: '1px dashed var(--gray3)' }}>
+                                        <span contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setReportId(e.target.innerText)}>{reportId}</span>
+                                    </span>
+                                    <span style={{ color: 'var(--gray3)' }}>•</span>
+                                    <span>PERÍODO:</span>
+                                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)' }}>{timeframeLabel}</span>
                                 </div>
                             </div>
                         </header>
 
-                        {/* FAIXA DE STATUS OPERACIONAL */}
-                        <div className={`status-banner ${statusBannerClass}`}>
-                            <div className="status-states">
-                                <div className={`status-state ${normalStateActive}`}>
-                                    <div className="status-dot dot-green"></div>
-                                    <div className="status-label">
-                                        <span className="status-tag">NORMAL</span>
-                                        <span className="status-name">Estável</span>
-                                    </div>
-                                </div>
-                                <div className={`status-state ${atencaoStateActive}`}>
-                                    <div className="status-dot dot-amber"></div>
-                                    <div className="status-label">
-                                        <span className="status-tag">ATENÇÃO</span>
-                                        <span className="status-name">Vigilância</span>
-                                    </div>
-                                </div>
-                                <div className={`status-state ${perigoStateActive}`}>
-                                    <div className="status-dot dot-orange"></div>
-                                    <div className="status-label">
-                                        <span className="status-tag">PERIGO</span>
-                                        <span className="status-name">Alerta</span>
-                                    </div>
-                                </div>
-                                <div className={`status-state ${gperigoStateActive}`}>
-                                    <div className="status-dot dot-red"></div>
-                                    <div className="status-label">
-                                        <span className="status-tag">G. PERIGO</span>
-                                        <span className="status-name">Mobilização</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="status-active-label">
-                                <div className={`pulse ${activePulseColor}`}></div>
-                                STATUS OPERACIONAL ATIVO — ATUALIZAÇÃO AUTOMÁTICA VIA SIGERD
+                        {/* 1. IDENTIFICAÇÃO E STATUS OPERACIONAL */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">1. Identificação e Status Operacional</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px', border: '1px solid var(--border)' }}>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ width: '20%', background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>EMITIDO POR</td>
+                                        <td style={{ width: '30%', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setEmitidoPor(e.target.innerText)}>{emitidoPor}</div>
+                                        </td>
+                                        <td style={{ width: '20%', background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>MATRÍCULA</td>
+                                        <td style={{ width: '30%', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setMatricula(e.target.innerText)}>{matricula}</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>NÍVEL DE PERIGO</td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setNivelPerigo(e.target.innerText)}>{nivelPerigo}</div>
+                                        </td>
+                                        <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>STATUS OPERACIONAL</td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setStatusOperacional(e.target.innerText)}>{statusOperacional}</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div style={{ fontSize: '9px', color: 'var(--text3)', fontStyle: 'italic', marginBottom: '16px' }}>
+                                Legenda de classificação de risco: NORMAL (Estável) | ATENÇÃO (Vigilância) | PERIGO (Alerta) | GRANDE PERIGO (Mobilização)
                             </div>
                         </div>
 
-                        {/* INDICADORES PRIMÁRIOS */}
-                        <div style={{ background: 'var(--white)', borderBottom: '1px solid var(--border)', marginBottom: '20px' }}>
-                            <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-                                <div style={{ padding: '10px 32px 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ color: 'var(--blue)' }}>
-                                        <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-                                        <path d="M4 8h8M4 11h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                        <path d="M4 5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                    </svg>
-                                    <span style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text3)' }}>Indicadores do Período</span>
-                                </div>
-                                <div className="kpi-grid">
-                                    <div className="kpi-card">
-                                        <div className={`kpi-accent-top ${dashboardData.vistorias?.stats?.total > 0 ? 'accent-blue' : 'accent-neutral'}`}></div>
-                                        <div className="kpi-label">Vistorias</div>
-                                        <div className="kpi-value">{dashboardData.vistorias?.stats?.total || 0}</div>
-                                        <div className={`kpi-badge ${dashboardData.vistorias?.stats?.total > 0 ? 'badge-info' : 'badge-neutral'}`}>
-                                            {dashboardData.vistorias?.stats?.total > 0 ? `${dashboardData.vistorias.stats.total} registradas` : 'Nenhum registro'}
-                                        </div>
-                                    </div>
-                                    <div className="kpi-card">
-                                        <div className={`kpi-accent-top ${dashboardData.ocorrencias?.stats?.total > 0 ? 'accent-red' : 'accent-neutral'}`}></div>
-                                        <div className="kpi-label">Ocorrências</div>
-                                        <div className="kpi-value">{dashboardData.ocorrencias?.stats?.total || 0}</div>
-                                        <div className={`kpi-badge ${dashboardData.ocorrencias?.stats?.total > 0 ? 'badge-alert' : 'badge-ok'}`}>
-                                            {dashboardData.ocorrencias?.stats?.total > 0 ? `${dashboardData.ocorrencias.stats.total} ativas` : 'Sem ocorrências'}
-                                        </div>
-                                    </div>
-                                    <div className="kpi-card">
-                                        <div className={`kpi-accent-top ${dashboardData.interdicoes?.stats?.total > 0 ? 'accent-red' : 'accent-neutral'}`}></div>
-                                        <div className="kpi-label">Interdições</div>
-                                        <div className="kpi-value">{dashboardData.interdicoes?.stats?.total || 0}</div>
-                                        <div className={`kpi-badge ${dashboardData.interdicoes?.stats?.total > 0 ? 'badge-alert' : 'badge-ok'}`}>
-                                            {dashboardData.interdicoes?.stats?.total > 0 ? `${dashboardData.interdicoes.stats.total} ativas` : 'Nenhuma ativa'}
-                                        </div>
-                                    </div>
-                                    <div className="kpi-card">
-                                        <div className="kpi-accent-top accent-blue"></div>
-                                        <div className="kpi-label">Chuva Média</div>
-                                        <div className="kpi-value">{avgAcc}<span className="kpi-unit">mm</span></div>
-                                        <div className="kpi-badge badge-info">Acumulado 24h</div>
-                                    </div>
-                                    <div className="kpi-card">
-                                        <div className={`kpi-accent-top ${activeWarnings.length > 0 ? 'accent-warn' : 'accent-neutral'}`}></div>
-                                        <div className="kpi-label">Avisos INMET</div>
-                                        <div className="kpi-value">{activeWarnings.length}</div>
-                                        <div className={`kpi-badge ${activeWarnings.length > 0 ? 'badge-warn' : 'badge-ok'}`}>
-                                            {activeWarnings.length > 0 ? `${activeWarnings.length} vigente(s)` : 'Nenhum vigente'}
-                                        </div>
-                                    </div>
-                                </div>
+                        {/* 2. INDICADORES DO PERÍODO */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">2. Indicadores do Período</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>VISTORIAS</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>OCORRÊNCIAS</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>INTERDIÇÕES</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>CHUVA MÉDIA (24H)</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>AVISOS INMET</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiVistoriasVal(e.target.innerText)}>{kpiVistoriasVal}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiOcorrenciasVal(e.target.innerText)}>{kpiOcorrenciasVal}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInterdicoesVal(e.target.innerText)}>{kpiInterdicoesVal}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiChuvaVal(e.target.innerText)}>{kpiChuvaVal}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInmetVal(e.target.innerText)}>{kpiInmetVal}</div>
+                                        </td>
+                                    </tr>
+                                    <tr style={{ background: 'var(--gray1)' }}>
+                                        <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiVistoriasDesc(e.target.innerText)}>{kpiVistoriasDesc}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiOcorrenciasDesc(e.target.innerText)}>{kpiOcorrenciasDesc}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInterdicoesDesc(e.target.innerText)}>{kpiInterdicoesDesc}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiChuvaDesc(e.target.innerText)}>{kpiChuvaDesc}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--text2)' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiInmetDesc(e.target.innerText)}>{kpiInmetDesc}</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* 3. PLUVIOMETRIA E ALERTAS METEOROLÓGICOS */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">3. Pluviometria e Alertas Meteorológicos</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>PLUVIÔMETROS CEMADEN</th>
+                                        <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>ALERTAS VIGENTES — INMET</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ border: '1px solid var(--border)', padding: '8px 10px', verticalAlign: 'top', fontSize: '10px', lineHeight: '1.5' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field min-h-[60px]" onBlur={e => setPluviometerText(e.target.innerHTML)} dangerouslySetInnerHTML={{ __html: pluviometerText }} />
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '8px 10px', verticalAlign: 'top', fontSize: '10px', lineHeight: '1.5' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field min-h-[60px]" onBlur={e => setInmetAlertsText(e.target.innerHTML)} dangerouslySetInnerHTML={{ __html: inmetAlertsText }} />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* 4. ASSISTÊNCIA HUMANITÁRIA */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">4. Assistência Humanitária</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        <th style={{ width: '22%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ABRIGOS ATIVOS</th>
+                                        <th style={{ width: '22%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>PESSOAS / FAMÍLIAS ASSISTIDAS</th>
+                                        <th style={{ width: '22%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>KITS DE EMERGÊNCIA DISTRIBUÍDOS</th>
+                                        <th style={{ width: '34%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>LOGÍSTICA SOCIAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiAbrigos(e.target.innerText)}>{kpiAbrigos}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiPessoas(e.target.innerText)}>{kpiPessoas}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setKpiKits(e.target.innerText)}>{kpiKits}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', color: 'var(--text)' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field text-left" onBlur={e => setKpiLogisticaSocial(e.target.innerText)}>{kpiLogisticaSocial}</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* 5. CONDIÇÕES E PREVISÃO METEOROLÓGICA */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">5. Condições e Previsão Meteorológica</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '12px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        <th style={{ width: '25%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>TEMPERATURA ATUAL</th>
+                                        <th style={{ width: '25%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>UMIDADE</th>
+                                        <th style={{ width: '25%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>PROBABILIDADE DE CHUVA</th>
+                                        <th style={{ width: '25%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>VENTO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setTempAtual(e.target.innerText)}>{tempAtual}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setUmidade(e.target.innerText)}>{umidade}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setProbChuva(e.target.innerText)}>{probChuva}</div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '14px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setVento(e.target.innerText)}>{vento}</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>Previsão estendida (5 dias)</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        {forecastDays.map((fd, i) => (
+                                            <th key={i} style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>
+                                                <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => {
+                                                    const newDays = [...forecastDays];
+                                                    newDays[i] = e.target.innerText;
+                                                    setForecastDays(newDays);
+                                                }}>{fd}</div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        {forecastTemps.map((ft, i) => (
+                                            <td key={i} style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: '500' }}>
+                                                <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => {
+                                                    const newTemps = [...forecastTemps];
+                                                    newTemps[i] = e.target.innerText;
+                                                    setForecastTemps(newTemps);
+                                                }}>{ft}</div>
+                                            </td>
+                                        ))}
+                                    </tr>
+                                    <tr style={{ background: 'var(--gray1)' }}>
+                                        {forecastProbs.map((fp, i) => (
+                                            <td key={i} style={{ border: '1px solid var(--border)', padding: '4px 10px', fontSize: '9px', color: 'var(--blue)', fontFamily: 'IBM Plex Mono, monospace', fontWeight: '500' }}>
+                                                <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => {
+                                                    const newProbs = [...forecastProbs];
+                                                    newProbs[i] = e.target.innerText;
+                                                    setForecastProbs(newProbs);
+                                                }}>{fp}</div>
+                                            </td>
+                                        ))}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* PAGE BREAK BEFORE OPERATIONAL PROTOCOL TO FIT ON PAGE 2 */}
+                        <div className="page-break"></div>
+
+                        {/* 6. PROTOCOLO OPERACIONAL */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">6. Protocolo Operacional</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)' }}>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ width: '20%', background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ESTADO ATUAL</td>
+                                        <td style={{ width: '80%', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', lineHeight: '1.5' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setProtocolEstadoAtual(e.target.innerText)}>{protocolEstadoAtual}</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ACIONAMENTO</td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', lineHeight: '1.5' }}>
+                                            <div contentEditable suppressContentEditableWarning className="editable-field" onBlur={e => setProtocolAcionamento(e.target.innerText)}>{protocolAcionamento}</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* 7. DISTRIBUIÇÃO GEOGRÁFICA — SANTA MARIA DE JETIBÁ */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">7. Distribuição Geográfica — Santa Maria de Jetibá</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text3)', fontStyle: 'italic', marginBottom: '8px' }}>
+                                Inserir imagem de mapa/satélite com a distribuição geográfica das ocorrências, vistorias e interdições registradas no período, com marcadores georreferenciados.
+                            </div>
+                            <div style={{ height: '320px', width: '100%', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)', marginBottom: '24px', position: 'relative' }}>
+                                <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%', background: '#1C2D42' }} zoomControl={false} attributionControl={false} dragging={false} scrollWheelZoom={false} doubleClickZoom={false}>
+                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                    {activities.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).map((l, i) => (
+                                        <Marker key={i} position={[l.lat, l.lng]} icon={L.divIcon({ className: 'custom-m', html: `<div style="background:#ef4444; width:8px; height:8px; border:2px solid white; border-radius:50%; box-shadow:0 0 5px rgba(0,0,0,0.5);"></div>`, iconSize:[8,8], iconAnchor:[4,4] })} />
+                                    ))}
+                                    <MapController center={[-20.0246, -40.7464]} markers={activities.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng))} />
+                                </MapContainer>
                             </div>
                         </div>
 
-                        {/* CONTEÚDO PRINCIPAL */}
-                        <div className="main">
-
-                            {/* PLUVIÔMETROS */}
-                            <div className="section col-span-1 avoid-break">
-                                <div className="section-header">
-                                    <svg className="section-icon" viewBox="0 0 16 16" fill="none">
-                                        <path d="M8 2 C8 2 3 8 3 11 a5 5 0 0 0 10 0 C13 8 8 2 8 2Z" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                                    </svg>
-                                    <span className="section-title">Pluviômetros CEMADEN</span>
-                                </div>
-                                <div className="section-body">
-                                    {pluviometerData && pluviometerData.length > 0 ? (
-                                        pluviometerData.slice(0, 5).map((p, i) => {
-                                            const val = (p.acc24hr || p.rainRaw || 0);
-                                            const pct = Math.min(100, val);
-                                            let gradient = 'linear-gradient(90deg, var(--blue), var(--blue2))';
-                                            if (val >= 80) {
-                                                gradient = 'linear-gradient(90deg, var(--red), #E05252)';
-                                            } else if (val >= 40) {
-                                                gradient = 'linear-gradient(90deg, var(--amber), var(--amber2))';
-                                            }
-                                            return (
-                                                <div className="gauge-row" key={i}>
-                                                    <div className="gauge-top">
-                                                        <span className="gauge-name">{p.name}</span>
-                                                        <span className="gauge-val">{val.toFixed(1)} mm</span>
+                        {/* 8. DETALHAMENTO DE VISTORIAS, OCORRÊNCIAS E INTERDIÇÕES */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">8. Detalhamento de Vistorias, Ocorrências e Interdições</div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6px', border: '1px solid var(--border)' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--ice2)' }}>
+                                        <th style={{ width: '15%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>Nº</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>CRONOLOGIA</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>RISCO / TIPOLOGIA</th>
+                                        <th style={{ width: '30%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>OBSERVAÇÕES</th>
+                                        <th style={{ width: '15%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'center' }}>COORDENADAS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {activities.length > 0 ? (
+                                        activities.map((act, i) => (
+                                            <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
+                                                    <div contentEditable suppressContentEditableWarning className="editable-field text-center">{act.id}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center' }}>
+                                                    <div contentEditable suppressContentEditableWarning className="editable-field text-center">
+                                                        {act.date ? new Date(act.date).toLocaleDateString('pt-BR') + ' ' + new Date(act.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---'}
                                                     </div>
-                                                    <div className="gauge-track">
-                                                        <div className="gauge-fill" style={{ width: `${pct}%`, background: gradient }}></div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center' }}>
+                                                    <div contentEditable suppressContentEditableWarning className="editable-field text-center">{`${act.type} - ${act.risk}`}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontStyle: 'italic' }}>
+                                                    <div contentEditable suppressContentEditableWarning className="editable-field">{act.details}</div>
+                                                </td>
+                                                <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center', color: 'var(--text3)' }}>
+                                                    <div contentEditable suppressContentEditableWarning className="editable-field">
+                                                        {act.lat != null && act.lng != null ? `${act.lat.toFixed(5)}, ${act.lng.toFixed(5)}` : '---'}
                                                     </div>
-                                                    <div className="gauge-meta">Acumulado — última leitura CEMADEN</div>
-                                                </div>
-                                            );
-                                        })
+                                                </td>
+                                            </tr>
+                                        ))
                                     ) : (
-                                        <div className="no-records">Sem registros mapeados no período</div>
+                                        <tr>
+                                            <td colSpan={5} style={{ border: '1px solid var(--border)', padding: '12px', textAlign: 'center', color: 'var(--text3)', fontSize: '10px', textTransform: 'uppercase', fontWeight: '500', fontStyle: 'italic' }}>
+                                                Sem registros no período
+                                            </td>
+                                        </tr>
                                     )}
-                                </div>
+                                </tbody>
+                            </table>
+                            <div style={{ fontSize: '9px', color: 'var(--text3)', fontStyle: 'italic', marginBottom: '24px' }}>
+                                Observação: replicar a linha acima para cada registro do período. Caso não haja registros em uma categoria, indicar "Sem registros no período".
                             </div>
-
-                            {/* ALERTAS INMET */}
-                            <div className="section col-span-2 avoid-break">
-                                <div className="section-header">
-                                    <svg className="section-icon" viewBox="0 0 16 16" fill="none">
-                                        <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                                        <path d="M8 7v3M8 11.5v.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                                    </svg>
-                                    <span className="section-title">Alertas Vigentes — INMET</span>
-                                </div>
-                                <div className="section-body">
-                                    {activeWarnings && activeWarnings.length > 0 ? (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            {activeWarnings.map((a, i) => {
-                                                const desc = String(a.descricao || '').toLowerCase();
-                                                const cat = String(a.categoria || '').toLowerCase();
-                                                const critical = desc.includes('grande perigo') || cat.includes('vermelho') || cat.includes('crítico');
-                                                const bg = critical ? 'var(--red-bg)' : 'var(--amber-bg)';
-                                                const border = critical ? '1px solid var(--red)' : '1px solid var(--amber2)';
-                                                const dotColor = critical ? 'var(--red)' : 'var(--amber2)';
-                                                const textColor = critical ? 'var(--red)' : 'var(--amber)';
-                                                return (
-                                                    <div className="alert-box" key={i} style={{ background: bg, border: border }}>
-                                                        <div className="alert-dot" style={{ backgroundColor: dotColor }}></div>
-                                                        <div>
-                                                            <div className="alert-text" style={{ color: textColor }}>{a.categoria || 'ALERTA'}</div>
-                                                            <div className="alert-sub" style={{ color: 'var(--text)' }}>{a.descricao}</div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <div className="alert-box no-alert">
-                                            <div className="alert-dot"></div>
-                                            <div>
-                                                <div className="alert-text">Céu limpo e condições estáveis</div>
-                                                <div className="alert-sub">0 aviso(s) ativo(s) — sem restrições meteorológicas</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* ASSISTÊNCIA HUMANITÁRIA */}
-                            <div className="section col-span-3 avoid-break">
-                                <div className="section-header">
-                                    <svg className="section-icon" viewBox="0 0 16 16" fill="none">
-                                        <path d="M8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" stroke="currentColor" strokeWidth="1.3"/>
-                                        <path d="M4 14v-2a4 4 0 0 1 8 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                                    </svg>
-                                    <span className="section-title">Assistência Humanitária</span>
-                                </div>
-                                <div className="section-body">
-                                    <div className="assist-body-split">
-                                        <div className="assist-column-numbers">
-                                            <div className="assist-card">
-                                                <div className="assist-num">{humanitarianData?.shelters?.length || 0}</div>
-                                                <div className="assist-label">Abrigos</div>
-                                            </div>
-                                            <div className="assist-card">
-                                                <div className="assist-num">{humanitarianData?.occupants?.length || 0}</div>
-                                                <div className="assist-label">Pessoas / Famílias</div>
-                                            </div>
-                                            <div className="assist-card">
-                                                <div className="assist-num">
-                                                    {(humanitarianData?.inventory || []).filter(item => String(item.item_name).toLowerCase().includes('kit')).length}
-                                                </div>
-                                                <div className="assist-label">Kits Emergência</div>
-                                            </div>
-                                        </div>
-                                        <div className="assist-column-records">
-                                            {(!humanitarianData || (!humanitarianData.shelters?.length && !humanitarianData.occupants?.length && !humanitarianData.inventory?.length)) ? (
-                                                <div className="no-records fill-height">
-                                                    Sem registros mapeados no período selecionado
-                                                </div>
-                                            ) : (
-                                                <div className="active-logistics-box" style={{ 
-                                                    height: '100%', 
-                                                    display: 'flex', 
-                                                    flexDirection: 'column', 
-                                                    justifyContent: 'center', 
-                                                    alignItems: 'center',
-                                                    padding: '20px',
-                                                    background: 'var(--gray1)',
-                                                    border: '1px solid var(--border)',
-                                                    borderRadius: '4px',
-                                                    textAlign: 'center'
-                                                }}>
-                                                    <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                                        Logística Social Ativa
-                                                    </span>
-                                                    <span style={{ fontSize: '10px', color: 'var(--text3)', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                                        Dados de abrigos e famílias integrados no período
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* PREVISÃO METEOROLÓGICA */}
-                            <div className="section col-span-2 avoid-break">
-                                <div className="section-header">
-                                    <svg className="section-icon" viewBox="0 0 16 16" fill="none">
-                                        <circle cx="5.5" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
-                                        <path d="M8.5 8H14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                                        <path d="M5.5 2V4M5.5 12V14M1.5 8H3.5M9.04 3.96 7.62 5.38M3.38 10.62 1.96 12.04M9.04 12.04 7.62 10.62M3.38 5.38 1.96 3.96" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                                        <path d="M12 7a2 2 0 1 0 0 2h-4" stroke="currentColor" stroke-width="1.2" fill="none"/>
-                                    </svg>
-                                    <span className="section-title">Condições e Previsão Meteorológica</span>
-                                </div>
-                                <div className="section-body">
-                                    {weatherData?.current ? (
-                                        <>
-                                            <div className="weather-now">
-                                                <div>
-                                                    <div className="temp-big">{Math.round(weatherData.current.temp || 0)}<sup>°C</sup></div>
-                                                    <div style={{ fontSize: '10px', color: 'var(--text3)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Temperatura atual</div>
-                                                </div>
-                                                <div className="vdivider" style={{ height: '54px', margin: '0 16px' }}></div>
-                                                <div className="weather-stats">
-                                                    <div className="ws-item">
-                                                        <span className="ws-label">Umidade</span>
-                                                        <span className="ws-value">{weatherData.current.humidity}<span style={{ fontSize: '11px', color: 'var(--text3)' }}>%</span></span>
-                                                    </div>
-                                                    <div className="ws-item">
-                                                        <span className="ws-label">Prob. Chuva</span>
-                                                        <span className="ws-value" style={{ color: 'var(--blue)' }}>{weatherData.daily?.[0]?.rainProb || 0}<span style={{ fontSize: '11px', color: 'var(--text3)' }}>%</span></span>
-                                                    </div>
-                                                    <div className="ws-item">
-                                                        <span className="ws-label">Vento</span>
-                                                        <span className="ws-value">{Math.round(weatherData.current.wind || 6)}<span style={{ fontSize: '11px', color: 'var(--text3)' }}> km/h</span></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="forecast-row">
-                                                {(weatherData.daily || []).slice(1, 6).map((day, i) => {
-                                                    const dailyDate = new Date(day.date);
-                                                    const weekday = dailyDate.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
-                                                    const capitalizedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-                                                    return (
-                                                        <div className="fc-day" key={i}>
-                                                            <div className="fc-weekday">{capitalizedWeekday}</div>
-                                                            <div className="fc-symbol">{getWeatherIcon(day.code)}</div>
-                                                            <div className="fc-temps">{Math.round(day.tempMax)}° / {Math.round(day.tempMin)}°</div>
-                                                            <div className="fc-prob" style={{ color: day.rainProb > 30 ? 'var(--blue)' : 'var(--text3)' }}>{day.rainProb}%</div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="no-records">Sem dados de previsão no período</div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* PROTOCOLO OPERACIONAL */}
-                            <div className="section col-span-1 avoid-break">
-                                <div className="section-header">
-                                    <svg className="section-icon" viewBox="0 0 16 16" fill="none">
-                                        <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-                                        <path d="M5 5h6M5 8h4M5 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                                    </svg>
-                                    <span className="section-title">Protocolo Operacional</span>
-                                </div>
-                                <div className="section-body">
-                                    <div className="protocol-box">
-                                        <div className="protocol-title">Estado Atual</div>
-                                        <div className="protocol-text">
-                                            {protocolText}
-                                        </div>
-                                        <div className="protocol-cta">
-                                            <span>Acionamento via</span>
-                                            <span className="cta-num">199</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* MAPA / DISTRIBUIÇÃO GEOGRÁFICA */}
-                            <div className="section col-span-3 avoid-break">
-                                <div className="section-header">
-                                    <svg className="section-icon" viewBox="0 0 16 16" fill="none">
-                                        <path d="M10 2l4 2v10l-4-2-4 2-4-2V2l4 2 4-2Z" stroke="currentColor" strokeWidth="1.3" fill="none"/>
-                                        <path d="M6 4v10M10 2v10" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" opacity="0.5"/>
-                                    </svg>
-                                    <span className="section-title">Distribuição Geográfica — Santa Maria de Jetibá</span>
-                                </div>
-                                <div className="section-body" style={{ padding: '16px' }}>
-                                    <div style={{ height: '320px', width: '100%', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
-                                        <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%', background: '#1C2D42' }} zoomControl={false} attributionControl={false} dragging={false} scrollWheelZoom={false} doubleClickZoom={false}>
-                                            <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-                                            {(dashboardData.locations || []).filter(l => l.lat && l.lng && !isNaN(l.lat) && !isNaN(l.lng)).map((l, i) => (
-                                                <Marker key={i} position={[l.lat, l.lng]} icon={L.divIcon({ className: 'custom-m', html: `<div style="background:#ef4444; width:8px; height:8px; border:2px solid white; border-radius:50%; box-shadow:0 0 5px rgba(0,0,0,0.5);"></div>`, iconSize:[8,8], iconAnchor:[4,4] })} />
-                                            ))}
-                                            <MapController center={[-20.0246, -40.7464]} markers={(dashboardData.locations || []).filter(l => l.lat && l.lng && !isNaN(l.lat) && !isNaN(l.lng))} />
-                                        </MapContainer>
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
 
-                        {/* DETALHAMENTO DE ATIVIDADES (TABELAS DETALHADAS) */}
-                        {(dashboardData.ocorrencias?.locations?.length > 0 || 
-                          dashboardData.vistorias?.locations?.length > 0 || 
-                          dashboardData.interdicoes?.locations?.length > 0) ? (
-                            <div style={{ padding: '0 32px 32px' }}>
-                                {/* 1. OCORRÊNCIAS */}
-                                {dashboardData.ocorrencias?.locations?.length > 0 && (
-                                    <div className="section avoid-break" style={{ marginBottom: '20px' }}>
-                                        <div className="section-header">
-                                            <svg className="section-icon" viewBox="0 0 16 16" fill="none" style={{ color: 'var(--red)' }}>
-                                                <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.4"/>
-                                                <path d="M4 8h8M4 11h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                                <path d="M4 5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                                            </svg>
-                                            <span className="section-title">Detalhamento de Ocorrências ({dashboardData.ocorrencias.locations.length})</span>
-                                        </div>
-                                        <div className="section-body" style={{ padding: '0', overflowX: 'auto' }}>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '600px' }}>
-                                                <thead>
-                                                    <tr style={{ background: 'var(--gray1)', borderBottom: '1px solid var(--border)' }}>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '90px', color: 'var(--text2)' }}>Nº</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '130px', color: 'var(--text2)' }}>Cronologia</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '150px', color: 'var(--text2)' }}>Tipologia</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text2)' }}>Subtipo / Detalhes</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600', width: '130px', color: 'var(--text2)' }}>Coordenadas</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {dashboardData.ocorrencias.locations.sort((a,b) => new Date(b.date) - new Date(a.date)).map((l, i) => (
-                                                        <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
-                                                            <td style={{ padding: '10px 12px', fontWeight: '600', color: 'var(--blue)', fontFamily: 'IBM Plex Mono, monospace' }}>{l.formattedId || l.id || '---'}</td>
-                                                            <td style={{ padding: '10px 12px', color: 'var(--text2)', fontFamily: 'IBM Plex Mono, monospace' }}>
-                                                                {l.date ? new Date(l.date).toLocaleDateString('pt-BR') + ' ' + new Date(l.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---'}
-                                                            </td>
-                                                            <td style={{ padding: '10px 12px', fontWeight: '600', color: 'var(--text)', textTransform: 'uppercase' }}>{l.risk}</td>
-                                                            <td style={{ padding: '10px 12px', color: 'var(--text2)', fontStyle: 'italic' }}>{l.details || l.subtype || '---'}</td>
-                                                            <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text3)' }}>{l.lat?.toFixed(5)}, {l.lng?.toFixed(5)}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 2. VISTORIAS */}
-                                {dashboardData.vistorias?.locations?.length > 0 && (
-                                    <div className="section avoid-break" style={{ marginBottom: '20px' }}>
-                                        <div className="section-header">
-                                            <svg className="section-icon" viewBox="0 0 16 16" fill="none">
-                                                <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-                                                <path d="M5 5h6M5 8h4M5 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                                            </svg>
-                                            <span className="section-title">Detalhamento de Vistorias ({dashboardData.vistorias.locations.length})</span>
-                                        </div>
-                                        <div className="section-body" style={{ padding: '0', overflowX: 'auto' }}>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '600px' }}>
-                                                <thead>
-                                                    <tr style={{ background: 'var(--gray1)', borderBottom: '1px solid var(--border)' }}>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '90px', color: 'var(--text2)' }}>Nº</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '130px', color: 'var(--text2)' }}>Cronologia</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '150px', color: 'var(--text2)' }}>Risco / Tipologia</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text2)' }}>Observações</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600', width: '130px', color: 'var(--text2)' }}>Coordenadas</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {dashboardData.vistorias.locations.sort((a,b) => new Date(b.date) - new Date(a.date)).map((l, i) => (
-                                                        <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
-                                                            <td style={{ padding: '10px 12px', fontWeight: '600', color: 'var(--blue)', fontFamily: 'IBM Plex Mono, monospace' }}>{l.formattedId || l.id || '---'}</td>
-                                                            <td style={{ padding: '10px 12px', color: 'var(--text2)', fontFamily: 'IBM Plex Mono, monospace' }}>
-                                                                {l.date ? new Date(l.date).toLocaleDateString('pt-BR') + ' ' + new Date(l.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---'}
-                                                            </td>
-                                                            <td style={{ padding: '10px 12px', fontWeight: '600', color: 'var(--text)', textTransform: 'uppercase' }}>{l.risk}</td>
-                                                            <td style={{ padding: '10px 12px', color: 'var(--text2)', fontStyle: 'italic' }}>{l.details || l.subtype || '---'}</td>
-                                                            <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text3)' }}>{l.lat?.toFixed(5)}, {l.lng?.toFixed(5)}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 3. INTERDIÇÕES */}
-                                {dashboardData.interdicoes?.locations?.length > 0 && (
-                                    <div className="section avoid-break" style={{ marginBottom: '20px' }}>
-                                        <div className="section-header">
-                                            <svg className="section-icon" viewBox="0 0 16 16" fill="none" style={{ color: 'var(--red)' }}>
-                                                <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3"/>
-                                                <path d="M5 5h6M5 8h4M5 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                                            </svg>
-                                            <span className="section-title">Detalhamento de Interdições ({dashboardData.interdicoes.locations.length})</span>
-                                        </div>
-                                        <div className="section-body" style={{ padding: '0', overflowX: 'auto' }}>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '600px' }}>
-                                                <thead>
-                                                    <tr style={{ background: 'var(--gray1)', borderBottom: '1px solid var(--border)' }}>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '90px', color: 'var(--text2)' }}>Nº</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '130px', color: 'var(--text2)' }}>Cronologia</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', width: '150px', color: 'var(--text2)' }}>Tipo de Risco</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text2)' }}>Medida Adotada</th>
-                                                        <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '600', width: '130px', color: 'var(--text2)' }}>Coordenadas</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {dashboardData.interdicoes.locations.sort((a,b) => new Date(b.date) - new Date(a.date)).map((l, i) => (
-                                                        <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
-                                                            <td style={{ padding: '10px 12px', fontWeight: '600', color: 'var(--blue)', fontFamily: 'IBM Plex Mono, monospace' }}>{l.formattedId || l.id || '---'}</td>
-                                                            <td style={{ padding: '10px 12px', color: 'var(--text2)', fontFamily: 'IBM Plex Mono, monospace' }}>
-                                                                {l.date ? new Date(l.date).toLocaleDateString('pt-BR') + ' ' + new Date(l.date).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---'}
-                                                            </td>
-                                                            <td style={{ padding: '10px 12px', fontWeight: '600', color: 'var(--text)', textTransform: 'uppercase' }}>{l.risco_tipo || l.risk || '---'}</td>
-                                                            <td style={{ padding: '10px 12px', color: 'var(--text2)', fontStyle: 'italic' }}>{l.medida_tipo || l.details || l.subtype || '---'}</td>
-                                                            <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text3)' }}>
-                                                                {l.coordenadas || (l.lat ? `${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}` : '---')}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
+                        {/* 9. CONSIDERAÇÕES FINAIS */}
+                        <div className="avoid-break">
+                            <div className="section-title-new">9. Considerações Finais</div>
+                            <div style={{ fontSize: '10px', lineHeight: '1.5', background: 'var(--white)', minHeight: '60px', marginBottom: '24px' }}>
+                                <div contentEditable suppressContentEditableWarning className="editable-field min-h-[60px]" onBlur={e => setConsideracoesFinais(e.target.innerText)} style={{ outline: 'none', padding: '4px 0' }}>
+                                    {consideracoesFinais}
+                                </div>
                             </div>
-                        ) : null}
+                        </div>
                     </div>
 
                     {/* RODAPÉ OFICIAL */}
-                    <footer className="footer avoid-break">
-                        <span className="footer-left">
+                    <footer style={{ borderTop: '1px solid var(--border)', paddingTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', textAlign: 'center', color: 'var(--text3)', fontSize: '9px', marginTop: 'auto' }}>
+                        <span>
                             COMPDEC / SIGERD — Coordenadoria Municipal de Proteção e Defesa Civil de Santa Maria de Jetibá — ES
                         </span>
-                        <span className="footer-right">
-                            Gerado automaticamente em {emissionDate} &nbsp;|&nbsp; SIGERD Mobile v1.46.24
+                        <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text3)' }}>
+                            Gerado automaticamente em {emissionDate || '---'} &nbsp;|&nbsp; SIGERD Mobile v1.46.24
                         </span>
                     </footer>
 
