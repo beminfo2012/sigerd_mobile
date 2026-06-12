@@ -192,11 +192,23 @@ export const api = {
             });
             const allInterdicoes = Array.from(iMap.values());
 
-            // 5. INMET
+            // 5. INMET (fetch local with production fallback)
             let inmetAlerts = [];
-            if (inmetResp && inmetResp.ok) {
-                const alerts = await inmetResp.json();
-                inmetAlerts = Array.isArray(alerts) ? alerts : [];
+            try {
+                if (inmetResp && inmetResp.ok) {
+                    const alerts = await inmetResp.json();
+                    inmetAlerts = Array.isArray(alerts) ? alerts : [];
+                }
+                // If local API is empty, fetch from production cached API
+                if (inmetAlerts.length === 0) {
+                    const prodResp = await fetch('https://sigerd-mobile.vercel.app/api/inmet').catch(() => null);
+                    if (prodResp && prodResp.ok) {
+                        const alerts = await prodResp.json();
+                        inmetAlerts = Array.isArray(alerts) ? alerts : [];
+                    }
+                }
+            } catch (e) {
+                console.warn('[API] INMET load failed, fallback used:', e);
             }
 
             // Stats for today

@@ -2320,11 +2320,21 @@ const Dashboard = () => {
 
                 // Fallback direct INMET fetch if data.alerts is empty
                 try {
-                    const inmetResp = await fetch('https://apiprevmet3.inmet.gov.br/avisos/municipio/3204559').catch(() => null);
+                    const inmetResp = await fetch('https://sigerd-mobile.vercel.app/api/inmet').catch(() => null);
                     if (inmetResp && inmetResp.ok) {
                         const inmetData = await inmetResp.json();
                         if (Array.isArray(inmetData) && inmetData.length > 0) {
-                            setData(prev => prev ? ({ ...prev, alerts: inmetData }) : prev);
+                            setData(prev => {
+                                if (!prev) return prev;
+                                return {
+                                    ...prev,
+                                    alerts: inmetData,
+                                    stats: {
+                                        ...prev.stats,
+                                        inmetAlertsCount: inmetData.length
+                                    }
+                                };
+                            });
                         }
                     }
                 } catch (e) { console.warn('[INMET] Direct catch failed:', e); }
@@ -2360,28 +2370,14 @@ const Dashboard = () => {
             await syncPendingData()
             const [newData, newDetail] = await Promise.all([api.getDashboardData(), getPendingSyncCount()]);
             if (newData) {
-                const processed = {
+                setData({
                     ...newData,
-                    vistorias: { 
-                        stats: { total: (newData.vistorias || []).length }, 
-                        breakdown: processBreakdown(newData.vistorias || []), 
-                        localidadeBreakdown: processLocalidadeBreakdown(newData.vistorias || []), 
-                        locations: processLocations(newData.vistorias || [], 'v') 
-                    },
-                    ocorrencias: { 
-                        stats: { total: (newData.ocorrencias || []).length }, 
-                        breakdown: processBreakdown(newData.ocorrencias || []), 
-                        localidadeBreakdown: processLocalidadeBreakdown(newData.ocorrencias || []), 
-                        locations: processLocations(newData.ocorrencias || [], 'o') 
-                    },
-                    interdicoes: { 
-                        stats: { total: (newData.interdicoes || []).length || (newData.vistorias || []).filter(v => v.interdicao_id || v.interdicaoId).length }, 
-                        breakdown: processBreakdown(newData.interdicoes || []), 
-                        localidadeBreakdown: processLocalidadeBreakdown(newData.interdicoes || []), 
-                        locations: processLocations(newData.interdicoes || (newData.vistorias || []).filter(v => v.interdicao_id || v.interdicaoId), 'i') 
+                    stats: {
+                        ...newData.stats,
+                        totalInterdicoes: newData.interdicoes.stats.total,
+                        inmetAlertsCount: (newData.alerts || []).length
                     }
-                };
-                setData(processed);
+                });
             }
             setSyncDetail(newDetail)
             toast.success('Sincronizado', 'Dados atualizados com sucesso.')

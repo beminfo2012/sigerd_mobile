@@ -210,16 +210,27 @@ const Alerts = () => {
     const fetchAlerts = async () => {
         setLoading(true)
         try {
-            const resp = await fetch('/api/inmet')
-            if (resp.ok) {
-                const data = await resp.json()
-                const validAlerts = Array.isArray(data) ? data : []
-                setAlerts(validAlerts)
-                if (validAlerts.length > 0) {
-                    loadAlertToForm(validAlerts[0])
+            const resp = await fetch('/api/inmet').catch(() => null)
+            let data = []
+            if (resp && resp.ok) {
+                data = await resp.json()
+            }
+            let validAlerts = Array.isArray(data) ? data : []
+
+            // Fallback to production cached API if local is empty/blocked
+            if (validAlerts.length === 0) {
+                const prodResp = await fetch('https://sigerd-mobile.vercel.app/api/inmet').catch(() => null)
+                if (prodResp && prodResp.ok) {
+                    const prodData = await prodResp.json()
+                    if (Array.isArray(prodData) && prodData.length > 0) {
+                        validAlerts = prodData
+                    }
                 }
-            } else {
-                setAlerts([])
+            }
+
+            setAlerts(validAlerts)
+            if (validAlerts.length > 0) {
+                loadAlertToForm(validAlerts[0])
             }
         } catch (e) {
             console.error(e)
