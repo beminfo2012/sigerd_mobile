@@ -212,7 +212,7 @@ const RelatorioSituacionalPrint = () => {
                     const inicioStr = formatAlertDate(a.inicio);
                     const fimStr = formatAlertDate(a.fim);
                     const periodo = (inicioStr && fimStr) ? ` (de ${inicioStr} até ${fimStr})` : '';
-                    return `• <strong>[${sev}] ${tipo}</strong>${period}`;
+                    return `• <strong>[${sev}] ${tipo}</strong>${periodo}`;
                 }).join('<br/>')
                 : 'Céu limpo e condições estáveis — 0 aviso(s) ativo(s)';
             setInmetAlertsText(inmetList);
