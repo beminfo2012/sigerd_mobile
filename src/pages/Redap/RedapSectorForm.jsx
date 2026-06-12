@@ -3,17 +3,26 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
     MapPin, Camera, Save, ArrowLeft, 
     Shield, Info, Trash2, Image as ImageIcon,
-    Clock, DollarSign, List, X
+    Clock, DollarSign, List, X, CheckCircle, Send, AlertTriangle
 } from 'lucide-react';
 import { UserContext } from '../../App';
 import * as redapService from '../../services/redapService';
 import { useToast } from '../../components/ToastNotification';
 import { CurrencyInput } from '../../components/RedapInputs';
 import FileInput from '../../components/FileInput';
-import { REDAP_ITEM_MAPPING } from '../../services/redapService';
+
+// Mapeamento amigável das seções
+const SECAO_MAP = {
+    '2': { enum: 'DANOS_HUMANOS', title: 'Seção 2: Danos Humanos' },
+    '3': { enum: 'DANOS_EDIFICACOES', title: 'Seção 3: Danos a Edificações Públicas / Sociais' },
+    '4': { enum: 'DANOS_INFRAESTRUTURA', title: 'Seção 4: Danos de Infraestrutura' },
+    '5': { enum: 'DANOS_AGRICOLAS', title: 'Seção 5: Danos a Atividades Agrícolas / Privadas' },
+    '6': { enum: 'DANOS_AMBIENTAIS', title: 'Seção 6: Danos Ambientais' },
+    '8': { enum: 'OBSERVACOES', title: 'Seção 8: Parecer Técnico e Observações' }
+};
 
 const RedapSectorForm = () => {
-    const { eventoId, id } = useParams();
+    const { eventoId, secaoId } = useParams();
     const navigate = useNavigate();
     const { toast } = useToast();
     const user = React.useContext(UserContext);
@@ -21,117 +30,169 @@ const RedapSectorForm = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [event, setEvent] = useState(null);
+    const [secaoRecord, setSecaoRecord] = useState(null);
 
-    const [formData, setFormData] = useState({
-        evento_id: eventoId,
-        secretaria_responsavel: '',
-        classificacao_dano: 'Dano Material',
-        instalacao_afetada: '',
-        descricao_detalhada: '',
-        valor_estimado: 0,
-        latitude: null,
-        longitude: null,
-        fotos: [],
-        status_validacao: 'Enviado',
-        usuario_id: user?.id,
-        assinatura_url: user?.signature || null,
-        responsavel_nome: user?.full_name || '',
-        responsavel_cargo: user?.cargo || 'Agente de Defesa Civil'
+    // Identifica secretaria do usuário
+    const userSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
+    const config = SECAO_MAP[secaoId];
+
+    // Estados dos formulários de acordo com a seção
+    const [identificacao, setIdentificacao] = useState({
+        responsavel_preenchimento: user?.full_name || '',
+        cargo_funcao: user?.cargo || '',
+        telefone: user?.telefone || '',
+        email: user?.email || ''
     });
 
-    const [extraData, setExtraData] = useState({});
+    const [dadosJson, setDadosJson] = useState({});
+    const [fotos, setFotos] = useState([]);
 
     useEffect(() => {
+        if (!config) {
+            toast.error('Seção inválida.');
+            navigate(`/redap/evento/${eventoId}`);
+            return;
+        }
         loadData();
-    }, [id, eventoId]);
+    }, [eventoId, secaoId]);
 
-    const handleFileSelect = (files) => {
-        files.forEach(file => {
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            // Carrega desastre
+            const events = await redapService.getActiveEvents();
+            const currentEvent = events.find(e => e.id === eventoId);
+            setEvent(currentEvent);
+
+            // Carrega seções deste evento
+            const secoes = await redapService.getSecoesByEvento(eventoId);
+            const currentSecao = secoes.find(s => s.secao === config.enum && s.secretaria_id === userSecretaria);
+            
+            if (currentSecao) {
+                setSecaoRecord(currentSecao);
+                setIdentificacao({
+                    responsavel_preenchimento: currentSecao.responsavel_preenchimento || user?.full_name || '',
+                    cargo_funcao: currentSecao.cargo_funcao || user?.cargo || '',
+                    telefone: currentSecao.telefone || user?.telefone || '',
+                    email: currentSecao.email || user?.email || ''
+                });
+                setDadosJson(currentSecao.dados_json || {});
+                setFotos(currentSecao.dados_json?.fotos || []);
+            } else {
+                // Inicializa dadosJson padrão
+                initDefaultDados(config.enum);
+            }
+        } catch (error) {
+            toast.error('Erro ao carregar dados da seção.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const initDefaultDados = (secaoEnum) => {
+        if (secaoEnum === 'DANOS_HUMANOS') {
+            setDadosJson({
+                mortos: 0,
+                feridos: 0,
+                enfermos: 0,
+                desalojados: 0,
+                desabrigados: 0,
+                desaparecidos: 0,
+                familias_afetadas: 0,
+                detalhes: ''
+            });
+        } else if (secaoEnum === 'DANOS_EDIFICACOES') {
+            // Mapeia por secretaria
+            let items = [];
+            if (userSecretaria === 'Saúde') {
+                items = ['Hospitais', 'Unidades Básicas de Saúde (UBS)', 'Pronto Atendimento (PA)', 'Farmácias Públicas', 'Laboratórios de Análises'];
+            } else if (userSecretaria === 'Educação') {
+                items = ['Escolas Municipais de Ensino Fundamental', 'Centros Municipais de Ed. Infantil (CMEI)', 'Bibliotecas Públicas'];
+            } else {
+                items = ['Prefeitura Municipal (Sede)', 'Almoxarifado Central', 'Prédios Administrativos', 'Quadras Poliesportivas'];
+            }
+            const itemsData = {};
+            items.forEach(it => {
+                itemsData[it] = { danificado: 0, destruido: 0, valor_estimado: 0 };
+            });
+            setDadosJson({ items: itemsData, detalhes: '' });
+        } else if (secaoEnum === 'DANOS_INFRAESTRUTURA') {
+            const items = ['Pontes de Madeira', 'Pontes de Concreto', 'Bueiros e Galerias', 'Estradas Vicinais (KM)', 'Muros de Contenção'];
+            const itemsData = {};
+            items.forEach(it => {
+                itemsData[it] = { danificado: 0, destruido: 0, valor_estimado: 0, extensao: '' };
+            });
+            setDadosJson({ items: itemsData, detalhes: '' });
+        } else if (secaoEnum === 'DANOS_AGRICOLAS') {
+            const items = ['Lavouras Temporárias', 'Lavouras Permanentes', 'Pecuária de Corte/Leite', 'Piscicultura / Tanques', 'Mel e Silvicultura'];
+            const itemsData = {};
+            items.forEach(it => {
+                itemsData[it] = { area_afetada_ha: 0, produtores_atingidos: 0, perda_estimada_ton: 0, valor_estimado: 0 };
+            });
+            setDadosJson({ items: itemsData, detalhes: '' });
+        } else if (secaoEnum === 'DANOS_AMBIENTAIS') {
+            setDadosJson({
+                area_atingida_ha: 0,
+                recursos_hidricos_comprometidos: 'Não',
+                incendios_florestais: 'Não',
+                custo_recuperacao: 0,
+                detalhes: ''
+            });
+        } else if (secaoEnum === 'OBSERVACOES') {
+            setDadosJson({
+                parecer_tecnico: '',
+                observacoes_complementares: ''
+            });
+        }
+    };
+
+    const handleFileSelect = (filesList) => {
+        filesList.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setFormData(prev => ({
-                    ...prev,
-                    fotos: [...prev.fotos, { 
-                        id: crypto.randomUUID(), 
-                        data: reader.result, 
-                        timestamp: new Date().toISOString() 
-                    }]
-                }));
+                setFotos(prev => [...prev, { 
+                    id: crypto.randomUUID(), 
+                    data: reader.result, 
+                    timestamp: new Date().toISOString() 
+                }]);
             };
             reader.readAsDataURL(file);
         });
     };
 
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const events = await redapService.getActiveEvents();
-            const currentEvent = events.find(e => e.id === eventoId);
-            setEvent(currentEvent);
-
-            const sector = redapService.REDAP_SECTORS[user?.role] || 'Não Identificado';
-            
-            if (id && id !== 'novo') {
-                const regs = await redapService.getRegistrationsByEvent(eventoId);
-                const current = regs.find(r => r.id === id);
-                if (current) {
-                    setFormData(current);
-                    setExtraData(current.extra_parameters || {});
-                }
-            } else {
-                setFormData(prev => ({ 
-                    ...prev, 
-                    secretaria_responsavel: sector,
-                    responsavel_nome: user?.full_name || '',
-                    responsavel_cargo: user?.cargo || 'Agente de Defesa Civil',
-                    extra_parameters: {} 
-                }));
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => setFormData(prev => ({ ...prev, latitude: pos.coords.latitude, longitude: pos.coords.longitude })),
-                    () => console.warn('GPS fail')
-                );
-            }
-        } catch (error) {
-            toast.error('Erro ao carregar dados.');
-        } finally {
-            setLoading(false);
-        }
-    };
-    const isReadOnly = event?.status_evento === 'Finalizado' || ['Aprovado', 'Rejeitado'].includes(formData.status_validacao);
-
-    const handleSave = async () => {
-        if (isReadOnly) return;
-        if (!formData.instalacao_afetada) return toast.error('Informe o item afetado.');
-        if (formData.fotos.length === 0) return toast.error('Adicione fotos da evidência.');
+    const handleSave = async (status = 'PREENCHIDO') => {
+        if (saving) return;
 
         setSaving(true);
         try {
-            // Use structural extra_parameters field (JSONB)
-            await redapService.saveRegistration({
-                ...formData,
-                extra_parameters: extraData
-            });
-            toast.success('Dano registrado com sucesso!');
+            const payload = {
+                id: secaoRecord?.id || undefined,
+                evento_id: eventoId,
+                secretaria_id: userSecretaria,
+                secao: config.enum,
+                responsavel_preenchimento: identificacao.responsavel_preenchimento,
+                cargo_funcao: identificacao.cargo_funcao,
+                telefone: identificacao.telefone,
+                email: identificacao.email,
+                status_secao: status,
+                dados_json: {
+                    ...dadosJson,
+                    fotos: fotos
+                },
+                data_envio: status === 'ENVIADO' ? new Date().toISOString() : secaoRecord?.data_envio || null
+            };
+
+            await redapService.saveSecao(payload);
+            toast.success(status === 'ENVIADO' ? 'Seção enviada para validação!' : 'Rascunho salvo localmente!');
             navigate(`/redap/evento/${eventoId}`);
         } catch (error) {
-            toast.error('Erro ao salvar.');
+            toast.error('Erro ao salvar os dados da seção.');
         } finally {
             setSaving(false);
         }
     };
 
-    const sectorConfig = REDAP_ITEM_MAPPING[formData.secretaria_responsavel]?.[formData.classificacao_dano] || {};
-    const availableTypes = REDAP_ITEM_MAPPING[formData.secretaria_responsavel] 
-        ? Object.keys(REDAP_ITEM_MAPPING[formData.secretaria_responsavel]) 
-        : ['Dano Material', 'Prejuízo Econômico'];
-    const sectorItems = sectorConfig.items || [];
-    const extraFields = sectorConfig.extraFields || [];
-
-    if (loading) return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-    );
+    const isReadOnly = event?.status_evento === 'Finalizado' || secaoRecord?.status_secao === 'ENVIADO' || secaoRecord?.status_secao === 'VALIDADO';
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100 transition-colors duration-300">
@@ -141,221 +202,481 @@ const RedapSectorForm = () => {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-base font-black text-slate-800 dark:text-white leading-tight tracking-tight">Registro de Dano</h1>
-                        <p className="text-[10px] text-slate-400 dark:text-emerald-400/80 font-bold uppercase tracking-widest truncate max-w-[150px]">
+                        <h1 className="text-base font-black text-slate-800 dark:text-white leading-tight tracking-tight">Preenchimento de Seção</h1>
+                        <p className="text-[10px] text-slate-400 dark:text-emerald-400/80 font-bold uppercase tracking-widest truncate max-w-[200px]">
                             {event?.nome_evento}
                         </p>
                     </div>
                 </div>
+
                 {!isReadOnly && (
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
-                    >
-                        {saving ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />} Enviar
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleSave('PREENCHIDO')}
+                            disabled={saving}
+                            className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5"
+                        >
+                            <Save size={14} /> Salvar Rascunho
+                        </button>
+                        <button
+                            onClick={() => handleSave('ENVIADO')}
+                            disabled={saving}
+                            className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            <Send size={14} /> Finalizar & Enviar
+                        </button>
+                    </div>
                 )}
             </header>
 
             <main className="p-4 max-w-2xl mx-auto space-y-6">
-                {/* Sector Info */}
+                {/* Cabeçalho do Bloco */}
                 <div className="bg-blue-600 dark:bg-blue-700 rounded-[2rem] p-6 text-white shadow-xl flex items-center justify-between transition-all">
                     <div>
-                        <p className="text-[10px] uppercase font-black tracking-widest opacity-80 mb-1">Responsabilidade Setorial</p>
-                        <h2 className="text-xl font-black uppercase">{formData.secretaria_responsavel}</h2>
+                        <p className="text-[10px] uppercase font-black tracking-widest opacity-80 mb-1">Seção Governamental ({userSecretaria})</p>
+                        <h2 className="text-lg font-black uppercase tracking-tight">{config?.title}</h2>
                     </div>
                     <Shield size={32} className="opacity-40" />
                 </div>
 
-                {/* Form Body */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 transition-colors">
-                    <div className="space-y-4">
-                        {/* Type Selection */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                                <List size={12} className="text-blue-500" /> Classificação do Impacto
-                            </label>
-                            <div className="flex flex-wrap gap-2">
-                                {availableTypes.map(t => (
-                                    <button
-                                        key={t}
-                                        type="button"
-                                        disabled={isReadOnly}
-                                        onClick={() => setFormData(prev => ({ ...prev, classificacao_dano: t, instalacao_afetada: '' }))}
-                                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${
-                                            formData.classificacao_dano === t 
-                                            ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-lg' 
-                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
-                                        } disabled:opacity-60`}
-                                    >
-                                        {t}
-                                    </button>
+                {secaoRecord?.status_secao === 'VALIDADO' && (
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-3xl p-5 flex items-start gap-4">
+                        <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <h4 className="font-bold text-emerald-800 dark:text-emerald-400 text-xs uppercase tracking-wider">Seção Validada pela Defesa Civil</h4>
+                            <p className="text-xs text-emerald-600 dark:text-emerald-500/80 mt-1">Este conteúdo já foi auditado e consolidado no relatório unificado.</p>
+                        </div>
+                    </div>
+                )}
+
+                {secaoRecord?.justificativa_devolucao && secaoRecord.status_secao !== 'VALIDADO' && (
+                    <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-3xl p-5 flex items-start gap-4">
+                        <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <h4 className="font-bold text-rose-800 dark:text-rose-400 text-xs uppercase tracking-wider">Retorno / Necessidade de Ajuste</h4>
+                            <p className="text-xs text-rose-600 dark:text-rose-500/80 mt-1 font-semibold">" {secaoRecord.justificativa_devolucao} "</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Form: Identificação */}
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                        <Info size={12} className="text-blue-500" /> Responsável Pelo Preenchimento
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Nome</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                value={identificacao.responsavel_preenchimento}
+                                onChange={(e) => setIdentificacao({ ...identificacao, responsavel_preenchimento: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Cargo / Função</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                value={identificacao.cargo_funcao}
+                                onChange={(e) => setIdentificacao({ ...identificacao, cargo_funcao: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Telefone de Contato</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                value={identificacao.telefone}
+                                onChange={(e) => setIdentificacao({ ...identificacao, telefone: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">E-mail</label>
+                            <input
+                                type="text"
+                                disabled={isReadOnly}
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                value={identificacao.email}
+                                onChange={(e) => setIdentificacao({ ...identificacao, email: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Form Dinâmico por Seção */}
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
+                    {config?.enum === 'DANOS_HUMANOS' && (
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <List size={12} className="text-blue-500" /> Registro de Danos Humanos
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                {['mortos', 'feridos', 'enfermos', 'desalojados', 'desabrigados', 'desaparecidos', 'familias_afetadas'].map(field => (
+                                    <div key={field} className="space-y-1">
+                                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase capitalize">{field.replace(/_/g, ' ')}</label>
+                                        <input
+                                            type="number"
+                                            disabled={isReadOnly}
+                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                            value={dadosJson[field] || 0}
+                                            onChange={(e) => setDadosJson({ ...dadosJson, [field]: parseInt(e.target.value) || 0 })}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         </div>
+                    )}
 
-                        {/* Item Selection (Assisted) */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                                <Shield size={12} className="text-blue-500" /> Item / Instalação Afetada
-                            </label>
-                            <div className="relative">
-                                <input
-                                    list="sector-items"
-                                    type="text"
-                                    disabled={isReadOnly}
-                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 disabled:opacity-60"
-                                    placeholder={formData.classificacao_dano === 'Dano Humano' ? 'Descreva o impacto humano...' : "Ex: Ponte, Escola, Lavoura..."}
-                                    value={formData.instalacao_afetada}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, instalacao_afetada: e.target.value }))}
-                                />
-                                <datalist id="sector-items">
-                                    {sectorItems.map(item => <option key={item} value={item} />)}
-                                </datalist>
+                    {config?.enum === 'DANOS_EDIFICACOES' && dadosJson.items && (
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <List size={12} className="text-blue-500" /> Instalações Setoriais Afetadas
+                            </h3>
+                            <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+                                {Object.keys(dadosJson.items).map((itemName, index) => {
+                                    const item = dadosJson.items[itemName];
+                                    return (
+                                        <div key={itemName} className={`pt-4 ${index === 0 ? 'pt-0' : ''} space-y-2`}>
+                                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-300">{itemName}</h4>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Danificado</label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.danificado || 0}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].danificado = parseInt(e.target.value) || 0;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Destruído</label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.destruido || 0}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].destruido = parseInt(e.target.value) || 0;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Valor Dano (R$)</label>
+                                                    <CurrencyInput
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.valor_estimado || 0}
+                                                        onChange={(val) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].valor_estimado = val;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
+                    )}
 
-                        {/* Financial Value (only if not human damage, or optional) */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                                <DollarSign size={12} className="text-blue-500" /> Valor Estimado (R$)
-                            </label>
-                            <CurrencyInput
-                                disabled={isReadOnly}
-                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 disabled:opacity-60"
-                                value={formData.valor_estimado}
-                                onChange={(val) => setFormData(prev => ({ ...prev, valor_estimado: val }))}
-                            />
-                        </div>
-
-                        {/* Extra Fields Section (Dynamic based on FIDE Models) */}
-                        {extraFields.length > 0 && (
-                            <div className="p-5 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30 space-y-4">
-                                <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Shield size={12} /> Dados Técnicos do Setor
-                                </p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {extraFields.map(field => (
-                                        <div key={field.name} className="space-y-1.5">
-                                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-tight">
-                                                {field.label}
-                                            </label>
-                                            {field.type === 'number' ? (
-                                                <input
-                                                    type="number"
-                                                    disabled={isReadOnly}
-                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm disabled:opacity-60"
-                                                    value={extraData[field.name] || ''}
-                                                    onChange={(e) => setExtraData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                                                />
-                                            ) : field.type === 'boolean' ? (
-                                                <div className="flex gap-2">
-                                                    {['Sim', 'Não'].map(opt => (
-                                                        <button
-                                                            key={opt}
-                                                            type="button"
-                                                            disabled={isReadOnly}
-                                                            onClick={() => setExtraData(prev => ({ ...prev, [field.name]: opt }))}
-                                                            className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase border transition-all ${
-                                                                extraData[field.name] === opt 
-                                                                ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-sm' 
-                                                                : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-700'
-                                                            } disabled:opacity-60`}
-                                                        >
-                                                            {opt}
-                                                        </button>
-                                                    ))}
+                    {config?.enum === 'DANOS_INFRAESTRUTURA' && dadosJson.items && (
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <List size={12} className="text-blue-500" /> Infraestrutura Urbana / Rural
+                            </h3>
+                            <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+                                {Object.keys(dadosJson.items).map((itemName, index) => {
+                                    const item = dadosJson.items[itemName];
+                                    return (
+                                        <div key={itemName} className={`pt-4 ${index === 0 ? 'pt-0' : ''} space-y-2`}>
+                                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-300">{itemName}</h4>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Danif.</label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.danificado || 0}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].danificado = parseInt(e.target.value) || 0;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
                                                 </div>
-                                            ) : (
-                                                <input
-                                                    type="text"
-                                                    disabled={isReadOnly}
-                                                    className="w-full px-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-bold text-slate-700 dark:text-slate-100 text-sm disabled:opacity-60"
-                                                    value={extraData[field.name] || ''}
-                                                    onChange={(e) => setExtraData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                                                />
-                                            )}
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Destr.</label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.destruido || 0}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].destruido = parseInt(e.target.value) || 0;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Extensão</label>
+                                                    <input
+                                                        type="text"
+                                                        disabled={isReadOnly}
+                                                        placeholder="Ex: 50m"
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.extensao || ''}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].extensao = e.target.value;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Valor Dano</label>
+                                                    <CurrencyInput
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.valor_estimado || 0}
+                                                        onChange={(val) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].valor_estimado = val;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
-                                    ))}
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {config?.enum === 'DANOS_AGRICOLAS' && dadosJson.items && (
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <List size={12} className="text-blue-500" /> Atividades Agrícolas / Agropecuárias
+                            </h3>
+                            <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+                                {Object.keys(dadosJson.items).map((itemName, index) => {
+                                    const item = dadosJson.items[itemName];
+                                    return (
+                                        <div key={itemName} className={`pt-4 ${index === 0 ? 'pt-0' : ''} space-y-2`}>
+                                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-300">{itemName}</h4>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Área (HA)</label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.area_afetada_ha || 0}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].area_afetada_ha = parseFloat(e.target.value) || 0;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Produtores</label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.produtores_atingidos || 0}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].produtores_atingidos = parseInt(e.target.value) || 0;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Perda (T)</label>
+                                                    <input
+                                                        type="number"
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.perda_estimada_ton || 0}
+                                                        onChange={(e) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].perda_estimada_ton = parseFloat(e.target.value) || 0;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Prejuízo (R$)</label>
+                                                    <CurrencyInput
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        value={item.valor_estimado || 0}
+                                                        onChange={(val) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            newItems[itemName].valor_estimado = val;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {config?.enum === 'DANOS_AMBIENTAIS' && (
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <List size={12} className="text-blue-500" /> Impactos Ambientais
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Área Degradada (HA)</label>
+                                    <input
+                                        type="number"
+                                        disabled={isReadOnly}
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        value={dadosJson.area_atingida_ha || 0}
+                                        onChange={(e) => setDadosJson({ ...dadosJson, area_atingida_ha: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Recursos Hídricos Comprometidos?</label>
+                                    <select
+                                        disabled={isReadOnly}
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        value={dadosJson.recursos_hidricos_comprometidos || 'Não'}
+                                        onChange={(e) => setDadosJson({ ...dadosJson, recursos_hidricos_comprometidos: e.target.value })}
+                                    >
+                                        <option value="Não">Não</option>
+                                        <option value="Sim">Sim</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Ocorrência de Incêndios?</label>
+                                    <select
+                                        disabled={isReadOnly}
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        value={dadosJson.incendios_florestais || 'Não'}
+                                        onChange={(e) => setDadosJson({ ...dadosJson, incendios_florestais: e.target.value })}
+                                    >
+                                        <option value="Não">Não</option>
+                                        <option value="Sim">Sim</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Custo de Recuperação (R$)</label>
+                                    <CurrencyInput
+                                        disabled={isReadOnly}
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        value={dadosJson.custo_recuperacao || 0}
+                                        onChange={(val) => setDadosJson({ ...dadosJson, custo_recuperacao: val })}
+                                    />
                                 </div>
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                                <Info size={12} className="text-blue-500" /> Descrição Técnica Adicional
+                    {config?.enum === 'OBSERVACOES' && (
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <List size={12} className="text-blue-500" /> Parecer Geral da Defesa Civil
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Parecer Técnico Discursivo</label>
+                                    <textarea
+                                        disabled={isReadOnly}
+                                        rows={6}
+                                        placeholder="Digite aqui o parecer oficial sobre o desastre, detalhando as vistorias, ações e o histórico operacional..."
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-slate-700 dark:text-slate-200 outline-none text-sm resize-y"
+                                        value={dadosJson.parecer_tecnico || ''}
+                                        onChange={(e) => setDadosJson({ ...dadosJson, parecer_tecnico: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Observações Complementares</label>
+                                    <textarea
+                                        disabled={isReadOnly}
+                                        rows={4}
+                                        placeholder="Outras informações pertinentes..."
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-slate-700 dark:text-slate-200 outline-none text-sm resize-y"
+                                        value={dadosJson.observacoes_complementares || ''}
+                                        onChange={(e) => setDadosJson({ ...dadosJson, observacoes_complementares: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {config?.enum !== 'OBSERVACOES' && (
+                        <div className="space-y-2 pt-4 border-t border-slate-50 dark:border-slate-800">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                <Info size={12} className="text-blue-500" /> Observações e Relato Setorial Adicional
                             </label>
                             <textarea
                                 disabled={isReadOnly}
-                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 dark:text-slate-200 min-h-[100px] disabled:opacity-60"
+                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 dark:text-slate-200 min-h-[100px]"
                                 placeholder="Detalhes específicos, logradouros, ruas e pontos de referência..."
-                                value={formData.descricao_detalhada}
-                                onChange={(e) => setFormData(prev => ({ ...prev, descricao_detalhada: e.target.value }))}
+                                value={dadosJson.detalhes || ''}
+                                onChange={(e) => setDadosJson({ ...dadosJson, detalhes: e.target.value })}
                             />
                         </div>
-
-                        {/* FIDE Narrative Sections */}
-                        <div className="grid grid-cols-1 gap-4 pt-4 border-t border-slate-50 dark:border-slate-800">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Considerações Finais</label>
-                                <textarea
-                                    disabled={isReadOnly}
-                                    className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/10 outline-none transition-all font-medium text-slate-600 dark:text-slate-400 text-xs min-h-[80px] disabled:opacity-60"
-                                    placeholder="Parecer técnico final e conclusões do setor..."
-                                    value={extraData.consideracoes || ''}
-                                    onChange={(e) => setExtraData(prev => ({ ...prev, consideracoes: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* GPS Card */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between transition-colors">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-2xl text-emerald-600 dark:text-emerald-400 transition-colors">
-                            <MapPin size={24} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Coordenadas GPS</p>
-                            <p className="text-xs font-bold text-slate-700 dark:text-slate-100 tracking-tight">
-                                {formData.latitude ? `${formData.latitude.toFixed(6)}, ${formData.longitude.toFixed(6)}` : 'Buscando Localização...'}
-                            </p>
+                {/* Evidências Fotográficas */}
+                {config?.enum !== 'OBSERVACOES' && (
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2 block">
+                            Fotos de Evidência ({fotos.length})
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {!isReadOnly && (
+                                <div className="aspect-square">
+                                    <FileInput 
+                                        label="Adicionar"
+                                        onFileSelect={handleFileSelect}
+                                        type="photo"
+                                    />
+                                </div>
+                            )}
+                            {fotos.map((foto, idx) => (
+                                <div key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 group shadow-sm bg-slate-50 dark:bg-slate-800 transition-all">
+                                    <img src={foto.url || foto.data} className="w-full h-full object-cover" />
+                                    {!isReadOnly && (
+                                        <button
+                                            onClick={() => setFotos(prev => prev.filter((_, i) => i !== idx))}
+                                            className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-
-                {/* Photo Capture Section using App Standard FileInput */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-colors">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2 block">
-                        Fotos de Evidência ({formData.fotos.length})
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {!isReadOnly && (
-                            <div className="aspect-square">
-                                <FileInput 
-                                    label="Adicionar"
-                                    onFileSelect={handleFileSelect}
-                                    type="photo"
-                                />
-                            </div>
-                        )}
-                        {formData.fotos.map((foto, idx) => (
-                            <div key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 group shadow-sm bg-slate-50 dark:bg-slate-800 transition-all">
-                                <img src={foto.url || foto.data} className="w-full h-full object-cover" />
-                                {!isReadOnly && (
-                                    <button
-                                        onClick={() => setFormData(prev => ({ ...prev, fotos: prev.fotos.filter((_, i) => i !== idx) }))}
-                                        className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                )}
             </main>
         </div>
     );

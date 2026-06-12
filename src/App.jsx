@@ -439,6 +439,11 @@ const AppContent = ({
                                         <RedapSectorForm />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/redap/evento/:eventoId/secao/:secaoId" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapSectorForm />
+                                    </ProtectedRoute>
+                                } />
                                 {/* Legado - To be removed later */}
                                 <Route path="/redap/v1/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>

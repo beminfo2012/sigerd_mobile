@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 31
+const DB_VERSION = 32
 
 
 let dbPromise = null;
@@ -244,6 +244,34 @@ export const initDB = async () => {
                 const store = db.createObjectStore('sco_logs', { keyPath: 'id', autoIncrement: true });
                 store.createIndex('plano_id', 'plano_id', { unique: false });
             }
+
+            // Novas tabelas para o Módulo REDAP Multi-Secretarial
+            if (!db.objectStoreNames.contains('eventos_desastre')) {
+                const store = db.createObjectStore('eventos_desastre', { keyPath: 'id' });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('status_geral', 'status_geral', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('redap_secoes')) {
+                const store = db.createObjectStore('redap_secoes', { keyPath: 'id' });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('evento_id', 'evento_id', { unique: false });
+                store.createIndex('status_secao', 'status_secao', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('redap_fluxo_aprovacao')) {
+                const store = db.createObjectStore('redap_fluxo_aprovacao', { keyPath: 'id' });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('evento_id', 'evento_id', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('redap_historico_acoes')) {
+                const store = db.createObjectStore('redap_historico_acoes', { keyPath: 'id' });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('evento_id', 'evento_id', { unique: false });
+            }
+            if (!db.objectStoreNames.contains('redap_assinaturas')) {
+                const store = db.createObjectStore('redap_assinaturas', { keyPath: 'id' });
+                store.createIndex('synced', 'synced', { unique: false });
+                store.createIndex('evento_id', 'evento_id', { unique: false });
+            }
         },
     });
     return dbPromise;
@@ -327,7 +355,12 @@ export const saveVistoriaOffline = async (data) => {
 export const getPendingSyncCount = async () => {
     const db = await initDB()
 
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'ocorrencias_operacionais', 'despachos', 'emergency_contracts', 'agenda_vistorias'];
+    const stores = [
+        'vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 
+        'inventory', 'distributions', 'redap_records', 'ocorrencias_operacionais', 
+        'despachos', 'emergency_contracts', 'agenda_vistorias',
+        'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'
+    ];
     let detail = {
         total: 0,
         vistorias: 0,
@@ -364,7 +397,12 @@ export const getPendingSyncCount = async () => {
 
 export const syncPendingData = async () => {
     const db = await initDB()
-    const stores = ['vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 'inventory', 'distributions', 'redap_records', 'emergency_contracts', 'despachos', 'ocorrencias_operacionais', 'agenda_vistorias', 'redap_eventos', 'redap_registros'];
+    const stores = [
+        'vistorias', 'interdicoes', 'shelters', 'occupants', 'donations', 
+        'inventory', 'distributions', 'redap_records', 'emergency_contracts', 
+        'despachos', 'ocorrencias_operacionais', 'agenda_vistorias', 'redap_eventos', 'redap_registros',
+        'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'
+    ];
     let syncedCount = 0
 
     for (const storeName of stores) {
@@ -974,7 +1012,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                                                     storeName === 'ocorrencias_operacionais' ? 'ocorrencia_id' :
                                                         (storeName === 'agenda_vistorias' && payload.id) ? 'id' :
                                                             (storeName === 'desinterdicoes' && payload.id) ? 'id' :
-                                                                ['redap_eventos', 'redap_registros'].includes(storeName) ? 'id' :
+                                                                ['redap_eventos', 'redap_registros', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(storeName) ? 'id' :
                                                                     undefined
         }).select();
 
@@ -1053,7 +1091,12 @@ export const pullAllData = async (force = false) => {
             //{ table: 'despachos', store: 'despachos', key: 'despacho_id' },
             { table: 'ocorrencias_operacionais', store: 'ocorrencias_operacionais', key: 'ocorrencia_id' },
             { table: 'agenda_vistorias', store: 'agenda_vistorias', key: null },
-            { table: 'desinterdicoes', store: 'desinterdicoes', key: null } // Use null to force supabase_id matching
+            { table: 'desinterdicoes', store: 'desinterdicoes', key: null },
+            { table: 'eventos_desastre', store: 'eventos_desastre', key: null },
+            { table: 'redap_secoes', store: 'redap_secoes', key: null },
+            { table: 'redap_fluxo_aprovacao', store: 'redap_fluxo_aprovacao', key: null },
+            { table: 'redap_historico_acoes', store: 'redap_historico_acoes', key: null },
+            { table: 'redap_assinaturas', store: 'redap_assinaturas', key: null }
         ];
 
         // Fetch tables sequentially to avoid overloading the DB pool and accurately identify bottlenecks
@@ -1066,7 +1109,7 @@ export const pullAllData = async (force = false) => {
 
             try {
                 let query = supabase.from(mod.table).select('*');
-                if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters'].includes(mod.table)) {
+                if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(mod.table)) {
                     query = query.order('created_at', { ascending: false }).limit(200);
                 }
 

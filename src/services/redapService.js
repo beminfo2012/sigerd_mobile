@@ -279,74 +279,364 @@ export const getCobrades = () => COBRADES;
 export const getActiveEvents = async () => {
     // Online check first
     if (navigator.onLine) {
-        const { data, error } = await supabase
-            .from('redap_eventos')
-            .select('*')
-            .order('data_inicio', { ascending: false });
-        
-        if (!error && data) {
-            const db = await initDB();
-            const tx = db.transaction('redap_eventos', 'readwrite');
-            for (const ev of data) {
-                await tx.store.put({ ...ev, synced: true });
+        try {
+            const { data, error } = await supabase
+                .from('eventos_desastre')
+                .select('*')
+                .order('data_hora_evento', { ascending: false });
+            
+            if (!error && data) {
+                const db = await initDB();
+                const tx = db.transaction('eventos_desastre', 'readwrite');
+                for (const ev of data) {
+                    await tx.store.put({ ...ev, synced: true });
+                }
+                await tx.done;
+                
+                // Map keys for compatibility
+                return data.map(ev => ({
+                    ...ev,
+                    nome_evento: ev.nome_evento || ev.cobrade_tipo || 'Desastre Sem Nome',
+                    cobrade: `${ev.cobrade_codigo} - ${ev.cobrade_tipo || ''}`,
+                    data_inicio: ev.data_hora_evento,
+                    status_evento: ev.status_geral
+                }));
             }
-            await tx.done;
-            return data;
+        } catch (e) {
+            console.error('Supabase fetch failed for eventos_desastre:', e);
         }
     }
     
     // Fallback to local
     const db = await initDB();
-    return db.getAllFromIndex('redap_eventos', 'data_inicio');
+    const local = await db.getAll('eventos_desastre');
+    // Sort local
+    local.sort((a, b) => new Date(b.data_hora_evento) - new Date(a.data_hora_evento));
+    return local.map(ev => ({
+        ...ev,
+        nome_evento: ev.nome_evento || ev.cobrade_tipo || 'Desastre Sem Nome',
+        cobrade: `${ev.cobrade_codigo} - ${ev.cobrade_tipo || ''}`,
+        data_inicio: ev.data_hora_evento,
+        status_evento: ev.status_geral
+    }));
 };
 
 export const createEvent = async (event) => {
     const db = await initDB();
+    
+    // Extrai cobrade_codigo e cobrade_tipo do cobrade (ex: "1.2.1.0.0 - Inundações")
+    const parts = event.cobrade ? event.cobrade.split(' - ') : [];
+    const cobrade_codigo = parts[0] || '1.2.1.0.0';
+    const cobrade_tipo = parts[1] || 'Inundações';
+    
     const newEvent = {
-        ...event,
         id: crypto.randomUUID(),
+        nome_evento: event.nome_evento,
+        cobrade_codigo,
+        cobrade_grupo: 'Desastres Naturais',
+        cobrade_subgrupo: 'Meteorológicos/Hidrológicos',
+        cobrade_tipo,
+        data_hora_evento: event.data_inicio || new Date().toISOString(),
+        municipio_uf: 'Santa Maria de Jetibá / ES',
+        area_afetada_localidade: 'Área Urbana e Rural',
+        decreto_municipal_emergencia: null,
+        status_geral: 'RASCUNHO',
+        data_emissao: new Date().toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         synced: false
     };
-    await db.put('redap_eventos', newEvent);
+    
+    await db.put('eventos_desastre', newEvent);
     triggerSync();
-    return newEvent;
+    
+    // Inicia fluxo de aprovação padrão (Etapas 1 a 5)
+    await initFluxoAprovacao(newEvent.id);
+    
+    return {
+        ...newEvent,
+        nome_evento: newEvent.nome_evento,
+        cobrade: `${newEvent.cobrade_codigo} - ${newEvent.cobrade_tipo}`,
+        data_inicio: newEvent.data_hora_evento,
+        status_evento: newEvent.status_geral
+    };
 };
 
 export const deleteEvent = async (eventId) => {
     const db = await initDB();
     
     // 1. Delete from local IDB
-    await db.delete('redap_eventos', eventId);
+    await db.delete('eventos_desastre', eventId);
     
-    // Also delete registrations linked to this event in local DB
-    const allRegs = await db.getAll('redap_registros');
-    for (const reg of allRegs) {
-        if (reg.evento_id === eventId) {
-            await db.delete('redap_registros', reg.id);
+    // Deleta registros locais associados
+    const collections = ['redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'];
+    for (const storeName of collections) {
+        const items = await db.getAll(storeName);
+        for (const item of items) {
+            if (item.evento_id === eventId) {
+                await db.delete(storeName, item.id);
+            }
         }
     }
 
     // 2. Delete from Supabase if online
     if (navigator.onLine) {
-        const { error } = await supabase
-            .from('redap_eventos')
-            .delete()
-            .eq('id', eventId);
-        
-        if (error) {
-            console.error('Error deleting from Supabase:', error);
-            // We don't throw here to allow local deletion to persist, 
-            // but in a real app you might want to handle sync conflicts
+        try {
+            await supabase.from('eventos_desastre').delete().eq('id', eventId);
+            await supabase.from('redap_secoes').delete().eq('evento_id', eventId);
+            await supabase.from('redap_fluxo_aprovacao').delete().eq('evento_id', eventId);
+            await supabase.from('redap_historico_acoes').delete().eq('evento_id', eventId);
+            await supabase.from('redap_assinaturas').delete().eq('evento_id', eventId);
+        } catch (e) {
+            console.error('Error deleting from Supabase:', e);
         }
     }
     
     return { success: true };
 };
 
+export const initFluxoAprovacao = async (eventoId) => {
+    const db = await initDB();
+    const etapas = [
+        { etapa: 1, descricao_etapa: 'Preenchimento Setorial (Secretarias Municipais)', responsavel: 'Secretarias Municipais' },
+        { etapa: 2, descricao_etapa: 'Consolidação e Parecer Técnico', responsavel: 'Defesa Civil' },
+        { etapa: 3, descricao_etapa: 'Assinatura do Relatório Geral', responsavel: 'Coordenador Defesa Civil' },
+        { etapa: 4, descricao_etapa: 'Assinatura de Homologação', responsavel: 'Prefeito Municipal' },
+        { etapa: 5, descricao_etapa: 'Homologação e Registro do REDAP', responsavel: 'Defesa Civil Estadual' }
+    ];
+    
+    for (const et of etapas) {
+        const record = {
+            id: crypto.randomUUID(),
+            evento_id: eventoId,
+            etapa: et.etapa,
+            descricao_etapa: et.descricao_etapa,
+            responsavel: et.responsavel,
+            data_hora: new Date().toISOString(),
+            status: et.etapa === 1 ? 'CONCLUIDA' : 'PENDENTE',
+            synced: false
+        };
+        await db.put('redap_fluxo_aprovacao', record);
+    }
+    triggerSync();
+};
+
 /**
- * REGISTRATIONS (Sector Damages)
+ * REDAP Sections
+ */
+export const getSecoesByEvento = async (eventoId) => {
+    if (navigator.onLine) {
+        try {
+            const { data, error } = await supabase
+                .from('redap_secoes')
+                .select('*')
+                .eq('evento_id', eventoId);
+            
+            if (!error && data) {
+                const db = await initDB();
+                const tx = db.transaction('redap_secoes', 'readwrite');
+                for (const item of data) {
+                    await tx.store.put({ ...item, synced: true });
+                }
+                await tx.done;
+                return data;
+            }
+        } catch (e) {
+            console.error('Error fetching secoes:', e);
+        }
+    }
+    
+    const db = await initDB();
+    const local = await db.getAll('redap_secoes');
+    return local.filter(s => s.evento_id === eventoId);
+};
+
+export const saveSecao = async (secaoData) => {
+    const db = await initDB();
+    const toSave = {
+        ...secaoData,
+        id: secaoData.id || crypto.randomUUID(),
+        data_preenchimento: secaoData.data_preenchimento || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+    await db.put('redap_secoes', toSave);
+    triggerSync();
+    
+    // Registra histórico de ação
+    await addHistoricoAcao({
+        evento_id: toSave.evento_id,
+        ator: toSave.responsavel_preenchimento || 'Usuário Setorial',
+        acao: `Preenchimento/Atualização da Seção: ${toSave.secao}`,
+        tipo_acao: toSave.status_secao === 'ENVIADO' ? 'ENVIO' : 'EDICAO'
+    });
+    
+    return toSave.id;
+};
+
+/**
+ * REDAP Fluxo de Aprovação
+ */
+export const getFluxoAprovacaoByEvento = async (eventoId) => {
+    if (navigator.onLine) {
+        try {
+            const { data, error } = await supabase
+                .from('redap_fluxo_aprovacao')
+                .select('*')
+                .eq('evento_id', eventoId)
+                .order('etapa', { ascending: true });
+            
+            if (!error && data) {
+                const db = await initDB();
+                const tx = db.transaction('redap_fluxo_aprovacao', 'readwrite');
+                for (const item of data) {
+                    await tx.store.put({ ...item, synced: true });
+                }
+                await tx.done;
+                return data;
+            }
+        } catch (e) {
+            console.error('Error fetching fluxo:', e);
+        }
+    }
+    
+    const db = await initDB();
+    const local = await db.getAll('redap_fluxo_aprovacao');
+    return local.filter(f => f.evento_id === eventoId).sort((a, b) => a.etapa - b.etapa);
+};
+
+export const updateFluxoEtapa = async (eventoId, etapaNumero, status, responsavelNome = '') => {
+    const db = await initDB();
+    const localFluxo = await db.getAll('redap_fluxo_aprovacao');
+    const record = localFluxo.find(f => f.evento_id === eventoId && f.etapa === etapaNumero);
+    
+    if (record) {
+        record.status = status;
+        record.data_hora = new Date().toISOString();
+        if (responsavelNome) record.responsavel = responsavelNome;
+        record.synced = false;
+        await db.put('redap_fluxo_aprovacao', record);
+        triggerSync();
+        
+        // Registra histórico de ação
+        await addHistoricoAcao({
+            evento_id: eventoId,
+            ator: responsavelNome || 'Sistema',
+            acao: `Alteração da Etapa ${etapaNumero} para: ${status}`,
+            tipo_acao: 'ANALISE'
+        });
+        
+        return true;
+    }
+    return false;
+};
+
+/**
+ * REDAP Histórico de Ações
+ */
+export const getHistoricoAcoesByEvento = async (eventoId) => {
+    if (navigator.onLine) {
+        try {
+            const { data, error } = await supabase
+                .from('redap_historico_acoes')
+                .select('*')
+                .eq('evento_id', eventoId)
+                .order('data_hora', { ascending: false });
+            
+            if (!error && data) {
+                const db = await initDB();
+                const tx = db.transaction('redap_historico_acoes', 'readwrite');
+                for (const item of data) {
+                    await tx.store.put({ ...item, synced: true });
+                }
+                await tx.done;
+                return data;
+            }
+        } catch (e) {
+            console.error('Error fetching historico:', e);
+        }
+    }
+    
+    const db = await initDB();
+    const local = await db.getAll('redap_historico_acoes');
+    return local.filter(h => h.evento_id === eventoId).sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+};
+
+export const addHistoricoAcao = async (acaoData) => {
+    const db = await initDB();
+    const newAcao = {
+        id: crypto.randomUUID(),
+        evento_id: acaoData.evento_id,
+        data_hora: new Date().toISOString(),
+        ator: acaoData.ator || 'Sistema',
+        acao: acaoData.acao || '',
+        tipo_acao: acaoData.tipo_acao || 'EDICAO',
+        synced: false
+    };
+    await db.put('redap_historico_acoes', newAcao);
+    triggerSync();
+    return newAcao;
+};
+
+/**
+ * REDAP Assinaturas
+ */
+export const getAssinaturasByEvento = async (eventoId) => {
+    if (navigator.onLine) {
+        try {
+            const { data, error } = await supabase
+                .from('redap_assinaturas')
+                .select('*')
+                .eq('evento_id', eventoId)
+                .order('data_hora_assinatura', { ascending: true });
+            
+            if (!error && data) {
+                const db = await initDB();
+                const tx = db.transaction('redap_assinaturas', 'readwrite');
+                for (const item of data) {
+                    await tx.store.put({ ...item, synced: true });
+                }
+                await tx.done;
+                return data;
+            }
+        } catch (e) {
+            console.error('Error fetching assinaturas:', e);
+        }
+    }
+    
+    const db = await initDB();
+    const local = await db.getAll('redap_assinaturas');
+    return local.filter(a => a.evento_id === eventoId).sort((a, b) => new Date(a.data_hora_assinatura) - new Date(b.data_hora_assinatura));
+};
+
+export const addAssinatura = async (assinaturaData) => {
+    const db = await initDB();
+    const newAssinatura = {
+        id: crypto.randomUUID(),
+        evento_id: assinaturaData.evento_id,
+        usuario_id: assinaturaData.usuario_id,
+        nome: assinaturaData.nome,
+        cargo_secretaria: assinaturaData.cargo_secretaria,
+        data_hora_assinatura: new Date().toISOString(),
+        hash_assinatura: assinaturaData.hash_assinatura || crypto.randomUUID().substring(0, 16),
+        synced: false
+    };
+    await db.put('redap_assinaturas', newAssinatura);
+    triggerSync();
+    
+    // Registra histórico
+    await addHistoricoAcao({
+        evento_id: newAssinatura.evento_id,
+        ator: newAssinatura.nome,
+        acao: `Assinatura eletrônica registrada: ${newAssinatura.cargo_secretaria}`,
+        tipo_acao: 'APROVACAO'
+    });
+    
+    return newAssinatura;
+};
+
+/**
+ * REGISTRATIONS (Sector Damages) - Legado, mantido para retrocompatibilidade
  */
 export const saveRegistration = async (reg) => {
     const db = await initDB();
@@ -363,8 +653,6 @@ export const saveRegistration = async (reg) => {
 
 export const getRegistrationsByEvent = async (eventId) => {
     const db = await initDB();
-    
-    // Always start with local data to be fast and show pending changes
     const localAll = await db.getAll('redap_registros');
     let regs = localAll.filter(r => r.evento_id === eventId);
 
@@ -378,18 +666,13 @@ export const getRegistrationsByEvent = async (eventId) => {
             
             if (!error && remoteData) {
                 const tx = db.transaction('redap_registros', 'readwrite');
-                
-                // Merge logic: only update local if local is ALREADY synced or remote is newer
                 for (const remote of remoteData) {
                     const local = regs.find(l => l.id === remote.id);
-                    // If local doesn't exist or is already synced, remote is the source of truth
                     if (!local || local.synced) {
                         await tx.store.put({ ...remote, synced: true });
                     }
                 }
                 await tx.done;
-                
-                // Refresh list after merge
                 const updatedLocal = await db.getAll('redap_registros');
                 regs = updatedLocal.filter(r => r.evento_id === eventId);
             }
@@ -397,14 +680,12 @@ export const getRegistrationsByEvent = async (eventId) => {
             console.error('Supabase fetch failed:', e);
         }
     }
-    
     return regs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
 export const updateRegistrationStatus = async (id, status) => {
     const db = await initDB();
     const record = await db.get('redap_registros', id);
-    
     if (record) {
         record.status_validacao = status;
         record.synced = false;
