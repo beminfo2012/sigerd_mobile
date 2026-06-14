@@ -78,30 +78,68 @@ export const NumberInput = ({ value, onChange, disabled, className, placeholder 
 };
 
 export const DecimalInput = ({ value, onChange, disabled, className, placeholder }) => {
-    const handleChange = (e) => {
-        const val = e.target.value;
-        if (val === '') {
-            onChange(0);
-        } else {
-            onChange(parseFloat(val) || 0);
-        }
+    const [displayValue, setDisplayValue] = useState('');
+
+    const formatDecimal = (val) => {
+        if (val === undefined || val === null || val === '') return '0,00';
+        const parsed = parseFloat(val);
+        if (isNaN(parsed)) return '0,00';
+        return new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(parsed);
     };
 
-    const handleBlur = (e) => {
-        const val = parseFloat(e.target.value) || 0;
-        onChange(parseFloat(val.toFixed(2)));
+    useEffect(() => {
+        if (value === 0 || value === '0' || value === '') {
+            setDisplayValue('0,00');
+        } else if (value !== undefined && value !== null) {
+            setDisplayValue(formatDecimal(value));
+        } else {
+            setDisplayValue('0,00');
+        }
+    }, [value]);
+
+    const handleChange = (e) => {
+        let rawValue = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        
+        // Remove leading zeros
+        rawValue = rawValue.replace(/^0+/, '');
+
+        if (rawValue === '') {
+            onChange(0);
+            setDisplayValue('0,00');
+            return;
+        }
+
+        // Pad with zeros to ensure at least 3 digits for proper conversion
+        if (rawValue.length < 3) {
+            rawValue = rawValue.padStart(3, '0');
+        }
+
+        const numberValue = parseInt(rawValue, 10) / 100; // Convert to decimal
+
+        if (isNaN(numberValue)) {
+            onChange(0);
+            setDisplayValue('0,00');
+        } else {
+            onChange(numberValue);
+            setDisplayValue(formatDecimal(numberValue));
+        }
     };
 
     return (
         <input
-            type="number"
-            step="0.01"
+            type="text"
+            inputMode="numeric"
             disabled={disabled}
             className={className}
             placeholder={placeholder || "0,00"}
-            value={value === 0 ? '' : value}
+            value={displayValue}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={() => {
+                setDisplayValue(formatDecimal(value));
+            }}
         />
     );
 };

@@ -8,7 +8,7 @@ import {
 import { UserContext } from '../../App';
 import * as redapService from '../../services/redapService';
 import { useToast } from '../../components/ToastNotification';
-import { CurrencyInput } from '../../components/RedapInputs';
+import { CurrencyInput, DecimalInput } from '../../components/RedapInputs';
 import FileInput from '../../components/FileInput';
 
 // Mapeamento amigável das seções
@@ -466,25 +466,14 @@ const RedapSectorForm = () => {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Extensão</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
+                                                    <DecimalInput
                                                         disabled={isReadOnly}
-                                                        placeholder="0,00"
                                                         className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
-                                                        value={item.extensao || ''}
-                                                        onChange={(e) => {
+                                                        value={item.extensao}
+                                                        onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
-                                                            newItems[itemName].extensao = e.target.value !== '' ? parseFloat(e.target.value) : '';
+                                                            newItems[itemName].extensao = val;
                                                             setDadosJson({ ...dadosJson, items: newItems });
-                                                        }}
-                                                        onBlur={(e) => {
-                                                            if (e.target.value !== '') {
-                                                                const val = parseFloat(e.target.value);
-                                                                const newItems = { ...dadosJson.items };
-                                                                newItems[itemName].extensao = parseFloat(val.toFixed(2));
-                                                                setDadosJson({ ...dadosJson, items: newItems });
-                                                            }
                                                         }}
                                                     />
                                                 </div>
@@ -523,22 +512,13 @@ const RedapSectorForm = () => {
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Área (HA)</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
+                                                    <DecimalInput
                                                         disabled={isReadOnly}
-                                                        placeholder="0,00"
                                                         className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
-                                                        value={item.area_afetada_ha || 0}
-                                                        onChange={(e) => {
+                                                        value={item.area_afetada_ha}
+                                                        onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
-                                                            newItems[itemName].area_afetada_ha = parseFloat(e.target.value) || 0;
-                                                            setDadosJson({ ...dadosJson, items: newItems });
-                                                        }}
-                                                        onBlur={(e) => {
-                                                            const val = parseFloat(e.target.value) || 0;
-                                                            const newItems = { ...dadosJson.items };
-                                                            newItems[itemName].area_afetada_ha = parseFloat(val.toFixed(2));
+                                                            newItems[itemName].area_afetada_ha = val;
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -600,18 +580,11 @@ const RedapSectorForm = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                     <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Área Degradada (HA)</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
+                                    <DecimalInput
                                         disabled={isReadOnly}
-                                        placeholder="0,00"
                                         className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
-                                        value={dadosJson.area_atingida_ha || 0}
-                                        onChange={(e) => setDadosJson({ ...dadosJson, area_atingida_ha: parseFloat(e.target.value) || 0 })}
-                                        onBlur={(e) => {
-                                            const val = parseFloat(e.target.value) || 0;
-                                            setDadosJson({ ...dadosJson, area_atingida_ha: parseFloat(val.toFixed(2)) });
-                                        }}
+                                        value={dadosJson.area_atingida_ha}
+                                        onChange={(val) => setDadosJson({ ...dadosJson, area_atingida_ha: val })}
                                     />
                                 </div>
                                 <div className="space-y-1">
