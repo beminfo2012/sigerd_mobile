@@ -260,12 +260,12 @@ const RedapSectorForm = () => {
                 )}
             </header>
 
-            <main className="p-4 max-w-2xl mx-auto space-y-6">
+            <main className="p-4 max-w-5xl mx-auto space-y-6">
                 {/* Cabeçalho do Bloco */}
                 <div className="bg-blue-600 dark:bg-blue-700 rounded-[2rem] p-6 text-white shadow-xl flex items-center justify-between transition-all">
                     <div>
-                        <p className="text-[10px] uppercase font-black tracking-widest opacity-80 mb-1">Seção Governamental ({userSecretaria})</p>
-                        <h2 className="text-lg font-black uppercase tracking-tight">{config?.title}</h2>
+                        <p className="text-xs uppercase font-black tracking-widest opacity-80 mb-1">Seção Governamental ({userSecretaria})</p>
+                        <h2 className="text-xl font-black uppercase tracking-tight">{config?.title}</h2>
                     </div>
                     <Shield size={32} className="opacity-40" />
                 </div>
@@ -274,8 +274,8 @@ const RedapSectorForm = () => {
                     <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-3xl p-5 flex items-start gap-4">
                         <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={20} />
                         <div>
-                            <h4 className="font-bold text-emerald-800 dark:text-emerald-400 text-xs uppercase tracking-wider">Seção Validada pela Defesa Civil</h4>
-                            <p className="text-xs text-emerald-600 dark:text-emerald-500/80 mt-1">Este conteúdo já foi auditado e consolidado no relatório unificado.</p>
+                            <h4 className="font-bold text-emerald-800 dark:text-emerald-400 text-sm uppercase tracking-wider">Seção Validada pela Defesa Civil</h4>
+                            <p className="text-sm text-emerald-600 dark:text-emerald-500/80 mt-1">Este conteúdo já foi auditado e consolidado no relatório unificado.</p>
                         </div>
                     </div>
                 )}
@@ -284,54 +284,54 @@ const RedapSectorForm = () => {
                     <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-3xl p-5 flex items-start gap-4">
                         <AlertTriangle className="text-rose-500 shrink-0 mt-0.5" size={20} />
                         <div>
-                            <h4 className="font-bold text-rose-800 dark:text-rose-400 text-xs uppercase tracking-wider">Retorno / Necessidade de Ajuste</h4>
-                            <p className="text-xs text-rose-600 dark:text-rose-500/80 mt-1 font-semibold">" {secaoRecord.justificativa_devolucao} "</p>
+                            <h4 className="font-bold text-rose-800 dark:text-rose-400 text-sm uppercase tracking-wider">Retorno / Necessidade de Ajuste</h4>
+                            <p className="text-sm text-rose-600 dark:text-rose-500/80 mt-1 font-semibold">" {secaoRecord.justificativa_devolucao} "</p>
                         </div>
                     </div>
                 )}
 
                 {/* Form: Identificação */}
                 <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
-                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-2">
-                        <Info size={12} className="text-blue-500" /> Responsável Pelo Preenchimento
+                    <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-2">
+                        <Info size={16} className="text-blue-500" /> Responsável Pelo Preenchimento
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Nome</label>
+                        <div className="space-y-1 bg-white dark:bg-slate-900">
+                            <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Nome</label>
                             <input
                                 type="text"
                                 disabled={isReadOnly}
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                 value={identificacao.responsavel_preenchimento}
                                 onChange={(e) => setIdentificacao({ ...identificacao, responsavel_preenchimento: e.target.value })}
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Cargo / Função</label>
+                            <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Cargo / Função</label>
                             <input
                                 type="text"
                                 disabled={isReadOnly}
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                 value={identificacao.cargo_funcao}
                                 onChange={(e) => setIdentificacao({ ...identificacao, cargo_funcao: e.target.value })}
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Telefone de Contato</label>
+                            <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Telefone de Contato</label>
                             <input
                                 type="text"
                                 disabled={isReadOnly}
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                 value={identificacao.telefone}
                                 onChange={(e) => setIdentificacao({ ...identificacao, telefone: e.target.value })}
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">E-mail</label>
+                            <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">E-mail</label>
                             <input
                                 type="text"
                                 disabled={isReadOnly}
-                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                 value={identificacao.email}
                                 onChange={(e) => setIdentificacao({ ...identificacao, email: e.target.value })}
                             />
@@ -343,17 +343,17 @@ const RedapSectorForm = () => {
                 <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
                     {config?.enum === 'DANOS_HUMANOS' && (
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                                <List size={12} className="text-blue-500" /> Registro de Danos Humanos
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Registro de Danos Humanos
                             </h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 {['mortos', 'feridos', 'enfermos', 'desalojados', 'desabrigados', 'desaparecidos', 'familias_afetadas'].map(field => (
                                     <div key={field} className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase capitalize">{field.replace(/_/g, ' ')}</label>
+                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase capitalize">{field.replace(/_/g, ' ')}</label>
                                         <input
                                             type="number"
                                             disabled={isReadOnly}
-                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                            className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                             value={dadosJson[field] || 0}
                                             onChange={(e) => setDadosJson({ ...dadosJson, [field]: parseInt(e.target.value) || 0 })}
                                         />
@@ -365,22 +365,22 @@ const RedapSectorForm = () => {
 
                     {config?.enum === 'DANOS_EDIFICACOES' && dadosJson.items && (
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                                <List size={12} className="text-blue-500" /> Instalações Setoriais Afetadas
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Instalações Setoriais Afetadas
                             </h3>
-                            <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+                            <div className="space-y-6">
                                 {Object.keys(dadosJson.items).map((itemName, index) => {
                                     const item = dadosJson.items[itemName];
                                     return (
-                                        <div key={itemName} className={`pt-4 ${index === 0 ? 'pt-0' : ''} space-y-2`}>
-                                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-300">{itemName}</h4>
-                                            <div className="grid grid-cols-3 gap-2">
+                                        <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                            <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName}</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Danificado</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Qtd. Danificado</label>
                                                     <input
                                                         type="number"
                                                         disabled={isReadOnly}
-                                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.danificado || 0}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -390,11 +390,11 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Destruído</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Qtd. Destruído</label>
                                                     <input
                                                         type="number"
                                                         disabled={isReadOnly}
-                                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.destruido || 0}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -404,10 +404,10 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Valor Dano (R$)</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano (R$)</label>
                                                     <CurrencyInput
                                                         disabled={isReadOnly}
-                                                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.valor_estimado || 0}
                                                         onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
@@ -426,22 +426,22 @@ const RedapSectorForm = () => {
 
                     {config?.enum === 'DANOS_INFRAESTRUTURA' && dadosJson.items && (
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                                <List size={12} className="text-blue-500" /> Infraestrutura Urbana / Rural
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Infraestrutura Urbana / Rural
                             </h3>
-                            <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+                            <div className="space-y-6">
                                 {Object.keys(dadosJson.items).map((itemName, index) => {
                                     const item = dadosJson.items[itemName];
                                     return (
-                                        <div key={itemName} className={`pt-4 ${index === 0 ? 'pt-0' : ''} space-y-2`}>
-                                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-300">{itemName}</h4>
-                                            <div className="grid grid-cols-4 gap-2">
+                                        <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                            <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName}</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Danif.</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Qtd. Danif.</label>
                                                     <input
                                                         type="number"
                                                         disabled={isReadOnly}
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.danificado || 0}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -451,11 +451,11 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Qtd. Destr.</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Qtd. Destr.</label>
                                                     <input
                                                         type="number"
                                                         disabled={isReadOnly}
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.destruido || 0}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -465,12 +465,12 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Extensão</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Extensão</label>
                                                     <input
                                                         type="text"
                                                         disabled={isReadOnly}
                                                         placeholder="Ex: 50m"
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.extensao || ''}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -480,10 +480,10 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Valor Dano</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano</label>
                                                     <CurrencyInput
                                                         disabled={isReadOnly}
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.valor_estimado || 0}
                                                         onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
@@ -502,22 +502,22 @@ const RedapSectorForm = () => {
 
                     {config?.enum === 'DANOS_AGRICOLAS' && dadosJson.items && (
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                                <List size={12} className="text-blue-500" /> Atividades Agrícolas / Agropecuárias
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Atividades Agrícolas / Agropecuárias
                             </h3>
-                            <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
+                            <div className="space-y-6">
                                 {Object.keys(dadosJson.items).map((itemName, index) => {
                                     const item = dadosJson.items[itemName];
                                     return (
-                                        <div key={itemName} className={`pt-4 ${index === 0 ? 'pt-0' : ''} space-y-2`}>
-                                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-300">{itemName}</h4>
-                                            <div className="grid grid-cols-4 gap-2">
+                                        <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                            <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName}</h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Área (HA)</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Área (HA)</label>
                                                     <input
                                                         type="number"
                                                         disabled={isReadOnly}
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.area_afetada_ha || 0}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -527,11 +527,11 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Produtores</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Produtores</label>
                                                     <input
                                                         type="number"
                                                         disabled={isReadOnly}
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.produtores_atingidos || 0}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -541,11 +541,11 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Perda (T)</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Perda (T)</label>
                                                     <input
                                                         type="number"
                                                         disabled={isReadOnly}
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.perda_estimada_ton || 0}
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
@@ -555,10 +555,10 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">Prejuízo (R$)</label>
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Prejuízo (R$)</label>
                                                     <CurrencyInput
                                                         disabled={isReadOnly}
-                                                        className="w-full px-2 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg font-bold text-slate-700 dark:text-slate-100 text-xs outline-none"
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                                                         value={item.valor_estimado || 0}
                                                         onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
@@ -577,25 +577,25 @@ const RedapSectorForm = () => {
 
                     {config?.enum === 'DANOS_AMBIENTAIS' && (
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                                <List size={12} className="text-blue-500" /> Impactos Ambientais
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Impactos Ambientais
                             </h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Área Degradada (HA)</label>
+                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Área Degradada (HA)</label>
                                     <input
                                         type="number"
                                         disabled={isReadOnly}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                         value={dadosJson.area_atingida_ha || 0}
                                         onChange={(e) => setDadosJson({ ...dadosJson, area_atingida_ha: parseFloat(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Recursos Hídricos Comprometidos?</label>
+                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Recursos Hídricos Comprometidos?</label>
                                     <select
                                         disabled={isReadOnly}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                         value={dadosJson.recursos_hidricos_comprometidos || 'Não'}
                                         onChange={(e) => setDadosJson({ ...dadosJson, recursos_hidricos_comprometidos: e.target.value })}
                                     >
@@ -604,10 +604,10 @@ const RedapSectorForm = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Ocorrência de Incêndios?</label>
+                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Ocorrência de Incêndios?</label>
                                     <select
                                         disabled={isReadOnly}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                         value={dadosJson.incendios_florestais || 'Não'}
                                         onChange={(e) => setDadosJson({ ...dadosJson, incendios_florestais: e.target.value })}
                                     >
@@ -616,10 +616,10 @@ const RedapSectorForm = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Custo de Recuperação (R$)</label>
+                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Custo de Recuperação (R$)</label>
                                     <CurrencyInput
                                         disabled={isReadOnly}
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-slate-700 dark:text-slate-100 outline-none text-sm"
+                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
                                         value={dadosJson.custo_recuperacao || 0}
                                         onChange={(val) => setDadosJson({ ...dadosJson, custo_recuperacao: val })}
                                     />
@@ -630,28 +630,28 @@ const RedapSectorForm = () => {
 
                     {config?.enum === 'OBSERVACOES' && (
                         <div className="space-y-4">
-                            <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                                <List size={12} className="text-blue-500" /> Parecer Geral da Defesa Civil
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Parecer Geral da Defesa Civil
                             </h3>
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Parecer Técnico Discursivo</label>
+                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Parecer Técnico Discursivo</label>
                                     <textarea
                                         disabled={isReadOnly}
                                         rows={6}
                                         placeholder="Digite aqui o parecer oficial sobre o desastre, detalhando as vistorias, ações e o histórico operacional..."
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-slate-700 dark:text-slate-200 outline-none text-sm resize-y"
+                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-medium text-slate-800 dark:text-slate-200 outline-none text-base resize-y transition-all"
                                         value={dadosJson.parecer_tecnico || ''}
                                         onChange={(e) => setDadosJson({ ...dadosJson, parecer_tecnico: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Observações Complementares</label>
+                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Observações Complementares</label>
                                     <textarea
                                         disabled={isReadOnly}
                                         rows={4}
                                         placeholder="Outras informações pertinentes..."
-                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl font-medium text-slate-700 dark:text-slate-200 outline-none text-sm resize-y"
+                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-medium text-slate-800 dark:text-slate-200 outline-none text-base resize-y transition-all"
                                         value={dadosJson.observacoes_complementares || ''}
                                         onChange={(e) => setDadosJson({ ...dadosJson, observacoes_complementares: e.target.value })}
                                     />
@@ -661,13 +661,13 @@ const RedapSectorForm = () => {
                     )}
 
                     {config?.enum !== 'OBSERVACOES' && (
-                        <div className="space-y-2 pt-4 border-t border-slate-50 dark:border-slate-800">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                                <Info size={12} className="text-blue-500" /> Observações e Relato Setorial Adicional
+                        <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <Info size={16} className="text-blue-500" /> Observações e Relato Setorial Adicional
                             </label>
                             <textarea
                                 disabled={isReadOnly}
-                                className="w-full px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 dark:text-slate-200 min-h-[100px]"
+                                className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all font-medium text-slate-800 dark:text-slate-200 min-h-[100px] text-base"
                                 placeholder="Detalhes específicos, logradouros, ruas e pontos de referência..."
                                 value={dadosJson.detalhes || ''}
                                 onChange={(e) => setDadosJson({ ...dadosJson, detalhes: e.target.value })}
@@ -679,10 +679,10 @@ const RedapSectorForm = () => {
                 {/* Evidências Fotográficas */}
                 {config?.enum !== 'OBSERVACOES' && (
                     <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
-                        <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2 block">
+                        <label className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest ml-1 mb-2 block">
                             Fotos de Evidência ({fotos.length})
                         </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             {!isReadOnly && (
                                 <div className="aspect-square">
                                     <FileInput 
