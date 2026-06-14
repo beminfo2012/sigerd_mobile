@@ -216,7 +216,24 @@ const RedapSectorForm = () => {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-base font-black text-slate-800 dark:text-white leading-tight tracking-tight">Preenchimento de Seção</h1>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-base font-black text-slate-800 dark:text-white leading-tight tracking-tight">Preenchimento de Seção</h1>
+                            {secaoRecord?.status_secao === 'PENDENTE' && secaoRecord?.justificativa_devolucao && (
+                                <span className="text-[9px] font-black text-rose-600 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/20 px-2 py-0.5 rounded-full uppercase">Retornado</span>
+                            )}
+                            {secaoRecord?.status_secao === 'VALIDADO' && (
+                                <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/20 px-2 py-0.5 rounded-full uppercase">Validada</span>
+                            )}
+                            {secaoRecord?.status_secao === 'ENVIADO' && (
+                                <span className="text-[9px] font-black text-amber-600 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/20 px-2 py-0.5 rounded-full uppercase">Aguardando Validação</span>
+                            )}
+                            {secaoRecord?.status_secao === 'PREENCHIDO' && (
+                                <span className="text-[9px] font-black text-blue-600 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/20 px-2 py-0.5 rounded-full uppercase">Rascunho</span>
+                            )}
+                            {!secaoRecord && (
+                                <span className="text-[9px] font-black text-orange-600 bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/20 px-2 py-0.5 rounded-full uppercase">Pendente</span>
+                            )}
+                        </div>
                         <p className="text-[10px] text-slate-400 dark:text-emerald-400/80 font-bold uppercase tracking-widest truncate max-w-[200px]">
                             {event?.nome_evento}
                         </p>
