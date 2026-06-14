@@ -198,10 +198,15 @@ const RedapSectorForm = () => {
         }
     };
 
-    const isReadOnly = event?.status_evento === 'Finalizado' || 
-                       secaoRecord?.status_secao === 'ENVIADO' || 
-                       secaoRecord?.status_secao === 'VALIDADO' ||
-                       (!isDefesaCivil && userRealSecretaria !== userSecretaria);
+    const isVisualizar = queryParams.get('visualizar') === 'true';
+
+    const isReadOnly = isVisualizar || 
+                       event?.status_evento === 'Finalizado' || 
+                       (!isDefesaCivil && (
+                           secaoRecord?.status_secao === 'ENVIADO' || 
+                           secaoRecord?.status_secao === 'VALIDADO' ||
+                           userRealSecretaria !== userSecretaria
+                       ));
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100 transition-colors duration-300">

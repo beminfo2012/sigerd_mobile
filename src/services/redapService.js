@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { initDB, triggerSync } from './db';
+import { initDB, triggerSync, syncSingleItem } from './db';
 
 /**
  * REDAP Service (V2 Architecture)
@@ -425,6 +425,7 @@ export const initFluxoAprovacao = async (eventoId) => {
  * REDAP Sections
  */
 export const getSecoesByEvento = async (eventoId) => {
+    const db = await initDB();
     if (navigator.onLine) {
         try {
             const { data, error } = await supabase
@@ -433,20 +434,24 @@ export const getSecoesByEvento = async (eventoId) => {
                 .eq('evento_id', eventoId);
             
             if (!error && data) {
-                const db = await initDB();
                 const tx = db.transaction('redap_secoes', 'readwrite');
+                const store = tx.objectStore('redap_secoes');
+                const localSecoes = await store.getAll();
+                const unsynced = localSecoes.filter(s => s.evento_id === eventoId && s.synced === false);
+
                 for (const item of data) {
-                    await tx.store.put({ ...item, synced: true });
+                    const isUnsynced = unsynced.some(u => u.id === item.id);
+                    if (!isUnsynced) {
+                        await store.put({ ...item, synced: true });
+                    }
                 }
                 await tx.done;
-                return data;
             }
         } catch (e) {
             console.error('Error fetching secoes:', e);
         }
     }
     
-    const db = await initDB();
     const local = await db.getAll('redap_secoes');
     return local.filter(s => s.evento_id === eventoId);
 };
@@ -461,7 +466,17 @@ export const saveSecao = async (secaoData) => {
         synced: false
     };
     await db.put('redap_secoes', toSave);
-    triggerSync();
+    
+    if (navigator.onLine) {
+        try {
+            await syncSingleItem('redap_secoes', toSave, db);
+        } catch (e) {
+            console.error('Immediate sync for saveSecao failed:', e);
+            triggerSync();
+        }
+    } else {
+        triggerSync();
+    }
     
     // Registra histórico de ação
     await addHistoricoAcao({
@@ -478,6 +493,7 @@ export const saveSecao = async (secaoData) => {
  * REDAP Fluxo de Aprovação
  */
 export const getFluxoAprovacaoByEvento = async (eventoId) => {
+    const db = await initDB();
     if (navigator.onLine) {
         try {
             const { data, error } = await supabase
@@ -487,20 +503,24 @@ export const getFluxoAprovacaoByEvento = async (eventoId) => {
                 .order('etapa', { ascending: true });
             
             if (!error && data) {
-                const db = await initDB();
                 const tx = db.transaction('redap_fluxo_aprovacao', 'readwrite');
+                const store = tx.objectStore('redap_fluxo_aprovacao');
+                const localFluxo = await store.getAll();
+                const unsynced = localFluxo.filter(f => f.evento_id === eventoId && f.synced === false);
+
                 for (const item of data) {
-                    await tx.store.put({ ...item, synced: true });
+                    const isUnsynced = unsynced.some(u => u.id === item.id);
+                    if (!isUnsynced) {
+                        await store.put({ ...item, synced: true });
+                    }
                 }
                 await tx.done;
-                return data;
             }
         } catch (e) {
             console.error('Error fetching fluxo:', e);
         }
     }
     
-    const db = await initDB();
     const local = await db.getAll('redap_fluxo_aprovacao');
     return local.filter(f => f.evento_id === eventoId).sort((a, b) => a.etapa - b.etapa);
 };
@@ -516,7 +536,17 @@ export const updateFluxoEtapa = async (eventoId, etapaNumero, status, responsave
         if (responsavelNome) record.responsavel = responsavelNome;
         record.synced = false;
         await db.put('redap_fluxo_aprovacao', record);
-        triggerSync();
+        
+        if (navigator.onLine) {
+            try {
+                await syncSingleItem('redap_fluxo_aprovacao', record, db);
+            } catch (e) {
+                console.error('Immediate sync for updateFluxoEtapa failed:', e);
+                triggerSync();
+            }
+        } else {
+            triggerSync();
+        }
         
         // Registra histórico de ação
         await addHistoricoAcao({
@@ -535,6 +565,7 @@ export const updateFluxoEtapa = async (eventoId, etapaNumero, status, responsave
  * REDAP Histórico de Ações
  */
 export const getHistoricoAcoesByEvento = async (eventoId) => {
+    const db = await initDB();
     if (navigator.onLine) {
         try {
             const { data, error } = await supabase
@@ -544,20 +575,24 @@ export const getHistoricoAcoesByEvento = async (eventoId) => {
                 .order('data_hora', { ascending: false });
             
             if (!error && data) {
-                const db = await initDB();
                 const tx = db.transaction('redap_historico_acoes', 'readwrite');
+                const store = tx.objectStore('redap_historico_acoes');
+                const localHist = await store.getAll();
+                const unsynced = localHist.filter(h => h.evento_id === eventoId && h.synced === false);
+
                 for (const item of data) {
-                    await tx.store.put({ ...item, synced: true });
+                    const isUnsynced = unsynced.some(u => u.id === item.id);
+                    if (!isUnsynced) {
+                        await store.put({ ...item, synced: true });
+                    }
                 }
                 await tx.done;
-                return data;
             }
         } catch (e) {
             console.error('Error fetching historico:', e);
         }
     }
     
-    const db = await initDB();
     const local = await db.getAll('redap_historico_acoes');
     return local.filter(h => h.evento_id === eventoId).sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
 };
@@ -574,7 +609,17 @@ export const addHistoricoAcao = async (acaoData) => {
         synced: false
     };
     await db.put('redap_historico_acoes', newAcao);
-    triggerSync();
+    
+    if (navigator.onLine) {
+        try {
+            await syncSingleItem('redap_historico_acoes', newAcao, db);
+        } catch (e) {
+            console.error('Immediate sync for addHistoricoAcao failed:', e);
+            triggerSync();
+        }
+    } else {
+        triggerSync();
+    }
     return newAcao;
 };
 
@@ -582,6 +627,7 @@ export const addHistoricoAcao = async (acaoData) => {
  * REDAP Assinaturas
  */
 export const getAssinaturasByEvento = async (eventoId) => {
+    const db = await initDB();
     if (navigator.onLine) {
         try {
             const { data, error } = await supabase
@@ -593,18 +639,23 @@ export const getAssinaturasByEvento = async (eventoId) => {
             if (!error && data) {
                 const db = await initDB();
                 const tx = db.transaction('redap_assinaturas', 'readwrite');
+                const store = tx.objectStore('redap_assinaturas');
+                const localAss = await store.getAll();
+                const unsynced = localAss.filter(a => a.evento_id === eventoId && a.synced === false);
+
                 for (const item of data) {
-                    await tx.store.put({ ...item, synced: true });
+                    const isUnsynced = unsynced.some(u => u.id === item.id);
+                    if (!isUnsynced) {
+                        await store.put({ ...item, synced: true });
+                    }
                 }
                 await tx.done;
-                return data;
             }
         } catch (e) {
             console.error('Error fetching assinaturas:', e);
         }
     }
     
-    const db = await initDB();
     const local = await db.getAll('redap_assinaturas');
     return local.filter(a => a.evento_id === eventoId).sort((a, b) => new Date(a.data_hora_assinatura) - new Date(b.data_hora_assinatura));
 };
@@ -622,7 +673,17 @@ export const addAssinatura = async (assinaturaData) => {
         synced: false
     };
     await db.put('redap_assinaturas', newAssinatura);
-    triggerSync();
+    
+    if (navigator.onLine) {
+        try {
+            await syncSingleItem('redap_assinaturas', newAssinatura, db);
+        } catch (e) {
+            console.error('Immediate sync for addAssinatura failed:', e);
+            triggerSync();
+        }
+    } else {
+        triggerSync();
+    }
     
     // Registra histórico
     await addHistoricoAcao({

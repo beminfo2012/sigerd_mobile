@@ -67,6 +67,8 @@ const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
 const RedapForm = lazy(() => import('./pages/Redap/RedapForm'))
 const RedapEventDetails = lazy(() => import('./pages/Redap/RedapEventDetails'))
 const RedapSectorForm = lazy(() => import('./pages/Redap/RedapSectorForm'))
+const RedapPrint = lazy(() => import('./pages/Redap/RedapPrint'))
+const RedapPrintSecao = lazy(() => import('./pages/Redap/RedapPrintSecao'))
 
 // Contingency Plan (Lazy)
 const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
@@ -442,6 +444,16 @@ const AppContent = ({
                                 <Route path="/redap/evento/:eventoId/secao/:secaoId" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
                                         <RedapSectorForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/evento/imprimir-secao/:id/:secaoId" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapPrintSecao />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/evento/imprimir/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapPrint />
                                     </ProtectedRoute>
                                 } />
                                 {/* Legado - To be removed later */}

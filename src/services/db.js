@@ -447,7 +447,8 @@ export const syncSingleItem = async (storeName, item, db) => {
         let processedPhotos = []
         let processedDocuments = []
         // Upload Photos
-        const fotosToUpload = item.fotos || (item.data && item.data.evidencias) || [];
+        const hasSecaoFotos = storeName === 'redap_secoes' && Array.isArray(item.dados_json?.fotos);
+        const fotosToUpload = hasSecaoFotos ? item.dados_json.fotos : (item.fotos || (item.data && item.data.evidencias) || []);
         if (fotosToUpload.length > 0) {
             console.log(`[Sync] Processing ${fotosToUpload.length} photos for ${storeName}/${item.id}...`);
             
@@ -467,6 +468,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                             'donations': 'donations',
                             'redap_records': 'redap',
                             'redap_registros': 'redap_fotos',
+                            'redap_secoes': 'redap_fotos',
                             'ocorrencias_operacionais': 'ocorrencias_fotos'
                         };
                         const folder = folderMap[storeName] || 'general';
@@ -482,7 +484,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                             const { data: urlData } = supabase.storage
                                 .from(folder)
                                 .getPublicUrl(fileName);
-                            processed.push({ ...foto, [foto.data ? 'data' : 'url']: urlData.publicUrl });
+                            processed.push({ ...foto, data: urlData.publicUrl, url: urlData.publicUrl });
                         } else {
                             throw new Error(`Upload failed for ${fileName}: ${uploadError.message}`);
                         }
@@ -494,8 +496,12 @@ export const syncSingleItem = async (storeName, item, db) => {
                 }
             }
 
-            if (item.fotos) processedPhotos = processed;
-            if (item.data && item.data.evidencias) item.data.evidencias = processed;
+            if (hasSecaoFotos) {
+                item.dados_json.fotos = processed;
+            } else {
+                if (item.fotos) processedPhotos = processed;
+                if (item.data && item.data.evidencias) item.data.evidencias = processed;
+            }
         }
 
         // Upload Documents

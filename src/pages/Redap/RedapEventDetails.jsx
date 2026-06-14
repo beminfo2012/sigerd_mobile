@@ -6,7 +6,8 @@ import {
     FileText, Download, TrendingUp,
     MapPin, Plus, DollarSign,
     MoreHorizontal, ChevronRight,
-    Map as MapIcon, ClipboardList, Send, AlertTriangle, UserCheck, Calendar, Info, History, Signature
+    Map as MapIcon, ClipboardList, Send, AlertTriangle, UserCheck, Calendar, Info, History, Signature, Printer,
+    Eye, EyeOff, Edit, Check, Undo
 } from 'lucide-react';
 import { UserContext } from '../../App';
 import * as redapService from '../../services/redapService';
@@ -62,6 +63,20 @@ const RedapEventDetails = () => {
 
     const isDefesaCivil = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role);
     const userSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
+
+    const visibleSections = SECOES_REDAP.filter(item => {
+        if (isDefesaCivil) return true;
+        // Seções de controle/consolidadas automáticas (1, 7, 8, 9) não são visíveis para secretarias setoriais
+        if (['1', '7', '8', '9'].includes(item.id)) return false;
+        
+        // A Assistência Social tem permissão para a Seção 2
+        if (item.secaoId === '2' && userSecretaria === 'Assistência Social') return true;
+        // A Saúde também tem permissão para a Seção 2 e Seção 3 (Saúde)
+        if (item.secaoId === '2' && userSecretaria === 'Saúde') return true;
+        
+        // Verifica se a secretaria do item corresponde à secretaria do usuário
+        return item.secretaria.toLowerCase().includes(userSecretaria.toLowerCase());
+    });
 
     useEffect(() => {
         loadData();
@@ -167,11 +182,15 @@ const RedapEventDetails = () => {
         }
     };
 
-    // Lógica econômica consolidada (Seção 7) - Soma automática de seções validadas
-    const getPrejuizoConsolidado = () => {
+    // Lógica econômica consolidada (Seção 7) - Soma automática de seções validadas / preenchidas
+    const getPrejuizoConsolidado = (apenasValidados = false) => {
         let total = 0;
         secoes.forEach(sec => {
-            if (sec.status_secao === 'VALIDADO' && sec.dados_json) {
+            const statusMatch = apenasValidados 
+                ? sec.status_secao === 'VALIDADO' 
+                : ['VALIDADO', 'ENVIADO', 'PREENCHIDO'].includes(sec.status_secao);
+                
+            if (statusMatch && sec.dados_json) {
                 // Seção 3 e 4 possuem a propriedade items
                 if (sec.dados_json.items) {
                     Object.values(sec.dados_json.items).forEach(item => {
@@ -187,6 +206,62 @@ const RedapEventDetails = () => {
         return total;
     };
 
+    // Função para dispensar preenchimento por parte da Defesa Civil
+    const handleDispensarSecao = async (item) => {
+        const targetEnum = SECAO_ENUM_MAP[item.secaoId];
+        if (!targetEnum) return;
+        
+        const record = secoes.find(s => {
+            if (item.secaoId === '3') {
+                return s.secao === targetEnum && s.secretaria_id === item.secretaria;
+            }
+            return s.secao === targetEnum;
+        });
+
+        try {
+            await redapService.saveSecao({
+                id: record?.id || undefined,
+                evento_id: id,
+                secretaria_id: item.secretaria || userSecretaria,
+                secao: targetEnum,
+                status_secao: 'DISPENSADO',
+                responsavel_preenchimento: user?.full_name || 'Defesa Civil',
+                dados_json: record?.dados_json || { dispensado: true }
+            });
+            toast.success('Seção dispensada com sucesso!');
+            loadData();
+        } catch (e) {
+            toast.error('Erro ao dispensar seção.');
+        }
+    };
+
+    // Função para reativar seção dispensada
+    const handleReativarSecao = async (item) => {
+        const targetEnum = SECAO_ENUM_MAP[item.secaoId];
+        if (!targetEnum) return;
+
+        const record = secoes.find(s => {
+            if (item.secaoId === '3') {
+                return s.secao === targetEnum && s.secretaria_id === item.secretaria;
+            }
+            return s.secao === targetEnum;
+        });
+
+        if (!record) return;
+
+        try {
+            await redapService.saveSecao({
+                ...record,
+                status_secao: 'PENDENTE',
+                justificativa_devolucao: null
+            });
+            toast.success('Seção reativada com sucesso!');
+            loadData();
+        } catch (e) {
+            toast.error('Erro ao reativar seção.');
+        }
+    };
+
     // Verifica permissão para preencher a seção
     const canFillSecao = (item) => {
         if (event?.status_evento === 'Finalizado') return false;
@@ -195,10 +270,10 @@ const RedapEventDetails = () => {
         if (isDefesaCivil) return true;
 
         // Verifica competências setoriais
-        if (item.secretaria.includes(userSecretaria)) {
-            return true;
+        if (item.secaoId === '2') {
+            return userSecretaria === 'Assistência Social' || userSecretaria === 'Saúde';
         }
-        return false;
+        return item.secretaria.toLowerCase().includes(userSecretaria.toLowerCase());
     };
 
     const getSecaoStatusBadge = (item) => {
@@ -221,6 +296,8 @@ const RedapEventDetails = () => {
         }
 
         switch (record.status_secao) {
+            case 'DISPENSADO':
+                return <span className="text-[10px] font-black text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase">Dispensada</span>;
             case 'PREENCHIDO':
                 return <span className="text-[10px] font-black text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full uppercase">Rascunho</span>;
             case 'ENVIADO':
@@ -237,16 +314,14 @@ const RedapEventDetails = () => {
         if (!targetEnum) return null;
 
         const record = secoes.find(s => {
-            if (isDefesaCivil) {
-                if (item.secaoId === '3') {
-                    return s.secao === targetEnum && s.secretaria_id === item.secretaria;
-                }
-                return s.secao === targetEnum;
+            if (item.secaoId === '3') {
+                return s.secao === targetEnum && s.secretaria_id === item.secretaria;
             }
-            return s.secao === targetEnum && s.secretaria_id === userSecretaria;
-        }) || (isDefesaCivil && item.secaoId === '3' ? null : secoes.find(s => s.secao === targetEnum));
+            return s.secao === targetEnum;
+        });
 
-        const readOnly = record?.status_secao === 'VALIDADO' || record?.status_secao === 'ENVIADO';
+        // O readOnly só se aplica a usuários normais quando a seção foi enviada/validada. DC tem edição irrestrita
+        const readOnly = !isDefesaCivil && (record?.status_secao === 'VALIDADO' || record?.status_secao === 'ENVIADO');
 
         if (item.editavel === false) {
             return null;
@@ -256,52 +331,84 @@ const RedapEventDetails = () => {
 
         return (
             <div className="flex items-center gap-2">
-                {canFillSecao(item) && !readOnly && (
+                {/* Preencher / Editar */}
+                {canFillSecao(item) && !readOnly && record?.status_secao !== 'DISPENSADO' && (
                     <button
                         onClick={() => navigate(`/redap/evento/${id}/secao/${item.secaoId}?secretaria=${encodeURIComponent(targetSecretaria)}`)}
-                        className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-blue-700 transition-all flex items-center gap-1"
+                        className="bg-blue-600 dark:bg-blue-500 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-blue-700 transition-all flex items-center gap-1 shadow-sm active:scale-95"
+                        title={record ? 'Editar Seção' : 'Preencher Seção'}
                     >
-                        Preencher
+                        {isDefesaCivil ? (record ? <Edit size={14} /> : <Plus size={14} />) : (record ? 'Editar' : 'Preencher')}
                     </button>
                 )}
+
+                {/* Visualizar */}
+                {record && (
+                    <button
+                        onClick={() => navigate(`/redap/evento/${id}/secao/${item.secaoId}?secretaria=${encodeURIComponent(record.secretaria_id)}&visualizar=true`)}
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1 active:scale-95"
+                        title="Visualizar Detalhes"
+                    >
+                        {isDefesaCivil ? <Eye size={14} /> : 'Visualizar'}
+                    </button>
+                )}
+
+                {/* Imprimir Individual */}
+                {record && record.status_secao !== 'DISPENSADO' && (
+                    <button
+                        onClick={() => window.open(`/redap/evento/imprimir-secao/${id}/${item.secaoId}?secretaria=${encodeURIComponent(record.secretaria_id)}`, '_blank')}
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1 active:scale-95 hover:bg-slate-200"
+                        title="Imprimir Individual"
+                    >
+                        <Printer size={12} />
+                    </button>
+                )}
+
+                {/* Validar e Devolver (Defesa Civil) */}
                 {isDefesaCivil && record?.status_secao === 'ENVIADO' && (
                     <>
                         <button
                             onClick={() => handleValidarSecao(record)}
-                            className="bg-emerald-600 dark:bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-emerald-700 transition-all flex items-center gap-1"
+                            className="bg-emerald-600 dark:bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-emerald-700 transition-all flex items-center gap-1 active:scale-95"
+                            title="Validar"
                         >
-                            Validar
+                            <Check size={14} />
                         </button>
                         <button
                             onClick={() => setDevolverSecao(record)}
-                            className="bg-rose-600 dark:bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-rose-700 transition-all flex items-center gap-1"
+                            className="bg-rose-600 dark:bg-rose-500 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-rose-700 transition-all flex items-center gap-1 active:scale-95"
+                            title="Devolver"
                         >
-                            Devolver
+                            <Undo size={14} />
                         </button>
                     </>
+                )}
+
+                {/* Dispensar e Reativar (Defesa Civil) */}
+                {isDefesaCivil && record?.status_secao !== 'DISPENSADO' && record?.status_secao !== 'VALIDADO' && (
+                    <button
+                        onClick={() => handleDispensarSecao(item)}
+                        className="bg-slate-400 dark:bg-slate-600 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-slate-500 transition-all flex items-center gap-1 active:scale-95"
+                        title="Dispensar"
+                    >
+                        <EyeOff size={14} />
+                    </button>
+                )}
+                {isDefesaCivil && record?.status_secao === 'DISPENSADO' && (
+                    <button
+                        onClick={() => handleReativarSecao(item)}
+                        className="bg-emerald-600 dark:bg-emerald-500 text-white px-3 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-emerald-700 transition-all flex items-center gap-1 active:scale-95"
+                        title="Reativar"
+                    >
+                        <RefreshCw size={14} />
+                    </button>
                 )}
             </div>
         );
     };
 
-    const handlePrintPdf = async () => {
-        setGeneratingPdf(true);
-        try {
-            await generateRedapReport({
-                event,
-                secoes,
-                fluxo,
-                historico,
-                assinaturas,
-                totalPrejuizo: getPrejuizoConsolidado()
-            });
-            toast.success('PDF do REDAP gerado com sucesso!');
-        } catch (e) {
-            console.error(e);
-            toast.error('Falha ao gerar relatório PDF.');
-        } finally {
-            setGeneratingPdf(false);
-        }
+    const handlePrintPreview = () => {
+        window.open(`/redap/evento/imprimir/${id}`, '_blank');
     };
 
     if (loading) return (
@@ -327,13 +434,14 @@ const RedapEventDetails = () => {
                 </div>
                 
                 <div className="flex gap-2">
-                    <button
-                        onClick={handlePrintPdf}
-                        disabled={generatingPdf}
-                        className="bg-emerald-600 dark:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-emerald-950/20 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
-                    >
-                        {generatingPdf ? 'Gerando...' : 'Imprimir Relatório'} <FileText size={16} />
-                    </button>
+                    {isDefesaCivil && (
+                        <button
+                            onClick={handlePrintPreview}
+                            className="bg-emerald-600 dark:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-emerald-950/20 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            Visualizar e Imprimir <Printer size={16} />
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -345,11 +453,21 @@ const RedapEventDetails = () => {
                             <TrendingUp size={32} />
                         </div>
                         <div className="flex-1">
-                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">Prejuízo Consolidado do Evento</p>
-                            <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getPrejuizoConsolidado())}
-                            </h2>
-                            <p className="text-xs text-slate-400 mt-1">Soma reativa das seções setoriais validadas pela Defesa Civil.</p>
+                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Prejuízos Econômicos Coletados</p>
+                            <div className="space-y-1.5">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getPrejuizoConsolidado(true))}
+                                    </span>
+                                    <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">Consolidado (Validado)</span>
+                                </div>
+                                <div className="flex items-baseline gap-2 text-slate-500 dark:text-slate-400">
+                                    <span className="text-lg font-bold">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getPrejuizoConsolidado(false))}
+                                    </span>
+                                    <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">Total Estimado (Validadas/Aguardando/Rascunhos)</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -417,7 +535,7 @@ const RedapEventDetails = () => {
                         <ClipboardList size={16} className="text-blue-500" /> Estrutura de Seções REDAP
                     </h3>
                     <div className="space-y-3">
-                        {SECOES_REDAP.map(item => {
+                        {visibleSections.map(item => {
                             return (
                                 <div 
                                     key={item.id}
@@ -442,60 +560,36 @@ const RedapEventDetails = () => {
                     </div>
                 </div>
 
-                {/* Assinaturas Eletrônicas e Histórico */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Assinaturas */}
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Signature size={16} className="text-blue-500" /> Assinaturas Eletrônicas
-                            </h3>
-                            {event?.status_evento !== 'Finalizado' && (
-                                <button
-                                    onClick={() => setShowAssinarModal(true)}
-                                    className="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-blue-700 transition-all flex items-center gap-1"
-                                >
-                                    <Plus size={12} /> Assinar
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="space-y-3 min-h-[150px]">
-                            {assinaturas.map(ass => (
-                                <div key={ass.id} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl space-y-1">
-                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-100">{ass.nome}</p>
-                                    <p className="text-[9px] text-slate-400 font-semibold">{ass.cargo_secretaria}</p>
-                                    <div className="flex items-center justify-between text-[8px] text-slate-400 font-mono mt-1 pt-1 border-t border-slate-100 dark:border-slate-800">
-                                        <span>{new Date(ass.data_hora_assinatura).toLocaleString('pt-BR')}</span>
-                                        <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded">HASH: {ass.hash_assinatura}</span>
-                                    </div>
-                                </div>
-                            ))}
-                            {assinaturas.length === 0 && (
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-8">Nenhuma assinatura registrada ainda.</p>
-                            )}
-                        </div>
+                {/* Assinaturas Eletrônicas */}
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Signature size={16} className="text-blue-500" /> Assinaturas Eletrônicas
+                        </h3>
+                        {event?.status_evento !== 'Finalizado' && (
+                            <button
+                                onClick={() => setShowAssinarModal(true)}
+                                className="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-blue-700 transition-all flex items-center gap-1"
+                            >
+                                <Plus size={12} /> Assinar
+                            </button>
+                        )}
                     </div>
 
-                    {/* Histórico e Auditoria */}
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
-                        <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <History size={16} className="text-blue-500" /> Histórico de Ações
-                        </h3>
-                        <div className="space-y-3 min-h-[150px] max-h-[250px] overflow-y-auto pr-1">
-                            {historico.map(hist => (
-                                <div key={hist.id} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl space-y-1">
-                                    <div className="flex justify-between items-start">
-                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-100">{hist.ator}</p>
-                                        <span className="text-[8px] text-slate-400">{new Date(hist.data_hora).toLocaleString('pt-BR')}</span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{hist.acao}</p>
+                    <div className="space-y-3 min-h-[150px]">
+                        {assinaturas.map(ass => (
+                            <div key={ass.id} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl space-y-1">
+                                <p className="text-xs font-bold text-slate-700 dark:text-slate-100">{ass.nome}</p>
+                                <p className="text-[9px] text-slate-400 font-semibold">{ass.cargo_secretaria}</p>
+                                <div className="flex items-center justify-between text-[8px] text-slate-400 font-mono mt-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+                                    <span>{new Date(ass.data_hora_assinatura).toLocaleString('pt-BR')}</span>
+                                    <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded">HASH: {ass.hash_assinatura}</span>
                                 </div>
-                            ))}
-                            {historico.length === 0 && (
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-8">Nenhuma ação registrada.</p>
-                            )}
-                        </div>
+                            </div>
+                        ))}
+                        {assinaturas.length === 0 && (
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-8">Nenhuma assinatura registrada ainda.</p>
+                        )}
                     </div>
                 </div>
             </main>

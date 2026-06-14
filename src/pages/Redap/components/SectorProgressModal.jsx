@@ -94,7 +94,7 @@ const SectorProgressModal = ({ isOpen, onClose, registrations = [] }) => {
                         onClick={onClose}
                         className="w-full py-4 bg-slate-800 dark:bg-slate-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs active:scale-95 transition-all shadow-lg"
                     >
-                        Fechar Histórico
+                        Fechar Status
                     </button>
                 </div>
             </div>
