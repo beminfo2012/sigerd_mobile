@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Clock as ClockIcon, Calendar, Info, FileText, CheckCircle2, AlertTriangle, X, Camera, Save, Trash2, Home, Users, Leaf, Globe, Shield, Search, ChevronDown, ChevronUp, AlertCircle, Calculator, Sparkles, ArrowLeft, PenTool, Image as ImageIcon, FileStack } from 'lucide-react';
-import { CurrencyInput, NumberInput } from '../../components/RedapInputs';
+import { CurrencyInput, NumberInput, DecimalInput } from '../../components/RedapInputs';
 import { getRedapById, saveRedapLocal, INITIAL_REDAP_STATE } from '../../services/redapDb';
 import { useToast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
@@ -1004,7 +1004,7 @@ const RedapForm = () => {
                                                                 />
                                                             </td>
                                                             <td className="py-2 text-center">
-                                                                <NumberInput
+                                                                <DecimalInput
                                                                     disabled={!isEditableByDC}
                                                                     className="w-20 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs disabled:opacity-60"
                                                                     value={val.extensao_area}
@@ -1080,7 +1080,7 @@ const RedapForm = () => {
                                                             />
                                                         </td>
                                                         <td className="py-2 text-center">
-                                                            <NumberInput
+                                                            <DecimalInput
                                                                 disabled={!isEditableByDC}
                                                                 className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                                                                 value={item.area}
@@ -1188,12 +1188,21 @@ const RedapForm = () => {
                                                         {item.unit}
                                                     </td>
                                                     <td className="py-2 text-center">
-                                                        <NumberInput
-                                                            disabled={!isEditableByDC}
-                                                            className="w-20 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                                                            value={val.quantidade}
-                                                            onChange={(n) => handleAmbientalChange(item.key, 'quantidade', n)}
-                                                        />
+                                                        {item.key === 'animais_silvestres' ? (
+                                                            <NumberInput
+                                                                disabled={!isEditableByDC}
+                                                                className="w-20 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                                value={val.quantidade}
+                                                                onChange={(n) => handleAmbientalChange(item.key, 'quantidade', n)}
+                                                            />
+                                                        ) : (
+                                                            <DecimalInput
+                                                                disabled={!isEditableByDC}
+                                                                className="w-20 p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                                                                value={val.quantidade}
+                                                                onChange={(n) => handleAmbientalChange(item.key, 'quantidade', n)}
+                                                            />
+                                                        )}
                                                     </td>
                                                     <td className="py-2 pr-2 text-right">
                                                         <CurrencyInput
@@ -1414,6 +1423,7 @@ const RedapForm = () => {
                                                     if (!fieldKey) return null; // Spacer
                                                     const isCurrency = ['valor', 'prejuizo', 'custo'].some(term => fieldKey.includes(term));
                                                     const isNumber = typeof formData.data.setorial[activeSector][fieldKey] === 'number';
+                                                    const isDecimalField = ['m2', 'ha', 'km', 'extensao', 'estradas_vicinais'].some(term => fieldKey.toLowerCase().includes(term));
                                                     const isTotalField = fieldKey === 'prejuizo_total';
 
                                                     return (
@@ -1436,12 +1446,21 @@ const RedapForm = () => {
                                                                     onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
                                                                 />
                                                             ) : isNumber ? (
-                                                                <NumberInput
-                                                                    disabled={isTotalField}
-                                                                    className={`w-full px-3 py-3 rounded-xl text-xs font-bold outline-none border transition-all ${isTotalField ? 'bg-white border-amber-300 text-amber-900 cursor-not-allowed text-base' : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500'}`}
-                                                                    value={formData.data.setorial[activeSector][fieldKey]}
-                                                                    onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
-                                                                />
+                                                                isDecimalField ? (
+                                                                    <DecimalInput
+                                                                        disabled={isTotalField}
+                                                                        className={`w-full px-3 py-3 rounded-xl text-xs font-bold outline-none border transition-all ${isTotalField ? 'bg-white border-amber-300 text-amber-900 cursor-not-allowed text-base' : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500'}`}
+                                                                        value={formData.data.setorial[activeSector][fieldKey]}
+                                                                        onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
+                                                                    />
+                                                                ) : (
+                                                                    <NumberInput
+                                                                        disabled={isTotalField}
+                                                                        className={`w-full px-3 py-3 rounded-xl text-xs font-bold outline-none border transition-all ${isTotalField ? 'bg-white border-amber-300 text-amber-900 cursor-not-allowed text-base' : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500'}`}
+                                                                        value={formData.data.setorial[activeSector][fieldKey]}
+                                                                        onChange={(val) => updateSetorialField(activeSector, fieldKey, val)}
+                                                                    />
+                                                                )
                                                             ) : (
                                                                 <input
                                                                     type="text"

@@ -76,3 +76,32 @@ export const NumberInput = ({ value, onChange, disabled, className, placeholder 
         />
     );
 };
+
+export const DecimalInput = ({ value, onChange, disabled, className, placeholder }) => {
+    const handleChange = (e) => {
+        const val = e.target.value;
+        if (val === '') {
+            onChange(0);
+        } else {
+            onChange(parseFloat(val) || 0);
+        }
+    };
+
+    const handleBlur = (e) => {
+        const val = parseFloat(e.target.value) || 0;
+        onChange(parseFloat(val.toFixed(2)));
+    };
+
+    return (
+        <input
+            type="number"
+            step="0.01"
+            disabled={disabled}
+            className={className}
+            placeholder={placeholder || "0,00"}
+            value={value === 0 ? '' : value}
+            onChange={handleChange}
+            onBlur={handleBlur}
+        />
+    );
+};
