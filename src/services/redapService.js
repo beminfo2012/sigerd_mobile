@@ -362,12 +362,15 @@ export const createEvent = async (event) => {
     };
 };
 
-export const updateEventLocation = async (eventId, lat, lng) => {
+export const updateEventLocation = async (eventId, lat, lng, polygonCoords = null) => {
     const db = await initDB();
     const local = await db.get('eventos_desastre', eventId);
     if (local) {
         local.latitude = lat;
         local.longitude = lng;
+        if (polygonCoords) {
+            local.polygon_coords = JSON.stringify(polygonCoords);
+        }
         local.updated_at = new Date().toISOString();
         local.synced = false;
         await db.put('eventos_desastre', local);
@@ -378,7 +381,8 @@ export const updateEventLocation = async (eventId, lat, lng) => {
                     .from('eventos_desastre')
                     .update({ 
                         latitude: lat, 
-                        longitude: lng, 
+                        longitude: lng,
+                        polygon_coords: polygonCoords ? JSON.stringify(polygonCoords) : null,
                         updated_at: new Date().toISOString() 
                     })
                     .eq('id', eventId);
@@ -394,10 +398,13 @@ export const updateEventLocation = async (eventId, lat, lng) => {
         
         // Registra histórico de ação
         try {
+            const verticesQtd = polygonCoords ? polygonCoords.length : 0;
             await addHistoricoAcao({
                 evento_id: eventId,
                 ator: 'Defesa Civil',
-                acao: `Localização geográfica do desastre atualizada para: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                acao: verticesQtd > 0 
+                    ? `Área afetada pelo desastre atualizada no mapa (Polígono com ${verticesQtd} vértices, centro: ${lat.toFixed(5)}, ${lng.toFixed(5)})`
+                    : `Localização geográfica do desastre atualizada para: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
                 tipo_acao: 'EDICAO'
             });
         } catch (hErr) {

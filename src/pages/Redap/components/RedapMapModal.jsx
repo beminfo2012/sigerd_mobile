@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { X, MapPin, DollarSign, Shield } from 'lucide-react';
@@ -60,39 +60,65 @@ const RedapMapModal = ({ isOpen, onClose, registrations = [], eventName }) => {
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             />
-                            {points.map((reg) => (
-                                <Marker 
-                                    key={reg.id} 
-                                    position={[reg.latitude, reg.longitude]}
-                                >
-                                    <Popup className="redap-popup">
-                                        <div className="p-1 space-y-2 min-w-[200px]">
-                                            <div className="flex flex-col gap-1 border-b pb-2 mb-2">
-                                                <span className="text-[10px] font-black uppercase text-blue-600">
-                                                    {reg.secretaria_responsavel?.replace(/_/g, ' ')}
-                                                </span>
-                                                <span className="text-sm font-black leading-tight">
-                                                    {reg.instalacao_afetada}
-                                                </span>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-[11px] text-slate-500 leading-tight">
-                                                    {reg.descricao_detalhada}
-                                                </p>
-                                                <div className="flex items-center gap-1.5 text-xs font-black text-slate-800 mt-2">
-                                                    <DollarSign size={14} className="text-emerald-500" />
-                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(reg.valor_estimado)}
+                            {points.map((reg) => {
+                                let parsedPolygon = null;
+                                if (reg.polygon_coords) {
+                                    try {
+                                        parsedPolygon = typeof reg.polygon_coords === 'string'
+                                            ? JSON.parse(reg.polygon_coords)
+                                            : reg.polygon_coords;
+                                    } catch (e) {
+                                        console.error('Error parsing polygon_coords in MapModal:', e);
+                                    }
+                                }
+                                return (
+                                    <React.Fragment key={reg.id}>
+                                        {parsedPolygon && Array.isArray(parsedPolygon) && parsedPolygon.length > 0 && (
+                                            <Polygon 
+                                                positions={parsedPolygon} 
+                                                pathOptions={{ 
+                                                    color: '#ef4444', 
+                                                    fillColor: '#f87171', 
+                                                    fillOpacity: 0.25,
+                                                    weight: 2.5
+                                                }} 
+                                            />
+                                        )}
+                                        <Marker position={[reg.latitude, reg.longitude]}>
+                                            <Popup className="redap-popup">
+                                                <div className="p-1 space-y-2 min-w-[200px]">
+                                                    <div className="flex flex-col gap-1 border-b pb-2 mb-2">
+                                                        <span className="text-[10px] font-black uppercase text-blue-600">
+                                                            {reg.secretaria_responsavel?.replace(/_/g, ' ')}
+                                                        </span>
+                                                        <span className="text-sm font-black leading-tight">
+                                                            {reg.instalacao_afetada}
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <p className="text-[11px] text-slate-500 leading-tight">
+                                                            {reg.descricao_detalhada}
+                                                        </p>
+                                                        {reg.valor_estimado > 0 && (
+                                                            <div className="flex items-center gap-1.5 text-xs font-black text-slate-800 mt-2">
+                                                                <DollarSign size={14} className="text-emerald-500" />
+                                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(reg.valor_estimado)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {reg.fotos && reg.fotos.length > 0 && (
+                                                        <div className="flex -space-x-1.5 pt-2">
+                                                            {reg.fotos.slice(0, 3).map((foto, i) => (
+                                                                <img key={i} src={foto.url || foto.data} className="w-8 h-8 rounded-full border-2 border-white object-cover" />
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                            <div className="flex -space-x-1.5 pt-2">
-                                                {reg.fotos?.slice(0, 3).map((foto, i) => (
-                                                    <img key={i} src={foto.url || foto.data} className="w-8 h-8 rounded-full border-2 border-white object-cover" />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </Popup>
-                                </Marker>
-                            ))}
+                                            </Popup>
+                                        </Marker>
+                                    </React.Fragment>
+                                );
+                            })}
                             <RecenterMap points={points} />
                         </MapContainer>
                     ) : (

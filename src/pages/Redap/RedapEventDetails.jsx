@@ -723,6 +723,7 @@ const RedapEventDetails = () => {
                                 id: 'central',
                                 latitude: event.latitude,
                                 longitude: event.longitude,
+                                polygon_coords: event.polygon_coords,
                                 secretaria_responsavel: 'Defesa Civil',
                                 instalacao_afetada: 'Ponto Zero do Desastre',
                                 descricao_detalhada: event.nome_evento || 'Ocorrência Geral',
@@ -780,9 +781,10 @@ const RedapEventDetails = () => {
                     onClose={() => setShowLocationPicker(false)}
                     initialLat={event?.latitude}
                     initialLng={event?.longitude}
-                    onSave={async (lat, lng) => {
+                    initialPolygonCoords={event?.polygon_coords}
+                    onSave={async (lat, lng, polygonCoords) => {
                         try {
-                            const updated = await redapService.updateEventLocation(id, lat, lng);
+                            const updated = await redapService.updateEventLocation(id, lat, lng, polygonCoords);
                             if (updated) {
                                 setEvent(updated);
                                 toast.success('Sucesso', 'Localização do desastre atualizada no mapa!');
