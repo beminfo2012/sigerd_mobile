@@ -476,24 +476,24 @@ const RedapEventDetails = () => {
             <main className="p-4 space-y-6 max-w-7xl mx-auto">
                 {/* Event Summary Card */}
                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 transition-all">
-                    <div className="flex items-center gap-6">
-                        <div className="bg-blue-600 dark:bg-blue-500 p-5 rounded-[2rem] text-white shadow-xl shadow-blue-100 dark:shadow-blue-900/30">
-                            <TrendingUp size={32} />
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                        <div className="bg-blue-600 dark:bg-blue-500 p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-blue-100 dark:shadow-blue-900/30 shrink-0">
+                            <TrendingUp size={24} className="sm:w-8 sm:h-8" />
                         </div>
-                        <div className="flex-1">
-                            <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1.5">Prejuízos Econômicos Coletados</p>
-                            <div className="space-y-1.5">
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100">
+                        <div className="flex-1 min-w-0 w-full">
+                            <p className="text-[10px] sm:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] mb-1.5 leading-tight">Prejuízos Econômicos Coletados</p>
+                            <div className="space-y-2">
+                                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                    <span className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100 leading-tight">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getPrejuizoConsolidado(true))}
                                     </span>
-                                    <span className="text-xs font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">Consolidado (Validado)</span>
+                                    <span className="text-[9px] sm:text-xs font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full w-fit shrink-0">Consolidado (Validado)</span>
                                 </div>
-                                <div className="flex items-baseline gap-2 text-slate-500 dark:text-slate-400">
-                                    <span className="text-xl font-bold">
+                                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 text-slate-500 dark:text-slate-400">
+                                    <span className="text-lg sm:text-xl font-bold leading-tight">
                                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getPrejuizoConsolidado(false))}
                                     </span>
-                                    <span className="text-xs font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">Total Estimado (Validadas/Aguardando/Rascunhos)</span>
+                                    <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full w-fit shrink-0">Total Estimado</span>
                                 </div>
                             </div>
                         </div>
