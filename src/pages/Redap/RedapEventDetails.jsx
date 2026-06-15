@@ -14,6 +14,7 @@ import * as redapService from '../../services/redapService';
 import { useToast } from '../../components/ToastNotification';
 import { generateRedapReport } from '../../utils/redapReportGenerator';
 import RedapMapModal from './components/RedapMapModal';
+import RedapLocationPickerModal from './components/RedapLocationPickerModal';
 import ConfirmModal from '../../components/ConfirmModal';
 
 const SECOES_REDAP = [
@@ -56,6 +57,7 @@ const RedapEventDetails = () => {
 
     // Modais e Estados Auxiliares
     const [showMapModal, setShowMapModal] = useState(false);
+    const [showLocationPicker, setShowLocationPicker] = useState(false);
     const [devolverSecao, setDevolverSecao] = useState(null);
     const [justificativa, setJustificativa] = useState('');
     const [showAssinarModal, setShowAssinarModal] = useState(false);
@@ -342,15 +344,22 @@ const RedapEventDetails = () => {
         const targetSecretaria = isDefesaCivil ? item.secretaria : userSecretaria;
 
         return (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 {/* Preencher / Editar */}
                 {canFillSecao(item) && !readOnly && record?.status_secao !== 'DISPENSADO' && (
                     <button
                         onClick={() => navigate(`/redap/evento/${id}/secao/${item.secaoId}?secretaria=${encodeURIComponent(targetSecretaria)}`)}
-                        className="bg-blue-600 dark:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase hover:bg-blue-700 transition-all flex items-center gap-1 shadow-sm active:scale-95"
+                        className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase hover:bg-blue-700 transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95 shrink-0"
                         title={record ? 'Editar Seção' : 'Preencher Seção'}
                     >
-                        {isDefesaCivil ? (record ? <Edit size={14} /> : <Plus size={14} />) : (record ? 'Editar' : 'Preencher')}
+                        {isDefesaCivil ? (
+                            record ? <Edit size={14} /> : <Plus size={14} />
+                        ) : (
+                            <>
+                                <span className="hidden sm:inline">{record ? 'Editar' : 'Preencher'}</span>
+                                {record ? <Edit size={14} className="sm:hidden" /> : <Plus size={14} className="sm:hidden" />}
+                            </>
+                        )}
                     </button>
                 )}
 
@@ -358,10 +367,17 @@ const RedapEventDetails = () => {
                 {record && (
                     <button
                         onClick={() => navigate(`/redap/evento/${id}/secao/${item.secaoId}?secretaria=${encodeURIComponent(record.secretaria_id)}&visualizar=true`)}
-                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1 active:scale-95"
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-1 active:scale-95 shrink-0"
                         title="Visualizar Detalhes"
                     >
-                        {isDefesaCivil ? <Eye size={14} /> : 'Visualizar'}
+                        {isDefesaCivil ? (
+                            <Eye size={14} />
+                        ) : (
+                            <>
+                                <span className="hidden sm:inline">Visualizar</span>
+                                <Eye size={14} className="sm:hidden" />
+                            </>
+                        )}
                     </button>
                 )}
 
@@ -369,7 +385,7 @@ const RedapEventDetails = () => {
                 {record && record.status_secao !== 'DISPENSADO' && (
                     <button
                         onClick={() => window.open(`/redap/evento/imprimir-secao/${id}/${item.secaoId}?secretaria=${encodeURIComponent(record.secretaria_id)}`, '_blank')}
-                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1 active:scale-95"
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-1 active:scale-95 shrink-0"
                         title="Imprimir Individual"
                     >
                         <Printer size={14} />
@@ -381,14 +397,14 @@ const RedapEventDetails = () => {
                     <>
                         <button
                             onClick={() => handleValidarSecao(record)}
-                            className="bg-emerald-600 dark:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase hover:bg-emerald-700 transition-all flex items-center gap-1 active:scale-95"
+                            className="bg-emerald-600 dark:bg-emerald-500 text-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase hover:bg-emerald-700 transition-all flex items-center justify-center gap-1 active:scale-95 shrink-0"
                             title="Validar"
                         >
                             <Check size={14} />
                         </button>
                         <button
                             onClick={() => setDevolverSecao(record)}
-                            className="bg-rose-600 dark:bg-rose-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase hover:bg-rose-700 transition-all flex items-center gap-1 active:scale-95"
+                            className="bg-rose-600 dark:bg-rose-500 text-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase hover:bg-rose-700 transition-all flex items-center justify-center gap-1 active:scale-95 shrink-0"
                             title="Devolver"
                         >
                             <Undo size={14} />
@@ -400,7 +416,7 @@ const RedapEventDetails = () => {
                 {isDefesaCivil && record?.status_secao !== 'DISPENSADO' && record?.status_secao !== 'VALIDADO' && (
                     <button
                         onClick={() => handleDispensarSecao(item)}
-                        className="bg-slate-400 dark:bg-slate-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase hover:bg-slate-500 transition-all flex items-center gap-1 active:scale-95"
+                        className="bg-slate-400 dark:bg-slate-600 text-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase hover:bg-slate-500 transition-all flex items-center justify-center gap-1 active:scale-95 shrink-0"
                         title="Dispensar"
                     >
                         <EyeOff size={14} />
@@ -409,7 +425,7 @@ const RedapEventDetails = () => {
                 {isDefesaCivil && record?.status_secao === 'DISPENSADO' && (
                     <button
                         onClick={() => handleReativarSecao(item)}
-                        className="bg-emerald-600 dark:bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase hover:bg-emerald-700 transition-all flex items-center gap-1 active:scale-95"
+                        className="bg-emerald-600 dark:bg-emerald-500 text-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase hover:bg-emerald-700 transition-all flex items-center justify-center gap-1 active:scale-95 shrink-0"
                         title="Reativar"
                     >
                         <RefreshCw size={14} />
@@ -438,8 +454,8 @@ const RedapEventDetails = () => {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1 className="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100 leading-tight">Módulo REDAP-001/2026</h1>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-tight flex items-center gap-1">
+                        <h1 className="text-sm sm:text-lg md:text-xl font-black text-slate-800 dark:text-slate-100 leading-tight truncate max-w-[140px] sm:max-w-none">Módulo REDAP-001/2026</h1>
+                        <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-tight flex items-center gap-1">
                             <Shield size={10} className="text-blue-500 dark:text-blue-400" /> {event?.id_sigerd || 'REDAP-PENDENTE'}
                         </p>
                     </div>
@@ -449,9 +465,9 @@ const RedapEventDetails = () => {
                     {isDefesaCivil && (
                         <button
                             onClick={handlePrintPreview}
-                            className="bg-emerald-600 dark:bg-emerald-500 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-emerald-950/20 active:scale-95 transition-all flex items-center gap-2"
+                            className="bg-emerald-600 dark:bg-emerald-500 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-emerald-950/20 active:scale-95 transition-all flex items-center gap-1.5 sm:gap-2 shrink-0"
                         >
-                            Visualizar e Imprimir <Printer size={16} />
+                            <span className="hidden sm:inline">Visualizar e </span>Imprimir <Printer size={14} className="shrink-0" />
                         </button>
                     )}
                 </div>
@@ -494,11 +510,48 @@ const RedapEventDetails = () => {
                                 <Calendar size={14} className="text-blue-500" /> {event?.data_inicio ? new Date(event.data_inicio).toLocaleString('pt-BR') : 'Não informada'}
                             </p>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1 col-span-1 sm:col-span-2 md:col-span-1">
                             <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Localidade e Município</p>
                             <p className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                                 <MapPin size={14} className="text-rose-500" /> {event?.municipio_uf || 'Santa Maria de Jetibá / ES'}
                             </p>
+                            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/60 flex flex-wrap items-center gap-2">
+                                {event?.latitude && event?.longitude ? (
+                                    <>
+                                        <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 font-mono font-bold">
+                                            {event.latitude.toFixed(5)}, {event.longitude.toFixed(5)}
+                                        </span>
+                                        {isDefesaCivil && (
+                                            <button
+                                                onClick={() => setShowLocationPicker(true)}
+                                                className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider hover:underline"
+                                            >
+                                                Alterar
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setShowMapModal(true)}
+                                            className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all ml-auto"
+                                        >
+                                            <MapIcon size={12} /> Ver no Mapa
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded border border-amber-100/40 dark:border-amber-900/20 uppercase tracking-widest flex items-center gap-1">
+                                            <AlertTriangle size={10} /> Localização pendente
+                                        </span>
+                                        {isDefesaCivil && (
+                                            <button
+                                                onClick={() => setShowLocationPicker(true)}
+                                                className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all shadow-sm flex items-center gap-1 ml-auto"
+                                            >
+                                                <MapPin size={10} /> Marcar no Mapa
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -551,10 +604,10 @@ const RedapEventDetails = () => {
                             return (
                                 <div 
                                     key={item.id}
-                                    className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl flex items-center justify-between gap-4 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all"
+                                    className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-slate-850 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-sm">
+                                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-slate-850 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-sm shrink-0">
                                             {item.id}
                                         </div>
                                         <div>
@@ -562,7 +615,7 @@ const RedapEventDetails = () => {
                                             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">{item.secretaria}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto pt-2 sm:pt-0 border-t border-slate-100 dark:border-slate-800/60 sm:border-t-0">
                                         {getSecaoStatusBadge(item)}
                                         {getSecaoAction(item)}
                                     </div>
@@ -654,6 +707,97 @@ const RedapEventDetails = () => {
                 cancelText="Cancelar"
                 type="info"
             />
+
+            {/* Modal de Mapa Geral dos Danos */}
+            {showMapModal && (
+                <RedapMapModal
+                    isOpen={showMapModal}
+                    onClose={() => setShowMapModal(false)}
+                    eventName={event?.nome_evento}
+                    registrations={(() => {
+                        const points = [];
+                        
+                        // Adiciona o ponto central do desastre
+                        if (event?.latitude && event?.longitude) {
+                            points.push({
+                                id: 'central',
+                                latitude: event.latitude,
+                                longitude: event.longitude,
+                                secretaria_responsavel: 'Defesa Civil',
+                                instalacao_afetada: 'Ponto Zero do Desastre',
+                                descricao_detalhada: event.nome_evento || 'Ocorrência Geral',
+                                valor_estimado: getPrejuizoConsolidado(true),
+                                fotos: []
+                            });
+                        }
+                        
+                        // Verifica se as seções possuem dados com fotos ou instalações afetadas contendo coordenadas
+                        secoes.forEach(sec => {
+                            if (sec.dados_json) {
+                                // Se a seção tem itens específicos (Seções 3, 4, 5 etc.)
+                                if (sec.dados_json.items) {
+                                    Object.entries(sec.dados_json.items).forEach(([key, value]) => {
+                                        if (value.latitude && value.longitude) {
+                                            points.push({
+                                                id: `${sec.id}-${key}`,
+                                                latitude: Number(value.latitude),
+                                                longitude: Number(value.longitude),
+                                                secretaria_responsavel: sec.secretaria_id || 'Setorial',
+                                                instalacao_afetada: key,
+                                                descricao_detalhada: value.descricao || 'Dano registrado.',
+                                                valor_estimado: Number(value.valor_estimado) || 0,
+                                                fotos: value.fotos || []
+                                            });
+                                        }
+                                    });
+                                }
+                                
+                                // Se o próprio JSON da seção tiver localização geral
+                                if (sec.dados_json.localizacao?.lat && sec.dados_json.localizacao?.lng) {
+                                    points.push({
+                                        id: sec.id,
+                                        latitude: Number(sec.dados_json.localizacao.lat),
+                                        longitude: Number(sec.dados_json.localizacao.lng),
+                                        secretaria_responsavel: sec.secretaria_id || 'Setorial',
+                                        instalacao_afetada: `Danos gerais - ${sec.secao?.replace(/_/g, ' ')}`,
+                                        descricao_detalhada: sec.dados_json.observacoes || 'Dados consolidados da seção.',
+                                        valor_estimado: 0,
+                                        fotos: sec.dados_json.fotos || []
+                                    });
+                                }
+                            }
+                        });
+                        
+                        return points;
+                    })()}
+                />
+            )}
+
+            {/* Modal de Seleção de Localização (Marcação) */}
+            {showLocationPicker && (
+                <RedapLocationPickerModal
+                    isOpen={showLocationPicker}
+                    onClose={() => setShowLocationPicker(false)}
+                    initialLat={event?.latitude}
+                    initialLng={event?.longitude}
+                    onSave={async (lat, lng) => {
+                        try {
+                            const updated = await redapService.updateEventLocation(id, lat, lng);
+                            if (updated) {
+                                setEvent(updated);
+                                toast.success('Sucesso', 'Localização do desastre atualizada no mapa!');
+                            } else {
+                                toast.error('Erro ao salvar localização.');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            toast.error('Erro ao atualizar georreferenciamento.');
+                        } finally {
+                            setShowLocationPicker(false);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };

@@ -362,6 +362,59 @@ export const createEvent = async (event) => {
     };
 };
 
+export const updateEventLocation = async (eventId, lat, lng) => {
+    const db = await initDB();
+    const local = await db.get('eventos_desastre', eventId);
+    if (local) {
+        local.latitude = lat;
+        local.longitude = lng;
+        local.updated_at = new Date().toISOString();
+        local.synced = false;
+        await db.put('eventos_desastre', local);
+        
+        if (navigator.onLine) {
+            try {
+                const { error } = await supabase
+                    .from('eventos_desastre')
+                    .update({ 
+                        latitude: lat, 
+                        longitude: lng, 
+                        updated_at: new Date().toISOString() 
+                    })
+                    .eq('id', eventId);
+                if (!error) {
+                    local.synced = true;
+                    await db.put('eventos_desastre', local);
+                }
+            } catch (e) {
+                console.error('Error updating event location in Supabase:', e);
+            }
+        }
+        triggerSync();
+        
+        // Registra histórico de ação
+        try {
+            await addHistoricoAcao({
+                evento_id: eventId,
+                ator: 'Defesa Civil',
+                acao: `Localização geográfica do desastre atualizada para: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                tipo_acao: 'EDICAO'
+            });
+        } catch (hErr) {
+            console.error('Error recording action history:', hErr);
+        }
+        
+        return {
+            ...local,
+            nome_evento: local.nome_evento || local.cobrade_tipo || 'Desastre Sem Nome',
+            cobrade: `${local.cobrade_codigo} - ${local.cobrade_tipo || ''}`,
+            data_inicio: local.data_hora_evento,
+            status_evento: local.status_geral
+        };
+    }
+    return null;
+};
+
 export const deleteEvent = async (eventId) => {
     const db = await initDB();
     
