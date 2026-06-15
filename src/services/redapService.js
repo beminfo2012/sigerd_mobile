@@ -299,7 +299,8 @@ export const getActiveEvents = async () => {
                     nome_evento: ev.nome_evento || ev.cobrade_tipo || 'Desastre Sem Nome',
                     cobrade: `${ev.cobrade_codigo} - ${ev.cobrade_tipo || ''}`,
                     data_inicio: ev.data_hora_evento,
-                    status_evento: ev.status_geral
+                    status_evento: ev.status_geral,
+                    data_limite: ev.data_limite || null
                 }));
             }
         } catch (e) {
@@ -317,7 +318,8 @@ export const getActiveEvents = async () => {
         nome_evento: ev.nome_evento || ev.cobrade_tipo || 'Desastre Sem Nome',
         cobrade: `${ev.cobrade_codigo} - ${ev.cobrade_tipo || ''}`,
         data_inicio: ev.data_hora_evento,
-        status_evento: ev.status_geral
+        status_evento: ev.status_geral,
+        data_limite: ev.data_limite || null
     }));
 };
 
@@ -341,6 +343,7 @@ export const createEvent = async (event) => {
         area_afetada_localidade: 'Área Urbana e Rural',
         decreto_municipal_emergencia: null,
         status_geral: 'RASCUNHO',
+        data_limite: event.data_limite || null,
         data_emissao: new Date().toISOString(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -411,6 +414,71 @@ export const updateEventLocation = async (eventId, lat, lng, polygonCoords = nul
             console.error('Error recording action history:', hErr);
         }
         
+        return {
+            ...local,
+            nome_evento: local.nome_evento || local.cobrade_tipo || 'Desastre Sem Nome',
+            cobrade: `${local.cobrade_codigo} - ${local.cobrade_tipo || ''}`,
+            data_inicio: local.data_hora_evento,
+            status_evento: local.status_geral
+        };
+    }
+    return null;
+};
+
+export const updateEvent = async (eventId, eventData) => {
+    const db = await initDB();
+    const local = await db.get('eventos_desastre', eventId);
+    if (local) {
+        const parts = eventData.cobrade ? eventData.cobrade.split(' - ') : [];
+        const cobrade_codigo = parts[0] || local.cobrade_codigo;
+        const cobrade_tipo = parts[1] || local.cobrade_tipo;
+
+        local.nome_evento = eventData.nome_evento;
+        local.cobrade_codigo = cobrade_codigo;
+        local.cobrade_tipo = cobrade_tipo;
+        local.data_hora_evento = eventData.data_inicio;
+        local.data_limite = eventData.data_limite;
+        local.status_geral = eventData.status_geral;
+        local.updated_at = new Date().toISOString();
+        local.synced = false;
+
+        await db.put('eventos_desastre', local);
+
+        if (navigator.onLine) {
+            try {
+                const { error } = await supabase
+                    .from('eventos_desastre')
+                    .update({ 
+                        nome_evento: eventData.nome_evento,
+                        cobrade_codigo,
+                        cobrade_tipo,
+                        data_hora_evento: eventData.data_inicio,
+                        data_limite: eventData.data_limite,
+                        status_geral: eventData.status_geral,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', eventId);
+                if (!error) {
+                    local.synced = true;
+                    await db.put('eventos_desastre', local);
+                }
+            } catch (e) {
+                console.error('Error updating event in Supabase:', e);
+            }
+        }
+        triggerSync();
+
+        try {
+            await addHistoricoAcao({
+                evento_id: eventId,
+                ator: 'Defesa Civil',
+                acao: `Informações gerais do desastre atualizadas (Nome: ${eventData.nome_evento}, COBRADE: ${cobrade_codigo}, Status: ${eventData.status_geral})`,
+                tipo_acao: 'EDICAO'
+            });
+        } catch (hErr) {
+            console.error('Error recording action history:', hErr);
+        }
+
         return {
             ...local,
             nome_evento: local.nome_evento || local.cobrade_tipo || 'Desastre Sem Nome',

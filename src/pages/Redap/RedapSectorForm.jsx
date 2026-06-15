@@ -198,10 +198,15 @@ const RedapSectorForm = () => {
         }
     };
 
-    const isVisualizar = queryParams.get('visualizar') === 'true';
+    const isEventClosedForSecretaries = !isDefesaCivil && (
+        event?.status_evento === 'FECHADO' || 
+        event?.status_geral === 'FECHADO' ||
+        (event?.data_limite && new Date() > new Date(event.data_limite))
+    );
 
     const isReadOnly = isVisualizar || 
                        event?.status_evento === 'Finalizado' || 
+                       isEventClosedForSecretaries ||
                        (!isDefesaCivil && (
                            secaoRecord?.status_secao === 'ENVIADO' || 
                            secaoRecord?.status_secao === 'VALIDADO' ||

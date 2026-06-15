@@ -16,6 +16,7 @@ import { generateRedapReport } from '../../utils/redapReportGenerator';
 import RedapMapModal from './components/RedapMapModal';
 import RedapLocationPickerModal from './components/RedapLocationPickerModal';
 import ConfirmModal from '../../components/ConfirmModal';
+import EventModal from './components/EventModal';
 
 const SECOES_REDAP = [
     { id: '1', titulo: 'Seção 1: Identificação Institucional e do Evento', secretaria: 'Defesa Civil', editavel: false },
@@ -58,6 +59,7 @@ const RedapEventDetails = () => {
     // Modais e Estados Auxiliares
     const [showMapModal, setShowMapModal] = useState(false);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
+    const [showEditEventModal, setShowEditEventModal] = useState(false);
     const [devolverSecao, setDevolverSecao] = useState(null);
     const [justificativa, setJustificativa] = useState('');
     const [showAssinarModal, setShowAssinarModal] = useState(false);
@@ -156,6 +158,19 @@ const RedapEventDetails = () => {
         try {
             await redapService.updateFluxoEtapa(id, etapaNumero, 'CONCLUIDA', user?.full_name);
             toast.success(`Etapa ${etapaNumero} concluída!`);
+            
+            // Ao concluir a consolidação e parecer (Etapa 2), fecha para as secretarias não inserirem mais dados
+            if (etapaNumero === 2) {
+                await redapService.updateEvent(id, {
+                    nome_evento: event.nome_evento,
+                    cobrade: event.cobrade,
+                    data_inicio: event.data_inicio,
+                    data_limite: event.data_limite,
+                    status_geral: 'FECHADO'
+                });
+                toast.info('Desastre fechado para preenchimento de secretarias.');
+            }
+            
             loadData();
         } catch (e) {
             toast.error('Erro ao atualizar fluxo.');
@@ -266,10 +281,22 @@ const RedapEventDetails = () => {
 
     // Verifica permissão para preencher a seção
     const canFillSecao = (item) => {
-        if (event?.status_evento === 'Finalizado') return false;
-        
         // Defesa Civil pode preencher tudo se necessário, mas foca em 1, 7, 8, 9
         if (isDefesaCivil) return true;
+
+        // Se o evento está finalizado ou fechado geral
+        if (event?.status_evento === 'FECHADO' || event?.status_geral === 'FECHADO' || event?.status_evento === 'Finalizado') {
+            return false;
+        }
+
+        // Verificação de data limite para secretarias
+        if (event?.data_limite) {
+            const limit = new Date(event.data_limite);
+            const now = new Date();
+            if (now > limit) {
+                return false;
+            }
+        }
 
         // Verifica competências setoriais
         if (item.secaoId === '2') {
@@ -481,7 +508,22 @@ const RedapEventDetails = () => {
                             <TrendingUp size={24} className="sm:w-8 sm:h-8" />
                         </div>
                         <div className="flex-1 min-w-0 w-full">
-                            <p className="text-[10px] sm:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] mb-1.5 leading-tight">Prejuízos Econômicos Coletados</p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                                <div>
+                                    <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 leading-tight">
+                                        {event?.nome_evento || 'Carregando desastre...'}
+                                    </h2>
+                                    <p className="text-[10px] sm:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] sm:tracking-[0.2em]">Prejuízos Econômicos Coletados</p>
+                                </div>
+                                {isDefesaCivil && (
+                                    <button
+                                        onClick={() => setShowEditEventModal(true)}
+                                        className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5"
+                                    >
+                                        <Edit size={12} /> Editar Desastre
+                                    </button>
+                                )}
+                            </div>
                             <div className="space-y-2">
                                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
                                     <span className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-800 dark:text-slate-100 leading-tight">
@@ -499,18 +541,37 @@ const RedapEventDetails = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-6 border-t border-slate-100 dark:border-slate-800 text-sm">
-                        <div className="space-y-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-slate-100 dark:border-slate-800 text-sm">
+                        <div className="space-y-1 col-span-1">
                             <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Classificação COBRADE</p>
                             <p className="font-bold text-slate-700 dark:text-slate-200">{event?.cobrade}</p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Data do Desastre</p>
+                            <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Data do Desastre / Limite</p>
                             <p className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                                <Calendar size={14} className="text-blue-500" /> {event?.data_inicio ? new Date(event.data_inicio).toLocaleString('pt-BR') : 'Não informada'}
+                                <Calendar size={14} className="text-blue-500" /> {event?.data_inicio ? new Date(event.data_inicio).toLocaleDateString('pt-BR') : 'Não informada'}
+                            </p>
+                            {event?.data_limite && (
+                                <p className="text-[10px] font-black text-rose-500 dark:text-rose-450 uppercase tracking-widest mt-1 flex items-center gap-1">
+                                    ⚠️ Limite: {new Date(event.data_limite).toLocaleDateString('pt-BR')}
+                                </p>
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Status do Desastre</p>
+                            <p className="mt-1">
+                                {event?.status_evento === 'FECHADO' || event?.status_geral === 'FECHADO' ? (
+                                    <span className="inline-flex text-[10px] font-black text-rose-600 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                        Fechado (Bloqueado)
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                        Aberto (Secretarias)
+                                    </span>
+                                )}
                             </p>
                         </div>
-                        <div className="space-y-1 col-span-1 sm:col-span-2 md:col-span-1">
+                        <div className="space-y-1 col-span-1">
                             <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Localidade e Município</p>
                             <p className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                                 <MapPin size={14} className="text-rose-500" /> {event?.municipio_uf || 'Santa Maria de Jetibá / ES'}
@@ -796,6 +857,31 @@ const RedapEventDetails = () => {
                             toast.error('Erro ao atualizar georreferenciamento.');
                         } finally {
                             setShowLocationPicker(false);
+                        }
+                    }}
+                />
+            )}
+
+            {/* Modal de Edição Geral do Evento */}
+            {showEditEventModal && (
+                <EventModal
+                    isOpen={showEditEventModal}
+                    onClose={() => setShowEditEventModal(false)}
+                    eventToEdit={event}
+                    onSave={async (updatedFields) => {
+                        try {
+                            const updated = await redapService.updateEvent(id, updatedFields);
+                            if (updated) {
+                                setEvent(updated);
+                                toast.success('Desastre atualizado com sucesso!');
+                            } else {
+                                toast.error('Erro ao atualizar informações.');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            toast.error('Erro ao salvar edições.');
+                        } finally {
+                            setShowEditEventModal(false);
                         }
                     }}
                 />

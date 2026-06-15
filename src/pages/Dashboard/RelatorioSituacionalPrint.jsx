@@ -552,11 +552,6 @@ const RelatorioSituacionalPrint = () => {
                                         {emissionDate ? emissionDate.replace(' -', ' ÀS') : '---'}
                                     </span>
                                     <span style={{ color: 'var(--gray3)' }}>•</span>
-                                    <span>ID:</span>
-                                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)' }}>
-                                        <span>{reportId}</span>
-                                    </span>
-                                    <span style={{ color: 'var(--gray3)' }}>•</span>
                                     <span>PERÍODO:</span>
                                     <span style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)' }}>{timeframeLabel}</span>
                                 </div>

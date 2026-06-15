@@ -15,10 +15,14 @@ CREATE TABLE IF NOT EXISTS public.eventos_desastre (
     municipio_uf text NOT NULL DEFAULT 'Santa Maria de Jetibá / ES',
     area_afetada_localidade text NULL,
     decreto_municipal_emergencia text NULL,
-    status_geral text NOT NULL DEFAULT 'RASCUNHO', -- RASCUNHO | EM_VALIDACAO | APROVADO
+    status_geral text NOT NULL DEFAULT 'RASCUNHO', -- RASCUNHO | EM_VALIDACAO | APROVADO | FECHADO
     id_sigerd text UNIQUE, -- REDAP-XXX/AAAA
     data_emissao timestamp with time zone NOT NULL DEFAULT now(),
     criado_por uuid NULL,
+    latitude double precision NULL,
+    longitude double precision NULL,
+    polygon_coords text NULL,
+    data_limite timestamp with time zone NULL,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT eventos_desastre_pkey PRIMARY KEY (id)
@@ -210,3 +214,9 @@ FOR INSERT WITH CHECK (auth.uid() = usuario_id);
 DROP POLICY IF EXISTS "Assinaturas: Visualização geral" ON public.redap_assinaturas;
 CREATE POLICY "Assinaturas: Visualização geral" ON public.redap_assinaturas
 FOR SELECT USING (true);
+
+-- 8. COMPATIBILIDADE DE COLUNAS DE EVENTO (ALTER TABLE INDEMPOTENTE)
+ALTER TABLE public.eventos_desastre ADD COLUMN IF NOT EXISTS latitude double precision NULL;
+ALTER TABLE public.eventos_desastre ADD COLUMN IF NOT EXISTS longitude double precision NULL;
+ALTER TABLE public.eventos_desastre ADD COLUMN IF NOT EXISTS polygon_coords text NULL;
+ALTER TABLE public.eventos_desastre ADD COLUMN IF NOT EXISTS data_limite timestamp with time zone NULL;

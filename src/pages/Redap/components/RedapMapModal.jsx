@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap, ImageOverlay } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { X, MapPin, DollarSign, Shield } from 'lucide-react';
@@ -61,27 +61,51 @@ const RedapMapModal = ({ isOpen, onClose, registrations = [], eventName }) => {
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             />
                             {points.map((reg) => {
-                                let parsedPolygon = null;
+                                let listPolygons = [];
+                                let orthofoto = null;
                                 if (reg.polygon_coords) {
                                     try {
-                                        parsedPolygon = typeof reg.polygon_coords === 'string'
+                                        const parsed = typeof reg.polygon_coords === 'string'
                                             ? JSON.parse(reg.polygon_coords)
                                             : reg.polygon_coords;
+                                        
+                                        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                                            if (Array.isArray(parsed.polygons)) {
+                                                listPolygons = parsed.polygons;
+                                            }
+                                            if (parsed.orthofoto) {
+                                                orthofoto = parsed.orthofoto;
+                                            }
+                                        } else if (Array.isArray(parsed) && parsed.length > 0) {
+                                            if (Array.isArray(parsed[0][0])) {
+                                                listPolygons = parsed;
+                                            } else {
+                                                listPolygons = [parsed];
+                                            }
+                                        }
                                     } catch (e) {
                                         console.error('Error parsing polygon_coords in MapModal:', e);
                                     }
                                 }
                                 return (
                                     <React.Fragment key={reg.id}>
-                                        {parsedPolygon && Array.isArray(parsedPolygon) && parsedPolygon.length > 0 && (
+                                        {listPolygons.map((poly, idx) => (
                                             <Polygon 
-                                                positions={parsedPolygon} 
+                                                key={`${reg.id}-poly-${idx}`}
+                                                positions={poly} 
                                                 pathOptions={{ 
-                                                    color: '#ef4444', 
-                                                    fillColor: '#f87171', 
+                                                    color: reg.id === 'evento-geral' ? '#2563eb' : '#ef4444', 
+                                                    fillColor: reg.id === 'evento-geral' ? '#3b82f6' : '#f87171', 
                                                     fillOpacity: 0.25,
-                                                    weight: 2.5
+                                                    weight: reg.id === 'evento-geral' ? 3 : 2.5
                                                 }} 
+                                            />
+                                        ))}
+                                        {orthofoto && orthofoto.url && orthofoto.bounds && (
+                                            <ImageOverlay
+                                                url={orthofoto.url}
+                                                bounds={orthofoto.bounds}
+                                                opacity={0.7}
                                             />
                                         )}
                                         <Marker position={[reg.latitude, reg.longitude]}>

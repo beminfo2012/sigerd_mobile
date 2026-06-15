@@ -102,6 +102,43 @@ export const generateRedapReport = async (options) => {
     let contentHtml = `<div class="pdf-page-container">`;
     contentHtml += headerHtml;
 
+    // Processamento das coordenadas geográficas / áreas delimitadas
+    let areasMapeadasStr = 'Nenhuma área poligonal delimitada';
+    if (event.polygon_coords) {
+        try {
+            const parsed = typeof event.polygon_coords === 'string'
+                ? JSON.parse(event.polygon_coords)
+                : event.polygon_coords;
+            
+            let numPolygons = 0;
+            let temOrthofoto = false;
+            
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                if (Array.isArray(parsed.polygons)) {
+                    numPolygons = parsed.polygons.length;
+                }
+                if (parsed.orthofoto) {
+                    temOrthofoto = true;
+                }
+            } else if (Array.isArray(parsed) && parsed.length > 0) {
+                if (Array.isArray(parsed[0][0])) {
+                    numPolygons = parsed.length;
+                } else {
+                    numPolygons = 1;
+                }
+            }
+            
+            if (numPolygons > 0) {
+                areasMapeadasStr = `${numPolygons} área(s) delimitada(s) no mapa`;
+                if (temOrthofoto) {
+                    areasMapeadasStr += ' + Orthofoto integrada';
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing polygon_coords in report:', e);
+        }
+    }
+
     // --- SEÇÃO 1: Identificação Institucional ---
     contentHtml += `<div class="report-section">`;
     contentHtml += sectionTitle('1', 'Identificação Institucional e do Evento');
@@ -123,6 +160,10 @@ export const generateRedapReport = async (options) => {
                 <tr>
                     <td style="font-weight: 850; background: #f8fafc; color: #1e3a8a;">Área Afetada</td>
                     <td>${event.area_afetada_localidade || 'Área Urbana e Rural'}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 850; background: #f8fafc; color: #1e3a8a;">Limites Geográficos</td>
+                    <td style="font-weight: 600; color: #1e3a8a;">${areasMapeadasStr}</td>
                 </tr>
                 <tr>
                     <td style="font-weight: 850; background: #f8fafc; color: #1e3a8a;">Decreto de Emergência</td>
