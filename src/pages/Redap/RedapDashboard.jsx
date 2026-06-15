@@ -159,36 +159,36 @@ const RedapDashboard = () => {
                         <div 
                             key={event.id} 
                             onClick={() => navigate(`/redap/evento/${event.id}`)}
-                            className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:border-blue-100 dark:hover:border-blue-900 transition-all active:scale-[0.98] group cursor-pointer relative overflow-hidden"
+                            className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:border-blue-100 dark:hover:border-blue-900 transition-all active:scale-[0.98] group cursor-pointer relative overflow-hidden"
                         >
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full uppercase tracking-widest">
+                            <div className="flex items-center justify-between gap-3 sm:gap-4">
+                                <div className="flex-1 min-w-0 space-y-2.5">
+                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                        <span className="text-[8px] sm:text-[9px] font-black bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase tracking-widest truncate max-w-[120px] sm:max-w-none">
                                             {event.cobrade || 'Pendente'}
                                         </span>
-                                        <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${event.status_evento === 'Finalizado' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`}>
+                                        <span className={`text-[8px] sm:text-[9px] font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase tracking-widest ${event.status_evento === 'Finalizado' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`}>
                                             {event.status_evento}
                                         </span>
                                     </div>
-                                    <h3 className="font-black text-slate-800 dark:text-slate-100 text-xl leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    <h3 className="font-black text-slate-800 dark:text-slate-100 text-base sm:text-xl leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                                         {event.nome_evento || 'Evento sem Nome'}
                                     </h3>
-                                    <div className="flex items-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
                                         <p className="flex items-center gap-1.5 font-bold">
-                                            <Calendar size={14} className="text-slate-400 dark:text-slate-600" />
+                                            <Calendar size={12} className="text-slate-400 dark:text-slate-600 shrink-0" />
                                             {new Date(event.data_inicio).toLocaleDateString()}
                                         </p>
                                         <p className="flex items-center gap-1.5 font-bold">
-                                            <Clock size={14} className="text-slate-400 dark:text-slate-600" />
+                                            <Clock size={12} className="text-slate-400 dark:text-slate-600 shrink-0" />
                                             Aberto {Math.floor((new Date() - new Date(event.data_inicio)) / (1000 * 60 * 60 * 24))} dias atrás
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl group-hover:bg-blue-600 group-hover:text-white transition-all text-slate-400 dark:text-slate-500">
-                                        <ChevronRight size={24} />
+                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-2 sm:p-4 rounded-xl sm:rounded-3xl group-hover:bg-blue-600 group-hover:text-white transition-all text-slate-400 dark:text-slate-500">
+                                        <ChevronRight size={18} className="sm:w-6 sm:h-6" />
                                     </div>
                                     {isDC && (
                                         <button 
@@ -197,10 +197,10 @@ const RedapDashboard = () => {
                                                 setEventToDelete(event);
                                                 setShowDeleteModal(true);
                                             }}
-                                            className="p-4 rounded-3xl bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-600 hover:text-white transition-all active:scale-90"
+                                            className="p-2 sm:p-4 rounded-xl sm:rounded-3xl bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-600 hover:text-white transition-all active:scale-90"
                                             title="Excluir Evento"
                                         >
-                                            <Trash2 size={24} />
+                                            <Trash2 size={18} className="sm:w-6 sm:h-6" />
                                         </button>
                                     )}
                                 </div>
