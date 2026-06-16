@@ -3,8 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Settings, Image as ImageIcon, Upload, Trash2, Eye, EyeOff, Loader2, Plus, X, Check, AlertTriangle, Map, Layers, Info } from 'lucide-react';
 import { listOrthofotos, uploadOrthofoto, updateOrthofoto, deleteOrthofoto } from '../../services/orthofotoService';
 import { toast } from '../../components/ToastNotification';
+import { compressImage } from '../../utils/imageOptimizer';
 
 const DEFAULT_BOUNDS = [[-20.06, -40.80], [-19.98, -40.70]];
+
+const base64ToBlob = (base64Str) => {
+    const arr = base64Str.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+};
 
 const ConfiguracoesPage = () => {
     const navigate = useNavigate();
@@ -58,12 +71,48 @@ const ConfiguracoesPage = () => {
 
         setUploading(true);
         try {
-            await uploadOrthofoto(selectedFile, {
+            let fileToUpload = selectedFile;
+            const isImage = /\.(jpe?g|png)$/i.test(selectedFile.name);
+
+            if (isImage) {
+                try {
+                    // Usar FileReader para obter Base64
+                    const reader = new FileReader();
+                    const base64Promise = new Promise((resolve, reject) => {
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = (e) => reject(e);
+                        reader.readAsDataURL(selectedFile);
+                    });
+
+                    const base64Str = await base64Promise;
+
+                    // Compressão mantendo excelente qualidade para GIS (4096px de largura)
+                    const compressedBase64 = await compressImage(base64Str, {
+                        maxWidth: 4096,
+                        quality: 0.8,
+                        timestamp: false
+                    });
+
+                    const blob = base64ToBlob(compressedBase64);
+                    fileToUpload = new File([blob], selectedFile.name, { type: blob.type });
+
+                    const sizeOriginal = (selectedFile.size / (1024 * 1024)).toFixed(2);
+                    const sizeCompressed = (fileToUpload.size / (1024 * 1024)).toFixed(2);
+                    toast.success(`Imagem otimizada para o mapa: ${sizeOriginal}MB → ${sizeCompressed}MB.`);
+                } catch (compressErr) {
+                    console.warn('[Orthofoto] Falha na compressão do cliente, enviando original:', compressErr);
+                }
+            } else if (/\.(tiff?)$/i.test(selectedFile.name)) {
+                toast.warning('Imagens TIFF não podem ser exibidas visualmente no mapa (apenas o retângulo de contorno será mostrado). Sugere-se converter para PNG ou JPG.');
+            }
+
+            await uploadOrthofoto(fileToUpload, {
                 nome: formNome,
                 descricao: formDescricao,
                 bounds,
                 opacidade: formOpacidade,
             });
+
             toast.success('Orthofoto adicionada com sucesso!');
             window.dispatchEvent(new CustomEvent('orthofotos-updated'));
             setShowForm(false);
@@ -72,8 +121,17 @@ const ConfiguracoesPage = () => {
             setFormBounds({ s: '', w: '', n: '', e: '' });
             await loadOrthofotos();
         } catch (e) {
-            console.error(e);
-            toast.error('Erro ao fazer upload da orthofoto.');
+            console.error('[Config] Erro de upload:', e);
+            const errMsg = e.message || e.error_description || '';
+            const status = e.status || '';
+
+            if (errMsg.includes('Payload Too Large') || status === 413 || errMsg.includes('413')) {
+                toast.error('Erro 413 (Payload Too Large): O arquivo excede o limite máximo permitido no bucket do Supabase. Aumente o limite nas configurações do bucket "vistorias_fotos" ou converta a imagem para um formato otimizado.');
+            } else if (errMsg.includes('row-level security') || errMsg.includes('RLS') || errMsg.includes('permission')) {
+                toast.error('Erro de permissão (RLS): Verifique as políticas do bucket "vistorias_fotos" para a pasta "orthofotos/global/".');
+            } else {
+                toast.error(`Erro ao fazer upload da orthofoto: ${errMsg || 'Erro de conexão ou tamanho do arquivo.'}`);
+            }
         } finally {
             setUploading(false);
         }
