@@ -15,12 +15,12 @@ const useOrthofotos = () => {
         setLoading(true);
         try {
             const data = await listOrthofotos();
-            // Filtra apenas orthofotos ativas e com bounds definidos
+            // Filtra apenas orthofotos ativas. Camadas de fatias (TILES) podem ser exibidas sem bounds globais.
             const active = data
-                .filter(o => o.ativo && o.bounds)
+                .filter(o => o.ativo && (o.tipo === 'TILES' || o.bounds))
                 .map(o => ({
                     ...o,
-                    bounds: typeof o.bounds === 'string' ? JSON.parse(o.bounds) : o.bounds,
+                    bounds: o.bounds ? (typeof o.bounds === 'string' ? JSON.parse(o.bounds) : o.bounds) : null,
                     opacidade: o.opacidade ?? 0.7
                 }));
             setOrthofotos(active);
