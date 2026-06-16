@@ -49,13 +49,17 @@ const OrthofotsLayer = () => {
         <>
             {orthofotos.map(orto => {
                 if (orto.tipo === 'TILES') {
+                    const isTms = orto.url.includes('{-y}');
+                    const urlToUse = orto.url.replace(/{-y}/g, '{y}');
                     return (
                         <TileLayer
                             key={orto.id}
-                            url={orto.url}
+                            url={urlToUse}
+                            tms={isTms}
                             opacity={orto.opacidade ?? 0.7}
                             maxZoom={22}
-                            maxNativeZoom={20}
+                            maxNativeZoom={22}
+                            bounds={orto.bounds || undefined}
                         />
                     );
                 }
