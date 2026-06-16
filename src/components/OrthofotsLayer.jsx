@@ -55,7 +55,7 @@ const OrthofotsLayer = () => {
                             url={orto.url}
                             opacity={orto.opacidade ?? 0.7}
                             maxZoom={22}
-                            maxNativeZoom={20}
+                            maxNativeZoom={22}
                         />
                     );
                 }
