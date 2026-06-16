@@ -149,6 +149,7 @@ const ConfiguracoesPage = () => {
     const [formOpacidade, setFormOpacidade] = useState(0.7);
     const [formBounds, setFormBounds] = useState({ s: '', w: '', n: '', e: '' });
     const [selectedFile, setSelectedFile] = useState(null);
+    const [formTms, setFormTms] = useState(true);
 
     const loadOrthofotos = async () => {
         setLoading(true);
@@ -299,8 +300,9 @@ const ConfiguracoesPage = () => {
 
         if (inputType === 'tiles') {
             if (!formUrl.trim()) return toast.error('Informe a URL da Camada de Tiles.');
-            if (!formUrl.includes('{z}') || !formUrl.includes('{x}') || !formUrl.includes('{y}')) {
-                return toast.error('A URL deve conter as marcações {z}, {x} e {y}. Exemplo: https://meuservidor.com/tiles/{z}/{x}/{y}.png');
+            const hasY = formUrl.includes('{y}') || formUrl.includes('{-y}');
+            if (!formUrl.includes('{z}') || !formUrl.includes('{x}') || !hasY) {
+                return toast.error('A URL deve conter as marcações {z}, {x} e {y} (ou {-y}). Exemplo: https://meuservidor.com/tiles/{z}/{x}/{y}.png');
             }
         } else {
             if (!selectedFile) return toast.error('Selecione um arquivo.');
@@ -313,9 +315,18 @@ const ConfiguracoesPage = () => {
         setUploading(true);
         try {
             if (inputType === 'tiles') {
+                let finalUrl = formUrl.trim();
+                if (formTms) {
+                    if (!finalUrl.includes('{-y}')) {
+                        finalUrl = finalUrl.replace(/{y}/g, '{-y}');
+                    }
+                } else {
+                    finalUrl = finalUrl.replace(/{-y}/g, '{y}');
+                }
+
                 await registerTilesLayer({
                     nome: formNome,
-                    url: formUrl,
+                    url: finalUrl,
                     descricao: formDescricao,
                     bounds,
                     opacidade: formOpacidade
@@ -464,6 +475,7 @@ const ConfiguracoesPage = () => {
                                 setFormDescricao('');
                                 setFormUrl('');
                                 setFormBounds({ s: '', w: '', n: '', e: '' });
+                                setFormTms(true);
                             }}
                             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-emerald-200 dark:shadow-none"
                         >
@@ -528,6 +540,18 @@ const ConfiguracoesPage = () => {
                                              placeholder="Ex: https://meuservidor.com/tiles/{z}/{x}/{y}.png"
                                              className="w-full px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
                                          />
+                                         <div className="flex items-center gap-2 mt-1 px-1">
+                                             <input
+                                                 type="checkbox"
+                                                 id="formTms"
+                                                 checked={formTms}
+                                                 onChange={e => setFormTms(e.target.checked)}
+                                                 className="w-3.5 h-3.5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                                             />
+                                             <label htmlFor="formTms" className="text-[10px] font-bold text-slate-500 cursor-pointer select-none">
+                                                 Inverter eixo Y (TMS - Padrão do QGIS / gdal2tiles)
+                                             </label>
+                                         </div>
                                      </div>
                                  )}
                                  <div className="space-y-1">
