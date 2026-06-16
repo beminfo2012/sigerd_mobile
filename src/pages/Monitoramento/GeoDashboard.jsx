@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css'
 import { api } from '../../services/api'
 import { getAllVistoriasLocal } from '../../services/db'
 import HeatmapLayer from '../../components/HeatmapLayer'
+import OrthofotsLayer from '../../components/OrthofotsLayer'
 
 // Fix: Support Leaflet plugins that expect window.L
 window.L = L;
@@ -246,6 +247,7 @@ const GeoDashboard = () => {
                         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                     />
+                    <OrthofotsLayer />
 
                     <HeatmapLayer points={filteredPoints.filter(l => l && l.lat && l.lng && !isNaN(Number(l.lat)))} show={viewMode === 'heat'} />
 

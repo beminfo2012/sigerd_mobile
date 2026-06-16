@@ -1838,6 +1838,7 @@ const WebViewDashboardView = ({
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
                                 <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && Math.abs(l.lat) > 0.01 && !isNaN(l.lat))} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                <OrthofotsLayer />
                                 {/* Camada de Áreas de Risco (GeoJSON toggle por tipo) */}
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />

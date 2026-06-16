@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Settings, Image as ImageIcon, Upload, Trash2, Eye, EyeOff, Loader2, Plus, X, Check, AlertTriangle, Map, Layers, Info } from 'lucide-react';
-import { listOrthofotos, uploadOrthofoto, registerTilesLayer, updateOrthofoto, deleteOrthofoto } from '../../services/orthofotoService';
+import { ArrowLeft, Settings, Image as ImageIcon, Upload, Trash2, Eye, EyeOff, Loader2, Plus, X, Check, AlertTriangle, Map, Layers, Info, Pencil } from 'lucide-react';
+import { listOrthofotos, uploadOrthofoto, registerTilesLayer, updateOrthofoto, deleteOrthofoto, uploadFileToStorage, deleteFileFromStorage } from '../../services/orthofotoService';
 import { toast } from '../../components/ToastNotification';
 import { compressImage } from '../../utils/imageOptimizer';
 import PizZip from 'pizzip';
@@ -150,6 +150,7 @@ const ConfiguracoesPage = () => {
     const [formBounds, setFormBounds] = useState({ s: '', w: '', n: '', e: '' });
     const [selectedFile, setSelectedFile] = useState(null);
     const [formTms, setFormTms] = useState(true);
+    const [editingOrto, setEditingOrto] = useState(null);
 
     const loadOrthofotos = async () => {
         setLoading(true);
@@ -305,7 +306,7 @@ const ConfiguracoesPage = () => {
                 return toast.error('A URL deve conter as marcações {z}, {x} e {y} (ou {-y}). Exemplo: https://meuservidor.com/tiles/{z}/{x}/{y}.png');
             }
         } else {
-            if (!selectedFile) return toast.error('Selecione um arquivo.');
+            if (!editingOrto && !selectedFile) return toast.error('Selecione um arquivo.');
         }
 
         const bounds = (formBounds.s && formBounds.w && formBounds.n && formBounds.e)
@@ -314,70 +315,136 @@ const ConfiguracoesPage = () => {
 
         setUploading(true);
         try {
-            if (inputType === 'tiles') {
-                let finalUrl = formUrl.trim();
-                if (formTms) {
-                    if (!finalUrl.includes('{-y}')) {
-                        finalUrl = finalUrl.replace(/{y}/g, '{-y}');
-                    }
-                } else {
-                    finalUrl = finalUrl.replace(/{-y}/g, '{y}');
-                }
-
-                await registerTilesLayer({
-                    nome: formNome,
-                    url: finalUrl,
-                    descricao: formDescricao,
-                    bounds,
-                    opacidade: formOpacidade
-                });
-                toast.success('Camada de Tiles adicionada com sucesso!');
-            } else {
-                let fileToUpload = selectedFile;
-                const isImage = /\.(jpe?g|png)$/i.test(selectedFile.name);
-
-                if (isImage) {
-                    try {
-                        const reader = new FileReader();
-                        const base64Promise = new Promise((resolve, reject) => {
-                            reader.onload = () => resolve(reader.result);
-                            reader.onerror = (e) => reject(e);
-                            reader.readAsDataURL(selectedFile);
-                        });
-
-                        const base64Str = await base64Promise;
-
-                        const compressedBase64 = await compressImage(base64Str, {
-                            maxWidth: 4096,
-                            quality: 0.8,
-                            timestamp: false
-                        });
-
-                        const blob = base64ToBlob(compressedBase64);
-                        fileToUpload = new File([blob], selectedFile.name, { type: blob.type });
-
-                        const sizeOriginal = (selectedFile.size / (1024 * 1024)).toFixed(2);
-                        const sizeCompressed = (fileToUpload.size / (1024 * 1024)).toFixed(2);
-                        toast.success(`Imagem otimizada para o mapa: ${sizeOriginal}MB → ${sizeCompressed}MB.`);
-                    } catch (compressErr) {
-                        console.warn('[Orthofoto] Falha na compressão do cliente, enviando original:', compressErr);
-                    }
-                } else if (/\.(tiff?)$/i.test(selectedFile.name)) {
-                    toast.warning('Imagens TIFF não podem ser exibidas visualmente no mapa (apenas o retângulo de contorno será mostrado). Sugere-se converter para PNG ou JPG.');
-                }
-
-                await uploadOrthofoto(fileToUpload, {
+            if (editingOrto) {
+                // Modo Edição
+                const updates = {
                     nome: formNome,
                     descricao: formDescricao,
-                    bounds: bounds || DEFAULT_BOUNDS,
                     opacidade: formOpacidade,
-                });
-                toast.success('Orthofoto adicionada com sucesso!');
+                    bounds
+                };
+
+                if (inputType === 'tiles') {
+                    let finalUrl = formUrl.trim();
+                    if (formTms) {
+                        if (!finalUrl.includes('{-y}')) {
+                            finalUrl = finalUrl.replace(/{y}/g, '{-y}');
+                        }
+                    } else {
+                        finalUrl = finalUrl.replace(/{-y}/g, '{y}');
+                    }
+                    updates.url = finalUrl;
+                } else if (selectedFile) {
+                    // Substituição de arquivo físico em edição
+                    let fileToUpload = selectedFile;
+                    const isImage = /\.(jpe?g|png)$/i.test(selectedFile.name);
+
+                    if (isImage) {
+                        try {
+                            const reader = new FileReader();
+                            const base64Promise = new Promise((resolve, reject) => {
+                                reader.onload = () => resolve(reader.result);
+                                reader.onerror = (e) => reject(e);
+                                reader.readAsDataURL(selectedFile);
+                            });
+
+                            const base64Str = await base64Promise;
+                            const compressedBase64 = await compressImage(base64Str, {
+                                maxWidth: 4096,
+                                quality: 0.8,
+                                timestamp: false
+                            });
+
+                            const blob = base64ToBlob(compressedBase64);
+                            fileToUpload = new File([blob], selectedFile.name, { type: blob.type });
+                        } catch (compressErr) {
+                            console.warn('[Orthofoto] Falha na compressão do cliente, enviando original:', compressErr);
+                        }
+                    }
+
+                    // Upload do novo arquivo
+                    const { publicUrl, storagePath } = await uploadFileToStorage(fileToUpload);
+                    const fileExt = fileToUpload.name.split('.').pop().toLowerCase();
+
+                    updates.url = publicUrl;
+                    updates.storage_path = storagePath;
+                    updates.tipo = fileExt === 'tif' || fileExt === 'tiff' ? 'TIFF' : fileExt.toUpperCase();
+
+                    // Se existia um arquivo antigo, podemos removê-lo
+                    if (editingOrto.storage_path) {
+                        await deleteFileFromStorage(editingOrto.storage_path);
+                    }
+                }
+
+                await updateOrthofoto(editingOrto.id, updates);
+                toast.success('Orthofoto atualizada com sucesso!');
+            } else {
+                // Modo Cadastro
+                if (inputType === 'tiles') {
+                    let finalUrl = formUrl.trim();
+                    if (formTms) {
+                        if (!finalUrl.includes('{-y}')) {
+                            finalUrl = finalUrl.replace(/{y}/g, '{-y}');
+                        }
+                    } else {
+                        finalUrl = finalUrl.replace(/{-y}/g, '{y}');
+                    }
+
+                    await registerTilesLayer({
+                        nome: formNome,
+                        url: finalUrl,
+                        descricao: formDescricao,
+                        bounds,
+                        opacidade: formOpacidade
+                    });
+                    toast.success('Camada de Tiles adicionada com sucesso!');
+                } else {
+                    let fileToUpload = selectedFile;
+                    const isImage = /\.(jpe?g|png)$/i.test(selectedFile.name);
+
+                    if (isImage) {
+                        try {
+                            const reader = new FileReader();
+                            const base64Promise = new Promise((resolve, reject) => {
+                                reader.onload = () => resolve(reader.result);
+                                reader.onerror = (e) => reject(e);
+                                reader.readAsDataURL(selectedFile);
+                            });
+
+                            const base64Str = await base64Promise;
+                            const compressedBase64 = await compressImage(base64Str, {
+                                maxWidth: 4096,
+                                quality: 0.8,
+                                timestamp: false
+                            });
+
+                            const blob = base64ToBlob(compressedBase64);
+                            fileToUpload = new File([blob], selectedFile.name, { type: blob.type });
+
+                            const sizeOriginal = (selectedFile.size / (1024 * 1024)).toFixed(2);
+                            const sizeCompressed = (fileToUpload.size / (1024 * 1024)).toFixed(2);
+                            toast.success(`Imagem otimizada para o mapa: ${sizeOriginal}MB → ${sizeCompressed}MB.`);
+                        } catch (compressErr) {
+                            console.warn('[Orthofoto] Falha na compressão do cliente, enviando original:', compressErr);
+                        }
+                    } else if (/\.(tiff?)$/i.test(selectedFile.name)) {
+                        toast.warning('Imagens TIFF não podem ser exibidas visualmente no mapa (apenas o retângulo de contorno será mostrado). Sugere-se converter para PNG ou JPG.');
+                    }
+
+                    await uploadOrthofoto(fileToUpload, {
+                        nome: formNome,
+                        descricao: formDescricao,
+                        bounds: bounds || DEFAULT_BOUNDS,
+                        opacidade: formOpacidade,
+                    });
+                    toast.success('Orthofoto adicionada com sucesso!');
+                }
             }
 
             window.dispatchEvent(new CustomEvent('orthofotos-updated'));
             setShowForm(false);
             setSelectedFile(null);
+            setEditingOrto(null);
             setFormNome(''); setFormDescricao(''); setFormUrl(''); setFormOpacidade(0.7);
             setFormBounds({ s: '', w: '', n: '', e: '' });
             await loadOrthofotos();
@@ -396,6 +463,38 @@ const ConfiguracoesPage = () => {
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleEdit = (orto) => {
+        setEditingOrto(orto);
+        setInputType(orto.tipo === 'TILES' ? 'tiles' : 'file');
+        setFormNome(orto.nome);
+        setFormDescricao(orto.descricao || '');
+        
+        if (orto.tipo === 'TILES') {
+            const hasTmsMarker = orto.url.includes('{-y}');
+            setFormUrl(orto.url);
+            setFormTms(hasTmsMarker);
+        } else {
+            setFormUrl('');
+            setFormTms(false);
+        }
+
+        setFormOpacidade(orto.opacidade ?? 0.7);
+        setSelectedFile(null);
+
+        if (orto.bounds && Array.isArray(orto.bounds) && orto.bounds.length === 2) {
+            setFormBounds({
+                s: orto.bounds[0][0]?.toString() || '',
+                w: orto.bounds[0][1]?.toString() || '',
+                n: orto.bounds[1][0]?.toString() || '',
+                e: orto.bounds[1][1]?.toString() || ''
+            });
+        } else {
+            setFormBounds({ s: '', w: '', n: '', e: '' });
+        }
+
+        setShowForm(true);
     };
 
     const handleToggleAtivo = async (orto) => {
@@ -471,6 +570,7 @@ const ConfiguracoesPage = () => {
                                 setShowForm(true);
                                 setInputType('file');
                                 setSelectedFile(null);
+                                setEditingOrto(null);
                                 setFormNome('');
                                 setFormDescricao('');
                                 setFormUrl('');
@@ -495,9 +595,9 @@ const ConfiguracoesPage = () => {
                         <div className="p-6 bg-slate-50 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 space-y-4">
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                                    <Upload size={14} className="text-emerald-600" /> Configurar Nova Orthofoto
+                                    {editingOrto ? <Pencil size={14} className="text-emerald-600" /> : <Upload size={14} className="text-emerald-600" />} {editingOrto ? 'Editar Orthofoto' : 'Configurar Nova Orthofoto'}
                                 </p>
-                                <button onClick={() => { setShowForm(false); setSelectedFile(null); }} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg">
+                                <button onClick={() => { setShowForm(false); setSelectedFile(null); setEditingOrto(null); }} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg">
                                     <X size={14} className="text-slate-400" />
                                 </button>
                             </div>
@@ -614,11 +714,11 @@ const ConfiguracoesPage = () => {
 
                              <button
                                  onClick={handleUpload}
-                                 disabled={uploading || (inputType === 'file' && !selectedFile)}
+                                 disabled={uploading || (!editingOrto && inputType === 'file' && !selectedFile)}
                                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-400 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                              >
                                  {uploading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                                 {uploading ? 'Enviando para a nuvem...' : 'Salvar Orthofoto'}
+                                 {uploading ? 'Enviando para a nuvem...' : editingOrto ? 'Atualizar Orthofoto' : 'Salvar Orthofoto'}
                              </button>
                         </div>
                     )}
@@ -698,6 +798,13 @@ const ConfiguracoesPage = () => {
                                             className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500"
                                         >
                                             {orto.ativo ? <Eye size={16} className="text-emerald-500" /> : <EyeOff size={16} />}
+                                        </button>
+                                        <button
+                                            onClick={() => handleEdit(orto)}
+                                            title="Editar"
+                                            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500"
+                                        >
+                                            <Pencil size={16} />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(orto)}

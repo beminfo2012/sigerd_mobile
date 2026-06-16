@@ -149,3 +149,45 @@ export const deleteOrthofoto = async (orthofoto) => {
     if (error) throw error;
     return true;
 };
+
+/**
+ * Faz upload de um arquivo diretamente para o bucket do Supabase Storage.
+ * @param {File} file 
+ * @returns {Promise<{ publicUrl: string, storagePath: string }>}
+ */
+export const uploadFileToStorage = async (file) => {
+    const fileName = `${STORAGE_PATH_PREFIX}${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(fileName);
+
+    return {
+        publicUrl: urlData.publicUrl,
+        storagePath: fileName
+    };
+};
+
+/**
+ * Remove um arquivo do bucket do Supabase Storage pelo seu caminho de armazenamento.
+ * @param {string} storagePath 
+ */
+export const deleteFileFromStorage = async (storagePath) => {
+    if (!storagePath) return;
+    const { error } = await supabase.storage
+        .from(BUCKET)
+        .remove([storagePath]);
+
+    if (error) {
+        console.warn('[orthofotoService] deleteFileFromStorage failed:', error);
+    }
+};
