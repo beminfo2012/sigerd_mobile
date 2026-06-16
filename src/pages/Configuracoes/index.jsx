@@ -376,9 +376,9 @@ const ConfiguracoesPage = () => {
             const status = e.status || '';
 
             if (errMsg.includes('Payload Too Large') || status === 413 || errMsg.includes('413')) {
-                toast.error('Erro 413 (Payload Too Large): O arquivo excede o limite máximo permitido no bucket do Supabase. Aumente o limite nas configurações do bucket "vistorias_fotos" ou converta a imagem para um formato otimizado.');
+                toast.error('Erro 413 (Payload Too Large): O arquivo excede o limite máximo permitido no bucket do Supabase. Aumente o limite nas configurações do bucket "orthofotos" ou converta a imagem para um formato otimizado.');
             } else if (errMsg.includes('row-level security') || errMsg.includes('RLS') || errMsg.includes('permission')) {
-                toast.error('Erro de permissão (RLS): Verifique as políticas do bucket "vistorias_fotos" para a pasta "orthofotos/global/".');
+                toast.error('Erro de permissão (RLS): Verifique as políticas do bucket "orthofotos" para a pasta "global/".');
             } else {
                 toast.error(`Erro ao salvar orthofoto: ${errMsg || 'Erro de conexão ou tamanho do arquivo.'}`);
             }

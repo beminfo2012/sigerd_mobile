@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
-const BUCKET = 'vistorias_fotos';
-const STORAGE_PATH_PREFIX = 'orthofotos/global/';
+const BUCKET = 'orthofotos';
+const STORAGE_PATH_PREFIX = 'global/';
 const TABLE = 'sigerd_orthofotos';
 
 /**
