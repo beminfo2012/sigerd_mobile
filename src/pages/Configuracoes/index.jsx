@@ -4,6 +4,7 @@ import { ArrowLeft, Settings, Image as ImageIcon, Upload, Trash2, Eye, EyeOff, L
 import { listOrthofotos, uploadOrthofoto, updateOrthofoto, deleteOrthofoto } from '../../services/orthofotoService';
 import { toast } from '../../components/ToastNotification';
 import { compressImage } from '../../utils/imageOptimizer';
+import PizZip from 'pizzip';
 
 const DEFAULT_BOUNDS = [[-20.06, -40.80], [-19.98, -40.70]];
 
@@ -17,6 +18,117 @@ const base64ToBlob = (base64Str) => {
         u8arr[n] = bstr.charCodeAt(n);
     }
     return new Blob([u8arr], { type: mime });
+};
+
+const parseKmlXml = (xmlText) => {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+    
+    // 1. Tentar ler GroundOverlay (Raster)
+    const groundOverlay = xmlDoc.querySelector('GroundOverlay');
+    if (groundOverlay) {
+        const href = groundOverlay.querySelector('Icon > href')?.textContent?.trim();
+        const north = groundOverlay.querySelector('LatLonBox > north')?.textContent?.trim();
+        const south = groundOverlay.querySelector('LatLonBox > south')?.textContent?.trim();
+        const east = groundOverlay.querySelector('LatLonBox > east')?.textContent?.trim();
+        const west = groundOverlay.querySelector('LatLonBox > west')?.textContent?.trim();
+        
+        return {
+            type: 'raster',
+            imagePath: href,
+            bounds: { s: south, w: west, n: north, e: east }
+        };
+    }
+    
+    // 2. Tentar ler geometrias vetoriais (Placemarks)
+    const placemarks = xmlDoc.querySelectorAll('Placemark');
+    if (placemarks.length > 0) {
+        const features = [];
+        
+        placemarks.forEach(pm => {
+            const name = pm.querySelector('name')?.textContent?.trim() || 'Placemark';
+            const description = pm.querySelector('description')?.textContent?.trim() || '';
+            
+            // Tentar extrair Polygon
+            const polygon = pm.querySelector('Polygon');
+            if (polygon) {
+                const coordsText = polygon.querySelector('coordinates')?.textContent?.trim();
+                if (coordsText) {
+                    const coords = coordsText.split(/\s+/).map(line => {
+                        const parts = line.split(',');
+                        const lng = Number(parts[0]);
+                        const lat = Number(parts[1]);
+                        return [lng, lat];
+                    }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
+                    
+                    features.push({
+                        type: 'Feature',
+                        properties: { name, description },
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [[...coords, coords[0]]] // Fechar o polígono
+                        }
+                    });
+                }
+            }
+            
+            // Tentar extrair LineString
+            const lineString = pm.querySelector('LineString');
+            if (lineString) {
+                const coordsText = lineString.querySelector('coordinates')?.textContent?.trim();
+                if (coordsText) {
+                    const coords = coordsText.split(/\s+/).map(line => {
+                        const parts = line.split(',');
+                        const lng = Number(parts[0]);
+                        const lat = Number(parts[1]);
+                        return [lng, lat];
+                    }).filter(c => !isNaN(c[0]) && !isNaN(c[1]));
+                    
+                    features.push({
+                        type: 'Feature',
+                        properties: { name, description },
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: coords
+                        }
+                    });
+                }
+            }
+            
+            // Tentar extrair Point
+            const point = pm.querySelector('Point');
+            if (point) {
+                const coordsText = point.querySelector('coordinates')?.textContent?.trim();
+                if (coordsText) {
+                    const parts = coordsText.split(',');
+                    const lng = Number(parts[0]);
+                    const lat = Number(parts[1]);
+                    if (!isNaN(lng) && !isNaN(lat)) {
+                        features.push({
+                            type: 'Feature',
+                            properties: { name, description },
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [lng, lat]
+                            }
+                        });
+                    }
+                }
+            }
+        });
+        
+        if (features.length > 0) {
+            return {
+                type: 'vector',
+                geojson: {
+                    type: 'FeatureCollection',
+                    features
+                }
+            };
+        }
+    }
+    
+    return null;
 };
 
 const ConfiguracoesPage = () => {
@@ -53,12 +165,130 @@ const ConfiguracoesPage = () => {
 
     useEffect(() => { loadOrthofotos(); }, []);
 
+    const handleKmlKmzFile = async (file) => {
+        try {
+            let xmlText = '';
+            let zip = null;
+            const isKmz = file.name.toLowerCase().endsWith('.kmz');
+            
+            if (isKmz) {
+                const arrayBuffer = await file.arrayBuffer();
+                zip = new PizZip(arrayBuffer);
+                
+                // Encontrar arquivo .kml no zip
+                const kmlFileName = Object.keys(zip.files).find(name => name.toLowerCase().endsWith('.kml'));
+                if (!kmlFileName) {
+                    throw new Error('Nenhum arquivo KML encontrado dentro do KMZ.');
+                }
+                xmlText = zip.files[kmlFileName].asText();
+            } else {
+                xmlText = await file.text();
+            }
+            
+            const parsed = parseKmlXml(xmlText);
+            if (!parsed) {
+                throw new Error('Não foi possível identificar dados geográficos válidos (GroundOverlay ou Placemarks) no KML.');
+            }
+            
+            if (parsed.type === 'raster') {
+                let imageBlob = null;
+                let finalFile = null;
+                
+                if (isKmz && parsed.imagePath && zip) {
+                    // Normalizar e encontrar a imagem dentro do zip
+                    const normPath = parsed.imagePath.replace(/\\/g, '/');
+                    const imgKey = Object.keys(zip.files).find(name => 
+                        name.toLowerCase() === normPath.toLowerCase() || 
+                        name.toLowerCase().endsWith('/' + normPath.toLowerCase())
+                    );
+                    
+                    if (imgKey) {
+                        const imgData = zip.files[imgKey].asBinary();
+                        const len = imgData.length;
+                        const u8 = new Uint8Array(len);
+                        for (let i = 0; i < len; i++) {
+                            u8[i] = imgData.charCodeAt(i);
+                        }
+                        
+                        const ext = imgKey.split('.').pop().toLowerCase();
+                        const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+                        imageBlob = new Blob([u8], { type: mime });
+                        finalFile = new File([imageBlob], `${file.name.replace(/\.[^.]+$/, '')}.${ext}`, { type: mime });
+                    }
+                }
+                
+                if (parsed.bounds) {
+                    setFormBounds(parsed.bounds);
+                }
+                
+                if (finalFile) {
+                    setSelectedFile(finalFile);
+                    setFormNome(file.name.replace(/\.[^.]+$/, ''));
+                    toast.success('Imagem e limites extraídos com sucesso do KMZ!');
+                } else {
+                    toast.warning('Limites geográficos lidos do KML, selecione a imagem manualmente.');
+                    setFormNome(file.name.replace(/\.[^.]+$/, ''));
+                }
+                setShowForm(true);
+                
+            } else if (parsed.type === 'vector') {
+                const geojsonStr = JSON.stringify(parsed.geojson);
+                const blob = new Blob([geojsonStr], { type: 'application/json' });
+                const finalFile = new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.geojson`, { type: 'application/json' });
+                
+                // Limites simples para GeoJSON
+                let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+                let hasCoords = false;
+                
+                const checkCoords = (coords) => {
+                    if (Array.isArray(coords[0])) {
+                        coords.forEach(checkCoords);
+                    } else if (typeof coords[0] === 'number') {
+                        const [lng, lat] = coords;
+                        if (lat < minLat) minLat = lat;
+                        if (lat > maxLat) maxLat = lat;
+                        if (lng < minLng) minLng = lng;
+                        if (lng > maxLng) maxLng = lng;
+                        hasCoords = true;
+                    }
+                };
+                
+                parsed.geojson.features.forEach(f => {
+                    checkCoords(f.geometry.coordinates);
+                });
+                
+                if (hasCoords) {
+                    setFormBounds({
+                        s: minLat.toFixed(6),
+                        w: minLng.toFixed(6),
+                        n: maxLat.toFixed(6),
+                        e: maxLng.toFixed(6)
+                    });
+                }
+                
+                setSelectedFile(finalFile);
+                setFormNome(file.name.replace(/\.[^.]+$/, ''));
+                toast.success('KML vetorial importado. Convertido para GeoJSON com limites calculados!');
+                setShowForm(true);
+            }
+        } catch (err) {
+            console.error('[KML/KMZ Parser] Error:', err);
+            toast.error(`Erro ao processar KML/KMZ: ${err.message}`);
+        }
+    };
+
     const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        setSelectedFile(file);
-        setFormNome(file.name.replace(/\.[^.]+$/, ''));
-        setShowForm(true);
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'kml' || ext === 'kmz') {
+            handleKmlKmzFile(file);
+        } else {
+            setSelectedFile(file);
+            setFormNome(file.name.replace(/\.[^.]+$/, ''));
+            setShowForm(true);
+        }
     };
 
     const handleUpload = async () => {
@@ -214,7 +444,7 @@ const ConfiguracoesPage = () => {
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept=".png,.jpg,.jpeg,.tif,.tiff"
+                            accept=".png,.jpg,.jpeg,.tif,.tiff,.kml,.kmz"
                             className="hidden"
                             onChange={handleFileSelect}
                         />
@@ -331,6 +561,11 @@ const ConfiguracoesPage = () => {
                                             <div className="text-center p-1">
                                                 <Map size={20} className="text-blue-400 mx-auto" />
                                                 <p className="text-[8px] font-black text-blue-400 mt-0.5">TIFF</p>
+                                            </div>
+                                        ) : orto.tipo === 'GEOJSON' ? (
+                                            <div className="text-center p-1">
+                                                <Layers size={20} className="text-indigo-400 mx-auto" />
+                                                <p className="text-[8px] font-black text-indigo-400 mt-0.5">VETORIAL</p>
                                             </div>
                                         ) : (
                                             <img

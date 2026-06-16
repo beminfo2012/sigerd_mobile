@@ -1,6 +1,35 @@
 import React from 'react';
-import { ImageOverlay, Rectangle } from 'react-leaflet';
+import { ImageOverlay, Rectangle, GeoJSON } from 'react-leaflet';
 import useOrthofotos from '../hooks/useOrthofotos';
+
+/**
+ * Componente que carrega e renderiza assincronamente os dados do arquivo GeoJSON de forma otimizada.
+ */
+const VectorOverlay = ({ url, opacidade }) => {
+    const [geojsonData, setGeojsonData] = React.useState(null);
+
+    React.useEffect(() => {
+        if (!url) return;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => setGeojsonData(data))
+            .catch(err => console.error('[VectorOverlay] Falha ao carregar GeoJSON da camada:', err));
+    }, [url]);
+
+    if (!geojsonData) return null;
+
+    return (
+        <GeoJSON
+            data={geojsonData}
+            style={{
+                color: '#4f46e5', // Indigo-600
+                weight: 2,
+                fillColor: '#818cf8', // Indigo-400
+                fillOpacity: (opacidade ?? 0.7) * 0.4
+            }}
+        />
+    );
+};
 
 /**
  * Componente que renderiza todas as orthofotos globais ativas do sistema.
@@ -19,6 +48,16 @@ const OrthofotsLayer = () => {
     return (
         <>
             {orthofotos.map(orto => {
+                if (orto.tipo === 'GEOJSON') {
+                    return (
+                        <VectorOverlay
+                            key={orto.id}
+                            url={orto.url}
+                            opacidade={orto.opacidade}
+                        />
+                    );
+                }
+
                 if (!orto.bounds) return null;
 
                 const isTiff = orto.tipo === 'TIFF' ||
