@@ -43,26 +43,32 @@ const VectorOverlay = ({ url, opacidade }) => {
 const OrthofotsLayer = () => {
     const { orthofotos } = useOrthofotos();
 
+    console.log('[OrthofotsLayer] Rendering with layers:', orthofotos);
+
     if (!orthofotos || orthofotos.length === 0) return null;
 
     return (
-        <>
-            {orthofotos.map(orto => {
-                if (orto.tipo === 'TILES') {
-                    const isTms = orto.url.includes('{-y}');
-                    const urlToUse = orto.url.replace(/{-y}/g, '{y}');
-                    return (
-                        <TileLayer
-                            key={orto.id}
-                            url={urlToUse}
-                            tms={isTms}
-                            opacity={orto.opacidade ?? 0.7}
-                            maxZoom={22}
-                            maxNativeZoom={22}
-                            bounds={orto.bounds || undefined}
-                        />
-                    );
-                }
+         <>
+             {orthofotos.map(orto => {
+                 if (orto.tipo === 'TILES') {
+                     const isTms = orto.url.includes('{-y}');
+                     const urlToUse = orto.url.replace(/{-y}/g, '{y}');
+                     console.log(`[OrthofotsLayer] Rendering TileLayer for ${orto.nome}:`, {
+                         urlToUse,
+                         isTms,
+                         opacity: orto.opacidade
+                     });
+                     return (
+                         <TileLayer
+                             key={orto.id}
+                             url={urlToUse}
+                             tms={isTms}
+                             opacity={orto.opacidade ?? 0.7}
+                             maxZoom={22}
+                             maxNativeZoom={22}
+                         />
+                     );
+                 }
 
                 if (orto.tipo === 'GEOJSON') {
                     return (
