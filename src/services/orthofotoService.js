@@ -74,6 +74,34 @@ export const uploadOrthofoto = async (file, metadata = {}) => {
 };
 
 /**
+ * Registra uma camada de tiles (XYZ) externa diretamente no banco de dados.
+ * @param {object} metadata - { nome, url, descricao, bounds, opacidade }
+ * @returns {Promise<object>} - Registro criado
+ */
+export const registerTilesLayer = async (metadata = {}) => {
+    const record = {
+        nome: metadata.nome,
+        descricao: metadata.descricao || '',
+        url: metadata.url,
+        storage_path: null,
+        tipo: 'TILES',
+        bounds: metadata.bounds ? JSON.stringify(metadata.bounds) : null,
+        opacidade: metadata.opacidade ?? 0.7,
+        ativo: true,
+    };
+
+    const { data, error: dbError } = await supabase
+        .from(TABLE)
+        .insert(record)
+        .select()
+        .single();
+
+    if (dbError) throw dbError;
+
+    return { ...data, bounds: data.bounds ? JSON.parse(data.bounds) : null };
+};
+
+/**
  * Atualiza os metadados de uma orthofoto (nome, descrição, bounds, opacidade, ativo).
  * @param {string} id 
  * @param {object} updates 

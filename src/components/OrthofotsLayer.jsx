@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageOverlay, Rectangle, GeoJSON } from 'react-leaflet';
+import { ImageOverlay, Rectangle, GeoJSON, TileLayer } from 'react-leaflet';
 import useOrthofotos from '../hooks/useOrthofotos';
 
 /**
@@ -48,6 +48,18 @@ const OrthofotsLayer = () => {
     return (
         <>
             {orthofotos.map(orto => {
+                if (orto.tipo === 'TILES') {
+                    return (
+                        <TileLayer
+                            key={orto.id}
+                            url={orto.url}
+                            opacity={orto.opacidade ?? 0.7}
+                            maxZoom={22}
+                            maxNativeZoom={20}
+                        />
+                    );
+                }
+
                 if (orto.tipo === 'GEOJSON') {
                     return (
                         <VectorOverlay

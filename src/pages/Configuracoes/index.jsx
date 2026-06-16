@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Settings, Image as ImageIcon, Upload, Trash2, Eye, EyeOff, Loader2, Plus, X, Check, AlertTriangle, Map, Layers, Info } from 'lucide-react';
-import { listOrthofotos, uploadOrthofoto, updateOrthofoto, deleteOrthofoto } from '../../services/orthofotoService';
+import { listOrthofotos, uploadOrthofoto, registerTilesLayer, updateOrthofoto, deleteOrthofoto } from '../../services/orthofotoService';
 import { toast } from '../../components/ToastNotification';
 import { compressImage } from '../../utils/imageOptimizer';
 import PizZip from 'pizzip';
@@ -142,8 +142,10 @@ const ConfiguracoesPage = () => {
 
     // Form state
     const [showForm, setShowForm] = useState(false);
+    const [inputType, setInputType] = useState('file'); // 'file' | 'tiles'
     const [formNome, setFormNome] = useState('');
     const [formDescricao, setFormDescricao] = useState('');
+    const [formUrl, setFormUrl] = useState('');
     const [formOpacidade, setFormOpacidade] = useState(0.7);
     const [formBounds, setFormBounds] = useState({ s: '', w: '', n: '', e: '' });
     const [selectedFile, setSelectedFile] = useState(null);
@@ -293,62 +295,79 @@ const ConfiguracoesPage = () => {
     };
 
     const handleUpload = async () => {
-        if (!selectedFile) return toast.error('Selecione um arquivo.');
         if (!formNome.trim()) return toast.error('Informe um nome.');
+
+        if (inputType === 'tiles') {
+            if (!formUrl.trim()) return toast.error('Informe a URL da Camada de Tiles.');
+            if (!formUrl.includes('{z}') || !formUrl.includes('{x}') || !formUrl.includes('{y}')) {
+                return toast.error('A URL deve conter as marcações {z}, {x} e {y}. Exemplo: https://meuservidor.com/tiles/{z}/{x}/{y}.png');
+            }
+        } else {
+            if (!selectedFile) return toast.error('Selecione um arquivo.');
+        }
 
         const bounds = (formBounds.s && formBounds.w && formBounds.n && formBounds.e)
             ? [[parseFloat(formBounds.s), parseFloat(formBounds.w)], [parseFloat(formBounds.n), parseFloat(formBounds.e)]]
-            : DEFAULT_BOUNDS;
+            : null;
 
         setUploading(true);
         try {
-            let fileToUpload = selectedFile;
-            const isImage = /\.(jpe?g|png)$/i.test(selectedFile.name);
+            if (inputType === 'tiles') {
+                await registerTilesLayer({
+                    nome: formNome,
+                    url: formUrl,
+                    descricao: formDescricao,
+                    bounds,
+                    opacidade: formOpacidade
+                });
+                toast.success('Camada de Tiles adicionada com sucesso!');
+            } else {
+                let fileToUpload = selectedFile;
+                const isImage = /\.(jpe?g|png)$/i.test(selectedFile.name);
 
-            if (isImage) {
-                try {
-                    // Usar FileReader para obter Base64
-                    const reader = new FileReader();
-                    const base64Promise = new Promise((resolve, reject) => {
-                        reader.onload = () => resolve(reader.result);
-                        reader.onerror = (e) => reject(e);
-                        reader.readAsDataURL(selectedFile);
-                    });
+                if (isImage) {
+                    try {
+                        const reader = new FileReader();
+                        const base64Promise = new Promise((resolve, reject) => {
+                            reader.onload = () => resolve(reader.result);
+                            reader.onerror = (e) => reject(e);
+                            reader.readAsDataURL(selectedFile);
+                        });
 
-                    const base64Str = await base64Promise;
+                        const base64Str = await base64Promise;
 
-                    // Compressão mantendo excelente qualidade para GIS (4096px de largura)
-                    const compressedBase64 = await compressImage(base64Str, {
-                        maxWidth: 4096,
-                        quality: 0.8,
-                        timestamp: false
-                    });
+                        const compressedBase64 = await compressImage(base64Str, {
+                            maxWidth: 4096,
+                            quality: 0.8,
+                            timestamp: false
+                        });
 
-                    const blob = base64ToBlob(compressedBase64);
-                    fileToUpload = new File([blob], selectedFile.name, { type: blob.type });
+                        const blob = base64ToBlob(compressedBase64);
+                        fileToUpload = new File([blob], selectedFile.name, { type: blob.type });
 
-                    const sizeOriginal = (selectedFile.size / (1024 * 1024)).toFixed(2);
-                    const sizeCompressed = (fileToUpload.size / (1024 * 1024)).toFixed(2);
-                    toast.success(`Imagem otimizada para o mapa: ${sizeOriginal}MB → ${sizeCompressed}MB.`);
-                } catch (compressErr) {
-                    console.warn('[Orthofoto] Falha na compressão do cliente, enviando original:', compressErr);
+                        const sizeOriginal = (selectedFile.size / (1024 * 1024)).toFixed(2);
+                        const sizeCompressed = (fileToUpload.size / (1024 * 1024)).toFixed(2);
+                        toast.success(`Imagem otimizada para o mapa: ${sizeOriginal}MB → ${sizeCompressed}MB.`);
+                    } catch (compressErr) {
+                        console.warn('[Orthofoto] Falha na compressão do cliente, enviando original:', compressErr);
+                    }
+                } else if (/\.(tiff?)$/i.test(selectedFile.name)) {
+                    toast.warning('Imagens TIFF não podem ser exibidas visualmente no mapa (apenas o retângulo de contorno será mostrado). Sugere-se converter para PNG ou JPG.');
                 }
-            } else if (/\.(tiff?)$/i.test(selectedFile.name)) {
-                toast.warning('Imagens TIFF não podem ser exibidas visualmente no mapa (apenas o retângulo de contorno será mostrado). Sugere-se converter para PNG ou JPG.');
+
+                await uploadOrthofoto(fileToUpload, {
+                    nome: formNome,
+                    descricao: formDescricao,
+                    bounds: bounds || DEFAULT_BOUNDS,
+                    opacidade: formOpacidade,
+                });
+                toast.success('Orthofoto adicionada com sucesso!');
             }
 
-            await uploadOrthofoto(fileToUpload, {
-                nome: formNome,
-                descricao: formDescricao,
-                bounds,
-                opacidade: formOpacidade,
-            });
-
-            toast.success('Orthofoto adicionada com sucesso!');
             window.dispatchEvent(new CustomEvent('orthofotos-updated'));
             setShowForm(false);
             setSelectedFile(null);
-            setFormNome(''); setFormDescricao(''); setFormOpacidade(0.7);
+            setFormNome(''); setFormDescricao(''); setFormUrl(''); setFormOpacidade(0.7);
             setFormBounds({ s: '', w: '', n: '', e: '' });
             await loadOrthofotos();
         } catch (e) {
@@ -361,7 +380,7 @@ const ConfiguracoesPage = () => {
             } else if (errMsg.includes('row-level security') || errMsg.includes('RLS') || errMsg.includes('permission')) {
                 toast.error('Erro de permissão (RLS): Verifique as políticas do bucket "vistorias_fotos" para a pasta "orthofotos/global/".');
             } else {
-                toast.error(`Erro ao fazer upload da orthofoto: ${errMsg || 'Erro de conexão ou tamanho do arquivo.'}`);
+                toast.error(`Erro ao salvar orthofoto: ${errMsg || 'Erro de conexão ou tamanho do arquivo.'}`);
             }
         } finally {
             setUploading(false);
@@ -437,7 +456,15 @@ const ConfiguracoesPage = () => {
                             </div>
                         </div>
                         <button
-                            onClick={() => fileInputRef.current?.click()}
+                            onClick={() => {
+                                setShowForm(true);
+                                setInputType('file');
+                                setSelectedFile(null);
+                                setFormNome('');
+                                setFormDescricao('');
+                                setFormUrl('');
+                                setFormBounds({ s: '', w: '', n: '', e: '' });
+                            }}
                             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-emerald-200 dark:shadow-none"
                         >
                             <Plus size={14} /> Nova Orthofoto
@@ -462,79 +489,113 @@ const ConfiguracoesPage = () => {
                                     <X size={14} className="text-slate-400" />
                                 </button>
                             </div>
+                             {/* Seletor de Tipo de Origem */}
+                             <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+                                 <button
+                                     type="button"
+                                     onClick={() => setInputType('file')}
+                                     className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${inputType === 'file' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}
+                                 >
+                                     Upload de Arquivo
+                                 </button>
+                                 <button
+                                     type="button"
+                                     onClick={() => setInputType('tiles')}
+                                     className={`flex-1 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${inputType === 'tiles' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-400 hover:text-slate-500'}`}
+                                 >
+                                     Camada de Tiles (XYZ)
+                                 </button>
+                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Arquivo selecionado</label>
-                                    <div className="px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 truncate flex items-center gap-2">
-                                        <ImageIcon size={12} className="text-emerald-500 shrink-0" />
-                                        {selectedFile?.name || '—'}
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Exibido *</label>
-                                    <input
-                                        value={formNome}
-                                        onChange={e => setFormNome(e.target.value)}
-                                        placeholder="Ex: Orthofoto 2024 – Zona Urbana"
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
-                                    />
-                                </div>
-                                <div className="space-y-1 sm:col-span-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descrição</label>
-                                    <input
-                                        value={formDescricao}
-                                        onChange={e => setFormDescricao(e.target.value)}
-                                        placeholder="Descrição opcional da cobertura"
-                                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
-                                    />
-                                </div>
-                            </div>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                 {inputType === 'file' ? (
+                                     <div className="space-y-1">
+                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                                             <span>Arquivo selecionado</span>
+                                             <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[9px] text-emerald-600 hover:text-emerald-700 font-black uppercase tracking-wider">Selecionar</button>
+                                         </label>
+                                         <div onClick={() => fileInputRef.current?.click()} className="cursor-pointer px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 truncate flex items-center gap-2 hover:border-emerald-500/50 transition-colors">
+                                             <ImageIcon size={12} className="text-emerald-500 shrink-0" />
+                                             {selectedFile?.name || 'Nenhum arquivo — Clique aqui'}
+                                         </div>
+                                     </div>
+                                 ) : (
+                                     <div className="space-y-1">
+                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">URL do Servidor de Tiles XYZ *</label>
+                                         <input
+                                             value={formUrl}
+                                             onChange={e => setFormUrl(e.target.value)}
+                                             placeholder="Ex: https://meuservidor.com/tiles/{z}/{x}/{y}.png"
+                                             className="w-full px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                         />
+                                     </div>
+                                 )}
+                                 <div className="space-y-1">
+                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Exibido *</label>
+                                     <input
+                                         value={formNome}
+                                         onChange={e => setFormNome(e.target.value)}
+                                         placeholder={inputType === 'tiles' ? "Ex: Mapa de Satélite – Fatiado" : "Ex: Orthofoto 2024 – Zona Urbana"}
+                                         className="w-full px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                     />
+                                 </div>
+                                 <div className="space-y-1 sm:col-span-2">
+                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descrição</label>
+                                     <input
+                                         value={formDescricao}
+                                         onChange={e => setFormDescricao(e.target.value)}
+                                         placeholder={inputType === 'tiles' ? "Servidor XYZ ou diretório de fatias geográficas" : "Descrição opcional da cobertura"}
+                                         className="w-full px-3 py-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                     />
+                                 </div>
+                             </div>
 
-                            {/* Bounds */}
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                    <Map size={10} /> Limites Geográficos (Bounds)
-                                    <span className="text-slate-300 font-normal normal-case ml-1">— deixe em branco para usar padrão municipal</span>
-                                </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {[['s', 'Sul (Lat Min)'], ['w', 'Oeste (Lng Min)'], ['n', 'Norte (Lat Max)'], ['e', 'Leste (Lng Max)']].map(([key, label]) => (
-                                        <div key={key} className="space-y-1">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">{label}</p>
-                                            <input
-                                                value={formBounds[key]}
-                                                onChange={e => setFormBounds(prev => ({ ...prev, [key]: e.target.value }))}
-                                                placeholder="-20.04"
-                                                type="number"
-                                                step="0.0001"
-                                                className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                             {/* Bounds */}
+                             <div className="space-y-2">
+                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                     <Map size={10} /> Limites Geográficos (Bounds)
+                                     <span className="text-slate-300 font-normal normal-case ml-1">
+                                         {inputType === 'tiles' ? '— opcional para camadas globais ou regionais' : '— deixe em branco para usar padrão municipal'}
+                                     </span>
+                                 </label>
+                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                     {[['s', 'Sul (Lat Min)'], ['w', 'Oeste (Lng Min)'], ['n', 'Norte (Lat Max)'], ['e', 'Leste (Lng Max)']].map(([key, label]) => (
+                                         <div key={key} className="space-y-1">
+                                             <p className="text-[9px] font-bold text-slate-400 uppercase">{label}</p>
+                                             <input
+                                                 value={formBounds[key]}
+                                                 onChange={e => setFormBounds(prev => ({ ...prev, [key]: e.target.value }))}
+                                                 placeholder="-20.04"
+                                                 type="number"
+                                                 step="0.0001"
+                                                 className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/30"
+                                             />
+                                         </div>
+                                     ))}
+                                 </div>
+                             </div>
 
-                            {/* Opacidade */}
-                            <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opacidade Padrão</label>
-                                    <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">{Math.round(formOpacidade * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range" min="0.1" max="1" step="0.05" value={formOpacidade}
-                                    onChange={e => setFormOpacidade(parseFloat(e.target.value))}
-                                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-emerald-600"
-                                />
-                            </div>
+                             {/* Opacidade */}
+                             <div className="space-y-1">
+                                 <div className="flex items-center justify-between">
+                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opacidade Padrão</label>
+                                     <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">{Math.round(formOpacidade * 100)}%</span>
+                                 </div>
+                                 <input
+                                     type="range" min="0.1" max="1" step="0.05" value={formOpacidade}
+                                     onChange={e => setFormOpacidade(parseFloat(e.target.value))}
+                                     className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-emerald-600"
+                                 />
+                             </div>
 
-                            <button
-                                onClick={handleUpload}
-                                disabled={uploading || !selectedFile}
-                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-400 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                            >
-                                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                                {uploading ? 'Enviando para a nuvem...' : 'Salvar Orthofoto'}
-                            </button>
+                             <button
+                                 onClick={handleUpload}
+                                 disabled={uploading || (inputType === 'file' && !selectedFile)}
+                                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 dark:disabled:bg-slate-700 disabled:text-slate-400 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                             >
+                                 {uploading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                                 {uploading ? 'Enviando para a nuvem...' : 'Salvar Orthofoto'}
+                             </button>
                         </div>
                     )}
 
@@ -567,6 +628,11 @@ const ConfiguracoesPage = () => {
                                             <div className="text-center p-1">
                                                 <Layers size={20} className="text-indigo-400 mx-auto" />
                                                 <p className="text-[8px] font-black text-indigo-400 mt-0.5">VETORIAL</p>
+                                            </div>
+                                        ) : orto.tipo === 'TILES' ? (
+                                            <div className="text-center p-1">
+                                                <Layers size={20} className="text-emerald-400 mx-auto" />
+                                                <p className="text-[8px] font-black text-emerald-400 mt-0.5">TILES</p>
                                             </div>
                                         ) : (
                                             <img
