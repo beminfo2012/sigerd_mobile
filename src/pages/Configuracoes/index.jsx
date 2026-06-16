@@ -166,6 +166,13 @@ const ConfiguracoesPage = () => {
     useEffect(() => { loadOrthofotos(); }, []);
 
     const handleKmlKmzFile = async (file) => {
+        // Validar tamanho máximo para evitar travamento de memória (Out of Memory) no navegador
+        const MAX_SIZE_MB = 50;
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            toast.error(`Arquivo geográfico muito grande (${(file.size / (1024 * 1024)).toFixed(1)}MB). O limite para processamento direto no navegador é de ${MAX_SIZE_MB}MB para evitar o travamento do sistema. Por favor, otimize a camada antes de subir.`);
+            return;
+        }
+
         try {
             let xmlText = '';
             let zip = null;
