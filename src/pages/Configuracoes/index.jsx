@@ -203,13 +203,7 @@ const ConfiguracoesPage = () => {
                     );
                     
                     if (imgKey) {
-                        const imgData = zip.files[imgKey].asBinary();
-                        const len = imgData.length;
-                        const u8 = new Uint8Array(len);
-                        for (let i = 0; i < len; i++) {
-                            u8[i] = imgData.charCodeAt(i);
-                        }
-                        
+                        const u8 = zip.files[imgKey].asUint8Array();
                         const ext = imgKey.split('.').pop().toLowerCase();
                         const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
                         imageBlob = new Blob([u8], { type: mime });
