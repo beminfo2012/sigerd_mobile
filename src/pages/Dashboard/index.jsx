@@ -37,6 +37,34 @@ const LegendPin = ({ color }) => (
         <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
     </svg>
 );
+
+const getMarkerColor = (loc) => {
+    if (!loc) return '#3b82f6';
+    if (loc.type === 'o') { // Ocorrência
+        switch (loc.status) {
+            case 'Cancelada': return '#64748b';
+            case 'Em Análise': return '#f97316';
+            case 'Em Atendimento': return '#f59e0b';
+            case 'Atendido': return '#3b82f6';
+            case 'Finalizada': return '#10b981';
+            default: return '#ef4444'; // Pendente
+        }
+    } else if (loc.type === 'i') { // Interdição
+        return loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b';
+    } else { // Vistoria ('v')
+        const riskStr = String(loc.nivelRisco || '').toLowerCase();
+        if (riskStr.includes('iminente') || riskStr.includes('muito alto') || riskStr === 'r4') {
+            return '#dc2626'; // Vermelho
+        } else if (riskStr.includes('alto') || riskStr === 'r3') {
+            return '#ea580c'; // Laranja
+        } else if (riskStr.includes('médio') || riskStr.includes('medio') || riskStr === 'r2') {
+            return '#f59e0b'; // Amarelo/Amber
+        } else if (riskStr.includes('baixo') || riskStr === 'r1') {
+            return '#10b981'; // Verde
+        }
+        return '#10b981'; // Fallback para baixo/outros
+    }
+};
 import {
     getPendingSyncCount, syncPendingData, getAllVistoriasLocal,
     getRemoteVistoriasCache, pullAllData, resetDatabase, getManualReadings,
@@ -140,6 +168,7 @@ const processLocations = (records, forcedType = null) => {
                 lat,
                 lng,
                 risk: v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || 'Interdição') : 'Vistoria'),
+                nivelRisco: v.nivel_risco || v.nivelRisco || v.risco_grau || v.riscoGrau || 'Outros',
                 status: v.status || (v.synced ? 'Sincronizado' : 'Não Sincronizado'),
                 details,
                 date: dateMatch || new Date().toISOString(),
@@ -601,11 +630,7 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                         <Marker
                             key={idx}
                             position={[loc.lat, loc.lng]}
-                            icon={createCustomPin(
-                                viewMode === 'ocorrencias'
-                                    ? (loc.status === 'Em Atendimento' ? '#f59e0b' : loc.status === 'Pendente' ? '#ef4444' : '#3b82f6')
-                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Iminente') ? '#dc2626' : '#f59e0b')
-                            )}
+                            icon={createCustomPin(getMarkerColor(loc))}
                         />
                     ))}
                 </MapContainer>
@@ -1327,18 +1352,7 @@ const MobileDashboardView = ({
                                     <Marker
                                         key={idx}
                                         position={[loc.lat, loc.lng]}
-                                        icon={createCustomPin(
-                                            viewMode === 'ocorrencias'
-                                                ? (loc.status === 'Cancelada' ? '#64748b' :
-                                                    loc.status === 'Em Análise' ? '#f97316' :
-                                                        loc.status === 'Em Atendimento' ? '#f59e0b' :
-                                                            loc.status === 'Atendido' ? '#3b82f6' :
-                                                                loc.status === 'Finalizada' ? '#10b981' :
-                                                                    '#ef4444') // Pendente
-                                                : viewMode === 'interdicoes'
-                                                    ? (loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b')
-                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316')
-                                        )}
+                                        icon={createCustomPin(getMarkerColor(loc))}
                                     >
                                         <Popup minWidth={180}>
                                             <div className="p-1">
@@ -1373,8 +1387,10 @@ const MobileDashboardView = ({
                                     </>
                                 ) : viewMode === 'vistorias' ? (
                                     <>
-                                        <div className="flex items-center gap-2"><LegendPin color="#ef4444" />Risco Alto</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#f97316" />Risco Baixo</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#dc2626" />R4</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#ea580c" />R3</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#f59e0b" />R2</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#10b981" />R1</div>
                                     </>
                                 ) : (
                                     <>
@@ -1853,18 +1869,7 @@ const WebViewDashboardView = ({
                                     <Marker
                                         key={idx}
                                         position={[loc.lat, loc.lng]}
-                                        icon={createCustomPin(
-                                            viewMode === 'ocorrencias'
-                                                ? (loc.status === 'Cancelada' ? '#64748b' :
-                                                    loc.status === 'Em Análise' ? '#f97316' :
-                                                        loc.status === 'Em Atendimento' ? '#f59e0b' :
-                                                            loc.status === 'Atendido' ? '#3b82f6' :
-                                                                loc.status === 'Finalizada' ? '#10b981' :
-                                                                    '#ef4444') // Pendente
-                                                : viewMode === 'interdicoes'
-                                                    ? (loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b')
-                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316')
-                                        )}
+                                        icon={createCustomPin(getMarkerColor(loc))}
                                     >
                                         <Popup minWidth={220}>
                                             <div className="p-2">
