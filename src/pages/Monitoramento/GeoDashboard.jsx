@@ -12,6 +12,23 @@ import HeatmapLayer from '../../components/HeatmapLayer'
 // Fix: Support Leaflet plugins that expect window.L
 window.L = L;
 
+const createCustomPin = (color) => {
+    return L.divIcon({
+        className: 'custom-pin-marker',
+        html: `
+            <div style="position: relative; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center;">
+                <svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3));">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="${color}" stroke="#ffffff" stroke-width="1.5"/>
+                    <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30]
+    });
+};
+
 const GeoDashboard = () => {
     const navigate = useNavigate()
     const location = useLocation()
@@ -233,17 +250,10 @@ const GeoDashboard = () => {
                     <HeatmapLayer points={filteredPoints.filter(l => l && l.lat && l.lng && !isNaN(Number(l.lat)))} show={viewMode === 'heat'} />
 
                     {viewMode === 'points' && filteredPoints.filter(l => l && l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
-                        <CircleMarker
+                        <Marker
                             key={idx}
-                            center={[loc.lat, loc.lng]}
-                            radius={8}
-                            pathOptions={{
-                                color: loc.risk.includes('Alto') ? '#ef4444' : '#3b82f6',
-                                fillColor: loc.risk.includes('Alto') ? '#ef4444' : '#3b82f6',
-                                fillOpacity: 0.8,
-                                stroke: true,
-                                weight: 2
-                            }}
+                            position={[loc.lat, loc.lng]}
+                            icon={createCustomPin(loc.risk.includes('Alto') ? '#ef4444' : '#3b82f6')}
                         >
                             <Popup blur={true}>
                                 <div className="min-w-[150px] p-1">
@@ -257,7 +267,7 @@ const GeoDashboard = () => {
                                     </div>
                                 </div>
                             </Popup>
-                        </CircleMarker>
+                        </Marker>
                     ))}
 
                     {/* Waze Layers */}

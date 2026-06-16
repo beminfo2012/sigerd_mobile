@@ -3,6 +3,30 @@ import { useParams } from 'react-router-dom';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import * as redapService from '../../services/redapService';
 import { FileText, Printer, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { MapContainer, TileLayer, Polygon, CircleMarker, ImageOverlay, Rectangle, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const MapBoundsAligner = ({ polygons }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (polygons && polygons.length > 0) {
+            const bounds = [];
+            polygons.forEach(poly => {
+                if (Array.isArray(poly)) {
+                    poly.forEach(pt => {
+                        if (Array.isArray(pt) && pt.length >= 2 && !isNaN(pt[0]) && !isNaN(pt[1])) {
+                            bounds.push(pt);
+                        }
+                    });
+                }
+            });
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [30, 30] });
+            }
+        }
+    }, [polygons, map]);
+    return null;
+};
 
 const RedapPrint = () => {
     const { id } = useParams();
@@ -350,6 +374,136 @@ const RedapPrint = () => {
                                 </tbody>
                             </table>
                         </section>
+
+                        {/* Delimitação Espacial e Georreferenciada do Desastre */}
+                        {(() => {
+                            let polygonsList = [];
+                            let orthofotoData = null;
+
+                            if (event.polygon_coords) {
+                                try {
+                                    const parsed = typeof event.polygon_coords === 'string'
+                                        ? JSON.parse(event.polygon_coords)
+                                        : event.polygon_coords;
+                                    
+                                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                                        if (Array.isArray(parsed.polygons)) {
+                                            polygonsList = parsed.polygons;
+                                        }
+                                        if (parsed.orthofoto && parsed.orthofoto.url) {
+                                            orthofotoData = parsed.orthofoto;
+                                        }
+                                    } else if (Array.isArray(parsed) && parsed.length > 0) {
+                                        if (Array.isArray(parsed[0]) && parsed[0].length > 0 && Array.isArray(parsed[0][0])) {
+                                            polygonsList = parsed;
+                                        } else {
+                                            polygonsList = [parsed];
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing polygon_coords in print:', e);
+                                }
+                            }
+
+                            const hasMap = (event.latitude && event.longitude) || polygonsList.length > 0;
+                            if (!hasMap) return null;
+
+                            // Centraliza o mapa
+                            let center = [event.latitude || -20.0401, event.longitude || -40.7489];
+                            if (polygonsList.length > 0 && polygonsList[0] && polygonsList[0][0]) {
+                                if (!event.latitude) {
+                                    center = polygonsList[0][0];
+                                }
+                            }
+
+                            return (
+                                <section className="mb-6 avoid-break">
+                                    <div className="section-header">
+                                        <span className="section-header-title">Delimitação Espacial e Georreferenciada</span>
+                                    </div>
+                                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 relative p-1">
+                                        <div className="h-[280px] w-full rounded-lg overflow-hidden relative z-0">
+                                            <MapContainer 
+                                                center={center} 
+                                                zoom={15} 
+                                                style={{ height: '100%', width: '100%', zIndex: 1 }} 
+                                                zoomControl={false}
+                                                dragging={false}
+                                                doubleClickZoom={false}
+                                                scrollWheelZoom={false}
+                                                boxZoom={false}
+                                                keyboard={false}
+                                            >
+                                                <TileLayer 
+                                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                />
+                                                
+                                                <MapBoundsAligner polygons={polygonsList} />
+                                                
+                                                {/* Polígonos de Área Afetada */}
+                                                {polygonsList.map((poly, idx) => (
+                                                    <Polygon 
+                                                        key={idx}
+                                                        positions={poly} 
+                                                        pathOptions={{ 
+                                                            color: '#dc2626', 
+                                                            fillColor: '#dc2626', 
+                                                            fillOpacity: 0.25, 
+                                                            weight: 3 
+                                                        }} 
+                                                    />
+                                                ))}
+
+                                                {/* Ponto Central do Desastre se não houver polígono ou como marcador */}
+                                                {polygonsList.length === 0 && event.latitude && event.longitude && (
+                                                    <CircleMarker 
+                                                        center={[event.latitude, event.longitude]} 
+                                                        radius={10} 
+                                                        pathOptions={{ 
+                                                            color: '#dc2626', 
+                                                            fillColor: '#dc2626', 
+                                                            fillOpacity: 0.6, 
+                                                            weight: 2 
+                                                        }} 
+                                                    />
+                                                )}
+
+                                                {/* Orthofoto Overlay se disponível (imagens web comuns PNG/JPG) */}
+                                                {orthofotoData && orthofotoData.url && orthofotoData.bounds && 
+                                                 orthofotoData.url !== 'TIFF_ATTACHED' && 
+                                                 !(typeof orthofotoData.url === 'string' && (orthofotoData.url.toLowerCase().endsWith('.tif') || orthofotoData.url.toLowerCase().endsWith('.tiff'))) && (
+                                                    <ImageOverlay
+                                                        url={orthofotoData.url}
+                                                        bounds={orthofotoData.bounds}
+                                                        opacity={0.8}
+                                                    />
+                                                )}
+
+                                                {/* Limites da Orthofoto TIFF se disponível (desenha Rectangle de limite) */}
+                                                {orthofotoData && orthofotoData.bounds && 
+                                                 (orthofotoData.url === 'TIFF_ATTACHED' || 
+                                                  (typeof orthofotoData.url === 'string' && (orthofotoData.url.toLowerCase().endsWith('.tif') || orthofotoData.url.toLowerCase().endsWith('.tiff')))) && (
+                                                    <Rectangle
+                                                        bounds={orthofotoData.bounds}
+                                                        pathOptions={{
+                                                            color: '#2563eb',
+                                                            fillColor: '#2563eb',
+                                                            fillOpacity: 0.05,
+                                                            weight: 2,
+                                                            dashArray: '5, 5'
+                                                        }}
+                                                    />
+                                                )}
+                                            </MapContainer>
+                                        </div>
+                                        <div className="p-2 text-[9px] text-slate-500 font-bold uppercase tracking-wider flex justify-between items-center bg-white border-t border-slate-100">
+                                            <span>Coordenadas Centrais: {center[0].toFixed(6)}, {center[1].toFixed(6)}</span>
+                                            <span>Sinalização Georreferenciada de Áreas Críticas</span>
+                                        </div>
+                                    </div>
+                                </section>
+                            );
+                        })()}
 
                         {/* Seção 2: Danos Humanos */}
                         <section className="mb-6 avoid-break">

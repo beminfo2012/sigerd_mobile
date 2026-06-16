@@ -815,7 +815,7 @@ const RelatorioSituacionalPrint = () => {
                                         vistoriasList.map((act, i) => (
                                             <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
-                                                    <div className="text-center">{act.id}</div>
+                                                    <div className="text-center">{i + 1}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center' }}>
                                                     <div className="text-center">
@@ -862,7 +862,7 @@ const RelatorioSituacionalPrint = () => {
                                         ocorrenciasList.map((act, i) => (
                                             <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
-                                                    <div className="text-center">{act.id}</div>
+                                                    <div className="text-center">{i + 1}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center' }}>
                                                     <div className="text-center">
@@ -909,7 +909,7 @@ const RelatorioSituacionalPrint = () => {
                                         interdicoesList.map((act, i) => (
                                             <tr key={i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold', color: 'var(--blue)', textAlign: 'center' }}>
-                                                    <div className="text-center">{act.id}</div>
+                                                    <div className="text-center">{i + 1}</div>
                                                 </td>
                                                 <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center' }}>
                                                     <div className="text-center">

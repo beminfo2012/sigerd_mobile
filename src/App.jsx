@@ -62,6 +62,9 @@ const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
 
+// Configurações do Sistema (Lazy)
+const ConfiguracoesPage = lazy(() => import('./pages/Configuracoes'))
+
 // Redap Module (Lazy)
 const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
 const RedapForm = lazy(() => import('./pages/Redap/RedapForm'))
@@ -298,6 +301,11 @@ const AppContent = ({
                                 <Route path="/usuarios" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil']}>
                                         <UserManagement />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/configuracoes" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral']}>
+                                        <ConfiguracoesPage />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/checklist-saida" element={

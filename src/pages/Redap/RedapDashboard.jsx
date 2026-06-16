@@ -102,7 +102,7 @@ const RedapDashboard = () => {
         );
     }
 
-    const isDC = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role);
+    const isDC = ['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral'].includes(user?.role);
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">

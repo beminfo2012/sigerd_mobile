@@ -37,7 +37,7 @@ const RedapSectorForm = () => {
     const urlSecretaria = queryParams.get('secretaria');
     const userRealSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
     const userSecretaria = urlSecretaria || userRealSecretaria;
-    const isDefesaCivil = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role);
+    const isDefesaCivil = ['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral'].includes(user?.role);
     const config = SECAO_MAP[secaoId];
 
     // Estados dos formulários de acordo com a seção

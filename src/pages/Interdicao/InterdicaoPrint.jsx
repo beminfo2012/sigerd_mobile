@@ -44,6 +44,23 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
 });
 
+const createCustomPin = (color) => {
+    return L.divIcon({
+        className: 'custom-pin-marker',
+        html: `
+            <div style="position: relative; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center;">
+                <svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3));">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="${color}" stroke="#ffffff" stroke-width="1.5"/>
+                    <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30]
+    });
+};
+
 const InterdicaoPrint = () => {
     const { id } = useParams();
     const [data, setData] = useState(null);
@@ -279,7 +296,13 @@ const InterdicaoPrint = () => {
                                             doubleClickZoom={false}
                                         >
                                             <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-                                            <Marker position={[lat, lng]} />
+                                            <Marker 
+                                                position={[lat, lng]} 
+                                                icon={createCustomPin(
+                                                    (data.risco_grau === 'Alto' || data.risco_grau === 'Iminente' || data.riscoGrau === 'Alto' || data.riscoGrau === 'Iminente') ? '#dc2626' : 
+                                                    (data.risco_grau === 'Médio' || data.riscoGrau === 'Médio') ? '#ea580c' : '#3b82f6'
+                                                )}
+                                            />
                                             <MapController lat={lat} lng={lng} />
                                         </MapContainer>
                                     ) : (

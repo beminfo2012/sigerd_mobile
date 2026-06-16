@@ -22,7 +22,13 @@ export const REDAP_SECTORS = {
     'Redap_ServicosUrbanos': 'Serviços Urbanos',
     'Redap_Transportes': 'Transportes',
     'Redap_Geral': 'Defesa Civil',
-    'Admin': 'Defesa Civil'
+    'Admin': 'Defesa Civil',
+    'admin': 'Defesa Civil',
+    'Administrador': 'Defesa Civil',
+    'administrador': 'Defesa Civil',
+    'Coordenador': 'Defesa Civil',
+    'Coordenador de Proteção e Defesa Civil': 'Defesa Civil',
+    'Agente de Defesa Civil': 'Defesa Civil'
 };
 
 // Mapeamento extraído dos modelos oficiais em Relatórios_Fide para os 13 setores

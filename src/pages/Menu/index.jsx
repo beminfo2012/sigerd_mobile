@@ -323,7 +323,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/usuarios'}
-                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
                         >
                             <div className="flex items-center">
                                 <div className="p-3 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-600 rounded-2xl mr-4">
@@ -332,6 +332,21 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                 <div className="flex-1">
                                     <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Usuários</span>
                                     <span className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest">Painel de Administração</span>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={() => window.location.href = '/configuracoes'}
+                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+                        >
+                            <div className="flex items-center">
+                                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-2xl mr-4">
+                                    <Globe size={22} />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Orthofotos</span>
+                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Configuração Global de Camadas GIS</span>
                                 </div>
                             </div>
                         </button>

@@ -18,6 +18,7 @@ import { searchInstallations, getInstallationsCount, importInstallations } from 
 import { useToast } from '../../components/ToastNotification'
 import { checkRiskArea } from '../../services/riskAreas'
 import RiskAreaModal from '../../components/RiskAreaModal'
+import OrthofotsLayer from '../../components/OrthofotsLayer'
 
 // GeoJSON Data for Layers
 import cprmData from '../../data/risk_cprm.json'
@@ -439,6 +440,7 @@ const GeoRescue = () => {
                     </Overlay>
                 </LayersControl>
 
+                <OrthofotsLayer />
                 <ZoomControl position="bottomright" />
                 <MapUpdater center={getCoords(selectedInstallation) || (hasPosition ? position : null)} />
 

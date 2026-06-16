@@ -261,8 +261,28 @@
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
-.dark .leaflet-tile {
+.dark .leaflet-container .leaflet-tile {
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+/* Desativa os filtros de modo escuro no mapa de satélite real usando wrappers, classes ou seletores inteligentes :has() */
+.leaflet-satellite-wrapper .leaflet-container,
+.leaflet-satellite-wrapper .leaflet-container .leaflet-tile,
+.leaflet-satellite-view,
+.leaflet-satellite-view .leaflet-tile,
+.dark .leaflet-satellite-wrapper .leaflet-container,
+.dark .leaflet-satellite-wrapper .leaflet-container .leaflet-tile,
+.dark .leaflet-satellite-view,
+.dark .leaflet-satellite-view .leaflet-tile,
+.dark .leaflet-container:has(img[src*="arcgisonline"]),
+.dark .leaflet-container:has(img[src*="arcgisonline"]) .leaflet-tile,
+.dark .leaflet-container:has(img[src*="lyrs=s"]),
+.dark .leaflet-container:has(img[src*="lyrs=s"]) .leaflet-tile,
+.dark .leaflet-container:has(img[src*="lyrs=y"]),
+.dark .leaflet-container:has(img[src*="lyrs=y"]) .leaflet-tile,
+.dark .leaflet-container:has(img[src*="google.com/vt"]),
+.dark .leaflet-container:has(img[src*="google.com/vt"]) .leaflet-tile {
+  filter: none !important;
 }
 
 .dark .leaflet-control-attribution {

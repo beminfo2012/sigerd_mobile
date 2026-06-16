@@ -65,7 +65,7 @@ const RedapEventDetails = () => {
     const [showAssinarModal, setShowAssinarModal] = useState(false);
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
-    const isDefesaCivil = ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role);
+    const isDefesaCivil = ['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral'].includes(user?.role);
     const userSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
 
     const visibleSections = SECOES_REDAP.filter(item => {
@@ -174,6 +174,28 @@ const RedapEventDetails = () => {
             loadData();
         } catch (e) {
             toast.error('Erro ao atualizar fluxo.');
+        }
+    };
+
+    // Função de reabertura de evento consolidado/fechado (Defesa Civil / Admin)
+    const handleReabrirEvento = async () => {
+        if (!window.confirm('Tem certeza de que deseja reabrir este desastre para edição? Isso redefinirá o status geral para ABERTO e as etapas de consolidação pendentes.')) return;
+        try {
+            await redapService.updateEvent(id, {
+                nome_evento: event.nome_evento,
+                cobrade: event.cobrade,
+                data_inicio: event.data_inicio,
+                data_limite: event.data_limite,
+                status_geral: 'ABERTO'
+            });
+
+            // Reseta a etapa 2 para PENDENTE
+            await redapService.updateFluxoEtapa(id, 2, 'PENDENTE', user?.full_name || 'Defesa Civil');
+            
+            toast.success('Evento reaberto com sucesso!');
+            loadData();
+        } catch (e) {
+            toast.error('Erro ao reabrir desastre.');
         }
     };
 
@@ -361,8 +383,8 @@ const RedapEventDetails = () => {
             return s.secao === targetEnum;
         });
 
-        // O readOnly só se aplica a usuários normais quando a seção foi enviada/validada. DC tem edição irrestrita
-        const readOnly = !isDefesaCivil && (record?.status_secao === 'VALIDADO' || record?.status_secao === 'ENVIADO');
+        // O readOnly só se aplica a usuários normais quando a seção foi enviada/validada. DC tem edição irrestrita (a menos que o status geral esteja FECHADO)
+        const readOnly = (event?.status_geral === 'FECHADO') || (!isDefesaCivil && (record?.status_secao === 'VALIDADO' || record?.status_secao === 'ENVIADO'));
 
         if (item.editavel === false) {
             return null;
@@ -640,13 +662,24 @@ const RedapEventDetails = () => {
                                             </p>
                                             <p className="text-[10px] text-slate-400 font-bold mt-0.5">{et.responsavel}</p>
                                         </div>
-                                        {isDefesaCivil && !isDone && (
-                                            <button
-                                                onClick={() => handleAvancarEtapa(et.etapa)}
-                                                className="bg-blue-600 text-white px-2 py-1 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-700"
-                                            >
-                                                Concluir
-                                            </button>
+                                        {isDefesaCivil && (
+                                            !isDone ? (
+                                                <button
+                                                    onClick={() => handleAvancarEtapa(et.etapa)}
+                                                    className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-700 active:scale-95 transition-all shadow-sm shrink-0"
+                                                >
+                                                    Concluir
+                                                </button>
+                                            ) : (
+                                                et.etapa === 2 && event?.status_geral === 'FECHADO' && (
+                                                    <button
+                                                        onClick={() => handleReabrirEvento()}
+                                                        className="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase active:scale-95 transition-all shadow-sm shrink-0"
+                                                    >
+                                                        Reabrir
+                                                    </button>
+                                                )
+                                            )
                                         )}
                                     </div>
                                 );

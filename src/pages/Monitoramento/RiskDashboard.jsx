@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, CircleMarker, Popup, Marker } from 'react-leaf
 import L from 'leaflet'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import 'leaflet/dist/leaflet.css'
+import OrthofotsLayer from '../../components/OrthofotsLayer'
 
 // Import consolidated data and services
 import residencesRiskData from '../../data/residences_risk.json'
@@ -27,8 +28,25 @@ const createCemadenIcon = (level) => {
         className: 'custom-div-icon',
         iconSize: [28, 28],
         iconAnchor: [14, 14]
-    })
-}
+    });
+};
+
+const createCustomPin = (color) => {
+    return L.divIcon({
+        className: 'custom-pin-marker',
+        html: `
+            <div style="position: relative; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center;">
+                <svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3));">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="${color}" stroke="#ffffff" stroke-width="1.5"/>
+                    <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30]
+    });
+};
 
 const RiskDashboard = ({ hideHeader = false }) => {
     const navigate = useNavigate()
@@ -372,16 +390,10 @@ const RiskDashboard = ({ hideHeader = false }) => {
 
                                 {/* 1. Rendering Residences Risk Markers */}
                                 {filteredData.slice(0, 1000).filter(v => v && v.lat != null && v.lon != null && !isNaN(Number(v.lat))).map((v, i) => (
-                                    <CircleMarker
+                                    <Marker
                                         key={`risk-${i}`}
-                                        center={[v.lat, v.lon]}
-                                        radius={5}
-                                        pathOptions={{
-                                            color: '#fff',
-                                            fillColor: COLORS[v.severidade] || COLORS[v.tipo] || '#3b82f6',
-                                            fillOpacity: 0.85,
-                                            weight: 1.5,
-                                        }}
+                                        position={[v.lat, v.lon]}
+                                        icon={createCustomPin(COLORS[v.severidade] || COLORS[v.tipo] || '#3b82f6')}
                                     >
                                         <Popup>
                                             <div className="text-xs p-1">
@@ -408,7 +420,7 @@ const RiskDashboard = ({ hideHeader = false }) => {
                                                 )}
                                             </div>
                                         </Popup>
-                                    </CircleMarker>
+                                    </Marker>
                                 ))}
 
                                 {/* 2. Rendering Cemaden Station Markers */}
@@ -440,6 +452,8 @@ const RiskDashboard = ({ hideHeader = false }) => {
                                         </Marker>
                                     )
                                 ))}
+                                {/* Orthofotos Globais do Sistema */}
+                                <OrthofotsLayer />
                             </MapContainer>
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center bg-slate-100 text-slate-400">

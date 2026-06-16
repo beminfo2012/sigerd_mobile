@@ -8,9 +8,35 @@ import {
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
     Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield
 } from 'lucide-react'
-import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap, Marker } from 'react-leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
+import OrthofotsLayer from '../../components/OrthofotsLayer'
+
+const createCustomPin = (color) => {
+    return L.divIcon({
+        className: 'custom-pin-marker',
+        html: `
+            <div style="position: relative; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center;">
+                <svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3));">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="${color}" stroke="#ffffff" stroke-width="1.5"/>
+                    <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -30]
+    });
+};
+
+const LegendPin = ({ color }) => (
+    <svg viewBox="0 0 24 24" width="12" height="12" className="inline-block flex-shrink-0" style={{ filter: 'drop-shadow(0px 1px 1.5px rgba(0,0,0,0.15))' }}>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={color} stroke="#ffffff" strokeWidth="1.5"/>
+        <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
+    </svg>
+);
 import {
     getPendingSyncCount, syncPendingData, getAllVistoriasLocal,
     getRemoteVistoriasCache, pullAllData, resetDatabase, getManualReadings,
@@ -572,15 +598,14 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                     <HeatmapLayer points={list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 35, blur: 20, opacity: 0.7 }} />
                     <AreasRiscoLayer data={areasRisco} tiposAtivos={null} />
                     {list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
-                        <CircleMarker
-                            key={idx} center={[loc.lat, loc.lng]} radius={14}
-                            pathOptions={{
-                                color: '#fff',
-                                fillColor: viewMode === 'ocorrencias'
+                        <Marker
+                            key={idx}
+                            position={[loc.lat, loc.lng]}
+                            icon={createCustomPin(
+                                viewMode === 'ocorrencias'
                                     ? (loc.status === 'Em Atendimento' ? '#f59e0b' : loc.status === 'Pendente' ? '#ef4444' : '#3b82f6')
-                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Iminente') ? '#dc2626' : '#f59e0b'),
-                                fillOpacity: 1, weight: 6
-                            }}
+                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Iminente') ? '#dc2626' : '#f59e0b')
+                            )}
                         />
                     ))}
                 </MapContainer>
@@ -1248,11 +1273,11 @@ const MobileDashboardView = ({
                     </div>
 
                     <div className="bg-white dark:bg-slate-800 p-2 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
-                        <div className="h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0">
-                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                        <div className={`h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0 ${mapStyle === 'satellite' ? 'leaflet-satellite-wrapper' : ''}`}>
+                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
                                 <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Mobile - Absolute inside map) */}
-                                <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-1.5">
+                                <div className="absolute top-4 left-4 z-[9999] flex flex-col gap-1.5">
                                     <button
                                         onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
                                         className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700 active:scale-90 transition-transform"
@@ -1270,6 +1295,7 @@ const MobileDashboardView = ({
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
                                 <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                <OrthofotsLayer />
                                 {/* Camada de Áreas de Risco (toggle por tipo) */}
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
@@ -1298,13 +1324,11 @@ const MobileDashboardView = ({
                                     </CircleMarker>
                                 ))}
                                 {filteredLocations?.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
-                                    <CircleMarker
+                                    <Marker
                                         key={idx}
-                                        center={[loc.lat, loc.lng]}
-                                        radius={5}
-                                        pathOptions={{
-                                            color: mapStyle === 'street' ? '#fff' : '#3b82f6',
-                                            fillColor: viewMode === 'ocorrencias'
+                                        position={[loc.lat, loc.lng]}
+                                        icon={createCustomPin(
+                                            viewMode === 'ocorrencias'
                                                 ? (loc.status === 'Cancelada' ? '#64748b' :
                                                     loc.status === 'Em Análise' ? '#f97316' :
                                                         loc.status === 'Em Atendimento' ? '#f59e0b' :
@@ -1313,10 +1337,8 @@ const MobileDashboardView = ({
                                                                     '#ef4444') // Pendente
                                                 : viewMode === 'interdicoes'
                                                     ? (loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b')
-                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
-                                            fillOpacity: 0.9,
-                                            weight: 2
-                                        }}
+                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316')
+                                        )}
                                     >
                                         <Popup minWidth={180}>
                                             <div className="p-1">
@@ -1335,29 +1357,29 @@ const MobileDashboardView = ({
                                                 </div>
                                             </div>
                                         </Popup>
-                                    </CircleMarker>
+                                    </Marker>
                                 ))}
                             </MapContainer>
                             {/* Standard Mobile Legend */}
-                            <div className="absolute bottom-2 right-2 z-[1000] bg-white/95 dark:bg-slate-800/95 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 text-[8px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-1.5">
+                            <div className="absolute bottom-2 right-2 z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 rounded-xl shadow-2xl border border-slate-250/80 dark:border-slate-800 text-[8px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest space-y-1.5">
                                 <div className="mb-0.5 text-[7px] text-slate-400">LEGENDA DO MAPA</div>
                                 {viewMode === 'ocorrencias' ? (
                                     <>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>Atendido</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>Em Atend.</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>Em Análise</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>Pendente</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-slate-500"></div>Cancelada</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#3b82f6" />Atendido</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#f59e0b" />Em Atend.</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#f97316" />Em Análise</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#ef4444" />Pendente</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#64748b" />Cancelada</div>
                                     </>
                                 ) : viewMode === 'vistorias' ? (
                                     <>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>Risco Alto</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>Risco Baixo</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#ef4444" />Risco Alto</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#f97316" />Risco Baixo</div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-600"></div>Interd. Total</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div>Interd. Parcial</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#dc2626" />Interd. Total</div>
+                                        <div className="flex items-center gap-2"><LegendPin color="#ea580c" />Interd. Parcial</div>
                                     </>
                                 )}
                                 {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (
@@ -1779,11 +1801,11 @@ const WebViewDashboardView = ({
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner">
-                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
+                        <div className={`flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner ${mapStyle === 'satellite' ? 'leaflet-satellite-wrapper' : ''}`}>
+                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
                                 <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Web - Below Zoom) */}
-                                <div className="absolute top-[80px] left-[10px] z-[1000] flex flex-col gap-2">
+                                <div className="absolute top-[80px] left-[10px] z-[9999] flex flex-col gap-2">
                                     <button
                                         onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
                                         className="w-[34px] h-[34px] bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center rounded-[4px] shadow-sm border-2 border-[rgba(0,0,0,0.2)] text-slate-700 dark:text-slate-200 transition-colors"
@@ -1828,13 +1850,11 @@ const WebViewDashboardView = ({
                                     </CircleMarker>
                                 ))}
                                 {filteredLocations?.filter(loc => loc.lat && loc.lng && Math.abs(loc.lat) > 0.01 && !isNaN(loc.lat)).map((loc, idx) => (
-                                    <CircleMarker
+                                    <Marker
                                         key={idx}
-                                        center={[loc.lat, loc.lng]}
-                                        radius={5}
-                                        pathOptions={{
-                                            color: mapStyle === 'street' ? '#fff' : '#3b82f6',
-                                            fillColor: viewMode === 'ocorrencias'
+                                        position={[loc.lat, loc.lng]}
+                                        icon={createCustomPin(
+                                            viewMode === 'ocorrencias'
                                                 ? (loc.status === 'Cancelada' ? '#64748b' :
                                                     loc.status === 'Em Análise' ? '#f97316' :
                                                         loc.status === 'Em Atendimento' ? '#f59e0b' :
@@ -1843,10 +1863,8 @@ const WebViewDashboardView = ({
                                                                     '#ef4444') // Pendente
                                                 : viewMode === 'interdicoes'
                                                     ? (loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b')
-                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316'),
-                                            fillOpacity: 0.9,
-                                            weight: 2
-                                        }}
+                                                    : (String(loc.risk).includes('Alto') || String(loc.risk).includes('Crítico') || String(loc.risk).includes('Perigo') ? '#ef4444' : '#f97316')
+                                        )}
                                     >
                                         <Popup minWidth={220}>
                                             <div className="p-2">
@@ -1867,31 +1885,31 @@ const WebViewDashboardView = ({
                                                 </div>
                                             </div>
                                         </Popup>
-                                    </CircleMarker>
+                                    </Marker>
                                 ))}
                             </MapContainer>
                             {/* Standard Web Legend */}
-                            <div className="absolute bottom-4 right-4 z-[1000] bg-white/5 dark:bg-slate-900/5 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-white/10 dark:border-slate-700/30 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest space-y-2.5">
+                            <div className="absolute bottom-[76px] right-4 md:bottom-4 md:right-4 z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl border border-slate-250/80 dark:border-slate-800 text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest space-y-2.5">
                                 <div className="mb-1 text-[8px] text-slate-400">LEGENDA</div>
                                 {viewMode === 'ocorrencias' ? (
                                     <>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Atendido</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-500"></div>Em Atendimento</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-500"></div>Em Análise</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-500"></div>Pendente</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-slate-500"></div>Cancelada</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#3b82f6" />Atendido</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#f59e0b" />Em Atendimento</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#f97316" />Em Análise</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#ef4444" />Pendente</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#64748b" />Cancelada</div>
                                     </>
                                 ) : viewMode === 'vistorias' ? (
                                     <>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>R4</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>R3</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-500"></div>R2</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-emerald-500"></div>R1</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#dc2626" />R4</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#ea580c" />R3</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#f59e0b" />R2</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#10b981" />R1</div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-600"></div>Total</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-600"></div>Parcial</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#dc2626" />Total</div>
+                                        <div className="flex items-center gap-2.5"><LegendPin color="#ea580c" />Parcial</div>
                                     </>
                                 )}
                                 {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (

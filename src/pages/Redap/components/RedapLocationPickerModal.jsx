@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Polygon, CircleMarker, useMap, useMapEvents, ImageOverlay } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, CircleMarker, useMap, useMapEvents, ImageOverlay, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
+import PizZip from 'pizzip';
 import 'leaflet/dist/leaflet.css';
 import { X, MapPin, Navigation, Check, RotateCcw, Trash2, HelpCircle, Layers, Image as ImageIcon, Plus, Grid, Sliders } from 'lucide-react';
+import { supabase } from '../../../services/supabase';
 
 // Ponto central padrão de Santa Maria de Jetibá
 const DEFAULT_CENTER = [-20.0401, -40.7489];
@@ -89,6 +91,7 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
     const [orthofotoOpacity, setOrthofotoOpacity] = useState(0.7);
     const [alignTrigger, setAlignTrigger] = useState(0);
     const [activeTab, setActiveTab] = useState('desenho'); // 'desenho' | 'orthofoto'
+    const [uploadingOrthofoto, setUploadingOrthofoto] = useState(false);
 
     // Inputs manuais de bounds
     const [boundSouth, setBoundSouth] = useState('');
@@ -225,17 +228,148 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
         );
     };
 
-    const handleOrthofotoUpload = (e) => {
+    const parseKML = (kmlText) => {
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            const coordinatesNodes = xmlDoc.getElementsByTagName('coordinates');
+            const importedPolygons = [];
+            
+            for (let i = 0; i < coordinatesNodes.length; i++) {
+                const coordStr = coordinatesNodes[i].textContent.trim();
+                const coordPairs = coordStr.split(/[\s\r\n]+/);
+                const polygonCoords = [];
+                
+                coordPairs.forEach(pair => {
+                    const parts = pair.split(',');
+                    if (parts.length >= 2) {
+                        const lon = parseFloat(parts[0]);
+                        const lat = parseFloat(parts[1]);
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            polygonCoords.push([lat, lon]);
+                        }
+                    }
+                });
+                
+                if (polygonCoords.length >= 3) {
+                    if (polygonCoords[0][0] === polygonCoords[polygonCoords.length - 1][0] &&
+                        polygonCoords[0][1] === polygonCoords[polygonCoords.length - 1][1]) {
+                        polygonCoords.pop();
+                    }
+                    importedPolygons.push(polygonCoords);
+                }
+            }
+            return importedPolygons;
+        } catch (err) {
+            console.error('Error parsing KML:', err);
+            return [];
+        }
+    };
+
+    const handleOrthofotoUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setOrthofotoUrl(reader.result);
-            // Dispara o alinhamento da imagem com a viewport atual do mapa
-            setAlignTrigger(prev => prev + 1);
-        };
-        reader.readAsDataURL(file);
+        const fileNameLower = file.name.toLowerCase();
+        
+        if (fileNameLower.endsWith('.kml')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const kmlText = event.target.result;
+                const imported = parseKML(kmlText);
+                if (imported.length > 0) {
+                    setPolygons(prev => [...prev, ...imported]);
+                    alert(`${imported.length} área(s) poligonal(is) importada(s) do KML com sucesso!`);
+                    if (imported[0] && imported[0][0]) {
+                        setMapCenter(imported[0][0]);
+                    }
+                } else {
+                    alert('Nenhum polígono válido encontrado no arquivo KML.');
+                }
+            };
+            reader.readAsText(file);
+        } 
+        else if (fileNameLower.endsWith('.kmz')) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const zip = new PizZip(arrayBuffer);
+                const kmlFileEntry = Object.keys(zip.files).find(name => name.toLowerCase().endsWith('.kml'));
+                if (kmlFileEntry) {
+                    const kmlText = zip.files[kmlFileEntry].asText();
+                    const imported = parseKML(kmlText);
+                    if (imported.length > 0) {
+                        setPolygons(prev => [...prev, ...imported]);
+                        alert(`${imported.length} área(s) poligonal(is) importada(s) do KMZ com sucesso!`);
+                        if (imported[0] && imported[0][0]) {
+                            setMapCenter(imported[0][0]);
+                        }
+                    } else {
+                        alert('Nenhum polígono válido encontrado no KMZ.');
+                    }
+                } else {
+                    alert('Nenhum arquivo KML encontrado dentro do KMZ.');
+                }
+            } catch (err) {
+                console.error('Error reading KMZ:', err);
+                alert('Erro ao processar arquivo KMZ. Verifique se o formato está correto.');
+            }
+        }
+        else {
+            // Upload físico para o Supabase Storage
+            setUploadingOrthofoto(true);
+            try {
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                const fileName = `orthofotos/redap_${Date.now()}.${fileExt}`;
+                
+                let uploadUrl = '';
+                
+                if (navigator.onLine) {
+                    const { error: uploadError } = await supabase.storage
+                        .from('vistorias_fotos')
+                        .upload(fileName, file, {
+                            cacheControl: '3600',
+                            upsert: true
+                        });
+                        
+                    if (uploadError) throw uploadError;
+                    
+                    const { data } = supabase.storage
+                        .from('vistorias_fotos')
+                        .getPublicUrl(fileName);
+                        
+                    uploadUrl = data.publicUrl;
+                } else {
+                    throw new Error('Dispositivo Offline');
+                }
+                
+                setOrthofotoUrl(uploadUrl);
+                setAlignTrigger(prev => prev + 1);
+                
+                if (fileExt === 'tif' || fileExt === 'tiff') {
+                    alert('Orthofoto TIFF georreferenciada vinculada e salva na nuvem com sucesso! Ajuste os limites (Bounds) se necessário.');
+                } else {
+                    alert('Imagem de sobreposição carregada e salva na nuvem com sucesso!');
+                }
+            } catch (err) {
+                console.error('Storage upload failed, trying fallback:', err);
+                
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                if (fileExt === 'tif' || fileExt === 'tiff') {
+                    alert('Erro ao fazer upload do arquivo TIFF. Arquivos TIFF georreferenciados necessitam de conexão ativa com a internet.');
+                } else {
+                    // Fallback para Base64 apenas para imagens comuns
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setOrthofotoUrl(reader.result);
+                        setAlignTrigger(prev => prev + 1);
+                        alert('Imagem carregada localmente (offline).');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            } finally {
+                setUploadingOrthofoto(false);
+            }
+        }
     };
 
     const handleAlignToViewport = () => {
@@ -396,29 +530,39 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                         {activeTab === 'orthofoto' && (
                             <div className="space-y-4">
                                 <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/20 rounded-2xl text-[11px] text-blue-700 dark:text-blue-300 font-bold space-y-1">
-                                    <span className="flex items-center gap-1 uppercase tracking-wider text-[10px] font-black"><ImageIcon size={12} /> Upload de Mapas Raster:</span>
+                                    <span className="flex items-center gap-1 uppercase tracking-wider text-[10px] font-black"><ImageIcon size={12} /> Upload de Arquivos Geográficos:</span>
                                     <p className="leading-relaxed font-medium">
-                                        Suba uma imagem aérea (orthofoto) e delimite seus cantos geográficos para sobrepô-la ao mapa base.
+                                        Carregue arquivos GIS de forma leve no sistema: imagens de satélite (PNG, JPG, TIFF) ou vetores geográficos (KML, KMZ).
                                     </p>
                                 </div>
 
                                 {/* Upload input */}
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest ml-1">Carregar Imagem Orthofoto</label>
+                                    <label className="text-[9px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest ml-1">Carregar Imagem / Vetor GIS</label>
                                     <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-750 hover:border-blue-500 rounded-2xl p-4 text-center cursor-pointer transition-all bg-white dark:bg-slate-850">
                                         <input
                                             type="file"
-                                            accept="image/*"
+                                            accept=".png,.jpg,.jpeg,.tif,.tiff,.kml,.kmz"
                                             onChange={handleOrthofotoUpload}
                                             className="absolute inset-0 opacity-0 cursor-pointer"
+                                            disabled={uploadingOrthofoto}
                                         />
-                                        <ImageIcon className="mx-auto text-slate-400 dark:text-slate-600 mb-2" size={24} />
-                                        <p className="text-[10px] font-black text-slate-700 dark:text-slate-350 uppercase">Selecionar Arquivo</p>
-                                        <p className="text-[9px] text-slate-400 mt-1 font-medium">PNG ou JPG</p>
+                                        {uploadingOrthofoto ? (
+                                            <div className="py-2">
+                                                <div className="w-5 h-5 border-2 border-blue-600/35 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+                                                <p className="text-[10px] font-black text-blue-600 uppercase">Enviando Arquivo...</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <ImageIcon className="mx-auto text-slate-400 dark:text-slate-600 mb-2" size={24} />
+                                                <p className="text-[10px] font-black text-slate-700 dark:text-slate-350 uppercase">Selecionar Arquivo</p>
+                                                <p className="text-[9px] text-slate-400 mt-1 font-medium">PNG, JPG, TIFF, KML ou KMZ</p>
+                                            </>
+                                        )}
                                     </div>
-                                    {orthofotoUrl && (
+                                    {orthofotoUrl && !uploadingOrthofoto && (
                                         <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-xl border border-emerald-100 dark:border-emerald-900/20 w-fit">
-                                            ✓ Orthofoto carregada com sucesso
+                                            ✓ Arquivo carregado com sucesso ({(orthofotoUrl === 'TIFF_ATTACHED' || (typeof orthofotoUrl === 'string' && (orthofotoUrl.toLowerCase().endsWith('.tif') || orthofotoUrl.toLowerCase().endsWith('.tiff')))) ? 'TIFF Georreferenciado' : 'Imagem de Sobreposição'})
                                         </p>
                                     )}
                                 </div>
@@ -586,11 +730,24 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
 
                         {/* Exibe a Overlay de Orthofoto */}
                         {orthofotoUrl && orthofotoBounds && (
-                            <ImageOverlay
-                                url={orthofotoUrl}
-                                bounds={orthofotoBounds}
-                                opacity={orthofotoOpacity}
-                            />
+                            (orthofotoUrl === 'TIFF_ATTACHED' || (typeof orthofotoUrl === 'string' && (orthofotoUrl.toLowerCase().endsWith('.tif') || orthofotoUrl.toLowerCase().endsWith('.tiff')))) ? (
+                                <Rectangle
+                                    bounds={orthofotoBounds}
+                                    pathOptions={{
+                                        color: '#ef4444',
+                                        fillColor: '#fca5a5',
+                                        fillOpacity: 0.35,
+                                        weight: 2,
+                                        dashArray: '5, 5'
+                                    }}
+                                />
+                            ) : (
+                                <ImageOverlay
+                                    url={orthofotoUrl}
+                                    bounds={orthofotoBounds}
+                                    opacity={orthofotoOpacity}
+                                />
+                            )
                         )}
 
                         <MapEventsHandler onClick={handleMapClick} />
@@ -610,11 +767,11 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                         </button>
                         <button 
                             onClick={handleConfirm}
-                            disabled={polygons.length === 0 && currentPolygon.length < 3}
+                            disabled={uploadingOrthofoto || (polygons.length === 0 && currentPolygon.length < 3)}
                             className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all shadow-lg shadow-emerald-200 dark:shadow-none flex items-center justify-center gap-2 border border-white/10"
                         >
                             <Check size={14} />
-                            Salvar Alterações Geográficas
+                            {uploadingOrthofoto ? 'Enviando Imagem...' : 'Salvar Alterações Geográficas'}
                         </button>
                     </div>
                 </div>

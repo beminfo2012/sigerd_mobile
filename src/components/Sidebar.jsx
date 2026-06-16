@@ -168,7 +168,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'Configurações',
             icon: Settings,
             path: '/menu',
-            roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin']
+            roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Operador']
         }
     ];
 
