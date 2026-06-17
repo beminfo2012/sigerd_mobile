@@ -151,7 +151,7 @@ const VoluntarioForm = () => {
     const handleAddAreasFromModal = (selectedAreas) => {
         const newAreas = selectedAreas.map(a => ({
             area_id: a.id,
-            nivel_experiencia: 'básico'
+            nivel_experiencia: ''
         }));
         setAreasSelecionadas([...areasSelecionadas, ...newAreas]);
     };
@@ -335,44 +335,50 @@ const VoluntarioForm = () => {
 
                     {areasSelecionadas.length === 0 ? (
                         <div className="text-center p-6 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Nenhuma área selecionada. Adicione pelo menos uma especialidade.</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Nenhuma área selecionada. Clique em "Adicionar Área" para inserir especialidades.</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {areasSelecionadas.map((area, index) => (
-                                <div key={index} className="flex flex-col md:flex-row gap-3 items-center bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                    <div className="flex-1 w-full">
-                                        <select 
-                                            value={area.area_id}
-                                            onChange={(e) => updateArea(index, 'area_id', e.target.value)}
-                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-purple-500 font-bold text-sm text-slate-800 dark:text-slate-200"
+                            {areasSelecionadas.map((area, index) => {
+                                const areaInfo = areasDisponiveis.find(a => a.id === area.area_id);
+                                return (
+                                    <div key={index} className="flex flex-col md:flex-row gap-3 items-center bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                        {/* Nome da área — somente leitura, não é mais um select */}
+                                        <div className="flex-1 w-full flex items-center gap-2 px-3 py-2.5 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-100 dark:border-purple-800/50 rounded-xl">
+                                            <Briefcase size={14} className="text-purple-500 shrink-0" />
+                                            <span className="text-sm font-black text-purple-700 dark:text-purple-400 truncate">
+                                                {areaInfo?.nome || 'Área desconhecida'}
+                                            </span>
+                                        </div>
+                                        {/* Nível de experiência — opção vazia por padrão */}
+                                        <div className="w-full md:w-52">
+                                            <select
+                                                value={area.nivel_experiencia}
+                                                onChange={(e) => updateArea(index, 'nivel_experiencia', e.target.value)}
+                                                required
+                                                className={`w-full px-3 py-2.5 bg-white dark:bg-slate-900 border-2 rounded-xl outline-none focus:border-purple-500 font-bold text-sm transition-colors ${
+                                                    !area.nivel_experiencia
+                                                        ? 'border-amber-400 text-slate-400 dark:text-slate-500'
+                                                        : 'border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
+                                                }`}
+                                            >
+                                                <option value="">Selecione o nível...</option>
+                                                <option value="básico">Básico</option>
+                                                <option value="intermediário">Intermediário</option>
+                                                <option value="avançado">Avançado</option>
+                                                <option value="profissional habilitado">Profissional Habilitado</option>
+                                            </select>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeArea(index)}
+                                            className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors shrink-0"
                                         >
-                                            {areasDisponiveis.map(a => (
-                                                <option key={a.id} value={a.id}>{a.nome}</option>
-                                            ))}
-                                        </select>
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
-                                    <div className="w-full md:w-48">
-                                        <select 
-                                            value={area.nivel_experiencia}
-                                            onChange={(e) => updateArea(index, 'nivel_experiencia', e.target.value)}
-                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-purple-500 font-bold text-sm text-slate-800 dark:text-slate-200"
-                                        >
-                                            <option value="básico">Básico</option>
-                                            <option value="intermediário">Intermediário</option>
-                                            <option value="avançado">Avançado</option>
-                                            <option value="profissional habilitado">Profissional Habilitado</option>
-                                        </select>
-                                    </div>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => removeArea(index)}
-                                        className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors shrink-0"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
