@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { 
     Search, Plus, ArrowLeft, Filter, 
     UserCheck, MapPin, Briefcase, Phone,
-    Eye, Edit2, Trash2, ChevronDown, Award, X
+    Eye, Edit2, Trash2, ChevronDown, Award, X, FileText
 } from 'lucide-react';
 import { getVoluntarios, deleteVoluntario, getAreasAtuacao } from '../../services/voluntariosService';
 import { useToast } from '../../components/ToastNotification';
+import VoluntarioViewModal from './VoluntarioViewModal';
 
 const STATUS_CONFIG = {
     'ativo':      { label: 'Ativo',       color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
@@ -36,6 +37,9 @@ const VoluntarioList = () => {
     // Confirm delete state
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [deleting, setDeleting] = useState(false);
+
+    // View Modal state
+    const [viewModalVoluntario, setViewModalVoluntario] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -109,9 +113,9 @@ const VoluntarioList = () => {
                 
                 <button
                     onClick={() => navigate('/voluntarios/novo')}
-                    className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2"
+                    className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-all flex items-center gap-2 border border-blue-400 dark:border-blue-300/30"
                 >
-                    <Plus size={14} /> Novo
+                    <Plus size={18} /> Novo Voluntário
                 </button>
             </header>
 
@@ -248,8 +252,15 @@ const VoluntarioList = () => {
                                     {/* Linha 4: Botões de Ação */}
                                     <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
                                         <button
-                                            onClick={() => navigate(`/voluntarios/editar/${voluntario.id}`)}
-                                            title="Visualizar / Editar"
+                                            onClick={() => window.open(`/voluntarios/termo/${voluntario.id}`, '_blank')}
+                                            title="Termo de Voluntariado"
+                                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors mr-auto"
+                                        >
+                                            <FileText size={14} /> Termo
+                                        </button>
+                                        <button
+                                            onClick={() => setViewModalVoluntario(voluntario)}
+                                            title="Visualizar Detalhes"
                                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                                         >
                                             <Eye size={14} /> Ver
@@ -307,6 +318,19 @@ const VoluntarioList = () => {
                     </div>
                 </div>
             )}
+
+            <VoluntarioViewModal
+                voluntario={viewModalVoluntario}
+                onClose={() => setViewModalVoluntario(null)}
+                onEdit={() => {
+                    navigate(`/voluntarios/editar/${viewModalVoluntario.id}`);
+                    setViewModalVoluntario(null);
+                }}
+                onDelete={() => {
+                    setConfirmDelete(viewModalVoluntario);
+                    setViewModalVoluntario(null);
+                }}
+            />
         </div>
     );
 };

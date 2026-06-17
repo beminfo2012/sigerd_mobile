@@ -8,6 +8,7 @@ import { getVoluntarioById, saveVoluntario, getAreasAtuacao } from '../../servic
 import { useToast } from '../../components/ToastNotification';
 import bairrosDataRaw from '../../data/Bairros.json';
 import SearchableSelect from '../../components/SearchableSelect';
+import AreaAtuacaoModal from './AreaAtuacaoModal';
 
 // Helper masks
 const applyCpfMask = (value) => {
@@ -40,6 +41,7 @@ const VoluntarioForm = () => {
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
     
     // Form States
     const [voluntario, setVoluntario] = useState({
@@ -146,17 +148,16 @@ const VoluntarioForm = () => {
         }
     };
 
-    const addArea = () => {
-        if (areasDisponiveis.length > 0) {
-            const firstAvailable = areasDisponiveis.find(a => !areasSelecionadas.some(s => s.area_id === a.id));
-            if (firstAvailable) {
-                setAreasSelecionadas([...areasSelecionadas, { area_id: firstAvailable.id, nivel_experiencia: 'básico' }]);
-            } else {
-                toast.warning('Todas as áreas disponíveis já foram adicionadas.');
-            }
-        } else {
-            toast.error('Nenhuma área de atuação cadastrada no sistema.');
-        }
+    const handleAddAreasFromModal = (selectedAreas) => {
+        const newAreas = selectedAreas.map(a => ({
+            area_id: a.id,
+            nivel_experiencia: 'básico'
+        }));
+        setAreasSelecionadas([...areasSelecionadas, ...newAreas]);
+    };
+
+    const handleAreaCreated = (newArea) => {
+        setAreasDisponiveis([...areasDisponiveis, newArea].sort((a, b) => a.nome.localeCompare(b.nome)));
     };
 
     const updateArea = (index, field, value) => {
@@ -175,6 +176,14 @@ const VoluntarioForm = () => {
         } else {
             setDisponibilidade({ ...disponibilidade, dias_semana: [...disponibilidade.dias_semana, dia] });
         }
+    };
+
+    const marcarTodosDias = () => {
+        setDisponibilidade({ ...disponibilidade, dias_semana: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'] });
+    };
+
+    const limparTodosDias = () => {
+        setDisponibilidade({ ...disponibilidade, dias_semana: [] });
     };
 
     if (loading) {
@@ -317,7 +326,7 @@ const VoluntarioForm = () => {
                         </h2>
                         <button 
                             type="button"
-                            onClick={addArea}
+                            onClick={() => setIsAreaModalOpen(true)}
                             className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
                         >
                             <Plus size={12} /> Adicionar Área
@@ -376,7 +385,14 @@ const VoluntarioForm = () => {
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Dias da Semana Disponíveis</label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Dias da Semana Disponíveis</label>
+                                <div className="flex items-center gap-2">
+                                    <button type="button" onClick={marcarTodosDias} className="text-[10px] font-bold text-amber-600 hover:text-amber-700 uppercase tracking-widest transition-colors">Marcar Todos</button>
+                                    <span className="text-slate-300">|</span>
+                                    <button type="button" onClick={limparTodosDias} className="text-[10px] font-bold text-slate-500 hover:text-slate-700 uppercase tracking-widest transition-colors">Limpar</button>
+                                </div>
+                            </div>
                             <div className="flex flex-wrap gap-2">
                                 {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map(dia => {
                                     const isSelected = disponibilidade.dias_semana.includes(dia);
@@ -410,7 +426,6 @@ const VoluntarioForm = () => {
                                     <option value="Manhã">Manhã</option>
                                     <option value="Tarde">Tarde</option>
                                     <option value="Noite">Noite</option>
-                                    <option value="Finais de Semana">Apenas Finais de Semana</option>
                                 </select>
                             </div>
                             <div className="space-y-1.5">
@@ -422,7 +437,8 @@ const VoluntarioForm = () => {
                                 >
                                     <option value="Bairro">Apenas no próprio Bairro</option>
                                     <option value="Município">Em todo o Município</option>
-                                    <option value="Região">Na Região (Municípios Vizinhos)</option>
+                                    <option value="Região">Na Região</option>
+                                    <option value="Municípios Vizinhos">Em Municípios Vizinhos</option>
                                 </select>
                             </div>
                         </div>
@@ -444,7 +460,7 @@ const VoluntarioForm = () => {
                                 className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl outline-none focus:border-blue-500 transition-colors font-bold text-sm text-slate-800 dark:text-slate-200"
                             >
                                 <option value="Independente">Independente</option>
-                                <option value="NUDEC">Membro de NUDEC</option>
+                                <option value="NUPDEC">Membro de NUPDEC</option>
                                 <option value="Servidor Público">Servidor Público</option>
                                 <option value="Profissional Liberal">Profissional Liberal</option>
                                 <option value="Entidade Parceira (ONG/Igreja)">Entidade Parceira</option>
@@ -497,6 +513,16 @@ const VoluntarioForm = () => {
                 </div>
 
             </main>
+
+            {/* Modal de Áreas de Atuação */}
+            <AreaAtuacaoModal
+                isOpen={isAreaModalOpen}
+                onClose={() => setIsAreaModalOpen(false)}
+                areasDisponiveis={areasDisponiveis}
+                areasSelecionadas={areasSelecionadas}
+                onConfirm={handleAddAreasFromModal}
+                onAreaCreated={handleAreaCreated}
+            />
         </div>
     );
 };

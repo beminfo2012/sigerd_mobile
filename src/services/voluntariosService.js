@@ -142,16 +142,22 @@ export const getAreasAtuacao = async () => {
 export const saveAreaAtuacao = async (area) => {
     try {
         if (area.id) {
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('areas_atuacao')
                 .update({ nome: area.nome, descricao: area.descricao, updated_at: new Date().toISOString() })
-                .eq('id', area.id);
+                .eq('id', area.id)
+                .select()
+                .single();
             if (error) throw error;
+            return data;
         } else {
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('areas_atuacao')
-                .insert([{ nome: area.nome, descricao: area.descricao }]);
+                .insert([{ nome: area.nome, descricao: area.descricao }])
+                .select()
+                .single();
             if (error) throw error;
+            return data;
         }
     } catch (error) {
         console.error('Erro ao salvar área de atuação:', error);

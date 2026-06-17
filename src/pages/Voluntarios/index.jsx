@@ -10,14 +10,6 @@ const VoluntariosDashboard = () => {
 
     const modules = [
         {
-            title: 'Novo Voluntário',
-            description: 'Cadastrar novo membro no banco de voluntários',
-            icon: PlusCircle,
-            color: 'text-emerald-500',
-            bg: 'bg-emerald-50 dark:bg-emerald-500/10',
-            path: '/voluntarios/novo'
-        },
-        {
             title: 'Banco de Voluntários',
             description: 'Buscar, filtrar e gerenciar cadastros',
             icon: Search,

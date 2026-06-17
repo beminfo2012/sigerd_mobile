@@ -82,6 +82,7 @@ const VoluntarioForm = lazy(() => import('./pages/Voluntarios/VoluntarioForm'))
 const AcionamentosList = lazy(() => import('./pages/Voluntarios/AcionamentosList'))
 const MissoesList = lazy(() => import('./pages/Voluntarios/MissoesList'))
 const HabilidadesList = lazy(() => import('./pages/Voluntarios/HabilidadesList'))
+const TermoVoluntariado = lazy(() => import('./pages/Voluntarios/TermoVoluntariado'))
 
 // Contingency Plan (Lazy)
 const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
@@ -152,7 +153,7 @@ const AppContent = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const isPrintPage = location.pathname.includes('/imprimir/') || location.pathname.includes('/relatorio-situacional/imprimir') || location.search.includes('fullscreen=true');
+    const isPrintPage = location.pathname.includes('/imprimir/') || location.pathname.includes('/relatorio-situacional/imprimir') || location.pathname.includes('/termo/') || location.search.includes('fullscreen=true');
     const isTvMode = location.search.includes('tvMode=true');
 
     useEffect(() => {
@@ -506,6 +507,11 @@ const AppContent = ({
                                 <Route path="/voluntarios/editar/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <VoluntarioForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/termo/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <TermoVoluntariado />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/voluntarios/acionamentos" element={
