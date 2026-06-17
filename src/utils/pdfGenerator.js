@@ -62,7 +62,14 @@ const normalizeData = (data, type) => {
                 }
                 return apoio;
             })(),
-            checklistRespostas: data.checklistRespostas || data.checklist_respostas || {}
+            checklistRespostas: data.checklistRespostas || data.checklist_respostas || {},
+            avaliacaoArborea: (() => {
+                let av = data.avaliacaoArborea || data.avaliacao_arborea || null;
+                if (typeof av === 'string') {
+                    try { av = JSON.parse(av); } catch (e) { av = null; }
+                }
+                return av;
+            })()
         };
     } else if (type === 'desinterdicao') {
         const photos = (() => {
@@ -234,8 +241,14 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
     };
 
     const getNivelBadge = (nivel) => {
+        let n = nivel;
+        if (n === 'Moderado') n = 'Médio';
         const colors = { 'Baixo': '#22c55e', 'Médio': '#eab308', 'Alto': '#f97316', 'Iminente': '#ef4444' };
-        return `<span style="color: ${colors[nivel] || '#64748b'}; font-size: 11px; font-weight: 900; border-bottom: 2px solid ${colors[nivel] || '#64748b'}; text-transform: uppercase;">${nivel}</span>`;
+        const display = n === 'Baixo' ? 'R1 · Baixo' :
+                        n === 'Médio' ? 'R2 · Médio' :
+                        n === 'Alto' ? 'R3 · Alto' :
+                        n === 'Iminente' ? 'R4 · Muito Alto / Iminente' : n;
+        return `<span style="color: ${colors[n] || '#64748b'}; font-size: 11px; font-weight: 900; border-bottom: 2px solid ${colors[n] || '#64748b'}; text-transform: uppercase;">${display}</span>`;
     };
 
     let contentHtml = `<div style="padding: 0 40px 40px 40px;">`;
@@ -274,6 +287,41 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                     ${renderField('Tipologia / Subtipos', data.subtiposRisco.map(s => s === 'Outros' ? `Outros (${data.subtipoRiscoOutros})` : s).join(', ') || '---')}
                 </div>
             </div>
+
+            ${(() => {
+                const av = data.avaliacaoArborea;
+                const hasAv = av && (av.parte_afetada || av.porte_arvore || av.frequencia_ocupacao_alvo);
+                if (!hasAv) return '';
+                
+                const mapping = {
+                    pequeno: 'Pequeno (≤ 5m)',
+                    medio: 'Médio (5m a 15m)',
+                    grande: 'Grande (≥ 15m)',
+                    tronco: 'Tronco',
+                    raiz: 'Raiz / Solo',
+                    copa_ramos: 'Copa / Ramos',
+                    base: 'Base / Colo',
+                    ocasional: 'Ocasional',
+                    intermitente: 'Intermitente',
+                    frequente: 'Frequente',
+                    constante: 'Constante'
+                };
+                
+                const parte = mapping[av.parte_afetada] || av.parte_afetada || '---';
+                const porte = mapping[av.porte_arvore] || av.porte_arvore || '---';
+                const alvo = mapping[av.frequencia_ocupacao_alvo] || av.frequencia_ocupacao_alvo || '---';
+                
+                return `
+                    <div style="margin-top: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 15px; page-break-inside: avoid;">
+                        <div style="font-size: 10px; color: #166534; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">AVALIAÇÃO ARBÓREA ESTRUTURADA (NBR 16246-3)</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            ${renderField('Defeito / Parte Afetada', parte)}
+                            ${renderField('Porte da Árvore', porte)}
+                            ${renderField('Ocupação do Alvo (QTRA)', alvo)}
+                        </div>
+                    </div>
+                `;
+            })()}
 
             <div style="page-break-before: always; height: 1px;"></div>
 

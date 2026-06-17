@@ -1,18 +1,25 @@
 export const CHECKLIST_DATA = {
     'Geológico / Geotécnico': [
         'Existem trincas no solo ou degraus de abatimento',
-        'Há inclinação excessiva de árvores, postes ou muros',
+        'Há inclinação excessiva de árvores ou postes (indício de movimento lento do solo)',
+        'Há muros, cercas ou estruturas com inclinação, fissura ou sinal de tombamento',
         'Foi observado afloramento de água (minas) no terreno',
         'O talude possui evidências de escorregamento recente',
         'Existem blocos de rocha instáveis acima do imóvel',
         'Há sinais de erosão avançada (ravinas/voçorocas)',
-        'O solo apresenta-se saturado ou com lama fluida'
+        'O solo apresenta-se saturado ou com lama fluida',
+        'Há lançamento de água pluvial ou esgoto concentrado sobre o talude',
+        'O corte ou aterro existente apresenta geometria inadequada (ângulo/altura excessivos)',
+        'Há sobrecarga na crista do talude (entulho, construção ou material depositado)',
+        'Há surgência de água com carreamento visível de partículas de solo (piping)',
+        'Existe muro de contenção com fissura, tombamento ou sinal de empuxo',
+        'Há registro de ocorrência anterior no mesmo local'
     ],
     'Hidrológico': [
         'A água atingiu ou pode atingir o interior do imóvel',
         'Existem bueiros ou redes de drenagem obstruídas',
         'O imóvel está em área de preservação permanente (APP)',
-        'Há sinais de erosão marginal em córrego próximo',
+        'Há sinais de erosão marginal in córrego próximo',
         'O escoamento de água da chuva é direcionado para o talude',
         'Há histórico de inundações recorrentes neste local',
         'Foi observado refluxo de esgoto durante as chuvas',
@@ -32,9 +39,17 @@ export const CHECKLIST_DATA = {
         'A edificação apresenta sinais de colapso parcial'
     ],
     'Ambiental': [
-        'Há risco iminente de queda de árvore sobre benfeitorias',
+        'Há inclinação excessiva do tronco ou desequilíbrio acentuado da copa',
+        'Existem cavidades, podridão ou sinais de fungos no tronco, base ou raízes',
+        'Há rachaduras, fendas ou fissuras no tronco ou em ramos estruturais',
+        'As raízes estão expostas, cortadas ou comprometidas por obra, calçada ou escavação',
+        'Há galhos secos, quebrados ou suspensos na copa (deadwood)',
+        'Foi identificado ataque de cupim, broca ou outra infestação',
+        'Há sinais de declínio fisiológico (copa rala, folhas amareladas, morte de ramos)',
+        'Há pessoas, veículos, edificações, rede elétrica ou via pública na possível trajetória de queda (alvo exposto)',
+        'Há sinais de queimada ou incêndio recente na vegetação',
+        'Há solo exposto sem cobertura vegetal, com risco de erosão',
         'Existem indícios de contaminação de fonte de água',
-        'Há queima de vegetação ou solo exposto em área de risco',
         'Foi detectado descarte irregular de resíduos perigosos',
         'A vegetação local está morta ou em processo de degradação'
     ],

@@ -629,6 +629,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
                 encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (Array.isArray(item.encaminhamentos) ? item.encaminhamentos : []),
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
+                avaliacao_arborea: item.avaliacaoArborea || item.avaliacao_arborea || null,
 
                 fotos: processedPhotos,
                 documentos: Array.isArray(item.documentos) ? item.documentos : [],

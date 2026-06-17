@@ -37,11 +37,38 @@ const bairrosData = bairrosDataRaw
 
 
 const RISK_DATA = {
-    'Geológico / Geotécnico': [
-        'Deslizamento de Terra', 'Movimento de Massa', 'Erosão do Solo', 'Ravina', 'Voçoroca',
-        'Queda de Blocos Rochosos', 'Recalque do Solo', 'Subsidência', 'Instabilidade de Encosta',
-        'Soterramento', 'Colapso de Talude', 'Trinca no Terreno', 'Afloramento de Água'
-    ],
+    'Geológico / Geotécnico': {
+        isGrouped: true,
+        groups: [
+            {
+                name: 'Grupo 1 — Movimentos de Massa',
+                items: [
+                    'Deslizamento Planar',
+                    'Deslizamento Rotacional',
+                    'Deslizamento em Cunha',
+                    'Rastejo',
+                    'Corrida de Massa / Fluxo de Detritos',
+                    'Queda / Rolamento de Blocos Rochosos'
+                ]
+            },
+            {
+                name: 'Grupo 2 — Processos Erosivos',
+                items: [
+                    'Erosão Laminar',
+                    'Erosão em Sulco',
+                    'Ravina',
+                    'Voçoroca'
+                ]
+            },
+            {
+                name: 'Grupo 3 — Recalque e Subsidência',
+                items: [
+                    'Subsidência (colapso de vazios subterrâneos)',
+                    'Recalque Diferencial do Solo'
+                ]
+            }
+        ]
+    },
     'Hidrológico': [
         'Alagamento', 'Inundação', 'Enxurrada', 'Transbordamento de Rio', 'Transbordamento de Córrego',
         'Assoreamento', 'Obstrução de Drenagem', 'Rompimento de Galeria Pluvial', 'Erosão Marginal',
@@ -53,11 +80,43 @@ const RISK_DATA = {
         'Edificação Abandonada', 'Estrutura Pós-Incêndio', 'Estrutura Comprometida por Infiltração',
         'Fundação Aparente', 'Pilar / Viga Comprometidos'
     ],
-    'Ambiental': [
-        'Queda de Árvore', 'Árvore com Risco de Queda', 'Galhos sobre Via ou Rede Elétrica',
-        'Incêndio Florestal', 'Queimada Irregular', 'Supressão Vegetal Irregular', 'Contaminação do Solo',
-        'Contaminação da Água', 'Assoreamento Ambiental', 'Erosão Ambiental', 'Deslizamento em Área Verde', 'Fauna em Risco'
-    ],
+    'Ambiental': {
+        isGrouped: true,
+        groups: [
+            {
+                name: 'Grupo 1 — Risco Arbóreo',
+                items: [
+                    'Queda de Árvore Inteira (Tombamento)',
+                    'Queda de Galho ou Ramo',
+                    'Fratura ou Quebra de Tronco',
+                    'Desenraizamento / Falha Radicular',
+                    'Galhos em Conflito com Rede Elétrica ou Via Pública'
+                ]
+            },
+            {
+                name: 'Grupo 2 — Incêndio e Queima',
+                items: [
+                    'Incêndio Florestal',
+                    'Queimada Irregular'
+                ]
+            },
+            {
+                name: 'Grupo 3 — Degradação e Poluição',
+                items: [
+                    'Supressão Vegetal Irregular',
+                    'Contaminação do Solo',
+                    'Contaminação da Água',
+                    'Assoreamento Ambiental'
+                ]
+            },
+            {
+                name: 'Grupo 4 — Fauna',
+                items: [
+                    'Risco Associado à Fauna'
+                ]
+            }
+        ]
+    },
     'Tecnológico': [
         'Vazamento de Gás', 'Vazamento de Produto Químico', 'Derramamento de Combustível',
         'Derramamento de Óleo', 'Explosão', 'Incêndio Industrial', 'Risco Elétrico', 'Poste com Risco de Queda',
@@ -304,6 +363,11 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             assinatura: null
         },
         checklistRespostas: {}, // { "pergunta": true/false }
+        avaliacaoArborea: {
+            parte_afetada: '',
+            porte_arvore: '',
+            frequencia_ocupacao_alvo: ''
+        },
         temApoioTecnico: false
     })
 
@@ -364,14 +428,51 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 } catch (e) { return val; }
             };
 
+            let mappedSubtipos = Array.isArray(initialData.subtipos_risco || initialData.subtiposRisco)
+                ? (initialData.subtipos_risco || initialData.subtiposRisco)
+                : [];
+            mappedSubtipos = mappedSubtipos.map(sub => {
+                if (sub === 'Queda de Árvore' || sub === 'Árvore com Risco de Queda') return 'Queda de Árvore Inteira (Tombamento)';
+                if (sub === 'Deslizamento de Terra' || sub === 'Colapso de Talude' || sub === 'Instabilidade de Encosta' || sub === 'Movimento de Massa') return 'Deslizamento Planar';
+                if (sub === 'Erosão do Solo') return 'Erosão Laminar';
+                if (sub === 'Subsidência') return 'Subsidência (colapso de vazios subterrâneos)';
+                if (sub === 'Recalque do Solo') return 'Recalque Diferencial do Solo';
+                return sub;
+            });
+
+            let rawNivel = initialData.nivel_risco || initialData.nivelRisco || 'Baixo';
+            if (rawNivel === 'Moderado') rawNivel = 'Médio';
+
+            const rawChecklist = parseJSON(initialData.checklist_respostas || initialData.checklistRespostas, {});
+            const migratedChecklist = {};
+            Object.entries(rawChecklist).forEach(([key, val]) => {
+                if (key === 'Há inclinação excessiva de árvores, postes ou muros') {
+                    migratedChecklist['Há inclinação excessiva de árvores ou postes (indício de movimento lento do solo)'] = val;
+                    migratedChecklist['Há muros, cercas ou estruturas com inclinação, fissura ou sinal de tombamento'] = val;
+                } else if (key === 'Há risco iminente de queda de árvore sobre benfeitorias') {
+                    migratedChecklist['Há inclinação excessiva do tronco ou desequilíbrio acentuado da copa'] = val;
+                    migratedChecklist['Há pessoas, veículos, edificações, rede elétrica ou via pública na possível trajetória de queda (alvo exposto)'] = val;
+                } else if (key === 'Há queima de vegetação ou solo exposto em área de risco') {
+                    migratedChecklist['Há sinais de queimada ou incêndio recente na vegetação'] = val;
+                    migratedChecklist['Há solo exposto sem cobertura vegetal, com risco de erosão'] = val;
+                } else {
+                    migratedChecklist[key] = val;
+                }
+            });
+
+            const parsedAvaliacao = parseJSON(initialData.avaliacao_arborea || initialData.avaliacaoArborea, {
+                parte_afetada: '',
+                porte_arvore: '',
+                frequencia_ocupacao_alvo: ''
+            });
+
             setFormData({
                 ...initialData,
-                // Map snake_case from DB to camelCase for form state
                 vistoriaId: initialData.vistoria_id || initialData.vistoriaId,
                 dataHora: formatDateTime(initialData.data_hora || initialData.dataHora),
                 categoriaRisco: initialData.categoria_risco || initialData.categoriaRisco || '',
-                subtiposRisco: Array.isArray(initialData.subtipos_risco || initialData.subtiposRisco) ? (initialData.subtipos_risco || initialData.subtiposRisco) : [],
-                nivelRisco: initialData.nivel_risco || initialData.nivelRisco || 'Baixo',
+                subtiposRisco: mappedSubtipos,
+                nivelRisco: rawNivel,
                 situacaoObservada: initialData.situacao_observada || initialData.situacaoObservada || 'Estabilizado',
                 populacaoEstimada: initialData.populacao_estimada || initialData.populacaoEstimada || '',
                 residenciasEmRisco: initialData.residencias_em_risco || initialData.residenciasEmRisco || '',
@@ -388,7 +489,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     cargo: apoio?.cargo || '',
                     assinatura: apoio?.assinatura || null
                 },
-                checklistRespostas: parseJSON(initialData.checklist_respostas || initialData.checklistRespostas, {}),
+                checklistRespostas: migratedChecklist,
+                avaliacaoArborea: parsedAvaliacao,
                 temApoioTecnico: !!(apoio?.nome || apoio?.assinatura),
                 fotos: (parseJSON(initialData.fotos, [])).map((f, i) =>
                     typeof f === 'string'
@@ -1390,8 +1492,185 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </div>
                             )}
 
+                            {/* Subtipos de Risco Dinâmicos */}
+                            {formData.categoriaRisco && RISK_DATA[formData.categoriaRisco] && (() => {
+                                const dataRisk = RISK_DATA[formData.categoriaRisco];
+                                if (dataRisk.isGrouped) {
+                                    return (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                            <label className={labelClasses}>Subtipos de Risco</label>
+                                            <div className="space-y-4">
+                                                {dataRisk.groups.map(group => (
+                                                    <div key={group.name} className="space-y-3 p-4 sm:p-5 rounded-[2rem] bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/80 shadow-sm">
+                                                        <h4 className="font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider pl-1 flex items-center gap-2">
+                                                            <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
+                                                            {group.name}
+                                                        </h4>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            {group.items.map(sub => (
+                                                                <button
+                                                                    key={sub}
+                                                                    type="button"
+                                                                    onClick={() => toggleArrayItem('subtiposRisco', sub)}
+                                                                    className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.subtiposRisco.includes(sub) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/10' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-indigo-200'}`}
+                                                                >
+                                                                    <span className="flex-1 pr-2 leading-snug">{sub}</span>
+                                                                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${formData.subtiposRisco.includes(sub) ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                                                        {formData.subtiposRisco.includes(sub) && <CheckCircle2 size={14} />}
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                } else {
+                                    return (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                            <label className={labelClasses}>Subtipos de Risco</label>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {dataRisk.map(sub => (
+                                                    <button
+                                                        key={sub}
+                                                        type="button"
+                                                        onClick={() => toggleArrayItem('subtiposRisco', sub)}
+                                                        className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.subtiposRisco.includes(sub) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/10' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
+                                                    >
+                                                        <span className="flex-1 pr-2 leading-snug">{sub}</span>
+                                                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${formData.subtiposRisco.includes(sub) ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
+                                                            {formData.subtiposRisco.includes(sub) && <CheckCircle2 size={14} />}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                            })()}
+
+                            {/* Bloco de Avaliação Arbórea Estruturada (NBR 16246-3) */}
+                            {formData.categoriaRisco === 'Ambiental' && formData.subtiposRisco.some(s => [
+                                'Queda de Árvore Inteira (Tombamento)',
+                                'Queda de Galho ou Ramo',
+                                'Fratura ou Quebra de Tronco',
+                                'Desenraizamento / Falha Radicular',
+                                'Galhos em Conflito com Rede Elétrica ou Via Pública'
+                            ].includes(s)) && (
+                                <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-5 sm:p-6 rounded-[2rem] border-2 border-emerald-100/50 dark:border-emerald-900/30 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 shadow-sm">
+                                    <div className="flex items-center justify-between border-b border-emerald-100/50 dark:border-emerald-900/20 pb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/25">
+                                                <ClipboardCheck size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-black text-slate-900 dark:text-slate-100 text-sm uppercase tracking-tight">
+                                                    Avaliação Arbórea Estruturada
+                                                </h3>
+                                                <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider mt-0.5">NBR 16246-3 · Risco de Árvores</p>
+                                            </div>
+                                        </div>
+                                        <span className="text-[9px] font-black bg-emerald-600 text-white px-2.5 py-1 rounded-full uppercase tracking-wider">Obrigatório</span>
+                                    </div>
+
+                                    {/* Parte Afetada */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">Parte Principal Afetada / Defeito</label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                            {[
+                                                { id: 'tronco', label: 'Tronco' },
+                                                { id: 'raiz', label: 'Raiz / Solo' },
+                                                { id: 'copa_ramos', label: 'Copa / Ramos' },
+                                                { id: 'base', label: 'Base / Colo' }
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.id}
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({
+                                                        ...prev,
+                                                        avaliacaoArborea: {
+                                                            ...prev.avaliacaoArborea,
+                                                            parte_afetada: prev.avaliacaoArborea?.parte_afetada === opt.id ? '' : opt.id
+                                                        }
+                                                    }))}
+                                                    className={`p-3 rounded-xl text-xs font-bold border-2 transition-all text-center ${formData.avaliacaoArborea?.parte_afetada === opt.id
+                                                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/20 scale-[1.02]'
+                                                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-emerald-200'
+                                                    }`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Porte da Árvore */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">Porte da Árvore</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { id: 'pequeno', label: 'Pequeno (≤ 5m)' },
+                                                { id: 'medio', label: 'Médio (5m a 15m)' },
+                                                { id: 'grande', label: 'Grande (≥ 15m)' }
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.id}
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({
+                                                        ...prev,
+                                                        avaliacaoArborea: {
+                                                            ...prev.avaliacaoArborea,
+                                                            porte_arvore: prev.avaliacaoArborea?.porte_arvore === opt.id ? '' : opt.id
+                                                        }
+                                                    }))}
+                                                    className={`p-3 rounded-xl text-xs font-bold border-2 transition-all text-center ${formData.avaliacaoArborea?.porte_arvore === opt.id
+                                                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/20 scale-[1.02]'
+                                                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-emerald-200'
+                                                    }`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Frequência de Ocupação do Alvo */}
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">Frequência de Ocupação do Alvo</label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                            {[
+                                                { id: 'ocasional', label: 'Ocasional' },
+                                                { id: 'intermitente', label: 'Intermitente' },
+                                                { id: 'frequente', label: 'Frequente' },
+                                                { id: 'constante', label: 'Constante' }
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.id}
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({
+                                                        ...prev,
+                                                        avaliacaoArborea: {
+                                                            ...prev.avaliacaoArborea,
+                                                            frequencia_ocupacao_alvo: prev.avaliacaoArborea?.frequencia_ocupacao_alvo === opt.id ? '' : opt.id
+                                                        }
+                                                    }))}
+                                                    className={`p-3 rounded-xl text-xs font-bold border-2 transition-all text-center ${formData.avaliacaoArborea?.frequencia_ocupacao_alvo === opt.id
+                                                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/20 scale-[1.02]'
+                                                        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-emerald-200'
+                                                    }`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Checklist Técnico Geral */}
                             {formData.categoriaRisco && formData.categoriaRisco !== 'Estrutural' && CHECKLIST_DATA[formData.categoriaRisco] && (
-                                <div className="bg-blue-50/30 dark:bg-blue-900/10 p-5 rounded-3xl border-2 border-blue-100/50 dark:border-blue-900/30 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="bg-blue-50/30 dark:bg-blue-900/10 p-5 rounded-[2rem] border-2 border-blue-100/50 dark:border-blue-900/30 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-black text-blue-900 dark:text-blue-400 text-[10px] uppercase tracking-wider flex items-center gap-2">
                                             <CheckCircle2 size={18} className="text-blue-600" /> Checklist Técnico
@@ -1422,9 +1701,46 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         type="button"
                                         onClick={() => {
                                             const simAnswers = Object.keys(formData.checklistRespostas).filter(k => formData.checklistRespostas[k] && !k.startsWith('structural:'));
-                                            if (simAnswers.length === 0) return alert("Marque pelo menos um item para consolidar.");
-                                            const text = `CONSTATAÇÕES TÉCNICAS:\n${simAnswers.map(a => `[SIM] ${a}`).join('\n')}\n\n`;
-                                            setFormData(prev => ({ ...prev, observacoes: text + prev.observacoes }));
+                                            
+                                            let arborealText = "";
+                                            const hasArboreal = formData.categoriaRisco === 'Ambiental' && formData.avaliacaoArborea && (
+                                                formData.avaliacaoArborea.parte_afetada || 
+                                                formData.avaliacaoArborea.porte_arvore || 
+                                                formData.avaliacaoArborea.frequencia_ocupacao_alvo
+                                            );
+                                            
+                                            if (hasArboreal) {
+                                                const mapping = {
+                                                    pequeno: 'Pequeno (≤ 5m)',
+                                                    medio: 'Médio (5m a 15m)',
+                                                    grande: 'Grande (≥ 15m)',
+                                                    tronco: 'Tronco',
+                                                    raiz: 'Raiz / Solo',
+                                                    copa_ramos: 'Copa / Ramos',
+                                                    base: 'Base / Colo',
+                                                    ocasional: 'Ocasional',
+                                                    intermitente: 'Intermitente',
+                                                    frequente: 'Frequente',
+                                                    constante: 'Constante'
+                                                };
+                                                
+                                                const parte = mapping[formData.avaliacaoArborea.parte_afetada] || formData.avaliacaoArborea.parte_afetada || 'Não informada';
+                                                const porte = mapping[formData.avaliacaoArborea.porte_arvore] || formData.avaliacaoArborea.porte_arvore || 'Não informado';
+                                                const alvo = mapping[formData.avaliacaoArborea.frequencia_ocupacao_alvo] || formData.avaliacaoArborea.frequencia_ocupacao_alvo || 'Não informada';
+                                                
+                                                arborealText = `AVALIAÇÃO ARBÓREA ESTRUTURADA (NBR 16246-3):\n- Parte Principal Afetada / Defeito: ${parte}\n- Porte da Árvore: ${porte}\n- Frequência de Ocupação do Alvo: ${alvo}\n\n`;
+                                            }
+
+                                            if (simAnswers.length === 0 && !hasArboreal) {
+                                                return alert("Marque pelo menos um item do checklist ou preencha a avaliação arbórea para consolidar.");
+                                            }
+
+                                            const checklistText = simAnswers.length > 0 
+                                                ? `CONSTATAÇÕES TÉCNICAS:\n${simAnswers.map(a => `[SIM] ${a}`).join('\n')}\n\n`
+                                                : "";
+
+                                            const text = arborealText + checklistText;
+                                            setFormData(prev => ({ ...prev, observacoes: text + (prev.observacoes || "") }));
                                         }}
                                         className="w-full p-4 bg-white dark:bg-slate-900 border-2 border-blue-100 dark:border-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-[10px] uppercase tracking-[2px] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all shadow-sm active:scale-[0.98]"
                                     >
@@ -1433,36 +1749,15 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </div>
                             )}
 
-                            {/* Subtipos de Risco Dinâmicos */}
-                            {formData.categoriaRisco && RISK_DATA[formData.categoriaRisco] && (
-                                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                                    <label className={labelClasses}>Subtipos de Risco</label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {RISK_DATA[formData.categoriaRisco].map(sub => (
-                                            <button
-                                                key={sub}
-                                                type="button"
-                                                onClick={() => toggleArrayItem('subtiposRisco', sub)}
-                                                className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.subtiposRisco.includes(sub) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
-                                            >
-                                                {sub}
-                                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${formData.subtiposRisco.includes(sub) ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
-                                                    {formData.subtiposRisco.includes(sub) && <CheckCircle2 size={14} />}
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
+                            {/* Nível de Risco */}
                             <div className="space-y-4">
                                 <label className={labelClasses}>Nível de Risco</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
-                                        { id: 'Baixo', label: 'Baixo', color: 'bg-emerald-500' },
-                                        { id: 'Médio', label: 'Moderado', color: 'bg-amber-500' },
-                                        { id: 'Alto', label: 'Alto', color: 'bg-orange-600' },
-                                        { id: 'Iminente', label: 'Muito Alto / Iminente', color: 'bg-red-600' }
+                                        { id: 'Baixo', label: 'R1 · Baixo', color: 'bg-emerald-500' },
+                                        { id: 'Médio', label: 'R2 · Médio', color: 'bg-amber-500' },
+                                        { id: 'Alto', label: 'R3 · Alto', color: 'bg-orange-600' },
+                                        { id: 'Iminente', label: 'R4 · Muito Alto / Iminente', color: 'bg-red-600' }
                                     ].map(nivel => (
                                         <button
                                             key={nivel.id}
