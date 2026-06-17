@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Printer, X, Download, FileText, Calendar, MapPin, Wind, CloudRain, AlertTriangle, ChevronRight, Activity, ShieldCheck, Map as MapIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import LimiteSMJLayer from '../../components/LimiteSMJLayer';
 import L from 'leaflet';
 import { UserContext } from '../../App';
 const LOGO_DEFESA_CIVIL_SITUACIONAL = '/logo_defesa_civil.png';
@@ -789,6 +790,7 @@ const RelatorioSituacionalPrint = () => {
                                     {activities.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).map((l, i) => (
                                         <Marker key={i} position={[l.lat, l.lng]} icon={L.divIcon({ className: 'custom-m', html: `<div style="background:#ef4444; width:8px; height:8px; border:2px solid white; border-radius:50%; box-shadow:0 0 5px rgba(0,0,0,0.5);"></div>`, iconSize:[8,8], iconAnchor:[4,4] })} />
                                     ))}
+                                    <LimiteSMJLayer keyId="limite-smj-relatorioprint" />
                                     <MapController center={[-20.0246, -40.7464]} markers={activities.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng))} />
                                 </MapContainer>
                             </div>

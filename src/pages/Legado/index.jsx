@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, History, Filter, Map as MapIcon, BarChart3, Search, Calendar, User, Info, ShieldAlert, X, FileText, Upload, Loader2, Eye, Download, Trash2 } from 'lucide-react'
+import { ArrowLeft, History, Filter, Map as MapIcon, BarChart3, Search, Calendar, User, Info, ShieldAlert, X, FileText, Upload, Loader2, Eye, Download, Trash2, ExternalLink } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import LimiteSMJLayer from '../../components/LimiteSMJLayer'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { getLegadoPdf, uploadLegadoPdf } from '../../services/legadoService'
 import { supabase } from '../../services/supabase'
@@ -10,6 +11,22 @@ import 'leaflet/dist/leaflet.css'
 
 // Import legacy data
 import legacyData from '../../data/legacy_vistorias.json'
+
+// Converte URL do Google Drive (view/edit) para URL de preview incorporável
+const getDrivePreviewUrl = (url) => {
+    if (!url) return null
+    // Extrai FILE_ID de formatos: /file/d/FILE_ID/view, /file/d/FILE_ID/edit, /d/FILE_ID/edit
+    const match = url.match(/\/(?:file\/d\/|d\/)([a-zA-Z0-9_-]+)(?:\/|$)/)
+    if (match && match[1]) {
+        return `https://drive.google.com/file/d/${match[1]}/preview`
+    }
+    // Google Docs fallback
+    const docMatch = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)(?:\/|$)/)
+    if (docMatch && docMatch[1]) {
+        return `https://docs.google.com/document/d/${docMatch[1]}/preview`
+    }
+    return url
+}
 
 const LegadoDashboard = () => {
     const navigate = useNavigate()
@@ -24,8 +41,22 @@ const LegadoDashboard = () => {
     const [uploadingPdf, setUploadingPdf] = useState(false)
     const [showPdfViewerModal, setShowPdfViewerModal] = useState(false)
 
+
+
     const handleSelectItem = async (item) => {
         setSelectedItem(item)
+        if (item.drive_url) {
+            const previewUrl = getDrivePreviewUrl(item.drive_url)
+            setPdfRecord({
+                pdf_url: item.drive_url,
+                preview_url: previewUrl,
+                nome_arquivo: `${item.fullTitle}`,
+                created_at: new Date().toISOString(),
+                is_drive: true
+            })
+            setShowPdfViewerModal(true)
+            return
+        }
         setLoadingPdf(true)
         try {
             const record = await getLegadoPdf(item.id)
@@ -273,32 +304,36 @@ const LegadoDashboard = () => {
                 {/* Right Panel: Map */}
                 <div className="col-span-1 lg:col-span-3 relative h-[60vh] lg:h-auto">
                     <MapContainer
-                        center={[-20.0246, -40.6976]} // Santa Maria de Jetibá
-                        zoom={13}
+                        center={[-20.0246, -40.6976]}
+                        zoom={11}
                         style={{ height: '100%', width: '100%', zIndex: 1 }}
                         zoomControl={false}
                     >
                         <TileLayer
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                         />
+
+                        {/* Limite Municipal SMJ */}
+                        <LimiteSMJLayer keyId="limite-smj-legado" />
+
                         {filteredData.filter(item => item.lat != null && item.lon != null && !isNaN(Number(item.lat))).map(item => (
                             <CircleMarker
                                 key={item.id}
                                 center={[item.lat, item.lon]}
-                                radius={7}
+                                radius={item.drive_url ? 8 : 6}
                                 pathOptions={{
-                                    color: '#1e40af',
-                                    fillColor: '#3b82f6',
-                                    fillOpacity: 0.6,
-                                    weight: 2
+                                    color: item.drive_url ? '#1e3a8a' : '#1e40af',
+                                    fillColor: item.drive_url ? '#2563eb' : '#3b82f6',
+                                    fillOpacity: 0.7,
+                                    weight: item.drive_url ? 2.5 : 1.5
                                 }}
                             >
                                 <Popup className="custom-popup">
                                     <div className="p-1 min-w-[220px] font-sans">
                                         <div className="flex items-center gap-2 mb-3">
                                             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center font-black text-sm text-white shadow-lg shadow-blue-500/20">
-                                                {item.number}
+                                                {item.number || '?'}
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Ano Referência</p>
@@ -311,20 +346,17 @@ const LegadoDashboard = () => {
                                                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-tight">Requerente / Objeto</span>
                                                 <p className="text-xs font-bold text-slate-700 leading-snug">{item.requester}</p>
                                             </div>
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-tight">Título Original</span>
-                                                <p className="text-[10px] text-slate-500 italic leading-tight">{item.fullTitle}</p>
-                                            </div>
                                         </div>
 
                                         <div className="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
-                                            <div className="flex items-center gap-1.5">
-                                                <Info size={12} className="text-blue-500" />
-                                                <span className="text-[9px] font-black text-blue-600 uppercase tracking-wider">Histórico Legado</span>
-                                            </div>
+                                            {item.drive_url && (
+                                                <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1">
+                                                    <FileText size={10}/> Parecer vinculado
+                                                </span>
+                                            )}
                                             <button
                                                 onClick={() => handleSelectItem(item)}
-                                                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-750 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
+                                                className="ml-auto px-2.5 py-1 bg-blue-600 hover:bg-blue-750 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
                                             >
                                                 Ver Detalhes
                                             </button>
@@ -439,30 +471,51 @@ const LegadoDashboard = () => {
                                                 </div>
                                             </div>
                                             
-                                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                                <button 
-                                                    onClick={() => setShowPdfViewerModal(true)}
-                                                    className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    <Eye size={14} /> Visualizar
-                                                </button>
-                                                <a 
-                                                    href={pdfRecord.pdf_url}
-                                                    download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-750 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    <Download size={14} /> Baixar
-                                                </a>
-                                            </div>
-                                            
-                                            <button 
-                                                onClick={() => handleDeletePdf(selectedItem.id)}
-                                                className="w-full py-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                                            >
-                                                <Trash2 size={12} /> Remover PDF Anexo
-                                            </button>
+                                            {pdfRecord.is_drive ? (
+                                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                                                    <button
+                                                        onClick={() => setShowPdfViewerModal(true)}
+                                                        className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25"
+                                                    >
+                                                        <Eye size={14} /> Visualizar Parecer no Sistema
+                                                    </button>
+                                                    <a 
+                                                        href={pdfRecord.pdf_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        <ExternalLink size={12} /> Abrir no Google Drive
+                                                    </a>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                                        <button 
+                                                            onClick={() => setShowPdfViewerModal(true)}
+                                                            className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                                                        >
+                                                            <Eye size={14} /> Visualizar
+                                                        </button>
+                                                        <a 
+                                                            href={pdfRecord.pdf_url}
+                                                            download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-750 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                                                        >
+                                                            <Download size={14} /> Baixar
+                                                        </a>
+                                                    </div>
+                                                    
+                                                    <button 
+                                                        onClick={() => handleDeletePdf(selectedItem.id)}
+                                                        className="w-full py-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <Trash2 size={12} /> Remover PDF Anexo
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
@@ -503,27 +556,44 @@ const LegadoDashboard = () => {
             {/* Modal de Visualização do PDF em Tela Cheia */}
             {showPdfViewerModal && pdfRecord && (
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="bg-slate-900 w-full max-w-5xl h-[90vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-800">
+                    <div className="bg-slate-900 w-full max-w-5xl h-[92vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-800">
                         {/* Header */}
-                        <div className="p-5 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
+                        <div className="p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
                             <div className="flex items-center gap-3">
-                                <FileText className="text-blue-500" size={20} />
+                                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+                                    <FileText size={18} className="text-white" />
+                                </div>
                                 <div>
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Visualizando Laudo</h3>
-                                    <p className="text-sm font-black text-slate-200 truncate max-w-[250px] sm:max-w-md">{pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}</p>
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                        {pdfRecord.is_drive ? 'Parecer Técnico · Google Drive' : 'Laudo Digitalizado'}
+                                    </p>
+                                    <p className="text-sm font-black text-slate-200 truncate max-w-[250px] sm:max-w-lg leading-tight">{pdfRecord.nome_arquivo || 'Documento'}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <a 
-                                    href={pdfRecord.pdf_url}
-                                    download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-300 hover:text-white"
-                                    title="Baixar PDF"
-                                >
-                                    <Download size={18} />
-                                </a>
+                                {pdfRecord.is_drive ? (
+                                    <a 
+                                        href={pdfRecord.pdf_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-300 hover:text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider"
+                                        title="Abrir no Drive"
+                                    >
+                                        <ExternalLink size={16} />
+                                        <span className="hidden sm:inline">Drive</span>
+                                    </a>
+                                ) : (
+                                    <a 
+                                        href={pdfRecord.pdf_url}
+                                        download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-300 hover:text-white"
+                                        title="Baixar PDF"
+                                    >
+                                        <Download size={18} />
+                                    </a>
+                                )}
                                 <button 
                                     onClick={() => setShowPdfViewerModal(false)}
                                     className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-300 hover:text-white"
@@ -534,51 +604,33 @@ const LegadoDashboard = () => {
                         </div>
                         
                         {/* Viewer Body */}
-                        <div className="flex-1 bg-slate-950 relative flex items-center justify-center">
-                            {/* Iframe para Desktop (apenas se for link remoto para evitar restrições de iframe em data-urls de browsers) */}
-                            {pdfRecord.pdf_url && !pdfRecord.pdf_url.startsWith('data:') ? (
+                        <div className="flex-1 relative overflow-hidden">
+                            {/* Iframe - funciona para PDF do Supabase E para preview do Google Drive */}
+                            {(pdfRecord.preview_url || (pdfRecord.pdf_url && !pdfRecord.pdf_url.startsWith('data:'))) ? (
                                 <iframe 
-                                    src={pdfRecord.pdf_url} 
-                                    className="w-full h-full border-none hidden md:block"
-                                    title="Visualizador de PDF Legado"
+                                    src={pdfRecord.preview_url || pdfRecord.pdf_url} 
+                                    className="w-full h-full border-none"
+                                    title="Visualizador de Laudo Técnico"
+                                    allow="autoplay"
                                 />
                             ) : (
-                                <div className="hidden md:flex flex-col items-center justify-center p-8 text-center gap-4 text-white">
-                                    <div className="w-20 h-20 rounded-3xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-450">
+                                <div className="flex flex-col items-center justify-center h-full p-8 text-center gap-5 text-white">
+                                    <div className="w-20 h-20 rounded-3xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
                                         <FileText size={40} />
                                     </div>
                                     <div>
-                                        <h4 className="text-base font-black text-slate-200 uppercase tracking-wide">Documento Armazenado Localmente (Offline)</h4>
-                                        <p className="text-xs text-slate-400 mt-2 leading-relaxed max-w-md">Este laudo está armazenado temporariamente no cache local do seu dispositivo. Clique no botão abaixo para abrir ou baixar o PDF diretamente.</p>
+                                        <h4 className="text-base font-black text-slate-200 uppercase tracking-wide">Documento em Cache Local</h4>
+                                        <p className="text-xs text-slate-400 mt-2 leading-relaxed max-w-md">Este laudo está armazenado localmente. Clique abaixo para abrir ou baixar o PDF.</p>
                                     </div>
                                     <a 
                                         href={pdfRecord.pdf_url}
                                         download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
-                                        className="px-6 py-3 bg-blue-650 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
+                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
                                     >
                                         <Download size={16} /> Abrir / Salvar Arquivo PDF
                                     </a>
                                 </div>
                             )}
-                            
-                            {/* Mobile Info/Fallback */}
-                            <div className="md:hidden flex flex-col items-center justify-center p-6 text-center gap-4 text-white">
-                                <div className="w-16 h-16 rounded-3xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                                    <FileText size={32} />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-black text-slate-200 uppercase tracking-wide">Laudo Técnico PDF</p>
-                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-[280px]">Dispositivos móveis exigem um leitor externo para abrir arquivos PDF.</p>
-                                </div>
-                                <a 
-                                    href={pdfRecord.pdf_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
-                                >
-                                    <Eye size={16} /> Abrir Documento Completo
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>

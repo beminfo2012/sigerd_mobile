@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { UserContext } from '../../App'
 import { api } from '../../services/api'
 import {
-    ClipboardList, AlertTriangle, Timer, CloudRain, BarChart3,
+    ClipboardList, ClipboardCheck, AlertTriangle, Timer, CloudRain, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
     Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield
 } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap, Marker } from 'react-leaflet'
+import LimiteSMJLayer from '../../components/LimiteSMJLayer'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
@@ -33,8 +34,8 @@ const createCustomPin = (color) => {
 
 const LegendPin = ({ color }) => (
     <svg viewBox="0 0 24 24" width="12" height="12" className="inline-block flex-shrink-0" style={{ filter: 'drop-shadow(0px 1px 1.5px rgba(0,0,0,0.15))' }}>
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={color} stroke="#ffffff" strokeWidth="1.5"/>
-        <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill={color} stroke="#ffffff" strokeWidth="1.5" />
+        <circle cx="12" cy="9" r="3.5" fill="#ffffff" />
     </svg>
 );
 
@@ -144,7 +145,7 @@ const processLocations = (records, forcedType = null) => {
 
             let lat = pLat || fLat;
             let lng = pLng || fLng;
-            
+
             // Advanced type detection
             let type = forcedType;
             if (!type) {
@@ -493,22 +494,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
                 <MapAutoBounds locations={data.ocorrencias?.locations || []} />
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
-                {limiteSMJ && (
-                    <GeoJSON
-                        data={limiteSMJ}
-                        style={() => ({
-                            color: '#64748b',
-                            fillColor: 'transparent',
-                            fillOpacity: 0,
-                            weight: 2.5,
-                            dashArray: '6, 6',
-                            opacity: 0.8
-                        })}
-                        onEachFeature={(feature, layer) => {
-                            layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
-                        }}
-                    />
-                )}
+                <LimiteSMJLayer keyId="limite-smj-strategic" />
             </MapContainer>
             <div className="absolute bottom-8 right-8 z-[1000] bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-slate-200 text-[9px] font-black text-slate-700 uppercase tracking-widest shadow-lg">
                 <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
@@ -577,22 +563,7 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ }) => {
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                     <MapAutoBounds locations={(rainfall || []).filter(s => s.lat && (s.lon || s.lng))} />
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                    {limiteSMJ && (
-                        <GeoJSON
-                            data={limiteSMJ}
-                            style={() => ({
-                                color: '#64748b',
-                                fillColor: 'transparent',
-                                fillOpacity: 0,
-                                weight: 2.5,
-                                dashArray: '6, 6',
-                                opacity: 0.8
-                            })}
-                            onEachFeature={(feature, layer) => {
-                                layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
-                            }}
-                        />
-                    )}
+                    <LimiteSMJLayer keyId="limite-smj-climate" />
                     {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                         <CircleMarker
                             key={idx}
@@ -659,22 +630,7 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                     <HeatmapLayer points={list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 35, blur: 20, opacity: 0.7 }} />
                     <AreasRiscoLayer data={areasRisco} tiposAtivos={null} />
-                    {limiteSMJ && (
-                        <GeoJSON
-                            data={limiteSMJ}
-                            style={() => ({
-                                color: '#64748b',
-                                fillColor: 'transparent',
-                                fillOpacity: 0,
-                                weight: 2.5,
-                                dashArray: '6, 6',
-                                opacity: 0.8
-                            })}
-                            onEachFeature={(feature, layer) => {
-                                layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
-                            }}
-                        />
-                    )}
+                    <LimiteSMJLayer keyId="limite-smj-ops" />
                     {list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
                         <Marker
                             key={idx}
@@ -1375,22 +1331,7 @@ const MobileDashboardView = ({
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
                                 )}
-                                {limiteSMJ && (
-                                    <GeoJSON
-                                        data={limiteSMJ}
-                                        style={() => ({
-                                            color: '#64748b',
-                                            fillColor: 'transparent',
-                                            fillOpacity: 0,
-                                            weight: 2.5,
-                                            dashArray: '6, 6',
-                                            opacity: 0.8
-                                        })}
-                                        onEachFeature={(feature, layer) => {
-                                            layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
-                                        }}
-                                    />
-                                )}
+                                <LimiteSMJLayer keyId="limite-smj-mobile1" />
                                 {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
                                 {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                                     <CircleMarker
@@ -1820,11 +1761,11 @@ const WebViewDashboardView = ({
                     {/* Blue Horizontal Nav Bar */}
                     <div className="bg-[#2a5299] rounded-[12px] p-0.5 flex items-center justify-between overflow-x-auto custom-scrollbar gap-1.5">
                         {[
-                            { label: 'Pluviômetros', icon: BarChart3, path: '/monitoramento' },
+                            { label: 'Vistorias', icon: ClipboardList, path: '/vistorias' },
                             { label: 'Ocorrências', icon: ClipboardList, path: '/ocorrencias' },
                             { label: 'Assistência Humanitária', icon: Home, path: '/abrigos' },
                             { label: 'Relatórios', icon: FileText, action: () => setShowReportMenu(!showReportMenu) },
-                            { label: 'Atualizar Dados', icon: RefreshCw, action: handleSync, spin: syncing }
+                            { label: 'REDAP', icon: ClipboardCheck, path: '/redap' }
                         ].map((item, idx) => (
                             <button
                                 key={idx}
@@ -1910,22 +1851,7 @@ const WebViewDashboardView = ({
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
                                 )}
-                                {limiteSMJ && (
-                                    <GeoJSON
-                                        data={limiteSMJ}
-                                        style={() => ({
-                                            color: '#64748b',
-                                            fillColor: 'transparent',
-                                            fillOpacity: 0,
-                                            weight: 2.5,
-                                            dashArray: '6, 6',
-                                            opacity: 0.8
-                                        })}
-                                        onEachFeature={(feature, layer) => {
-                                            layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
-                                        }}
-                                    />
-                                )}
+                                <LimiteSMJLayer keyId="limite-smj-mobile2" />
                                 {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
                                 {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                                     <CircleMarker
@@ -2192,14 +2118,7 @@ const Dashboard = () => {
     const [climateLoading, setClimateLoading] = useState(true)
     const [pluvioLoading, setPluvioLoading] = useState(true)
     const [activeContingencyPlan, setActiveContingencyPlan] = useState(null)
-    const [limiteSMJ, setLimiteSMJ] = useState(null)
 
-    useEffect(() => {
-        fetch('/limite_smj.json')
-            .then(res => res.json())
-            .then(d => setLimiteSMJ(d))
-            .catch(e => console.warn('[LimiteSMJ] Erro ao carregar JSON:', e));
-    }, []);
 
     const statusInfo = useMemo(() => {
         if (climateLoading) {
@@ -2285,19 +2204,19 @@ const Dashboard = () => {
                     if (!item) return;
                     // PRIORITIZE Business ID (formatted number like 001/2026) for true deduplication
                     const businessId = item.vistoria_id || item.vistoriaId || item.id_vistoria || item.ocorrencia_id_format || item.ocorrencia_id || item.id_ocorrencia || item.interdicao_id || item.interdicaoId || item.id_interdicao;
-                    
+
                     const key = businessId ? String(businessId) : (item.id ? `tech-${item.id}` : `rnd-${Math.random()}`);
-                    
+
                     if (key && key !== 'undefined' && key !== 'null') uniqueMap.set(key, item);
                 });
                 return Array.from(uniqueMap.values());
             };
 
             const initialAllV = deduplicate([...(cachedVistorias || []), ...(localVistorias || [])]);
-            const initialAllO = deduplicate(localOcorrencias || []); 
-            
+            const initialAllO = deduplicate(localOcorrencias || []);
+
             // Extract interdicoes from vistorias AND combine with local interdicoes table
-            const vistoriasWithI = (initialAllV || []).filter(v => 
+            const vistoriasWithI = (initialAllV || []).filter(v =>
                 v && (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao)
             );
             const initialAllI = deduplicate([...(localInterdicoes || []), ...vistoriasWithI]);
@@ -2614,17 +2533,17 @@ const Dashboard = () => {
             const now = new Date();
             const emissionDate = now.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' -');
 
-            const hasHighAlerts = (reportData.locations || []).some(l => 
+            const hasHighAlerts = (reportData.locations || []).some(l =>
                 String(l.risk).includes('Alto') || String(l.risk).includes('Crítico') || String(l.risk).includes('Perigo')
             );
-            const hasMediumAlerts = (reportData.locations || []).some(l => 
+            const hasMediumAlerts = (reportData.locations || []).some(l =>
                 String(l.risk).includes('Médio') || String(l.risk).includes('Média') || String(l.risk).includes('Atenção')
             );
 
             const currentStatus = statusInfo || { label: 'NORMAL', bg: '#10b981', text: 'white' };
 
             const validStations = (rainfall || []).filter(p => (p.acc24hr || p.rainRaw || 0) > 0);
-            const avgAcc = validStations.length > 0 
+            const avgAcc = validStations.length > 0
                 ? (validStations.reduce((acc, p) => acc + (p.acc24hr || p.rainRaw || 0), 0) / validStations.length).toFixed(1)
                 : '0.0';
 

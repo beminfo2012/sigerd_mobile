@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, Filter, Flame, Map as MapIcon, Layers, Calendar, AlertTriangle, Car, ExternalLink } from 'lucide-react'
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap, Polyline, Marker, GeoJSON } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, Polyline, Marker } from 'react-leaflet'
+import LimiteSMJLayer from '../../components/LimiteSMJLayer'
 import { wazeService } from '../../services/wazeService'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -41,14 +42,7 @@ const GeoDashboard = () => {
     const [filterTime, setFilterTime] = useState('all') // '24h', '48h', 'all'
     const [showWaze, setShowWaze] = useState(false)
     const [wazeData, setWazeData] = useState({ alerts: [], jams: [] })
-    const [limiteSMJ, setLimiteSMJ] = useState(null)
-
     useEffect(() => {
-        fetch('/limite_smj.json')
-            .then(res => res.json())
-            .then(d => setLimiteSMJ(d))
-            .catch(e => console.warn('[LimiteSMJ] Erro ao carregar JSON:', e));
-
         const loadData = async () => {
             try {
                 const [remote, local] = await Promise.all([
@@ -253,22 +247,7 @@ const GeoDashboard = () => {
                         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                     />
-                    {limiteSMJ && (
-                        <GeoJSON
-                            data={limiteSMJ}
-                            style={() => ({
-                                color: '#64748b',
-                                fillColor: 'transparent',
-                                fillOpacity: 0,
-                                weight: 2.5,
-                                dashArray: '6, 6',
-                                opacity: 0.8
-                            })}
-                            onEachFeature={(feature, layer) => {
-                                layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
-                            }}
-                        />
-                    )}
+                    <LimiteSMJLayer keyId="limite-smj-geo" />
                     <OrthofotsLayer />
 
                     <HeatmapLayer points={filteredPoints.filter(l => l && l.lat && l.lng && !isNaN(Number(l.lat)))} show={viewMode === 'heat'} />

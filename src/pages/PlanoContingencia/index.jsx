@@ -14,6 +14,7 @@ import { supabase } from '../../services/supabase'
 import { useToast } from '../../components/ToastNotification'
 
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet'
+import LimiteSMJLayer from '../../components/LimiteSMJLayer'
 import L from 'leaflet'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 
@@ -595,6 +596,7 @@ const PlanoContingencia = () => {
                                     <MapContainer center={[-20.0246, -40.7464]} zoom={15} style={{ height: '100%', width: '100%' }}>
                                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                         <Circle center={[-20.0246, -40.7464]} radius={400} pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.15 }} />
+                                        <LimiteSMJLayer keyId="limite-smj-contingencia" />
                                     </MapContainer>
                                 </div>
                             ) : (
