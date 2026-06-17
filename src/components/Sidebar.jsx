@@ -147,6 +147,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: HUMANITARIAN_ROLES
         },
         {
+            label: 'Voluntários',
+            icon: Users,
+            path: '/voluntarios',
+            roles: AGENT_ROLES
+        },
+        {
             label: 'Monitoramento',
             icon: BarChart3,
             path: '/monitoramento',

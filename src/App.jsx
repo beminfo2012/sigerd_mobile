@@ -67,11 +67,21 @@ const ConfiguracoesPage = lazy(() => import('./pages/Configuracoes'))
 
 // Redap Module (Lazy)
 const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
+
 const RedapForm = lazy(() => import('./pages/Redap/RedapForm'))
 const RedapEventDetails = lazy(() => import('./pages/Redap/RedapEventDetails'))
 const RedapSectorForm = lazy(() => import('./pages/Redap/RedapSectorForm'))
 const RedapPrint = lazy(() => import('./pages/Redap/RedapPrint'))
 const RedapPrintSecao = lazy(() => import('./pages/Redap/RedapPrintSecao'))
+
+// Voluntarios (Lazy)
+// Voluntarios (Lazy)
+const VoluntariosDashboard = lazy(() => import('./pages/Voluntarios/index'))
+const VoluntarioList = lazy(() => import('./pages/Voluntarios/VoluntarioList'))
+const VoluntarioForm = lazy(() => import('./pages/Voluntarios/VoluntarioForm'))
+const AcionamentosList = lazy(() => import('./pages/Voluntarios/AcionamentosList'))
+const MissoesList = lazy(() => import('./pages/Voluntarios/MissoesList'))
+const HabilidadesList = lazy(() => import('./pages/Voluntarios/HabilidadesList'))
 
 // Contingency Plan (Lazy)
 const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
@@ -471,10 +481,46 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
 
-
                                 <Route path="/contingencia" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <PlanoContingencia />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Voluntarios Routes */}
+                                <Route path="/voluntarios" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <VoluntariosDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/lista" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <VoluntarioList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <VoluntarioForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <VoluntarioForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/acionamentos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <AcionamentosList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/missoes" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <MissoesList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/habilidades" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <HabilidadesList />
                                     </ProtectedRoute>
                                 } />
 
