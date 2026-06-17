@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Users, PlusCircle, Search, CalendarCheck, 
-    BellRing, Shield, Award, ClipboardList 
+    BellRing, Shield, Award, ClipboardList, ArrowLeft
 } from 'lucide-react';
 
 const VoluntariosDashboard = () => {
@@ -52,18 +52,21 @@ const VoluntariosDashboard = () => {
     ];
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100 transition-colors duration-300 p-4 max-w-5xl mx-auto space-y-6">
-            <header className="flex flex-col gap-2 mb-8">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 text-slate-800 dark:text-slate-100 transition-colors duration-300">
+            {/* Sticky Header */}
+            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between sticky top-0 z-20 shadow-sm transition-colors">
                 <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-2xl">
-                        <Users className="text-blue-600 dark:text-blue-400" size={28} />
-                    </div>
+                    <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors active:scale-95 text-slate-600 dark:text-slate-400">
+                        <ArrowLeft size={20} />
+                    </button>
                     <div>
-                        <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">Módulo Voluntários</h1>
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Gerenciamento e acionamento da rede de apoio</p>
+                        <h1 className="text-base font-black text-slate-800 dark:text-slate-100 leading-tight">Módulo Voluntários</h1>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Gestão e Acionamento</p>
                     </div>
                 </div>
             </header>
+
+            <div className="p-4 max-w-5xl mx-auto space-y-6 mt-4">
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {modules.map((mod, idx) => (
@@ -101,6 +104,7 @@ const VoluntariosDashboard = () => {
                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">Em Missão</span>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

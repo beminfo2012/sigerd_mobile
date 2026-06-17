@@ -10,12 +10,12 @@ import { useEffect, useState } from 'react'
 import { GeoJSON } from 'react-leaflet'
 
 const LIMITE_STYLE = {
-    color: '#64748b',
+    color: '#f59e0b', // Amber 500 (Laranja/Amarelo)
     fillColor: 'transparent',
     fillOpacity: 0,
-    weight: 2,
+    weight: 3,
     dashArray: '8, 6',
-    opacity: 0.75,
+    opacity: 1,
     lineCap: 'round',
     lineJoin: 'round'
 }
