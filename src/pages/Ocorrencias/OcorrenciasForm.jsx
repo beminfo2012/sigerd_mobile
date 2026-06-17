@@ -239,6 +239,8 @@ const logradourosData = logradourosDataRaw
         bairro: item["Bairro"] ? item["Bairro"].trim() : ""
     }));
 
+const bairrosData = bairrosDataRaw;
+
 const ENCAMINHAMENTOS_LIST = [
     'Secretaria de Interior',
     'Secretaria de Ação Social',

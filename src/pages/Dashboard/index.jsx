@@ -311,7 +311,8 @@ const EventLogCard = ({ data, rainfall, cemadenAlerts }) => {
 const TvModeDashboardView = ({
     data, weather, cemadenAlerts, rainfall, statusInfo,
     viewMode, setViewMode, mapFilter, mapStyle,
-    navigate, activeContingencyPlan, load, getWeatherIcon
+    navigate, activeContingencyPlan, load, getWeatherIcon,
+    limiteSMJ
 }) => {
     const [currentView, setCurrentView] = useState('menu');
     const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -428,16 +429,16 @@ const TvModeDashboardView = ({
 
             {/* Strategic Content Area */}
             <div className="flex-1 min-h-0">
-                {currentView === 'resumo' && <TV_StrategicOverview data={data} statusInfo={statusInfo} isDark={false} rainfall={rainfall} getWeatherIcon={getWeatherIcon} />}
-                {currentView === 'chuva' && <TV_ClimateCenter rainfall={rainfall} weather={weather} isDark={false} getWeatherIcon={getWeatherIcon} />}
-                {currentView === 'ocorrencias' && <TV_OperationsCenter data={data} isDark={false} setViewMode={setViewMode} viewMode={viewMode} mapStyle={mapStyle} areasRisco={areasRisco} />}
+                {currentView === 'resumo' && <TV_StrategicOverview data={data} statusInfo={statusInfo} isDark={false} rainfall={rainfall} getWeatherIcon={getWeatherIcon} limiteSMJ={limiteSMJ} />}
+                {currentView === 'chuva' && <TV_ClimateCenter rainfall={rainfall} weather={weather} isDark={false} getWeatherIcon={getWeatherIcon} limiteSMJ={limiteSMJ} />}
+                {currentView === 'ocorrencias' && <TV_OperationsCenter data={data} isDark={false} setViewMode={setViewMode} viewMode={viewMode} mapStyle={mapStyle} areasRisco={areasRisco} limiteSMJ={limiteSMJ} />}
                 {currentView === 'humanitaria' && <TV_HumanitarianStrategic />}
                 {currentView === 'sco' && <TV_SCOStrategic plan={activeContingencyPlan} />}
             </div>
         </div>
     );
 };// --- 1. TV STRATEGIC OVERVIEW (Dashboard Consolidado) ---
-const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIcon }) => (
+const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIcon, limiteSMJ }) => (
     <div className="grid grid-cols-12 gap-6 h-full">
         {/* Left Column: Alerts & Stats */}
         <div className="col-span-4 flex flex-col gap-6">
@@ -492,6 +493,22 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
                 <MapAutoBounds locations={data.ocorrencias?.locations || []} />
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
+                {limiteSMJ && (
+                    <GeoJSON
+                        data={limiteSMJ}
+                        style={() => ({
+                            color: '#64748b',
+                            fillColor: 'transparent',
+                            fillOpacity: 0,
+                            weight: 2.5,
+                            dashArray: '6, 6',
+                            opacity: 0.8
+                        })}
+                        onEachFeature={(feature, layer) => {
+                            layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
+                        }}
+                    />
+                )}
             </MapContainer>
             <div className="absolute bottom-8 right-8 z-[1000] bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-slate-200 text-[9px] font-black text-slate-700 uppercase tracking-widest shadow-lg">
                 <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
@@ -501,7 +518,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
 );
 
 // --- 2. TV CLIMATE CENTER (Monitoramento Climático) ---
-const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon }) => {
+const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ }) => {
     const sortedRain = [...(rainfall || [])].sort((a, b) => (b.rainRaw || 0) - (a.rainRaw || 0));
 
     return (
@@ -560,6 +577,22 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon }) => {
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                     <MapAutoBounds locations={(rainfall || []).filter(s => s.lat && (s.lon || s.lng))} />
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                    {limiteSMJ && (
+                        <GeoJSON
+                            data={limiteSMJ}
+                            style={() => ({
+                                color: '#64748b',
+                                fillColor: 'transparent',
+                                fillOpacity: 0,
+                                weight: 2.5,
+                                dashArray: '6, 6',
+                                opacity: 0.8
+                            })}
+                            onEachFeature={(feature, layer) => {
+                                layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
+                            }}
+                        />
+                    )}
                     {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                         <CircleMarker
                             key={idx}
@@ -582,7 +615,7 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon }) => {
 };
 
 // --- 3. TV OPERATIONS CENTER (Centro de Ocorrências) ---
-const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco }) => {
+const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco, limiteSMJ }) => {
     const list = [...(data.ocorrencias?.locations || []), ...(data.vistorias?.locations || [])]
         .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
 
@@ -626,6 +659,22 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                     <HeatmapLayer points={list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 35, blur: 20, opacity: 0.7 }} />
                     <AreasRiscoLayer data={areasRisco} tiposAtivos={null} />
+                    {limiteSMJ && (
+                        <GeoJSON
+                            data={limiteSMJ}
+                            style={() => ({
+                                color: '#64748b',
+                                fillColor: 'transparent',
+                                fillOpacity: 0,
+                                weight: 2.5,
+                                dashArray: '6, 6',
+                                opacity: 0.8
+                            })}
+                            onEachFeature={(feature, layer) => {
+                                layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
+                            }}
+                        />
+                    )}
                     {list.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
                         <Marker
                             key={idx}
@@ -1015,7 +1064,7 @@ const MobileDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode, activeContingencyPlan, load
+    chartMode, setChartMode, activeContingencyPlan, load, limiteSMJ
 }) => {
     const userProfile = useContext(UserContext);
     const isOperador = userProfile?.role === 'Operador';
@@ -1066,6 +1115,7 @@ const MobileDashboardView = ({
             activeContingencyPlan={activeContingencyPlan}
             load={load}
             getWeatherIcon={getWeatherIcon}
+            limiteSMJ={limiteSMJ}
         />
     }
 
@@ -1325,6 +1375,22 @@ const MobileDashboardView = ({
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
                                 )}
+                                {limiteSMJ && (
+                                    <GeoJSON
+                                        data={limiteSMJ}
+                                        style={() => ({
+                                            color: '#64748b',
+                                            fillColor: 'transparent',
+                                            fillOpacity: 0,
+                                            weight: 2.5,
+                                            dashArray: '6, 6',
+                                            opacity: 0.8
+                                        })}
+                                        onEachFeature={(feature, layer) => {
+                                            layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
+                                        }}
+                                    />
+                                )}
                                 {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
                                 {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
                                     <CircleMarker
@@ -1544,7 +1610,7 @@ const WebViewDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode, activeContingencyPlan, load
+    chartMode, setChartMode, activeContingencyPlan, load, limiteSMJ
 }) => {
     const [tiposRiscoAtivos, setTiposRiscoAtivos] = useState(new Set()); // inicia VAZIO (desativado)
     const [areasRiscoData, setAreasRiscoData] = useState(null);
@@ -1579,6 +1645,7 @@ const WebViewDashboardView = ({
             activeContingencyPlan={activeContingencyPlan}
             load={load}
             getWeatherIcon={getWeatherIcon}
+            limiteSMJ={limiteSMJ}
         />
     }
 
@@ -1842,6 +1909,22 @@ const WebViewDashboardView = ({
                                 {/* Camada de Áreas de Risco (GeoJSON toggle por tipo) */}
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
                                     <AreasRiscoLayer data={areasRiscoData} tiposAtivos={tiposRiscoAtivos} />
+                                )}
+                                {limiteSMJ && (
+                                    <GeoJSON
+                                        data={limiteSMJ}
+                                        style={() => ({
+                                            color: '#64748b',
+                                            fillColor: 'transparent',
+                                            fillOpacity: 0,
+                                            weight: 2.5,
+                                            dashArray: '6, 6',
+                                            opacity: 0.8
+                                        })}
+                                        onEachFeature={(feature, layer) => {
+                                            layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
+                                        }}
+                                    />
                                 )}
                                 {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
                                 {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
@@ -2109,6 +2192,14 @@ const Dashboard = () => {
     const [climateLoading, setClimateLoading] = useState(true)
     const [pluvioLoading, setPluvioLoading] = useState(true)
     const [activeContingencyPlan, setActiveContingencyPlan] = useState(null)
+    const [limiteSMJ, setLimiteSMJ] = useState(null)
+
+    useEffect(() => {
+        fetch('/limite_smj.json')
+            .then(res => res.json())
+            .then(d => setLimiteSMJ(d))
+            .catch(e => console.warn('[LimiteSMJ] Erro ao carregar JSON:', e));
+    }, []);
 
     const statusInfo = useMemo(() => {
         if (climateLoading) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShieldAlert, Filter, Map as MapIcon, BarChart3, PieChart as PieIcon, RefreshCw, XCircle, Home, AlertTriangle, CloudRain, Droplets } from 'lucide-react'
-import { MapContainer, TileLayer, CircleMarker, Popup, Marker } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker, Popup, Marker, GeoJSON } from 'react-leaflet'
 import L from 'leaflet'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import 'leaflet/dist/leaflet.css'
@@ -55,6 +55,7 @@ const RiskDashboard = ({ hideHeader = false }) => {
     const [filteredData, setFilteredData] = useState([])
     const [rainStations, setRainStations] = useState([])
     const [lastUpdate, setLastUpdate] = useState(new Date())
+    const [limiteSMJ, setLimiteSMJ] = useState(null)
 
     // Filters
     const [selectedBairro, setSelectedBairro] = useState('Todos')
@@ -88,6 +89,12 @@ const RiskDashboard = ({ hideHeader = false }) => {
         try {
             // Load residences data
             setData(residencesRiskData)
+
+            // Load limite municipal GeoJSON
+            fetch('/limite_smj.json')
+                .then(res => res.json())
+                .then(d => setLimiteSMJ(d))
+                .catch(e => console.warn('[LimiteSMJ] Erro ao carregar JSON:', e));
 
             // Load rainfall data
             const rainfall = await cemadenService.getRainfallData()
@@ -387,6 +394,23 @@ const RiskDashboard = ({ hideHeader = false }) => {
                                     url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                                 />
+
+                                {limiteSMJ && (
+                                    <GeoJSON
+                                        data={limiteSMJ}
+                                        style={() => ({
+                                            color: '#64748b',
+                                            fillColor: 'transparent',
+                                            fillOpacity: 0,
+                                            weight: 2.5,
+                                            dashArray: '6, 6',
+                                            opacity: 0.8
+                                        })}
+                                        onEachFeature={(feature, layer) => {
+                                            layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
+                                        }}
+                                    />
+                                )}
 
                                 {/* 1. Rendering Residences Risk Markers */}
                                 {filteredData.slice(0, 1000).filter(v => v && v.lat != null && v.lon != null && !isNaN(Number(v.lat))).map((v, i) => (

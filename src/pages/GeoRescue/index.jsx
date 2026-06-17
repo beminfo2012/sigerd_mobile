@@ -68,6 +68,14 @@ const GeoRescue = () => {
     // Risk Area States
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [showRiskModal, setShowRiskModal] = useState(false)
+    const [limiteSMJ, setLimiteSMJ] = useState(null)
+
+    useEffect(() => {
+        fetch('/limite_smj.json')
+            .then(res => res.json())
+            .then(d => setLimiteSMJ(d))
+            .catch(e => console.warn('[LimiteSMJ] Erro ao carregar JSON:', e));
+    }, []);
 
     useEffect(() => {
         // Attempt to get user location
@@ -437,6 +445,25 @@ const GeoRescue = () => {
                                 fillColor: '#fb923c'
                             })}
                         />
+                    </Overlay>
+
+                    <Overlay checked name="Limite Municipal (Santa Maria de Jetibá)">
+                        {limiteSMJ ? (
+                            <GeoJSON 
+                                data={limiteSMJ} 
+                                style={() => ({
+                                    color: '#64748b',
+                                    fillColor: 'transparent',
+                                    fillOpacity: 0,
+                                    weight: 2.5,
+                                    dashArray: '6, 6',
+                                    opacity: 0.8
+                                })}
+                                onEachFeature={(feature, layer) => {
+                                    layer.bindPopup(`<div style="font-family:sans-serif;font-size:11px;font-weight:750;color:#334155;">Limite Municipal - Santa Maria de Jetibá</div>`);
+                                }}
+                            />
+                        ) : <span />}
                     </Overlay>
                 </LayersControl>
 
