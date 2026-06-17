@@ -27,7 +27,8 @@ import {
     CheckCircle,
     RefreshCcw,
     History,
-    Calendar
+    Calendar,
+    HeartHandshake
 } from 'lucide-react';
 import HumanitarianIcon from './HumanitarianIcon';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
@@ -148,7 +149,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         },
         {
             label: 'Voluntários',
-            icon: Users,
+            icon: HeartHandshake,
             path: '/voluntarios',
             roles: AGENT_ROLES
         },
