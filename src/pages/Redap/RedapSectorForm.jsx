@@ -35,6 +35,7 @@ const RedapSectorForm = () => {
     // Identifica secretaria do usuário a partir da URL ou pelo papel
     const queryParams = new URLSearchParams(window.location.search);
     const urlSecretaria = queryParams.get('secretaria');
+    const isVisualizar = queryParams.get('visualizar') === 'true';
     const userRealSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
     const userSecretaria = urlSecretaria || userRealSecretaria;
     const isDefesaCivil = ['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral'].includes(user?.role);
