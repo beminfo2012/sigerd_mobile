@@ -107,6 +107,19 @@ export const saveVoluntario = async (voluntarioData, areasData, disponibilidadeD
     }
 };
 
+export const deleteVoluntario = async (id) => {
+    try {
+        const { error } = await supabase
+            .from('voluntarios')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    } catch (error) {
+        console.error('Erro ao deletar voluntário:', error);
+        throw error;
+    }
+};
+
 // ==========================================
 // AREAS DE ATUACAO (Taxonomia)
 // ==========================================

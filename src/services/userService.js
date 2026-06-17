@@ -70,7 +70,7 @@ export const createUser = async (userData) => {
             options: {
                 data: {
                     full_name,
-                    role
+                    role  // Passado como metadata para o trigger
                 }
             }
         })
@@ -84,8 +84,11 @@ export const createUser = async (userData) => {
         // Get current user for created_by field
         const { data: { user: currentUser } } = await supabase.auth.getUser()
 
-        // Create/update profile
-        const { data: profileData, error: profileError } = await supabase
+        // Aguarda um momento para o trigger do Supabase criar o profile primeiro
+        await new Promise(resolve => setTimeout(resolve, 800))
+
+        // Força o upsert com onConflict para sobrescrever qualquer valor padrão criado pelo trigger
+        const { error: upsertError } = await supabase
             .from('profiles')
             .upsert({
                 id: authData.user.id,
@@ -96,7 +99,22 @@ export const createUser = async (userData) => {
                 is_active: true,
                 created_by: currentUser?.id,
                 updated_at: new Date().toISOString()
+            }, { onConflict: 'id' })
+
+        if (upsertError) throw upsertError
+
+        // UPDATE explícito para garantir o role correto (caso trigger tenha sobrescrito)
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .update({
+                role,
+                full_name,
+                matricula: matricula || null,
+                cargo: cargo || null,
+                is_active: true,
+                updated_at: new Date().toISOString()
             })
+            .eq('id', authData.user.id)
             .select()
             .single()
 
