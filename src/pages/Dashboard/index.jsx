@@ -1545,6 +1545,63 @@ const BoletinsCard = () => {
         </div>
     );
 };
+// --- SUB-COMPONENT: ALERTAS CEMADEN CARD ---
+const NIVEL_CARD_STYLES = {
+    'MUITO_ALTO': { bg: 'bg-red-500/10', text: 'text-red-600', icon: 'bg-red-500/10', label: 'Muito Alto' },
+    'ALTO':       { bg: 'bg-orange-500/10', text: 'text-orange-600', icon: 'bg-orange-500/10', label: 'Alto' },
+    'MODERADO':   { bg: 'bg-amber-400/10', text: 'text-amber-600', icon: 'bg-amber-400/10', label: 'Moderado' },
+    'OBSERVACAO': { bg: 'bg-blue-500/10', text: 'text-blue-600', icon: 'bg-blue-500/10', label: 'Observação' },
+};
+const NIVEL_PRIORITY = ['MUITO_ALTO', 'ALTO', 'MODERADO', 'OBSERVACAO'];
+
+const AlertasCemadenCard = ({ navigate }) => {
+    const [count, setCount] = useState(null);
+    const [nivelMaisCritico, setNivelMaisCritico] = useState(null);
+
+    useEffect(() => {
+        import('../../services/supabase').then(({ supabase: sb }) => {
+            sb.from('alertas_cemaden')
+                .select('nivel_atual', { count: 'exact' })
+                .eq('status', 'ATIVO')
+                .then(({ data, count: total }) => {
+                    setCount(total ?? 0);
+                    if (data && data.length > 0) {
+                        const niveis = data.map(a => a.nivel_atual);
+                        const mais = NIVEL_PRIORITY.find(n => niveis.includes(n)) || niveis[0];
+                        setNivelMaisCritico(mais);
+                    }
+                });
+        }).catch(() => setCount(0));
+    }, []);
+
+    const style = nivelMaisCritico ? (NIVEL_CARD_STYLES[nivelMaisCritico] || NIVEL_CARD_STYLES['OBSERVACAO']) : { bg: 'bg-orange-500/10', text: 'text-orange-600', icon: 'bg-orange-500/10', label: '—' };
+
+    return (
+        <div
+            onClick={() => navigate('/alertas-cemaden')}
+            className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]"
+        >
+            <div className="flex flex-col">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Alertas CEMADEN</span>
+                {count === null ? (
+                    <span className="text-4xl font-black text-slate-300 tabular-nums leading-none animate-pulse">—</span>
+                ) : (
+                    <span className={`text-4xl font-black tabular-nums leading-none ${count > 0 ? style.text : 'text-slate-800 dark:text-slate-100'}`}>{count}</span>
+                )}
+                <p className={`text-[10px] font-bold uppercase mt-2 opacity-80 ${count > 0 && nivelMaisCritico ? style.text : 'text-slate-400'}`}>
+                    {count === null ? 'Carregando...' : count === 0 ? 'Sem alertas ativos' : `Nível: ${style.label}`}
+                </p>
+            </div>
+            <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${style.icon} flex items-center justify-center ${style.text} group-hover:scale-110 transition-transform`}>
+                <ShieldAlert size={24} />
+            </div>
+            {count > 0 && (
+                <div className={`absolute bottom-0 left-0 right-0 h-1 ${nivelMaisCritico === 'MUITO_ALTO' ? 'bg-red-500' : nivelMaisCritico === 'ALTO' ? 'bg-orange-500' : nivelMaisCritico === 'MODERADO' ? 'bg-amber-400' : 'bg-blue-500'} opacity-60 rounded-b-3xl`} />
+            )}
+        </div>
+    );
+};
+
 // --- SUB-COMPONENT: WEB VIEW ---
 const WebViewDashboardView = ({
     data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
@@ -1663,30 +1720,42 @@ const WebViewDashboardView = ({
                         </div>
 
                         {/* Card 2: INMET Alerts */}
-                        {!isOperador && (
-                            <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Avisos Ativos</span>
-                                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{((data.alerts || []).length + (cemadenAlerts || []).length)}</span>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Novos Alertas</p>
+                        {!isOperador && (() => {
+                            const allAlerts = [...(data.alerts || []), ...(cemadenAlerts || [])];
+                            const totalCount = allAlerts.length;
+                            // Determina o nível mais severo dos alertas INMET
+                            const inmetAlerts = data.alerts || [];
+                            const hasGrandePerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande perigo'));
+                            const hasPerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('perigo') && !(a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande'));
+                            const hasPerigoPotencial = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('potencial'));
+                            const inmetIconStyle = hasGrandePerigo
+                                ? { bg: 'bg-red-500/10', text: 'text-red-600', bar: 'bg-red-500', label: 'Grande Perigo' }
+                                : hasPerigo
+                                    ? { bg: 'bg-orange-500/10', text: 'text-orange-600', bar: 'bg-orange-500', label: 'Perigo' }
+                                    : hasPerigoPotencial
+                                        ? { bg: 'bg-amber-400/10', text: 'text-amber-600', bar: 'bg-amber-400', label: 'Perigo Potencial' }
+                                        : { bg: 'bg-slate-100', text: 'text-slate-400', bar: null, label: 'Sem avisos' };
+                            return (
+                                <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Avisos Ativos</span>
+                                        <span className={`text-4xl font-black tabular-nums leading-none ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-800 dark:text-slate-100'}`}>{totalCount}</span>
+                                        <p className={`text-[10px] font-bold uppercase mt-2 opacity-80 ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-400'}`}>
+                                            {totalCount === 0 ? 'Sem avisos' : inmetIconStyle.label}
+                                        </p>
+                                    </div>
+                                    <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${inmetIconStyle.bg} flex items-center justify-center ${inmetIconStyle.text} group-hover:scale-110 transition-transform`}>
+                                        <Zap size={24} />
+                                    </div>
+                                    {totalCount > 0 && inmetIconStyle.bar && (
+                                        <div className={`absolute bottom-0 left-0 right-0 h-1 ${inmetIconStyle.bar} opacity-60 rounded-b-3xl`} />
+                                    )}
                                 </div>
-                                <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
-                                    <Zap size={24} />
-                                </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
-                        {/* Card 3: Ocorrências */}
-                        <div onClick={() => navigate('/ocorrencias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Ocorrências</span>
-                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{data.stats.activeOccurrences}</span>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Em Andamento</p>
-                            </div>
-                            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
-                                <AlertTriangle size={24} />
-                            </div>
-                        </div>
+                        {/* Card 3: Alertas CEMADEN Ativos */}
+                        <AlertasCemadenCard navigate={navigate} />
 
                         {/* Card 4: Vistorias */}
                         <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">

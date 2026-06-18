@@ -378,14 +378,14 @@ const Alerts = () => {
     return (
         <div className="bg-slate-50 min-h-screen p-5 pb-24">
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-xl font-black text-gray-800 tracking-tight">Avisos INMET</h1>
+            <div className="flex items-center gap-3 mb-6">
                 <button
                     onClick={() => navigate('/dashboard')}
                     className="bg-white p-2 rounded-xl border border-slate-100 shadow-sm hover:bg-slate-50 transition-colors active:scale-95"
                 >
                     <ArrowLeft size={20} className="text-slate-600" />
                 </button>
+                <h1 className="text-xl font-black text-gray-800 tracking-tight">Avisos INMET</h1>
             </div>
 
             {/* Main Grid - Always single column for mobile-first */}
