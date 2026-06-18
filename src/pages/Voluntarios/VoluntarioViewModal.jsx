@@ -1,8 +1,43 @@
-import React from 'react';
-import { X, User, Phone, MapPin, Briefcase, Calendar, CheckSquare, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, User, Phone, MapPin, Briefcase, Calendar, CheckSquare, Edit2, Trash2, FileText, UploadCloud, File, ExternalLink, Loader2 } from 'lucide-react';
+import { uploadDocumentoTermo } from '../../services/voluntariosService';
+import { useToast } from '../../components/ToastNotification';
 
-const VoluntarioViewModal = ({ voluntario, onClose, onEdit, onDelete }) => {
+const VoluntarioViewModal = ({ voluntario, onClose, onEdit, onDelete, onUpdate }) => {
+    const [uploadingTermo, setUploadingTermo] = useState(false);
+    const fileInputRef = useRef(null);
+    const { toast } = useToast();
+
     if (!voluntario) return null;
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Basic validation: PDF or Image
+        if (!file.type.includes('pdf') && !file.type.includes('image')) {
+            toast.error('Formato inválido. Por favor, envie um PDF ou imagem (JPG, PNG).');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            toast.error('Arquivo muito grande. O tamanho máximo é 5MB.');
+            return;
+        }
+
+        setUploadingTermo(true);
+        try {
+            const fileUrl = await uploadDocumentoTermo(voluntario.id, file);
+            toast.success('Termo anexado com sucesso!');
+            if (onUpdate) {
+                onUpdate({ ...voluntario, documento_termo_url: fileUrl });
+            }
+        } catch (error) {
+            toast.error('Erro ao anexar o termo.');
+        } finally {
+            setUploadingTermo(false);
+        }
+    };
 
     const renderField = (label, value) => (
         <div className="mb-4">
@@ -123,6 +158,58 @@ const VoluntarioViewModal = ({ voluntario, onClose, onEdit, onDelete }) => {
                             {renderField('Equipamentos', voluntario.equipamentos_proprios)}
                             <div className="md:col-span-2">
                                 {renderField('Restrições', voluntario.restricoes)}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Termo de Voluntariado */}
+                    <section className="mb-4">
+                        <h3 className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <FileText size={16} className="text-blue-500" /> Termo Assinado
+                        </h3>
+                        <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${voluntario.documento_termo_url ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
+                                    <File size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                        {voluntario.documento_termo_url ? 'Termo Anexado' : 'Nenhum termo anexado'}
+                                    </p>
+                                    <p className="text-xs font-medium text-slate-500">
+                                        {voluntario.documento_termo_url ? 'Documento digitalizado salvo no sistema' : 'Faça o upload do termo impresso e assinado'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                {voluntario.documento_termo_url && (
+                                    <a
+                                        href={voluntario.documento_termo_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex-1 sm:flex-none px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <ExternalLink size={16} /> Ver Arquivo
+                                    </a>
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/jpeg, image/png, application/pdf"
+                                    className="hidden"
+                                    ref={fileInputRef}
+                                    onChange={handleFileUpload}
+                                />
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={uploadingTermo}
+                                    className="flex-1 sm:flex-none px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 rounded-lg text-sm font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {uploadingTermo ? (
+                                        <><Loader2 size={16} className="animate-spin" /> Enviando...</>
+                                    ) : (
+                                        <><UploadCloud size={16} /> {voluntario.documento_termo_url ? 'Substituir' : 'Anexar Documento'}</>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </section>

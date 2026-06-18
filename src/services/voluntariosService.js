@@ -107,6 +107,38 @@ export const saveVoluntario = async (voluntarioData, areasData, disponibilidadeD
     }
 };
 
+export const uploadDocumentoTermo = async (voluntarioId, file) => {
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `termo_${Date.now()}.${fileExt}`;
+        const filePath = `voluntarios/${voluntarioId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('vistorias_fotos')
+            .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+            .from('vistorias_fotos')
+            .getPublicUrl(filePath);
+
+        const fileUrl = publicUrlData.publicUrl;
+
+        const { error: updateError } = await supabase
+            .from('voluntarios')
+            .update({ documento_termo_url: fileUrl })
+            .eq('id', voluntarioId);
+
+        if (updateError) throw updateError;
+
+        return fileUrl;
+    } catch (error) {
+        console.error('Erro ao fazer upload do termo:', error);
+        throw error;
+    }
+};
+
 export const deleteVoluntario = async (id) => {
     try {
         const { error } = await supabase

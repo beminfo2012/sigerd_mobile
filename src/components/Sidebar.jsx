@@ -130,6 +130,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
+            label: 'Alertas CEMADEN',
+            icon: AlertTriangle, // reusing AlertTriangle or another icon like Activity
+            path: '/alertas-cemaden',
+            roles: AGENT_ROLES
+        },
+        {
             label: 'Interdições',
             icon: AlertOctagon,
             path: '/interdicao',

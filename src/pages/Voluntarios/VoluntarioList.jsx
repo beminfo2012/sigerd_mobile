@@ -330,6 +330,10 @@ const VoluntarioList = () => {
                     setConfirmDelete(viewModalVoluntario);
                     setViewModalVoluntario(null);
                 }}
+                onUpdate={(updatedVoluntario) => {
+                    setVoluntarios(prev => prev.map(v => v.id === updatedVoluntario.id ? updatedVoluntario : v));
+                    setViewModalVoluntario(updatedVoluntario);
+                }}
             />
         </div>
     );

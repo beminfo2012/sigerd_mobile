@@ -75,7 +75,6 @@ const RedapPrint = lazy(() => import('./pages/Redap/RedapPrint'))
 const RedapPrintSecao = lazy(() => import('./pages/Redap/RedapPrintSecao'))
 
 // Voluntarios (Lazy)
-// Voluntarios (Lazy)
 const VoluntariosDashboard = lazy(() => import('./pages/Voluntarios/index'))
 const VoluntarioList = lazy(() => import('./pages/Voluntarios/VoluntarioList'))
 const VoluntarioForm = lazy(() => import('./pages/Voluntarios/VoluntarioForm'))
@@ -83,6 +82,10 @@ const AcionamentosList = lazy(() => import('./pages/Voluntarios/AcionamentosList
 const MissoesList = lazy(() => import('./pages/Voluntarios/MissoesList'))
 const HabilidadesList = lazy(() => import('./pages/Voluntarios/HabilidadesList'))
 const TermoVoluntariado = lazy(() => import('./pages/Voluntarios/TermoVoluntariado'))
+
+// Alertas CEMADEN (Lazy)
+const AlertasCemadenList = lazy(() => import('./pages/AlertasCemaden/index'))
+const AlertaCemadenDetail = lazy(() => import('./pages/AlertasCemaden/AlertaDetail'))
 
 // Contingency Plan (Lazy)
 const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
@@ -527,6 +530,18 @@ const AppContent = ({
                                 <Route path="/voluntarios/habilidades" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <HabilidadesList />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Alertas CEMADEN Routes */}
+                                <Route path="/alertas-cemaden" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <AlertasCemadenList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/alertas-cemaden/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <AlertaCemadenDetail />
                                     </ProtectedRoute>
                                 } />
 
