@@ -1589,7 +1589,7 @@ const AlertasCemadenCard = ({ navigate }) => {
                     <span className={`text-4xl font-black tabular-nums leading-none ${count > 0 ? style.text : 'text-slate-800 dark:text-slate-100'}`}>{count}</span>
                 )}
                 <p className={`text-[10px] font-bold uppercase mt-2 opacity-80 ${count > 0 && nivelMaisCritico ? style.text : 'text-slate-400'}`}>
-                    {count === null ? 'Carregando...' : count === 0 ? 'Sem alertas ativos' : `Nível: ${style.label}`}
+                    {count === null ? 'Carregando...' : count === 0 ? 'Sem alertas vigentes' : `Nível: ${style.label}`}
                 </p>
             </div>
             <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${style.icon} flex items-center justify-center ${style.text} group-hover:scale-110 transition-transform`}>
@@ -1734,14 +1734,14 @@ const WebViewDashboardView = ({
                                     ? { bg: 'bg-orange-500/10', text: 'text-orange-600', bar: 'bg-orange-500', label: 'Perigo' }
                                     : hasPerigoPotencial
                                         ? { bg: 'bg-amber-400/10', text: 'text-amber-600', bar: 'bg-amber-400', label: 'Perigo Potencial' }
-                                        : { bg: 'bg-slate-100', text: 'text-slate-400', bar: null, label: 'Sem avisos' };
+                                        : { bg: 'bg-slate-100', text: 'text-slate-400', bar: null, label: 'Sem avisos vigentes' };
                             return (
                                 <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Avisos Ativos</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Avisos INMET</span>
                                         <span className={`text-4xl font-black tabular-nums leading-none ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-800 dark:text-slate-100'}`}>{totalCount}</span>
                                         <p className={`text-[10px] font-bold uppercase mt-2 opacity-80 ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-400'}`}>
-                                            {totalCount === 0 ? 'Sem avisos' : inmetIconStyle.label}
+                                            {totalCount === 0 ? 'Sem avisos vigentes' : inmetIconStyle.label}
                                         </p>
                                     </div>
                                     <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${inmetIconStyle.bg} flex items-center justify-center ${inmetIconStyle.text} group-hover:scale-110 transition-transform`}>
