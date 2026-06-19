@@ -235,6 +235,10 @@ const VistoriaPrint = () => {
     const lng = parseFloat(data.longitude || data.lng || data.long);
     const hasMap = !isNaN(lat) && !isNaN(lng);
 
+    // Normalize Risk Level
+    let nivelRiscoNormalizado = data.nivel_risco || data.nivelRisco || 'Baixo';
+    if (nivelRiscoNormalizado === 'Moderado') nivelRiscoNormalizado = 'Médio';
+
     // Normalize Photos
     const photos = (() => {
         let p = data.fotos || [];
@@ -761,8 +765,8 @@ const VistoriaPrint = () => {
                                                 <Marker 
                                                     position={[lat, lng]} 
                                                     icon={createCustomPin(
-                                                        (data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente' || data.nivel_risco === 'Alto' || data.nivel_risco === 'Iminente') ? '#dc2626' : 
-                                                        (data.nivelRisco === 'Médio' || data.nivel_risco === 'Médio') ? '#ea580c' : '#3b82f6'
+                                                        (nivelRiscoNormalizado === 'Alto' || nivelRiscoNormalizado === 'Iminente') ? '#dc2626' : 
+                                                        (nivelRiscoNormalizado === 'Médio') ? '#ea580c' : '#3b82f6'
                                                     )}
                                                 />
                                                 <MapController lat={lat} lng={lng} />
@@ -804,12 +808,12 @@ const VistoriaPrint = () => {
                                     <tr>
                                         <td>{data.categoriaRisco || data.categoria_risco || 'Não Classificado'}</td>
                                         <td className={`font-black text-center ${
-                                                (data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente') ? 'badge-risk-alto' :
-                                                data.nivelRisco === 'Médio' ? 'badge-risk-medio' : 'badge-risk-baixo'
+                                                (nivelRiscoNormalizado === 'Alto' || nivelRiscoNormalizado === 'Iminente') ? 'badge-risk-alto' :
+                                                nivelRiscoNormalizado === 'Médio' ? 'badge-risk-medio' : 'badge-risk-baixo'
                                             }`} style={{ padding: '8px', fontSize: '10px' }}>
-                                                {data.nivelRisco === 'Médio' ? '⚠️ MÉDIO' : 
-                                                 (data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente') ? `⚠️ ${data.nivelRisco.toUpperCase()}` : 
-                                                 (data.nivelRisco || 'BAIXO').toUpperCase()}
+                                                {nivelRiscoNormalizado === 'Médio' ? '⚠️ MÉDIO' : 
+                                                 (nivelRiscoNormalizado === 'Alto' || nivelRiscoNormalizado === 'Iminente') ? `⚠️ ${nivelRiscoNormalizado.toUpperCase()}` : 
+                                                 (nivelRiscoNormalizado).toUpperCase()}
                                         </td>
                                         <td className={`font-black text-center ${
                                                 (data.situacaoObservada === 'Ativo' || data.situacaoObservada === 'Em evolução' || data.situacaoObservada === 'Em Evolução') 

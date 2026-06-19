@@ -30,7 +30,11 @@ const normalizeData = (data, type) => {
                 return Array.isArray(s) ? s : [];
             })(),
             subtipoRiscoOutros: data.subtipoRiscoOutros || data.subtipo_risco_outros || '',
-            nivelRisco: data.nivelRisco || data.nivel_risco || 'Baixo',
+            nivelRisco: (() => {
+                let r = data.nivel_risco || data.nivelRisco || 'Baixo';
+                if (r === 'Moderado') return 'Médio';
+                return r;
+            })(),
             situacaoObservada: data.situacaoObservada || data.situacao_observada || 'Estabilizado',
             populacaoEstimada: data.populacaoEstimada || data.populacao_estimada || '---',
             gruposVulneraveis: data.gruposVulneraveis || data.grupos_vulneraveis || [],
