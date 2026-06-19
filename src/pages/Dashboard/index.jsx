@@ -1722,10 +1722,9 @@ const WebViewDashboardView = ({
 
                         {/* Card 2: INMET Alerts */}
                         {!isOperador && (() => {
-                            const allAlerts = [...(data.alerts || []), ...(cemadenAlerts || [])];
-                            const totalCount = allAlerts.length;
-                            // Determina o nível mais severo dos alertas INMET
                             const inmetAlerts = data.alerts || [];
+                            const totalCount = inmetAlerts.length;
+                            // Determina o nível mais severo dos alertas INMET
                             const hasGrandePerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande perigo'));
                             const hasPerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('perigo') && !(a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande'));
                             const hasPerigoPotencial = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('potencial'));
