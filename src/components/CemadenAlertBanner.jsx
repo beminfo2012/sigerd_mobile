@@ -1,17 +1,55 @@
 import React from 'react';
 import { AlertTriangle, ChevronRight, Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CemadenAlertBanner = ({ alerts }) => {
+    const navigate = useNavigate();
+
     if (!alerts || alerts.length === 0) return null;
 
     // Get the most severe alert
     const mainAlert = alerts[0];
 
     // Logic for colors based on CEMADEN threat level
-    // Levels: 1 (Moderate/Yellow), 2 (High/Orange), 3 (Very High/Red), 4 (Extreme/Black-Purple)
-    const level = mainAlert.nivel || 1;
+    // Support both string values from database (OBSERVACAO, MODERADO, ALTO, MUITO_ALTO, CESSAR) and legacy numbers (1, 2, 3, 4)
+    const levelKey = mainAlert.nivel_atual || mainAlert.nivel || 'OBSERVACAO';
 
     const config = {
+        'OBSERVACAO': {
+            bg: 'bg-slate-400/90',
+            border: 'border-slate-300',
+            text: 'text-slate-950',
+            label: 'Observação',
+            iconColor: 'text-slate-900'
+        },
+        'MODERADO': {
+            bg: 'bg-amber-400/90',
+            border: 'border-amber-300',
+            text: 'text-amber-950',
+            label: 'Risco Moderado',
+            iconColor: 'text-amber-900'
+        },
+        'ALTO': {
+            bg: 'bg-orange-500/90',
+            border: 'border-orange-400',
+            text: 'text-white',
+            label: 'Risco Alto',
+            iconColor: 'text-white'
+        },
+        'MUITO_ALTO': {
+            bg: 'bg-red-600/90',
+            border: 'border-red-500',
+            text: 'text-white',
+            label: 'Risco Muito Alto',
+            iconColor: 'text-white'
+        },
+        'CESSAR': {
+            bg: 'bg-emerald-600/90',
+            border: 'border-emerald-500',
+            text: 'text-white',
+            label: 'Alerta Cessado',
+            iconColor: 'text-white'
+        },
         1: {
             bg: 'bg-amber-400/90',
             border: 'border-amber-300',
@@ -40,7 +78,7 @@ const CemadenAlertBanner = ({ alerts }) => {
             label: 'Risco Extremo',
             iconColor: 'text-purple-400'
         }
-    }[level] || {
+    }[levelKey] || {
         bg: 'bg-blue-600/90',
         border: 'border-blue-500',
         text: 'text-white',
@@ -48,8 +86,19 @@ const CemadenAlertBanner = ({ alerts }) => {
         iconColor: 'text-white'
     };
 
+    const handleBannerClick = () => {
+        if (mainAlert.id) {
+            navigate(`/alertas-cemaden/${mainAlert.id}`);
+        } else {
+            navigate('/alertas-cemaden');
+        }
+    };
+
     return (
-        <div className={`mb-6 p-4 rounded-[28px] ${config.bg} backdrop-blur-md border ${config.border} shadow-lg animate-in fade-in slide-in-from-top-4 duration-500`}>
+        <div 
+            onClick={handleBannerClick}
+            className={`mb-6 p-4 rounded-[28px] ${config.bg} backdrop-blur-md border ${config.border} shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 cursor-pointer hover:scale-[1.01] transition-transform`}
+        >
             <div className="flex items-center gap-4">
                 <div className={`p-3 bg-white/20 rounded-2xl ${config.iconColor}`}>
                     <AlertTriangle size={24} strokeWidth={2.5} />
@@ -58,17 +107,17 @@ const CemadenAlertBanner = ({ alerts }) => {
                 <div className="flex-1">
                     <div className="flex items-center gap-2">
                         <span className={`text-[10px] font-black uppercase tracking-widest ${config.text} opacity-80`}>
-                            Alerta Cemaden
+                            Alerta Cemaden {mainAlert.numero_alerta ? `#${mainAlert.numero_alerta}` : ''}
                         </span>
                         <div className={`w-1.5 h-1.5 rounded-full ${config.iconColor} animate-pulse`} />
                     </div>
 
                     <h3 className={`text-base font-black ${config.text} leading-tight mt-0.5 uppercase tracking-tight`}>
-                        {mainAlert.descricao || `${config.label} de Deslizamento`}
+                        {mainAlert.descricao || mainAlert.tipo_evento || `${config.label} de Deslizamento`}
                     </h3>
 
                     <p className={`text-[11px] font-bold ${config.text} opacity-90 mt-1`}>
-                        Localização: Santa Maria de Jetibá - ES
+                        Localização: {mainAlert.municipio || 'Santa Maria de Jetibá'} - {mainAlert.uf || 'ES'}
                     </p>
                 </div>
 
@@ -83,8 +132,14 @@ const CemadenAlertBanner = ({ alerts }) => {
                     <Bell size={12} className={config.text} />
                     <span className={`text-[9px] font-black uppercase tracking-tighter ${config.text}`}>Notificação Ativa</span>
                 </div>
-                <button className={`text-[10px] font-black uppercase bg-white/20 px-3 py-1 rounded-lg ${config.text}`}>
-                    Ver Mapas
+                <button 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/alertas-cemaden');
+                    }}
+                    className={`text-[10px] font-black uppercase bg-white/20 px-3 py-1 rounded-lg ${config.text}`}
+                >
+                    Ver Todos
                 </button>
             </div>
         </div>

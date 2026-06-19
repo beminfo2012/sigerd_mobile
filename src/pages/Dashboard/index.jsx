@@ -75,6 +75,7 @@ import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
 import { getShelters, getOccupants, getInventory } from '../../services/shelterDb'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService, STATION_METADATA } from '../../services/cemaden'
+import { getAlertasCemaden } from '../../services/alertasCemadenService'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 import { useToast } from '../../components/ToastNotification'
 import { APP_VERSION } from '../../version'
@@ -2347,7 +2348,7 @@ const Dashboard = () => {
                 } catch (e) { console.warn('[Weather] Fetch failed:', e); }
 
                 try {
-                    const alerts = await cemadenService.getActiveAlerts();
+                    const alerts = await getAlertasCemaden({ status: 'ATIVO' });
                     setCemadenAlerts(alerts || []);
                 } catch (e) { console.warn('[Cemaden] Alerts failed:', e); }
 
