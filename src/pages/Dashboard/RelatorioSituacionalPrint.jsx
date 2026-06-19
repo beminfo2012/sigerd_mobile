@@ -196,8 +196,10 @@ const RelatorioSituacionalPrint = () => {
             setKpiChuvaVal(`${avgAcc} mm`);
             setKpiChuvaDesc('Acumulado no período');
 
-            setKpiInmetVal(String(activeWarnings?.length || 0));
-            setKpiInmetDesc(activeWarnings?.length > 0 ? `${activeWarnings.length} vigente(s)` : 'Nenhum vigente');
+            const cemadenAlerts = reportData.cemadenAlerts || [];
+            const totalAlerts = (activeWarnings?.length || 0) + cemadenAlerts.length;
+            setKpiInmetVal(String(totalAlerts));
+            setKpiInmetDesc(totalAlerts > 0 ? `${totalAlerts} vigente(s)` : 'Nenhum vigente');
 
             // Pluviometer bullet list
             const pluvioList = pluviometerData && pluviometerData.length > 0 
@@ -217,12 +219,11 @@ const RelatorioSituacionalPrint = () => {
                 }).join('<br/>')
                 : '';
 
-            const cemadenAlerts = reportData.cemadenAlerts;
             let cemadenList = cemadenAlerts && cemadenAlerts.length > 0
                 ? cemadenAlerts.map(a => {
                     const sev = a.nivel_atual || 'ALERTA';
                     const tipo = a.tipo_evento || 'Risco';
-                    const inicioStr = new Date(a.data_abertura).toLocaleDateString('pt-BR');
+                    const inicioStr = a.data_abertura ? new Date(a.data_abertura).toLocaleDateString('pt-BR') : '';
                     const periodo = inicioStr ? ` (aberto em ${inicioStr})` : '';
                     return `• <strong>CEMADEN [${sev}] ${tipo}</strong>${periodo}`;
                 }).join('<br/>')
