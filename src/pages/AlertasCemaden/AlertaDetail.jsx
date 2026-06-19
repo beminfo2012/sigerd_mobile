@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     ArrowLeft, AlertTriangle, Calendar, MapPin, Download, 
-    FileText, CheckCircle, Clock, Info, ShieldAlert
+    FileText, CheckCircle, Clock, Info, ShieldAlert, MessageCircle
 } from 'lucide-react';
 import { getAlertaCemadenById } from '../../services/alertasCemadenService';
 import { useToast } from '../../components/ToastNotification';
@@ -66,16 +66,52 @@ const AlertaCemadenDetail = () => {
         );
     };
 
+    const shareToWhatsApp = async () => {
+        const isAltaSeveridade = alerta.nivel_atual === 'ALTO' || alerta.nivel_atual === 'MUITO_ALTO';
+        const severityEmoji = isAltaSeveridade ? '🔴' : (alerta.nivel_atual === 'MODERADO' ? '🟠' : '🟢');
+        
+        const waText =
+            `🚨 *ALERTA CEMADEN - DEFESA CIVIL* 🚨\n\n` +
+            `📍 *MUNICÍPIO:* ${alerta.municipio} - ${alerta.uf}\n` +
+            `⚠️ *TIPO DE EVENTO:* ${alerta.tipo_evento}\n` +
+            `${severityEmoji} *NÍVEL ATUAL:* ${alerta.nivel_atual}\n\n` +
+            `📅 *Abertura:* ${new Date(alerta.data_abertura).toLocaleDateString('pt-BR')}\n` +
+            `🚦 *Status:* ${alerta.status}\n\n` +
+            (latestVersao && latestVersao.cenario_risco ? `⚡ *Cenário de Risco:*\n${latestVersao.cenario_risco}\n\n` : '') +
+            `📞 *Emergência:* 199 / 27 99771-2022\n` +
+            `🏘️ Defesa Civil - Santa Maria de Jetibá`;
+
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(waText);
+                toast.success('Texto copiado! Abrindo WhatsApp...');
+            }
+        } catch (err) {
+            console.warn('Clipboard copy failed:', err);
+        }
+
+        const waChannelLink = `https://whatsapp.com/channel/0029Vb7CuCcW4lh0Lhj115`;
+        window.open(waChannelLink, '_blank');
+    };
+
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 transition-colors">
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center gap-4 sticky top-0 z-20">
-                <button onClick={() => navigate('/alertas-cemaden')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
-                    <ArrowLeft size={20} />
-                </button>
-                <div>
-                    <h1 className="text-base font-black text-slate-800 dark:text-white leading-tight">Detalhes do Alerta</h1>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{alerta.numero_alerta}</p>
+            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between sticky top-0 z-20">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/alertas-cemaden')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div>
+                        <h1 className="text-base font-black text-slate-800 dark:text-white leading-tight">Detalhes do Alerta</h1>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{alerta.numero_alerta}</p>
+                    </div>
                 </div>
+                <button
+                    onClick={shareToWhatsApp}
+                    className="flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#20ba59] transition-all shadow-md"
+                >
+                    <MessageCircle size={16} /> Compartilhar
+                </button>
             </header>
 
             <main className="p-4 max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">

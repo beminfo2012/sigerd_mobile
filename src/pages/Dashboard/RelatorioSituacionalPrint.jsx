@@ -205,18 +205,31 @@ const RelatorioSituacionalPrint = () => {
                 : 'Sem registros mapeados no período';
             setPluviometerText(pluvioList);
 
-            // INMET warning list
-            const inmetList = activeWarnings && activeWarnings.length > 0
+            // INMET & CEMADEN warning list
+            let inmetList = activeWarnings && activeWarnings.length > 0
                 ? activeWarnings.map(a => {
                     const sev = a.severidade || a.aviso_severidade || 'ALERTA';
                     const tipo = a.tipo || a.descricao || 'Meteorológico';
                     const inicioStr = formatAlertDate(a.inicio);
                     const fimStr = formatAlertDate(a.fim);
                     const periodo = (inicioStr && fimStr) ? ` (de ${inicioStr} até ${fimStr})` : '';
-                    return `• <strong>[${sev}] ${tipo}</strong>${periodo}`;
+                    return `• <strong>INMET [${sev}] ${tipo}</strong>${periodo}`;
                 }).join('<br/>')
-                : 'Céu limpo e condições estáveis — 0 aviso(s) ativo(s)';
-            setInmetAlertsText(inmetList);
+                : '';
+
+            const cemadenAlerts = reportData.cemadenAlerts;
+            let cemadenList = cemadenAlerts && cemadenAlerts.length > 0
+                ? cemadenAlerts.map(a => {
+                    const sev = a.nivel_atual || 'ALERTA';
+                    const tipo = a.tipo_evento || 'Risco';
+                    const inicioStr = new Date(a.data_abertura).toLocaleDateString('pt-BR');
+                    const periodo = inicioStr ? ` (aberto em ${inicioStr})` : '';
+                    return `• <strong>CEMADEN [${sev}] ${tipo}</strong>${periodo}`;
+                }).join('<br/>')
+                : '';
+
+            const combinedAlerts = [inmetList, cemadenList].filter(Boolean).join('<br/>');
+            setInmetAlertsText(combinedAlerts || 'Céu limpo e condições estáveis — 0 aviso(s) ativo(s)');
 
             // Humanitarian Data
             setKpiAbrigos(String(humanitarianData?.shelters?.length || 0));
@@ -650,7 +663,7 @@ const RelatorioSituacionalPrint = () => {
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
                                         <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>PLUVIÔMETROS CEMADEN</th>
-                                        <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>ALERTAS VIGENTES — INMET</th>
+                                        <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>ALERTAS VIGENTES</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -228,6 +228,41 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
         );
     };
 
+    const handleSelectEntireMunicipality = async () => {
+        try {
+            const res = await fetch('/limite_smj.json');
+            const data = await res.json();
+            
+            let importedPolygons = [];
+            if (data && data.features) {
+                data.features.forEach(feature => {
+                    if (feature.geometry.type === 'Polygon') {
+                        // GeoJSON uses [lng, lat]
+                        const coords = feature.geometry.coordinates[0].map(c => [c[1], c[0]]);
+                        importedPolygons.push(coords);
+                    } else if (feature.geometry.type === 'MultiPolygon') {
+                        feature.geometry.coordinates.forEach(poly => {
+                            const coords = poly[0].map(c => [c[1], c[0]]);
+                            importedPolygons.push(coords);
+                        });
+                    }
+                });
+            }
+            
+            if (importedPolygons.length > 0) {
+                setPolygons(prev => [...prev, ...importedPolygons]);
+                alert('Limite do município adicionado com sucesso!');
+                const centroid = getCentroidOfPolygons(importedPolygons);
+                if (centroid) setMapCenter([centroid.lat, centroid.lng]);
+            } else {
+                alert('Não foi possível processar as coordenadas do limite do município.');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar limite do município:', error);
+            alert('Erro ao carregar o limite do município. Verifique se o arquivo limite_smj.json está disponível.');
+        }
+    };
+
     const parseKML = (kmlText) => {
         try {
             const parser = new DOMParser();
@@ -497,7 +532,15 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
 
                                 {/* Lista de Áreas Poligonais Salvas */}
                                 <div className="space-y-2">
-                                    <h3 className="text-[10px] font-black uppercase text-slate-450 dark:text-slate-555 tracking-wider ml-1">Áreas Confirmadas ({polygons.length})</h3>
+                                    <div className="flex items-center justify-between ml-1">
+                                        <h3 className="text-[10px] font-black uppercase text-slate-450 dark:text-slate-555 tracking-wider">Áreas Confirmadas ({polygons.length})</h3>
+                                        <button 
+                                            onClick={handleSelectEntireMunicipality} 
+                                            className="text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:underline px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-md transition-colors"
+                                        >
+                                            + Todo o Município
+                                        </button>
+                                    </div>
                                     
                                     {polygons.length === 0 ? (
                                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 italic p-3 text-center bg-slate-100/40 dark:bg-slate-850/20 rounded-2xl">

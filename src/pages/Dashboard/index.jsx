@@ -2625,7 +2625,8 @@ const Dashboard = () => {
                 emissionDate,
                 currentStatus,
                 avgAcc,
-                activeWarnings: data?.alerts || []
+                activeWarnings: data?.alerts || [],
+                cemadenAlerts: cemadenAlerts || []
             };
 
             // Save to session for the print component and open route
