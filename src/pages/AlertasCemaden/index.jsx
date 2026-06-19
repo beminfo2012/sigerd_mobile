@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     AlertTriangle, UploadCloud, Search, Filter, 
-    ChevronDown, X, Eye, FileText, CheckCircle, AlertCircle
+    ChevronDown, X, Eye, FileText, CheckCircle, AlertCircle, ArrowLeft
 } from 'lucide-react';
 import { getAlertasCemaden, parseAlertaCemaden, processarUploadCemaden } from '../../services/alertasCemadenService';
 import { useToast } from '../../components/ToastNotification';
@@ -105,6 +105,13 @@ const AlertasCemadenList = () => {
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 transition-colors">
             <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between sticky top-0 z-20">
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors active:scale-95"
+                        title="Voltar para o Dashboard"
+                    >
+                        <ArrowLeft size={20} className="text-slate-600 dark:text-slate-300" />
+                    </button>
                     <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
                         <AlertTriangle size={20} />
                     </div>
