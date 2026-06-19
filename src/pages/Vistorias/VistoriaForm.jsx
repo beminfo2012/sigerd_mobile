@@ -408,7 +408,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     }, [formData.agente, formData.matricula, formData.cargo])
 
     useEffect(() => {
+        console.log('[DEBUG VistoriaForm] formData.nivelRisco changed to:', formData.nivelRisco);
+    }, [formData.nivelRisco])
+
+    useEffect(() => {
+        console.log('[DEBUG VistoriaForm] initialData received:', initialData);
         if (initialData) {
+            console.log('[DEBUG VistoriaForm] initialData.nivel_risco:', initialData.nivel_risco, 'initialData.nivelRisco:', initialData.nivelRisco);
             const parseJSON = (val, fallback) => {
                 if (typeof val === 'string') {
                     try { return JSON.parse(val); } catch (e) { return fallback; }
@@ -440,8 +446,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 return sub;
             });
 
-            let rawNivel = initialData.nivel_risco || initialData.nivelRisco || 'Baixo';
-            if (rawNivel === 'Moderado') rawNivel = 'Médio';
+             let rawNivel = initialData.nivel_risco || initialData.nivelRisco || 'Baixo';
+             if (rawNivel === 'Moderado') rawNivel = 'Médio';
+             console.log('[DEBUG VistoriaForm] rawNivel calculated:', rawNivel);
 
             const rawChecklist = parseJSON(initialData.checklist_respostas || initialData.checklistRespostas, {});
             const migratedChecklist = {};
