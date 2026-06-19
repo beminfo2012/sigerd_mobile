@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Polygon, CircleMarker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import PizZip from 'pizzip';
 import 'leaflet/dist/leaflet.css';
 import OrthofotsLayer from '../../../components/OrthofotsLayer';
 import { X, MapPin, Navigation, Check, RotateCcw, Trash2, HelpCircle, Grid } from 'lucide-react';
@@ -279,7 +278,7 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                             Cancelar
                         </button>
                         <button 
-                            onClick={handleConfirm}
+                            onClick={handleSave}
                             disabled={polygons.length === 0 && currentPolygon.length < 3}
                             className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all shadow-lg shadow-emerald-200 dark:shadow-none flex items-center justify-center gap-2 border border-white/10"
                         >

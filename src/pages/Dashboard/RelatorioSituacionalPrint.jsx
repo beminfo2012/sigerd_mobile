@@ -664,7 +664,7 @@ const RelatorioSituacionalPrint = () => {
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
                                         <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>PLUVIÔMETROS CEMADEN</th>
-                                        <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>ALERTAS VIGENTES</th>
+                                        <th style={{ width: '50%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', textAlign: 'left' }}>ALERTAS VIGENTES (INMET / CEMADEN)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
