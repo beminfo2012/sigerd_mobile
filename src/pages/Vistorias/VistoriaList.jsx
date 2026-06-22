@@ -456,6 +456,21 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                             <Mail size={18} />
                                         </button>
 
+                                        {/* NOPRER Button */}
+                                        {(vistoria.nivelRisco === 'Médio' || vistoria.nivelRisco === 'Alto') && (
+                                            <button
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    const vistoriaIdStr = encodeURIComponent(vistoria.id || vistoria.vistoria_id);
+                                                    navigate(`/noprer/novo/vistoria/${vistoriaIdStr}`);
+                                                }}
+                                                className="px-3 h-10 flex items-center justify-center text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                title="Emitir Notificação Preliminar de Risco"
+                                            >
+                                                Emitir NOPRER
+                                            </button>
+                                        )}
+
                                         {userProfile?.role !== 'Operador' && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, vistoria }) }}

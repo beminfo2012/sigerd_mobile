@@ -124,6 +124,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
+            label: 'NOPRER',
+            icon: Shield,
+            path: '/noprer',
+            roles: AGENT_ROLES
+        },
+        {
             label: 'Ocorrências',
             icon: AlertTriangle,
             path: '/ocorrencias',
