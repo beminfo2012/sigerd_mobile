@@ -92,6 +92,7 @@ const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
 
 // Mapeamento de Capacidade Instalada (MCI)
 const MciDashboard = lazy(() => import('./pages/Mci'))
+const MciPrint = lazy(() => import('./pages/Mci/MciPrint'))
 
 
 // Create context for user profile
@@ -159,7 +160,7 @@ const AppContent = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const isPrintPage = location.pathname.includes('/imprimir/') || location.pathname.includes('/relatorio-situacional/imprimir') || location.pathname.includes('/termo/') || location.search.includes('fullscreen=true');
+    const isPrintPage = location.pathname.includes('/imprimir') || location.pathname.includes('/termo/') || location.search.includes('fullscreen=true');
     const isTvMode = location.search.includes('tvMode=true');
 
     useEffect(() => {
@@ -552,6 +553,11 @@ const AppContent = ({
                                 <Route path="/mci" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, ...REDAP_ROLES]}>
                                         <MciDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/mci/imprimir" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, ...REDAP_ROLES]}>
+                                        <MciPrint />
                                     </ProtectedRoute>
                                 } />
 

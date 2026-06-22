@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     Search, Plus, Filter, Edit3, Trash2, CheckCircle2, XCircle, 
     AlertTriangle, Users, MapPin, Truck, Wrench, Package, 
-    ShieldAlert, FileText, ClipboardList, RefreshCw, Send, Check, Upload
+    ShieldAlert, FileText, ClipboardList, RefreshCw, Send, Check, Upload, ArrowLeft, Printer
 } from 'lucide-react';
 import { UserContext } from '../../App';
 import { supabase } from '../../services/supabase';
@@ -178,6 +178,26 @@ const mapCsvRowToRecurso = (row, defaultSecretaria) => {
     };
 };
 
+const getMciSecretariaName = (redapSector) => {
+    const map = {
+        'Defesa Civil': 'Coordenadoria Municipal de Proteção e Defesa Civil',
+        'Administração': 'Secretaria de Administração',
+        'Agropecuária': 'Secretaria de Agropecuária',
+        'Cultura': 'Secretaria de Cultura e Turismo',
+        'Defesa Social': 'Secretaria de Defesa Social',
+        'Educação': 'Secretaria de Educação',
+        'Esporte e Turismo': 'Secretaria de Esportes e Lazer',
+        'Interior': 'Secretaria de Interior',
+        'Meio Ambiente': 'Secretaria de Meio Ambiente',
+        'Obras': 'Secretaria de Obras e Infraestrutura',
+        'Saúde': 'Secretaria de Saúde',
+        'Serviços Urbanos': 'Secretaria de Serviços Urbanos',
+        'Assistência Social': 'Secretaria de Trabalho, Desenvolvimento e Assistência Social',
+        'Transportes': 'Secretaria de Transportes'
+    };
+    return map[redapSector] || redapSector;
+};
+
 export default function MciDashboard() {
     const user = useContext(UserContext);
     const { toast: addToast } = useToast();
@@ -186,6 +206,7 @@ export default function MciDashboard() {
     // User Roles & Department Mapping
     const isCOMPDEC = ['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil'].includes(user?.role);
     const userSecretaria = REDAP_SECTORS[user?.role] || 'Outros';
+    const mciSecretariaName = getMciSecretariaName(userSecretaria);
 
     // State Variables
     const [recursos, setRecursos] = useState([]);
@@ -221,7 +242,7 @@ export default function MciDashboard() {
     const [formName, setFormName] = useState('');
     const [formCategory, setFormCategory] = useState('VEICULO');
     const [formStatus, setFormStatus] = useState('DISPONIVEL');
-    const [formSecretaria, setFormSecretaria] = useState(isCOMPDEC ? 'Defesa Civil' : userSecretaria);
+    const [formSecretaria, setFormSecretaria] = useState(isCOMPDEC ? 'Coordenadoria Municipal de Proteção e Defesa Civil' : mciSecretariaName);
     
     // Category specific details state
     const [veiculoTipo, setVeiculoTipo] = useState('Caminhonete 4x4');
@@ -270,7 +291,7 @@ export default function MciDashboard() {
             // Apply RBAC filters: Secretarias can only load their own records
             const filters = {};
             if (!isCOMPDEC) {
-                filters.secretaria_id = userSecretaria;
+                filters.secretaria_id = mciSecretariaName;
             }
             const dataRec = await getMciRecursos(filters);
             setRecursos(dataRec);
@@ -278,7 +299,7 @@ export default function MciDashboard() {
             const dataReq = await getMciRequisicoes();
             // Filter requests for secretarias
             if (!isCOMPDEC) {
-                setRequisicoes(dataReq.filter(r => r.recurso?.secretaria_id === userSecretaria));
+                setRequisicoes(dataReq.filter(r => r.recurso?.secretaria_id === mciSecretariaName));
             } else {
                 setRequisicoes(dataReq);
             }
@@ -436,7 +457,7 @@ export default function MciDashboard() {
         setFormName('');
         setFormCategory('VEICULO');
         setFormStatus('DISPONIVEL');
-        setFormSecretaria(isCOMPDEC ? 'Defesa Civil' : userSecretaria);
+        setFormSecretaria(isCOMPDEC ? 'Coordenadoria Municipal de Proteção e Defesa Civil' : mciSecretariaName);
         
         setVeiculoTipo('Caminhonete 4x4');
         setVeiculoPlaca('');
@@ -577,7 +598,7 @@ export default function MciDashboard() {
                 }
                 
                 // Map rows using mapped helper
-                const defaultSec = isCOMPDEC ? 'Defesa Civil' : userSecretaria;
+                const defaultSec = isCOMPDEC ? 'Coordenadoria Municipal de Proteção e Defesa Civil' : mciSecretariaName;
                 const mapped = rows.map((row, idx) => {
                     try {
                         return mapCsvRowToRecurso(row, defaultSec);
@@ -608,7 +629,7 @@ export default function MciDashboard() {
                 // If not COMPDEC, force their own secretaria
                 const targetRecurso = {
                     ...recursoData,
-                    secretaria_id: isCOMPDEC ? recursoData.secretaria_id : userSecretaria
+                    secretaria_id: isCOMPDEC ? recursoData.secretaria_id : mciSecretariaName
                 };
                 await createMciRecurso(targetRecurso, user?.id);
                 successCount++;
@@ -648,6 +669,33 @@ export default function MciDashboard() {
         if (cobradeLabel.includes('incêndio')) {
             if (recurso.categoria === 'VEICULO' && recurso.detalhes?.tipo?.toLowerCase()?.includes('tanque')) return true;
             if (recurso.categoria === 'PROFISSIONAL' && recurso.detalhes?.funcao?.toLowerCase()?.includes('brigadista')) return true;
+        }
+        if (cobradeLabel.includes('chuvas intensas') || cobradeLabel.includes('tempestade') || cobradeLabel.includes('vendaval') || cobradeLabel.includes('granizo')) {
+            if (recurso.categoria === 'INSTALACAO' && (recurso.detalhes?.capacidade_abrigo > 0)) return true;
+            if (recurso.categoria === 'ESTOQUE' && (
+                recurso.detalhes?.item?.toLowerCase()?.includes('lona') || 
+                recurso.detalhes?.item?.toLowerCase()?.includes('telha') || 
+                recurso.detalhes?.item?.toLowerCase()?.includes('colchão') || 
+                recurso.detalhes?.item?.toLowerCase()?.includes('cesta') ||
+                recurso.detalhes?.item?.toLowerCase()?.includes('kit') ||
+                recurso.detalhes?.item?.toLowerCase()?.includes('higiene')
+            )) return true;
+            if (recurso.categoria === 'EQUIPAMENTO' && (
+                recurso.detalhes?.especificacoes?.toLowerCase()?.includes('motosserra') || 
+                recurso.detalhes?.especificacoes?.toLowerCase()?.includes('gerador') ||
+                recurso.detalhes?.especificacoes?.toLowerCase()?.includes('bomba') ||
+                recurso.detalhes?.especificacoes?.toLowerCase()?.includes('torre')
+            )) return true;
+            if (recurso.categoria === 'VEICULO' && (
+                recurso.detalhes?.tipo?.toLowerCase()?.includes('caminhão') || 
+                recurso.detalhes?.tipo?.toLowerCase()?.includes('munck') ||
+                recurso.detalhes?.tipo?.toLowerCase()?.includes('cesto') ||
+                recurso.detalhes?.tipo?.toLowerCase()?.includes('retroescavadeira')
+            )) return true;
+            if (recurso.categoria === 'PROFISSIONAL' && (
+                recurso.detalhes?.funcao?.toLowerCase()?.includes('operador') ||
+                recurso.detalhes?.funcao?.toLowerCase()?.includes('motorista')
+            )) return true;
         }
         return false;
     };
@@ -691,17 +739,46 @@ export default function MciDashboard() {
         <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-                <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-500">Logística de Emergência</span>
-                    <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase mt-1">MCI - CAPACIDADE INSTALADA</h2>
+                <div className="flex items-start gap-4">
+                    <button 
+                        onClick={() => navigate('/dashboard')}
+                        className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors mt-1 print:hidden"
+                        title="Voltar ao Dashboard"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-blue-500">Logística de Emergência</span>
+                        <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase mt-1">MCI - CAPACIDADE INSTALADA</h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {isCOMPDEC 
                             ? 'Painel Geral COMPDEC: Gerencie e mobilize os recursos municipais em tempo real.'
-                            : `Secretaria: ${userSecretaria}. Gerencie os recursos de sua pasta.`
+                            : `Secretaria: ${mciSecretariaName}. Gerencie os recursos de sua pasta.`
                         }
                     </p>
                 </div>
-                <div className="flex gap-2">
+                </div>
+                <div className="flex gap-2 print:hidden flex-wrap">
+                    <button 
+                        onClick={() => {
+                            sessionStorage.setItem('mciReportData', JSON.stringify({
+                                recursos: filteredRecursos,
+                                stats,
+                                filters: {
+                                    categoria: filterCategory,
+                                    status: filterStatus,
+                                    secretaria: filterSecretaria,
+                                    onlyAvailable
+                                },
+                                isCOMPDEC,
+                                userSecretaria: mciSecretariaName
+                            }));
+                            window.open('/mci/imprimir', '_blank');
+                        }}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs uppercase tracking-wider rounded-lg flex items-center gap-2 shadow-sm transition-all border border-slate-200 dark:border-slate-700"
+                    >
+                        <Printer size={16} /> Relatório
+                    </button>
                     <button 
                         onClick={() => {
                             setCsvFile(null);
@@ -1220,14 +1297,25 @@ export default function MciDashboard() {
                                         disabled={!isCOMPDEC}
                                         className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none disabled:opacity-60"
                                     >
-                                        <option value="Defesa Civil">Defesa Civil</option>
-                                        <option value="Obras">Obras</option>
-                                        <option value="Saúde">Saúde</option>
-                                        <option value="Educação">Educação</option>
-                                        <option value="Interior">Interior</option>
-                                        <option value="Assistência Social">Assistência Social</option>
-                                        <option value="Serviços Urbanos">Serviços Urbanos</option>
-                                        <option value="Meio Ambiente">Meio Ambiente</option>
+                                        <option value="Coordenadoria Municipal de Proteção e Defesa Civil">Coordenadoria Municipal de Proteção e Defesa Civil</option>
+                                        <option value="Controladoria Geral Interna">Controladoria Geral Interna</option>
+                                        <option value="Secretaria de Administração">Secretaria de Administração</option>
+                                        <option value="Secretaria de Agropecuária">Secretaria de Agropecuária</option>
+                                        <option value="Secretaria de Cultura e Turismo">Secretaria de Cultura e Turismo</option>
+                                        <option value="Secretaria de Defesa Social">Secretaria de Defesa Social</option>
+                                        <option value="Secretaria de Educação">Secretaria de Educação</option>
+                                        <option value="Secretaria de Esportes e Lazer">Secretaria de Esportes e Lazer</option>
+                                        <option value="Secretaria de Fazenda">Secretaria de Fazenda</option>
+                                        <option value="Secretaria de Gabinete">Secretaria de Gabinete</option>
+                                        <option value="Secretaria de Interior">Secretaria de Interior</option>
+                                        <option value="Secretaria Jurídica">Secretaria Jurídica</option>
+                                        <option value="Secretaria de Meio Ambiente">Secretaria de Meio Ambiente</option>
+                                        <option value="Secretaria de Obras e Infraestrutura">Secretaria de Obras e Infraestrutura</option>
+                                        <option value="Secretaria de Planejamento e Projetos">Secretaria de Planejamento e Projetos</option>
+                                        <option value="Secretaria de Saúde">Secretaria de Saúde</option>
+                                        <option value="Secretaria de Serviços Urbanos">Secretaria de Serviços Urbanos</option>
+                                        <option value="Secretaria de Trabalho, Desenvolvimento e Assistência Social">Secretaria de Trabalho, Desenvolvimento e Assistência Social</option>
+                                        <option value="Secretaria de Transportes">Secretaria de Transportes</option>
                                     </select>
                                 </div>
                             </div>
