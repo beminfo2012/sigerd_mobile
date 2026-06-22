@@ -70,7 +70,7 @@ const NoprerDetails = () => {
     const historyTimeline = [
         { date: '17/06/2026', type: 'vistoria', label: 'Vistoria Original', doc: noprer.origem_id },
         { date: new Date(noprer.data_emissao).toLocaleDateString('pt-BR'), type: 'noprer', label: 'Emissão NOPRER', doc: noprer.numero_noprer },
-        { date: new Date(noprer.data_limite).toLocaleDateString('pt-BR'), type: 'prazo', label: 'Fim do Prazo', doc: '30 dias' },
+        { date: new Date(noprer.data_limite).toLocaleDateString('pt-BR'), type: 'prazo', label: 'Fim do Prazo', doc: `${noprer.prazo_dias} dias` },
     ];
 
     return (
@@ -123,7 +123,39 @@ const NoprerDetails = () => {
                             <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Status Atual</p>
                             <h2 className="text-2xl font-black">{noprer.status}</h2>
                         </div>
-                        <CheckCircle size={32} className="opacity-50" />
+                        
+                        {/* Status Changer */}
+                        {noprer.status !== 'CONVERTIDA EM INTERDIÇÃO' && (
+                            <div className="flex flex-col items-end gap-1">
+                                <label className="text-[10px] font-bold uppercase opacity-80">Alterar Status</label>
+                                <select 
+                                    className="bg-white/20 border border-white/30 text-sm font-bold rounded-lg px-3 py-1 outline-none cursor-pointer"
+                                    value={noprer.status}
+                                    onChange={async (e) => {
+                                        const newStatus = e.target.value;
+                                        try {
+                                            const { error } = await supabase.from('noprer').update({ status: newStatus }).eq('id', noprer.id);
+                                            if (error) throw error;
+                                            setNoprer({ ...noprer, status: newStatus });
+                                        } catch (err) {
+                                            console.error("Erro ao alterar status:", err);
+                                            alert("Falha ao alterar status.");
+                                        }
+                                    }}
+                                >
+                                    <option value="EMITIDA" className="text-slate-900">EMITIDA</option>
+                                    <option value="NOTIFICADO" className="text-slate-900">NOTIFICADO</option>
+                                    <option value="EM ADEQUAÇÃO" className="text-slate-900">EM ADEQUAÇÃO</option>
+                                    <option value="PRAZO VENCENDO" className="text-slate-900">PRAZO VENCENDO</option>
+                                    <option value="VENCIDA" className="text-slate-900">VENCIDA</option>
+                                    <option value="REVISTORIADA" className="text-slate-900">REVISTORIADA</option>
+                                    <option value="ENCERRADA" className="text-slate-900">ENCERRADA</option>
+                                </select>
+                            </div>
+                        )}
+                        {noprer.status === 'CONVERTIDA EM INTERDIÇÃO' && (
+                            <CheckCircle size={32} className="opacity-50" />
+                        )}
                     </div>
 
                     {/* Resumo */}

@@ -154,20 +154,20 @@ const NoprerForm = () => {
         const { data } = await supabase
             .from('noprer')
             .select('numero_noprer')
-            .like('numero_noprer', `NOPRER-${year}.%`)
+            .like('numero_noprer', `%/${year}`)
             .order('numero_noprer', { ascending: false })
             .limit(1);
             
         if (data && data.length > 0 && data[0].numero_noprer) {
-            const parts = data[0].numero_noprer.split('.');
+            const parts = data[0].numero_noprer.split('/');
             if (parts.length > 1) {
-                const lastNum = parseInt(parts[1], 10);
+                const lastNum = parseInt(parts[0], 10);
                 if (!isNaN(lastNum)) {
-                    return `NOPRER-${year}.${(lastNum + 1).toString().padStart(4, '0')}`;
+                    return `${(lastNum + 1).toString().padStart(4, '0')}/${year}`;
                 }
             }
         }
-        return `NOPRER-${year}.0001`;
+        return `0001/${year}`;
     };
 
     const handleSave = async () => {
@@ -250,10 +250,10 @@ const NoprerForm = () => {
                         <div>
                             <h1 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
                                 <ShieldAlert className="text-blue-600" /> 
-                                Emitir NOPRER
+                                {id ? 'Editar NOPRER' : 'Emitir NOPRER'}
                             </h1>
                             <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
-                                Origem: {origem.toUpperCase()} #{sourceData.vistoria_id || sourceData.ocorrencia_id || origemId}
+                                {id ? `NOPRER ${existingNoprer?.numero_noprer}` : `Origem: ${origem?.toUpperCase() || ''} #${sourceData.vistoria_id || sourceData.ocorrencia_id || origemId || ''}`}
                             </p>
                         </div>
                     </div>
