@@ -284,7 +284,7 @@ export default function MciDashboard() {
             }
 
             const events = await getActiveEvents();
-            const activeOnly = events.filter(e => e.status_evento === 'EM_ANDAMENTO' || e.status_evento === 'HOMOLOGADO');
+            const activeOnly = events.filter(e => e.status_evento !== 'FECHADO' && e.status_evento !== 'Finalizado');
             setActiveEvents(activeOnly);
             if (activeOnly.length > 0) {
                 setSelectedEvent(activeOnly[0]);

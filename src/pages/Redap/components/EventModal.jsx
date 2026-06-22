@@ -7,7 +7,7 @@ const EventModal = ({ isOpen, onClose, onSave, eventToEdit = null }) => {
     const [cobrade, setCobrade] = useState('');
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [limitDate, setLimitDate] = useState('');
-    const [status, setStatus] = useState('RASCUNHO');
+    const [status, setStatus] = useState('ABERTO');
     const cobrades = getCobrades();
 
     useEffect(() => {
@@ -17,13 +17,13 @@ const EventModal = ({ isOpen, onClose, onSave, eventToEdit = null }) => {
             setCobrade(eventToEdit.cobrade || '');
             setStartDate(eventToEdit.data_inicio ? new Date(eventToEdit.data_inicio).toISOString().split('T')[0] : '');
             setLimitDate(eventToEdit.data_limite ? new Date(eventToEdit.data_limite).toISOString().split('T')[0] : '');
-            setStatus(eventToEdit.status_geral || 'RASCUNHO');
+            setStatus(eventToEdit.status_geral || 'ABERTO');
         } else {
             setName('');
             setCobrade('');
             setStartDate(new Date().toISOString().split('T')[0]);
             setLimitDate('');
-            setStatus('RASCUNHO');
+            setStatus('ABERTO');
         }
     }, [eventToEdit, isOpen]);
 
@@ -150,7 +150,7 @@ const EventModal = ({ isOpen, onClose, onSave, eventToEdit = null }) => {
                                 onChange={(e) => setStatus(e.target.value)}
                                 className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-bold text-slate-700 dark:text-slate-200 appearance-none"
                             >
-                                <option value="RASCUNHO">Aberto às Secretarias (Rascunho)</option>
+                                <option value="ABERTO">Aberto às Secretarias</option>
                                 <option value="FECHADO">Fechado para Lançamento (Consolidado/Finalizado)</option>
                             </select>
                             <Info className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-650 pointer-events-none" size={20} />

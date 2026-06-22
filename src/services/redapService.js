@@ -348,7 +348,7 @@ export const createEvent = async (event) => {
         municipio_uf: 'Santa Maria de Jetibá / ES',
         area_afetada_localidade: 'Área Urbana e Rural',
         decreto_municipal_emergencia: null,
-        status_geral: 'RASCUNHO',
+        status_geral: 'ABERTO',
         data_limite: event.data_limite || null,
         data_emissao: new Date().toISOString(),
         created_at: new Date().toISOString(),
