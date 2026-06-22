@@ -143,6 +143,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: REDAP_ROLES
         },
         {
+            label: 'MCI - Recursos',
+            icon: ClipboardList,
+            path: '/mci',
+            roles: [...AGENT_ROLES, ...REDAP_ROLES]
+        },
+        {
             label: 'Assist. Humanitária',
             icon: HumanitarianIcon,
             path: '/abrigos',

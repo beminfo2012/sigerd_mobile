@@ -90,6 +90,9 @@ const AlertaCemadenDetail = lazy(() => import('./pages/AlertasCemaden/AlertaDeta
 // Contingency Plan (Lazy)
 const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
 
+// Mapeamento de Capacidade Instalada (MCI)
+const MciDashboard = lazy(() => import('./pages/Mci'))
+
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -542,6 +545,13 @@ const AppContent = ({
                                 <Route path="/alertas-cemaden/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <AlertaCemadenDetail />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* MCI Routes */}
+                                <Route path="/mci" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, ...REDAP_ROLES]}>
+                                        <MciDashboard />
                                     </ProtectedRoute>
                                 } />
 
