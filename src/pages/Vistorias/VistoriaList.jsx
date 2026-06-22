@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight } from 'lucide-react'
+import { Search, Plus, FileText, MapPin, Calendar, Trash2, Share, Filter, X, ChevronDown, Mail, Printer, ArrowLeft, Eye, ChevronRight, ShieldAlert } from 'lucide-react'
 import { UserContext } from '../../App'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
@@ -13,6 +13,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const navigate = useNavigate()
     const { userProfile } = useContext(UserContext)
     const [vistorias, setVistorias] = useState([])
+    const [noprers, setNoprers] = useState([])
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
@@ -42,6 +43,10 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const fetchVistorias = async () => {
         setLoading(true)
         try {
+            // Fetch NOPRERs to link them
+            const { data: noprersData } = await supabase.from('noprer').select('id, origem_id, numero_noprer')
+            if (noprersData) setNoprers(noprersData)
+
             // 1. Fetch from Supabase (Optimized Select)
             const { data: rawCloudData, error } = await supabase
                 .from('vistorias')
@@ -457,18 +462,36 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                         </button>
 
                                         {/* NOPRER Button */}
-                                        {(vistoria.nivelRisco === 'Médio' || vistoria.nivelRisco === 'Alto') && (
-                                            <button
-                                                onClick={(e) => { 
-                                                    e.stopPropagation(); 
-                                                    const vistoriaIdStr = encodeURIComponent(vistoria.id || vistoria.vistoria_id);
-                                                    navigate(`/noprer/novo/vistoria/${vistoriaIdStr}`);
-                                                }}
-                                                className="px-3 h-10 flex items-center justify-center text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all active:scale-95 ml-1"
-                                                title="Emitir Notificação Preliminar de Risco"
-                                            >
-                                                Emitir NOPRER
-                                            </button>
+                                        {(vistoria.nivelRisco === 'Médio' || vistoria.nivelRisco === 'Alto' || vistoria.nivelRisco === 'Muito Alto' || vistoria.nivelRisco === 'Iminente') && (
+                                            (() => {
+                                                const linkedNoprer = noprers.find(n => String(n.origem_id) === String(vistoria.vistoria_id) || String(n.origem_id) === String(vistoria.id));
+                                                if (linkedNoprer) {
+                                                    return (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); navigate(`/noprer/detalhes/${linkedNoprer.id}`); }}
+                                                            className="px-3 h-10 flex items-center gap-1 justify-center text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                            title="Ver NOPRER Gerada"
+                                                        >
+                                                            <ShieldAlert size={14} />
+                                                            {linkedNoprer.numero_noprer}
+                                                        </button>
+                                                    );
+                                                } else {
+                                                    return (
+                                                        <button
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                const vistoriaIdStr = encodeURIComponent(vistoria.id || vistoria.vistoria_id);
+                                                                navigate(`/noprer/novo/vistoria/${vistoriaIdStr}`);
+                                                            }}
+                                                            className="px-3 h-10 flex items-center justify-center text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                            title="Emitir Notificação Preliminar de Risco"
+                                                        >
+                                                            Emitir NOPRER
+                                                        </button>
+                                                    );
+                                                }
+                                            })()
                                         )}
 
                                         {userProfile?.role !== 'Operador' && (

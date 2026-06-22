@@ -67,12 +67,13 @@ const INTELLIGENT_CHECKLIST = {
 };
 
 const NoprerForm = () => {
-    const { origem, origemId } = useParams();
+    const { origem, origemId, id } = useParams();
     const navigate = useNavigate();
     const { userProfile } = useContext(UserContext);
     
     const [loading, setLoading] = useState(true);
     const [sourceData, setSourceData] = useState(null);
+    const [existingNoprer, setExistingNoprer] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
 
     // Form State
@@ -91,28 +92,53 @@ const NoprerForm = () => {
     
     useEffect(() => {
         const loadData = async () => {
-            const data = await getSourceData(origem, decodeURIComponent(origemId));
-            if (data) {
-                setSourceData(data);
-                
-                // Pre-fill some intelligence based on source
-                const nivel = origem === 'vistoria' ? (data.nivelRisco || data.nivel_risco) : data.nivel_risco;
-                
-                // Default risk logic
-                let presumedType = '';
-                if (data.categoriaRisco?.toLowerCase().includes('chuva') || data.categoria_risco?.toLowerCase().includes('chuva')) presumedType = 'Hidrológico';
-                else if (data.categoriaRisco?.toLowerCase().includes('deslizamento') || data.categoria_risco?.toLowerCase().includes('deslizamento')) presumedType = 'Geológico';
-                
-                setFormData(prev => ({
-                    ...prev,
-                    tipo_risco: presumedType || '',
-                    descricao: `Risco ${nivel} identificado durante ${origem}. É necessário monitoramento e ações preventivas.`
-                }));
+            if (id) {
+                // Modo Edição
+                const { data, error } = await supabase.from('noprer').select('*').eq('id', id).single();
+                if (data) {
+                    setExistingNoprer(data);
+                    setFormData({
+                        tipo_risco: data.tipo_risco || '',
+                        descricao: data.descricao || '',
+                        medidas_mitigatorias: data.medidas_mitigatorias || [],
+                        prazo_dias: data.prazo_dias || 30
+                    });
+                    setSourceData({ 
+                        endereco: data.endereco, 
+                        solicitante: data.solicitante, 
+                        nivel_risco: data.risco, 
+                        vistoria_id: data.origem_id 
+                    });
+                    if (data.recusou_assinatura) {
+                        setSignatureMode('recusa');
+                        setTestemunhas(data.testemunhas || { t1: '', doc1: '', t2: '', doc2: '' });
+                    } else if (data.assinatura) {
+                        setSignatureMode('digital');
+                        setSignatureData(data.assinatura);
+                    }
+                }
+            } else {
+                // Modo Criação
+                const data = await getSourceData(origem, decodeURIComponent(origemId));
+                if (data) {
+                    setSourceData(data);
+                    
+                    const nivel = origem === 'vistoria' ? (data.nivelRisco || data.nivel_risco) : data.nivel_risco;
+                    let presumedType = '';
+                    if (data.categoriaRisco?.toLowerCase().includes('chuva') || data.categoria_risco?.toLowerCase().includes('chuva')) presumedType = 'Hidrológico';
+                    else if (data.categoriaRisco?.toLowerCase().includes('deslizamento') || data.categoria_risco?.toLowerCase().includes('deslizamento')) presumedType = 'Geológico';
+                    
+                    setFormData(prev => ({
+                        ...prev,
+                        tipo_risco: presumedType || '',
+                        descricao: `Risco ${nivel} identificado durante ${origem}. É necessário monitoramento e ações preventivas.`
+                    }));
+                }
             }
             setLoading(false);
         };
         loadData();
-    }, [origem, origemId]);
+    }, [origem, origemId, id]);
 
     const handleChecklistToggle = (item) => {
         setFormData(prev => ({
@@ -123,62 +149,92 @@ const NoprerForm = () => {
         }));
     };
 
+    const generateNextNumber = async () => {
+        const year = new Date().getFullYear();
+        const { data } = await supabase
+            .from('noprer')
+            .select('numero_noprer')
+            .like('numero_noprer', `NOPRER-${year}.%`)
+            .order('numero_noprer', { ascending: false })
+            .limit(1);
+            
+        if (data && data.length > 0 && data[0].numero_noprer) {
+            const parts = data[0].numero_noprer.split('.');
+            if (parts.length > 1) {
+                const lastNum = parseInt(parts[1], 10);
+                if (!isNaN(lastNum)) {
+                    return `NOPRER-${year}.${(lastNum + 1).toString().padStart(4, '0')}`;
+                }
+            }
+        }
+        return `NOPRER-${year}.0001`;
+    };
+
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // Calculate final dates
-            const data_emissao = new Date().toISOString();
             const data_limite = new Date();
             data_limite.setDate(data_limite.getDate() + formData.prazo_dias);
-            
-            // Generate sequence roughly (in a real scenario, use a DB sequence)
-            const numeroNoprer = `NOPRER-${new Date().getFullYear()}.${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-            
-            // Build the NOPRER object for Supabase
-            const noprerObj = {
-                numero_noprer: numeroNoprer,
-                origem_tipo: origem,
-                origem_id: sourceData.vistoria_id || sourceData.ocorrencia_id_format || sourceData.ocorrencia_id || origemId,
-                data_emissao: data_emissao,
-                risco: origem === 'vistoria' ? (sourceData.nivelRisco || sourceData.nivel_risco) : sourceData.nivel_risco,
-                tipo_risco: formData.tipo_risco,
-                descricao: formData.descricao,
-                medidas_mitigatorias: formData.medidas_mitigatorias,
-                prazo_dias: formData.prazo_dias,
-                data_limite: data_limite.toISOString(),
-                status: signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO',
-                endereco: sourceData.endereco,
-                solicitante: sourceData.solicitante || sourceData.solicitante_nome,
-                coordenadas: sourceData.coordenadas || (sourceData.latitude ? { lat: sourceData.latitude, lng: sourceData.longitude } : null),
-                criado_por: userProfile?.full_name || 'Agente',
-                assinatura: signatureData,
-                testemunhas: signatureMode === 'recusa' ? testemunhas : null,
-                recusou_assinatura: signatureMode === 'recusa'
-            };
 
-            const { error } = await supabase.from('noprer').insert([noprerObj]);
-            
-            if (error) {
-                console.error("Erro Supabase:", error);
-                throw error;
+            if (id && existingNoprer) {
+                // Update
+                const noprerObj = {
+                    tipo_risco: formData.tipo_risco,
+                    descricao: formData.descricao,
+                    medidas_mitigatorias: formData.medidas_mitigatorias,
+                    prazo_dias: formData.prazo_dias,
+                    data_limite: data_limite.toISOString(),
+                    status: signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO',
+                    assinatura: signatureData,
+                    testemunhas: signatureMode === 'recusa' ? testemunhas : null,
+                    recusou_assinatura: signatureMode === 'recusa'
+                };
+                const { error } = await supabase.from('noprer').update(noprerObj).eq('id', id);
+                if (error) throw error;
+            } else {
+                // Insert
+                const data_emissao = new Date().toISOString();
+                const numeroNoprer = await generateNextNumber();
+                
+                const noprerObj = {
+                    numero_noprer: numeroNoprer,
+                    origem_tipo: origem,
+                    origem_id: sourceData.vistoria_id || sourceData.ocorrencia_id_format || sourceData.ocorrencia_id || origemId,
+                    data_emissao: data_emissao,
+                    risco: origem === 'vistoria' ? (sourceData.nivelRisco || sourceData.nivel_risco) : sourceData.nivel_risco,
+                    tipo_risco: formData.tipo_risco,
+                    descricao: formData.descricao,
+                    medidas_mitigatorias: formData.medidas_mitigatorias,
+                    prazo_dias: formData.prazo_dias,
+                    data_limite: data_limite.toISOString(),
+                    status: signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO',
+                    endereco: sourceData.endereco,
+                    solicitante: sourceData.solicitante || sourceData.solicitante_nome,
+                    coordenadas: sourceData.coordenadas || (sourceData.latitude ? { lat: sourceData.latitude, lng: sourceData.longitude } : null),
+                    criado_por: userProfile?.full_name || 'Agente',
+                    assinatura: signatureData,
+                    testemunhas: signatureMode === 'recusa' ? testemunhas : null,
+                    recusou_assinatura: signatureMode === 'recusa'
+                };
+
+                const { error } = await supabase.from('noprer').insert([noprerObj]);
+                if (error) throw error;
             }
 
-            // Redirect to Dashboard
             navigate('/noprer');
-            
         } catch (e) {
             console.error('Erro ao salvar NOPRER:', e);
-            alert('Falha ao emitir a NOPRER no servidor.');
+            alert('Falha ao salvar a NOPRER no servidor.');
         } finally {
             setIsSaving(false);
         }
     };
 
     if (loading) {
-        return <div className="p-8 text-center">Carregando dados da origem...</div>;
+        return <div className="p-8 text-center">Carregando dados...</div>;
     }
 
-    if (!sourceData) {
+    if (!sourceData && !id) {
         return <div className="p-8 text-center text-red-500">Erro: Registro de origem não encontrado.</div>;
     }
 

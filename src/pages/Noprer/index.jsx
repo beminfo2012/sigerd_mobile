@@ -2,13 +2,15 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     AlertTriangle, FileText, CheckCircle, Activity, Search, 
-    Plus, Filter, Clock, MapPin, Map as MapIcon, BarChart3, List
+    Plus, Filter, Clock, MapPin, Map as MapIcon, BarChart3, List,
+    ArrowLeft, Eye, Trash2
 } from 'lucide-react';
 import { UserContext } from '../../App';
 import { supabase } from '../../services/supabase';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import LimiteSMJLayer from '../../components/LimiteSMJLayer';
+import ConfirmModal from '../../components/ConfirmModal';
 
 // Icons config for leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -25,27 +27,46 @@ const NoprerDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [noprers, setNoprers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+
+    const fetchNoprers = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('noprer')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            if (data) setNoprers(data);
+        } catch (err) {
+            console.error("Erro ao buscar NOPRERs:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchNoprers = async () => {
-            setLoading(true);
-            try {
-                const { data, error } = await supabase
-                    .from('noprer')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                if (data) setNoprers(data);
-            } catch (err) {
-                console.error("Erro ao buscar NOPRERs:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchNoprers();
     }, []);
+
+    const handleDelete = (id) => {
+        setDeleteModal({ open: true, id });
+    };
+
+    const confirmDeletion = async () => {
+        if (!deleteModal.id) return;
+        try {
+            const { error } = await supabase.from('noprer').delete().eq('id', deleteModal.id);
+            if (error) throw error;
+            setNoprers(prev => prev.filter(n => n.id !== deleteModal.id));
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao excluir NOPRER');
+        } finally {
+            setDeleteModal({ open: false, id: null });
+        }
+    };
 
     // KPIs Calculation
     const kpis = useMemo(() => {
@@ -89,25 +110,24 @@ const NoprerDashboard = () => {
             
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <AlertTriangle className="text-blue-500" size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-wider text-blue-500">Prevenção e Mitigação</span>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => navigate('/')}
+                        className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <ArrowLeft size={24} className="text-slate-600 dark:text-slate-300" />
+                    </button>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <AlertTriangle className="text-blue-500" size={20} />
+                            <span className="text-[10px] font-black uppercase tracking-wider text-blue-500">Prevenção e Mitigação</span>
+                        </div>
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Painel NOPRER</h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                            Notificação Preliminar de Risco - Gestão, Monitoramento e Revistorias.
+                        </p>
                     </div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Painel NOPRER</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                        Notificação Preliminar de Risco - Gestão, Monitoramento e Revistorias.
-                    </p>
                 </div>
-                
-                {/* As NOPRERs são emitidas via Vistoria ou Ocorrencia */}
-                <button 
-                    onClick={() => navigate('/vistorias')}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-600/20"
-                >
-                    <Plus size={18} />
-                    Emitir a partir de Vistoria
-                </button>
             </div>
 
             {/* KPIs */}
@@ -206,12 +226,33 @@ const NoprerDashboard = () => {
                                             </span>
                                         </td>
                                         <td className="p-4 text-right">
-                                            <button 
-                                                onClick={() => navigate(`/noprer/detalhes/${noprer.id}`)}
-                                                className="text-xs font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors"
-                                            >
-                                                Detalhes
-                                            </button>
+                                            <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => navigate(`/noprer/detalhes/${noprer.id}`)}
+                                                    className="w-8 h-8 flex items-center justify-center text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 rounded-lg transition-colors"
+                                                    title="Detalhes e Impressão"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                                {userProfile?.role !== 'Operador' && (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => navigate(`/noprer/editar/${noprer.id}`)}
+                                                            className="w-8 h-8 flex items-center justify-center text-amber-600 hover:text-white bg-amber-50 hover:bg-amber-600 rounded-lg transition-colors"
+                                                            title="Editar NOPRER"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDelete(noprer.id)}
+                                                            className="w-8 h-8 flex items-center justify-center text-red-600 hover:text-white bg-red-50 hover:bg-red-600 rounded-lg transition-colors"
+                                                            title="Excluir NOPRER"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -265,6 +306,17 @@ const NoprerDashboard = () => {
                     </MapContainer>
                 </div>
             )}
+
+            <ConfirmModal 
+                isOpen={deleteModal.open}
+                onClose={() => setDeleteModal({ open: false, id: null })}
+                onConfirm={confirmDeletion}
+                title="Excluir NOPRER"
+                message="Tem certeza que deseja excluir esta NOPRER? Esta ação não pode ser desfeita e removerá o histórico deste documento."
+                confirmText="Excluir"
+                cancelText="Cancelar"
+                isDestructive={true}
+            />
         </div>
     );
 };

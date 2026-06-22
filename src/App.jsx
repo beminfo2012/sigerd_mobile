@@ -578,6 +578,11 @@ const AppContent = ({
                                         <NoprerForm />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/noprer/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <NoprerForm />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/noprer/detalhes/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <NoprerDetails />

@@ -27,6 +27,7 @@ const OcorrenciasDashboard = () => {
     const { userProfile } = useContext(UserContext);
     const { toast } = useToast();
     const [records, setRecords] = useState([]);
+    const [noprers, setNoprers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -47,6 +48,11 @@ const OcorrenciasDashboard = () => {
             if (navigator.onLine) {
                 try {
                     const { supabase } = await import('../../services/supabase');
+                    
+                    // Fetch NOPRERs to link them
+                    const { data: noprersData } = await supabase.from('noprer').select('id, origem_id, numero_noprer');
+                    if (noprersData) setNoprers(noprersData);
+
                     const { data: remoteData, error } = await supabase
                         .from('ocorrencias_operacionais')
                         .select('id, ocorrencia_id, ocorrencia_id_format, agente, solicitante, endereco, bairro, data_ocorrencia, horario_ocorrencia, categoria_risco, nivel_risco, subtipos_risco, status, created_at, updated_at')
@@ -315,18 +321,36 @@ const OcorrenciasDashboard = () => {
                                             </button>
 
                                             {/* NOPRER Button */}
-                                            {(record.nivel_risco === 'Médio' || record.nivel_risco === 'Alto') && (
-                                                <button
-                                                    onClick={(e) => { 
-                                                        e.stopPropagation(); 
-                                                        const ocorrenciaIdStr = encodeURIComponent(record.id || record.ocorrencia_id);
-                                                        navigate(`/noprer/novo/ocorrencia/${ocorrenciaIdStr}`);
-                                                    }}
-                                                    className="px-3 h-10 flex items-center justify-center text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all active:scale-95 ml-1"
-                                                    title="Emitir Notificação Preliminar de Risco"
-                                                >
-                                                    Emitir NOPRER
-                                                </button>
+                                            {(record.nivel_risco === 'Médio' || record.nivel_risco === 'Alto' || record.nivel_risco === 'Muito Alto' || record.nivel_risco === 'Iminente') && (
+                                                (() => {
+                                                    const linkedNoprer = noprers.find(n => String(n.origem_id) === String(record.ocorrencia_id_format) || String(n.origem_id) === String(record.ocorrencia_id) || String(n.origem_id) === String(record.id));
+                                                    if (linkedNoprer) {
+                                                        return (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); navigate(`/noprer/detalhes/${linkedNoprer.id}`); }}
+                                                                className="px-3 h-10 flex items-center gap-1 justify-center text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                                title="Ver NOPRER Gerada"
+                                                            >
+                                                                <ShieldAlert size={14} />
+                                                                {linkedNoprer.numero_noprer}
+                                                            </button>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <button
+                                                                onClick={(e) => { 
+                                                                    e.stopPropagation(); 
+                                                                    const ocorrenciaIdStr = encodeURIComponent(record.id || record.ocorrencia_id);
+                                                                    navigate(`/noprer/novo/ocorrencia/${ocorrenciaIdStr}`);
+                                                                }}
+                                                                className="px-3 h-10 flex items-center justify-center text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                                title="Emitir Notificação Preliminar de Risco"
+                                                            >
+                                                                Emitir NOPRER
+                                                            </button>
+                                                        );
+                                                    }
+                                                })()
                                             )}
 
                                             {userProfile?.role !== 'Operador' && (

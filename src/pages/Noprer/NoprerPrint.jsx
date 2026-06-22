@@ -37,6 +37,25 @@ const NoprerPrint = () => {
 
     return (
         <div className="min-h-screen bg-slate-800 flex flex-col font-sans">
+            <style>
+                {`
+                    @media print {
+                        @page { size: A4; margin: 0; }
+                        body, html { margin: 0; padding: 0; background: #fff !important; }
+                        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .no-print { display: none !important; }
+                        .break-before-page { page-break-before: always; }
+                        .print-container { 
+                            width: 210mm !important; 
+                            min-height: 297mm !important; 
+                            margin: 0 !important; 
+                            padding: 15mm !important; 
+                            box-shadow: none !important; 
+                            transform: none !important;
+                        }
+                    }
+                `}
+            </style>
             {/* Toolbar - No Print */}
             <div className="no-print bg-slate-900 border-b border-slate-700 p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
                 <div className="flex items-center gap-4">
@@ -77,7 +96,7 @@ const NoprerPrint = () => {
             {/* A4 Paper Container */}
             <div className="flex-1 overflow-auto p-8 print:p-0 flex justify-center pb-24">
                 <div 
-                    className="bg-white print:m-0 print:shadow-none"
+                    className="bg-white print-container"
                     style={{ 
                         width: '210mm',
                         minHeight: '297mm',
