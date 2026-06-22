@@ -508,7 +508,7 @@ const Pluviometros = ({ hideHeader = false }) => {
                 </div>
 
                 {/* Interactive Leaflet Map */}
-                <div className="h-[460px] w-full rounded-b-[20px] overflow-hidden relative border-x border-b border-slate-200 dark:border-slate-800 shadow-lg z-[0] bg-slate-100 dark:bg-slate-900">
+                <div className="h-[500px] md:h-[70vh] min-h-[500px] max-h-[850px] w-full rounded-b-[20px] overflow-hidden relative border-x border-b border-slate-200 dark:border-slate-800 shadow-lg z-[0] bg-slate-100 dark:bg-slate-900">
                     {loading ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm z-[10]">
                             <div className="flex flex-col items-center gap-3">
