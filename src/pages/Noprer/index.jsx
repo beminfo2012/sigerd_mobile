@@ -5,64 +5,46 @@ import {
     Plus, Filter, Clock, MapPin, Map as MapIcon, BarChart3, List
 } from 'lucide-react';
 import { UserContext } from '../../App';
+import { supabase } from '../../services/supabase';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import LimiteSMJLayer from '../../components/LimiteSMJLayer';
 
+// Icons config for leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
 const NoprerDashboard = () => {
     const navigate = useNavigate();
-    const userProfile = useContext(UserContext);
+    const { userProfile } = useContext(UserContext);
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
     const [searchTerm, setSearchTerm] = useState('');
-
-    // Mock data based on the plan
     const [noprers, setNoprers] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulating data load
-        const mockData = [
-            {
-                id: 1,
-                numero_noprer: 'NOPRER-2026.000147',
-                vistoria_id: 'VIST-2026.000312',
-                data_emissao: '2026-06-18',
-                risco: 'R2',
-                tipo_risco: 'Geológico',
-                descricao: 'Instabilidade de talude / movimento de massa',
-                prazo_dias: 30,
-                data_limite: '2026-07-18',
-                status: 'EM ADEQUAÇÃO',
-                endereco: 'Rodovia ES-080, km 22, Comunidade do Garrafão',
-                lat: -20.040,
-                lng: -40.700,
-                criado_por: 'Bruno Pagel'
-            },
-            {
-                id: 2,
-                numero_noprer: 'NOPRER-2026.000148',
-                vistoria_id: 'VIST-2026.000315',
-                data_emissao: '2026-06-19',
-                risco: 'R3',
-                tipo_risco: 'Estrutural',
-                descricao: 'Risco de colapso de telhado',
-                prazo_dias: 15,
-                data_limite: '2026-06-21', // Vencendo em 3 dias
-                status: 'PRAZO VENCENDO',
-                endereco: 'Rua Principal, Centro',
-                lat: -20.035,
-                lng: -40.710,
-                criado_por: 'Agente Silva'
+        const fetchNoprers = async () => {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('noprer')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                if (data) setNoprers(data);
+            } catch (err) {
+                console.error("Erro ao buscar NOPRERs:", err);
+            } finally {
+                setLoading(false);
             }
-        ];
-        
-        // In real usage, fetch from DB
-        const stored = localStorage.getItem('@sigerd:noprers');
-        if (stored) {
-            setNoprers(JSON.parse(stored));
-        } else {
-            setNoprers(mockData);
-            localStorage.setItem('@sigerd:noprers', JSON.stringify(mockData));
-        }
+        };
+
+        fetchNoprers();
     }, []);
 
     // KPIs Calculation
@@ -88,6 +70,20 @@ const NoprerDashboard = () => {
         }
     };
 
+    const filtered = useMemo(() => {
+        return noprers.filter(n => {
+            const matchesSearch = 
+                (n.numero_noprer || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (n.origem_id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (n.endereco || '').toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesSearch;
+        });
+    }, [noprers, searchTerm]);
+
+    if (loading) {
+        return <div className="p-8 text-center">Carregando painel NOPRER...</div>;
+    }
+
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8 animate-fade-in pb-24">
             
@@ -104,7 +100,7 @@ const NoprerDashboard = () => {
                     </p>
                 </div>
                 
-                {/* As NOPRERs são emitidas via Vistoria, este botão é atalho para listar vistorias */}
+                {/* As NOPRERs são emitidas via Vistoria ou Ocorrencia */}
                 <button 
                     onClick={() => navigate('/vistorias')}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-600/20"
@@ -140,7 +136,7 @@ const NoprerDashboard = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input 
                         type="text"
-                        placeholder="Buscar por número, vistoria, endereço..."
+                        placeholder="Buscar por número, origem, endereço..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
@@ -187,7 +183,7 @@ const NoprerDashboard = () => {
                                         </td>
                                         <td className="p-4">
                                             <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 inline-block px-2 py-1 rounded-md">
-                                                {noprer.vistoria_id}
+                                                {noprer.origem_id}
                                             </div>
                                         </td>
                                         <td className="p-4">
@@ -232,27 +228,40 @@ const NoprerDashboard = () => {
                     >
                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                         <LimiteSMJLayer />
-                        {noprers.map(n => (
-                            n.lat && n.lng && (
-                                <Marker key={n.id} position={[n.lat, n.lng]}>
-                                    <Popup>
-                                        <div className="p-1 min-w-[200px]">
-                                            <div className="font-bold text-sm mb-1">{n.numero_noprer}</div>
-                                            <div className="text-xs text-slate-600 mb-2">{n.endereco}</div>
-                                            <div className={`text-[10px] font-bold px-2 py-1 rounded inline-block ${getStatusStyle(n.status)}`}>
-                                                {n.status}
+                        {filtered.map(n => {
+                            // Extract coordinates properly
+                            let lat, lng;
+                            if (n.coordenadas && typeof n.coordenadas === 'object') {
+                                lat = n.coordenadas.lat;
+                                lng = n.coordenadas.lng;
+                            } else if (n.lat && n.lng) {
+                                lat = n.lat;
+                                lng = n.lng;
+                            }
+                            
+                            if (lat && lng) {
+                                return (
+                                    <Marker key={n.id} position={[lat, lng]}>
+                                        <Popup>
+                                            <div className="p-1 min-w-[200px]">
+                                                <div className="font-bold text-sm mb-1">{n.numero_noprer}</div>
+                                                <div className="text-xs text-slate-600 mb-2">{n.endereco}</div>
+                                                <div className={`text-[10px] font-bold px-2 py-1 rounded inline-block border ${getStatusStyle(n.status)}`}>
+                                                    {n.status}
+                                                </div>
+                                                <button 
+                                                    onClick={() => navigate(`/noprer/detalhes/${n.id}`)}
+                                                    className="mt-3 w-full text-center text-xs bg-blue-50 text-blue-600 py-1.5 rounded font-bold"
+                                                >
+                                                    Ver Completo
+                                                </button>
                                             </div>
-                                            <button 
-                                                onClick={() => navigate(`/noprer/detalhes/${n.id}`)}
-                                                className="mt-3 w-full text-center text-xs bg-blue-50 text-blue-600 py-1.5 rounded font-bold"
-                                            >
-                                                Ver Completo
-                                            </button>
-                                        </div>
-                                    </Popup>
-                                </Marker>
-                            )
-                        ))}
+                                        </Popup>
+                                    </Marker>
+                                )
+                            }
+                            return null;
+                        })}
                     </MapContainer>
                 </div>
             )}
