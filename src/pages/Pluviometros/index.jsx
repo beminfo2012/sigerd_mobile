@@ -5,7 +5,7 @@ import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend, Responsi
 import html2canvas from 'html2canvas'
 import { saveManualReading, getManualReadings } from '../../services/db'
 import { STATION_METADATA } from '../../services/cemaden'
-import { MapContainer, TileLayer, useMap, useMapEvents, Marker } from 'react-leaflet'
+import { MapContainer, TileLayer, useMap, useMapEvents, Marker, GeoJSON } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import LimiteSMJLayer from '../../components/LimiteSMJLayer'
@@ -99,6 +99,47 @@ const createPluvioIcon = (station, isActive) => {
         popupAnchor: [0, -13]
     });
 };
+// --- Bacias Hidrográficas Layer ---
+const BACIAS_COLORS = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
+];
+const getBaciaColor = (name) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return BACIAS_COLORS[Math.abs(hash) % BACIAS_COLORS.length];
+};
+
+const BaciasLayer = ({ data }) => {
+    if (!data || !data.features || data.features.length === 0) return null;
+    return (
+        <GeoJSON
+            data={data}
+            style={(feature) => {
+                const color = getBaciaColor(feature.properties?.Name || 'Unknown');
+                return {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.3,
+                    weight: 2,
+                    opacity: 0.9
+                };
+            }}
+            onEachFeature={(feature, layer) => {
+                const p = feature.properties || {};
+                const color = getBaciaColor(p.Name || 'Unknown');
+                layer.bindPopup(`
+                    <div style="font-family:sans-serif;min-width:190px">
+                        <div style="font-size:10px;font-weight:900;color:${color};text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">Bacia Hidrográfica</div>
+                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:4px">${p.Name || 'Bacia'}</div>
+                        <div style="font-size:10px;color:#475569;max-height:150px;overflow-y:auto;line-height:1.4;">${p.description || ''}</div>
+                    </div>
+                `);
+            }}
+        />
+    );
+};
 
 // Map hook component to capture Leaflet map instance
 const MapInstanceCapture = ({ setMap }) => {
@@ -144,6 +185,8 @@ const Pluviometros = ({ hideHeader = false }) => {
     const [stations, setStations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [baciasData, setBaciasData] = useState(null);
+    const [showBacias, setShowBacias] = useState(false);
     
     // Selection state for Map & Charts
     const [selectedStation, setSelectedStation] = useState(null);
@@ -175,6 +218,10 @@ const Pluviometros = ({ hideHeader = false }) => {
 
     useEffect(() => {
         fetchData();
+        fetch('/bacias_hidrograficas.geojson')
+            .then(r => r.json())
+            .then(d => setBaciasData(d))
+            .catch(e => console.warn('[Bacias] Falha ao carregar JSON:', e));
     }, []);
 
     // Set first station as default for charts once loaded
@@ -494,7 +541,14 @@ const Pluviometros = ({ hideHeader = false }) => {
                     </form>
                     
                     <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-white/80">Provedor:</span>
+                        <button
+                            onClick={() => setShowBacias(!showBacias)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm ${showBacias ? 'bg-white text-[#0ea5e9]' : 'bg-white/20 text-white hover:bg-white/30 border border-white/25'}`}
+                            title="Alternar Bacias Hidrográficas"
+                        >
+                            <Waves size={14} /> Bacias
+                        </button>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-white/80 ml-2 hidden sm:inline">Provedor:</span>
                         <select
                             value={mapStyle}
                             onChange={e => setMapStyle(e.target.value)}
@@ -538,6 +592,11 @@ const Pluviometros = ({ hideHeader = false }) => {
 
                             {/* Municipality Bounds */}
                             <LimiteSMJLayer keyId="pluvio-page-smj" />
+
+                            {/* Bacias Hidrográficas Layer */}
+                            {showBacias && baciasData && (
+                                <BaciasLayer data={baciasData} />
+                            )}
 
                             {/* Rain Gauges Markers */}
                             {stations.filter(s => s.lat && s.lng).map(station => {
