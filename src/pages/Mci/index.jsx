@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     Search, Plus, Filter, Edit3, Trash2, CheckCircle2, XCircle, 
     AlertTriangle, Users, MapPin, Truck, Wrench, Package, 
-    ShieldAlert, FileText, ClipboardList, RefreshCw, Send, Check
+    ShieldAlert, FileText, ClipboardList, RefreshCw, Send, Check, Upload
 } from 'lucide-react';
 import { UserContext } from '../../App';
 import { supabase } from '../../services/supabase';
@@ -50,6 +50,134 @@ const redIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
+// Simple CSV parser supporting quotes, commas, and semicolons
+const parseCSV = (text) => {
+    if (!text || !text.trim()) return [];
+    
+    // Split first line to detect separator
+    const firstLine = text.split('\n')[0];
+    const separator = firstLine.includes(';') ? ';' : ',';
+    
+    const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(separator).map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+    const results = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        let values = [];
+        let currentVal = '';
+        let insideQuotes = false;
+        
+        for (let charIndex = 0; charIndex < line.length; charIndex++) {
+            const char = line[charIndex];
+            if (char === '"' || char === "'") {
+                insideQuotes = !insideQuotes;
+            } else if (char === separator && !insideQuotes) {
+                values.push(currentVal.trim().replace(/^["']|["']$/g, ''));
+                currentVal = '';
+            } else {
+                currentVal += char;
+            }
+        }
+        values.push(currentVal.trim().replace(/^["']|["']$/g, ''));
+        
+        if (values.length >= headers.length) {
+            const row = {};
+            headers.forEach((header, index) => {
+                row[header] = values[index] || '';
+            });
+            results.push(row);
+        }
+    }
+    return results;
+};
+
+// Map flat CSV row to structured resource object
+const mapCsvRowToRecurso = (row, defaultSecretaria) => {
+    const nome = row.nome || row.name || 'Recurso Sem Nome';
+    
+    // Normalize Categoria
+    let categoria = (row.categoria || row.category || 'VEICULO').toUpperCase().trim();
+    if (categoria.includes('VEI')) categoria = 'VEICULO';
+    else if (categoria.includes('EQU') || categoria.includes('FER')) categoria = 'EQUIPAMENTO';
+    else if (categoria.includes('EST') || categoria.includes('ALM')) categoria = 'ESTOQUE';
+    else if (categoria.includes('PRO') || categoria.includes('MAO') || categoria.includes('MÃO')) categoria = 'PROFISSIONAL';
+    else if (categoria.includes('INS') || categoria.includes('ABR')) categoria = 'INSTALACAO';
+    else categoria = 'VEICULO';
+    
+    // Normalize Status
+    let status = (row.status || 'DISPONIVEL').toUpperCase().trim();
+    if (status.includes('DISP')) status = 'DISPONIVEL';
+    else if (status.includes('MAN')) status = 'EM_MANUTENCAO';
+    else if (status.includes('USO')) status = 'EM_USO';
+    else if (status.includes('OCU')) status = 'OCUPADO';
+    else if (status.includes('REF')) status = 'EM_REFORMA';
+    else status = 'DISPONIVEL';
+    
+    // Secretaria
+    const secretaria_id = row.secretaria || row.secretaria_id || defaultSecretaria;
+    
+    // Details construction
+    let detalhes = {};
+    if (categoria === 'VEICULO') {
+        detalhes = {
+            tipo: row.tipo || row.veiculo_tipo || 'Caminhonete 4x4',
+            placa: row.placa || '',
+            identificacao_patrimonial: row.patrimonio || row.identificacao_patrimonial || '',
+            capacidade: row.capacidade || '',
+            observacoes_operacionais: row.obs || row.observacoes || ''
+        };
+    } else if (categoria === 'EQUIPAMENTO') {
+        detalhes = {
+            estado_conservacao: row.estado || row.estado_conservacao || 'bom',
+            localizacao_guarda: row.guarda || row.localizacao_guarda || '',
+            especificacoes: row.descricao || row.especificacoes || '',
+            quantidade: parseInt(row.quantidade || row.qtd || '1', 10) || 1
+        };
+    } else if (categoria === 'ESTOQUE') {
+        detalhes = {
+            item: row.item || row.nome || '',
+            unidade_medida: row.unidade || row.unidade_medida || 'Unidades',
+            quantidade_estoque: parseInt(row.quantidade || row.qtd || '0', 10) || 0,
+            validade: row.validade || null,
+            local_armazenamento: row.local || row.local_armazenamento || ''
+        };
+    } else if (categoria === 'PROFISSIONAL') {
+        detalhes = {
+            funcao: row.funcao || row.especialidade || '',
+            profissionais_disponiveis: parseInt(row.quantidade || row.qtd || '1', 10) || 1,
+            turno_disponibilidade: row.turno || row.turno_disponibilidade || '24h',
+            contato_responsavel: row.contato || row.contato_responsavel || ''
+        };
+    } else if (categoria === 'INSTALACAO') {
+        let lat = parseFloat(row.lat || row.latitude || '-20.0285');
+        let lng = parseFloat(row.lng || row.longitude || '-40.7441');
+        detalhes = {
+            tipo: row.tipo || row.instalacao_tipo || 'Escola',
+            capacidade_abrigo: parseInt(row.capacidade || row.capacidade_abrigo || '100', 10) || 100,
+            coordenadas: { lat: isNaN(lat) ? -20.0285 : lat, lng: isNaN(lng) ? -40.7441 : lng },
+            endereco: row.endereco || '',
+            infraestrutura: {
+                agua_potavel: String(row.agua || row.agua_potavel || 'true').toLowerCase() === 'true',
+                energia_eletrica: String(row.energia || row.energia_eletrica || 'true').toLowerCase() === 'true',
+                sanitarios: String(row.sanitarios || row.sanitarios_eletrica || 'true').toLowerCase() === 'true',
+                cozinha: String(row.cozinha || 'true').toLowerCase() === 'true',
+                chuveiros: String(row.chuveiros || 'false').toLowerCase() === 'true'
+            }
+        };
+    }
+    
+    return {
+        nome,
+        categoria,
+        status,
+        secretaria_id,
+        detalhes
+    };
+};
+
 export default function MciDashboard() {
     const user = useContext(UserContext);
     const { addToast } = useToast();
@@ -81,6 +209,13 @@ export default function MciDashboard() {
     const [editingRecurso, setEditingRecurso] = useState(null);
     const [logs, setLogs] = useState([]);
     const [selectedRecursoForRequest, setSelectedRecursoForRequest] = useState(null);
+
+    // Import CSV States
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [csvFile, setCsvFile] = useState(null);
+    const [csvPreview, setCsvPreview] = useState([]);
+    const [importing, setImporting] = useState(false);
+    const [importError, setImportError] = useState('');
 
     // Form States
     const [formName, setFormName] = useState('');
@@ -422,6 +557,81 @@ export default function MciDashboard() {
         }
     };
 
+    // CSV Import Handlers
+    const handleCsvUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        setCsvFile(file);
+        setImportError('');
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const text = event.target.result;
+                const rows = parseCSV(text);
+                if (rows.length === 0) {
+                    setImportError('O arquivo CSV está vazio ou possui formato inválido.');
+                    setCsvPreview([]);
+                    return;
+                }
+                
+                // Map rows using mapped helper
+                const defaultSec = isCOMPDEC ? 'Defesa Civil' : userSecretaria;
+                const mapped = rows.map((row, idx) => {
+                    try {
+                        return mapCsvRowToRecurso(row, defaultSec);
+                    } catch (err) {
+                        console.error('Erro na linha ', idx + 2, err);
+                        return null;
+                    }
+                }).filter(Boolean);
+                
+                setCsvPreview(mapped);
+            } catch (err) {
+                console.error(err);
+                setImportError('Erro ao processar o arquivo CSV.');
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+
+    const handleConfirmImport = async () => {
+        if (csvPreview.length === 0) return;
+        
+        setImporting(true);
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const recursoData of csvPreview) {
+            try {
+                // If not COMPDEC, force their own secretaria
+                const targetRecurso = {
+                    ...recursoData,
+                    secretaria_id: isCOMPDEC ? recursoData.secretaria_id : userSecretaria
+                };
+                await createMciRecurso(targetRecurso, user?.id);
+                successCount++;
+            } catch (err) {
+                console.error('Erro ao importar recurso:', recursoData, err);
+                failCount++;
+            }
+        }
+        
+        setImporting(false);
+        setShowImportModal(false);
+        setCsvFile(null);
+        setCsvPreview([]);
+        
+        if (successCount > 0) {
+            addToast(`${successCount} recursos importados com sucesso!`, 'success');
+            loadData();
+        }
+        if (failCount > 0) {
+            addToast(`${failCount} recursos falharam na importação. Verifique as restrições de permissão ou formato.`, 'error');
+        }
+    };
+
     // Smart recommendations logic
     const getRecursoRelevancia = (recurso) => {
         if (!selectedEvent) return false;
@@ -478,13 +688,13 @@ export default function MciDashboard() {
     };
 
     return (
-        <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-900 text-slate-100 min-h-screen">
+        <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                 <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-blue-500">Logística de Emergência</span>
-                    <h2 className="text-2xl font-black tracking-tight text-white uppercase mt-1">MCI - CAPACIDADE INSTALADA</h2>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase mt-1">MCI - CAPACIDADE INSTALADA</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {isCOMPDEC 
                             ? 'Painel Geral COMPDEC: Gerencie e mobilize os recursos municipais em tempo real.'
                             : `Secretaria: ${userSecretaria}. Gerencie os recursos de sua pasta.`
@@ -492,6 +702,17 @@ export default function MciDashboard() {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <button 
+                        onClick={() => {
+                            setCsvFile(null);
+                            setCsvPreview([]);
+                            setImportError('');
+                            setShowImportModal(true);
+                        }}
+                        className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs uppercase tracking-wider rounded-lg flex items-center gap-2 border border-slate-200 dark:border-slate-700 shadow-sm transition-all"
+                    >
+                        <Upload size={16} /> Importar CSV
+                    </button>
                     <button 
                         onClick={handleAddRecurso}
                         className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg flex items-center gap-2 shadow-lg transition-all"
@@ -510,10 +731,10 @@ export default function MciDashboard() {
                     { label: 'Profissionais', value: stats.profissionais, icon: Users, color: 'text-purple-500' },
                     { label: 'Instalações', value: stats.instalacoes, icon: MapPin, color: 'text-red-500' }
                 ].map((item, i) => (
-                    <div key={i} className="bg-slate-800/50 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm">
+                    <div key={i} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 flex items-center justify-between shadow-sm backdrop-blur-sm">
                         <div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{item.label}</span>
-                            <h3 className="text-2xl font-black text-white mt-1">{item.value}</h3>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{item.label}</span>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{item.value}</h3>
                         </div>
                         <item.icon className={`h-8 w-8 ${item.color} opacity-70`} />
                     </div>
@@ -522,13 +743,13 @@ export default function MciDashboard() {
 
             {/* Recomendações de Evento Ativo (COMPDEC) */}
             {isCOMPDEC && selectedEvent && (
-                <div className="bg-blue-950/40 border border-blue-800/40 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-start gap-3">
-                        <ShieldAlert className="text-blue-500 h-6 w-6 mt-1 flex-shrink-0" />
+                        <ShieldAlert className="text-blue-600 dark:text-blue-500 h-6 w-6 mt-1 flex-shrink-0" />
                         <div>
-                            <h4 className="text-sm font-black uppercase text-white tracking-tight">Evento Ativo: {selectedEvent.nome_evento}</h4>
-                            <p className="text-xs text-slate-300 mt-1">
-                                O sistema está cruzando recursos recomendados para desastres do tipo <strong className="text-blue-400">{selectedEvent.cobrade_tipo}</strong>.
+                            <h4 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-tight">Evento Ativo: {selectedEvent.nome_evento}</h4>
+                            <p className="text-xs text-slate-650 dark:text-slate-300 mt-1">
+                                O sistema está cruzando recursos recomendados para desastres do tipo <strong className="text-blue-600 dark:text-blue-400">{selectedEvent.cobrade_tipo}</strong>.
                             </p>
                         </div>
                     </div>
@@ -536,7 +757,7 @@ export default function MciDashboard() {
                         <select 
                             value={selectedEvent.id} 
                             onChange={(e) => setSelectedEvent(activeEvents.find(ev => ev.id === e.target.value))}
-                            className="bg-slate-800 text-xs border border-slate-700 rounded-lg p-2 text-white font-semibold focus:outline-none w-full md:w-auto"
+                            className="bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white font-semibold focus:outline-none w-full md:w-auto"
                         >
                             {activeEvents.map(ev => (
                                 <option key={ev.id} value={ev.id}>{ev.nome_evento}</option>
@@ -547,22 +768,22 @@ export default function MciDashboard() {
             )}
 
             {/* Tab Navigation */}
-            <div className="flex border-b border-slate-800">
+            <div className="flex border-b border-slate-200 dark:border-slate-800">
                 <button 
                     onClick={() => setActiveTab('inventory')}
-                    className={`px-6 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all ${activeTab === 'inventory' ? 'border-blue-500 text-blue-500' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                    className={`px-6 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all ${activeTab === 'inventory' ? 'border-blue-500 text-blue-500' : 'border-transparent text-slate-550 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                     <div className="flex items-center gap-2"><ClipboardList size={16} /> Inventário</div>
                 </button>
                 <button 
                     onClick={() => setActiveTab('map')}
-                    className={`px-6 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all ${activeTab === 'map' ? 'border-blue-500 text-blue-500' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                    className={`px-6 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all ${activeTab === 'map' ? 'border-blue-500 text-blue-500' : 'border-transparent text-slate-550 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                     <div className="flex items-center gap-2"><MapPin size={16} /> Mapa de Abrigos</div>
                 </button>
                 <button 
                     onClick={() => setActiveTab('requests')}
-                    className={`px-6 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all ${activeTab === 'requests' ? 'border-blue-500 text-blue-500' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                    className={`px-6 py-3 text-xs font-black uppercase tracking-wider border-b-2 transition-all ${activeTab === 'requests' ? 'border-blue-500 text-blue-500' : 'border-transparent text-slate-550 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                     <div className="flex items-center gap-2">
                         <Send size={16} /> Requisições
@@ -579,7 +800,7 @@ export default function MciDashboard() {
             {activeTab === 'inventory' && (
                 <div className="space-y-4">
                     {/* Search & Filters */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 bg-slate-800/30 p-4 border border-slate-800 rounded-xl">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 bg-white dark:bg-slate-800/30 p-4 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
                         <div className="relative">
                             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                             <input 
@@ -587,14 +808,14 @@ export default function MciDashboard() {
                                 placeholder="Buscar recursos..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition-all"
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 transition-all"
                             />
                         </div>
                         <div>
                             <select 
                                 value={filterCategory} 
                                 onChange={(e) => setFilterCategory(e.target.value)}
-                                className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none"
                             >
                                 <option value="TODAS">Categorias: Todas</option>
                                 <option value="VEICULO">Veículos</option>
@@ -608,7 +829,7 @@ export default function MciDashboard() {
                             <select 
                                 value={filterStatus} 
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"
+                                className="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none"
                             >
                                 <option value="TODOS">Status: Todos</option>
                                 <option value="DISPONIVEL">Disponível</option>
@@ -623,7 +844,7 @@ export default function MciDashboard() {
                                 <select 
                                     value={filterSecretaria} 
                                     onChange={(e) => setFilterSecretaria(e.target.value)}
-                                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"
+                                    className="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none"
                                 >
                                     <option value="TODAS">Secretaria: Todas</option>
                                     {secretarias.map((s, idx) => (
@@ -633,12 +854,12 @@ export default function MciDashboard() {
                             </div>
                         )}
                         <div className="flex items-center justify-end">
-                            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
                                 <input 
                                     type="checkbox" 
                                     checked={onlyAvailable}
                                     onChange={(e) => setOnlyAvailable(e.target.checked)}
-                                    className="rounded border-slate-700 text-blue-600 bg-slate-950 focus:ring-0 focus:ring-offset-0" 
+                                    className="rounded border-slate-300 dark:border-slate-700 text-blue-600 bg-white dark:bg-slate-950 focus:ring-0 focus:ring-offset-0" 
                                 />
                                 Apenas Disponíveis
                             </label>
@@ -662,18 +883,18 @@ export default function MciDashboard() {
                                 return (
                                     <div 
                                         key={rec.id} 
-                                        className={`bg-slate-800/40 border rounded-xl p-5 relative overflow-hidden transition-all hover:bg-slate-800/60 ${
+                                        className={`bg-white dark:bg-slate-800/40 border rounded-xl p-5 relative overflow-hidden transition-all hover:bg-slate-100/50 dark:hover:bg-slate-800/60 ${
                                             isRecommended 
                                                 ? 'border-blue-500 shadow-md shadow-blue-900/10' 
                                                 : outdated 
-                                                    ? 'border-red-900/40 shadow-md shadow-red-900/5' 
-                                                    : 'border-slate-800'
+                                                    ? 'border-red-500/40 dark:border-red-900/40 shadow-md shadow-red-900/5' 
+                                                    : 'border-slate-200 dark:border-slate-800'
                                         }`}
                                     >
                                         {/* Status Badge */}
                                         <div className="absolute top-4 right-4 flex items-center gap-1.5">
                                             {outdated && (
-                                                <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-wide animate-pulse">
+                                                <span className="bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-wide animate-pulse">
                                                     Não Atualizado (90d+)
                                                 </span>
                                             )}
@@ -684,10 +905,10 @@ export default function MciDashboard() {
                                             )}
                                             <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                                                 rec.status === 'DISPONIVEL' 
-                                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
                                                     : rec.status === 'EM_MANUTENCAO' 
-                                                        ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                                                        : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                                        ? 'bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30' 
+                                                        : 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                                             }`}>
                                                 {rec.status}
                                             </span>
@@ -695,29 +916,29 @@ export default function MciDashboard() {
 
                                         {/* Title & Info */}
                                         <div className="flex items-start gap-3">
-                                            <div className="p-2.5 bg-slate-900 border border-slate-700 rounded-lg">
-                                                {rec.categoria === 'VEICULO' && <Truck className="text-blue-400 h-5 w-5" />}
-                                                {rec.categoria === 'EQUIPAMENTO' && <Wrench className="text-emerald-400 h-5 w-5" />}
-                                                {rec.categoria === 'ESTOQUE' && <Package className="text-amber-400 h-5 w-5" />}
-                                                {rec.categoria === 'PROFISSIONAL' && <Users className="text-purple-400 h-5 w-5" />}
-                                                {rec.categoria === 'INSTALACAO' && <MapPin className="text-red-400 h-5 w-5" />}
+                                            <div className="p-2.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                                {rec.categoria === 'VEICULO' && <Truck className="text-blue-600 dark:text-blue-400 h-5 w-5" />}
+                                                {rec.categoria === 'EQUIPAMENTO' && <Wrench className="text-emerald-600 dark:text-emerald-400 h-5 w-5" />}
+                                                {rec.categoria === 'ESTOQUE' && <Package className="text-amber-600 dark:text-amber-400 h-5 w-5" />}
+                                                {rec.categoria === 'PROFISSIONAL' && <Users className="text-purple-600 dark:text-purple-400 h-5 w-5" />}
+                                                {rec.categoria === 'INSTALACAO' && <MapPin className="text-red-600 dark:text-red-400 h-5 w-5" />}
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-bold text-white uppercase">{rec.nome}</h4>
-                                                <span className="text-[10px] text-slate-400 font-semibold uppercase">
+                                                <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase">{rec.nome}</h4>
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">
                                                     Secretaria: {rec.secretaria_id}
                                                 </span>
                                             </div>
                                         </div>
 
                                         {/* Category Specific Info */}
-                                        <div className="mt-4 pt-4 border-t border-slate-800/80 text-xs space-y-1 text-slate-350">
+                                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80 text-xs space-y-1 text-slate-700 dark:text-slate-300">
                                             {rec.categoria === 'VEICULO' && (
                                                 <>
                                                     <p><strong>Tipo:</strong> {rec.detalhes?.tipo}</p>
                                                     {rec.detalhes?.placa && <p><strong>Placa:</strong> {rec.detalhes?.placa}</p>}
                                                     {rec.detalhes?.capacidade && <p><strong>Capacidade:</strong> {rec.detalhes?.capacidade}</p>}
-                                                    {rec.detalhes?.observacoes_operacionais && <p className="italic text-slate-400">"{rec.detalhes?.observacoes_operacionais}"</p>}
+                                                    {rec.detalhes?.observacoes_operacionais && <p className="italic text-slate-500 dark:text-slate-400">"{rec.detalhes?.observacoes_operacionais}"</p>}
                                                 </>
                                             )}
                                             {rec.categoria === 'EQUIPAMENTO' && (
@@ -752,17 +973,17 @@ export default function MciDashboard() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="mt-4 pt-3 border-t border-slate-800/80 flex justify-between items-center text-xs">
+                                        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/80 flex justify-between items-center text-xs">
                                             <span className="text-[10px] text-slate-500">
                                                 Atualizado em: {new Date(rec.ultima_atualizacao).toLocaleDateString()}
                                             </span>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 text-slate-700 dark:text-slate-350">
                                                 {/* Revalidar (se estiver desatualizado) */}
                                                 {outdated && (
                                                     <button 
                                                         onClick={() => handleRenewValidade(rec.id)}
                                                         title="Confirmar validade atual dos dados"
-                                                        className="p-1 text-emerald-400 hover:bg-emerald-500/10 rounded"
+                                                        className="p-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded animate-pulse"
                                                     >
                                                         <CheckCircle2 size={16} />
                                                     </button>
@@ -772,7 +993,7 @@ export default function MciDashboard() {
                                                     <button 
                                                         onClick={() => handleOpenRequest(rec)}
                                                         title="Requisitar este recurso para evento ativo"
-                                                        className="px-2.5 py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded font-bold text-[10px] uppercase tracking-wider"
+                                                        className="px-2.5 py-1 bg-blue-100 dark:bg-blue-600/30 hover:bg-blue-600 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-300 hover:text-white rounded font-bold text-[10px] uppercase tracking-wider transition-colors"
                                                     >
                                                         Requisitar
                                                     </button>
@@ -780,21 +1001,21 @@ export default function MciDashboard() {
                                                 <button 
                                                     onClick={() => handleViewLogs(rec)}
                                                     title="Histórico de alterações"
-                                                    className="p-1 text-slate-400 hover:bg-slate-700/30 rounded"
+                                                    className="p-1 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/30 rounded"
                                                 >
                                                     <ClipboardList size={16} />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleEditRecurso(rec)}
                                                     title="Editar"
-                                                    className="p-1 text-blue-400 hover:bg-blue-500/10 rounded"
+                                                    className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded"
                                                 >
                                                     <Edit3 size={16} />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(rec.id)}
                                                     title="Remover"
-                                                    className="p-1 text-red-400 hover:bg-red-500/10 rounded"
+                                                    className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -810,9 +1031,9 @@ export default function MciDashboard() {
 
             {/* TAB: MAP */}
             {activeTab === 'map' && (
-                <div className="bg-slate-800/30 border border-slate-800 rounded-xl p-4">
-                    <h3 className="text-sm font-black uppercase text-white tracking-tight mb-4">Mapa de Instalações Físicas do MCI</h3>
-                    <div className="h-[550px] rounded-xl overflow-hidden border border-slate-850">
+                <div className="bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm">
+                    <h3 className="text-sm font-black uppercase text-slate-900 dark:text-white tracking-tight mb-4">Mapa de Instalações Físicas do MCI</h3>
+                    <div className="h-[550px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-850">
                         <MapContainer center={[-20.0285, -40.7441]} zoom={13} className="h-full w-full">
                             <TileLayer
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -831,12 +1052,12 @@ export default function MciDashboard() {
                                     >
                                         <Popup>
                                             <div className="p-1 text-slate-900 font-sans">
-                                                <h4 className="font-bold text-sm uppercase">{inst.nome}</h4>
-                                                <p className="text-xs text-slate-600 mt-1">Status: <strong>{inst.status}</strong></p>
-                                                <p className="text-xs text-slate-600">Capacidade: {inst.detalhes?.capacidade_abrigo} pessoas</p>
-                                                <p className="text-xs text-slate-600">Endereço: {inst.detalhes?.endereco}</p>
+                                                <h4 className="font-bold text-sm uppercase text-slate-950">{inst.nome}</h4>
+                                                <p className="text-xs text-slate-700 mt-1">Status: <strong className={isDisp ? "text-emerald-700" : "text-red-700"}>{inst.status}</strong></p>
+                                                <p className="text-xs text-slate-700">Capacidade: {inst.detalhes?.capacidade_abrigo} pessoas</p>
+                                                <p className="text-xs text-slate-700">Endereço: {inst.detalhes?.endereco}</p>
                                                 <div className="mt-2 pt-2 border-t border-slate-200">
-                                                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Infraestrutura:</span>
+                                                    <span className="text-[10px] font-bold text-slate-500 block uppercase">Infraestrutura:</span>
                                                     <ul className="text-[10px] text-slate-700 list-disc pl-4 space-y-0.5 mt-1">
                                                         {inst.detalhes?.infraestrutura?.agua_potavel && <li>Água Potável</li>}
                                                         {inst.detalhes?.infraestrutura?.energia_eletrica && <li>Energia</li>}
@@ -858,18 +1079,18 @@ export default function MciDashboard() {
             {activeTab === 'requests' && (
                 <div className="space-y-4">
                     {loading ? (
-                        <div className="text-center py-20 text-xs text-slate-400 font-bold uppercase tracking-widest">
+                        <div className="text-center py-20 text-xs text-slate-400 font-bold uppercase tracking-widest animate-pulse">
                             Buscando requisições...
                         </div>
                     ) : requisicoes.length === 0 ? (
-                        <div className="text-center py-20 text-xs text-slate-400 bg-slate-800/20 border border-dashed border-slate-850 rounded-xl">
+                        <div className="text-center py-20 text-xs text-slate-400 bg-white dark:bg-slate-800/20 border border-dashed border-slate-200 dark:border-slate-850 rounded-xl shadow-sm">
                             Nenhuma requisição de recurso registrada.
                         </div>
                     ) : (
-                        <div className="bg-slate-850 border border-slate-800 rounded-xl overflow-hidden">
+                        <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
                             <table className="w-full text-left text-xs border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-900 text-slate-300 font-bold uppercase border-b border-slate-800">
+                                    <tr className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold uppercase border-b border-slate-200 dark:border-slate-800">
                                         <th className="p-4">Recurso</th>
                                         <th className="p-4">Secretaria</th>
                                         <th className="p-4">Justificativa</th>
@@ -877,12 +1098,12 @@ export default function MciDashboard() {
                                         <th className="p-4 text-right">Ações</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-800/80">
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/80">
                                     {requisicoes.map((req) => (
-                                        <tr key={req.id} className="hover:bg-slate-800/20 text-slate-300">
+                                        <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 text-slate-850 dark:text-slate-300 transition-colors">
                                             <td className="p-4">
-                                                <div className="font-bold text-white">{req.recurso?.nome}</div>
-                                                <span className="text-[10px] text-slate-500">{req.recurso?.categoria}</span>
+                                                <div className="font-bold text-slate-900 dark:text-white">{req.recurso?.nome}</div>
+                                                <span className="text-[10px] text-slate-550 dark:text-slate-500">{req.recurso?.categoria}</span>
                                             </td>
                                             <td className="p-4">{req.recurso?.secretaria_id}</td>
                                             <td className="p-4 italic max-w-xs truncate" title={req.justificativa}>
@@ -891,12 +1112,12 @@ export default function MciDashboard() {
                                             <td className="p-4 text-center">
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
                                                     req.status === 'SOLICITADO' 
-                                                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
+                                                        ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30' 
                                                         : req.status === 'APROVADO' 
-                                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
                                                             : req.status === 'REJEITADO'
-                                                                ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                                                : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+                                                                ? 'bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30'
+                                                                : 'bg-slate-500/20 text-slate-600 dark:text-slate-400 border border-slate-500/30'
                                                 }`}>
                                                     {req.status}
                                                 </span>
@@ -908,13 +1129,13 @@ export default function MciDashboard() {
                                                         <>
                                                             <button 
                                                                 onClick={() => handleUpdateRequestStatus(req, 'APROVADO')}
-                                                                className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[9px] uppercase tracking-wider flex items-center gap-1"
+                                                                className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-sm transition-colors"
                                                             >
                                                                 <Check size={10} /> Aceitar
                                                             </button>
                                                             <button 
                                                                 onClick={() => handleUpdateRequestStatus(req, 'REJEITADO')}
-                                                                className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-[9px] uppercase tracking-wider flex items-center gap-1"
+                                                                className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-[9px] uppercase tracking-wider flex items-center gap-1 shadow-sm transition-colors"
                                                             >
                                                                 <XCircle size={10} /> Recusar
                                                             </button>
@@ -924,7 +1145,7 @@ export default function MciDashboard() {
                                                     {isCOMPDEC && req.status === 'APROVADO' && (
                                                         <button 
                                                             onClick={() => handleUpdateRequestStatus(req, 'FINALIZADO')}
-                                                            className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded text-[9px] uppercase tracking-wider"
+                                                            className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold rounded text-[9px] uppercase tracking-wider transition-colors"
                                                         >
                                                             Finalizar
                                                         </button>
@@ -943,32 +1164,32 @@ export default function MciDashboard() {
             {/* FORM MODAL (ADD / EDIT RECURSO) */}
             {showFormModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-                        <div className="bg-slate-950 p-4 border-b border-slate-800 flex justify-between items-center">
-                            <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="bg-slate-100 dark:bg-slate-950 p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                            <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
                                 {editingRecurso ? 'Editar Recurso MCI' : 'Cadastrar Recurso MCI'}
                             </h3>
-                            <button onClick={() => setShowFormModal(false)} className="text-slate-400 hover:text-white">&times;</button>
+                            <button onClick={() => setShowFormModal(false)} className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white text-lg font-bold">&times;</button>
                         </div>
-                        <form onSubmit={handleSubmitForm} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                        <form onSubmit={handleSubmitForm} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs text-slate-700 dark:text-slate-300">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-slate-400 font-bold uppercase mb-1">Nome do Recurso</label>
+                                    <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Nome do Recurso</label>
                                     <input 
                                         type="text" 
                                         value={formName}
                                         onChange={(e) => setFormName(e.target.value)}
                                         required
                                         placeholder="Ex: Retroescavadeira JCB"
-                                        className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none focus:border-blue-500"
+                                        className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-slate-400 font-bold uppercase mb-1">Categoria</label>
+                                    <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Categoria</label>
                                     <select 
                                         value={formCategory} 
                                         onChange={(e) => setFormCategory(e.target.value)}
-                                        className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none"
+                                        className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none"
                                     >
                                         <option value="VEICULO">Veículos</option>
                                         <option value="EQUIPAMENTO">Equipamentos e Ferramentas</option>
@@ -978,11 +1199,11 @@ export default function MciDashboard() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-slate-400 font-bold uppercase mb-1">Status Operacional</label>
+                                    <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Status Operacional</label>
                                     <select 
                                         value={formStatus} 
                                         onChange={(e) => setFormStatus(e.target.value)}
-                                        className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none"
+                                        className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none"
                                     >
                                         <option value="DISPONIVEL">Disponível</option>
                                         <option value="EM_MANUTENCAO">Em Manutenção</option>
@@ -992,12 +1213,12 @@ export default function MciDashboard() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-slate-400 font-bold uppercase mb-1">Secretaria Responsável</label>
+                                    <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Secretaria Responsável</label>
                                     <select 
                                         value={formSecretaria} 
                                         onChange={(e) => setFormSecretaria(e.target.value)}
                                         disabled={!isCOMPDEC}
-                                        className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none disabled:opacity-60"
+                                        className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none disabled:opacity-60"
                                     >
                                         <option value="Defesa Civil">Defesa Civil</option>
                                         <option value="Obras">Obras</option>
@@ -1012,30 +1233,30 @@ export default function MciDashboard() {
                             </div>
 
                             {/* CATEGORY SPECIFIC FIELDS */}
-                            <div className="border-t border-slate-850 pt-4 mt-2">
+                            <div className="border-t border-slate-200 dark:border-slate-850 pt-4 mt-2">
                                 <h4 className="text-[10px] font-black uppercase text-blue-500 tracking-wider mb-3">Dados Específicos</h4>
                                 
                                 {formCategory === 'VEICULO' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Tipo de Veículo</label>
-                                            <input type="text" value={veiculoTipo} onChange={(e) => setVeiculoTipo(e.target.value)} placeholder="Ex: Caminhão-pipa, Retroescavadeira" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Tipo de Veículo</label>
+                                            <input type="text" value={veiculoTipo} onChange={(e) => setVeiculoTipo(e.target.value)} placeholder="Ex: Caminhão-pipa, Retroescavadeira" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Placa</label>
-                                            <input type="text" value={veiculoPlaca} onChange={(e) => setVeiculoPlaca(e.target.value)} placeholder="ABC-1234" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Placa</label>
+                                            <input type="text" value={veiculoPlaca} onChange={(e) => setVeiculoPlaca(e.target.value)} placeholder="ABC-1234" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Identificação Patrimonial</label>
-                                            <input type="text" value={veiculoPatrimonio} onChange={(e) => setVeiculoPatrimonio(e.target.value)} placeholder="PAT-12345" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Identificação Patrimonial</label>
+                                            <input type="text" value={veiculoPatrimonio} onChange={(e) => setVeiculoPatrimonio(e.target.value)} placeholder="PAT-12345" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Capacidade</label>
-                                            <input type="text" value={veiculoCapacidade} onChange={(e) => setVeiculoCapacidade(e.target.value)} placeholder="Ex: 5000 kg ou 15 passageiros" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Capacidade</label>
+                                            <input type="text" value={veiculoCapacidade} onChange={(e) => setVeiculoCapacidade(e.target.value)} placeholder="Ex: 5000 kg ou 15 passageiros" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Observações Operacionais</label>
-                                            <textarea value={veiculoObs} onChange={(e) => setVeiculoObs(e.target.value)} placeholder="Ex: Apenas operador experiente, guincho integrado" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none h-16 resize-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Observações Operacionais</label>
+                                            <textarea value={veiculoObs} onChange={(e) => setVeiculoObs(e.target.value)} placeholder="Ex: Apenas operador experiente, guincho integrado" className="w-full p-2 bg-slate-50 dark:bg-slate-955 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none h-16 resize-none" />
                                         </div>
                                     </div>
                                 )}
@@ -1043,16 +1264,16 @@ export default function MciDashboard() {
                                 {formCategory === 'EQUIPAMENTO' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="md:col-span-2">
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Descrição / Especificações</label>
-                                            <input type="text" value={equipDesc} onChange={(e) => setEquipDesc(e.target.value)} placeholder="Ex: Motosserra Stihl 250" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Descrição / Especificações</label>
+                                            <input type="text" value={equipDesc} onChange={(e) => setEquipDesc(e.target.value)} placeholder="Ex: Motosserra Stihl 250" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Quantidade</label>
-                                            <input type="number" value={equipQtd} onChange={(e) => setEquipQtd(parseInt(e.target.value))} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Quantidade</label>
+                                            <input type="number" value={equipQtd} onChange={(e) => setEquipQtd(parseInt(e.target.value))} className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Estado de Conservação</label>
-                                            <select value={equipEstado} onChange={(e) => setEquipEstado(e.target.value)} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none">
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Estado de Conservação</label>
+                                            <select value={equipEstado} onChange={(e) => setEquipEstado(e.target.value)} className="w-full p-2 bg-slate-50 dark:bg-slate-955 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none">
                                                 <option value="ótimo">Ótimo</option>
                                                 <option value="bom">Bom</option>
                                                 <option value="regular">Regular</option>
@@ -1060,8 +1281,8 @@ export default function MciDashboard() {
                                             </select>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Localização de Guarda</label>
-                                            <input type="text" value={equipGuarda} onChange={(e) => setEquipGuarda(e.target.value)} placeholder="Almoxarifado da Secretaria" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Localização de Guarda</label>
+                                            <input type="text" value={equipGuarda} onChange={(e) => setEquipGuarda(e.target.value)} placeholder="Almoxarifado da Secretaria" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                     </div>
                                 )}
@@ -1069,24 +1290,24 @@ export default function MciDashboard() {
                                 {formCategory === 'ESTOQUE' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Item</label>
-                                            <input type="text" value={estoqueItem} onChange={(e) => setEstoqueItem(e.target.value)} placeholder="Ex: Telha de fibrocimento, Cesta básica" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Item</label>
+                                            <input type="text" value={estoqueItem} onChange={(e) => setEstoqueItem(e.target.value)} placeholder="Ex: Telha de fibrocimento, Cesta básica" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Unidade de Medida</label>
-                                            <input type="text" value={estoqueMedida} onChange={(e) => setEstoqueMedida(e.target.value)} placeholder="Ex: Unidades, Rolos, Metros" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Unidade de Medida</label>
+                                            <input type="text" value={estoqueMedida} onChange={(e) => setEstoqueMedida(e.target.value)} placeholder="Ex: Unidades, Rolos, Metros" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Quantidade em Estoque</label>
-                                            <input type="number" value={estoqueQtd} onChange={(e) => setEstoqueQtd(parseInt(e.target.value))} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Quantidade em Estoque</label>
+                                            <input type="number" value={estoqueQtd} onChange={(e) => setEstoqueQtd(parseInt(e.target.value))} className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Validade (se aplicável)</label>
-                                            <input type="date" value={estoqueValidade} onChange={(e) => setEstoqueValidade(e.target.value)} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Validade (se aplicável)</label>
+                                            <input type="date" value={estoqueValidade} onChange={(e) => setEstoqueValidade(e.target.value)} className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Local de Armazenamento</label>
-                                            <input type="text" value={estoqueLocal} onChange={(e) => setEstoqueLocal(e.target.value)} placeholder="Barracão da Assistência Social" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Local de Armazenamento</label>
+                                            <input type="text" value={estoqueLocal} onChange={(e) => setEstoqueLocal(e.target.value)} placeholder="Barracão da Assistência Social" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                     </div>
                                 )}
@@ -1094,20 +1315,20 @@ export default function MciDashboard() {
                                 {formCategory === 'PROFISSIONAL' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Função / Especialidade</label>
-                                            <input type="text" value={mObraFuncao} onChange={(e) => setMObraFuncao(e.target.value)} placeholder="Ex: Operador de escavadeira" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Função / Especialidade</label>
+                                            <input type="text" value={mObraFuncao} onChange={(e) => setMObraFuncao(e.target.value)} placeholder="Ex: Operador de escavadeira" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Nº de Profissionais Disponíveis</label>
-                                            <input type="number" value={mObraQtd} onChange={(e) => setMObraQtd(parseInt(e.target.value))} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Nº de Profissionais Disponíveis</label>
+                                            <input type="number" value={mObraQtd} onChange={(e) => setMObraQtd(parseInt(e.target.value))} className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Turno / Disponibilidade</label>
-                                            <input type="text" value={mObraTurno} onChange={(e) => setMObraTurno(e.target.value)} placeholder="Ex: Diurno Comercial, 24h em plantão" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Turno / Disponibilidade</label>
+                                            <input type="text" value={mObraTurno} onChange={(e) => setMObraTurno(e.target.value)} placeholder="Ex: Diurno Comercial, 24h em plantão" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Contato do Responsável</label>
-                                            <input type="text" value={mObraContato} onChange={(e) => setMObraContato(e.target.value)} placeholder="(27) 99999-8888" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Contato do Responsável</label>
+                                            <input type="text" value={mObraContato} onChange={(e) => setMObraContato(e.target.value)} placeholder="(27) 99999-8888" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                     </div>
                                 )}
@@ -1115,46 +1336,46 @@ export default function MciDashboard() {
                                 {formCategory === 'INSTALACAO' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Tipo de Instalação</label>
-                                            <input type="text" value={instTipo} onChange={(e) => setInstTipo(e.target.value)} placeholder="Ex: Escola, Ginásio, Igreja" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Tipo de Instalação</label>
+                                            <input type="text" value={instTipo} onChange={(e) => setInstTipo(e.target.value)} placeholder="Ex: Escola, Ginásio, Igreja" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Capacidade de Alojados (Pessoas)</label>
-                                            <input type="number" value={instCapacidade} onChange={(e) => setInstCapacidade(parseInt(e.target.value))} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Capacidade de Alojados (Pessoas)</label>
+                                            <input type="number" value={instCapacidade} onChange={(e) => setInstCapacidade(parseInt(e.target.value))} className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Coordenada Latitude</label>
-                                            <input type="number" step="any" value={instLat} onChange={(e) => setInstLat(e.target.value)} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Coordenada Latitude</label>
+                                            <input type="number" step="any" value={instLat} onChange={(e) => setInstLat(e.target.value)} className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div>
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Coordenada Longitude</label>
-                                            <input type="number" step="any" value={instLng} onChange={(e) => setInstLng(e.target.value)} className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Coordenada Longitude</label>
+                                            <input type="number" step="any" value={instLng} onChange={(e) => setInstLng(e.target.value)} className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-slate-400 font-bold uppercase mb-1">Endereço Completo</label>
-                                            <input type="text" value={instEnd} onChange={(e) => setInstEnd(e.target.value)} placeholder="Rua/Bairro, Distrito" className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none" />
+                                            <label className="block text-slate-600 dark:text-slate-400 font-bold uppercase mb-1">Endereço Completo</label>
+                                            <input type="text" value={instEnd} onChange={(e) => setInstEnd(e.target.value)} placeholder="Rua/Bairro, Distrito" className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none" />
                                         </div>
                                         <div className="md:col-span-2 space-y-2 mt-2">
-                                            <span className="block text-slate-400 font-bold uppercase">Infraestrutura Disponível</span>
+                                            <span className="block text-slate-600 dark:text-slate-400 font-bold uppercase">Infraestrutura Disponível</span>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={infraAgua} onChange={(e) => setInfraAgua(e.target.checked)} className="rounded text-blue-600 bg-slate-950 border-slate-800 focus:ring-0" />
+                                                <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
+                                                    <input type="checkbox" checked={infraAgua} onChange={(e) => setInfraAgua(e.target.checked)} className="rounded text-blue-600 bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 focus:ring-0" />
                                                     Água Potável
                                                 </label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={infraEnergia} onChange={(e) => setInfraEnergia(e.target.checked)} className="rounded text-blue-600 bg-slate-950 border-slate-800 focus:ring-0" />
+                                                <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
+                                                    <input type="checkbox" checked={infraEnergia} onChange={(e) => setInfraEnergia(e.target.checked)} className="rounded text-blue-600 bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 focus:ring-0" />
                                                     Energia Elétrica
                                                 </label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={infraSanitarios} onChange={(e) => setInfraSanitarios(e.target.checked)} className="rounded text-blue-600 bg-slate-950 border-slate-800 focus:ring-0" />
+                                                <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
+                                                    <input type="checkbox" checked={infraSanitarios} onChange={(e) => setInfraSanitarios(e.target.checked)} className="rounded text-blue-600 bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 focus:ring-0" />
                                                     Sanitários
                                                 </label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={infraCozinha} onChange={(e) => setInfraCozinha(e.target.checked)} className="rounded text-blue-600 bg-slate-950 border-slate-800 focus:ring-0" />
+                                                <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
+                                                    <input type="checkbox" checked={infraCozinha} onChange={(e) => setInfraCozinha(e.target.checked)} className="rounded text-blue-600 bg-white dark:bg-slate-955 border-slate-300 dark:border-slate-800 focus:ring-0" />
                                                     Cozinha
                                                 </label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input type="checkbox" checked={infraChuveiros} onChange={(e) => setInfraChuveiros(e.target.checked)} className="rounded text-blue-600 bg-slate-950 border-slate-800 focus:ring-0" />
+                                                <label className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300">
+                                                    <input type="checkbox" checked={infraChuveiros} onChange={(e) => setInfraChuveiros(e.target.checked)} className="rounded text-blue-600 bg-white dark:bg-slate-955 border-slate-300 dark:border-slate-800 focus:ring-0" />
                                                     Chuveiros
                                                 </label>
                                             </div>
@@ -1164,9 +1385,9 @@ export default function MciDashboard() {
                             </div>
 
                             {/* Submit & Cancel */}
-                            <div className="flex justify-end gap-3 pt-6 border-t border-slate-850">
-                                <button type="button" onClick={() => setShowFormModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg uppercase tracking-wider">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg uppercase tracking-wider">Salvar Recurso</button>
+                            <div className="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-850">
+                                <button type="button" onClick={() => setShowFormModal(false)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold rounded-lg uppercase tracking-wider transition-colors">Cancelar</button>
+                                <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg uppercase tracking-wider transition-colors">Salvar Recurso</button>
                             </div>
                         </form>
                     </div>
@@ -1176,25 +1397,24 @@ export default function MciDashboard() {
             {/* REQUEST MODAL (COMPDEC) */}
             {showRequestModal && selectedRecursoForRequest && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-md overflow-hidden shadow-2xl">
-                        <div className="bg-slate-950 p-4 border-b border-slate-800 flex justify-between items-center">
-                            <h3 className="text-sm font-black uppercase tracking-wider text-white">Requisitar Recurso Operacional</h3>
-                            <button onClick={() => setShowRequestModal(false)} className="text-slate-400 hover:text-white">&times;</button>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+                        <div className="bg-slate-100 dark:bg-slate-955 p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center text-slate-900 dark:text-white">
+                            <h3 className="text-sm font-black uppercase tracking-wider">Requisitar Recurso Operacional</h3>
+                            <button onClick={() => setShowRequestModal(false)} className="text-slate-550 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white text-lg font-bold">&times;</button>
                         </div>
-                        <form onSubmit={handleSubmitRequest} className="p-6 space-y-4 text-xs">
+                        <form onSubmit={handleSubmitRequest} className="p-6 space-y-4 text-xs text-slate-700 dark:text-slate-300">
                             <div>
-                                <label className="block text-slate-400 font-bold uppercase mb-1">Recurso</label>
-                                <div className="p-2.5 bg-slate-950 border border-slate-850 rounded font-bold text-white uppercase">
+                                <label className="block text-slate-650 dark:text-slate-400 font-bold uppercase mb-1">Recurso</label>
+                                <div className="p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-250 dark:border-slate-850 rounded font-bold text-slate-900 dark:text-white uppercase">
                                     {selectedRecursoForRequest.nome} ({selectedRecursoForRequest.secretaria_id})
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-slate-400 font-bold uppercase mb-1">Vincular a Evento Ativo</label>
-                                <select 
+                                                  <select 
                                     value={requestEventId} 
                                     onChange={(e) => setRequestEventId(e.target.value)}
                                     required
-                                    className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none"
+                                    className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded text-slate-900 dark:text-white focus:outline-none"
                                 >
                                     <option value="">Selecione um evento...</option>
                                     {activeEvents.map(ev => (
@@ -1203,18 +1423,18 @@ export default function MciDashboard() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-slate-400 font-bold uppercase mb-1">Justificativa da Requisição</label>
+                                <label className="block text-slate-650 dark:text-slate-400 font-bold uppercase mb-1">Justificativa da Requisição</label>
                                 <textarea 
                                     value={requestJustification} 
                                     onChange={(e) => setRequestJustification(e.target.value)}
                                     required
                                     placeholder="Ex: Necessário para evacuação preventiva de moradores do bairro Pomar."
-                                    className="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none h-24 resize-none"
+                                    className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded text-slate-900 dark:text-white focus:outline-none h-24 resize-none"
                                 />
                             </div>
-                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
-                                <button type="button" onClick={() => setShowRequestModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg uppercase tracking-wider">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg uppercase tracking-wider">Enviar Solicitação</button>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-850">
+                                <button type="button" onClick={() => setShowRequestModal(false)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold rounded-lg uppercase tracking-wider transition-colors">Cancelar</button>
+                                <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg uppercase tracking-wider transition-colors">Enviar Solicitação</button>
                             </div>
                         </form>
                     </div>
@@ -1224,37 +1444,37 @@ export default function MciDashboard() {
             {/* AUDIT LOG MODAL */}
             {showLogModal && editingRecurso && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-                        <div className="bg-slate-950 p-4 border-b border-slate-800 flex justify-between items-center">
-                            <h3 className="text-sm font-black uppercase tracking-wider text-white">Histórico de Alterações</h3>
-                            <button onClick={() => setShowLogModal(false)} className="text-slate-400 hover:text-white">&times;</button>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+                        <div className="bg-slate-100 dark:bg-slate-955 p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center text-slate-900 dark:text-white">
+                            <h3 className="text-sm font-black uppercase tracking-wider">Histórico de Alterações</h3>
+                            <button onClick={() => setShowLogModal(false)} className="text-slate-550 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white text-lg font-bold">&times;</button>
                         </div>
-                        <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
-                            <div className="pb-3 border-b border-slate-800">
-                                <h4 className="font-bold text-white uppercase text-sm">{editingRecurso.nome}</h4>
-                                <span className="text-[10px] text-slate-400 uppercase">Categoria: {editingRecurso.categoria} | Secretaria: {editingRecurso.secretaria_id}</span>
+                        <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs text-slate-750 dark:text-slate-300">
+                            <div className="pb-3 border-b border-slate-200 dark:border-slate-800">
+                                <h4 className="font-bold text-slate-900 dark:text-white uppercase text-sm">{editingRecurso.nome}</h4>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Categoria: {editingRecurso.categoria} | Secretaria: {editingRecurso.secretaria_id}</span>
                             </div>
                             {logs.length === 0 ? (
-                                <p className="text-slate-400 py-6 text-center italic">Nenhum log de alteração registrado.</p>
+                                <p className="text-slate-500 dark:text-slate-450 py-6 text-center italic">Nenhum log de alteração registrado.</p>
                             ) : (
-                                <div className="space-y-4 relative border-l-2 border-slate-850 pl-4 ml-2">
+                                <div className="space-y-4 relative border-l-2 border-slate-200 dark:border-slate-800 pl-4 ml-2">
                                     {logs.map((log) => (
                                         <div key={log.id} className="relative">
-                                            <div className="absolute -left-[23px] top-0.5 bg-slate-900 p-0.5 border border-slate-800 rounded-full">
-                                                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                            <div className="absolute -left-[23px] top-0.5 bg-white dark:bg-slate-900 p-0.5 border border-slate-200 dark:border-slate-800 rounded-full">
+                                                <div className="w-2.5 h-2.5 bg-blue-550 rounded-full"></div>
                                             </div>
-                                            <div className="bg-slate-950/40 border border-slate-850 rounded-lg p-3">
-                                                <div className="flex justify-between font-bold text-slate-300">
-                                                    <span className="uppercase text-[10px] tracking-wider text-blue-400">{log.acao}</span>
+                                            <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-lg p-3">
+                                                <div className="flex justify-between font-bold text-slate-650 dark:text-slate-350">
+                                                    <span className="uppercase text-[10px] tracking-wider text-blue-600 dark:text-blue-400">{log.acao}</span>
                                                     <span>{new Date(log.criado_em).toLocaleString()}</span>
                                                 </div>
                                                 {log.dados_novos?.status && (
-                                                    <p className="mt-2 text-slate-300">
-                                                        Status alterado para: <strong className="text-white uppercase">{log.dados_novos.status}</strong>
+                                                    <p className="mt-2 text-slate-700 dark:text-slate-300">
+                                                        Status alterado para: <strong className="text-slate-900 dark:text-white uppercase">{log.dados_novos.status}</strong>
                                                     </p>
                                                 )}
                                                 {log.dados_novos?.nome && log.dados_anteriores?.nome && log.dados_novos.nome !== log.dados_anteriores.nome && (
-                                                    <p className="mt-1 text-slate-300">
+                                                    <p className="mt-1 text-slate-700 dark:text-slate-300">
                                                         Nome editado de "{log.dados_anteriores.nome}" para "{log.dados_novos.nome}"
                                                     </p>
                                                 )}
@@ -1264,8 +1484,92 @@ export default function MciDashboard() {
                                 </div>
                             )}
                         </div>
-                        <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
-                            <button onClick={() => setShowLogModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg uppercase tracking-wider text-[10px]">Fechar</button>
+                        <div className="p-4 bg-slate-100 dark:bg-slate-955 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                            <button onClick={() => setShowLogModal(false)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-850 dark:text-white font-bold rounded-lg uppercase tracking-wider text-[10px]">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* CSV IMPORT MODAL */}
+            {showImportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="bg-slate-100 dark:bg-slate-955 p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center text-slate-900 dark:text-white">
+                            <h3 className="text-sm font-black uppercase tracking-wider">Importar Recursos via CSV</h3>
+                            <button onClick={() => setShowImportModal(false)} className="text-slate-550 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white text-lg font-bold">&times;</button>
+                        </div>
+                        <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs text-slate-750 dark:text-slate-300">
+                            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 rounded-lg space-y-2">
+                                <h4 className="font-bold text-blue-800 dark:text-blue-400 uppercase">Instruções para Importação</h4>
+                                <p className="leading-relaxed">
+                                    O arquivo CSV deve conter um cabeçalho e utilizar vírgula (,) ou ponto e vírgula (;) como separador. 
+                                    Se você não for da COMPDEC, os recursos serão vinculados automaticamente à sua secretaria.
+                                </p>
+                                <p className="font-bold text-slate-800 dark:text-slate-250">Campos suportados:</p>
+                                <ul className="list-disc pl-4 space-y-1">
+                                    <li><strong>nome</strong> (obrigatório)</li>
+                                    <li><strong>categoria</strong> (opcional: VEICULO, EQUIPAMENTO, ESTOQUE, PROFISSIONAL, INSTALACAO)</li>
+                                    <li><strong>status</strong> (opcional: DISPONIVEL, EM_MANUTENCAO, EM_USO, OCUPADO)</li>
+                                    <li><strong>secretaria</strong> (opcional: Nome da secretaria)</li>
+                                    <li><strong>tipo, placa, patrimonio, capacidade, estado, guarda, item, unidade, quantidade, validade, local, funcao, turno, contato, lat, lng, endereco</strong> (detalhes específicos de cada categoria)</li>
+                                </ul>
+                            </div>
+
+                            <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-8 bg-slate-50 dark:bg-slate-950/40 transition-colors">
+                                <Upload className="h-10 w-10 text-slate-450 dark:text-slate-500 mb-3" />
+                                <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg uppercase tracking-wider text-[10px] shadow transition-colors">
+                                    Selecionar Arquivo CSV
+                                    <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+                                </label>
+                                {csvFile && (
+                                    <span className="mt-2 text-slate-800 dark:text-slate-200 font-semibold">{csvFile.name}</span>
+                                )}
+                            </div>
+
+                            {importError && (
+                                <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 rounded-lg text-red-700 dark:text-red-400 font-semibold text-center">
+                                    {importError}
+                                </div>
+                            )}
+
+                            {csvPreview.length > 0 && (
+                                <div className="space-y-3">
+                                    <h4 className="font-bold text-slate-900 dark:text-white uppercase">Pré-visualização dos Dados ({csvPreview.length} registros)</h4>
+                                    <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-slate-100 dark:bg-slate-955 text-slate-700 dark:text-slate-300 font-bold uppercase border-b border-slate-200 dark:border-slate-800 text-[10px]">
+                                                    <th className="p-3">Nome</th>
+                                                    <th className="p-3">Categoria</th>
+                                                    <th className="p-3">Secretaria</th>
+                                                    <th className="p-3">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
+                                                {csvPreview.map((item, idx) => (
+                                                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-900/40 text-slate-800 dark:text-slate-350">
+                                                        <td className="p-3 font-semibold text-slate-900 dark:text-white">{item.nome}</td>
+                                                        <td className="p-3 uppercase text-blue-600 dark:text-blue-400">{item.categoria}</td>
+                                                        <td className="p-3">{item.secretaria_id}</td>
+                                                        <td className="p-3 uppercase">{item.status}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 bg-slate-100 dark:bg-slate-955 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
+                            <button onClick={() => setShowImportModal(false)} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold rounded-lg uppercase tracking-wider text-[10px] transition-colors">Cancelar</button>
+                            <button 
+                                onClick={handleConfirmImport} 
+                                disabled={csvPreview.length === 0 || importing}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-lg uppercase tracking-wider text-[10px] flex items-center gap-2 shadow transition-all"
+                            >
+                                {importing ? 'Importando...' : 'Confirmar Importação'}
+                            </button>
                         </div>
                     </div>
                 </div>
