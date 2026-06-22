@@ -192,7 +192,7 @@ export const api = {
             });
             const allInterdicoes = Array.from(iMap.values());
 
-            // 5. INMET (fetch local with production fallback)
+            // 5. INMET (fetch local with production fallback and database fallback)
             let inmetAlerts = [];
             try {
                 if (inmetResp && inmetResp.ok) {
@@ -205,6 +205,30 @@ export const api = {
                     if (prodResp && prodResp.ok) {
                         const alerts = await prodResp.json();
                         inmetAlerts = Array.isArray(alerts) ? alerts : [];
+                    }
+                }
+                // Database fallback to display active warnings from Supabase
+                if (inmetAlerts.length === 0) {
+                    const nowIso = new Date().toISOString();
+                    const { data: dbAlerts } = await supabase
+                        .from('alertas_inmet')
+                        .select('*')
+                        .gte('fim', nowIso)
+                        .lte('inicio', nowIso)
+                        .order('inicio', { ascending: false });
+                    
+                    if (dbAlerts && dbAlerts.length > 0) {
+                        inmetAlerts = dbAlerts.map(a => ({
+                            id: a.id,
+                            tipo: a.tipo,
+                            severidade: a.severidade,
+                            inicio: a.inicio,
+                            fim: a.fim,
+                            riscos: a.riscos,
+                            instrucoes: a.instrucoes,
+                            msg: a.msg,
+                            descricao: a.descricao
+                        }));
                     }
                 }
             } catch (e) {

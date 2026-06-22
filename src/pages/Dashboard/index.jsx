@@ -80,6 +80,7 @@ import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 import { useToast } from '../../components/ToastNotification'
 import { APP_VERSION } from '../../version'
 import { contingencyDb } from '../../services/contingencyDb'
+import { supabase } from '../../services/supabase'
 
 // --- HELPER FUNCTIONS ---
 const processBreakdown = (records) => {
@@ -2616,6 +2617,55 @@ const Dashboard = () => {
                 ? (validStations.reduce((acc, p) => acc + (p.acc24hr || p.rainRaw || 0), 0) / validStations.length).toFixed(1)
                 : '0.0';
 
+            // Fetch INMET and CEMADEN alerts active during the timeframe from Supabase
+            let reportInmetAlerts = [];
+            let reportCemadenAlerts = [];
+
+            try {
+                const nowIso = new Date().toISOString();
+                // Default to last 7 days if hours === 0
+                const limitIso = limitDate ? limitDate.toISOString() : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(); 
+                
+                // Fetch INMET alerts active during the period (overlapping)
+                const { data: dbInmet } = await supabase
+                    .from('alertas_inmet')
+                    .select('*')
+                    .lte('inicio', nowIso)
+                    .gte('fim', limitIso)
+                    .order('inicio', { ascending: false });
+                
+                if (dbInmet) {
+                    reportInmetAlerts = dbInmet.map(a => ({
+                        id: a.id,
+                        tipo: a.tipo,
+                        severidade: a.severidade,
+                        inicio: a.inicio,
+                        fim: a.fim,
+                        riscos: a.riscos ? a.riscos.split('\n') : [],
+                        instrucoes: a.instrucoes ? a.instrucoes.split('\n') : [],
+                        msg: a.msg,
+                        descricao: a.descricao
+                    }));
+                }
+
+                // Fetch CEMADEN alerts active during the period (overlapping)
+                const { data: dbCemaden } = await supabase
+                    .from('alertas_cemaden')
+                    .select('*')
+                    .ne('status', 'EXCLUIDO')
+                    .lte('data_abertura', nowIso)
+                    .or(`data_cessar.is.null,data_cessar.gte.${limitIso}`);
+                
+                if (dbCemaden) {
+                    reportCemadenAlerts = dbCemaden;
+                }
+            } catch (alertErr) {
+                console.error('[Report] Error fetching historical alerts:', alertErr);
+                // Fallback to currently loaded active warnings
+                reportInmetAlerts = data?.alerts || [];
+                reportCemadenAlerts = cemadenAlerts || [];
+            }
+
             const finalPreviewData = {
                 dashboardData: reportData,
                 weatherData: weather,
@@ -2625,8 +2675,8 @@ const Dashboard = () => {
                 emissionDate,
                 currentStatus,
                 avgAcc,
-                activeWarnings: data?.alerts || [],
-                cemadenAlerts: cemadenAlerts || []
+                activeWarnings: reportInmetAlerts,
+                cemadenAlerts: reportCemadenAlerts
             };
 
             // Save to session for the print component and open route

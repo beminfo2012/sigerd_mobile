@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RefreshCw, Upload, MessageCircle, Copy, Check, ShieldAlert } from 'lucide-react'
 import { toJpeg } from 'html-to-image'
+import { supabase } from '../../services/supabase'
 
 // Componente isolado da Arte para garantir consistência entre Preview e Exportação
 const AlertArt = ({ format, severity, alertType, startDate, endDate, risks, instructionsList, mapImage, severityColor }) => {
@@ -225,6 +226,35 @@ const Alerts = () => {
                     if (Array.isArray(prodData) && prodData.length > 0) {
                         validAlerts = prodData
                     }
+                }
+            }
+
+            // Fallback to database query if APIs are empty
+            if (validAlerts.length === 0) {
+                try {
+                    const nowIso = new Date().toISOString()
+                    const { data: dbAlerts } = await supabase
+                        .from('alertas_inmet')
+                        .select('*')
+                        .gte('fim', nowIso)
+                        .lte('inicio', nowIso)
+                        .order('inicio', { ascending: false })
+                    
+                    if (dbAlerts && dbAlerts.length > 0) {
+                        validAlerts = dbAlerts.map(a => ({
+                            id: a.id,
+                            tipo: a.tipo,
+                            severidade: a.severidade,
+                            inicio: a.inicio,
+                            fim: a.fim,
+                            riscos: a.riscos ? a.riscos.split('\n') : [],
+                            instrucoes: a.instrucoes ? a.instrucoes.split('\n') : [],
+                            msg: a.msg,
+                            descricao: a.descricao
+                        }))
+                    }
+                } catch (dbErr) {
+                    console.error('[Alerts] Database fallback error:', dbErr)
                 }
             }
 

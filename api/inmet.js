@@ -1,3 +1,10 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL || 'https://flsppiyjmcrjqulosrqs.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZsc3BwaXlqbWNyanF1bG9zcnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMDM2NTksImV4cCI6MjA4MjY3OTY1OX0.TmRPTae3ptQILfAvEvdVnKwnqIdI0FgFQ7jh1vev-gs';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 export default async function handler(request, response) {
     const targetUrl = 'https://apiprevmet3.inmet.gov.br/avisos/ativos';
     const targetGeocode = "3204559"; // Santa Maria de Jetibá
@@ -68,6 +75,36 @@ export default async function handler(request, response) {
 
         // Deduplicate and sort by severity/date
         const uniqueAlerts = Array.from(new Map(alerts.map(a => [a.id, a])).values());
+
+        // Save to Supabase (alertas_inmet) if uniqueAlerts is not empty
+        if (uniqueAlerts.length > 0) {
+            try {
+                const upsertData = uniqueAlerts.map(a => ({
+                    id: String(a.id),
+                    tipo: a.tipo || a.descricao || 'Meteorológico',
+                    severidade: a.severidade || 'ALERTA',
+                    inicio: a.inicio,
+                    fim: a.fim,
+                    riscos: Array.isArray(a.riscos) ? a.riscos.join('\n') : (a.riscos || ''),
+                    instrucoes: Array.isArray(a.instrucoes) ? a.instrucoes.join('\n') : (a.instrucoes || ''),
+                    msg: a.msg || '',
+                    descricao: a.descricao || a.tipo || '',
+                    atualizado_em: new Date().toISOString()
+                }));
+
+                const { error: upsertError } = await supabase
+                    .from('alertas_inmet')
+                    .upsert(upsertData, { onConflict: 'id' });
+
+                if (upsertError) {
+                    console.error('[INMET] Supabase upsert error:', upsertError.message);
+                } else {
+                    console.log(`[INMET] Successfully saved ${upsertData.length} alerts to Supabase.`);
+                }
+            } catch (dbErr) {
+                console.error('[INMET] Supabase exception:', dbErr);
+            }
+        }
 
         // Enable CORS
         response.setHeader('Access-Control-Allow-Credentials', true)
