@@ -184,13 +184,17 @@ const NoprerForm = () => {
                     medidas_mitigatorias: formData.medidas_mitigatorias,
                     prazo_dias: formData.prazo_dias,
                     data_limite: data_limite.toISOString(),
-                    status: signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO',
+                    status: signatureMode ? (signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO') : existingNoprer.status,
                     assinatura: signatureData,
                     testemunhas: signatureMode === 'recusa' ? testemunhas : null,
                     recusou_assinatura: signatureMode === 'recusa'
                 };
                 const { error } = await supabase.from('noprer').update(noprerObj).eq('id', id);
-                if (error) throw error;
+                if (error) {
+                    console.error("Supabase Update Error:", error);
+                    alert(`Falha ao atualizar a NOPRER: ${error.message}`);
+                    throw error;
+                }
             } else {
                 // Insert
                 const data_emissao = new Date().toISOString();
@@ -218,13 +222,16 @@ const NoprerForm = () => {
                 };
 
                 const { error } = await supabase.from('noprer').insert([noprerObj]);
-                if (error) throw error;
+                if (error) {
+                    console.error("Supabase Insert Error:", error);
+                    alert(`Falha ao inserir a NOPRER: ${error.message}`);
+                    throw error;
+                }
             }
 
             navigate('/noprer');
         } catch (e) {
-            console.error('Erro ao salvar NOPRER:', e);
-            alert('Falha ao salvar a NOPRER no servidor.');
+            console.error('Erro global ao salvar NOPRER:', e);
         } finally {
             setIsSaving(false);
         }
