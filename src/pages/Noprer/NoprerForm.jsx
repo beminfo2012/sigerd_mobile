@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { UserContext } from '../../App';
+import { supabase } from '../../services/supabase';
 import { 
     ArrowLeft, ShieldAlert, Save, MapPin, Camera, User, 
     FileText, Calendar, AlertTriangle, CheckCircle, ChevronDown
@@ -8,33 +9,28 @@ import {
 import SignaturePad from '../../components/SignaturePad';
 import ConfirmModal from '../../components/ConfirmModal';
 
-// This would normally be in a separate db.js file
 const getSourceData = async (origem, origemId) => {
     try {
         if (origem === 'vistoria') {
-            // Simulated fetch from DB for vistoria
-            const { getVistoriaFull } = await import('../../services/db');
-            return await getVistoriaFull(origemId) || {
-                id: origemId,
-                vistoria_id: `VIST-MOCK`,
-                endereco: 'Endereço da Vistoria Mock',
-                solicitante: 'Proprietário Mock',
-                nivelRisco: 'Alto',
-                coordenadas: { lat: -20, lng: -40 }
-            };
+            // First check if getVistoriaFull works locally
+            let vistoria = null;
+            try {
+                const { getVistoriaFull } = await import('../../services/db');
+                vistoria = await getVistoriaFull(origemId);
+            } catch (err) { }
+            
+            if (vistoria) return vistoria;
+
+            // Otherwise, fetch direct from Supabase
+            const { data } = await supabase.from('vistorias').select('*').or(`id.eq.${origemId},vistoria_id.eq.${origemId}`).single();
+            return data;
         } else {
-            // Simulated fetch from DB for ocorrencia
-            return {
-                id: origemId,
-                ocorrencia_id: `OCOR-MOCK`,
-                endereco: 'Endereço da Ocorrência Mock',
-                solicitante: 'Solicitante Ocorrência Mock',
-                nivel_risco: 'Médio',
-                coordenadas: { lat: -20, lng: -40 }
-            };
+            // Fetch ocorrencia from Supabase
+            const { data } = await supabase.from('ocorrencias_operacionais').select('*').or(`id.eq.${origemId},ocorrencia_id.eq.${origemId},ocorrencia_id_format.eq.${origemId}`).single();
+            return data;
         }
     } catch (e) {
-        console.error(e);
+        console.error('Erro ao buscar dados da origem:', e);
         return null;
     }
 };
@@ -100,7 +96,7 @@ const NoprerForm = () => {
                 setSourceData(data);
                 
                 // Pre-fill some intelligence based on source
-                const nivel = origem === 'vistoria' ? data.nivelRisco : data.nivel_risco;
+                const nivel = origem === 'vistoria' ? (data.nivelRisco || data.nivel_risco) : data.nivel_risco;
                 
                 // Default risk logic
                 let presumedType = '';
@@ -135,14 +131,16 @@ const NoprerForm = () => {
             const data_limite = new Date();
             data_limite.setDate(data_limite.getDate() + formData.prazo_dias);
             
-            // Build the NOPRER object
+            // Generate sequence roughly (in a real scenario, use a DB sequence)
+            const numeroNoprer = `NOPRER-${new Date().getFullYear()}.${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+            
+            // Build the NOPRER object for Supabase
             const noprerObj = {
-                id: Date.now().toString(),
-                numero_noprer: `NOPRER-${new Date().getFullYear()}.${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+                numero_noprer: numeroNoprer,
                 origem_tipo: origem,
-                origem_id: sourceData.vistoria_id || sourceData.ocorrencia_id || origemId,
+                origem_id: sourceData.vistoria_id || sourceData.ocorrencia_id_format || sourceData.ocorrencia_id || origemId,
                 data_emissao: data_emissao,
-                risco: origem === 'vistoria' ? sourceData.nivelRisco : sourceData.nivel_risco,
+                risco: origem === 'vistoria' ? (sourceData.nivelRisco || sourceData.nivel_risco) : sourceData.nivel_risco,
                 tipo_risco: formData.tipo_risco,
                 descricao: formData.descricao,
                 medidas_mitigatorias: formData.medidas_mitigatorias,
@@ -151,24 +149,26 @@ const NoprerForm = () => {
                 status: signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO',
                 endereco: sourceData.endereco,
                 solicitante: sourceData.solicitante || sourceData.solicitante_nome,
-                coordenadas: sourceData.coordenadas,
+                coordenadas: sourceData.coordenadas || (sourceData.latitude ? { lat: sourceData.latitude, lng: sourceData.longitude } : null),
                 criado_por: userProfile?.full_name || 'Agente',
                 assinatura: signatureData,
                 testemunhas: signatureMode === 'recusa' ? testemunhas : null,
                 recusou_assinatura: signatureMode === 'recusa'
             };
 
-            // Save to LocalStorage mock
-            const existing = JSON.parse(localStorage.getItem('@sigerd:noprers') || '[]');
-            existing.unshift(noprerObj);
-            localStorage.setItem('@sigerd:noprers', JSON.stringify(existing));
+            const { error } = await supabase.from('noprer').insert([noprerObj]);
+            
+            if (error) {
+                console.error("Erro Supabase:", error);
+                throw error;
+            }
 
             // Redirect to Dashboard
             navigate('/noprer');
             
         } catch (e) {
             console.error('Erro ao salvar NOPRER:', e);
-            alert('Falha ao emitir a NOPRER.');
+            alert('Falha ao emitir a NOPRER no servidor.');
         } finally {
             setIsSaving(false);
         }

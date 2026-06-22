@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 import { Printer, X, ZoomIn, ZoomOut } from 'lucide-react';
 
 const NoprerPrint = () => {
@@ -8,13 +9,16 @@ const NoprerPrint = () => {
     const [zoom, setZoom] = useState(1);
 
     useEffect(() => {
-        // Mock fetch from LocalStorage for now
-        const stored = localStorage.getItem('@sigerd:noprers');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            const found = parsed.find(n => n.id === id);
-            if (found) setNoprer(found);
-        }
+        const fetchNoprer = async () => {
+            try {
+                const { data, error } = await supabase.from('noprer').select('*').eq('id', id).single();
+                if (data) setNoprer(data);
+                else console.error(error);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchNoprer();
     }, [id]);
 
     if (!noprer) return <div className="p-8">Carregando documento...</div>;

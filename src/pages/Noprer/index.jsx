@@ -179,11 +179,7 @@ const NoprerDashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {noprers.filter(n => 
-                                    n.numero_noprer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                    n.vistoria_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                    n.endereco.toLowerCase().includes(searchTerm.toLowerCase())
-                                ).map((noprer) => (
+                                {filtered.map((noprer) => (
                                     <tr key={noprer.id} className="border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                                         <td className="p-4">
                                             <div className="font-bold text-sm text-slate-800 dark:text-slate-200">{noprer.numero_noprer}</div>

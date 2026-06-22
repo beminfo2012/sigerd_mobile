@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 import { 
     ArrowLeft, Printer, History, AlertOctagon, CheckCircle, 
     Calendar, MapPin, User, FileText, ArrowRight, ShieldAlert 
@@ -13,13 +14,18 @@ const NoprerDetails = () => {
     const [showConvertModal, setShowConvertModal] = useState(false);
 
     useEffect(() => {
-        // Mock fetch
-        const stored = localStorage.getItem('@sigerd:noprers');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            const found = parsed.find(n => n.id === id);
-            if (found) setNoprer(found);
-        }
+        const fetchNoprer = async () => {
+            try {
+                // If it's a UUID, it will fetch. If we're passing numero_noprer in some cases, change the query.
+                // Currently route is /noprer/detalhes/:id
+                const { data, error } = await supabase.from('noprer').select('*').eq('id', id).single();
+                if (data) setNoprer(data);
+                else console.error(error);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchNoprer();
     }, [id]);
 
     if (!noprer) {
@@ -30,23 +36,25 @@ const NoprerDetails = () => {
         window.open(`/noprer/imprimir/${noprer.id}`, '_blank');
     };
 
-    const handleConvertToInterdicao = () => {
-        // Update status to CONVERTIDA EM INTERDIÇÃO
-        const stored = JSON.parse(localStorage.getItem('@sigerd:noprers') || '[]');
-        const updated = stored.map(n => n.id === noprer.id ? { ...n, status: 'CONVERTIDA EM INTERDIÇÃO' } : n);
-        localStorage.setItem('@sigerd:noprers', JSON.stringify(updated));
-        
-        // Pass the data to the Interdicao creation route
-        // This is a mockup of the navigation. The Interdicao module should receive these parameters
-        sessionStorage.setItem('interdicao_import_data', JSON.stringify({
-            endereco: noprer.endereco,
-            proprietario: noprer.solicitante,
-            coordenadas: noprer.coordenadas,
-            origem: noprer.origem_id,
-            noprer: noprer.numero_noprer
-        }));
-        
-        navigate('/interdicao'); 
+    const handleConvertToInterdicao = async () => {
+        try {
+            // Update status to CONVERTIDA EM INTERDIÇÃO
+            await supabase.from('noprer').update({ status: 'CONVERTIDA EM INTERDIÇÃO' }).eq('id', noprer.id);
+            
+            // Pass the data to the Interdicao creation route
+            sessionStorage.setItem('interdicao_import_data', JSON.stringify({
+                endereco: noprer.endereco,
+                proprietario: noprer.solicitante,
+                coordenadas: noprer.coordenadas,
+                origem: noprer.origem_id,
+                noprer: noprer.numero_noprer
+            }));
+            
+            navigate('/interdicao'); 
+        } catch (err) {
+            console.error("Erro ao converter para interdição:", err);
+            alert("Erro ao converter.");
+        }
     };
 
     const getStatusColor = (status) => {
