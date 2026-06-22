@@ -180,7 +180,7 @@ const mapCsvRowToRecurso = (row, defaultSecretaria) => {
 
 export default function MciDashboard() {
     const user = useContext(UserContext);
-    const { addToast } = useToast();
+    const { toast: addToast } = useToast();
     const navigate = useNavigate();
 
     // User Roles & Department Mapping

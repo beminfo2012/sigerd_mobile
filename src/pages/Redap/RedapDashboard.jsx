@@ -5,7 +5,7 @@ import {
     ArrowLeft, Search, AlertCircle,
     Download, Clock, CheckCircle,
     ChevronRight, Globe, Shield, FileStack, RefreshCw,
-    Calendar
+    Calendar, Paperclip
 } from 'lucide-react';
 import RedapDocsModal from './components/RedapDocsModal';
 import EventModal from './components/EventModal';
@@ -27,6 +27,9 @@ const RedapDashboard = () => {
     const [eventToDelete, setEventToDelete] = useState(null);
     const [showEventModal, setShowEventModal] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    const [docsCounts, setDocsCounts] = useState({});
+
+    const isDC = ['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral'].includes(user?.role);
 
     useEffect(() => {
         loadEvents();
@@ -38,6 +41,13 @@ const RedapDashboard = () => {
             const data = await redapService.getActiveEvents();
             if (data) {
                 setEvents(data);
+                // Carrega contagem de documentos para o badge (somente COMPDEC)
+                if (isDC && data.length > 0) {
+                    try {
+                        const counts = await redapService.getDocumentosCountByEventos(data.map(e => e.id));
+                        setDocsCounts(counts);
+                    } catch { /* tabela pode ainda não existir */ }
+                }
             }
         } catch (error) {
             console.error('Error loading events:', error);
@@ -102,7 +112,7 @@ const RedapDashboard = () => {
         );
     }
 
-    const isDC = ['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral'].includes(user?.role);
+    const isDefesaCivil = isDC; // alias for clarity
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
@@ -170,6 +180,11 @@ const RedapDashboard = () => {
                                         <span className={`text-[8px] sm:text-[9px] font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase tracking-widest ${event.status_evento === 'Finalizado' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`}>
                                             {event.status_evento}
                                         </span>
+                                        {isDC && (docsCounts[event.id] || 0) > 0 && (
+                                            <span className="flex items-center gap-1 text-[8px] sm:text-[9px] font-black bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase tracking-widest">
+                                                <Paperclip size={9} /> {docsCounts[event.id]} doc{docsCounts[event.id] > 1 ? 's' : ''}
+                                            </span>
+                                        )}
                                     </div>
                                     <h3 className="font-black text-slate-800 dark:text-slate-100 text-base sm:text-xl leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
                                         {event.nome_evento || 'Evento sem Nome'}

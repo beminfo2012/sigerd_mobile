@@ -878,6 +878,7 @@ export const getRegistrationsByEvent = async (eventId) => {
     return regs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
+
 export const updateRegistrationStatus = async (id, status) => {
     const db = await initDB();
     const record = await db.get('redap_registros', id);
@@ -891,3 +892,191 @@ export const updateRegistrationStatus = async (id, status) => {
     }
     return false;
 };
+
+// ============================================================
+// GESTÃO DOCUMENTAL (BLOCO A) — redap_documentos
+// ============================================================
+
+export const TIPOS_DOCUMENTO_REDAP = [
+    { value: 'Decreto de Situação de Emergência',               obrigatoriedade: 'OBRIGATORIO' },
+    { value: 'Decreto de Estado de Calamidade Pública',         obrigatoriedade: 'CONDICIONAL' },
+    { value: 'Ofício de Solicitação de Reconhecimento (SEDEC)', obrigatoriedade: 'OBRIGATORIO' },
+    { value: 'Parecer Técnico da Defesa Civil',                 obrigatoriedade: 'OBRIGATORIO' },
+    { value: 'Relatório Fotográfico',                           obrigatoriedade: 'RECOMENDADO' },
+    { value: 'Laudo de Vistoria (SECOBR/engenheiro)',           obrigatoriedade: 'RECOMENDADO' },
+    { value: 'Mapa de Áreas Afetadas',                          obrigatoriedade: 'OPCIONAL' },
+    { value: 'Notificação Prévia (NOPRER)',                      obrigatoriedade: 'OPCIONAL' },
+    { value: 'Outros',                                           obrigatoriedade: 'OPCIONAL' },
+];
+
+// Tipos obrigatórios para liberar etapa de Homologação
+export const DOCS_OBRIGATORIOS_HOMOLOGACAO = [
+    'Decreto de Situação de Emergência',
+    'Ofício de Solicitação de Reconhecimento (SEDEC)',
+    'Parecer Técnico da Defesa Civil',
+];
+
+/**
+ * Busca documentos de um evento.
+ */
+export const getDocumentosByEvento = async (eventoId) => {
+    try {
+        const { data, error } = await supabase
+            .from('redap_documentos')
+            .select('*')
+            .eq('evento_id', eventoId)
+            .order('data_upload', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('[redapService] Erro ao buscar documentos:', err);
+        throw err;
+    }
+};
+
+/**
+ * Conta documentos de múltiplos eventos (para o badge no dashboard).
+ */
+export const getDocumentosCountByEventos = async (eventoIds) => {
+    if (!eventoIds || eventoIds.length === 0) return {};
+    try {
+        const { data, error } = await supabase
+            .from('redap_documentos')
+            .select('evento_id, status_documento')
+            .in('evento_id', eventoIds)
+            .eq('status_documento', 'ANEXADO');
+        if (error) throw error;
+        const counts = {};
+        (data || []).forEach(d => {
+            counts[d.evento_id] = (counts[d.evento_id] || 0) + 1;
+        });
+        return counts;
+    } catch (err) {
+        console.error('[redapService] Erro ao contar documentos:', err);
+        return {};
+    }
+};
+
+/**
+ * Cria ou atualiza um documento (sem arquivo, apenas metadados).
+ */
+export const saveDocumentoRedap = async (docData, userId) => {
+    try {
+        const payload = {
+            evento_id: docData.evento_id,
+            tipo: docData.tipo,
+            nome_personalizado: docData.nome_personalizado,
+            numero_documento: docData.numero_documento || null,
+            data_documento: docData.data_documento || null,
+            observacao: docData.observacao || null,
+            status_documento: docData.status_documento || 'PENDENTE',
+            dispensado_motivo: docData.dispensado_motivo || null,
+            usuario_id: userId,
+            atualizado_em: new Date().toISOString(),
+        };
+
+        let result;
+        if (docData.id) {
+            const { data, error } = await supabase
+                .from('redap_documentos')
+                .update(payload)
+                .eq('id', docData.id)
+                .select()
+                .single();
+            if (error) throw error;
+            result = data;
+        } else {
+            const { data, error } = await supabase
+                .from('redap_documentos')
+                .insert([{ ...payload, data_upload: new Date().toISOString() }])
+                .select()
+                .single();
+            if (error) throw error;
+            result = data;
+        }
+        return result;
+    } catch (err) {
+        console.error('[redapService] Erro ao salvar documento:', err);
+        throw err;
+    }
+};
+
+/**
+ * Faz upload de arquivo para Supabase Storage e atualiza a URL no documento.
+ */
+export const uploadArquivoDocumento = async (docId, eventoId, file) => {
+    try {
+        const ext = file.name.split('.').pop();
+        const filePath = `${eventoId}/${docId}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('redap-documentos')
+            .upload(filePath, file, { upsert: true, contentType: file.type });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+            .from('redap-documentos')
+            .getPublicUrl(filePath);
+
+        // Atualiza o registro com a URL e muda status para ANEXADO
+        const { data, error } = await supabase
+            .from('redap_documentos')
+            .update({
+                arquivo_url: urlData.publicUrl,
+                status_documento: 'ANEXADO',
+                atualizado_em: new Date().toISOString()
+            })
+            .eq('id', docId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (err) {
+        console.error('[redapService] Erro ao fazer upload de arquivo:', err);
+        throw err;
+    }
+};
+
+/**
+ * Remove um documento e seu arquivo do Storage.
+ */
+export const deleteDocumentoRedap = async (doc) => {
+    try {
+        if (doc.arquivo_url) {
+            // Extrai o path relativo da URL pública
+            const urlParts = doc.arquivo_url.split('/redap-documentos/');
+            if (urlParts.length > 1) {
+                await supabase.storage
+                    .from('redap-documentos')
+                    .remove([urlParts[1]]);
+            }
+        }
+        const { error } = await supabase
+            .from('redap_documentos')
+            .delete()
+            .eq('id', doc.id);
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('[redapService] Erro ao remover documento:', err);
+        throw err;
+    }
+};
+
+/**
+ * Verifica se os documentos obrigatórios para homologação estão resolvidos (ANEXADO ou DISPENSADO).
+ * Retorna { liberado: boolean, pendentes: string[] }
+ */
+export const verificarDocumentosHomologacao = (documentos) => {
+    const pendentes = DOCS_OBRIGATORIOS_HOMOLOGACAO.filter(tipo => {
+        const doc = documentos.find(d => d.tipo === tipo);
+        if (!doc) return true; // Sem registro = pendente
+        if (doc.status_documento === 'PENDENTE') return true;
+        if (doc.status_documento === 'DISPENSADO' && !doc.dispensado_motivo?.trim()) return true;
+        return false;
+    });
+    return { liberado: pendentes.length === 0, pendentes };
+};
+

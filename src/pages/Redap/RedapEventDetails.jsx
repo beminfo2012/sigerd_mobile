@@ -17,6 +17,7 @@ import RedapMapModal from './components/RedapMapModal';
 import RedapLocationPickerModal from './components/RedapLocationPickerModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import EventModal from './components/EventModal';
+import RedapDocumentosOficiais from './components/RedapDocumentosOficiais';
 
 const SECOES_REDAP = [
     { id: '1', titulo: 'Seção 1: Identificação Institucional e do Evento', secretaria: 'Defesa Civil', editavel: false },
@@ -55,6 +56,7 @@ const RedapEventDetails = () => {
     const [fluxo, setFluxo] = useState([]);
     const [historico, setHistorico] = useState([]);
     const [assinaturas, setAssinaturas] = useState([]);
+    const [documentos, setDocumentos] = useState([]);
 
     // Modais e Estados Auxiliares
     const [showMapModal, setShowMapModal] = useState(false);
@@ -64,6 +66,9 @@ const RedapEventDetails = () => {
     const [justificativa, setJustificativa] = useState('');
     const [showAssinarModal, setShowAssinarModal] = useState(false);
     const [generatingPdf, setGeneratingPdf] = useState(false);
+
+    // Validação de Documentos
+    const { liberado: docsLiberados, pendentes: docsPendentes } = redapService.verificarDocumentosHomologacao ? redapService.verificarDocumentosHomologacao(documentos) : { liberado: true, pendentes: [] };
 
     const isDefesaCivil = ['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral'].includes(user?.role);
     const userSecretaria = redapService.REDAP_SECTORS[user?.role] || 'Defesa Civil';
@@ -110,6 +115,14 @@ const RedapEventDetails = () => {
                 // 5. Carrega assinaturas
                 const listAss = await redapService.getAssinaturasByEvento(id);
                 setAssinaturas(listAss || []);
+
+                // 6. Carrega documentos oficiais (apenas para COMPDEC)
+                try {
+                    const listDocs = await redapService.getDocumentosByEvento(id);
+                    setDocumentos(listDocs || []);
+                } catch (e) {
+                    console.warn('[REDAP] Documentos não disponíveis (tabela pode não existir ainda):', e.message);
+                }
             }
         } catch (error) {
             toast.error('Erro ao carregar dados do desastre.');
@@ -666,7 +679,13 @@ const RedapEventDetails = () => {
                                             !isDone ? (
                                                 <button
                                                     onClick={() => handleAvancarEtapa(et.etapa)}
-                                                    className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-700 active:scale-95 transition-all shadow-sm shrink-0"
+                                                    disabled={et.etapa === 4 && !docsLiberados}
+                                                    title={et.etapa === 4 && !docsLiberados ? 'Documentos obrigatórios pendentes' : ''}
+                                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all shadow-sm shrink-0 ${
+                                                        et.etapa === 4 && !docsLiberados
+                                                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed dark:bg-slate-800 dark:text-slate-600'
+                                                        : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+                                                    }`}
                                                 >
                                                     Concluir
                                                 </button>
@@ -718,6 +737,16 @@ const RedapEventDetails = () => {
                         })}
                     </div>
                 </div>
+
+                {/* Documentos Oficiais — exclusivo COMPDEC */}
+                {isDefesaCivil && (
+                    <RedapDocumentosOficiais
+                        eventoId={id}
+                        user={user}
+                        documentos={documentos}
+                        onUpdate={loadData}
+                    />
+                )}
 
                 {/* Assinaturas Eletrônicas */}
                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
