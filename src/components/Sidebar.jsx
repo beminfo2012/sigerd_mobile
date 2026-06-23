@@ -28,7 +28,8 @@ import {
     RefreshCcw,
     History,
     Calendar,
-    HeartHandshake
+    HeartHandshake,
+    Flame
 } from 'lucide-react';
 import HumanitarianIcon from './HumanitarianIcon';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
@@ -127,6 +128,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'NOPRER',
             icon: Shield,
             path: '/noprer',
+            roles: AGENT_ROLES
+        },
+        {
+            label: 'FIREGIS',
+            icon: Flame,
+            path: '/firegis',
             roles: AGENT_ROLES
         },
         {

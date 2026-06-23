@@ -100,6 +100,11 @@ const NoprerForm = lazy(() => import('./pages/Noprer/NoprerForm'))
 const NoprerDetails = lazy(() => import('./pages/Noprer/NoprerDetails'))
 const NoprerPrint = lazy(() => import('./pages/Noprer/NoprerPrint'))
 
+// FIREGIS
+const FiregisList = lazy(() => import('./pages/Firegis/FiregisList'))
+const FiregisDashboard = lazy(() => import('./pages/Firegis/FiregisDashboard'))
+const FiregisForm = lazy(() => import('./pages/Firegis/FiregisForm'))
+const FiregisImport = lazy(() => import('./pages/Firegis/FiregisImport'))
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -591,6 +596,33 @@ const AppContent = ({
                                 <Route path="/noprer/imprimir/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <NoprerPrint />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* FIREGIS Routes */}
+                                <Route path="/firegis" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <FiregisList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/firegis/dashboard" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <FiregisDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/firegis/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <FiregisForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/firegis/editar/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <FiregisForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/firegis/importar" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <FiregisImport />
                                     </ProtectedRoute>
                                 } />
 
