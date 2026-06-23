@@ -75,9 +75,9 @@ const FiregisDashboard = () => {
             </div>
 
             <div className="flex-1 p-4 md:p-6 pt-0 flex flex-col">
-                <div className="flex-1 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden relative min-h-[400px]">
+                <div className="flex-1 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden relative min-h-[500px]">
                     {/* Placeholder coordinates for Santa Maria de Jetibá */}
-                    <MapContainer center={[-20.0223, -40.744]} zoom={11} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+                    <MapContainer center={[-20.0223, -40.744]} zoom={11} className="absolute inset-0 w-full h-full z-0">
                         <LayersControl position="topright">
                             {/* MAPAS BASE */}
                             <LayersControl.BaseLayer checked name="Satélite (ArcGIS)">
