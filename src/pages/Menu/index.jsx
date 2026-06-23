@@ -182,7 +182,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
             </div>
 
             {/* User Header Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 flex items-center mb-8">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700 flex items-center mb-8">
                 <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-xl font-black text-blue-600 mr-5 border-2 border-blue-100 dark:border-blue-900/50">
                     {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
                 </div>
@@ -214,7 +214,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
             {/* Menu Sections */}
             <div className="space-y-4">
-                <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                     {/* Sync Option */}
                     {userProfile?.role !== 'Operador' && (
                         <button
@@ -271,7 +271,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Strategic Module - Plano de Contingência */}
                 {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/contingencia'}
                             className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
@@ -299,7 +299,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
                     'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
                 ].includes(userProfile?.role)) && (
-                        <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                             <button
                                 onClick={() => window.location.href = '/redap'}
                                 className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
@@ -320,7 +320,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* FIREGIS Module */}
                 {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/firegis'}
                             className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
@@ -348,7 +348,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
                     'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
                 ].includes(userProfile?.role)) && (
-                        <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                             <button
                                 onClick={() => window.location.href = '/mci'}
                                 className="w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left"
@@ -369,7 +369,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Management Section (Strategic) - FOR COORDINATORS AND ADMINS */}
                 {['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/usuarios'}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
@@ -404,7 +404,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Legado Section */}
                 {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
-                    <div className="bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/monitoramento/legado'}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
@@ -424,7 +424,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Agenda Section */}
                 {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Operador'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/agenda'}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
@@ -444,7 +444,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
 
                 {/* Voluntários Section */}
                 {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
                             onClick={() => window.location.href = '/voluntarios'}
                             className="w-full p-5 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors text-left"
@@ -466,7 +466,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 {/* Logout Card */}
                 <button
                     onClick={handleLogoutClick}
-                    className="w-full bg-white dark:bg-slate-800 p-5 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+                    className="w-full bg-white dark:bg-slate-800 p-5 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
                 >
                     <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-2xl mr-4">
                         <LogOut size={22} />
@@ -481,7 +481,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
             {/* Profile Modal */}
             {showProfileModal && (
                 <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-sm border border-slate-200 p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Editar Perfil</h3>
                             <button onClick={() => setShowProfileModal(false)} className="text-slate-300 hover:text-slate-600">

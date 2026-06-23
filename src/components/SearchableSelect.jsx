@@ -38,7 +38,7 @@ const SearchableSelect = ({
 
             {isOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl mt-10">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl mt-10">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label || placeholder || 'Selecione'}</h3>

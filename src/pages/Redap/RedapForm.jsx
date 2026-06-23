@@ -724,9 +724,9 @@ const RedapForm = () => {
                 </div>
             </header>
 
-            <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+            <div className="max-w-5xl mx-auto px-4 py-4 space-y-4">
                 {/* 2. TIPIGICAÇÃO & 3. DATA */}
-                <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                     <SectionHeader
                         icon={Shield}
                         title="2. Tipificação & 3. Ocorrência"
@@ -867,7 +867,7 @@ const RedapForm = () => {
                 {(!activeSector || ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) && (
                     <>
                         {/* 6.1 DANOS HUMANOS */}
-                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                        <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                             <SectionHeader
                                 icon={Users}
                                 title="6.1 Danos Humanos"
@@ -952,7 +952,7 @@ const RedapForm = () => {
                         </div>
 
                         {/* 6.2 DANOS MATERIAIS */}
-                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                        <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                             <SectionHeader
                                 icon={Home}
                                 title="6.2 Danos em Edificações"
@@ -1050,7 +1050,7 @@ const RedapForm = () => {
                         </div>
 
                         {/* 6.3 DANOS EM INFRAESTRUTURA */}
-                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                        <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                             <SectionHeader
                                 icon={Globe}
                                 title="6.3 Danos em Infraestrutura Pública"
@@ -1155,7 +1155,7 @@ const RedapForm = () => {
                         </div>
 
                         {/* 6.4 DANOS AGRÍCOLAS E DE PRODUÇÃO */}
-                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                        <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                             <SectionHeader
                                 icon={Shield}
                                 title="6.4 Danos Agrícolas e de Produção"
@@ -1280,7 +1280,7 @@ const RedapForm = () => {
                         </div>
 
                         {/* 6.5 DANOS AMBIENTAIS */}
-                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                        <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                             <SectionHeader
                                 icon={Leaf}
                                 title="6.5 Danos Ambientais"
@@ -1360,7 +1360,7 @@ const RedapForm = () => {
                         </div>
 
                         {/* 7. PREJUÍZOS ECONÔMICOS CONSOLIDADOS */}
-                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                        <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                             <SectionHeader
                                 icon={FileText}
                                 title="7. Prejuízos Econômicos Consolidados"
@@ -1445,7 +1445,7 @@ const RedapForm = () => {
 
                 {/* EXPANSÃO SETORIAL ESPECÍFICA */}
                 {(user?.role.startsWith('Redap_') || user?.role.startsWith('S2id_') || ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) && (
-                    <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                    <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                         <SectionHeader
                             icon={Globe}
                             title={`Relatório Setorial: ${activeSector === 'obras' ? 'SECURB' : (user?.role.replace('Redap_', '').replace('S2id_', '') || 'Geral')}`}
@@ -1717,7 +1717,7 @@ const RedapForm = () => {
 
                 {/* METADADOS OFICIAIS (Only for Admin/Defesa Civil) */}
                 {(!activeSector || ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(user?.role)) && (
-                    <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                    <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                         <SectionHeader
                             icon={FileText}
                             title="Metadados Oficiais"
@@ -1779,7 +1779,7 @@ const RedapForm = () => {
 
 
                 {/* EVIDÊNCIAS FOTOGRÁFICAS */}
-                <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                     <SectionHeader
                         icon={ImageIcon}
                         title="Evidências Fotográficas Georreferenciadas"
@@ -1832,7 +1832,7 @@ const RedapForm = () => {
                 </div>
 
                 {/* ASSINATURA DIGITAL */}
-                <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden mb-4">
+                <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                     <SectionHeader
                         icon={PenTool}
                         title="Assinatura do Responsável"

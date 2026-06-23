@@ -301,8 +301,8 @@ const NoprerForm = () => {
                     <div className="space-y-6">
                         
                         {/* Tipo de Risco */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
-                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
+                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
                                 
                                 1. Classificação do Risco
                             </h3>
@@ -333,8 +333,8 @@ const NoprerForm = () => {
                         </div>
 
                         {/* Prazos */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
-                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
+                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
                                 
                                 3. Prazos e Monitoramento
                             </h3>
@@ -364,8 +364,8 @@ const NoprerForm = () => {
                     <div className="space-y-6">
                         
                         {/* Checklist Inteligente */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
-                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
+                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
                                 
                                 2. Medidas Mitigatórias
                             </h3>
@@ -407,8 +407,8 @@ const NoprerForm = () => {
                         </div>
 
                         {/* Assinatura */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
-                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
+                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
                                 
                                 4. Ciência e Assinatura
                             </h3>

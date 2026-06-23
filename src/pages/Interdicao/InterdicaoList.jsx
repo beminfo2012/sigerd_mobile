@@ -457,7 +457,7 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
                         <p className="font-bold text-slate-400 uppercase tracking-widest text-xs">Carregando interdições...</p>
                     </div>
                 ) : filteredInterdicoes.length === 0 ? (
-                    <div className="py-20 bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 text-center">
+                    <div className="py-20 bg-white dark:bg-slate-800 border border-slate-200 border border-slate-100 dark:border-slate-700 text-center">
                         <div className="bg-slate-50 dark:bg-slate-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <AlertOctagon size={40} className="text-slate-300" />
                         </div>
@@ -666,7 +666,7 @@ const InterdicaoList = ({ onNew, onEdit, onDesinterdicao, onEditDesinterdicao })
             {/* History Modal */}
             {historyModal.open && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300" onClick={() => setHistoryModal({ open: false, item: null })}>
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/20">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">

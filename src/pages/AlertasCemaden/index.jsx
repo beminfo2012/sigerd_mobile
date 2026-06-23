@@ -132,7 +132,7 @@ const AlertasCemadenList = () => {
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-all flex items-center gap-2 border border-blue-400 dark:border-blue-300/30 disabled:opacity-50"
+                        className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5  text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-all flex items-center gap-2 border border-blue-400 dark:border-blue-300/30 disabled:opacity-50"
                     >
                         <UploadCloud size={18} /> {uploading ? 'Processando...' : 'Importar PDF'}
                     </button>
@@ -142,14 +142,14 @@ const AlertasCemadenList = () => {
             <main className="p-4 max-w-6xl mx-auto space-y-4">
                 {/* Modal de Preview (Overlaied when previewData exists) */}
                 {previewData && (
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border-2 border-blue-200 dark:border-blue-800/50 mb-6 shadow-xl relative animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-white dark:bg-slate-900 p-6 border border-slate-200 overflow-hidden border-2 border-blue-200 dark:border-blue-800/50 mb-6 shadow-xl relative animate-in fade-in slide-in-from-top-4">
                         <div className="absolute top-4 right-4 flex gap-2">
                             <button onClick={cancelUpload} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
                         <div className="flex items-center gap-3 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600">
+                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30  flex items-center justify-center text-blue-600">
                                 <FileText size={24} />
                             </div>
                             <div>
@@ -191,7 +191,7 @@ const AlertasCemadenList = () => {
                 )}
 
                 {/* Filtros */}
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
+                <div className="bg-white dark:bg-slate-900 p-4 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
                     <div className="relative flex-1">
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={15} />
                         <select 
@@ -228,14 +228,14 @@ const AlertasCemadenList = () => {
                         <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : alertas.length === 0 ? (
-                    <div className="text-center p-12 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+                    <div className="text-center p-12 bg-white dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800">
                         <AlertCircle size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhum alerta encontrado.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {alertas.map(alerta => (
-                            <div key={alerta.id} onClick={() => navigate(`/alertas-cemaden/${alerta.id}`)} className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 hover:border-blue-300 transition-all cursor-pointer group hover:shadow-lg flex flex-col">
+                            <div key={alerta.id} onClick={() => navigate(`/alertas-cemaden/${alerta.id}`)} className="bg-white dark:bg-slate-900 p-5  border border-slate-200 dark:border-slate-800 hover:border-blue-300 transition-all cursor-pointer group hover:shadow-lg flex flex-col">
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-2">
                                         <div className={`w-2 h-2 rounded-full ${alerta.status === 'ATIVO' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>

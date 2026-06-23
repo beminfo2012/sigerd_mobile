@@ -19,7 +19,7 @@ const MissoesList = () => {
                 </div>
             </header>
             <main className="p-4 max-w-5xl mx-auto mt-10">
-                <div className="text-center p-12 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+                <div className="text-center p-12 bg-white dark:bg-slate-900 border border-slate-200 border border-slate-200 dark:border-slate-800">
                     <ClipboardList size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
                     <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Módulo em Desenvolvimento</h2>
                     <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md mx-auto">

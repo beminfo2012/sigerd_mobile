@@ -274,7 +274,7 @@ const AlertaCemadenDetail = () => {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Art Panel (toggle) */}
                     {showArtPanel && (
-                        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
                             <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
                                 <Image size={18} className="text-orange-500" /> Gerar Arte para Compartilhamento
                             </h3>
@@ -292,8 +292,8 @@ const AlertaCemadenDetail = () => {
                             </div>
 
                             {/* Preview */}
-                            <div className="flex justify-center items-center min-h-[400px] bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 overflow-hidden">
-                                <div className="shadow-lg rounded-2xl overflow-hidden scale-[0.85] md:scale-100 transition-transform">
+                            <div className="flex justify-center items-center min-h-[400px] bg-slate-50 dark:bg-slate-800/50  p-4 overflow-hidden">
+                                <div className="shadow-lg  overflow-hidden scale-[0.85] md:scale-100 transition-transform">
                                     <CemadenAlertArt format={artFormat} alerta={alerta} latestVersao={latestVersao} nivelColor={nivelColor} />
                                 </div>
                             </div>
@@ -312,7 +312,7 @@ const AlertaCemadenDetail = () => {
                     )}
 
                     {/* Resumo Card */}
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
                         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
                             <div>
                                 <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 leading-tight mb-1">{alerta.municipio} - {alerta.uf}</h2>
@@ -350,7 +350,7 @@ const AlertaCemadenDetail = () => {
                     </div>
 
                     {/* Textos Completos (da versão mais recente) */}
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
                         <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
                             <FileText size={18} className="text-blue-500" /> Relatório Mais Recente
                         </h3>
@@ -370,7 +370,7 @@ const AlertaCemadenDetail = () => {
 
                 {/* Direita: Linha do Tempo */}
                 <div className="space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
                         <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2">
                             <Clock size={18} className="text-amber-500" /> Linha do Tempo
                         </h3>

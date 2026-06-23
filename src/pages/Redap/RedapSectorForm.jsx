@@ -268,7 +268,7 @@ const RedapSectorForm = () => {
 
             <main className="p-4 max-w-5xl mx-auto space-y-6">
                 {/* Cabeçalho do Bloco */}
-                <div className="bg-blue-600 dark:bg-blue-700 rounded-[2rem] p-6 text-white shadow-xl flex items-center justify-between transition-all">
+                <div className="bg-blue-600 dark:bg-blue-700 border border-slate-200 p-6 text-white shadow-xl flex items-center justify-between transition-all">
                     <div>
                         <p className="text-xs uppercase font-black tracking-widest opacity-80 mb-1">Seção Governamental ({userSecretaria})</p>
                         <h2 className="text-xl font-black uppercase tracking-tight">{config?.title}</h2>
@@ -297,7 +297,7 @@ const RedapSectorForm = () => {
                 )}
 
                 {/* Form: Identificação */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
                     <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-2">
                         <Info size={16} className="text-blue-500" /> Responsável Pelo Preenchimento
                     </h3>
@@ -346,7 +346,7 @@ const RedapSectorForm = () => {
                 </div>
 
                 {/* Form Dinâmico por Seção */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
                     {config?.enum === 'DANOS_HUMANOS' && (
                         <div className="space-y-4">
                             <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
@@ -680,7 +680,7 @@ const RedapSectorForm = () => {
 
                 {/* Evidências Fotográficas */}
                 {config?.enum !== 'OBSERVACOES' && (
-                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
                         <label className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest ml-1 mb-2 block">
                             Fotos de Evidência ({fotos.length})
                         </label>

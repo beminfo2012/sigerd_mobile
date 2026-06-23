@@ -267,7 +267,7 @@ const GeoRescue = () => {
 
             {/* Top Search Bar & Info - Lowered z-index slightly to play nice with Sidebar (z-5000) */}
             <div className="absolute top-4 left-4 right-4 z-[1000] space-y-3 pointer-events-none">
-                <div className="bg-white/90 backdrop-blur-md rounded-[2rem] shadow-2xl border border-slate-100 p-4 pointer-events-auto max-w-2xl mx-auto w-full transition-all duration-500 group focus-within:shadow-blue-500/10">
+                <div className="bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl border border-slate-100 p-4 pointer-events-auto max-w-2xl mx-auto w-full transition-all duration-500 group focus-within:shadow-blue-500/10">
                     <div className="relative">
                         <Search className="absolute left-4 top-3.5 text-blue-500/60 group-focus-within:text-blue-500 transition-colors" size={20} />
                         <input
@@ -342,7 +342,7 @@ const GeoRescue = () => {
             {/* Bottom Card: Selected UC */}
             {selectedInstallation && (
                 <div className="absolute bottom-6 left-4 right-4 z-[1000] pointer-events-none">
-                    <div className="bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-slate-100 p-6 pointer-events-auto max-w-md mx-auto w-full animate-in slide-in-from-bottom-6 duration-500">
+                    <div className="bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl border border-slate-100 p-6 pointer-events-auto max-w-md mx-auto w-full animate-in slide-in-from-bottom-6 duration-500">
                         <div className="flex justify-between items-start mb-6">
                             <div className="space-y-1.5">
                                 <div className="flex items-center gap-2 mb-2">
@@ -478,7 +478,7 @@ const GeoRescue = () => {
             {/* Success Modal */}
             {importSuccess && (
                 <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-700 text-center space-y-6 scale-in-center overflow-hidden relative">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 p-10 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-700 text-center space-y-6 scale-in-center overflow-hidden relative">
                         <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
                         <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl flex items-center justify-center mx-auto mb-2 transform rotate-12 transition-transform hover:rotate-0 duration-500">
                             <UploadCloud size={40} className="text-emerald-500" />

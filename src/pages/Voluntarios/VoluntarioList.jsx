@@ -121,7 +121,7 @@ const VoluntarioList = () => {
 
             <main className="p-4 max-w-5xl mx-auto space-y-4">
                 {/* Barra de Busca */}
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="bg-white dark:bg-slate-900 p-4 border border-slate-200 border border-slate-200 dark:border-slate-800 space-y-3">
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input 
@@ -191,7 +191,7 @@ const VoluntarioList = () => {
                         <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : filteredVoluntarios.length === 0 ? (
-                    <div className="text-center p-12 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+                    <div className="text-center p-12 bg-white dark:bg-slate-900 border border-slate-200 border border-slate-200 dark:border-slate-800">
                         <UserCheck size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhum voluntário encontrado com esses filtros.</p>
                     </div>
@@ -290,7 +290,7 @@ const VoluntarioList = () => {
             {/* Modal de Confirmação de Exclusão */}
             {confirmDelete && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 w-full max-w-sm shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
                         <div className="p-6 text-center">
                             <div className="w-14 h-14 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trash2 size={26} className="text-rose-600 dark:text-rose-400" />

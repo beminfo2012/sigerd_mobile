@@ -100,8 +100,8 @@ const FiregisImport = () => {
                 </div>
 
                 {preview.length > 0 && (
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
-                        <h3 className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden space-y-4">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-6 -mt-6 mb-6">
                             Pré-visualização ({preview.length} de X registros)
                         </h3>
                         <div className="overflow-x-auto">

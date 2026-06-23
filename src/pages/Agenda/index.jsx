@@ -69,7 +69,7 @@ const SearchableInput = ({
 
             {isOpen && (
                 <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
@@ -939,7 +939,7 @@ const Agenda = () => {
             {/* MODAL DE NOVO AGENDAMENTO PARA O COORDENADOR */}
             {showModal && (
                 <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[32px] overflow-hidden shadow-2xl flex flex-col">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg border border-slate-200 overflow-hidden shadow-2xl flex flex-col">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">{formData.id ? 'Editar Agendamento' : 'Novo Agendamento'}</h3>
@@ -1086,7 +1086,7 @@ const Agenda = () => {
             {/* MODAL VINCULAR VISTORIA */}
             {showLinkModal && (
                 <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl p-6">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm border border-slate-200 overflow-hidden shadow-2xl p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-2"><Link size={20} className="text-blue-500"/> Vincular Vistoria</h3>
                             <button onClick={() => setShowLinkModal(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-700 transition-colors">
@@ -1122,7 +1122,7 @@ const Agenda = () => {
             {/* MODAL DETALHES (INFORMAÇÕES) */}
             {showDetailsModal && selectedAgenda && (
                 <div className="fixed inset-0 z-[140] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl flex flex-col">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm border border-slate-200 overflow-hidden shadow-2xl flex flex-col">
                         <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className={`p-2 rounded-xl ${selectedAgenda.riscoColor.bg}`}>
@@ -1274,7 +1274,7 @@ const Agenda = () => {
             {/* MODAL CONFIRMAÇÃO EXCLUSÃO */}
             {showDeleteModal && (
                 <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl p-6 text-center">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm border border-slate-200 overflow-hidden shadow-2xl p-6 text-center">
                         <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
                             <Trash2 size={32} />
                         </div>

@@ -169,7 +169,7 @@ const RedapDashboard = () => {
                         <div 
                             key={event.id} 
                             onClick={() => navigate(`/redap/evento/${event.id}`)}
-                            className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:border-blue-100 dark:hover:border-blue-900 transition-all active:scale-[0.98] group cursor-pointer relative overflow-hidden"
+                            className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:border border-slate-200 p-4 sm:p-6 shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:border-blue-100 dark:hover:border-blue-900 transition-all active:scale-[0.98] group cursor-pointer relative overflow-hidden"
                         >
                             <div className="flex items-center justify-between gap-3 sm:gap-4">
                                 <div className="flex-1 min-w-0 space-y-2.5">
@@ -225,7 +225,7 @@ const RedapDashboard = () => {
 
                     {filteredEvents.length === 0 && (
                         <div className="p-20 text-center space-y-4">
-                            <div className="bg-slate-100 w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto text-slate-300">
+                            <div className="bg-slate-100 w-20 h-20 border border-slate-200 flex items-center justify-center mx-auto text-slate-300">
                                 <Shield size={40} />
                             </div>
                             <p className="text-slate-400 text-sm font-black uppercase tracking-widest">Nenhum evento ativo</p>

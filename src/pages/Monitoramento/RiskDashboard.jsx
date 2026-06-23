@@ -312,7 +312,7 @@ const RiskDashboard = ({ hideHeader = false }) => {
                 </div>
 
                 {/* Main Charts Section */}
-                <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm">
+                <div className="bg-white p-5 border border-slate-200 border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="p-2 bg-blue-50 rounded-lg">
                             <PieIcon className="text-blue-500" size={18} />
@@ -355,7 +355,7 @@ const RiskDashboard = ({ hideHeader = false }) => {
                 </div>
 
                 {/* Map Section - The most important part for correlation */}
-                <div className="bg-white p-1 rounded-[32px] border border-slate-100 shadow-lg overflow-hidden ring-4 ring-slate-100">
+                <div className="bg-white p-1 border border-slate-200 border border-slate-100 shadow-lg overflow-hidden ring-4 ring-slate-100">
                     <div className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-emerald-50 rounded-lg">
@@ -469,7 +469,7 @@ const RiskDashboard = ({ hideHeader = false }) => {
                 </div>
 
                 {/* Additional Insights Section */}
-                <div className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-sm">
+                <div className="bg-white p-5 border border-slate-200 border border-slate-100 shadow-sm">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="p-2 bg-purple-50 rounded-lg">
                             <BarChart3 className="text-purple-500" size={18} />

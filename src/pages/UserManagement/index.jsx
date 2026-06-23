@@ -139,7 +139,7 @@ const UserManagement = () => {
                     <span className="font-bold text-slate-500">Carregando usuários...</span>
                 </div>
             ) : filteredUsers.length === 0 ? (
-                <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 text-center">
+                <div className="bg-white border border-slate-200 p-8 shadow-sm border border-slate-100 text-center">
                     <Users size={48} className="mx-auto mb-4 text-slate-300" />
                     <p className="font-bold text-slate-500">
                         {searchTerm ? 'Nenhum usuário encontrado' : 'Nenhum usuário cadastrado'}

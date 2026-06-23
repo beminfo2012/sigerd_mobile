@@ -105,7 +105,7 @@ const HabilidadesList = () => {
             </header>
 
             <main className="p-4 max-w-4xl mx-auto space-y-6 mt-4">
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-[2rem] border border-slate-200 dark:border-slate-800 flex items-center">
+                <div className="bg-white dark:bg-slate-900 p-4 border border-slate-200 border border-slate-200 dark:border-slate-800 flex items-center">
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input 
@@ -123,7 +123,7 @@ const HabilidadesList = () => {
                         <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : filteredAreas.length === 0 ? (
-                    <div className="text-center p-12 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+                    <div className="text-center p-12 bg-white dark:bg-slate-900 border border-slate-200 border border-slate-200 dark:border-slate-800">
                         <Award size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
                         <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhuma área encontrada.</p>
                     </div>
@@ -160,7 +160,7 @@ const HabilidadesList = () => {
             {/* Modal de Criação/Edição */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+                    <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 border border-slate-200 w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                             <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">
                                 {editingArea.id ? 'Editar Área' : 'Nova Área'}

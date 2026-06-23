@@ -38,11 +38,11 @@ const ConfirmModal = ({
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 z-[100] animate-in fade-in duration-300" onClick={handleClose}>
             <div
-                className="bg-white dark:bg-slate-900 rounded-[32px] p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 border border-white/20 dark:border-slate-800"
+                className="bg-white dark:bg-slate-900  p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 border border-white/20 dark:border-slate-800"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex justify-center mb-6">
-                    <div className={`p-5 rounded-3xl ${type === 'danger' ? 'bg-red-50 dark:bg-red-500/10' : 'bg-blue-50 dark:bg-blue-500/10'} ring-8 ${type === 'danger' ? 'ring-red-50/50 dark:ring-red-500/5' : 'ring-blue-50/50 dark:ring-blue-500/5'}`}>
+                    <div className={`p-5  ${type === 'danger' ? 'bg-red-50 dark:bg-red-500/10' : 'bg-blue-50 dark:bg-blue-500/10'} ring-8 ${type === 'danger' ? 'ring-red-50/50 dark:ring-red-500/5' : 'ring-blue-50/50 dark:ring-blue-500/5'}`}>
                         <Icon className={type === 'danger' ? 'text-red-600 dark:text-red-500' : 'text-blue-600 dark:text-blue-500'} size={32} />
                     </div>
                 </div>
@@ -67,7 +67,7 @@ const ConfirmModal = ({
                             onChange={e => setTypedValue(e.target.value)}
                             placeholder={typedConfirmationWord}
                             autoFocus
-                            className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-white font-mono text-center text-lg tracking-[0.2em] focus:outline-none focus:border-red-400 dark:focus:border-red-500/50 transition-all placeholder:opacity-30"
+                            className="w-full px-4 py-4  border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-white font-mono text-center text-lg tracking-[0.2em] focus:outline-none focus:border-red-400 dark:focus:border-red-500/50 transition-all placeholder:opacity-30"
                         />
                     </div>
                 )}
@@ -76,7 +76,7 @@ const ConfirmModal = ({
                     <button
                         onClick={handleConfirm}
                         disabled={!canConfirm}
-                        className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg
+                        className={`w-full py-5  font-black text-sm uppercase tracking-widest transition-all shadow-lg
                             ${canConfirm
                                 ? (type === 'danger'
                                     ? 'bg-red-600 hover:bg-red-700 shadow-red-500/30 active:scale-[0.98]'
@@ -87,7 +87,7 @@ const ConfirmModal = ({
                     </button>
                     <button
                         onClick={handleClose}
-                        className="w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:text-slate-600 dark:hover:text-slate-300"
+                        className="w-full py-4  font-black text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all hover:text-slate-600 dark:hover:text-slate-300"
                     >
                         {cancelText}
                     </button>

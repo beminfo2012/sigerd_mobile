@@ -52,7 +52,7 @@ const MciPrint = () => {
     if (!reportData) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-50 p-10">
-                <div className="text-center p-12 bg-white rounded-[32px] shadow-2xl border border-slate-100 max-w-lg">
+                <div className="text-center p-12 bg-white border border-slate-200 shadow-2xl border border-slate-100 max-w-lg">
                     <h2 className="text-2xl font-black text-slate-800 mb-2 tracking-tight">Sessão Expirada</h2>
                     <p className="text-slate-500 mb-8 font-medium">Por favor, gere o relatório novamente no Dashboard do MCI.</p>
                     <button 

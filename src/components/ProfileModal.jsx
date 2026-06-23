@@ -52,7 +52,7 @@ const ProfileModal = ({ userProfile, setUserProfile, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-[32px] p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-slate-800 w-full max-w-md border border-slate-200 p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Editar Perfil</h3>

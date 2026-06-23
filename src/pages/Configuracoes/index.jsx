@@ -554,7 +554,7 @@ const ConfiguracoesPage = () => {
                 </div>
 
                 {/* Seção de Orthofotos */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                     <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center">

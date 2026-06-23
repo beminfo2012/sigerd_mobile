@@ -592,7 +592,7 @@ const PlanoContingencia = () => {
 
                         <div className="flex-1 overflow-auto custom-scrollbar p-10 flex flex-col items-center">
                             {activeTab === 'Mapa' ? (
-                                <div className="w-full h-full bg-slate-50 dark:bg-slate-900 rounded-[32px] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl min-h-[500px]">
+                                <div className="w-full h-full bg-slate-50 dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl min-h-[500px]">
                                     <MapContainer center={[-20.0246, -40.7464]} zoom={15} style={{ height: '100%', width: '100%' }}>
                                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                                         <Circle center={[-20.0246, -40.7464]} radius={400} pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.15 }} />
@@ -737,7 +737,7 @@ const PlanoContingencia = () => {
             {/* MODAL: ADVANCED SETOR DETAILS (Tactical Control) */}
             {showSetorModal && selectedSetor && (
                 <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-white/5">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-4xl border border-slate-200 overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-white/5">
                         <div className={`p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center ${selectedSetor.color_class || 'bg-slate-500'} text-white`}>
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 bg-white/20 rounded-xl">
@@ -878,7 +878,7 @@ const PlanoContingencia = () => {
             {/* MODAL: COMPACT ASSIGNMENT */}
             {showAssignModal && (
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[32px] overflow-hidden shadow-2xl flex flex-col h-[600px] border border-white/5">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg border border-slate-200 overflow-hidden shadow-2xl flex flex-col h-[600px] border border-white/5">
                          <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 bg-blue-600 rounded-lg text-white">
@@ -927,7 +927,7 @@ const PlanoContingencia = () => {
             {/* MODAL: COMPACT MATRIZ */}
             {showAtribuicaoPlanoModal && activePlan && (
                 <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-white/5">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-4xl border border-slate-200 overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-white/5">
                         <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/80">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 bg-emerald-600 rounded-xl text-white">
@@ -996,7 +996,7 @@ const PlanoContingencia = () => {
             {/* MODAL: ADD SETOR */}
             {showAddSetorModal && (
                 <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-white/5 p-8 animate-in zoom-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md border border-slate-200 overflow-hidden shadow-2xl border border-white/5 p-8 animate-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-8">
                             <div>
                                 <h3 className="text-sm font-black uppercase tracking-tight">Novo Comando / Setor</h3>
@@ -1026,7 +1026,7 @@ const PlanoContingencia = () => {
             {/* MODAL: ADD RECURSO */}
             {showAddRecursoModal && (
                 <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-white/5 p-8 animate-in zoom-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md border border-slate-200 overflow-hidden shadow-2xl border border-white/5 p-8 animate-in zoom-in duration-200">
                         <div className="flex justify-between items-center mb-8">
                             <div>
                                 <h3 className="text-sm font-black uppercase tracking-tight">Novo Recurso Operacional</h3>
@@ -1068,7 +1068,7 @@ const PlanoContingencia = () => {
             {/* MODAL: ADD TASK */}
             {showAddTaskModal && (
                 <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl border border-white/5">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm border border-slate-200 overflow-hidden shadow-2xl border border-white/5">
                         <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/80">
                             <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">Nova Tarefa</h3>
                             <button onClick={() => setShowAddTaskModal(false)} className="text-slate-400 hover:text-rose-500 transition-all"><X size={20}/></button>
@@ -1092,7 +1092,7 @@ const PlanoContingencia = () => {
             {/* MODAL: ALLOCATE RESOURCE */}
             {showAllocateResourceModal && (
                 <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl border border-white/5 h-[500px] flex flex-col">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md border border-slate-200 overflow-hidden shadow-2xl border border-white/5 h-[500px] flex flex-col">
                         <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/80">
                             <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">Alocar Estrutura</h3>
                             <button onClick={() => setShowAllocateResourceModal(false)} className="text-slate-400 hover:text-rose-500 transition-all"><X size={20}/></button>

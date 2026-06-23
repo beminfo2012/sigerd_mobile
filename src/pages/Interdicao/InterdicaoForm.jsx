@@ -62,7 +62,7 @@ const SearchableInput = ({
 
             {isOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
@@ -511,7 +511,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
     // Styles
     const inputClasses = "w-full bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-gray-200 dark:border-slate-700 outline-none focus:border-[#2a5299] dark:focus:border-blue-500 focus:ring-2 focus:ring-[#2a5299]/20 transition-all text-gray-700 dark:text-slate-200 font-medium placeholder:text-gray-400"
     const labelClasses = "text-sm text-[#2a5299] dark:text-blue-400 font-bold block mb-1.5 uppercase tracking-wide opacity-90"
-    const sectionClasses = "bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 space-y-5"
+    const sectionClasses = "bg-white dark:bg-slate-900 p-5 border border-gray-100 dark:border-slate-800 space-y-5 overflow-hidden"
 
     return (
         <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-32 font-sans transition-colors duration-300">
@@ -538,14 +538,11 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-4xl mx-auto">
+            <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-5xl mx-auto">
 
                 {/* 1. SEÇÃO: Identificação */}
                 <section className={sectionClasses}>
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">1. Identificação</h2>
-                    </div>
+                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">1. Identificação</h3>
 
                     <div className="grid grid-cols-2 gap-5">
                         <div className="col-span-2">
@@ -578,10 +575,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
                 {/* 2. SEÇÃO: Responsável Técnico */}
                 <section className={sectionClasses}>
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">2. Responsável Técnico</h2>
-                    </div>
+                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">2. Responsável Técnico</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                             <label className={labelClasses}>Agente</label>
@@ -619,10 +613,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
                 {/* 3. SEÇÃO: Localização */}
                 <section className={sectionClasses}>
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">3. Localização</h2>
-                    </div>
+                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">3. Localização</h3>
 
                     <div className="space-y-5">
                         <div className="space-y-2">
@@ -719,10 +710,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 {/* 4. SEÇÃO: Responsável / Proprietário */}
                 {formData.tipoAlvo !== 'Via pública' && (
                     <section className={`${sectionClasses} animate-in fade-in duration-500`}>
-                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">4. Responsável / Proprietário</h2>
-                        </div>
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">4. Responsável / Proprietário</h3>
 
                         <div className="space-y-4">
                             <div>
@@ -795,10 +783,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
                 {/* 5. SEÇÃO: Caracterização do Risco */}
                 <section className={sectionClasses}>
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">5. Caracterização do Risco</h2>
-                    </div>
+                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">5. Caracterização do Risco</h3>
 
                     <div>
                         <label className={labelClasses}>Tipo de Ocorrência (Múltiplo)</label>
@@ -862,10 +847,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
                 {/* 6. SEÇÃO: Medida Administrativa */}
                 <section className={sectionClasses}>
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">6. Medida Administrativa</h2>
-                    </div>
+                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">6. Medida Administrativa</h3>
 
                     <div>
                         <label className={labelClasses}>Tipo de Interdição</label>
@@ -976,10 +958,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
                 {/* 8. SEÇÃO: Relatório e Recomendações */}
                 <section className={sectionClasses}>
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">8. Relatório e Recomendações</h2>
-                    </div>
+                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">8. Relatório e Recomendações</h3>
 
                     <div>
                         <div className="flex justify-between items-center mb-1.5">
@@ -1000,10 +979,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
                 {/* 9. SEÇÃO: Assinaturas */}
                 <section className={sectionClasses}>
-                    <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800 pb-4">
-                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                        <h2 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-[3px]">9. Assinaturas</h2>
-                    </div>
+                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">9. Assinaturas</h3>
 
                     <div className="pt-4 space-y-4">
                         <div>
@@ -1183,7 +1159,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
 
                 {/* Histórico de Desinterdição - Largura total */}
                 {initialData?.desinterdicoes && initialData.desinterdicoes.length > 0 && (
-                    <div className="mt-8 bg-green-50 dark:bg-green-900/10 rounded-[2rem] p-6 border border-green-100 dark:border-green-800/20 shadow-inner">
+                    <div className="mt-8 bg-green-50 dark:bg-green-900/10 border border-slate-200 p-6 border border-green-100 dark:border-green-800/20 shadow-inner">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600">
                                 <Sparkles size={24} />

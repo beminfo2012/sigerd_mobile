@@ -14,7 +14,7 @@ const RiskAreaModal = ({
             onClick={onClose}
         >
             <div 
-                className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl relative overflow-hidden border border-red-100 dark:border-red-900/30 animate-in zoom-in-95 duration-300"
+                className="bg-white dark:bg-slate-900 w-full max-w-sm border border-slate-200 shadow-2xl relative overflow-hidden border border-red-100 dark:border-red-900/30 animate-in zoom-in-95 duration-300"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header Decoration */}

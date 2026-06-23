@@ -127,7 +127,7 @@ const DocumentoModal = ({ isOpen, onClose, onSave, eventoId, user, initialDoc = 
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-lg border border-slate-200 shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 flex items-center justify-between">
                     <div>
                         <h3 className="text-white font-black text-base uppercase tracking-wider">
@@ -356,7 +356,7 @@ const RedapDocumentosOficiais = ({ eventoId, user, documentos, onUpdate }) => {
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-5 transition-all">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-5 transition-all">
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>

@@ -191,7 +191,7 @@ export function Dashboard() {
                 </div>
 
                 {/* Main Content Section (List) */}
-                <div className="bg-white p-1 rounded-[32px] border border-slate-100 shadow-lg ring-4 ring-slate-100 overflow-hidden">
+                <div className="bg-white p-1 border border-slate-200 border border-slate-100 shadow-lg ring-4 ring-slate-100 overflow-hidden">
                     {/* Search and Filters Header */}
                     <div className="p-4 border-b border-slate-50 bg-white sticky top-0 z-10">
                         <div className="flex items-center gap-2 mb-4">

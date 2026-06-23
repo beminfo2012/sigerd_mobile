@@ -209,7 +209,7 @@ const ManagementDashboard = ({ hideHeader = false }) => {
 
                 {/* KPI Cards Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                    <div className="bg-white p-6 border border-slate-200 border border-slate-100 shadow-sm">
                         <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-4 border border-blue-100/50">
                             <Activity size={20} />
                         </div>
@@ -217,7 +217,7 @@ const ManagementDashboard = ({ hideHeader = false }) => {
                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Demandas Totais</div>
                         <div className="text-[8px] font-bold text-slate-300 uppercase mt-1">Vistorias ({stats.vistoriasCount}) + Ocor. ({stats.ocorrenciasCount})</div>
                     </div>
-                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div className="bg-white p-6 border border-slate-200 border border-slate-100 shadow-sm relative overflow-hidden">
                         <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-4 border border-emerald-100/50">
                             <Users size={20} />
                         </div>
@@ -226,14 +226,14 @@ const ManagementDashboard = ({ hideHeader = false }) => {
                         {stats.mortos > 0 && <div className="absolute top-4 right-4 text-[10px] font-black text-red-600">⚠ VITIMA FATAL</div>}
                     </div>
 
-                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                    <div className="bg-white p-6 border border-slate-200 border border-slate-100 shadow-sm">
                         <div className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4 border border-red-100/50">
                             <ShieldAlert size={20} />
                         </div>
                         <div className="text-4xl font-black text-slate-900 leading-none">{stats.interdicoes}</div>
                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Interdições Ativas</div>
                     </div>
-                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                    <div className="bg-white p-6 border border-slate-200 border border-slate-100 shadow-sm">
                         <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-4 border border-orange-100/50">
                             <Home size={20} />
                         </div>

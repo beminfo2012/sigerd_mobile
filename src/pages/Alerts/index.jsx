@@ -421,7 +421,7 @@ const Alerts = () => {
             {/* Main Grid - Always single column for mobile-first */}
             <div className="space-y-5">
                 {/* Control Panel */}
-                <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
+                <div className="bg-white p-6 border border-slate-200 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
                     <h2 className="text-sm font-bold text-slate-800 mb-5 pb-3 border-b border-slate-100">
                         Configurações do Alerta
                     </h2>
@@ -554,8 +554,8 @@ const Alerts = () => {
                 </div>
 
                 {/* Preview Area */}
-                <div className="bg-white p-6 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex justify-center items-center min-h-[600px] overflow-hidden">
-                    <div ref={artRef} className="shadow-lg rounded-2xl overflow-hidden scale-90 md:scale-100 transition-transform">
+                <div className="bg-white p-6 border border-slate-200 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex justify-center items-center min-h-[600px] overflow-hidden">
+                    <div ref={artRef} className="shadow-lg  overflow-hidden scale-90 md:scale-100 transition-transform">
                         <AlertArt
                             format={format}
                             severity={severity}

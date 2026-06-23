@@ -65,7 +65,7 @@ const VoluntariosDashboard = () => {
                     <button
                         key={idx}
                         onClick={() => navigate(mod.path)}
-                        className="flex flex-col items-start p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-lg transition-all text-left group"
+                        className="flex flex-col items-start p-6 bg-white dark:bg-slate-900 border border-slate-200 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-lg transition-all text-left group"
                     >
                         <div className={`p-4 rounded-2xl mb-4 ${mod.bg} ${mod.color} group-hover:scale-110 transition-transform`}>
                             <mod.icon size={24} strokeWidth={2.5} />
@@ -80,7 +80,7 @@ const VoluntariosDashboard = () => {
                 ))}
             </div>
 
-            <div className="bg-blue-600 dark:bg-blue-700 rounded-[2rem] p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative mt-8">
+            <div className="bg-blue-600 dark:bg-blue-700 border border-slate-200 p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative mt-8">
                 <Shield size={120} className="absolute -right-10 -bottom-10 opacity-10" />
                 <div className="relative z-10">
                     <h2 className="text-2xl font-black tracking-tight mb-2">Painel Rápido de Prontidão</h2>

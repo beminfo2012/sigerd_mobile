@@ -378,7 +378,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                         <p className="font-bold text-slate-400 uppercase tracking-widest text-xs">Carregando vistorias...</p>
                     </div>
                 ) : filteredVistorias.length === 0 ? (
-                    <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700">
+                    <div className="text-center py-20 bg-white dark:bg-slate-800 border border-slate-200 border border-slate-100 dark:border-slate-700">
                         <div className="bg-slate-50 dark:bg-slate-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <FileText size={40} className="text-slate-300" />
                         </div>

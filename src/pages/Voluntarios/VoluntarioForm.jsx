@@ -217,9 +217,9 @@ const VoluntarioForm = () => {
                 </button>
             </header>
 
-            <main className="p-4 max-w-4xl mx-auto space-y-6 mt-4">
+            <main className="p-4 max-w-5xl mx-auto space-y-6 mt-4">
                 {/* Dados Pessoais */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                     <h2 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-4">
                         <User size={18} className="text-blue-500" /> 1. Dados Pessoais
                     </h2>
@@ -259,7 +259,7 @@ const VoluntarioForm = () => {
                 </div>
 
                 {/* Contato e Endereço */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                     <h2 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-4">
                         <Phone size={18} className="text-emerald-500" /> 2. Contato e Localização
                     </h2>
@@ -319,7 +319,7 @@ const VoluntarioForm = () => {
                 </div>
 
                 {/* Habilidades e Especialidades */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
                             <Briefcase size={18} className="text-purple-500" /> 3. Áreas de Atuação
@@ -384,7 +384,7 @@ const VoluntarioForm = () => {
                 </div>
 
                 {/* Disponibilidade */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                     <h2 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-4">
                         <Calendar size={18} className="text-amber-500" /> 4. Disponibilidade e Escala
                     </h2>
@@ -452,7 +452,7 @@ const VoluntarioForm = () => {
                 </div>
 
                 {/* Logística e Outros */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                     <h2 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-4">
                         <CheckSquare size={18} className="text-slate-500" /> 5. Informações Complementares
                     </h2>

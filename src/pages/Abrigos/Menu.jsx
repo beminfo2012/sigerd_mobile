@@ -403,7 +403,7 @@ export default function ShelterMenu() {
 
                         {/* ═══ PER-SHELTER OCCUPANCY BARS ═══ */}
                         {shelterOccupancy.length > 0 && (
-                            <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
+                            <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                         <Users className="text-blue-500" size={18} />
@@ -443,7 +443,7 @@ export default function ShelterMenu() {
 
                         {/* ═══ LOW STOCK ALERTS ═══ */}
                         {lowStockAlerts.length > 0 && (
-                            <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 rounded-[32px] border border-red-100 dark:border-red-800 shadow-sm animate-in fade-in duration-700">
+                            <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 border border-slate-200 border border-red-100 dark:border-red-800 shadow-sm animate-in fade-in duration-700">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="p-2 bg-red-100 dark:bg-red-800 rounded-lg">
                                         <AlertTriangle className="text-red-500" size={18} />
@@ -481,7 +481,7 @@ export default function ShelterMenu() {
                         )}
 
                         {/* ═══ TIMELINE: DOAÇÕES vs DISTRIBUIÇÕES ═══ */}
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
+                        <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
                             <div className="flex items-center gap-2 mb-4">
                                 <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
                                     <TrendingUp className="text-violet-500" size={18} />
@@ -545,7 +545,7 @@ export default function ShelterMenu() {
                         {/* ═══ ORIGINAL CHARTS (Top Items) ═══ */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Stock Chart */}
-                            <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
                                         <Package className="text-emerald-500" size={18} />
@@ -572,7 +572,7 @@ export default function ShelterMenu() {
                             </div>
 
                             {/* Occupancy Bar Chart */}
-                            <div className="bg-white dark:bg-slate-900 p-5 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                         <BarChart3 className="text-blue-500" size={18} />

@@ -255,7 +255,7 @@ const SearchableInput = ({
 
             {isOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
                             <div className="flex justify-between items-center">
                                 <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
@@ -910,7 +910,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32 font-sans animate-in fade-in duration-500">
             {/* Header */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 sm:px-6 py-4 shadow-sm sticky top-0 z-30 border-b border-slate-100 dark:border-slate-700">
-                <div className="max-w-2xl mx-auto flex items-center justify-between">
+                <div className="max-w-5xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={onBack}
@@ -930,7 +930,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 </div>
             </div>
 
-            <div className="max-w-2xl mx-auto px-4 pt-6 space-y-6">
+            <div className="max-w-5xl mx-auto px-4 pt-6 space-y-6">
                 {detectedRiskArea && (
                     <Card className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 p-5 rounded-3xl flex items-start gap-4 animate-in slide-in-from-top-4 duration-300">
                         <div className="bg-red-100 dark:bg-red-900/50 p-3 rounded-2xl shadow-sm">
@@ -946,11 +946,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-6 pb-20">
                     {/* 1. SEÇÃO: Identificação */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">1. Identificação</h2>
-                        </div>
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8">1. Identificação</h3>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -1030,11 +1027,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </Card>
 
                     {/* 2. SEÇÃO: Responsável Técnico */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">2. Responsável Técnico</h2>
-                        </div>
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8">2. Responsável Técnico</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className={labelClasses}>Agente</label>
@@ -1070,11 +1064,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </Card>
 
                     {/* 3. SEÇÃO: Solicitante */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">3. Solicitante</h2>
-                        </div>
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8">3. Solicitante</h3>
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <label className={labelClasses}>Nome Completo</label>
@@ -1159,11 +1150,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </Card>
 
                     {/* 4. SEÇÃO: Local da Vistoria */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">4. Local da Vistoria</h2>
-                        </div>
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8">4. Local da Vistoria</h3>
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <SearchableInput
@@ -1253,11 +1241,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </Card>
 
                     {/* 5. SEÇÃO: Risco e Detalhes */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">5. Risco e Detalhes</h2>
-                        </div>
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8">5. Risco e Detalhes</h3>
 
                         <div className="space-y-6">
                             <div className="space-y-2">
@@ -1273,7 +1258,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             </div>
 
                             {formData.categoriaRisco === 'Estrutural' && (
-                                <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                                <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 border border-slate-200 border border-slate-200 dark:border-slate-800 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500 shadow-xl shadow-slate-200/50 dark:shadow-none">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
                                         <div className="flex items-center gap-4">
                                             <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-500/30">
@@ -1508,7 +1493,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                             <label className={labelClasses}>Subtipos de Risco</label>
                                             <div className="space-y-4">
                                                 {dataRisk.groups.map(group => (
-                                                    <div key={group.name} className="space-y-3 p-4 sm:p-5 rounded-[2rem] bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/80 shadow-sm">
+                                                    <div key={group.name} className="space-y-3 p-4 sm:p-5 border border-slate-200 bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/80 shadow-sm">
                                                         <h4 className="font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider pl-1 flex items-center gap-2">
                                                             <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
                                                             {group.name}
@@ -1565,7 +1550,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 'Desenraizamento / Falha Radicular',
                                 'Galhos em Conflito com Rede Elétrica ou Via Pública'
                             ].includes(s)) && (
-                                <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-5 sm:p-6 rounded-[2rem] border-2 border-emerald-100/50 dark:border-emerald-900/30 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 shadow-sm">
+                                <div className="bg-emerald-50/30 dark:bg-emerald-950/10 p-5 sm:p-6 border border-slate-200 border-2 border-emerald-100/50 dark:border-emerald-900/30 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 shadow-sm">
                                     <div className="flex items-center justify-between border-b border-emerald-100/50 dark:border-emerald-900/20 pb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/25">
@@ -1677,7 +1662,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
                             {/* Checklist Técnico Geral */}
                             {formData.categoriaRisco && formData.categoriaRisco !== 'Estrutural' && CHECKLIST_DATA[formData.categoriaRisco] && (
-                                <div className="bg-blue-50/30 dark:bg-blue-900/10 p-5 rounded-[2rem] border-2 border-blue-100/50 dark:border-blue-900/30 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="bg-blue-50/30 dark:bg-blue-900/10 p-5 border border-slate-200 border-2 border-blue-100/50 dark:border-blue-900/30 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-black text-blue-900 dark:text-blue-400 text-[10px] uppercase tracking-wider flex items-center gap-2">
                                             <CheckCircle2 size={18} className="text-blue-600" /> Checklist Técnico
@@ -1806,7 +1791,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700/50 space-y-6">
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 border border-slate-200 border border-slate-100 dark:border-slate-700/50 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <Users size={20} className="text-blue-600" />
                                     <h3 className="font-black text-slate-800 dark:text-slate-200 text-[10px] uppercase tracking-[2px]">População Exposta</h3>
@@ -1986,11 +1971,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </Card>
 
                     {/* 6. SEÇÃO: Assinaturas */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                            <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                            <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">6. Assinaturas</h2>
-                        </div>
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8">6. Assinaturas</h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
@@ -2081,7 +2063,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         {/* Bloco de Apoio Técnico */}
                         {formData.temApoioTecnico && (
                             <div className="border-t border-slate-50 dark:border-slate-700/50 pt-8 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <div className="bg-slate-50/50 dark:bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700/50">
+                                <div className="bg-slate-50/50 dark:bg-slate-900/50 p-6 border border-slate-200 border border-slate-100 dark:border-slate-700/50">
                                     <h3 className="font-black text-slate-800 dark:text-slate-100 text-[10px] uppercase tracking-[2px] mb-6 flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
@@ -2212,13 +2194,12 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     </Card>
 
                     {/* 7. SEÇÃO: Registro Fotográfico */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-700/50 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                                <h2 className="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-[3px]">7. Fotos</h2>
-                            </div>
-                            <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full">{formData.fotos.length} ANEXOS</span>
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
+                            <h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">
+                                7. Fotos
+                            </h3>
+                            <span className="bg-white/10 text-white text-[10px] font-black px-3 py-1 rounded-sm">{formData.fotos.length} ANEXOS</span>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -2326,7 +2307,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             {
                 comparisonContent && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setComparisonContent(null)}>
-                        <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="bg-white rounded-2xl w-full max-w-5xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                             <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-4 flex justify-between items-center text-white">
                                 <h3 className="font-bold flex items-center gap-2 text-lg">
                                     <Sparkles size={20} className="text-yellow-300" />
@@ -2471,7 +2452,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     )}
 
                     {/* Imagem Central */}
-                    <div className="relative w-full max-w-4xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                    <div className="relative w-full max-w-5xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
                         <img
                             src={formData.fotos[selectedPhotoIndex]?.data || formData.fotos[selectedPhotoIndex]}
                             className="w-full h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"

@@ -73,7 +73,7 @@ const SignaturePad = ({ onSave, onCancel, title = "Assinatura" }) => {
 
     return (
         <div className="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-            <div className="bg-white w-full max-w-lg rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200">
+            <div className="bg-white w-full max-w-lg border border-slate-200 p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-200">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h3 className="text-xl font-black text-slate-800 tracking-tight">{title}</h3>

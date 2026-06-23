@@ -537,9 +537,9 @@ const RedapEventDetails = () => {
 
             <main className="p-4 space-y-6 max-w-7xl mx-auto">
                 {/* Event Summary Card */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 transition-all">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 transition-all">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                        <div className="bg-blue-600 dark:bg-blue-500 p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-blue-100 dark:shadow-blue-900/30 shrink-0">
+                        <div className="bg-blue-600 dark:bg-blue-500 p-4 sm:p-5 rounded-[1.5rem] sm:border border-slate-200 text-white shadow-xl shadow-blue-100 dark:shadow-blue-900/30 shrink-0">
                             <TrendingUp size={24} className="sm:w-8 sm:h-8" />
                         </div>
                         <div className="flex-1 min-w-0 w-full">
@@ -653,7 +653,7 @@ const RedapEventDetails = () => {
                 </div>
 
                 {/* Workflow Progression (Timeline) */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-all">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-all">
                     <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <Clock size={16} className="text-blue-500" /> Fluxo de Aprovação e Validação
                     </h3>
@@ -708,7 +708,7 @@ const RedapEventDetails = () => {
                 </div>
 
                 {/* Seções Estruturadas REDAP-001/2026 */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-all">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-all">
                     <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <ClipboardList size={16} className="text-blue-500" /> Estrutura de Seções REDAP
                     </h3>
@@ -749,7 +749,7 @@ const RedapEventDetails = () => {
                 )}
 
                 {/* Assinaturas Eletrônicas */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                             <Signature size={16} className="text-blue-500" /> Assinaturas Eletrônicas
@@ -785,7 +785,7 @@ const RedapEventDetails = () => {
             {/* Modal de Devolução */}
             {devolverSecao && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 space-y-6">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md border border-slate-200 shadow-2xl p-6 space-y-6">
                         <div>
                             <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase">Devolver Seção</h3>
                             <p className="text-[10px] text-slate-400 uppercase font-black tracking-wider">Ajuste técnico solicitado pelo gestor</p>

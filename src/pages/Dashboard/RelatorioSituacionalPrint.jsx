@@ -375,7 +375,7 @@ const RelatorioSituacionalPrint = () => {
     if (!reportData) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-50 p-10">
-                <div className="text-center p-12 bg-white rounded-[32px] shadow-2xl border border-slate-100 max-w-lg">
+                <div className="text-center p-12 bg-white border border-slate-200 shadow-2xl border border-slate-100 max-w-lg">
                     <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
                         <FileText size={48} />
                     </div>

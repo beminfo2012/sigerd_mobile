@@ -445,7 +445,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
     <div className="grid grid-cols-12 gap-6 h-full">
         {/* Left Column: Alerts & Stats */}
         <div className="col-span-4 flex flex-col gap-6">
-            <div className="bg-white border border-slate-200 rounded-[32px] p-10 flex-1 flex flex-col justify-center items-center text-center shadow-md">
+            <div className="bg-white border border-slate-200 border border-slate-200 p-10 flex-1 flex flex-col justify-center items-center text-center shadow-md">
                 <div className={`w-32 h-32 rounded-full ${statusInfo.bg || 'bg-blue-600'} flex items-center justify-center text-white shadow-2xl mb-8 animate-pulse`}>
                     <ShieldAlert size={64} />
                 </div>
@@ -458,7 +458,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white border border-slate-200 p-8 rounded-[32px] flex flex-col justify-center shadow-md">
+                <div className="bg-white border border-slate-200 p-8 border border-slate-200 flex flex-col justify-center shadow-md">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
                             <AlertTriangle size={32} />
@@ -470,7 +470,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
                         <span className="text-xs font-bold text-slate-400 uppercase">Hoje</span>
                     </div>
                 </div>
-                <div className="bg-white border border-slate-200 p-8 rounded-[32px] flex flex-col justify-center shadow-md">
+                <div className="bg-white border border-slate-200 p-8 border border-slate-200 flex flex-col justify-center shadow-md">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                             <Droplets size={32} />
@@ -488,7 +488,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
         </div>
 
         {/* Right Column: Heatmap Map */}
-        <div className="col-span-8 bg-white border border-slate-200 rounded-[32px] shadow-xl overflow-hidden relative">
+        <div className="col-span-8 bg-white border border-slate-200 border border-slate-200 shadow-xl overflow-hidden relative">
             <div className="absolute top-8 left-8 z-[1000] bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl border border-slate-200 shadow-xl">
                 <span className="text-xs font-black text-slate-800 uppercase tracking-[3px]">Mancha de Calor Geral</span>
             </div>
@@ -721,7 +721,7 @@ const TV_SCOStrategic = ({ plan }) => (
                     </div>
                 </div>
                 <h2 className="text-3xl font-black text-slate-400 uppercase tracking-[20px] mb-4">SISTEMA DE COMANDO ATIVO</h2>
-                <div className={`inline-block px-16 py-6 rounded-[32px] text-white text-9xl font-black uppercase tracking-tighter shadow-2xl mb-12 ${plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
+                <div className={`inline-block px-16 py-6 border border-slate-200 text-white text-9xl font-black uppercase tracking-tighter shadow-2xl mb-12 ${plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
                     }`}>
                     {plan.nivel}
                 </div>
@@ -1083,7 +1083,7 @@ const MobileDashboardView = ({
                 {/* SCO BANNER (MOBILE) */}
                 {activeContingencyPlan && (
                     <div
-                        className={`p-6 rounded-[32px] border shadow-2xl flex items-center gap-5 cursor-pointer active:scale-95 transition-all overflow-hidden relative group mb-6 ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/20' :
+                        className={`p-6 border border-slate-200 border shadow-2xl flex items-center gap-5 cursor-pointer active:scale-95 transition-all overflow-hidden relative group mb-6 ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/20' :
                             activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500 shadow-orange-900/20' : 'bg-amber-500 border-amber-400 font-black'
                             }`}
                         onClick={() => navigate('/contingencia')}
@@ -1107,7 +1107,7 @@ const MobileDashboardView = ({
                 {weather?.current ? (
                     <div
                         onClick={() => setShowForecast(true)}
-                        className="bg-white dark:bg-slate-800 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer active:scale-95 transition-all mb-4"
+                        className="bg-white dark:bg-slate-800 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer active:scale-95 transition-all mb-4"
                     >
                         <div className="flex items-center gap-6">
                             <div className="text-6xl drop-shadow-sm">{getWeatherIcon(weather.current.code)}</div>
@@ -1135,7 +1135,7 @@ const MobileDashboardView = ({
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white/50 dark:bg-slate-800/50 rounded-[32px] p-8 border border-white dark:border-slate-700 shadow-sm animate-pulse mb-4 flex justify-between items-center">
+                    <div className="bg-white/50 dark:bg-slate-800/50 border border-slate-200 p-8 border border-white dark:border-slate-700 shadow-sm animate-pulse mb-4 flex justify-between items-center">
                         <div className="flex items-center gap-6">
                             <div className="w-14 h-14 bg-slate-200 dark:bg-slate-700 rounded-full" />
                             <div className="space-y-2">
@@ -1229,7 +1229,7 @@ const MobileDashboardView = ({
                 </div>
 
                 {/* 4. Tipologia Breakdown */}
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-800 p-6 border border-slate-200 shadow-sm border border-slate-100 dark:border-slate-700">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[2px]">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</h3>
                         <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
@@ -1305,7 +1305,7 @@ const MobileDashboardView = ({
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-800 p-2 rounded-[32px] shadow-sm border border-slate-100 dark:border-slate-700">
+                    <div className="bg-white dark:bg-slate-800 p-2 border border-slate-200 shadow-sm border border-slate-100 dark:border-slate-700">
                         <div className={`h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0 ${mapStyle === 'satellite' ? 'leaflet-satellite-wrapper' : ''}`}>
                             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
                                 <MapAutoBounds locations={filteredLocations} />
@@ -1852,7 +1852,7 @@ const WebViewDashboardView = ({
                 {/* --- 🗺️ 2. MAP & RESUMO SITUACIONAL --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
                     {/* Map Column */}
-                    <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
                         <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                             <div className="flex flex-col">
                                 <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 leading-tight">Mapa Interativo</h3>
@@ -2020,7 +2020,7 @@ const WebViewDashboardView = ({
                     </div>
 
                     {/* Resumo Situacional Column */}
-                    <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
                         <div className="flex justify-between items-center mb-8">
                             <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : viewMode === 'ocorrencias' ? 'Ocorrências' : 'Interdições'}</h3>
                             <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
@@ -2720,7 +2720,7 @@ const Dashboard = () => {
             {/* Global Modals */}
             {showForecast && weather && (
                 <div onClick={() => setShowForecast(false)} className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-8 shadow-2xl">
+                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm border border-slate-200 p-8 shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Previsão Local</h3>
                             <button onClick={() => setShowForecast(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><X size={18} /></button>
@@ -2752,7 +2752,7 @@ const Dashboard = () => {
             {/* Menu de Relatórios para WebView */}
             {showReportMenu && (
                 <div onClick={() => setShowReportMenu(false)} className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom-5">
+                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm border border-slate-200 p-6 shadow-2xl animate-in slide-in-from-bottom-5">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Emitir Relatório</h3>
                             <button onClick={() => setShowReportMenu(false)} className="bg-slate-100 dark:bg-slate-700 p-2 rounded-full text-slate-500 hover:text-slate-800 transition-colors">

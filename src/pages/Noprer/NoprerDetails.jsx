@@ -208,8 +208,8 @@ const NoprerDetails = () => {
                     </div>
 
                     {/* Resumo */}
-                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0 space-y-4">
-                        <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6 space-y-4">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
                             Identificação e Localização
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
@@ -231,8 +231,8 @@ const NoprerDetails = () => {
                     </div>
 
                     {/* Detalhes Técnicos */}
-                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0 space-y-4">
-                        <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6 space-y-4">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
                             Avaliação Técnica
                         </h3>
                         <div>
@@ -264,8 +264,8 @@ const NoprerDetails = () => {
 
                 {/* Sidebar Timeline */}
                 <div className="space-y-6">
-                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
-                        <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
                             
                             Histórico do Imóvel
                         </h3>
@@ -314,7 +314,7 @@ const NoprerDetails = () => {
             {/* Modal de Atualização de Status */}
             {isStatusModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 border border-slate-100 dark:border-slate-700 w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
                             <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm flex items-center gap-2">
                                 <RefreshCw size={18} className="text-blue-600" /> Alterar Status

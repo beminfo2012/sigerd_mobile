@@ -114,7 +114,7 @@ const FiregisForm = () => {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-32">
             {/* Header */}
             <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-20 shadow-sm">
-                <div className="max-w-4xl mx-auto flex items-center justify-between">
+                <div className="max-w-5xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button onClick={() => navigate('/firegis')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-300" />
@@ -129,11 +129,11 @@ const FiregisForm = () => {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto p-4 sm:p-6 mt-4">
+            <div className="max-w-5xl mx-auto p-4 sm:p-6 mt-4">
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Bloco 1: Identificação */}
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm space-y-6">
-                        <h3 className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-100 p-6 overflow-hidden dark:border-slate-700 shadow-sm overflow-hidden space-y-6">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-6 -mt-6 mb-6">
                             <FileText size={16} className="text-orange-500" /> Identificação da Ocorrência
                         </h3>
                         
@@ -172,8 +172,8 @@ const FiregisForm = () => {
                     </div>
 
                     {/* Bloco 2: Localização e Impacto */}
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm space-y-6">
-                        <h3 className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-100 p-6 overflow-hidden dark:border-slate-700 shadow-sm overflow-hidden space-y-6">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-6 -mt-6 mb-6">
                             <MapPin size={16} className="text-blue-500" /> Localização e Impacto
                         </h3>
                         
@@ -215,8 +215,8 @@ const FiregisForm = () => {
                     </div>
 
                     {/* Bloco 3: Detalhes Operacionais */}
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm space-y-6">
-                        <h3 className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2">
+                    <div className="bg-white dark:bg-slate-800 border border-slate-100 p-6 overflow-hidden dark:border-slate-700 shadow-sm overflow-hidden space-y-6">
+                        <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-6 -mt-6 mb-6">
                             Detalhes Operacionais
                         </h3>
                         
