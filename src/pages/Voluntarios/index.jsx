@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getVoluntarios } from '../../services/voluntariosService';
 import { useNavigate } from 'react-router-dom';
 import { 
     Users, PlusCircle, Search, CalendarCheck, 
@@ -6,6 +7,24 @@ import {
 } from 'lucide-react';
 
 const VoluntariosDashboard = () => {
+    const [disponiveis, setDisponiveis] = useState(0);
+    const [emMissao, setEmMissao] = useState(0);
+
+    useEffect(() => {
+        const fetchCounts = async () => {
+            try {
+                const data = await getVoluntarios();
+                // Considera disponíveis os ativos
+                const countAtivos = data.filter(v => v.status === 'ativo').length;
+                setDisponiveis(countAtivos);
+                // Em Missão ficará 0 até o módulo de missões ser finalizado
+                setEmMissao(0);
+            } catch (err) {
+                console.error('Erro ao buscar voluntários para o dashboard:', err);
+            }
+        };
+        fetchCounts();
+    }, []);
     const navigate = useNavigate();
 
     const modules = [
@@ -88,11 +107,11 @@ const VoluntariosDashboard = () => {
                 </div>
                 <div className="flex gap-4 relative z-10 w-full md:w-auto">
                     <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl flex flex-col items-center flex-1 md:flex-none">
-                        <span className="text-3xl font-black">0</span>
+                        <span className="text-3xl font-black">{disponiveis}</span>
                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">Disponíveis</span>
                     </div>
                     <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl flex flex-col items-center flex-1 md:flex-none">
-                        <span className="text-3xl font-black">0</span>
+                        <span className="text-3xl font-black">{emMissao}</span>
                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1">Em Missão</span>
                     </div>
                 </div>
