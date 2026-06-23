@@ -246,7 +246,7 @@ const NoprerForm = () => {
     }
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32">
+        <div className="bg-[#f0f4f8] dark:bg-slate-900 min-h-screen pb-32">
             {/* Header */}
             <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-20 shadow-sm">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -267,7 +267,7 @@ const NoprerForm = () => {
                     <button 
                         onClick={handleSave}
                         disabled={isSaving || !formData.tipo_risco}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-600/20 disabled:opacity-50 transition-all"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-sm font-bold flex items-center gap-2 shadow-sm shadow-blue-600/20 disabled:opacity-50 transition-all"
                     >
                         <Save size={18} />
                         {isSaving ? 'Emitindo...' : 'Finalizar Emissão'}
@@ -278,7 +278,7 @@ const NoprerForm = () => {
             <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
                 
                 {/* Info Card */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl p-5 flex flex-col md:flex-row gap-4 justify-between items-start">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-sm p-5 flex flex-col md:flex-row gap-4 justify-between items-start">
                     <div className="space-y-1">
                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Responsável Notificado</p>
                         <p className="font-bold text-slate-800 dark:text-slate-200">{sourceData.solicitante || 'Não identificado'}</p>
@@ -286,7 +286,7 @@ const NoprerForm = () => {
                     <div className="space-y-1">
                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Localização</p>
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                            <MapPin size={14} /> {sourceData.endereco || 'Sem endereço'}
+                             {sourceData.endereco || 'Sem endereço'}
                         </p>
                     </div>
                     <div className="space-y-1">
@@ -301,9 +301,9 @@ const NoprerForm = () => {
                     <div className="space-y-6">
                         
                         {/* Tipo de Risco */}
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm">
-                            <h3 className="font-black text-slate-800 dark:text-white mb-4 uppercase text-xs tracking-widest flex items-center gap-2">
-                                <AlertTriangle size={16} className="text-orange-500" />
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
+                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                                
                                 1. Classificação do Risco
                             </h3>
                             
@@ -312,7 +312,7 @@ const NoprerForm = () => {
                                     <button
                                         key={rt}
                                         onClick={() => setFormData(p => ({ ...p, tipo_risco: rt }))}
-                                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                                        className={`p-2.5 rounded-sm border text-xs font-bold transition-all ${
                                             formData.tipo_risco === rt 
                                             ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' 
                                             : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-400'
@@ -327,15 +327,15 @@ const NoprerForm = () => {
                             <textarea
                                 value={formData.descricao}
                                 onChange={(e) => setFormData(p => ({ ...p, descricao: e.target.value }))}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
                                 rows={4}
                             />
                         </div>
 
                         {/* Prazos */}
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm">
-                            <h3 className="font-black text-slate-800 dark:text-white mb-4 uppercase text-xs tracking-widest flex items-center gap-2">
-                                <Calendar size={16} className="text-blue-500" />
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
+                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                                
                                 3. Prazos e Monitoramento
                             </h3>
                             
@@ -346,10 +346,10 @@ const NoprerForm = () => {
                                         type="number"
                                         value={formData.prazo_dias}
                                         onChange={(e) => setFormData(p => ({ ...p, prazo_dias: parseInt(e.target.value) || 0 }))}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-black focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-3 text-lg font-black focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
                                     />
                                 </div>
-                                <div className="flex-[2] bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-100 dark:border-blue-800">
+                                <div className="flex-[2] bg-blue-50 dark:bg-blue-900/20 rounded-sm p-3 border border-blue-100 dark:border-blue-800">
                                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider">Aviso de Revistoria</p>
                                     <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                                         Uma Ordem de Serviço para Revistoria será agendada automaticamente para +3 dias após o vencimento.
@@ -364,14 +364,14 @@ const NoprerForm = () => {
                     <div className="space-y-6">
                         
                         {/* Checklist Inteligente */}
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm">
-                            <h3 className="font-black text-slate-800 dark:text-white mb-4 uppercase text-xs tracking-widest flex items-center gap-2">
-                                <CheckCircle size={16} className="text-emerald-500" />
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
+                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                                
                                 2. Medidas Mitigatórias
                             </h3>
                             
                             {!formData.tipo_risco ? (
-                                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-sm font-medium rounded-xl border border-orange-100 dark:border-orange-800 text-center">
+                                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-sm font-medium rounded-sm border border-orange-100 dark:border-orange-800 text-center">
                                     Selecione um Tipo de Risco primeiro para ver as sugestões.
                                 </div>
                             ) : (
@@ -385,14 +385,14 @@ const NoprerForm = () => {
                                             <div 
                                                 key={idx}
                                                 onClick={() => handleChecklistToggle(medida)}
-                                                className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                                                className={`p-3 rounded-sm border flex items-start gap-3 cursor-pointer transition-all ${
                                                     isChecked 
                                                     ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/50' 
                                                     : 'bg-slate-50 border-slate-200 hover:bg-slate-100 dark:bg-slate-900/50 dark:border-slate-700'
                                                 }`}
                                             >
                                                 <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center border ${isChecked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600'}`}>
-                                                    {isChecked && <CheckCircle size={14} />}
+                                                    {isChecked && <span>✓</span>}
                                                 </div>
                                                 <span className={`text-sm font-medium ${isChecked ? 'text-emerald-900 dark:text-emerald-300' : 'text-slate-600 dark:text-slate-300'}`}>
                                                     {medida}
@@ -407,9 +407,9 @@ const NoprerForm = () => {
                         </div>
 
                         {/* Assinatura */}
-                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm">
-                            <h3 className="font-black text-slate-800 dark:text-white mb-4 uppercase text-xs tracking-widest flex items-center gap-2">
-                                <FileText size={16} className="text-indigo-500" />
+                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
+                            <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                                
                                 4. Ciência e Assinatura
                             </h3>
 
@@ -417,20 +417,20 @@ const NoprerForm = () => {
                                 <div className="flex gap-2">
                                     <button 
                                         onClick={() => setSignatureMode('digital')}
-                                        className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-3 rounded-xl text-sm font-bold border border-indigo-200 transition-colors"
+                                        className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-3 rounded-sm text-sm font-bold border border-indigo-200 transition-colors"
                                     >
                                         Assinatura em Tela
                                     </button>
                                     <button 
                                         onClick={() => setSignatureMode('recusa')}
-                                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 p-3 rounded-xl text-sm font-bold border border-red-200 transition-colors"
+                                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 p-3 rounded-sm text-sm font-bold border border-red-200 transition-colors"
                                     >
                                         Recusou Assinar
                                     </button>
                                 </div>
                             ) : signatureMode === 'digital' ? (
                                 <div className="space-y-4 animate-in fade-in">
-                                    <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded-sm border border-slate-200 dark:border-slate-700">
                                         <SignaturePad onSave={(sig) => setSignatureData(sig)} />
                                     </div>
                                     <button 
@@ -441,7 +441,7 @@ const NoprerForm = () => {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="space-y-4 animate-in fade-in bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/50">
+                                <div className="space-y-4 animate-in fade-in bg-red-50 dark:bg-red-900/10 p-4 rounded-sm border border-red-100 dark:border-red-900/50">
                                     <p className="text-sm font-bold text-red-700 dark:text-red-400">Notificado recusou assinar.</p>
                                     <p className="text-xs text-red-600 dark:text-red-300">Necessário qualificação de duas testemunhas.</p>
                                     

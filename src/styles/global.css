@@ -40,15 +40,15 @@
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
 
-    --radius: 0.75rem;
+    --radius: 0.25rem; /* Ajustado para estilo mais quadrado/clean */
 
     /* SIGERD WEB Design Tokens (Desktop Only) */
-    --web-bg: #f5f7fa;
+    --web-bg: #f8fafc;
     --web-header-gradient: linear-gradient(90deg, #10346E 0%, #1a4b8c 100%);
     --web-sidebar-gradient: linear-gradient(180deg, #10346E 0%, #1a3c7a 100%);
     --web-primary: #10346E;
     --web-accent: #4CAF50;
-    --web-font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --web-font: Arial, Helvetica, sans-serif; /* Fonte limpa corporativa solicitada */
 
     /* Gradientes Premium */
     --primary-gradient: linear-gradient(135deg, hsl(221 83% 45%) 0%, hsl(221 83% 58%) 100%);
@@ -103,8 +103,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    line-height: 1.6;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
     overscroll-behavior-y: none;
     font-feature-settings: "rlig" 1, "calt" 1;
   }

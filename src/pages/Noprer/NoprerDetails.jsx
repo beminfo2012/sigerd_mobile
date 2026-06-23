@@ -143,7 +143,7 @@ const NoprerDetails = () => {
     historyTimeline.sort((a, b) => new Date(a.iso) - new Date(b.iso));
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32">
+        <div className="bg-[#f0f4f8] dark:bg-slate-900 min-h-screen pb-32">
             {/* Header */}
             <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-20 shadow-sm">
                 <div className="max-w-5xl mx-auto flex items-center justify-between">
@@ -164,7 +164,7 @@ const NoprerDetails = () => {
                     <div className="flex gap-2">
                         <button 
                             onClick={handlePrint}
-                            className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all"
+                            className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-4 py-2.5 rounded-sm font-bold flex items-center gap-2 transition-all"
                         >
                             <Printer size={18} />
                             Relatório
@@ -172,7 +172,7 @@ const NoprerDetails = () => {
                         {!isConclusive && (
                             <button 
                                 onClick={() => setShowConvertModal(true)}
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-red-600/20 transition-all"
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-sm font-bold flex items-center gap-2 shadow-sm shadow-red-600/20 transition-all"
                             >
                                 <AlertOctagon size={18} />
                                 Interdição
@@ -187,7 +187,7 @@ const NoprerDetails = () => {
                 {/* Main Content */}
                 <div className="md:col-span-2 space-y-6">
                     {/* Status Badge */}
-                    <div className={`p-6 rounded-3xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${getStatusColor(noprer.status)}`}>
+                    <div className={`p-6 rounded-sm border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${getStatusColor(noprer.status)}`}>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Status Atual</p>
                             <h2 className="text-2xl font-black">{noprer.status}</h2>
@@ -196,20 +196,20 @@ const NoprerDetails = () => {
                         {!isConclusive ? (
                             <button 
                                 onClick={openStatusModal}
-                                className="bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 border border-current text-xs font-bold uppercase px-4 py-2.5 rounded-xl transition-all flex items-center gap-2"
+                                className="bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 border border-current text-xs font-bold uppercase px-4 py-2.5 rounded-sm transition-all flex items-center gap-2"
                             >
                                 <RefreshCw size={16} /> Atualizar Status
                             </button>
                         ) : (
-                            <div className="bg-black/10 dark:bg-white/10 px-4 py-2 rounded-xl flex items-center gap-2">
+                            <div className="bg-black/10 dark:bg-white/10 px-4 py-2 rounded-sm flex items-center gap-2">
                                 <CheckCircle size={18} /> <span className="font-bold text-xs uppercase tracking-wider">Concluído</span>
                             </div>
                         )}
                     </div>
 
                     {/* Resumo */}
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
-                        <h3 className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2">
+                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0 space-y-4">
+                        <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
                             Identificação e Localização
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
@@ -231,8 +231,8 @@ const NoprerDetails = () => {
                     </div>
 
                     {/* Detalhes Técnicos */}
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm space-y-4">
-                        <h3 className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2">
+                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0 space-y-4">
+                        <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
                             Avaliação Técnica
                         </h3>
                         <div>
@@ -244,13 +244,13 @@ const NoprerDetails = () => {
                         </div>
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Descrição</p>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-4 rounded-sm border border-slate-100 dark:border-slate-700/50">
                                 {noprer.descricao}
                             </p>
                         </div>
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Medidas Mitigatórias Exigidas</p>
-                            <ul className="space-y-2 mt-2 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                            <ul className="space-y-2 mt-2 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-sm border border-slate-100 dark:border-slate-700/50">
                                 {noprer.medidas_mitigatorias?.map((medida, idx) => (
                                     <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300 font-medium">
                                         <CheckCircle size={16} className="text-emerald-500 shrink-0 mt-0.5" />
@@ -264,9 +264,9 @@ const NoprerDetails = () => {
 
                 {/* Sidebar Timeline */}
                 <div className="space-y-6">
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <h3 className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest flex items-center gap-2 mb-6">
-                            <History size={16} className="text-blue-500" />
+                    <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-0">
+                        <h3 className="bg-[#1e3a5f] text-white p-2 font-bold uppercase text-xs mb-4">
+                            
                             Histórico do Imóvel
                         </h3>
                         
@@ -328,7 +328,7 @@ const NoprerDetails = () => {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Novo Status</label>
                                 <select 
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800 dark:text-white transition-all cursor-pointer"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-4 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-800 dark:text-white transition-all cursor-pointer"
                                     value={newStatus}
                                     onChange={(e) => setNewStatus(e.target.value)}
                                 >
@@ -347,7 +347,7 @@ const NoprerDetails = () => {
                                     <MessageSquare size={12} /> Observações p/ o Histórico (Opcional)
                                 </label>
                                 <textarea 
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm transition-all text-slate-800 dark:text-white min-h-[100px] resize-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-4 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm transition-all text-slate-800 dark:text-white min-h-[100px] resize-none"
                                     placeholder="Ex: Responsável contatado via telefone..."
                                     value={statusObs}
                                     onChange={(e) => setStatusObs(e.target.value)}
@@ -357,7 +357,7 @@ const NoprerDetails = () => {
                             <button 
                                 onClick={handleUpdateStatus}
                                 disabled={updatingStatus}
-                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black uppercase tracking-widest p-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex justify-center items-center gap-2"
+                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black uppercase tracking-widest p-4 rounded-sm transition-all shadow-sm shadow-blue-600/20 flex justify-center items-center gap-2"
                             >
                                 {updatingStatus ? <RefreshCw className="animate-spin" size={20} /> : 'Salvar Alteração'}
                             </button>
