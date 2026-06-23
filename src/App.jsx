@@ -105,6 +105,8 @@ const FiregisList = lazy(() => import('./pages/Firegis/FiregisList'))
 const FiregisDashboard = lazy(() => import('./pages/Firegis/FiregisDashboard'))
 const FiregisForm = lazy(() => import('./pages/Firegis/FiregisForm'))
 const FiregisImport = lazy(() => import('./pages/Firegis/FiregisImport'))
+const FiregisPrint = lazy(() => import('./pages/Firegis/FiregisPrint'))
+const FiregisReport = lazy(() => import('./pages/Firegis/FiregisReport'))
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -623,6 +625,16 @@ const AppContent = ({
                                 <Route path="/firegis/importar" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <FiregisImport />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/firegis/imprimir/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <FiregisPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/firegis/relatorio" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <FiregisReport />
                                     </ProtectedRoute>
                                 } />
 

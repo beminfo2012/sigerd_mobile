@@ -195,8 +195,8 @@ const FiregisForm = () => {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-red-500 flex items-center gap-1">
                                     <MapPin size={12}/> Selecione o Local no Mapa (Obrigatório)
                                 </label>
-                                <div className="h-64 w-full rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700">
-                                    <MapContainer center={[-20.0223, -40.744]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                                <div className="h-64 w-full rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 relative z-0">
+                                    <MapContainer center={[-20.0223, -40.744]} zoom={12} style={{ height: '100%', width: '100%', zIndex: 1 }}>
                                         <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                         <LocationPicker />
                                     </MapContainer>
