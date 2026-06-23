@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { Printer, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 
 const NoprerPrint = () => {
     const { id } = useParams();
@@ -111,45 +112,47 @@ const NoprerPrint = () => {
                     {/* ===== PAGE 1 ===== */}
                     <div style={{ minHeight: '260mm', display: 'flex', flexDirection: 'column' }}>
                         {/* Cabecalho - Formato Estrito */}
-                        <div className="flex border-b-2 border-black pb-4 mb-4">
-                            <div className="w-24 flex items-center justify-center">
-                                {/* Placeholder for Logo */}
-                                <div className="w-16 h-16 border-2 border-black rounded-full flex items-center justify-center font-bold text-[8px] text-center">BRASÃO<br/>MUNICIPAL</div>
+                        <header className="flex flex-col items-center mb-6 border-b-4 border-[#2a5299] pb-4">
+                            <div className="w-full flex justify-between items-center mb-4 px-4">
+                                <div className="w-[100px] flex items-center justify-center">
+                                    <img src={LOGO_DEFESA_CIVIL} alt="Defesa Civil" className="h-[70px] w-auto object-contain" />
+                                </div>
+                                <div className="text-center flex-1 px-4">
+                                    <h3 className="text-slate-900 font-extrabold text-[12px] uppercase leading-tight">PREFEITURA MUNICIPAL DE<br />SANTA MARIA DE JETIBÁ</h3>
+                                    <p className="text-slate-600 text-[9px] uppercase font-bold tracking-widest mt-1">COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</p>
+                                </div>
+                                <div className="w-[100px] flex items-center justify-center text-right">
+                                    <img src={LOGO_SIGERD} alt="SIGERD" className="h-[70px] w-auto object-contain" />
+                                </div>
                             </div>
-                            <div className="flex-1 text-center flex flex-col justify-center">
-                                <h2 className="font-bold text-[14px] leading-tight uppercase">PREFEITURA MUNICIPAL DE SANTA MARIA DE JETIBÁ</h2>
-                                <h3 className="font-bold text-[12px] leading-tight uppercase mt-1">SECRETARIA MUNICIPAL DE OBRAS E INFRAESTRUTURA — SECOBR</h3>
-                                <h3 className="font-bold text-[12px] leading-tight uppercase mt-1">COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</h3>
-                                <p className="text-[10px] mt-1">Sistema Integrado de Gestão de Riscos e Desastres — SIGERD</p>
+                            <h1 className="text-xl font-black text-[#2a5299] uppercase tracking-wide text-center">NOTIFICAÇÃO PRELIMINAR DE RISCO — NOPRER</h1>
+                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50 px-4 py-1 rounded-full border border-slate-100 mt-2">
+                                <span>Emissão: {formatDate(noprer.data_emissao)}</span>
+                                <span>•</span>
+                                <span>Nº NOPRER: {noprer.numero_noprer || '---'}</span>
                             </div>
-                        </div>
-
-                        <div className="text-center mb-6">
-                            <h1 className="text-[16px] font-black uppercase tracking-widest border border-black p-2 bg-gray-200">
-                                NOTIFICAÇÃO PRELIMINAR DE RISCO — NOPRER
-                            </h1>
-                        </div>
+                        </header>
 
                         {/* 1. IDENTIFICAÇÃO DO PROCESSO */}
                         <div className="mb-4">
-                            <h3 className="text-[11px] font-bold uppercase mb-1">1. IDENTIFICAÇÃO DO PROCESSO</h3>
-                            <table className="w-full text-[10px] border-collapse border border-black">
+                            <h3 className="text-[11px] font-bold text-[#122848] uppercase mb-1">1. IDENTIFICAÇÃO DO PROCESSO</h3>
+                            <table className="w-full text-[10px] border-collapse border border-[#cbd5e1]">
                                 <tbody>
                                     <tr>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold w-[25%] uppercase">Nº DA NOPRER:</td>
-                                        <td className="border border-black p-1.5 font-bold text-[12px]">{noprer.numero_noprer}</td>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold w-[25%] uppercase">DATA DE EMISSÃO:</td>
-                                        <td className="border border-black p-1.5">{formatDate(noprer.data_emissao)}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold w-[25%] uppercase">Nº DA NOPRER:</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 font-bold text-[12px]">{noprer.numero_noprer}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold w-[25%] uppercase">DATA DE EMISSÃO:</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 font-bold">{formatDate(noprer.data_emissao)}</td>
                                     </tr>
                                     <tr>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold uppercase">ORIGEM (VIST/OCOR):</td>
-                                        <td className="border border-black p-1.5">{noprer.origem_id}</td>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold uppercase">TIPO DE RISCO:</td>
-                                        <td className="border border-black p-1.5 uppercase">{noprer.tipo_risco || 'N/A'}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold uppercase">ORIGEM (VIST/OCOR):</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 font-bold">{noprer.origem_id}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold uppercase">TIPO DE RISCO:</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 uppercase font-bold">{noprer.tipo_risco || 'N/A'}</td>
                                     </tr>
                                     <tr>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold uppercase">CLASSIFICAÇÃO DO RISCO:</td>
-                                        <td colSpan="3" className="border border-black p-1.5 font-bold uppercase">{noprer.risco}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold uppercase">CLASSIFICAÇÃO DO RISCO:</td>
+                                        <td colSpan="3" className="border border-[#cbd5e1] text-red-700 bg-red-50 p-1.5 font-black uppercase">{noprer.risco}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -157,16 +160,16 @@ const NoprerPrint = () => {
 
                         {/* 2. DADOS DO IMÓVEL */}
                         <div className="mb-4">
-                            <h3 className="text-[11px] font-bold uppercase mb-1">2. DADOS DO IMÓVEL</h3>
-                            <table className="w-full text-[10px] border-collapse border border-black">
+                            <h3 className="text-[11px] font-bold text-[#122848] uppercase mb-1">2. DADOS DO IMÓVEL</h3>
+                            <table className="w-full text-[10px] border-collapse border border-[#cbd5e1]">
                                 <tbody>
                                     <tr>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold w-[25%] uppercase">ENDEREÇO/LOCAL:</td>
-                                        <td className="border border-black p-1.5 uppercase">{noprer.endereco}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold w-[25%] uppercase">ENDEREÇO/LOCAL:</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 uppercase font-bold">{noprer.endereco}</td>
                                     </tr>
                                     <tr>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold uppercase">COORDENADAS (GPS):</td>
-                                        <td className="border border-black p-1.5">{noprer.coordenadas?.lat ? `${noprer.coordenadas.lat}, ${noprer.coordenadas.lng}` : 'N/A'}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold uppercase">COORDENADAS (GPS):</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 font-bold">{noprer.coordenadas?.lat ? `${noprer.coordenadas.lat}, ${noprer.coordenadas.lng}` : 'N/A'}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -174,12 +177,12 @@ const NoprerPrint = () => {
 
                         {/* 3. DADOS DO RESPONSÁVEL */}
                         <div className="mb-4">
-                            <h3 className="text-[11px] font-bold uppercase mb-1">3. RESPONSÁVEL NOTIFICADO</h3>
-                            <table className="w-full text-[10px] border-collapse border border-black">
+                            <h3 className="text-[11px] font-bold text-[#122848] uppercase mb-1">3. RESPONSÁVEL NOTIFICADO</h3>
+                            <table className="w-full text-[10px] border-collapse border border-[#cbd5e1]">
                                 <tbody>
                                     <tr>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold w-[25%] uppercase">NOME COMPLETO:</td>
-                                        <td className="border border-black p-1.5 uppercase font-bold">{noprer.solicitante}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold w-[25%] uppercase">NOME COMPLETO:</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 uppercase font-bold">{noprer.solicitante}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -187,12 +190,12 @@ const NoprerPrint = () => {
 
                         {/* 4. DESCRIÇÃO TÉCNICA */}
                         <div className="mb-4">
-                            <h3 className="text-[11px] font-bold uppercase mb-1">4. DESCRIÇÃO TÉCNICA DO RISCO IDENTIFICADO</h3>
-                            <div className="border border-black p-2 min-h-[80px]">
-                                <p className="text-[10px] text-justify leading-relaxed">
+                            <h3 className="text-[11px] font-bold text-[#122848] uppercase mb-1">4. DESCRIÇÃO TÉCNICA DO RISCO IDENTIFICADO</h3>
+                            <div className="border border-[#cbd5e1] p-3 min-h-[80px] bg-slate-50">
+                                <p className="text-[10px] text-justify leading-relaxed text-slate-800">
                                     Durante vistoria técnica ou atendimento, foi constatada a existência de risco {noprer.tipo_risco?.toLowerCase()} classificado como <strong>{noprer.risco?.toUpperCase()}</strong>, requerendo monitoramento.
                                 </p>
-                                <p className="text-[10px] text-justify leading-relaxed mt-2 font-bold uppercase">
+                                <p className="text-[10px] text-justify leading-relaxed mt-2 font-bold uppercase text-slate-900">
                                     {noprer.descricao}
                                 </p>
                             </div>
@@ -200,27 +203,27 @@ const NoprerPrint = () => {
 
                         {/* 5. MEDIDAS MITIGATÓRIAS */}
                         <div className="mb-4">
-                            <h3 className="text-[11px] font-bold uppercase mb-1">5. MEDIDAS MITIGATÓRIAS RECOMENDADAS</h3>
-                            <div className="border border-black p-2 min-h-[100px]">
-                                <ul className="list-disc list-inside text-[10px] space-y-1 text-justify uppercase">
+                            <h3 className="text-[11px] font-bold text-[#122848] uppercase mb-1">5. MEDIDAS MITIGATÓRIAS RECOMENDADAS</h3>
+                            <div className="border border-[#cbd5e1] p-3 min-h-[100px] bg-slate-50">
+                                <ul className="list-disc list-inside text-[10px] space-y-1.5 text-justify uppercase font-bold text-slate-800">
                                     {(noprer.medidas_mitigatorias || []).map((medida, idx) => (
                                         <li key={idx}>{medida}</li>
                                     ))}
-                                    <li className="font-bold">COMUNICAR IMEDIATAMENTE À COMPDEC QUALQUER AGRAVAMENTO DOS SINAIS OBSERVADOS.</li>
+                                    <li className="font-black text-red-700 mt-2">COMUNICAR IMEDIATAMENTE À COMPDEC QUALQUER AGRAVAMENTO DOS SINAIS OBSERVADOS.</li>
                                 </ul>
                             </div>
                         </div>
 
                         {/* 6. PRAZO E REVISTORIA */}
                         <div className="mb-4">
-                            <h3 className="text-[11px] font-bold uppercase mb-1">6. PRAZO PARA ADEQUAÇÃO</h3>
-                            <table className="w-full text-[10px] border-collapse border border-black">
+                            <h3 className="text-[11px] font-bold text-[#122848] uppercase mb-1">6. PRAZO PARA ADEQUAÇÃO</h3>
+                            <table className="w-full text-[10px] border-collapse border border-[#cbd5e1]">
                                 <tbody>
                                     <tr>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold w-[25%] uppercase">PRAZO:</td>
-                                        <td className="border border-black p-1.5 font-bold uppercase">{noprer.prazo_dias} DIAS CORRIDOS</td>
-                                        <td className="border border-black bg-gray-200 p-1.5 font-bold w-[25%] uppercase">DATA-LIMITE:</td>
-                                        <td className="border border-black p-1.5 font-bold">{formatDate(noprer.data_limite)}</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold w-[25%] uppercase">PRAZO:</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 font-bold uppercase">{noprer.prazo_dias} DIAS CORRIDOS</td>
+                                        <td className="border border-[#cbd5e1] bg-[#E8F1FA] text-[#122848] p-1.5 font-bold w-[25%] uppercase">DATA-LIMITE:</td>
+                                        <td className="border border-[#cbd5e1] text-slate-800 p-1.5 font-bold">{formatDate(noprer.data_limite)}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -228,9 +231,9 @@ const NoprerPrint = () => {
 
                         {/* 7. ADVERTÊNCIA */}
                         <div className="mb-6">
-                            <div className="border-2 border-black p-2 text-justify">
-                                <p className="text-[9px] uppercase font-bold text-center border-b border-black pb-1 mb-1">=== AVISO IMPORTANTE ===</p>
-                                <p className="text-[9px] leading-tight">
+                            <div className="border-2 border-red-600 bg-red-50 text-red-800 p-3 text-justify rounded-sm">
+                                <p className="text-[10px] uppercase font-black text-center border-b border-red-200 pb-1.5 mb-1.5">=== AVISO IMPORTANTE ===</p>
+                                <p className="text-[9px] leading-relaxed font-bold">
                                     ESTA NOTIFICAÇÃO NÃO CONSTITUI AUTO DE INTERDIÇÃO. TRATA-SE DE DOCUMENTO FORMAL QUE CIENTIFICA O RESPONSÁVEL QUANTO AO RISCO, TRANSFERINDO-LHE O DEVER DE ADOTAR AS MEDIDAS MITIGATÓRIAS. A INÉRCIA OU AGRAVAMENTO DO RISCO PODERÁ ENSEJAR A EMISSÃO DE AUTO DE INTERDIÇÃO E MEDIDAS ADMINISTRATIVAS CABÍVEIS, ALÉM DA RESPONSABILIDADE CIVIL POR EVENTUAIS DANOS.
                                 </p>
                             </div>
@@ -238,42 +241,37 @@ const NoprerPrint = () => {
 
                         {/* 8. ASSINATURAS */}
                         <div className="mt-auto pb-4">
-                            <h3 className="text-[11px] font-bold uppercase mb-6 text-center">8. ASSINATURAS E TERMO DE CIÊNCIA</h3>
-                            <p className="text-[10px] text-center mb-8 uppercase">DECLARO ESTAR CIENTE DO CONTEÚDO DESTA NOTIFICAÇÃO E DAS MEDIDAS RECOMENDADAS.</p>
+                            <h3 className="text-[11px] font-bold text-[#122848] uppercase mb-6 text-center">8. ASSINATURAS E TERMO DE CIÊNCIA</h3>
+                            <p className="text-[10px] text-center mb-8 uppercase font-bold text-slate-700">DECLARO ESTAR CIENTE DO CONTEÚDO DESTA NOTIFICAÇÃO E DAS MEDIDAS RECOMENDADAS.</p>
                             
                             {noprer.recusou_assinatura ? (
                                 <div className="space-y-4">
-                                    <div className="text-center text-[10px] font-bold border border-black p-1 mb-6">
+                                    <div className="text-center text-[10px] font-black border border-red-500 bg-red-50 text-red-700 p-2 mb-6 rounded-sm">
                                         O(A) NOTIFICADO(A) RECUSOU-SE A ASSINAR ESTE DOCUMENTO.
                                     </div>
                                     <div className="flex justify-between px-10 gap-8">
-                                        <div className="flex-1 text-center border-t border-black pt-1">
-                                            <p className="text-[10px] font-bold uppercase">{noprer.testemunhas?.t1 || 'TESTEMUNHA 1'}</p>
-                                            <p className="text-[9px] uppercase">{noprer.testemunhas?.doc1 || 'CPF/RG'}</p>
+                                        <div className="flex-1 text-center border-t border-slate-400 pt-1.5">
+                                            <p className="font-bold text-[10px] uppercase text-slate-800">T1: {noprer.testemunhas?.t1 || 'NOME DA TESTEMUNHA 1'}</p>
+                                            <p className="text-[9px] text-slate-600">{noprer.testemunhas?.doc1 || 'DOCUMENTO'}</p>
                                         </div>
-                                        <div className="flex-1 text-center border-t border-black pt-1">
-                                            <p className="text-[10px] font-bold uppercase">{noprer.testemunhas?.t2 || 'TESTEMUNHA 2'}</p>
-                                            <p className="text-[9px] uppercase">{noprer.testemunhas?.doc2 || 'CPF/RG'}</p>
+                                        <div className="flex-1 text-center border-t border-slate-400 pt-1.5">
+                                            <p className="font-bold text-[10px] uppercase text-slate-800">T2: {noprer.testemunhas?.t2 || 'NOME DA TESTEMUNHA 2'}</p>
+                                            <p className="text-[9px] text-slate-600">{noprer.testemunhas?.doc2 || 'DOCUMENTO'}</p>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="flex justify-between px-10 gap-8">
-                                    <div className="flex-1 flex flex-col items-center">
-                                        <div className="h-10 mb-1"></div>
-                                        <div className="w-full border-t border-black text-center pt-1">
-                                            <p className="text-[10px] font-bold uppercase">{noprer.criado_por}</p>
-                                            <p className="text-[9px] uppercase">AGENTE DE DEFESA CIVIL</p>
-                                        </div>
+                                    <div className="flex-1 text-center relative border-t border-slate-400 pt-1.5">
+                                        {noprer.assinatura && (
+                                            <img src={noprer.assinatura} alt="Assinatura Solicitante" className="absolute bottom-full left-1/2 -translate-x-1/2 h-16 object-contain" />
+                                        )}
+                                        <p className="font-bold text-[10px] uppercase text-slate-800">{noprer.solicitante}</p>
+                                        <p className="text-[9px] text-slate-600">RESPONSÁVEL / SOLICITANTE</p>
                                     </div>
-                                    <div className="flex-1 flex flex-col items-center">
-                                        <div className="h-10 mb-1 flex justify-center items-end">
-                                            {noprer.assinatura && <img src={noprer.assinatura} alt="Assinatura" style={{ maxHeight: '40px' }} />}
-                                        </div>
-                                        <div className="w-full border-t border-black text-center pt-1">
-                                            <p className="text-[10px] font-bold uppercase">{noprer.solicitante}</p>
-                                            <p className="text-[9px] uppercase">RESPONSÁVEL NOTIFICADO</p>
-                                        </div>
+                                    <div className="flex-1 text-center border-t border-slate-400 pt-1.5">
+                                        <p className="font-bold text-[10px] uppercase text-slate-800">{noprer.criado_por}</p>
+                                        <p className="text-[9px] text-slate-600">AGENTE DE DEFESA CIVIL</p>
                                     </div>
                                 </div>
                             )}
