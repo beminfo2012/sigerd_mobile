@@ -32,15 +32,15 @@ const FiregisDashboard = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
-            <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white p-4 sticky top-0 z-20 flex justify-between items-center shadow-lg">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/firegis')} className="p-2 -ml-2 rounded-full hover:bg-white/20 transition-colors">
-                        <ArrowLeft size={24} />
-                    </button>
-                    <div>
-                        <h1 className="text-lg font-black tracking-tight">FIREGIS Dashboard</h1>
-                        <p className="text-white/80 text-[10px] uppercase font-bold tracking-widest">Inteligência Territorial</p>
-                    </div>
+            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-20 shadow-sm flex items-center gap-4">
+                <button onClick={() => navigate('/firegis')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                    <ArrowLeft size={24} className="text-slate-600 dark:text-slate-300" />
+                </button>
+                <div>
+                    <h1 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                        <MapPin className="text-orange-600" /> Dashboard FIREGIS
+                    </h1>
+                    <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">Inteligência Territorial</p>
                 </div>
             </div>
 

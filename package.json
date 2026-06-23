@@ -34,6 +34,7 @@
     "localforage": "^1.10.0",
     "lucide-react": "^0.469.0",
     "mammoth": "^1.11.0",
+    "papaparse": "^5.5.4",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^6.0.227",
     "pizzip": "^3.2.0",

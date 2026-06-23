@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
-import { Flame, Plus, Search, Map, Upload, FileText, ChevronRight, MapPin, Calendar, Activity } from 'lucide-react';
+import { Flame, Plus, Search, Map, Upload, FileText, ChevronRight, MapPin, Calendar, Activity, ArrowLeft } from 'lucide-react';
 import { toast } from '../../components/ToastNotification';
 
 const FiregisList = () => {
@@ -51,30 +51,30 @@ const FiregisList = () => {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-20">
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-600 to-red-700 text-white p-6 md:p-8 rounded-b-[2.5rem] shadow-lg sticky top-0 z-20">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
-                                <Flame size={32} className="text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-black tracking-tight">FIREGIS</h1>
-                                <p className="text-white/80 text-sm font-medium">Gestão Integrada de Incêndios</p>
-                            </div>
+            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-20 shadow-sm">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => navigate('/menu')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                            <ArrowLeft size={24} className="text-slate-600 dark:text-slate-300" />
+                        </button>
+                        <div>
+                            <h1 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                                <Flame className="text-orange-600" /> FIREGIS
+                            </h1>
+                            <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">Gestão Integrada de Incêndios</p>
                         </div>
+                    </div>
 
-                        <div className="flex gap-2 w-full md:w-auto">
-                            <button onClick={() => navigate('/firegis/dashboard')} className="flex-1 md:flex-none bg-white/10 hover:bg-white/20 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
-                                <Map size={18} /> Dashboard
-                            </button>
-                            <button onClick={() => navigate('/firegis/importar')} className="flex-1 md:flex-none bg-white/10 hover:bg-white/20 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
-                                <Upload size={18} /> Importar
-                            </button>
-                            <button onClick={() => navigate('/firegis/novo')} className="flex-1 md:flex-none bg-white text-orange-600 hover:bg-orange-50 px-4 py-2.5 rounded-xl font-black flex items-center justify-center gap-2 shadow-lg transition-all">
-                                <Plus size={18} /> Novo Registro
-                            </button>
-                        </div>
+                    <div className="flex gap-2 w-full md:w-auto">
+                        <button onClick={() => navigate('/firegis/dashboard')} className="flex-1 md:flex-none bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm">
+                            <Map size={18} /> Dashboard
+                        </button>
+                        <button onClick={() => navigate('/firegis/importar')} className="flex-1 md:flex-none bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm">
+                            <Upload size={18} /> Importar
+                        </button>
+                        <button onClick={() => navigate('/firegis/novo')} className="flex-1 md:flex-none bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl font-black flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20 transition-all text-sm">
+                            <Plus size={18} /> Novo Registro
+                        </button>
                     </div>
                 </div>
             </div>

@@ -3,11 +3,36 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { Flame, ArrowLeft, Save, MapPin, Calendar, Clock, Activity, FileText } from 'lucide-react';
 import { toast } from '../../components/ToastNotification';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+
+// Fix leaflet icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const FiregisForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    
+    // Component to capture map clicks
+    const LocationPicker = () => {
+        useMapEvents({
+            click(e) {
+                setFormData(prev => ({
+                    ...prev,
+                    coordenadas: { lat: e.latlng.lat, lng: e.latlng.lng }
+                }));
+            },
+        });
+        return formData.coordenadas?.lat ? (
+            <Marker position={[formData.coordenadas.lat, formData.coordenadas.lng]} />
+        ) : null;
+    };
     
     const [formData, setFormData] = useState({
         codigo_ocorrencia: '',
@@ -51,6 +76,12 @@ const FiregisForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!formData.coordenadas?.lat || !formData.coordenadas?.lng) {
+            toast.warning('Atenção', 'A coordenada (Lat/Lng) é obrigatória. Clique no mapa para marcar o local do incêndio.');
+            return;
+        }
+
         setLoading(true);
         try {
             const payload = { ...formData };
@@ -159,13 +190,26 @@ const FiregisForm = () => {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Endereço Descritivo / Referência</label>
                                 <input type="text" name="endereco" value={formData.endereco} onChange={handleChange} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500" />
                             </div>
+
+                            <div className="md:col-span-2 space-y-2 mt-4">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-red-500 flex items-center gap-1">
+                                    <MapPin size={12}/> Selecione o Local no Mapa (Obrigatório)
+                                </label>
+                                <div className="h-64 w-full rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700">
+                                    <MapContainer center={[-20.0223, -40.744]} zoom={12} style={{ height: '100%', width: '100%' }}>
+                                        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                        <LocationPicker />
+                                    </MapContainer>
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Latitude (Opcional)</label>
-                                <input type="text" value={formData.coordenadas.lat} onChange={(e) => setFormData(p => ({...p, coordenadas: {...p.coordenadas, lat: e.target.value}}))} placeholder="-20.000000" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 font-mono text-sm" />
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Latitude</label>
+                                <input type="text" required value={formData.coordenadas.lat} onChange={(e) => setFormData(p => ({...p, coordenadas: {...p.coordenadas, lat: e.target.value}}))} placeholder="-20.000000" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 font-mono text-sm" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Longitude (Opcional)</label>
-                                <input type="text" value={formData.coordenadas.lng} onChange={(e) => setFormData(p => ({...p, coordenadas: {...p.coordenadas, lng: e.target.value}}))} placeholder="-40.000000" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 font-mono text-sm" />
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Longitude</label>
+                                <input type="text" required value={formData.coordenadas.lng} onChange={(e) => setFormData(p => ({...p, coordenadas: {...p.coordenadas, lng: e.target.value}}))} placeholder="-40.000000" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 font-mono text-sm" />
                             </div>
                         </div>
                     </div>
