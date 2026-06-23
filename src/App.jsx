@@ -173,7 +173,7 @@ const AppContent = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const isPrintPage = location.pathname.includes('/imprimir') || location.pathname.includes('/termo/') || location.search.includes('fullscreen=true');
+    const isPrintPage = location.pathname.includes('/imprimir') || location.pathname.includes('/relatorio') || location.pathname.includes('/termo/') || location.search.includes('fullscreen=true');
     const isTvMode = location.search.includes('tvMode=true');
 
     useEffect(() => {
