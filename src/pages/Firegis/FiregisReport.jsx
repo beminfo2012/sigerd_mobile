@@ -68,12 +68,12 @@ const FiregisReport = () => {
                 
                 {/* Header Institucional */}
                 <div className="flex justify-between items-center border-b-2 border-orange-600 pb-4 mb-6">
-                    <img src="/logo_defesa_civil.png" alt="Defesa Civil" className="h-12 object-contain grayscale" onError={(e) => e.target.style.display = 'none'} />
+                    <img src="/logo_defesa_civil.png" alt="Defesa Civil" className="h-12 object-contain" onError={(e) => e.target.style.display = 'none'} />
                     <div className="text-center flex-1">
                         <h1 className="text-xl font-black uppercase text-orange-800">FIREGIS - RELATÓRIO ESTATÍSTICO CONSOLIDADO</h1>
                         <p className="text-xs font-bold text-slate-600 uppercase mt-1">Total de Ocorrências: {incidents.length} | Área Total Afetada: {totalArea.toFixed(2)} ha</p>
                     </div>
-                    <img src="/logo_header.png" alt="SIGERD" className="h-12 object-contain grayscale" onError={(e) => e.target.style.display = 'none'} />
+                    <img src="/logo_header.png" alt="SIGERD" className="h-12 object-contain" onError={(e) => e.target.style.display = 'none'} />
                 </div>
 
                 <div className="overflow-x-auto">

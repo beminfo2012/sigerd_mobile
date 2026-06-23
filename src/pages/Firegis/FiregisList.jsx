@@ -72,7 +72,7 @@ const FiregisList = () => {
                         <button onClick={() => navigate('/firegis/importar')} className="flex-1 md:flex-none bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm">
                             <Upload size={18} /> Importar
                         </button>
-                        <button onClick={() => navigate('/firegis/relatorio')} className="flex-1 md:flex-none bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm">
+                        <button onClick={() => window.open('/firegis/relatorio', '_blank')} className="flex-1 md:flex-none bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm">
                             <Printer size={18} /> Relatório
                         </button>
                         <button onClick={() => navigate('/firegis/novo')} className="flex-1 md:flex-none bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl font-black flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20 transition-all text-sm">
@@ -151,7 +151,7 @@ const FiregisList = () => {
                                     </div>
 
                                     <button 
-                                        onClick={(e) => { e.stopPropagation(); navigate(`/firegis/imprimir/${inc.id}`); }}
+                                        onClick={(e) => { e.stopPropagation(); window.open(`/firegis/imprimir/${inc.id}`, '_blank'); }}
                                         className="w-full mt-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 py-2 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <Printer size={14} /> Imprimir Ocorrência
