@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
-import { Flame, ArrowLeft, Activity, MapPin, AlertTriangle } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, LayersControl, WMSTileLayer, LayerGroup } from 'react-leaflet';
+import { Flame, ArrowLeft, Activity, MapPin, AlertTriangle, Layers } from 'lucide-react';
 
 const FiregisDashboard = () => {
     const navigate = useNavigate();
@@ -77,29 +77,70 @@ const FiregisDashboard = () => {
             <div className="flex-1 p-4 md:p-6 pt-0 flex flex-col">
                 <div className="flex-1 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden relative min-h-[400px]">
                     {/* Placeholder coordinates for Santa Maria de Jetibá */}
-                    <MapContainer center={[-20.0223, -40.744]} zoom={12} style={{ height: '100%', width: '100%', zIndex: 1 }}>
-                        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-                        
-                        {incidents.filter(i => i.coordenadas?.lat && i.coordenadas?.lng).map(inc => (
-                            <CircleMarker 
-                                key={inc.id} 
-                                center={[parseFloat(inc.coordenadas.lat), parseFloat(inc.coordenadas.lng)]}
-                                radius={inc.status === 'EM ANDAMENTO' ? 12 : 8}
-                                pathOptions={{ 
-                                    color: inc.status === 'EM ANDAMENTO' ? '#ef4444' : inc.status === 'EXTINTO' ? '#10b981' : '#f97316',
-                                    fillColor: inc.status === 'EM ANDAMENTO' ? '#ef4444' : inc.status === 'EXTINTO' ? '#10b981' : '#f97316',
-                                    fillOpacity: 0.6
-                                }}
-                            >
-                                <Popup>
-                                    <div className="text-sm font-sans">
-                                        <p className="font-bold">{inc.tipo_incendio}</p>
-                                        <p className="text-xs text-slate-500">{inc.bairro}</p>
-                                        <p className="text-xs mt-1 font-bold text-orange-600">{inc.status}</p>
-                                    </div>
-                                </Popup>
-                            </CircleMarker>
-                        ))}
+                    <MapContainer center={[-20.0223, -40.744]} zoom={11} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+                        <LayersControl position="topright">
+                            {/* MAPAS BASE */}
+                            <LayersControl.BaseLayer checked name="Satélite (ArcGIS)">
+                                <TileLayer 
+                                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" 
+                                    attribution="Tiles &copy; Esri"
+                                />
+                            </LayersControl.BaseLayer>
+                            <LayersControl.BaseLayer name="Ruas (OpenStreetMap)">
+                                <TileLayer 
+                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+                                    attribution="&copy; OpenStreetMap contributors"
+                                />
+                            </LayersControl.BaseLayer>
+
+                            {/* CAMADAS (OVERLAYS) */}
+                            <LayersControl.Overlay name="Biomas Brasileiros (IBGE WMS)">
+                                <WMSTileLayer
+                                    url="https://geoservicos.ibge.gov.br/geoserver/ows"
+                                    layers="CREN:lm_bioma_250"
+                                    format="image/png"
+                                    transparent={true}
+                                    opacity={0.6}
+                                />
+                            </LayersControl.Overlay>
+
+                            <LayersControl.Overlay checked name="Ocorrências FIREGIS">
+                                <LayerGroup>
+                                    {incidents.filter(i => i.coordenadas?.lat && i.coordenadas?.lng).map(inc => (
+                                        <CircleMarker 
+                                            key={inc.id} 
+                                            center={[parseFloat(inc.coordenadas.lat), parseFloat(inc.coordenadas.lng)]}
+                                            radius={inc.status === 'EM ANDAMENTO' ? 12 : 8}
+                                            pathOptions={{ 
+                                                color: inc.status === 'EM ANDAMENTO' ? '#ef4444' : inc.status === 'EXTINTO' ? '#10b981' : '#f97316',
+                                                fillColor: inc.status === 'EM ANDAMENTO' ? '#ef4444' : inc.status === 'EXTINTO' ? '#10b981' : '#f97316',
+                                                fillOpacity: 0.8,
+                                                weight: 2
+                                            }}
+                                        >
+                                            <Popup>
+                                                <div className="text-sm font-sans min-w-[180px]">
+                                                    <div className="bg-orange-50 -mx-5 -mt-4 p-3 border-b border-orange-100 mb-2 rounded-t-xl">
+                                                        <p className="font-black text-orange-800 uppercase text-xs">{inc.codigo_ocorrencia}</p>
+                                                    </div>
+                                                    <p className="font-bold text-slate-800">{inc.tipo_incendio}</p>
+                                                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><MapPin size={12}/> {inc.bairro}</p>
+                                                    <div className="flex items-center justify-between mt-3">
+                                                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{inc.area_queimada_ha} ha</span>
+                                                        <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${
+                                                            inc.status === 'EM ANDAMENTO' ? 'bg-red-100 text-red-700' : 
+                                                            inc.status === 'EXTINTO' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
+                                                        }`}>
+                                                            {inc.status}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </Popup>
+                                        </CircleMarker>
+                                    ))}
+                                </LayerGroup>
+                            </LayersControl.Overlay>
+                        </LayersControl>
                     </MapContainer>
                 </div>
             </div>
