@@ -233,6 +233,7 @@ const FiregisPrint = () => {
                         <p>Data de emissão: {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR')}</p>
                     </div>
                 </div>
+                </div>
             </main>
         </div>
     );

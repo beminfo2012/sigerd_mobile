@@ -174,6 +174,14 @@ const FiregisReport = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Footer and Signatures */}
+                <div className="text-center mt-12 text-[9px] text-slate-500 uppercase pb-4">
+                    <p>Documento gerado eletronicamente via Sistema SIGERD - FIREGIS</p>
+                    <p>Data de emissão: {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR')}</p>
+                </div>
+
+                </div>
             </main>
         </div>
     );
