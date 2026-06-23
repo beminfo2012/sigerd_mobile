@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, LayersControl, WMSTileLayer, LayerGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, LayersControl, LayerGroup, GeoJSON } from 'react-leaflet';
 import { Flame, ArrowLeft, Activity, MapPin, AlertTriangle, Layers } from 'lucide-react';
 
 const FiregisDashboard = () => {
     const navigate = useNavigate();
     const [incidents, setIncidents] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [smjLimit, setSmjLimit] = useState(null);
 
     useEffect(() => {
         fetchIncidents();
+        fetch('/limite_smj.json')
+            .then(res => res.json())
+            .then(data => setSmjLimit(data))
+            .catch(err => console.error("Erro ao carregar limite SMJ:", err));
     }, []);
 
     const fetchIncidents = async () => {
@@ -94,14 +99,28 @@ const FiregisDashboard = () => {
                             </LayersControl.BaseLayer>
 
                             {/* CAMADAS (OVERLAYS) */}
-                            <LayersControl.Overlay name="Biomas Brasileiros (IBGE WMS)">
-                                <WMSTileLayer
-                                    url="https://geoservicos.ibge.gov.br/geoserver/ows"
-                                    layers="CREN:lm_bioma_250"
-                                    format="image/png"
-                                    transparent={true}
-                                    opacity={0.6}
-                                />
+                            <LayersControl.Overlay name="Bioma Mata Atlântica (SMJ)">
+                                <LayerGroup>
+                                    {smjLimit && (
+                                        <GeoJSON 
+                                            data={smjLimit}
+                                            style={{
+                                                fillColor: '#8bc34a', // Cor típica do bioma Mata Atlântica
+                                                weight: 2,
+                                                opacity: 1,
+                                                color: '#558b2f',
+                                                fillOpacity: 0.5
+                                            }}
+                                        >
+                                            <Popup>
+                                                <div className="text-center">
+                                                    <p className="font-black text-green-800 uppercase">Bioma Mata Atlântica</p>
+                                                    <p className="text-xs text-slate-600">Município de Santa Maria de Jetibá</p>
+                                                </div>
+                                            </Popup>
+                                        </GeoJSON>
+                                    )}
+                                </LayerGroup>
                             </LayersControl.Overlay>
 
                             <LayersControl.Overlay checked name="Ocorrências FIREGIS">
