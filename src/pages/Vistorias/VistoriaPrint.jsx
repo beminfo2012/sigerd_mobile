@@ -258,9 +258,18 @@ const VistoriaPrint = () => {
     })();
 
     // Helper for Checklist Items
-    const checklistItems = Object.entries(data.checklist_respostas || data.checklistRespostas || {})
+    const rawChecklist = data.checklist_respostas || data.checklistRespostas || {};
+    const checklistItems = Object.entries(rawChecklist)
         .filter(([_, val]) => val === true)
         .map(([key]) => key);
+
+    const checklistComments = Object.entries(rawChecklist)
+        .filter(([key, val]) => typeof val === 'string' && val.trim() !== '' && key.endsWith(':comentario'))
+        .reduce((acc, [key, val]) => {
+            const sec = key.split(':')[1];
+            acc[sec] = val;
+            return acc;
+        }, {});
 
     // Dynamic section numbers
     const hasChecklist = checklistItems.length > 0;
@@ -908,6 +917,7 @@ const VistoriaPrint = () => {
                                                     return numA - numB;
                                                 }).forEach(sec => {
                                                     const items = sections[sec];
+                                                    const comment = checklistComments[sec];
                                                     
                                                     // Agrupar itens da seção pelo subtipo (group)
                                                     const subGroups = {};
@@ -923,6 +933,11 @@ const VistoriaPrint = () => {
                                                         <tr key={`struc-${sec}`}>
                                                             <td style={{ fontWeight: '800', color: '#1e293b', fontSize: '11px', verticalAlign: 'top', width: '55%' }}>
                                                                 {sec}
+                                                                {comment && (
+                                                                    <div style={{ marginTop: '8px', fontSize: '9px', fontWeight: '500', color: '#475569', fontStyle: 'italic', backgroundColor: '#f1f5f9', padding: '6px', borderRadius: '4px', borderLeft: '2px solid #cbd5e1' }}>
+                                                                        Obs: {comment}
+                                                                    </div>
+                                                                )}
                                                             </td>
                                                             <td style={{ verticalAlign: 'top', width: '45%' }}>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

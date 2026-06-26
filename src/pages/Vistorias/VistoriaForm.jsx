@@ -142,62 +142,62 @@ const STRUCTURAL_DETAILED_CHECKLIST = [
         groups: [
             {
                 label: "Movimentação do terreno",
-                options: ["Não apresenta patologia", "Pequenos indícios", "Erosão", "Recalque", "Afundamento", "Talude instável"]
+                options: ["Não apresenta patologia", "Sem Estrutura", "Pequenos indícios", "Erosão", "Recalque", "Afundamento", "Talude instável"]
             },
             {
                 label: "Drenagem",
-                options: ["Adequada", "Deficiente", "Água acumulada", "Infiltração próxima à fundação"]
+                options: ["Adequada", "Sem Estrutura", "Deficiente", "Água acumulada", "Infiltração próxima à fundação"]
             }
         ]
     },
     {
         title: "2. FUNDAÇÕES",
-        options: ["Não apresenta patologia", "Trincas na base", "Recalque localizado", "Desnivelamento do piso", "Deslocamento solo/estrutura", "Afundamento significativo"]
+        options: ["Não apresenta patologia", "Sem Estrutura", "Trincas na base", "Recalque localizado", "Desnivelamento do piso", "Deslocamento solo/estrutura", "Afundamento significativo"]
     },
     {
         title: "3. PILARES",
-        options: ["Não apresenta patologia", "Fissura superficial", "Trinca estrutural", "Armadura exposta", "Concreto deteriorado", "Esmagamento", "Pilar inclinado"]
+        options: ["Não apresenta patologia", "Sem Estrutura", "Fissura superficial", "Trinca estrutural", "Armadura exposta", "Concreto deteriorado", "Esmagamento", "Pilar inclinado"]
     },
     {
         title: "4. VIGAS",
-        options: ["Não apresenta patologia", "Fissuras", "Trinca diagonal", "Deformação", "Armadura exposta", "Concreto deteriorado", "Risco de ruptura"]
+        options: ["Não apresenta patologia", "Sem Estrutura", "Fissuras", "Trinca diagonal", "Deformação", "Armadura exposta", "Concreto deteriorado", "Risco de ruptura"]
     },
     {
         title: "5. LAJES",
-        options: ["Não apresenta patologia", "Fissuras", "Flecha excessiva", "Infiltração", "Armadura exposta", "Desplacamento do concreto", "Colapso parcial"]
+        options: ["Não apresenta patologia", "Sem Estrutura", "Fissuras", "Flecha excessiva", "Infiltração", "Armadura exposta", "Desplacamento do concreto", "Colapso parcial"]
     },
     {
         title: "6. PAREDES E ALVENARIA",
-        options: ["Não apresenta patologia", "Trinca horizontal", "Trinca vertical", "Trinca diagonal", "Trincas em portas/janelas", "Parede fora de prumo", "Abaulamento", "Deslocamento estrutural"]
+        options: ["Não apresenta patologia", "Sem Estrutura", "Trinca horizontal", "Trinca vertical", "Trinca diagonal", "Trincas em portas/janelas", "Parede fora de prumo", "Abaulamento", "Deslocamento estrutural"]
     },
     {
         title: "7. COBERTURA",
         groups: [
             {
                 label: "Estrutura do telhado",
-                options: ["Não apresenta patologia", "Madeira deteriorada", "Estrutura metálica corroída", "Deformação estrutural", "Risco de colapso"]
+                options: ["Não apresenta patologia", "Sem Estrutura", "Madeira deteriorada", "Estrutura metálica corroída", "Deformação estrutural", "Risco de colapso"]
             },
             {
                 label: "Telhas",
-                options: ["Sem problemas", "Telhas deslocadas", "Telhas quebradas", "Risco de queda"]
+                options: ["Sem problemas", "Sem Estrutura", "Telhas deslocadas", "Telhas quebradas", "Risco de queda"]
             }
         ]
     },
     {
         title: "8. INDÍCIOS DE MOVIMENTAÇÃO ESTRUTURAL",
-        options: ["Não observado", "Portas não fecham", "Janelas travando", "Piso desnivelado", "Degraus deslocados", "Estrutura inclinada"]
+        options: ["Não observado", "Sem Estrutura", "Portas não fecham", "Janelas travando", "Piso desnivelado", "Degraus deslocados", "Estrutura inclinada"]
     },
     {
         title: "9. INFILTRAÇÕES E UMIDADE",
-        options: ["Não apresenta patologia", "Umidade ascendente", "Infiltração em paredes", "Infiltração em laje", "Mofo/bolor", "Eflorescência"]
+        options: ["Não apresenta patologia", "Sem Estrutura", "Umidade ascendente", "Infiltração em paredes", "Infiltração em laje", "Mofo/bolor", "Eflorescência"]
     },
     {
         title: "10. INTERVENÇÕES ESTRUTURAIS IRREGULARES",
-        options: ["Não identificado", "Remoção de parede", "Ampliação sem projeto", "Corte em vigas", "Corte em pilares", "Sobrecarga estrutural"]
+        options: ["Não identificado", "Sem Estrutura", "Remoção de parede", "Ampliação sem projeto", "Corte em vigas", "Corte em pilares", "Sobrecarga estrutural"]
     },
     {
         title: "11. ELEMENTOS EXTERNOS COM RISCO",
-        options: ["Não identificado", "Marquise com fissuras", "Sacada com trincas", "Muro inclinado", "Caixa d’água comprometida", "Estrutura com risco de queda"]
+        options: ["Não identificado", "Sem Estrutura", "Marquise com fissuras", "Sacada com trincas", "Muro inclinado", "Caixa d’água comprometida", "Estrutura com risco de queda"]
     }
 ]
 
@@ -839,6 +839,25 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(p => p.id !== id) }))
     }
 
+    const movePhoto = (id, direction) => {
+        setFormData(prev => {
+            const newFotos = [...prev.fotos];
+            const index = newFotos.findIndex(p => p.id === id);
+            if (index === -1) return prev;
+            
+            if (direction === 'left' && index > 0) {
+                const temp = newFotos[index - 1];
+                newFotos[index - 1] = newFotos[index];
+                newFotos[index] = temp;
+            } else if (direction === 'right' && index < newFotos.length - 1) {
+                const temp = newFotos[index + 1];
+                newFotos[index + 1] = newFotos[index];
+                newFotos[index] = temp;
+            }
+            return { ...prev, fotos: newFotos };
+        });
+    }
+
     const updatePhotoCaption = (id, text) => {
         setFormData(prev => ({
             ...prev,
@@ -1318,7 +1337,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                                             {group.options.map(opt => {
                                                                                 const key = `structural:${section.title}:${group.label}:${opt}`;
                                                                                 const isSelected = formData.checklistRespostas[key];
-                                                                                const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
+                                                                                const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas", "Sem Estrutura"].includes(opt);
                                                                                 return (
                                                                                     <button
                                                                                         key={opt}
@@ -1332,7 +1351,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                                                                     });
                                                                                                     newRes[key] = true;
                                                                                                 } else {
-                                                                                                    const negOpts = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
+                                                                                                    const negOpts = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas", "Sem Estrutura"];
                                                                                                     negOpts.forEach(n => {
                                                                                                         delete newRes[`structural:${section.title}:${group.label}:${n}`];
                                                                                                     });
@@ -1360,7 +1379,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                                 {section.options.map(opt => {
                                                                     const key = `structural:${section.title}:${opt}`;
                                                                     const isSelected = formData.checklistRespostas[key];
-                                                                    const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"].includes(opt);
+                                                                    const isNeg = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas", "Sem Estrutura"].includes(opt);
                                                                     return (
                                                                         <button
                                                                             key={opt}
@@ -1374,7 +1393,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                                                         });
                                                                                         newRes[key] = true;
                                                                                     } else {
-                                                                                        const negOpts = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas"];
+                                                                                        const negOpts = ["Não apresenta patologia", "Não identificado", "Não observado", "Sem problemas", "OK", "Funcionando", "Adequada", "Desobstruídas", "Sem Estrutura"];
                                                                                         negOpts.forEach(n => {
                                                                                             delete newRes[`structural:${section.title}:${n}`];
                                                                                         });
@@ -1395,6 +1414,15 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                                 })}
                                                             </div>
                                                         )}
+                                                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder={`Comentários livres sobre ${section.title.substring(section.title.indexOf('.') + 2).toLowerCase()} (opcional)...`}
+                                                                className={inputClasses}
+                                                                value={formData.checklistRespostas[`structural:${section.title}:comentario`] || ''}
+                                                                onChange={e => setFormData(prev => ({ ...prev, checklistRespostas: { ...prev.checklistRespostas, [`structural:${section.title}:comentario`]: e.target.value } }))}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -2212,22 +2240,46 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         onClick={() => setSelectedPhotoIndex(idx)}
                                     />
                                     <div className="absolute top-2 inset-x-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all z-20">
-                                        <button
-                                            type="button"
-                                            onClick={() => setEditingPhotoIndex(idx)}
-                                            className="bg-blue-600/90 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-blue-600 transition-all scale-90 group-hover:scale-100"
-                                            title="Editar imagem"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => removePhoto(foto.id)}
-                                            className="bg-red-600/80 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-red-600 transition-all scale-90 group-hover:scale-100"
-                                            title="Remover imagem"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        <div className="flex gap-1">
+                                            {idx > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => movePhoto(foto.id, 'left')}
+                                                    className="bg-slate-800/80 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-slate-700 transition-all scale-90 group-hover:scale-100"
+                                                    title="Mover para esquerda"
+                                                >
+                                                    <ChevronLeft size={16} />
+                                                </button>
+                                            )}
+                                            {idx < formData.fotos.length - 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => movePhoto(foto.id, 'right')}
+                                                    className="bg-slate-800/80 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-slate-700 transition-all scale-90 group-hover:scale-100"
+                                                    title="Mover para direita"
+                                                >
+                                                    <ChevronRight size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditingPhotoIndex(idx)}
+                                                className="bg-blue-600/90 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-blue-600 transition-all scale-90 group-hover:scale-100"
+                                                title="Editar imagem"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => removePhoto(foto.id)}
+                                                className="bg-red-600/80 backdrop-blur-md text-white p-2 rounded-xl shadow-lg hover:bg-red-600 transition-all scale-90 group-hover:scale-100"
+                                                title="Remover imagem"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-2 z-10">
                                         <input

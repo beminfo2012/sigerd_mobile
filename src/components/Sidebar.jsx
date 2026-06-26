@@ -119,6 +119,24 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
+            label: 'Monitoramento',
+            icon: BarChart3,
+            path: '/monitoramento',
+            roles: AGENT_ROLES
+        },
+        {
+            label: 'GeoRescue',
+            icon: Map,
+            path: '/georescue',
+            roles: AGENT_ROLES.filter(r => r !== 'Operador')
+        },
+        {
+            label: 'Ocorrências',
+            icon: AlertTriangle,
+            path: '/ocorrencias',
+            roles: AGENT_ROLES
+        },
+        {
             label: 'Vistorias',
             icon: ClipboardList,
             path: '/vistorias',
@@ -131,22 +149,15 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
-            label: 'FIREGIS',
-            icon: Flame,
-            path: '/firegis',
-            roles: AGENT_ROLES
-        },
-        {
-            label: 'Ocorrências',
-            icon: AlertTriangle,
-            path: '/ocorrencias',
-            roles: AGENT_ROLES
-        },
-
-        {
             label: 'Interdições',
             icon: AlertOctagon,
             path: '/interdicao',
+            roles: AGENT_ROLES
+        },
+        {
+            label: 'FIREGIS',
+            icon: Flame,
+            path: '/firegis',
             roles: AGENT_ROLES
         },
         {
@@ -154,12 +165,6 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             icon: ClipboardCheck,
             path: '/redap',
             roles: REDAP_ROLES
-        },
-        {
-            label: 'MCI - Recursos',
-            icon: ClipboardList,
-            path: '/mci',
-            roles: [...AGENT_ROLES, ...REDAP_ROLES]
         },
         {
             label: 'Assist. Humanitária',
@@ -174,16 +179,10 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
-            label: 'Monitoramento',
-            icon: BarChart3,
-            path: '/monitoramento',
-            roles: AGENT_ROLES
-        },
-        {
-            label: 'GeoRescue',
-            icon: Map,
-            path: '/georescue',
-            roles: AGENT_ROLES.filter(r => r !== 'Operador')
+            label: 'MCI - Recursos',
+            icon: ClipboardList,
+            path: '/mci',
+            roles: [...AGENT_ROLES, ...REDAP_ROLES]
         },
         {
             label: 'Legado',
@@ -243,8 +242,13 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                                 <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
 
-                            {/* Separador abaixo do ícone de REDAP */}
-                            {item.label === 'REDAP' && (
+                            {/* Separador após o ícone de FIREGIS */}
+                            {item.label === 'FIREGIS' && (
+                                <div className="h-[1px] bg-white/10 my-4 mx-2" />
+                            )}
+
+                            {/* Separador após o ícone de MCI - Recursos */}
+                            {item.label === 'MCI - Recursos' && (
                                 <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
 
