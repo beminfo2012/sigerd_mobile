@@ -838,6 +838,7 @@ const RedapPrint = () => {
                     {/* Footer com selo oficial */}
                     <footer className="text-center font-bold text-[8px] text-slate-400 uppercase tracking-widest pt-6 border-t border-slate-100 mt-8">
                         SIGERD • SISTEMA INTEGRADO DE GESTÃO E RELATÓRIOS DE DESASTRES
+                        <br/><span className="text-[6.5px] font-medium text-slate-400/80 mt-1 block tracking-wider normal-case">* Os custos estimados de recuperação estrutural baseiam-se nos referenciais de preços oficiais (SINAPI, SICRO e DER-ES) cadastrados via Módulo MRCR, aplicados conforme tipologia informada.</span>
                     </footer>
                 </div>
             </main>

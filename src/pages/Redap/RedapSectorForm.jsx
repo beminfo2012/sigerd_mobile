@@ -10,6 +10,7 @@ import * as redapService from '../../services/redapService';
 import { useToast } from '../../components/ToastNotification';
 import { CurrencyInput, DecimalInput } from '../../components/RedapInputs';
 import FileInput from '../../components/FileInput';
+import { MrcrSelector } from './components/MrcrSelector';
 
 // Mapeamento amigável das seções
 const SECAO_MAP = {
@@ -411,13 +412,16 @@ const RedapSectorForm = () => {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano (R$)</label>
-                                                    <CurrencyInput
+                                                    <MrcrSelector
                                                         disabled={isReadOnly}
-                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                        itemName={itemName}
                                                         value={item.valor_estimado || 0}
-                                                        onChange={(val) => {
+                                                        onChange={(val, meta) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].valor_estimado = val;
+                                                            if (meta) {
+                                                                newItems[itemName].mrcr_meta = meta;
+                                                            }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -485,13 +489,16 @@ const RedapSectorForm = () => {
                                                 </div>
                                                 <div className="space-y-1">
                                                     <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano</label>
-                                                    <CurrencyInput
+                                                    <MrcrSelector
                                                         disabled={isReadOnly}
-                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                        itemName={itemName}
                                                         value={item.valor_estimado || 0}
-                                                        onChange={(val) => {
+                                                        onChange={(val, meta) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].valor_estimado = val;
+                                                            if (meta) {
+                                                                newItems[itemName].mrcr_meta = meta;
+                                                            }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />

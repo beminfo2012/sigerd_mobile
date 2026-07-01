@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame, Calculator } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData, pullAllData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
@@ -396,6 +396,21 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                 <div className="flex-1">
                                     <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Orthofotos</span>
                                     <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Configuração Global de Camadas GIS</span>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={() => window.location.href = '/mrcr'}
+                            className="w-full p-5 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
+                        >
+                            <div className="flex items-center">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-600 rounded-2xl mr-4">
+                                    <Calculator size={22} />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo MRCR</span>
+                                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Módulo de Referências de Custo</span>
                                 </div>
                             </div>
                         </button>

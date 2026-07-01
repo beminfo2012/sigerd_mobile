@@ -1583,19 +1583,19 @@ const AlertasCemadenCard = ({ navigate }) => {
             onClick={() => navigate('/alertas-cemaden')}
             className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]"
         >
-            <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Alertas CEMADEN</span>
+            <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                    <ShieldAlert size={16} className={`${count > 0 ? style.text : 'text-slate-400'} opacity-70`} />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Alertas CEMADEN</span>
+                </div>
                 {count === null ? (
                     <span className="text-4xl font-black text-slate-300 tabular-nums leading-none animate-pulse">—</span>
                 ) : (
                     <span className={`text-4xl font-black tabular-nums leading-none ${count > 0 ? style.text : 'text-slate-800 dark:text-slate-100'}`}>{count}</span>
                 )}
-                <p className={`text-[10px] font-bold uppercase mt-2 opacity-80 ${count > 0 && nivelMaisCritico ? style.text : 'text-slate-400'}`}>
+                <p className={`text-[10px] font-bold uppercase opacity-80 ${count > 0 && nivelMaisCritico ? style.text : 'text-slate-400'}`}>
                     {count === null ? 'Carregando...' : count === 0 ? 'Sem alertas vigentes' : `Nível: ${style.label}`}
                 </p>
-            </div>
-            <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${style.icon} flex items-center justify-center ${style.text} group-hover:scale-110 transition-transform`}>
-                <ShieldAlert size={24} />
             </div>
             {count > 0 && (
                 <div className={`absolute bottom-0 left-0 right-0 h-1 ${nivelMaisCritico === 'MUITO_ALTO' ? 'bg-red-500' : nivelMaisCritico === 'ALTO' ? 'bg-orange-500' : nivelMaisCritico === 'MODERADO' ? 'bg-amber-400' : 'bg-blue-500'} opacity-60 rounded-b-3xl`} />
@@ -1706,18 +1706,18 @@ const WebViewDashboardView = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {/* Card 1: Risk Level */}
                         <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group shadow-sm hover:shadow-xl transition-all h-full min-h-[140px]">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Status Civil</span>
-                                <span className={`text-2xl font-black ${statusInfo.text} uppercase tracking-tighter`}>{statusInfo.label}</span>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 opacity-70">Condição Geral</p>
-                                <div className="mt-4 flex flex-col gap-2 max-w-[70%]">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-2">
+                                    <Shield size={16} className={`${statusInfo.text} opacity-70`} />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Status Civil</span>
+                                </div>
+                                <span className={`text-2xl font-black ${statusInfo.text} uppercase tracking-tighter leading-none`}>{statusInfo.label}</span>
+                                <div className="flex flex-col gap-2 w-full">
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">Condição Geral</p>
                                     <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden shadow-inner">
                                         <div className={`h-full rounded-full transition-all duration-1000 ${statusInfo.color}`} style={{ width: '100%' }} />
                                     </div>
                                 </div>
-                            </div>
-                            <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${statusInfo.bg} flex items-center justify-center ${statusInfo.text} group-hover:scale-110 transition-transform`}>
-                                <Shield size={24} />
                             </div>
                         </div>
 
@@ -1738,15 +1738,15 @@ const WebViewDashboardView = ({
                                         : { bg: 'bg-slate-100', text: 'text-slate-400', bar: null, label: 'Sem avisos vigentes' };
                             return (
                                 <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Avisos INMET</span>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <Zap size={16} className={`${totalCount > 0 ? inmetIconStyle.text : 'text-slate-400'} opacity-70`} />
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Avisos INMET</span>
+                                        </div>
                                         <span className={`text-4xl font-black tabular-nums leading-none ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-800 dark:text-slate-100'}`}>{totalCount}</span>
-                                        <p className={`text-[10px] font-bold uppercase mt-2 opacity-80 ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-400'}`}>
+                                        <p className={`text-[10px] font-bold uppercase opacity-80 ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-400'}`}>
                                             {totalCount === 0 ? 'Sem avisos vigentes' : inmetIconStyle.label}
                                         </p>
-                                    </div>
-                                    <div className={`absolute top-6 right-6 w-12 h-12 rounded-full ${inmetIconStyle.bg} flex items-center justify-center ${inmetIconStyle.text} group-hover:scale-110 transition-transform`}>
-                                        <Zap size={24} />
                                     </div>
                                     {totalCount > 0 && inmetIconStyle.bar && (
                                         <div className={`absolute bottom-0 left-0 right-0 h-1 ${inmetIconStyle.bar} opacity-60 rounded-b-3xl`} />
@@ -1760,30 +1760,30 @@ const WebViewDashboardView = ({
 
                         {/* Card 4: Vistorias */}
                         <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Vistorias</span>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-2">
+                                    <ClipboardList size={16} className="text-blue-600 opacity-70" />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Vistorias</span>
+                                </div>
                                 <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{data.stats.totalVistorias}</span>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Total Registrado</p>
-                            </div>
-                            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                                <ClipboardList size={24} />
+                                <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">Total Registrado</p>
                             </div>
                         </div>
 
                         {/* Card 5: Pluviometria */}
                         <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px] mb-1">Pluviometria</span>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-2">
+                                    <Droplets size={16} className="text-indigo-600 opacity-70" />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Pluviometria</span>
+                                </div>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">
                                         {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : 0}
                                     </span>
                                     <span className="text-xs font-black text-slate-400 uppercase">mm</span>
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 opacity-70">Média 24h</p>
-                            </div>
-                            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
-                                <Droplets size={24} />
+                                <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">Média 24h</p>
                             </div>
                         </div>
                     </div>

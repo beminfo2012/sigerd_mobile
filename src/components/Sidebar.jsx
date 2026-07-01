@@ -28,6 +28,7 @@ import {
     RefreshCcw,
     History,
     Calendar,
+    Calculator,
     HeartHandshake,
     Flame
 } from 'lucide-react';

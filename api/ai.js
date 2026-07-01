@@ -54,6 +54,8 @@ export default async function handler(request, response) {
             - Retorne APENAS o texto das considerações finais.
             - Use tom formal, conclusivo e urgente (padrão S2id).
             `;
+        } else if (type === 'documento') {
+            prompt = text;
         } else {
             prompt = `
             Transforme este relato de campo em uma descrição técnica de engenharia civil densa e formal: "${text}".

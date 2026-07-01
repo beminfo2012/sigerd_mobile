@@ -294,20 +294,31 @@ export const getActiveEvents = async () => {
             if (!error && data) {
                 const db = await initDB();
                 const tx = db.transaction('eventos_desastre', 'readwrite');
+                const store = tx.objectStore('eventos_desastre');
+                const localEvents = await store.getAll();
+                const unsyncedEvents = localEvents.filter(e => e.synced === false);
+
                 for (const ev of data) {
-                    await tx.store.put({ ...ev, synced: true });
+                    const isUnsynced = unsyncedEvents.some(u => u.id === ev.id);
+                    if (!isUnsynced) {
+                        await store.put({ ...ev, synced: true });
+                    }
                 }
                 await tx.done;
                 
-                // Map keys for compatibility
-                return data.map(ev => ({
-                    ...ev,
-                    nome_evento: ev.nome_evento || ev.cobrade_tipo || 'Desastre Sem Nome',
-                    cobrade: `${ev.cobrade_codigo} - ${ev.cobrade_tipo || ''}`,
-                    data_inicio: ev.data_hora_evento,
-                    status_evento: ev.status_geral,
-                    data_limite: ev.data_limite || null
-                }));
+                // Map keys for compatibility — prefer local unsynced data over Supabase
+                return data.map(ev => {
+                    const localVersion = unsyncedEvents.find(u => u.id === ev.id);
+                    const source = localVersion || ev;
+                    return {
+                        ...source,
+                        nome_evento: source.nome_evento || source.cobrade_tipo || 'Desastre Sem Nome',
+                        cobrade: `${source.cobrade_codigo} - ${source.cobrade_tipo || ''}`,
+                        data_inicio: source.data_hora_evento,
+                        status_evento: source.status_geral,
+                        data_limite: source.data_limite || null
+                    };
+                });
             }
         } catch (e) {
             console.error('Supabase fetch failed for eventos_desastre:', e);
@@ -445,6 +456,11 @@ export const updateEvent = async (eventId, eventData) => {
         local.data_hora_evento = eventData.data_inicio;
         local.data_limite = eventData.data_limite;
         local.status_geral = eventData.status_geral;
+        
+        if (eventData.nivel_intensidade_final !== undefined) {
+            local.nivel_intensidade_final = eventData.nivel_intensidade_final;
+        }
+
         local.updated_at = new Date().toISOString();
         local.synced = false;
 
@@ -461,6 +477,7 @@ export const updateEvent = async (eventId, eventData) => {
                         data_hora_evento: eventData.data_inicio,
                         data_limite: eventData.data_limite,
                         status_geral: eventData.status_geral,
+                        nivel_intensidade_final: eventData.nivel_intensidade_final !== undefined ? eventData.nivel_intensidade_final : local.nivel_intensidade_final,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', eventId);
@@ -901,6 +918,7 @@ export const TIPOS_DOCUMENTO_REDAP = [
     { value: 'Decreto de Situação de Emergência',               obrigatoriedade: 'OBRIGATORIO' },
     { value: 'Decreto de Estado de Calamidade Pública',         obrigatoriedade: 'CONDICIONAL' },
     { value: 'Ofício de Solicitação de Reconhecimento (SEDEC)', obrigatoriedade: 'OBRIGATORIO' },
+    { value: 'Ofício - Requerimento CEPDEC/ES',                 obrigatoriedade: 'OBRIGATORIO' },
     { value: 'Parecer Técnico da Defesa Civil',                 obrigatoriedade: 'OBRIGATORIO' },
     { value: 'Relatório Fotográfico',                           obrigatoriedade: 'RECOMENDADO' },
     { value: 'Laudo de Vistoria (SECOBR/engenheiro)',           obrigatoriedade: 'RECOMENDADO' },
@@ -913,6 +931,7 @@ export const TIPOS_DOCUMENTO_REDAP = [
 export const DOCS_OBRIGATORIOS_HOMOLOGACAO = [
     'Decreto de Situação de Emergência',
     'Ofício de Solicitação de Reconhecimento (SEDEC)',
+    'Ofício - Requerimento CEPDEC/ES',
     'Parecer Técnico da Defesa Civil',
 ];
 

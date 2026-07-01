@@ -13,8 +13,10 @@ import { UserContext } from '../../App';
 import * as redapService from '../../services/redapService';
 import { useToast } from '../../components/ToastNotification';
 import { generateRedapReport } from '../../utils/redapReportGenerator';
+import FluxoAprovacaoTimeline from './components/FluxoAprovacaoTimeline';
 import RedapMapModal from './components/RedapMapModal';
 import RedapLocationPickerModal from './components/RedapLocationPickerModal';
+import RedapParecerDecisorioModal from './components/RedapParecerDecisorioModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import EventModal from './components/EventModal';
 import RedapDocumentosOficiais from './components/RedapDocumentosOficiais';
@@ -65,6 +67,7 @@ const RedapEventDetails = () => {
     const [devolverSecao, setDevolverSecao] = useState(null);
     const [justificativa, setJustificativa] = useState('');
     const [showAssinarModal, setShowAssinarModal] = useState(false);
+    const [showParecerModal, setShowParecerModal] = useState(false);
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
     // Validação de Documentos
@@ -187,6 +190,41 @@ const RedapEventDetails = () => {
             loadData();
         } catch (e) {
             toast.error('Erro ao atualizar fluxo.');
+        }
+    };
+
+    const handleSalvarParecerDecisorio = async (dadosParecer) => {
+        try {
+            // Lógica de salvar o parecer (implementaremos no redapService se necessário)
+            // Se Opção B, evento encerra.
+            // Se Opção A, avança fluxo.
+            
+            // Simulação de salvar parecer
+            if (dadosParecer.opcao === 'B') {
+                const updated = await redapService.updateEvent(id, {
+                    ...event,
+                    status_geral: 'ENCERRADO_SEM_DECRETACAO',
+                    nivel_intensidade_final: null
+                });
+                await redapService.updateFluxoEtapa(id, 3, 'NAO_APLICAVEL', user?.full_name); // Conclui etapa como não aplicável ou alternativa
+                setEvent(updated);
+                toast.success('Parecer emitido. Evento encerrado sem decretação.');
+            } else {
+                // Opção A
+                const updated = await redapService.updateEvent(id, {
+                    ...event,
+                    status_geral: 'PARECER_FAVORAVEL_DECRETACAO',
+                    nivel_intensidade_final: dadosParecer.nivel_intensidade
+                });
+                await redapService.updateFluxoEtapa(id, 3, 'CONCLUIDA', user?.full_name);
+                setEvent(updated);
+                toast.success('Parecer favorável emitido com sucesso! Avançando para decretos.');
+            }
+            
+            setShowParecerModal(false);
+            loadData();
+        } catch (error) {
+            toast.error('Erro ao salvar o parecer decisório.');
         }
     };
 
@@ -536,6 +574,32 @@ const RedapEventDetails = () => {
             </header>
 
             <main className="p-4 space-y-6 max-w-7xl mx-auto">
+                {/* Banner de Encerramento sem Decretação */}
+                {event?.status_geral === 'ENCERRADO_SEM_DECRETACAO' && (
+                    <div className="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4 rounded-r-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle size={24} className="text-rose-500 shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="text-sm font-bold text-rose-800 dark:text-rose-300 uppercase tracking-widest">
+                                    Evento Encerrado Internamente
+                                </h3>
+                                <p className="text-xs text-rose-700/80 dark:text-rose-200/80 mt-1 leading-relaxed">
+                                    Este evento foi ENCERRADO INTERNAMENTE sem decretação de situação de emergência ou calamidade pública, 
+                                    conforme Parecer Decisório do Coordenador.
+                                </p>
+                            </div>
+                        </div>
+                        {isDefesaCivil && (
+                            <button
+                                onClick={handleReabrirEvento}
+                                className="bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-colors shrink-0"
+                            >
+                                Reabrir Evento
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {/* Event Summary Card */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 transition-all">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
@@ -594,8 +658,8 @@ const RedapEventDetails = () => {
                         </div>
                         <div className="space-y-1">
                             <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Status do Desastre</p>
-                            <p className="mt-1">
-                                {event?.status_evento === 'FECHADO' || event?.status_geral === 'FECHADO' ? (
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                                {event?.status_evento === 'FECHADO' || event?.status_geral === 'FECHADO' || event?.status_geral === 'ENCERRADO_SEM_DECRETACAO' ? (
                                     <span className="inline-flex text-[10px] font-black text-rose-600 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                                         Fechado (Bloqueado)
                                     </span>
@@ -604,7 +668,16 @@ const RedapEventDetails = () => {
                                         Aberto (Secretarias)
                                     </span>
                                 )}
-                            </p>
+                                {event?.nivel_intensidade_final && (
+                                    <span className={`inline-flex text-[10px] font-black border px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                        event.nivel_intensidade_final === 'NIVEL_I' ? 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' :
+                                        event.nivel_intensidade_final === 'NIVEL_II' ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800' :
+                                        'text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800'
+                                    }`}>
+                                        {event.nivel_intensidade_final.replace('_', ' ')}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-1 col-span-1">
                             <p className="text-slate-400 font-bold uppercase tracking-wider text-xs">Localidade e Município</p>
@@ -653,59 +726,18 @@ const RedapEventDetails = () => {
                 </div>
 
                 {/* Workflow Progression (Timeline) */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-all">
-                    <h3 className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Clock size={16} className="text-blue-500" /> Fluxo de Aprovação e Validação
-                    </h3>
-                    <div className="relative pt-4 pb-2">
-                        <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-100 dark:bg-slate-800 -translate-y-1/2 z-0 hidden md:block" />
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative z-10">
-                            {fluxo.map(et => {
-                                const isDone = et.status === 'CONCLUIDA';
-                                return (
-                                    <div key={et.id} className="bg-slate-50 dark:bg-slate-800/40 md:bg-transparent p-4 md:p-0 rounded-2xl flex flex-col items-center text-center space-y-2">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                                            isDone ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                                        }`}>
-                                            {et.etapa}
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-black uppercase tracking-tight text-slate-700 dark:text-slate-200 leading-tight">
-                                                {et.descricao_etapa.split(' (')[0]}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 font-bold mt-0.5">{et.responsavel}</p>
-                                        </div>
-                                        {isDefesaCivil && (
-                                            !isDone ? (
-                                                <button
-                                                    onClick={() => handleAvancarEtapa(et.etapa)}
-                                                    disabled={et.etapa === 4 && !docsLiberados}
-                                                    title={et.etapa === 4 && !docsLiberados ? 'Documentos obrigatórios pendentes' : ''}
-                                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all shadow-sm shrink-0 ${
-                                                        et.etapa === 4 && !docsLiberados
-                                                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed dark:bg-slate-800 dark:text-slate-600'
-                                                        : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                                                    }`}
-                                                >
-                                                    Concluir
-                                                </button>
-                                            ) : (
-                                                et.etapa === 2 && event?.status_geral === 'FECHADO' && (
-                                                    <button
-                                                        onClick={() => handleReabrirEvento()}
-                                                        className="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase active:scale-95 transition-all shadow-sm shrink-0"
-                                                    >
-                                                        Reabrir
-                                                    </button>
-                                                )
-                                            )
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
+                <FluxoAprovacaoTimeline 
+                    evento={event}
+                    fases={fluxo}
+                    isDefesaCivil={isDefesaCivil}
+                    isPrefeito={user?.role === 'Prefeito'}
+                    userPapel={user?.role}
+                    onEmitirParecerConsolidacao={() => handleAvancarEtapa(2)}
+                    onEmitirParecerDecisorio={() => setShowParecerModal(true)}
+                    onGerarDocumentos={() => handleAvancarEtapa(4)}
+                    onEnviarCepdec={() => handleAvancarEtapa(5)}
+                    onExportarPacote={() => toast.info('Em breve: Exportação de pacote documental completo (.zip)')}
+                />
 
                 {/* Seções Estruturadas REDAP-001/2026 */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 p-7 shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 transition-all">
@@ -744,6 +776,7 @@ const RedapEventDetails = () => {
                         eventoId={id}
                         user={user}
                         documentos={documentos}
+                        eventData={event}
                         onUpdate={loadData}
                     />
                 )}
@@ -948,6 +981,13 @@ const RedapEventDetails = () => {
                     }}
                 />
             )}
+
+            <RedapParecerDecisorioModal
+                isOpen={showParecerModal}
+                onClose={() => setShowParecerModal(false)}
+                onConfirm={handleSalvarParecerDecisorio}
+                user={user}
+            />
         </div>
     );
 };

@@ -64,6 +64,7 @@ const UserManagement = lazy(() => import('./pages/UserManagement'))
 
 // Configurações do Sistema (Lazy)
 const ConfiguracoesPage = lazy(() => import('./pages/Configuracoes'))
+const MrcrPage = lazy(() => import('./pages/Mrcr'))
 
 // Redap Module (Lazy)
 const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
@@ -337,6 +338,11 @@ const AppContent = ({
                                 <Route path="/configuracoes" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral']}>
                                         <ConfiguracoesPage />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/mrcr" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral']}>
+                                        <MrcrPage />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/checklist-saida" element={

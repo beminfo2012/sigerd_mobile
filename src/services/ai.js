@@ -43,3 +43,22 @@ export const refineReportText = async (text, category = 'Geral', context = '', t
     }
 };
 
+export const generateRedapDocumentIa = async (promptText) => {
+    if (!promptText) return null;
+    try {
+        const response = await fetch('/api/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: promptText, type: 'documento', category: 'Documento' })
+        });
+        if (response.ok) {
+            return await response.text();
+        } else {
+            return null;
+        }
+    } catch (e) {
+        console.error('AI Document Error:', e);
+        return null;
+    }
+};
+

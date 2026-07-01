@@ -5,6 +5,7 @@ import { listOrthofotos, uploadOrthofoto, registerTilesLayer, updateOrthofoto, d
 import { toast } from '../../components/ToastNotification';
 import { compressImage } from '../../utils/imageOptimizer';
 import PizZip from 'pizzip';
+import MrcrTab from './MrcrTab';
 
 const DEFAULT_BOUNDS = [[-20.06, -40.80], [-19.98, -40.70]];
 
@@ -135,6 +136,7 @@ const ConfiguracoesPage = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
+    const [activeConfigTab, setActiveConfigTab] = useState('orthofotos');
     const [orthofotos, setOrthofotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -541,7 +543,6 @@ const ConfiguracoesPage = () => {
             </header>
 
             <main className="flex-1 overflow-y-auto p-4 space-y-6 max-w-4xl mx-auto w-full">
-
                 {/* Info Card */}
                 <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-4 flex gap-3">
                     <Info size={18} className="text-indigo-500 shrink-0 mt-0.5" />
