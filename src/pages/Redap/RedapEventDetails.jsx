@@ -20,6 +20,7 @@ import RedapParecerDecisorioModal from './components/RedapParecerDecisorioModal'
 import ConfirmModal from '../../components/ConfirmModal';
 import EventModal from './components/EventModal';
 import RedapDocumentosOficiais from './components/RedapDocumentosOficiais';
+import RedapQuadroResumoModal from './components/RedapQuadroResumoModal';
 
 const SECOES_REDAP = [
     { id: '1', titulo: 'Seção 1: Identificação Institucional e do Evento', secretaria: 'Defesa Civil', editavel: false },
@@ -64,6 +65,7 @@ const RedapEventDetails = () => {
     const [showMapModal, setShowMapModal] = useState(false);
     const [showLocationPicker, setShowLocationPicker] = useState(false);
     const [showEditEventModal, setShowEditEventModal] = useState(false);
+    const [showQuadroResumoModal, setShowQuadroResumoModal] = useState(false);
     const [devolverSecao, setDevolverSecao] = useState(null);
     const [justificativa, setJustificativa] = useState('');
     const [showAssinarModal, setShowAssinarModal] = useState(false);
@@ -438,6 +440,16 @@ const RedapEventDetails = () => {
         const readOnly = (event?.status_geral === 'FECHADO') || (!isDefesaCivil && (record?.status_secao === 'VALIDADO' || record?.status_secao === 'ENVIADO'));
 
         if (item.editavel === false) {
+            if (item.id === '7') {
+                return (
+                    <button
+                        onClick={() => setShowQuadroResumoModal(true)}
+                        className="bg-blue-600 dark:bg-blue-500 text-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase hover:bg-blue-700 transition-all flex items-center gap-1 active:scale-95 shrink-0"
+                    >
+                        <Eye size={14} /> Ver Resumo
+                    </button>
+                );
+            }
             return null;
         }
 
@@ -981,6 +993,12 @@ const RedapEventDetails = () => {
                     }}
                 />
             )}
+
+            <RedapQuadroResumoModal
+                isOpen={showQuadroResumoModal}
+                onClose={() => setShowQuadroResumoModal(false)}
+                secoes={secoes}
+            />
 
             <RedapParecerDecisorioModal
                 isOpen={showParecerModal}

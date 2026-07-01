@@ -116,6 +116,10 @@ const RedapSectorForm = () => {
                 items = ['Hospitais', 'Unidades Básicas de Saúde (UBS)', 'Pronto Atendimento (PA)', 'Farmácias Públicas', 'Laboratórios de Análises'];
             } else if (userSecretaria === 'Educação') {
                 items = ['Escolas Municipais de Ensino Fundamental', 'Centros Municipais de Ed. Infantil (CMEI)', 'Bibliotecas Públicas'];
+            } else if (userSecretaria === 'Assistência Social') {
+                items = ['Centros de Referência de Assistência Social (CRAS)', 'Centros de Referência Especializado (CREAS)', 'Abrigos e Casas de Passagem'];
+            } else if (userSecretaria === 'Serviços Urbanos') {
+                items = ['Prédios Administrativos', 'Garagens e Pátios de Máquinas', 'Cemitérios Municipais'];
             } else {
                 items = ['Prefeitura Municipal (Sede)', 'Almoxarifado Central', 'Prédios Administrativos', 'Quadras Poliesportivas'];
             }
@@ -123,29 +127,101 @@ const RedapSectorForm = () => {
             items.forEach(it => {
                 itemsData[it] = { danificado: 0, destruido: 0, valor_estimado: 0 };
             });
-            setDadosJson({ items: itemsData, detalhes: '' });
+
+            // Serviços Essenciais
+            let servicos = [];
+            if (userSecretaria === 'Saúde') {
+                servicos = ['Assistência médica, saúde pública e atendimento de emergências médicas'];
+            } else if (userSecretaria === 'Educação') {
+                servicos = ['Rede de ensino público e transporte escolar'];
+            } else if (userSecretaria === 'Serviços Urbanos') {
+                servicos = ['Limpeza urbana e recolhimento de lixo', 'Iluminação pública'];
+            } else if (userSecretaria === 'CESAN' || userSecretaria === 'Cesan') {
+                servicos = ['Abastecimento de água potável', 'Esgotamento sanitário'];
+            } else if (userSecretaria === 'Defesa Social') {
+                servicos = ['Segurança Pública (Guarda Municipal, Defesa Civil)'];
+            }
+            const servicosData = {};
+            servicos.forEach(it => {
+                servicosData[it] = { prejudicado: 'Não', valor_estimado: 0 };
+            });
+
+            setDadosJson({ items: itemsData, servicos: servicosData, detalhes: '' });
         } else if (secaoEnum === 'DANOS_INFRAESTRUTURA') {
             const items = ['Pontes de Madeira', 'Pontes de Concreto', 'Bueiros e Galerias', 'Estradas Vicinais (KM)', 'Muros de Contenção'];
+            if (userSecretaria === 'Obras') {
+                items.push('Vias Pavimentadas');
+            }
             const itemsData = {};
             items.forEach(it => {
                 itemsData[it] = { danificado: 0, destruido: 0, valor_estimado: 0, extensao: '' };
             });
             setDadosJson({ items: itemsData, detalhes: '' });
         } else if (secaoEnum === 'DANOS_AGRICOLAS') {
-            const items = ['Lavouras Temporárias', 'Lavouras Permanentes', 'Pecuária de Corte/Leite', 'Piscicultura / Tanques', 'Mel e Silvicultura'];
-            const itemsData = {};
-            items.forEach(it => {
-                itemsData[it] = { area_afetada_ha: 0, produtores_atingidos: 0, perda_estimada_ton: 0, valor_estimado: 0 };
-            });
-            setDadosJson({ items: itemsData, detalhes: '' });
+            if (userSecretaria === 'Agropecuária' || userSecretaria === 'Agricultura') {
+                const gruposAgro = {
+                    'Hortaliças em campo': 'ha',
+                    'Hortaliças em cultivo protegido (estufas)': 'ha',
+                    'Fruticultura': 'ha',
+                    'Cafeicultura': 'ha',
+                    'Avicultura (produção de ovos e aves)': 'un./produtores',
+                    'Pecuária leiteira': 'produtores/rebanho',
+                    'Outras culturas agrícolas': 'ha',
+                    'Estufas agrícolas': 'un.',
+                    'Sistemas de irrigação': 'un.',
+                    'Galpões e instalações rurais': 'un.',
+                    'Máquinas e implementos agrícolas': 'un.',
+                    'Insumos agrícolas armazenados': 'R$'
+                };
+                const itemsAgro = {};
+                for(let k in gruposAgro) {
+                    itemsAgro[k] = { unidade: gruposAgro[k], quantidade: 0, percentual: 0, valor_estimado: 0, observacoes: '' };
+                }
+
+                const gruposInfra = {
+                    'Estufas': 'un.',
+                    'Galpões': 'un.',
+                    'Sistemas de irrigação': 'un.',
+                    'Reservatórios de água': 'un.',
+                    'Cercas': 'm',
+                    'Máquinas e implementos': 'un.',
+                    'Pontes particulares de acesso às propriedades': 'un.',
+                    'Estradas internas das propriedades': 'm'
+                };
+                const infraData = {};
+                for(let k in gruposInfra) {
+                    infraData[k] = { unidade: gruposInfra[k], quantidade: 0, valor_estimado: 0 };
+                }
+
+                setDadosJson({ agro: itemsAgro, infra: infraData, detalhes: '' });
+            } else if (userSecretaria === 'CDL' || userSecretaria === 'Desenvolvimento Econômico') {
+                const setores = ['Indústria', 'Comércio', 'Serviços'];
+                const setoresData = {};
+                setores.forEach(s => {
+                    setoresData[s] = { valor_estimado: 0 };
+                });
+                setDadosJson({ setores: setoresData, detalhes: '' });
+            } else {
+                const items = ['Lavouras Temporárias', 'Lavouras Permanentes', 'Pecuária de Corte/Leite', 'Piscicultura / Tanques', 'Mel e Silvicultura'];
+                const itemsData = {};
+                items.forEach(it => {
+                    itemsData[it] = { area_afetada_ha: 0, produtores_atingidos: 0, perda_estimada_ton: 0, valor_estimado: 0 };
+                });
+                setDadosJson({ items: itemsData, detalhes: '' });
+            }
         } else if (secaoEnum === 'DANOS_AMBIENTAIS') {
-            setDadosJson({
-                area_atingida_ha: 0,
-                recursos_hidricos_comprometidos: 'Não',
-                incendios_florestais: 'Não',
-                custo_recuperacao: 0,
-                detalhes: ''
+            const ambientais = [
+                'Poluição ou contaminação da água',
+                'Poluição ou contaminação do ar',
+                'Poluição ou contaminação do solo',
+                'Diminuição ou exaurimento hídrico',
+                "Incêndios em parques, APA's ou APP's"
+            ];
+            const impactos = {};
+            ambientais.forEach(it => {
+                impactos[it] = { ocorreu: 'Não', populacao_atingida: '', area_atingida: '' };
             });
+            setDadosJson({ impactos: impactos, detalhes: '' });
         } else if (secaoEnum === 'OBSERVACOES') {
             setDadosJson({
                 parecer_tecnico: '',
@@ -434,6 +510,57 @@ const RedapSectorForm = () => {
                         </div>
                     )}
 
+                    
+                    {config?.enum === 'DANOS_EDIFICACOES' && dadosJson.servicos && Object.keys(dadosJson.servicos).length > 0 && (
+                        <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Serviços Essenciais Afetados / Prejudicados
+                            </h3>
+                            <div className="space-y-4">
+                                {Object.keys(dadosJson.servicos).map((itemName) => {
+                                    const item = dadosJson.servicos[itemName];
+                                    return (
+                                        <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                            <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName}</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Prejudicado?</label>
+                                                    <select
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                        value={item.prejudicado || 'Não'}
+                                                        onChange={(e) => {
+                                                            const newServicos = { ...dadosJson.servicos };
+                                                            newServicos[itemName].prejudicado = e.target.value;
+                                                            setDadosJson({ ...dadosJson, servicos: newServicos });
+                                                        }}
+                                                    >
+                                                        <option value="Não">Não</option>
+                                                        <option value="Parcialmente">Parcialmente</option>
+                                                        <option value="Totalmente">Totalmente</option>
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Estimado (R$)</label>
+                                                    <CurrencyInput
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                        value={item.valor_estimado || 0}
+                                                        onChange={(val) => {
+                                                            const newServicos = { ...dadosJson.servicos };
+                                                            newServicos[itemName].valor_estimado = val;
+                                                            setDadosJson({ ...dadosJson, servicos: newServicos });
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {config?.enum === 'DANOS_INFRAESTRUTURA' && dadosJson.items && (
                         <div className="space-y-4">
                             <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
@@ -511,7 +638,159 @@ const RedapSectorForm = () => {
                         </div>
                     )}
 
-                    {config?.enum === 'DANOS_AGRICOLAS' && dadosJson.items && (
+                    
+                    {config?.enum === 'DANOS_AGRICOLAS' && Object.keys(dadosJson).includes('agro') && dadosJson.agro && (
+                        <div className="space-y-8">
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                    <List size={16} className="text-blue-500" /> Produção Agropecuária
+                                </h3>
+                                <div className="space-y-6">
+                                    {Object.keys(dadosJson.agro).map((itemName) => {
+                                        const item = dadosJson.agro[itemName];
+                                        return (
+                                            <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                                <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName} <span className="text-[10px] text-slate-400 font-normal">({item.unidade})</span></h4>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Quantidade</label>
+                                                        <DecimalInput
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.quantidade}
+                                                            onChange={(val) => {
+                                                                const newAgro = { ...dadosJson.agro };
+                                                                newAgro[itemName].quantidade = val;
+                                                                setDadosJson({ ...dadosJson, agro: newAgro });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Perda (%)</label>
+                                                        <input
+                                                            type="number"
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.percentual || 0}
+                                                            onChange={(e) => {
+                                                                const newAgro = { ...dadosJson.agro };
+                                                                newAgro[itemName].percentual = parseFloat(e.target.value) || 0;
+                                                                setDadosJson({ ...dadosJson, agro: newAgro });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Prejuízo (R$)</label>
+                                                        <CurrencyInput
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.valor_estimado || 0}
+                                                            onChange={(val) => {
+                                                                const newAgro = { ...dadosJson.agro };
+                                                                newAgro[itemName].valor_estimado = val;
+                                                                setDadosJson({ ...dadosJson, agro: newAgro });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Observações</label>
+                                                        <input
+                                                            type="text"
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.observacoes || ''}
+                                                            onChange={(e) => {
+                                                                const newAgro = { ...dadosJson.agro };
+                                                                newAgro[itemName].observacoes = e.target.value;
+                                                                setDadosJson({ ...dadosJson, agro: newAgro });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                                <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                    <List size={16} className="text-blue-500" /> Infraestrutura Rural
+                                </h3>
+                                <div className="space-y-6">
+                                    {dadosJson.infra && Object.keys(dadosJson.infra).map((itemName) => {
+                                        const item = dadosJson.infra[itemName];
+                                        return (
+                                            <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                                <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName} <span className="text-[10px] text-slate-400 font-normal">({item.unidade})</span></h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Qtd. Danificada</label>
+                                                        <DecimalInput
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.quantidade}
+                                                            onChange={(val) => {
+                                                                const newInfra = { ...dadosJson.infra };
+                                                                newInfra[itemName].quantidade = val;
+                                                                setDadosJson({ ...dadosJson, infra: newInfra });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Estimado (R$)</label>
+                                                        <CurrencyInput
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.valor_estimado || 0}
+                                                            onChange={(val) => {
+                                                                const newInfra = { ...dadosJson.infra };
+                                                                newInfra[itemName].valor_estimado = val;
+                                                                setDadosJson({ ...dadosJson, infra: newInfra });
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {config?.enum === 'DANOS_AGRICOLAS' && Object.keys(dadosJson).includes('setores') && dadosJson.setores && (
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
+                                <List size={16} className="text-blue-500" /> Prejuízos Econômicos Privados
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {Object.keys(dadosJson.setores).map((itemName) => {
+                                    const item = dadosJson.setores[itemName];
+                                    return (
+                                        <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                            <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName}</h4>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Prejuízo (R$)</label>
+                                                <CurrencyInput
+                                                    disabled={isReadOnly}
+                                                    className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                    value={item.valor_estimado || 0}
+                                                    onChange={(val) => {
+                                                        const newSetores = { ...dadosJson.setores };
+                                                        newSetores[itemName].valor_estimado = val;
+                                                        setDadosJson({ ...dadosJson, setores: newSetores });
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {config?.enum === 'DANOS_AGRICOLAS' && Object.keys(dadosJson).includes('items') && dadosJson.items && (
                         <div className="space-y-4">
                             <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
                                 <List size={16} className="text-blue-500" /> Atividades Agrícolas / Agropecuárias
@@ -585,54 +864,86 @@ const RedapSectorForm = () => {
                         </div>
                     )}
 
-                    {config?.enum === 'DANOS_AMBIENTAIS' && (
+                    {config?.enum === 'DANOS_AMBIENTAIS' && dadosJson.impactos && (
                         <div className="space-y-4">
                             <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
                                 <List size={16} className="text-blue-500" /> Impactos Ambientais
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Área Degradada (HA)</label>
-                                    <DecimalInput
-                                        disabled={isReadOnly}
-                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
-                                        value={dadosJson.area_atingida_ha}
-                                        onChange={(val) => setDadosJson({ ...dadosJson, area_atingida_ha: val })}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Recursos Hídricos Comprometidos?</label>
-                                    <select
-                                        disabled={isReadOnly}
-                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
-                                        value={dadosJson.recursos_hidricos_comprometidos || 'Não'}
-                                        onChange={(e) => setDadosJson({ ...dadosJson, recursos_hidricos_comprometidos: e.target.value })}
-                                    >
-                                        <option value="Não">Não</option>
-                                        <option value="Sim">Sim</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Ocorrência de Incêndios?</label>
-                                    <select
-                                        disabled={isReadOnly}
-                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
-                                        value={dadosJson.incendios_florestais || 'Não'}
-                                        onChange={(e) => setDadosJson({ ...dadosJson, incendios_florestais: e.target.value })}
-                                    >
-                                        <option value="Não">Não</option>
-                                        <option value="Sim">Sim</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Custo de Recuperação (R$)</label>
-                                    <CurrencyInput
-                                        disabled={isReadOnly}
-                                        className="w-full px-4 py-3.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none text-base transition-all"
-                                        value={dadosJson.custo_recuperacao || 0}
-                                        onChange={(val) => setDadosJson({ ...dadosJson, custo_recuperacao: val })}
-                                    />
-                                </div>
+                            <div className="space-y-4">
+                                {Object.keys(dadosJson.impactos).map((itemName) => {
+                                    const item = dadosJson.impactos[itemName];
+                                    const isIncendio = itemName.includes('Incêndio');
+                                    
+                                    return (
+                                        <div key={itemName} className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-150 dark:border-slate-800/65 space-y-3">
+                                            <h4 className="text-sm font-black text-slate-800 dark:text-slate-200">{itemName}</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Ocorreu?</label>
+                                                    <select
+                                                        disabled={isReadOnly}
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                        value={item.ocorreu || 'Não'}
+                                                        onChange={(e) => {
+                                                            const newImpactos = { ...dadosJson.impactos };
+                                                            newImpactos[itemName].ocorreu = e.target.value;
+                                                            if (e.target.value === 'Não') {
+                                                                newImpactos[itemName].populacao_atingida = '';
+                                                                newImpactos[itemName].area_atingida = '';
+                                                            }
+                                                            setDadosJson({ ...dadosJson, impactos: newImpactos });
+                                                        }}
+                                                    >
+                                                        <option value="Não">Não</option>
+                                                        <option value="Sim">Sim</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                {item.ocorreu === 'Sim' && !isIncendio && (
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">População do município atingida</label>
+                                                        <select
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.populacao_atingida || ''}
+                                                            onChange={(e) => {
+                                                                const newImpactos = { ...dadosJson.impactos };
+                                                                newImpactos[itemName].populacao_atingida = e.target.value;
+                                                                setDadosJson({ ...dadosJson, impactos: newImpactos });
+                                                            }}
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            <option value="0 a 5%">0 a 5%</option>
+                                                            <option value="5 a 10%">5 a 10%</option>
+                                                            <option value="10 a 20%">10 a 20%</option>
+                                                            <option value="mais de 20%">mais de 20%</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+
+                                                {item.ocorreu === 'Sim' && isIncendio && (
+                                                    <div className="space-y-1">
+                                                        <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Área atingida</label>
+                                                        <select
+                                                            disabled={isReadOnly}
+                                                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                            value={item.area_atingida || ''}
+                                                            onChange={(e) => {
+                                                                const newImpactos = { ...dadosJson.impactos };
+                                                                newImpactos[itemName].area_atingida = e.target.value;
+                                                                setDadosJson({ ...dadosJson, impactos: newImpactos });
+                                                            }}
+                                                        >
+                                                            <option value="">Selecione...</option>
+                                                            <option value="40%">40%</option>
+                                                            <option value="Mais de 40%">Mais de 40%</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
