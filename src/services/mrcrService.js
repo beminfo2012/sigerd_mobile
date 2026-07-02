@@ -30,6 +30,7 @@ export const getTipologiasComposicoes = async () => {
  * Salva a importação do DER-ES atualizando as composições e o histórico.
  */
 export const importarDerEs = async ({ fonte, mesReferencia, composicoesAtualizadas, usuarioNome }) => {
+    const formattedMesReferencia = mesReferencia.length === 7 ? `${mesReferencia}-01` : mesReferencia;
     // 1. Atualizar mrcr_composicoes
     for (const item of composicoesAtualizadas) {
         // item = { tipologia_id, composicao, custo_unitario }
@@ -49,7 +50,7 @@ export const importarDerEs = async ({ fonte, mesReferencia, composicoesAtualizad
             updateData.composicoes_deres_edif = item.composicao;
             updateData.custo_unitario_deres_edif = item.custo_unitario;
         }
-        updateData.mes_referencia_deres = mesReferencia;
+        updateData.mes_referencia_deres = formattedMesReferencia;
         updateData.updated_at = new Date().toISOString();
 
         if (compExistente) {
@@ -75,7 +76,7 @@ export const importarDerEs = async ({ fonte, mesReferencia, composicoesAtualizad
                 custo_unitario: item.custo_unitario, // Campo genérico opcional
                 custo_unitario_deres_rod: fonte === 'DER_ES_ROD' ? item.custo_unitario : null,
                 custo_unitario_deres_edif: fonte === 'DER_ES_EDIF' ? item.custo_unitario : null,
-                mes_referencia: mesReferencia
+                mes_referencia: formattedMesReferencia
             });
     }
 
@@ -84,7 +85,7 @@ export const importarDerEs = async ({ fonte, mesReferencia, composicoesAtualizad
         .from('mrcr_atualizacoes_log')
         .insert({
             fonte,
-            mes_referencia: mesReferencia,
+            mes_referencia: formattedMesReferencia,
             importado_por: usuarioNome,
             composicoes_atualizadas: composicoesAtualizadas.length,
             status: 'SUCESSO'

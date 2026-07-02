@@ -129,7 +129,7 @@ const MrcrTab = () => {
 
                 compBase.itens.forEach(item => {
                     const itemDescNorm = normalize(item.descricao);
-                    const itemWords = itemDescNorm.split(' ').filter(w => w.length > 2);
+                    const itemWords = itemDescNorm.replace(/[^a-z0-9]/g, ' ').split(' ').filter(w => w.length > 2);
                     
                     let foundPreco = item.preco_unitario; // Mantém o base se não achar
                     
@@ -138,7 +138,7 @@ const MrcrTab = () => {
                         const rowTextNorm = normalize(rowText);
                         
                         const matchCount = itemWords.filter(w => rowTextNorm.includes(w)).length;
-                        if (itemWords.length > 0 && matchCount >= Math.ceil(itemWords.length * 0.7)) {
+                        if (itemWords.length > 0 && matchCount >= Math.ceil(itemWords.length * 0.5)) {
                             
                             // Extrair o primeiro valor monetário grande da linha (o valor unitário do material)
                             // Match currency format like 1.234,56 or 12,34
