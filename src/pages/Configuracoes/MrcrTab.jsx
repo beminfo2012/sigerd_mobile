@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Upload, FileSpreadsheet, Check, AlertTriangle, Loader2, Table2, Eye, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import * as pdfjsLib from 'pdfjs-dist';
+// Configuração do worker do PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 import { getMapeamentosDerEs, getTipologiasComposicoes, importarDerEs, getUltimaAtualizacaoDerEs, forcePullSinapiSicro } from '../../services/mrcrService';
 import { toast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
@@ -18,7 +21,7 @@ const MrcrTab = () => {
     
     // Importação
     const [fonteSelecionada, setFonteSelecionada] = useState('DER_ES_ROD');
-    const [mesReferencia, setMesReferencia] = useState(new Date().toISOString().slice(0, 10));
+    const [mesReferencia, setMesReferencia] = useState(new Date().toISOString().slice(0, 7));
     const [previaImportacao, setPreviaImportacao] = useState(null);
     
     // Tabs internas (Comparativo vs Importação)
@@ -290,7 +293,7 @@ const MrcrTab = () => {
                             >
                                 {uploading ? <Loader2 size={24} className="animate-spin text-blue-500" /> : <FileSpreadsheet size={24} className="text-slate-400 group-hover:text-blue-500" />}
                                 <span className="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                    {uploading ? 'Processando...' : 'Selecionar arquivo XLS/XLSX'}
+                                    {uploading ? 'Processando...' : (fonteSelecionada === 'DER_ES_ROD' ? 'Selecionar PDFs (Múltiplos permitidos)' : 'Selecionar arquivo XLS/XLSX')}
                                 </span>
                             </button>
                             <input 
