@@ -570,23 +570,6 @@ const MrcrTab = () => {
                         </div>
                     </div>
                 </div>
-            )}.format(item.preco_unitario)}</td>
-                                            <td className="p-3 text-right font-bold text-blue-600 dark:text-blue-400">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colSpan="4" className="p-4 text-right font-black uppercase tracking-widest text-slate-500">Custo Total da Composição:</td>
-                                        <td className="p-4 text-right font-black text-emerald-600 dark:text-emerald-400 text-lg">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedComposicao.total || selectedComposicao.itens?.reduce((acc, curr) => acc + curr.total, 0) || 0)}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             )}
         </div>
     );
