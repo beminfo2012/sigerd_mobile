@@ -469,7 +469,7 @@ const RedapSectorForm = () => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].danificado = parseInt(e.target.value) || 0;
                                                             if (newItems[itemName].valor_referencia) {
-                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                                newItems[itemName].valor_estimado = (newItems[itemName].extensao !== undefined ? (newItems[itemName].extensao || 0) * newItems[itemName].valor_referencia : ((newItems[itemName].destruido || 0) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5));
                                                             }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
@@ -486,7 +486,7 @@ const RedapSectorForm = () => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].destruido = parseInt(e.target.value) || 0;
                                                             if (newItems[itemName].valor_referencia) {
-                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                                newItems[itemName].valor_estimado = (newItems[itemName].extensao !== undefined ? (newItems[itemName].extensao || 0) * newItems[itemName].valor_referencia : ((newItems[itemName].destruido || 0) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5));
                                                             }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
@@ -501,7 +501,7 @@ const RedapSectorForm = () => {
                                                         onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].valor_referencia = val;
-                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
+                                                            newItems[itemName].valor_estimado = (item.extensao !== undefined ? (item.extensao || 0) * val : ((item.destruido || 0) * val + (item.danificado || 0) * val * 0.5));
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -511,7 +511,7 @@ const RedapSectorForm = () => {
                                                             const newItems = { ...dadosJson.items };
                                                             const val = mrcrData.valor_unitario;
                                                             newItems[itemName].valor_referencia = val;
-                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
+                                                            newItems[itemName].valor_estimado = (item.extensao !== undefined ? (item.extensao || 0) * val : ((item.destruido || 0) * val + (item.danificado || 0) * val * 0.5));
                                                             newItems[itemName].mrcr_meta = mrcrData;
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
@@ -607,7 +607,7 @@ const RedapSectorForm = () => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].danificado = parseInt(e.target.value) || 0;
                                                             if (newItems[itemName].valor_referencia) {
-                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                                newItems[itemName].valor_estimado = (newItems[itemName].extensao !== undefined ? (newItems[itemName].extensao || 0) * newItems[itemName].valor_referencia : ((newItems[itemName].destruido || 0) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5));
                                                             }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
@@ -624,7 +624,7 @@ const RedapSectorForm = () => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].destruido = parseInt(e.target.value) || 0;
                                                             if (newItems[itemName].valor_referencia) {
-                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                                newItems[itemName].valor_estimado = (newItems[itemName].extensao !== undefined ? (newItems[itemName].extensao || 0) * newItems[itemName].valor_referencia : ((newItems[itemName].destruido || 0) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5));
                                                             }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
@@ -640,7 +640,7 @@ const RedapSectorForm = () => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].extensao = val;
                                                             if (newItems[itemName].valor_referencia) {
-                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                                newItems[itemName].valor_estimado = (newItems[itemName].extensao !== undefined ? (newItems[itemName].extensao || 0) * newItems[itemName].valor_referencia : ((newItems[itemName].destruido || 0) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5));
                                                             }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
@@ -655,7 +655,7 @@ const RedapSectorForm = () => {
                                                         onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].valor_referencia = val;
-                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
+                                                            newItems[itemName].valor_estimado = (item.extensao !== undefined ? (item.extensao || 0) * val : ((item.destruido || 0) * val + (item.danificado || 0) * val * 0.5));
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -665,7 +665,7 @@ const RedapSectorForm = () => {
                                                             const newItems = { ...dadosJson.items };
                                                             const val = mrcrData.valor_unitario;
                                                             newItems[itemName].valor_referencia = val;
-                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
+                                                            newItems[itemName].valor_estimado = (item.extensao !== undefined ? (item.extensao || 0) * val : ((item.destruido || 0) * val + (item.danificado || 0) * val * 0.5));
                                                             newItems[itemName].mrcr_meta = mrcrData;
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
