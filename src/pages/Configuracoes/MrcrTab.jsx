@@ -59,32 +59,67 @@ const MrcrTab = () => {
         }
     };
 
+    const extractTextFromPDF = async (file) => {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let allLines = [];
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            
+            // Agrupar itens por Y (linha) para simular colunas/linhas
+            const rowMap = {};
+            textContent.items.forEach(item => {
+                const y = Math.round(item.transform[5]);
+                if (!rowMap[y]) rowMap[y] = [];
+                rowMap[y].push(item.str);
+            });
+            
+            // Ordenar por Y e juntar as colunas
+            Object.keys(rowMap).sort((a, b) => b - a).forEach(y => {
+                allLines.push(rowMap[y].join(' '));
+            });
+        }
+        return allLines;
+    };
+
     const handleFileSelect = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
         setUploading(true);
         try {
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: 'array' });
+            const normalize = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
             
-            // Assume que a primeira aba tem os dados
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
+            // Processar arquivos e gerar as "linhas de dados"
+            let todasAsLinhasDeTexto = [];
             
-            // Converter para array de objetos (a linha de cabeçalho pode variar, o ideal é varrer por linha)
-            // Para simplificar a importação semi-automática, pegamos o raw e tentamos achar códigos
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
+            if (fonteSelecionada === 'DER_ES_ROD') {
+                // Modo PDF: juntar todas as linhas de todos os PDFs
+                for (const file of files) {
+                    if (file.name.toLowerCase().endsWith('.pdf')) {
+                        const lines = await extractTextFromPDF(file);
+                        todasAsLinhasDeTexto = [...todasAsLinhasDeTexto, ...lines];
+                    }
+                }
+            } else {
+                // Modo XLSX: ler apenas 1 arquivo
+                const file = files[0];
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                todasAsLinhasDeTexto = jsonData.filter(r => Array.isArray(r)).map(row => row.join('  '));
+            }
+
             const matches = [];
             const mapeamentosFonte = mapeamentos.filter(m => m.fonte === fonteSelecionada && m.ativo);
-            
-            // Tipologias ativas para a fonte selecionada
             const tipsFonte = tipologias.filter(t => t.fonte_referencia === fonteSelecionada);
             
-            const normalize = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
-
-            // Para cada tipologia, pegamos a composição base (SINAPI) e procuramos os insumos na planilha DER
+            // Para cada tipologia, pegamos a composição base e procuramos os insumos
             tipsFonte.forEach(tip => {
                 const compBase = tip.composicoes?.[0]?.composicoes_sinapi;
                 if (!compBase || !compBase.itens) return;
@@ -98,28 +133,22 @@ const MrcrTab = () => {
                     
                     let foundPreco = item.preco_unitario; // Mantém o base se não achar
                     
-                    // Procura na planilha o insumo
-                    for (let row of jsonData) {
-                        if (!Array.isArray(row)) continue;
-                        const rowText = row.join(' ').trim();
+                    // Procura nas linhas processadas
+                    for (let rowText of todasAsLinhasDeTexto) {
                         const rowTextNorm = normalize(rowText);
                         
-                        // Busca se a linha tem a maioria das palavras do insumo
                         const matchCount = itemWords.filter(w => rowTextNorm.includes(w)).length;
                         if (itemWords.length > 0 && matchCount >= Math.ceil(itemWords.length * 0.7)) {
-                            // Puxar valor numérico (geralmente últimas colunas)
-                            let custoStr = row.slice().reverse().find(cell => {
-                                if (typeof cell === 'number') return true;
-                                if (typeof cell === 'string' && /^[0-9]+,[0-9]{2}$/.test(cell.trim())) return true;
-                                return false;
-                            });
                             
-                            if (typeof custoStr === 'number') {
-                                foundPreco = custoStr;
-                                encontrouAoMenosUmInsumo = true;
-                                break;
-                            } else if (typeof custoStr === 'string') {
-                                foundPreco = parseFloat(custoStr.replace('.', '').replace(',', '.'));
+                            // Extrair o primeiro valor monetário grande da linha (o valor unitário do material)
+                            // Match currency format like 1.234,56 or 12,34
+                            const moneyRegex = /\b\d{1,3}(?:\.\d{3})*,\d{2}\b/g;
+                            const foundMoneys = rowText.match(moneyRegex);
+                            
+                            if (foundMoneys && foundMoneys.length > 0) {
+                                // Pega o último valor, geralmente é o preço final da linha
+                                const valStr = foundMoneys[foundMoneys.length - 1];
+                                foundPreco = parseFloat(valStr.replace('.', '').replace(',', '.'));
                                 encontrouAoMenosUmInsumo = true;
                                 break;
                             }
@@ -160,7 +189,7 @@ const MrcrTab = () => {
             }
         } catch (err) {
             console.error(err);
-            toast.error('Erro ao processar a planilha.');
+            toast.error('Erro ao processar o arquivo.');
         } finally {
             setUploading(false);
             e.target.value = ''; // Reset
@@ -278,7 +307,7 @@ const MrcrTab = () => {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mês/Ano de Referência</label>
                                     <input 
-                                        type="date"
+                                        type="month"
                                         value={mesReferencia}
                                         onChange={e => setMesReferencia(e.target.value)}
                                         className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500"
@@ -293,12 +322,13 @@ const MrcrTab = () => {
                             >
                                 {uploading ? <Loader2 size={24} className="animate-spin text-blue-500" /> : <FileSpreadsheet size={24} className="text-slate-400 group-hover:text-blue-500" />}
                                 <span className="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                    {uploading ? 'Processando...' : (fonteSelecionada === 'DER_ES_ROD' ? 'Selecionar PDFs (Múltiplos permitidos)' : 'Selecionar arquivo XLS/XLSX')}
+                                    {uploading ? 'Processando...' : (fonteSelecionada === 'DER_ES_ROD' ? 'Selecionar PDFs (Múltiplos)' : 'Selecionar XLS/XLSX')}
                                 </span>
                             </button>
                             <input 
                                 type="file" 
-                                accept=".xls,.xlsx" 
+                                accept={fonteSelecionada === 'DER_ES_ROD' ? '.pdf' : '.xls,.xlsx'}
+                                multiple={fonteSelecionada === 'DER_ES_ROD'}
                                 className="hidden" 
                                 ref={fileInputRef}
                                 onChange={handleFileSelect}
