@@ -36,11 +36,13 @@ export const importarDerEs = async ({ fonte, mesReferencia, composicoesAtualizad
         // item = { tipologia_id, composicao, custo_unitario }
         
         // Verifica se a tipologia já tem registro em mrcr_composicoes
-        const { data: compExistente } = await supabase
+        const { data: compExistentes } = await supabase
             .from('mrcr_composicoes')
             .select('id')
             .eq('tipologia_id', item.tipologia_id)
-            .single();
+            .order('created_at', { ascending: false });
+        
+        const compExistente = compExistentes && compExistentes.length > 0 ? compExistentes[0] : null;
 
         const updateData = {};
         if (fonte === 'DER_ES_ROD') {
