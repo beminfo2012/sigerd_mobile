@@ -400,16 +400,26 @@ const MrcrTab = () => {
                             <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 dark:border-slate-800">
                                 <tr>
                                     <th className="p-4">Tipologia</th>
-                                    <th className="p-4 text-right">SINAPI</th>
-                                    <th className="p-4 text-right">SICRO</th>
-                                    <th className="p-4 text-right">DER-ES Rod</th>
-                                    <th className="p-4 text-right">DER-ES Edif</th>
+                                    <th className="p-4 text-right">
+                                        SINAPI
+                                        <div className="text-[9px] font-normal text-slate-400 normal-case">Ref: Julho 2026</div>
+                                    </th>
+                                    <th className="p-4 text-right">
+                                        SICRO
+                                        <div className="text-[9px] font-normal text-slate-400 normal-case">Ref: Julho 2026</div>
+                                    </th>
+                                    <th className="p-4 text-right">
+                                        DER-ES
+                                        <div className="text-[9px] font-normal text-slate-400 normal-case">
+                                            Ref: {ultimaAtualizacao?.mes_referencia ? new Date(ultimaAtualizacao.mes_referencia + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : 'Não importado'}
+                                        </div>
+                                    </th>
                                     <th className="p-4 text-center">Fonte Padrão</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {tipologias.length === 0 ? (
-                                    <tr><td colSpan="6" className="p-8 text-center text-slate-400">Nenhuma tipologia cadastrada.</td></tr>
+                                    <tr><td colSpan="5" className="p-8 text-center text-slate-400">Nenhuma tipologia cadastrada.</td></tr>
                                 ) : (
                                     tipologias.filter((v, i, a) => a.findIndex(t => (t.descricao === v.descricao)) === i).map(t => {
                                         const comp = t.composicoes?.[0] || {};
@@ -424,39 +434,17 @@ const MrcrTab = () => {
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sinapi)}</span>
-                                                        {comp.composicoes_sinapi && (
-                                                            <button onClick={() => setSelectedComposicao(comp.composicoes_sinapi)} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
-                                                                <Eye size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sicro)}</span>
-                                                        {comp.composicoes_sicro && (
-                                                            <button onClick={() => setSelectedComposicao(comp.composicoes_sicro)} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
-                                                                <Eye size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <span className="font-black text-blue-600 dark:text-blue-400">{formatR$(comp.custo_unitario_deres_rod)}</span>
-                                                        {comp.composicoes_deres_rod && (
-                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_deres_rod, fonte: 'DER-ES RODOVIAS'})} className="text-blue-300 hover:text-blue-600 transition-colors" title="Ver Composição">
-                                                                <Eye size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <span className="font-black text-emerald-600 dark:text-emerald-400">{formatR$(comp.custo_unitario_deres_edif)}</span>
-                                                        {comp.composicoes_deres_edif && (
-                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_deres_edif, fonte: 'DER-ES EDIFICAÇÕES'})} className="text-emerald-300 hover:text-emerald-600 transition-colors" title="Ver Composição">
+                                                        <span className={`font-black ${comp.custo_unitario_deres_rod ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                                            {formatR$(comp.custo_unitario_deres_rod || comp.custo_unitario_deres_edif)}
+                                                        </span>
+                                                        {(comp.composicoes_deres_rod || comp.composicoes_deres_edif) && (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    if (comp.composicoes_deres_rod) setSelectedComposicao({...comp.composicoes_deres_rod, fonte: 'DER-ES RODOVIAS'});
+                                                                    else setSelectedComposicao({...comp.composicoes_deres_edif, fonte: 'DER-ES EDIFICAÇÕES'});
+                                                                }} 
+                                                                className="text-slate-400 hover:text-blue-600 transition-colors" title="Ver Composição"
+                                                            >
                                                                 <Eye size={14} />
                                                             </button>
                                                         )}
