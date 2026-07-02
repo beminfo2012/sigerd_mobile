@@ -33,8 +33,11 @@ export const MrcrSelector = ({ onSelect, disabled }) => {
     };
     
     const getValorPorFonte = (tipologia, fonte) => {
-        if (!tipologia?.composicoes?.[0]) return 0;
-        const comp = tipologia.composicoes[0];
+        if (!tipologia?.composicoes) return 0;
+        const comp = tipologia.composicoes.reduce((acc, curr) => ({
+            ...acc,
+            ...Object.fromEntries(Object.entries(curr).filter(([_, v]) => v !== null && v !== undefined))
+        }), {}) || {};
         
         switch (fonte) {
             case 'SINAPI': return comp.custo_unitario_sinapi || 0;
@@ -58,7 +61,7 @@ export const MrcrSelector = ({ onSelect, disabled }) => {
         setOpen(false);
     };
 
-    const filteredTipologias = tipologias.filter(t => 
+    const filteredTipologias = tipologias.filter((v, i, a) => a.findIndex(t => t.descricao === v.descricao) === i).filter(t => 
         t.categoria === filtroCategoria && 
         (searchTerm === '' || t.descricao.toLowerCase().includes(searchTerm.toLowerCase()) || (t.codigo && t.codigo.toLowerCase().includes(searchTerm.toLowerCase())))
     );
@@ -173,7 +176,18 @@ export const MrcrSelector = ({ onSelect, disabled }) => {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                                                        {(selectedTipologia.composicoes?.[0]?.[selectedFonte === 'DER_ES_ROD' ? 'composicoes_deres_rod' : selectedFonte === 'DER_ES_EDIF' ? 'composicoes_deres_edif' : selectedFonte === 'SICRO' ? 'composicoes_sicro' : 'composicoes_sinapi']?.itens || selectedTipologia.composicoes?.[0]?.composicoes_sinapi?.itens || []).map((insumo, idx) => (
+                                                        {(
+    (() => {
+        const comp = selectedTipologia.composicoes?.reduce((acc, curr) => ({
+            ...acc,
+            ...Object.fromEntries(Object.entries(curr).filter(([_, v]) => v !== null && v !== undefined))
+        }), {}) || {};
+        
+        const fonteKey = selectedFonte === 'DER_ES_ROD' ? 'composicoes_deres_rod' : selectedFonte === 'DER_ES_EDIF' ? 'composicoes_deres_edif' : selectedFonte === 'SICRO' ? 'composicoes_sicro' : 'composicoes_sinapi';
+        
+        return comp[fonteKey]?.itens || comp.composicoes_sinapi?.itens || [];
+    })()
+).map((insumo, idx) => (
                                                             <tr key={idx}>
                                                                 <td className="py-1 pr-2 truncate max-w-[200px]" title={insumo.descricao}>{insumo.descricao}</td>
                                                                 <td className="py-1 text-right font-bold text-slate-700 dark:text-slate-300">
