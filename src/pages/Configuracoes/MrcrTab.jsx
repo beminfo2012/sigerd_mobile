@@ -26,7 +26,7 @@ const MrcrTab = () => {
     
     // Tabs internas (Comparativo vs Importação)
     const [activeSubTab, setActiveSubTab] = useState('comparativo');
-    const [selectedComposicao, setSelectedComposicao] = useState(null);
+    const [selectedTipologia, setSelectedTipologia] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -443,47 +443,25 @@ const MrcrTab = () => {
                                         
                                         return (
                                             <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                                <td className="p-4">
-                                                    <p className="font-bold text-slate-800 dark:text-slate-100">{t.descricao}</p>
-                                                    <p className="text-[10px] uppercase font-bold text-slate-400">{t.categoria}</p>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sinapi)}</span>
-                                                        {comp.composicoes_sinapi && (
-                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_sinapi, fonte: 'SINAPI'})} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
-                                                                <Eye size={14} />
-                                                            </button>
-                                                        )}
+                                                <td className="p-4 flex items-start gap-3">
+                                                    <button onClick={() => setSelectedTipologia(t)} className="mt-0.5 text-slate-400 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-blue-900/30 p-1.5 rounded-lg transition-all" title="Ver Auditoria de Insumos">
+                                                        <Eye size={16} />
+                                                    </button>
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 dark:text-slate-100">{t.descricao}</p>
+                                                        <p className="text-[10px] uppercase font-bold text-slate-400">{t.categoria}</p>
                                                     </div>
                                                 </td>
                                                 <td className="p-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sicro)}</span>
-                                                        {comp.composicoes_sicro && (
-                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_sicro, fonte: 'SICRO'})} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
-                                                                <Eye size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    <span className="font-medium text-slate-600 dark:text-slate-300">{formatR$(comp.custo_unitario_sinapi)}</span>
                                                 </td>
                                                 <td className="p-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <span className={`font-black ${comp.custo_unitario_deres_rod ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                                                            {formatR$(comp.custo_unitario_deres_rod || comp.custo_unitario_deres_edif)}
-                                                        </span>
-                                                        {(comp.composicoes_deres_rod || comp.composicoes_deres_edif) && (
-                                                            <button 
-                                                                onClick={() => {
-                                                                    if (comp.composicoes_deres_rod) setSelectedComposicao({...comp.composicoes_deres_rod, fonte: 'DER-ES RODOVIAS'});
-                                                                    else setSelectedComposicao({...comp.composicoes_deres_edif, fonte: 'DER-ES EDIFICAÇÕES'});
-                                                                }} 
-                                                                className="text-slate-400 hover:text-blue-600 transition-colors" title="Ver Composição"
-                                                            >
-                                                                <Eye size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    <span className="font-medium text-slate-600 dark:text-slate-300">{formatR$(comp.custo_unitario_sicro)}</span>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <span className={`font-black ${comp.custo_unitario_deres_rod ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                                        {formatR$(comp.custo_unitario_deres_rod || comp.custo_unitario_deres_edif)}
+                                                    </span>
                                                 </td>
                                                 <td className="p-4 text-center">
                                                     <span className="text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-600 dark:text-slate-300">
@@ -500,19 +478,20 @@ const MrcrTab = () => {
             )}
 
             {/* Modal de Composição */}
-            {selectedComposicao && (
+            {selectedTipologia && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-800">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between">
                             <div>
-                                <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-wide">
-                                    Detalhamento de Composição
+                                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                    <Table2 size={20} className="text-blue-500" />
+                                    Auditoria de Composição: {selectedTipologia.descricao}
                                 </h3>
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
-                                    {selectedComposicao.fonte}
+                                    Análise de Discrepância entre Fontes
                                 </p>
                             </div>
-                            <button onClick={() => setSelectedComposicao(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                            <button onClick={() => setSelectedTipologia(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -520,20 +499,78 @@ const MrcrTab = () => {
                             <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
                                 <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 dark:bg-slate-800/50">
                                     <tr>
-                                        <th className="p-3 rounded-l-lg">Tipo</th>
-                                        <th className="p-3">Descrição do Insumo/Serviço</th>
+                                        <th className="p-3 rounded-l-lg">Insumo / Material</th>
                                         <th className="p-3 text-center">Coef.</th>
-                                        <th className="p-3 text-right">Preço Unit. (R$)</th>
-                                        <th className="p-3 rounded-r-lg text-right">Total (R$)</th>
+                                        <th className="p-3 text-right">SINAPI (R$)</th>
+                                        <th className="p-3 text-right">SICRO (R$)</th>
+                                        <th className="p-3 text-right">DER-ES (R$)</th>
+                                        <th className="p-3 rounded-r-lg text-center">Auditoria</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {selectedComposicao.itens?.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                            <td className="p-3 font-bold text-xs">{item.tipo}</td>
-                                            <td className="p-3 font-medium">{item.descricao}</td>
-                                            <td className="p-3 text-center">{item.coeficiente}</td>
-                                            <td className="p-3 text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.preco_unitario)}</td>
+                                    {(() => {
+                                        const comp = selectedTipologia.composicoes?.reduce((acc, curr) => ({
+                                            ...acc,
+                                            ...Object.fromEntries(Object.entries(curr).filter(([_, v]) => v !== null && v !== undefined))
+                                        }), {}) || {};
+                                        
+                                        const formatR$ = (val) => val ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '-';
+                                        const normalize = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
+                                        
+                                        const baseItens = comp.composicoes_sinapi?.itens || comp.composicoes_deres_rod?.itens || comp.composicoes_deres_edif?.itens || [];
+                                        
+                                        return baseItens.map((item, idx) => {
+                                            const itemDescNorm = normalize(item.descricao);
+                                            
+                                            // Preços
+                                            const precoSinapi = comp.composicoes_sinapi?.itens?.find(i => normalize(i.descricao) === itemDescNorm)?.preco_unitario || 0;
+                                            const precoSicro = comp.composicoes_sicro?.itens?.find(i => normalize(i.descricao) === itemDescNorm)?.preco_unitario || 0;
+                                            const precoDer = (comp.composicoes_deres_rod || comp.composicoes_deres_edif)?.itens?.find(i => normalize(i.descricao) === itemDescNorm)?.preco_unitario || 0;
+                                            
+                                            const prices = [precoSinapi, precoSicro, precoDer].filter(p => p > 0);
+                                            const max = prices.length ? Math.max(...prices) : 0;
+                                            const min = prices.length ? Math.min(...prices) : 0;
+                                            
+                                            const diffPerc = min > 0 ? ((max - min) / min) * 100 : 0;
+                                            const hasDiscrepancy = diffPerc > 30; // Diferença maior que 30%
+                                            const hasMissing = prices.length < 3;
+                                            
+                                            return (
+                                                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                                    <td className="p-3 font-medium text-xs max-w-sm truncate" title={item.descricao}>{item.descricao}</td>
+                                                    <td className="p-3 text-center font-mono text-xs">{item.coeficiente}</td>
+                                                    <td className="p-3 text-right font-medium">{formatR$(precoSinapi)}</td>
+                                                    <td className="p-3 text-right font-medium">{formatR$(precoSicro)}</td>
+                                                    <td className={`p-3 text-right font-medium ${precoDer > 0 ? 'text-blue-600 dark:text-blue-400' : ''}`}>{formatR$(precoDer)}</td>
+                                                    <td className="p-3 text-center">
+                                                        <div className="flex justify-center gap-1">
+                                                            {hasDiscrepancy && (
+                                                                <div className="p-1 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-500" title={`Alta discrepância de ${diffPerc.toFixed(1)}% entre o menor e maior valor`}>
+                                                                    <AlertTriangle size={14} />
+                                                                </div>
+                                                            )}
+                                                            {hasMissing && (
+                                                                <div className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-400" title="Item ausente ou sem valor em algumas fontes">
+                                                                    <X size={14} />
+                                                                </div>
+                                                            )}
+                                                            {!hasDiscrepancy && !hasMissing && (
+                                                                <div className="p-1 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500" title="Valores padronizados e consistentes">
+                                                                    <Check size={14} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        });
+                                    })()}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}.format(item.preco_unitario)}</td>
                                             <td className="p-3 text-right font-bold text-blue-600 dark:text-blue-400">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}</td>
                                         </tr>
                                     ))}
