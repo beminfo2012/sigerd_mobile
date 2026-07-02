@@ -411,7 +411,7 @@ const MrcrTab = () => {
                                     <th className="p-4 text-right">
                                         DER-ES
                                         <div className="text-[9px] font-normal text-slate-400 normal-case">
-                                            Ref: {ultimaAtualizacao?.mes_referencia ? new Date(ultimaAtualizacao.mes_referencia + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : 'Não importado'}
+                                            Ref: {ultimaAtualizacao?.mes_referencia ? (() => { try { const d = ultimaAtualizacao.mes_referencia.includes('-') && ultimaAtualizacao.mes_referencia.length === 7 ? new Date(ultimaAtualizacao.mes_referencia + '-02') : new Date(ultimaAtualizacao.mes_referencia); return isNaN(d.getTime()) ? ultimaAtualizacao.mes_referencia : d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); } catch(e) { return ultimaAtualizacao.mes_referencia; } })() : 'Não importado'}
                                         </div>
                                     </th>
                                     <th className="p-4 text-center">Fonte Padrão</th>
@@ -431,6 +431,26 @@ const MrcrTab = () => {
                                                 <td className="p-4">
                                                     <p className="font-bold text-slate-800 dark:text-slate-100">{t.descricao}</p>
                                                     <p className="text-[10px] uppercase font-bold text-slate-400">{t.categoria}</p>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sinapi)}</span>
+                                                        {comp.composicoes_sinapi && (
+                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_sinapi, fonte: 'SINAPI'})} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
+                                                                <Eye size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sicro)}</span>
+                                                        {comp.composicoes_sicro && (
+                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_sicro, fonte: 'SICRO'})} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
+                                                                <Eye size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
@@ -454,8 +474,7 @@ const MrcrTab = () => {
                                                     <span className="text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-600 dark:text-slate-300">
                                                         {t.fonte_referencia}
                                                     </span>
-                                                </td>
-                                            </tr>
+                                                </td></tr>
                                         )
                                     })
                                 )}
