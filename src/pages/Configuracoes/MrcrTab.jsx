@@ -75,15 +75,39 @@ const MrcrTab = () => {
             
             const matches = [];
             const mapeamentosFonte = mapeamentos.filter(m => m.fonte === fonteSelecionada && m.ativo);
+            
+            // Tipologias ativas para a fonte selecionada
+            const tipsFonte = tipologias.filter(t => t.fonte_referencia === fonteSelecionada);
+            
+            const normalize = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
 
             // Varre as linhas procurando os códigos mapeados
             jsonData.forEach(row => {
                 if (!Array.isArray(row)) return;
                 const rowText = row.join(' ').trim();
+                const rowTextNorm = normalize(rowText);
                 
-                mapeamentosFonte.forEach(map => {
-                    // Verifica se a linha contém o código do DER-ES
-                    if (rowText.includes(map.codigo_deres)) {
+                tipsFonte.forEach(tip => {
+                    const map = mapeamentosFonte.find(m => m.tipologia_id === tip.id);
+                    const tipNameNorm = normalize(tip.descricao);
+                    const tipWords = tipNameNorm.split(' ').filter(w => w.length > 2);
+                    const hasAllWords = tipWords.length > 0 && tipWords.every(w => rowTextNorm.includes(w));
+                    
+                    let found = false;
+                    let foundCodigo = '';
+                    let foundDesc = '';
+                    
+                    if (map && rowText.includes(map.codigo_deres)) {
+                        found = true;
+                        foundCodigo = map.codigo_deres;
+                        foundDesc = map.descricao_deres;
+                    } else if (hasAllWords) {
+                        found = true;
+                        foundCodigo = 'SEM_CODIGO';
+                        foundDesc = tip.descricao;
+                    }
+                    
+                    if (found) {
                         // Tenta extrair o custo unitário (normalmente a última coluna numérica ou um valor monetário)
                         let custoStr = row.slice().reverse().find(cell => {
                             if (typeof cell === 'number') return true;
@@ -101,13 +125,13 @@ const MrcrTab = () => {
                         if (custoUnitario > 0) {
                             // Encontrou!
                             matches.push({
-                                tipologia_id: map.tipologia_id,
-                                codigo_deres: map.codigo_deres,
-                                descricao_encontrada: map.descricao_deres,
+                                tipologia_id: tip.id,
+                                codigo_deres: foundCodigo,
+                                descricao_encontrada: foundDesc,
                                 custo_unitario: custoUnitario,
                                 composicao: {
-                                    codigo_deres: map.codigo_deres,
-                                    descricao: map.descricao_deres,
+                                    codigo_deres: foundCodigo,
+                                    descricao: foundDesc,
                                     custo_unitario_ref: custoUnitario,
                                     itens: [
                                         { tipo: 'Mão de Obra', descricao: 'Trabalhadores (Extraído da sub-composição)', coeficiente: 1, preco_unitario: custoUnitario * 0.4, total: custoUnitario * 0.4 },
