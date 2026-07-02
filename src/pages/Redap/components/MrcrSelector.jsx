@@ -116,16 +116,41 @@ export const MrcrSelector = ({ onSelect, disabled }) => {
                                         className="w-full text-xs font-bold pl-8 pr-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-slate-700 dark:text-slate-200"
                                     />
                                 </div>
-                                <select 
-                                    className="w-full text-xs font-bold p-2 mt-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-slate-700 dark:text-slate-200"
-                                    onChange={(e) => setSelectedTipologia(filteredTipologias.find(t => t.id === e.target.value))}
-                                    value={selectedTipologia?.id || ''}
-                                >
-                                    <option value="">-- Selecione a Tipologia --</option>
-                                    {filteredTipologias.map(t => (
-                                        <option key={t.id} value={t.id}>{t.codigo} - {t.descricao}</option>
-                                    ))}
-                                </select>
+                                
+                                {!selectedTipologia ? (
+                                    <div className="mt-2 max-h-48 overflow-y-auto pr-1 space-y-1 custom-scrollbar">
+                                        {filteredTipologias.length === 0 ? (
+                                            <div className="p-3 text-center text-xs text-slate-500 font-medium">Nenhuma tipologia encontrada</div>
+                                        ) : (
+                                            filteredTipologias.map(t => (
+                                                <button
+                                                    key={t.id}
+                                                    type="button"
+                                                    onClick={() => setSelectedTipologia(t)}
+                                                    className="w-full text-left p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all flex flex-col gap-0.5 group"
+                                                >
+                                                    <span className="text-[10px] font-black text-blue-500 group-hover:text-blue-600">{t.codigo}</span>
+                                                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 line-clamp-2">{t.descricao}</span>
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="mt-2 flex items-center justify-between p-3 rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-blue-500">{selectedTipologia.codigo}</span>
+                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{selectedTipologia.descricao}</span>
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setSelectedTipologia(null)}
+                                            className="text-[10px] font-black text-blue-500 hover:text-blue-700 uppercase tracking-wider px-2 py-1 bg-white dark:bg-slate-800 rounded shadow-sm"
+                                        >
+                                            Trocar
+                                        </button>
+                                    </div>
+                                )}
+
                             </div>
 
                             {selectedTipologia && (
