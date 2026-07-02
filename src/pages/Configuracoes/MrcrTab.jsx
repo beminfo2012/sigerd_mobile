@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Upload, FileSpreadsheet, Check, AlertTriangle, Loader2, Table2, Eye, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import * as pdfjsLib from 'pdfjs-dist';
-// Configuração do worker do PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 import { getMapeamentosDerEs, getTipologiasComposicoes, importarDerEs, getUltimaAtualizacaoDerEs, forcePullSinapiSicro } from '../../services/mrcrService';
 import { toast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
