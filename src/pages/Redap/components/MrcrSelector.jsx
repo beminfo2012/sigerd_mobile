@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getTipologiasComposicoes } from '../../../services/mrcrService';
-import { Calculator, Check, Info, Loader2, Search } from 'lucide-react';
+import { Calculator, Check, Info, Loader2, Search, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { CurrencyInput } from '../../../components/RedapInputs';
 
-export const MrcrSelector = ({ value, onChange, disabled, itemName }) => {
+export const MrcrSelector = ({ value, onChange, disabled, itemName, qtdDestruido = 0, qtdDanificado = 0, meta }) => {
     const [tipologias, setTipologias] = useState([]);
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
@@ -11,7 +11,8 @@ export const MrcrSelector = ({ value, onChange, disabled, itemName }) => {
     // Estados do cálculo
     const [selectedTipologia, setSelectedTipologia] = useState(null);
     const [selectedFonte, setSelectedFonte] = useState('DER_ES_ROD');
-    const [quantidade, setQuantidade] = useState(1);
+    const [mostrarComposicao, setMostrarComposicao] = useState(false);
+    
     
     useEffect(() => {
         if (open && tipologias.length === 0) {
@@ -44,15 +45,25 @@ export const MrcrSelector = ({ value, onChange, disabled, itemName }) => {
         }
     };
     
+    const calcularTotal = (valorUnitario) => {
+        const numDestruido = parseFloat(qtdDestruido) || 0;
+        const numDanificado = parseFloat(qtdDanificado) || 0;
+        return (numDestruido * valorUnitario) + (numDanificado * (valorUnitario * 0.5));
+    };
+
     const aplicarCalculo = () => {
         if (!selectedTipologia) return;
         const valorUnitario = getValorPorFonte(selectedTipologia, selectedFonte);
-        const valorTotal = valorUnitario * quantidade;
+        const valorTotal = calcularTotal(valorUnitario);
+        
         onChange(valorTotal, {
             fonte: selectedFonte,
             tipologia_id: selectedTipologia.id,
-            quantidade,
-            valor_unitario: valorUnitario
+            tipologia_desc: selectedTipologia.descricao,
+            qtdDestruido: parseFloat(qtdDestruido) || 0,
+            qtdDanificado: parseFloat(qtdDanificado) || 0,
+            valor_unitario: valorUnitario,
+            calculo: `(${parseFloat(qtdDestruido) || 0} * R$ ${valorUnitario.toFixed(2)}) + (${parseFloat(qtdDanificado) || 0} * (R$ ${valorUnitario.toFixed(2)} * 50%))`
         });
         setOpen(false);
     };
@@ -64,8 +75,15 @@ export const MrcrSelector = ({ value, onChange, disabled, itemName }) => {
                     disabled={disabled}
                     className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
                     value={value || 0}
-                    onChange={(val) => onChange(val)}
+                    onChange={(val) => onChange(val, null)}
                 />
+                {meta && (
+                    <div className="text-[9px] font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <span className="font-bold text-blue-500">{meta.fonte}:</span> Base R$ {meta.valor_unitario?.toFixed(2)}
+                        <br/>
+                        <span className="text-slate-400">100% Destruído ({meta.qtdDestruido}) + 50% Danificado ({meta.qtdDanificado})</span>
+                    </div>
+                )}
                 {!disabled && (
                     <button
                         type="button"
@@ -92,33 +110,46 @@ export const MrcrSelector = ({ value, onChange, disabled, itemName }) => {
                         <>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Buscar Tipologia Base</label>
-                                <select 
-                                    className="w-full text-xs font-bold p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-slate-700 dark:text-slate-200"
-                                    onChange={(e) => setSelectedTipologia(tipologias.find(t => t.id === e.target.value))}
-                                    value={selectedTipologia?.id || ''}
-                                >
-                                    <option value="">-- Selecione --</option>
-                                    {tipologias.map(t => (
-                                        <option key={t.id} value={t.id}>{t.codigo} - {t.descricao}</option>
-                                    ))}
-                                </select>
+                                
+                                {(() => {
+                                    // Filtrar tipologias baseadas no nome do item
+                                    const isEdificacao = ['Almoxarifado', 'Prédios', 'Muros', 'Escolas', 'Hospitais', 'Saúde', 'Creches', 'Instalações', 'Habitações'].some(i => itemName?.toLowerCase().includes(i.toLowerCase()));
+                                    const filteredTips = tipologias.filter(t => isEdificacao ? t.categoria === 'EDIFICAÇÕES' : true);
+                                    
+                                    return (
+                                        <select 
+                                            className="w-full text-xs font-bold p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none text-slate-700 dark:text-slate-200"
+                                            onChange={(e) => setSelectedTipologia(filteredTips.find(t => t.id === e.target.value))}
+                                            value={selectedTipologia?.id || ''}
+                                        >
+                                            <option value="">-- Selecione --</option>
+                                            {filteredTips.map(t => (
+                                                <option key={t.id} value={t.id}>{t.codigo} - {t.descricao}</option>
+                                            ))}
+                                        </select>
+                                    );
+                                })()}
+
                             </div>
 
                             {selectedTipologia && (
                                 <div className="space-y-3">
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-3 gap-2">
                                         <div className="space-y-1">
-                                            <label className="text-[9px] font-black uppercase text-slate-400">Quantidade</label>
-                                            <input 
-                                                type="number"
-                                                value={quantidade}
-                                                onChange={e => setQuantidade(parseFloat(e.target.value) || 0)}
-                                                className="w-full text-xs font-bold p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none"
-                                            />
+                                            <label className="text-[9px] font-black uppercase text-slate-400 truncate" title="100% do Valor">100% (Destr)</label>
+                                            <div className="w-full text-xs font-bold p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center text-slate-600">
+                                                {qtdDestruido}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 truncate" title="50% do Valor">50% (Danif)</label>
+                                            <div className="w-full text-xs font-bold p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center text-slate-600">
+                                                {qtdDanificado}
+                                            </div>
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-[9px] font-black uppercase text-slate-400">Unid.</label>
-                                            <div className="w-full text-xs font-bold p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center text-slate-500">
+                                            <div className="w-full text-xs font-bold p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center text-blue-500">
                                                 {selectedTipologia.unidade}
                                             </div>
                                         </div>
@@ -150,11 +181,43 @@ export const MrcrSelector = ({ value, onChange, disabled, itemName }) => {
                                         </div>
                                     </div>
 
-                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setMostrarComposicao(!mostrarComposicao)}
+                                            className="w-full flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                        >
+                                            <span className="flex items-center gap-1.5"><Eye size={12} /> Ver Insumos ({selectedTipologia.composicoes?.[0]?.composicoes_sinapi?.itens?.length || 0})</span>
+                                            {mostrarComposicao ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                        </button>
+                                        
+                                        {mostrarComposicao && (
+                                            <div className="max-h-40 overflow-y-auto bg-slate-50 dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+                                                <table className="w-full text-left text-[9px] text-slate-500">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="pb-1 uppercase tracking-wider">Insumo</th>
+                                                            <th className="pb-1 uppercase tracking-wider text-right">R$ (Ref)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                                        {(selectedTipologia.composicoes?.[0]?.[selectedFonte === 'DER_ES_ROD' ? 'composicoes_deres_rod' : selectedFonte === 'DER_ES_EDIF' ? 'composicoes_deres_edif' : selectedFonte === 'SICRO' ? 'composicoes_sicro' : 'composicoes_sinapi']?.itens || selectedTipologia.composicoes?.[0]?.composicoes_sinapi?.itens || []).map((insumo, idx) => (
+                                                            <tr key={idx}>
+                                                                <td className="py-1 pr-2 truncate max-w-[200px]" title={insumo.descricao}>{insumo.descricao}</td>
+                                                                <td className="py-1 text-right font-bold text-slate-700 dark:text-slate-300">
+                                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(insumo.preco_unitario || 0)}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+
                                         <div className="flex justify-between items-end mb-3">
                                             <span className="text-[10px] font-black uppercase text-slate-400">Total Calculado</span>
                                             <span className="text-sm font-black text-slate-800 dark:text-white">
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(getValorPorFonte(selectedTipologia, selectedFonte) * quantidade)}
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calcularTotal(getValorPorFonte(selectedTipologia, selectedFonte)))}
                                             </span>
                                         </div>
                                         <button

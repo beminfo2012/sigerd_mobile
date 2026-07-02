@@ -491,6 +491,9 @@ const RedapSectorForm = () => {
                                                     <MrcrSelector
                                                         disabled={isReadOnly}
                                                         itemName={itemName}
+                                                        qtdDestruido={item.destruido || item.extensao || 0}
+                                                        qtdDanificado={item.danificado || 0}
+                                                        meta={item.mrcr_meta}
                                                         value={item.valor_estimado || 0}
                                                         onChange={(val, meta) => {
                                                             const newItems = { ...dadosJson.items };
@@ -619,6 +622,9 @@ const RedapSectorForm = () => {
                                                     <MrcrSelector
                                                         disabled={isReadOnly}
                                                         itemName={itemName}
+                                                        qtdDestruido={item.destruido || item.extensao || 0}
+                                                        qtdDanificado={item.danificado || 0}
+                                                        meta={item.mrcr_meta}
                                                         value={item.valor_estimado || 0}
                                                         onChange={(val, meta) => {
                                                             const newItems = { ...dadosJson.items };
