@@ -5,8 +5,10 @@ import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
 import ConfirmModal from '../../components/ConfirmModal'
 import { toast } from '../../components/ToastNotification'
+import { useNavigate } from 'react-router-dom'
 
 const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode }) => {
+    const navigate = useNavigate()
     const [syncDetail, setSyncDetail] = useState({ total: 0 })
     const [syncing, setSyncing] = useState(false)
     const [showProfileModal, setShowProfileModal] = useState(false)
@@ -166,7 +168,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
             {/* Header Back Button */}
             <div className="flex items-center gap-3 mb-6">
                 <button
-                    onClick={() => window.location.href = '/'}
+                    onClick={() => navigate('/')}
                     className="p-3 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-100 hover:text-blue-600 transition-colors"
                 >
                     <ArrowLeft size={20} />
@@ -273,7 +275,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
                     <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
-                            onClick={() => window.location.href = '/contingencia'}
+                            onClick={() => navigate('/contingencia')}
                             className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
                         >
                             <div className="flex items-center">
@@ -301,7 +303,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 ].includes(userProfile?.role)) && (
                         <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                             <button
-                                onClick={() => window.location.href = '/redap'}
+                                onClick={() => navigate('/redap')}
                                 className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
                             >
                                 <div className="flex items-center">
@@ -322,7 +324,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
                     <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
-                            onClick={() => window.location.href = '/firegis'}
+                            onClick={() => navigate('/firegis')}
                             className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
                         >
                             <div className="flex items-center">
@@ -350,7 +352,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 ].includes(userProfile?.role)) && (
                         <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                             <button
-                                onClick={() => window.location.href = '/mci'}
+                                onClick={() => navigate('/mci')}
                                 className="w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left"
                             >
                                 <div className="flex items-center">
@@ -371,7 +373,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 {['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
                     <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
-                            onClick={() => window.location.href = '/usuarios'}
+                            onClick={() => navigate('/usuarios')}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
                         >
                             <div className="flex items-center">
@@ -386,7 +388,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                         </button>
 
                         <button
-                            onClick={() => window.location.href = '/configuracoes'}
+                            onClick={() => navigate('/configuracoes')}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
                         >
                             <div className="flex items-center">
@@ -401,7 +403,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                         </button>
 
                         <button
-                            onClick={() => window.location.href = '/mrcr'}
+                            onClick={() => navigate('/mrcr')}
                             className="w-full p-5 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
                         >
                             <div className="flex items-center">
@@ -421,7 +423,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
                     <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
-                            onClick={() => window.location.href = '/monitoramento/legado'}
+                            onClick={() => navigate('/monitoramento/legado')}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
                         >
                             <div className="flex items-center">
@@ -441,7 +443,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Operador'].includes(userProfile?.role) && (
                     <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
-                            onClick={() => window.location.href = '/agenda'}
+                            onClick={() => navigate('/agenda')}
                             className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
                         >
                             <div className="flex items-center">
@@ -461,7 +463,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                 {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
                     <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <button
-                            onClick={() => window.location.href = '/voluntarios'}
+                            onClick={() => navigate('/voluntarios')}
                             className="w-full p-5 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors text-left"
                         >
                             <div className="flex items-center">
