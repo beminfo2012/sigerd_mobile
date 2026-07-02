@@ -493,22 +493,36 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano (R$)</label>
-                                                    <MrcrSelector
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Ref. (R$)</label>
+                                                    <CurrencyInput
                                                         disabled={isReadOnly}
-                                                        itemName={itemName}
-                                                        qtdDestruido={item.destruido || item.extensao || 0}
-                                                        qtdDanificado={item.danificado || 0}
-                                                        meta={item.mrcr_meta}
-                                                        value={item.valor_estimado || 0}
-                                                        onChange={(val, meta) => {
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                        value={item.valor_referencia || 0}
+                                                        onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
-                                                            newItems[itemName].valor_estimado = val;
-                                                            if (meta) {
-                                                                newItems[itemName].mrcr_meta = meta;
-                                                            }
+                                                            newItems[itemName].valor_referencia = val;
+                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
+                                                    />
+                                                    <MrcrSelector
+                                                        disabled={isReadOnly}
+                                                        onSelect={(mrcrData) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            const val = mrcrData.valor_unitario;
+                                                            newItems[itemName].valor_referencia = val;
+                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
+                                                            newItems[itemName].mrcr_meta = mrcrData;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano Final</label>
+                                                    <CurrencyInput
+                                                        disabled={true}
+                                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-xl font-bold text-slate-500 dark:text-slate-400 text-sm outline-none cursor-not-allowed"
+                                                        value={item.valor_estimado || 0}
                                                     />
                                                 </div>
                                             </div>
@@ -633,22 +647,36 @@ const RedapSectorForm = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano</label>
-                                                    <MrcrSelector
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Ref. (R$)</label>
+                                                    <CurrencyInput
                                                         disabled={isReadOnly}
-                                                        itemName={itemName}
-                                                        qtdDestruido={item.destruido || item.extensao || 0}
-                                                        qtdDanificado={item.danificado || 0}
-                                                        meta={item.mrcr_meta}
-                                                        value={item.valor_estimado || 0}
-                                                        onChange={(val, meta) => {
+                                                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-slate-350 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl font-bold text-slate-800 dark:text-slate-100 text-sm outline-none transition-all"
+                                                        value={item.valor_referencia || 0}
+                                                        onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
-                                                            newItems[itemName].valor_estimado = val;
-                                                            if (meta) {
-                                                                newItems[itemName].mrcr_meta = meta;
-                                                            }
+                                                            newItems[itemName].valor_referencia = val;
+                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
+                                                    />
+                                                    <MrcrSelector
+                                                        disabled={isReadOnly}
+                                                        onSelect={(mrcrData) => {
+                                                            const newItems = { ...dadosJson.items };
+                                                            const val = mrcrData.valor_unitario;
+                                                            newItems[itemName].valor_referencia = val;
+                                                            newItems[itemName].valor_estimado = ((item.destruido || 0) + (item.extensao || 0)) * val + (item.danificado || 0) * val * 0.5;
+                                                            newItems[itemName].mrcr_meta = mrcrData;
+                                                            setDadosJson({ ...dadosJson, items: newItems });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-450 uppercase">Valor Dano Final</label>
+                                                    <CurrencyInput
+                                                        disabled={true}
+                                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900/50 border-2 border-slate-100 dark:border-slate-800 rounded-xl font-bold text-slate-500 dark:text-slate-400 text-sm outline-none cursor-not-allowed"
+                                                        value={item.valor_estimado || 0}
                                                     />
                                                 </div>
                                             </div>
