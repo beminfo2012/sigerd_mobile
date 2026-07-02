@@ -81,67 +81,72 @@ const MrcrTab = () => {
             
             const normalize = (text) => text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : '';
 
-            // Varre as linhas procurando os códigos mapeados
-            jsonData.forEach(row => {
-                if (!Array.isArray(row)) return;
-                const rowText = row.join(' ').trim();
-                const rowTextNorm = normalize(rowText);
-                
-                tipsFonte.forEach(tip => {
-                    const map = mapeamentosFonte.find(m => m.tipologia_id === tip.id);
-                    const tipNameNorm = normalize(tip.descricao);
-                    const tipWords = tipNameNorm.split(' ').filter(w => w.length > 2);
-                    const hasAllWords = tipWords.length > 0 && tipWords.every(w => rowTextNorm.includes(w));
-                    
-                    let found = false;
-                    let foundCodigo = '';
-                    let foundDesc = '';
-                    
-                    if (map && rowText.includes(map.codigo_deres)) {
-                        found = true;
-                        foundCodigo = map.codigo_deres;
-                        foundDesc = map.descricao_deres;
-                    } else if (hasAllWords) {
-                        found = true;
-                        foundCodigo = 'SEM_CODIGO';
-                        foundDesc = tip.descricao;
-                    }
-                    
-                    if (found) {
-                        // Tenta extrair o custo unitário (normalmente a última coluna numérica ou um valor monetário)
-                        let custoStr = row.slice().reverse().find(cell => {
-                            if (typeof cell === 'number') return true;
-                            if (typeof cell === 'string' && /^[0-9]+,[0-9]{2}$/.test(cell.trim())) return true;
-                            return false;
-                        });
-                        
-                        let custoUnitario = 0;
-                        if (typeof custoStr === 'number') {
-                            custoUnitario = custoStr;
-                        } else if (typeof custoStr === 'string') {
-                            custoUnitario = parseFloat(custoStr.replace('.', '').replace(',', '.'));
-                        }
+            // Para cada tipologia, pegamos a composição base (SINAPI) e procuramos os insumos na planilha DER
+            tipsFonte.forEach(tip => {
+                const compBase = tip.composicoes?.[0]?.composicoes_sinapi;
+                if (!compBase || !compBase.itens) return;
 
-                        if (custoUnitario > 0) {
-                            // Encontrou!
-                            matches.push({
-                                tipologia_id: tip.id,
-                                codigo_deres: foundCodigo,
-                                descricao_encontrada: foundDesc,
-                                custo_unitario: custoUnitario,
-                                composicao: {
-                                    codigo_deres: foundCodigo,
-                                    descricao: foundDesc,
-                                    custo_unitario_ref: custoUnitario,
-                                    itens: [
-                                        { tipo: 'Mão de Obra', descricao: 'Trabalhadores (Extraído da sub-composição)', coeficiente: 1, preco_unitario: custoUnitario * 0.4, total: custoUnitario * 0.4 },
-                                        { tipo: 'Material', descricao: 'Insumos base (Extraído da sub-composição)', coeficiente: 1, preco_unitario: custoUnitario * 0.6, total: custoUnitario * 0.6 }
-                                    ]
-                                }
+                const novosItens = [];
+                let encontrouAoMenosUmInsumo = false;
+
+                compBase.itens.forEach(item => {
+                    const itemDescNorm = normalize(item.descricao);
+                    const itemWords = itemDescNorm.split(' ').filter(w => w.length > 2);
+                    
+                    let foundPreco = item.preco_unitario; // Mantém o base se não achar
+                    
+                    // Procura na planilha o insumo
+                    for (let row of jsonData) {
+                        if (!Array.isArray(row)) continue;
+                        const rowText = row.join(' ').trim();
+                        const rowTextNorm = normalize(rowText);
+                        
+                        // Busca se a linha tem a maioria das palavras do insumo
+                        const matchCount = itemWords.filter(w => rowTextNorm.includes(w)).length;
+                        if (itemWords.length > 0 && matchCount >= Math.ceil(itemWords.length * 0.7)) {
+                            // Puxar valor numérico (geralmente últimas colunas)
+                            let custoStr = row.slice().reverse().find(cell => {
+                                if (typeof cell === 'number') return true;
+                                if (typeof cell === 'string' && /^[0-9]+,[0-9]{2}$/.test(cell.trim())) return true;
+                                return false;
                             });
+                            
+                            if (typeof custoStr === 'number') {
+                                foundPreco = custoStr;
+                                encontrouAoMenosUmInsumo = true;
+                                break;
+                            } else if (typeof custoStr === 'string') {
+                                foundPreco = parseFloat(custoStr.replace('.', '').replace(',', '.'));
+                                encontrouAoMenosUmInsumo = true;
+                                break;
+                            }
                         }
                     }
+
+                    novosItens.push({
+                        ...item,
+                        preco_unitario: foundPreco,
+                        total: foundPreco * item.coeficiente
+                    });
                 });
+
+                if (encontrouAoMenosUmInsumo) {
+                    const novoCustoTotal = novosItens.reduce((acc, curr) => acc + curr.total, 0);
+                    
+                    matches.push({
+                        tipologia_id: tip.id,
+                        codigo_deres: tip.codigo || 'SEM_CODIGO',
+                        descricao_encontrada: tip.descricao,
+                        custo_unitario: novoCustoTotal,
+                        composicao: {
+                            codigo_deres: tip.codigo || 'SEM_CODIGO',
+                            descricao: tip.descricao,
+                            custo_unitario_ref: novoCustoTotal,
+                            itens: novosItens,
+                            fonte: fonteSelecionada
+                        }
+                    });
+                }
             });
 
             if (matches.length === 0) {
@@ -373,7 +378,7 @@ const MrcrTab = () => {
                                 {tipologias.length === 0 ? (
                                     <tr><td colSpan="6" className="p-8 text-center text-slate-400">Nenhuma tipologia cadastrada.</td></tr>
                                 ) : (
-                                    tipologias.map(t => {
+                                    tipologias.filter((v, i, a) => a.findIndex(t => (t.descricao === v.descricao)) === i).map(t => {
                                         const comp = t.composicoes?.[0] || {};
                                         
                                         const formatR$ = (val) => val ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '-';
