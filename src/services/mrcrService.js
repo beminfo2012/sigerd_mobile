@@ -161,8 +161,11 @@ export const forcePullSinapiSicro = async () => {
     const historico = [];
     const mesRef = new Date().toISOString().slice(0, 7) + '-01'; 
 
+    // Forçar recriação de todas as composições simuladas
+    await supabase.from('mrcr_composicoes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    
     for (const t of tipologias) {
-        if (!existingIds.includes(t.id)) {
+        if (true) {
             let baseVal = 0;
             let mockItensSinapi = [];
             let mockItensSicro = [];

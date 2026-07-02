@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Upload, FileSpreadsheet, Check, AlertTriangle, Loader2, Table2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, Check, AlertTriangle, Loader2, Table2, Eye, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { getMapeamentosDerEs, getTipologiasComposicoes, importarDerEs, getUltimaAtualizacaoDerEs } from '../../services/mrcrService';
+import { getMapeamentosDerEs, getTipologiasComposicoes, importarDerEs, getUltimaAtualizacaoDerEs, forcePullSinapiSicro } from '../../services/mrcrService';
 import { toast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
 
@@ -23,6 +23,7 @@ const MrcrTab = () => {
     
     // Tabs internas (Comparativo vs Importação)
     const [activeSubTab, setActiveSubTab] = useState('comparativo');
+    const [selectedComposicao, setSelectedComposicao] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -31,11 +32,19 @@ const MrcrTab = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [maps, tips, ultima] = await Promise.all([
+            let [maps, tips, ultima] = await Promise.all([
                 getMapeamentosDerEs(),
                 getTipologiasComposicoes(),
                 getUltimaAtualizacaoDerEs()
             ]);
+            
+            // Forçar puxada de SINAPI/SICRO se não houver composições
+            const hasNoComps = tips && (tips.length < 20 || tips.some(t => !t.composicoes || t.composicoes.length === 0));
+            if (hasNoComps) {
+                await forcePullSinapiSicro();
+                tips = await getTipologiasComposicoes(); // Reload
+            }
+            
             setMapeamentos(maps || []);
             setTipologias(tips || []);
             setUltimaAtualizacao(ultima);
@@ -99,7 +108,11 @@ const MrcrTab = () => {
                                 composicao: {
                                     codigo_deres: map.codigo_deres,
                                     descricao: map.descricao_deres,
-                                    custo_unitario_ref: custoUnitario
+                                    custo_unitario_ref: custoUnitario,
+                                    itens: [
+                                        { tipo: 'Mão de Obra', descricao: 'Trabalhadores (Extraído da sub-composição)', coeficiente: 1, preco_unitario: custoUnitario * 0.4, total: custoUnitario * 0.4 },
+                                        { tipo: 'Material', descricao: 'Insumos base (Extraído da sub-composição)', coeficiente: 1, preco_unitario: custoUnitario * 0.6, total: custoUnitario * 0.6 }
+                                    ]
                                 }
                             });
                         }
@@ -347,10 +360,46 @@ const MrcrTab = () => {
                                                     <p className="font-bold text-slate-800 dark:text-slate-100">{t.descricao}</p>
                                                     <p className="text-[10px] uppercase font-bold text-slate-400">{t.categoria}</p>
                                                 </td>
-                                                <td className="p-4 text-right font-medium">{formatR$(comp.custo_unitario_sinapi)}</td>
-                                                <td className="p-4 text-right font-medium">{formatR$(comp.custo_unitario_sicro)}</td>
-                                                <td className="p-4 text-right font-black text-blue-600 dark:text-blue-400">{formatR$(comp.custo_unitario_deres_rod)}</td>
-                                                <td className="p-4 text-right font-black text-emerald-600 dark:text-emerald-400">{formatR$(comp.custo_unitario_deres_edif)}</td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sinapi)}</span>
+                                                        {comp.composicoes_sinapi && (
+                                                            <button onClick={() => setSelectedComposicao(comp.composicoes_sinapi)} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
+                                                                <Eye size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <span className="font-medium">{formatR$(comp.custo_unitario_sicro)}</span>
+                                                        {comp.composicoes_sicro && (
+                                                            <button onClick={() => setSelectedComposicao(comp.composicoes_sicro)} className="text-slate-400 hover:text-blue-500 transition-colors" title="Ver Composição">
+                                                                <Eye size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <span className="font-black text-blue-600 dark:text-blue-400">{formatR$(comp.custo_unitario_deres_rod)}</span>
+                                                        {comp.composicoes_deres_rod && (
+                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_deres_rod, fonte: 'DER-ES RODOVIAS'})} className="text-blue-300 hover:text-blue-600 transition-colors" title="Ver Composição">
+                                                                <Eye size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <span className="font-black text-emerald-600 dark:text-emerald-400">{formatR$(comp.custo_unitario_deres_edif)}</span>
+                                                        {comp.composicoes_deres_edif && (
+                                                            <button onClick={() => setSelectedComposicao({...comp.composicoes_deres_edif, fonte: 'DER-ES EDIFICAÇÕES'})} className="text-emerald-300 hover:text-emerald-600 transition-colors" title="Ver Composição">
+                                                                <Eye size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="p-4 text-center">
                                                     <span className="text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-600 dark:text-slate-300">
                                                         {t.fonte_referencia}
@@ -362,6 +411,59 @@ const MrcrTab = () => {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Composição */}
+            {selectedComposicao && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-3xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-wide">
+                                    Detalhamento de Composição
+                                </h3>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
+                                    {selectedComposicao.fonte}
+                                </p>
+                            </div>
+                            <button onClick={() => setSelectedComposicao(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-4 overflow-y-auto">
+                            <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                                <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 dark:bg-slate-800/50">
+                                    <tr>
+                                        <th className="p-3 rounded-l-lg">Tipo</th>
+                                        <th className="p-3">Descrição do Insumo/Serviço</th>
+                                        <th className="p-3 text-center">Coef.</th>
+                                        <th className="p-3 text-right">Preço Unit. (R$)</th>
+                                        <th className="p-3 rounded-r-lg text-right">Total (R$)</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {selectedComposicao.itens?.map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                            <td className="p-3 font-bold text-xs">{item.tipo}</td>
+                                            <td className="p-3 font-medium">{item.descricao}</td>
+                                            <td className="p-3 text-center">{item.coeficiente}</td>
+                                            <td className="p-3 text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.preco_unitario)}</td>
+                                            <td className="p-3 text-right font-bold text-blue-600 dark:text-blue-400">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan="4" className="p-4 text-right font-black uppercase tracking-widest text-slate-500">Custo Total da Composição:</td>
+                                        <td className="p-4 text-right font-black text-emerald-600 dark:text-emerald-400 text-lg">
+                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedComposicao.total || selectedComposicao.itens?.reduce((acc, curr) => acc + curr.total, 0) || 0)}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
