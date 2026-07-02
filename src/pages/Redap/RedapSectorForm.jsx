@@ -468,6 +468,9 @@ const RedapSectorForm = () => {
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].danificado = parseInt(e.target.value) || 0;
+                                                            if (newItems[itemName].valor_referencia) {
+                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                            }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -482,6 +485,9 @@ const RedapSectorForm = () => {
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].destruido = parseInt(e.target.value) || 0;
+                                                            if (newItems[itemName].valor_referencia) {
+                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                            }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -586,6 +592,9 @@ const RedapSectorForm = () => {
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].danificado = parseInt(e.target.value) || 0;
+                                                            if (newItems[itemName].valor_referencia) {
+                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                            }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -600,6 +609,9 @@ const RedapSectorForm = () => {
                                                         onChange={(e) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].destruido = parseInt(e.target.value) || 0;
+                                                            if (newItems[itemName].valor_referencia) {
+                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                            }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -613,6 +625,9 @@ const RedapSectorForm = () => {
                                                         onChange={(val) => {
                                                             const newItems = { ...dadosJson.items };
                                                             newItems[itemName].extensao = val;
+                                                            if (newItems[itemName].valor_referencia) {
+                                                                newItems[itemName].valor_estimado = ((newItems[itemName].destruido || 0) + (newItems[itemName].extensao || 0)) * newItems[itemName].valor_referencia + (newItems[itemName].danificado || 0) * newItems[itemName].valor_referencia * 0.5;
+                                                            }
                                                             setDadosJson({ ...dadosJson, items: newItems });
                                                         }}
                                                     />
@@ -770,7 +785,7 @@ const RedapSectorForm = () => {
                             <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
                                 <List size={16} className="text-blue-500" /> Prejuízos Econômicos Privados
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                                 {Object.keys(dadosJson.setores).map((itemName) => {
                                     const item = dadosJson.setores[itemName];
                                     return (
