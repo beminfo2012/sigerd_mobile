@@ -434,7 +434,10 @@ const MrcrTab = () => {
                                     <tr><td colSpan="5" className="p-8 text-center text-slate-400">Nenhuma tipologia cadastrada.</td></tr>
                                 ) : (
                                     tipologias.filter((v, i, a) => a.findIndex(t => (t.descricao === v.descricao)) === i).map(t => {
-                                        const comp = t.composicoes?.find(c => c.custo_unitario_deres_rod || c.custo_unitario_deres_edif) || t.composicoes?.[0] || {};
+                                        const comp = t.composicoes?.reduce((acc, curr) => ({
+                                            ...acc,
+                                            ...Object.fromEntries(Object.entries(curr).filter(([_, v]) => v !== null && v !== undefined))
+                                        }), {}) || {};
                                         
                                         const formatR$ = (val) => val ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val) : '-';
                                         
