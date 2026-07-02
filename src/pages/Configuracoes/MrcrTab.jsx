@@ -117,7 +117,7 @@ const MrcrTab = () => {
 
             const matches = [];
             const mapeamentosFonte = mapeamentos.filter(m => m.fonte === fonteSelecionada && m.ativo);
-            const tipsFonte = tipologias.filter(t => t.fonte_referencia === fonteSelecionada);
+            const tipsFonte = tipologias.filter(t => t.fonte_referencia === fonteSelecionada).filter((v, i, a) => a.findIndex(t => t.descricao === v.descricao) === i);
             
             // Para cada tipologia, pegamos a composição base e procuramos os insumos
             tipsFonte.forEach(tip => {
@@ -371,12 +371,24 @@ const MrcrTab = () => {
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                         {previaImportacao.map((item, idx) => (
                                             <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                                <td className="p-3 font-mono text-xs font-bold">{item.codigo_deres}</td>
-                                                <td className="p-3 font-medium">{item.descricao_encontrada}</td>
-                                                <td className="p-3 text-right font-black text-blue-600 dark:text-blue-400">
-                                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.custo_unitario)}
-                                                </td>
-                                            </tr>
+                                                  <td className="p-3 font-mono text-xs font-bold">{item.codigo_deres}</td>
+                                                  <td className="p-3 font-medium">
+                                                      {item.descricao_encontrada}
+                                                      <div className="text-[10px] text-slate-400 mt-1">
+                                                          {item.composicao?.itens?.length || 0} insumos que compõem este item foram processados
+                                                      </div>
+                                                  </td>
+                                                  <td className="p-3 text-right">
+                                                      <div className="flex items-center justify-end gap-2">
+                                                          <span className="font-black text-blue-600 dark:text-blue-400">
+                                                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.custo_unitario)}
+                                                          </span>
+                                                          <button onClick={() => setSelectedComposicao(item.composicao)} className="text-blue-400 hover:text-blue-600 transition-colors" title="Ver Insumos da Composição">
+                                                              <Eye size={16} />
+                                                          </button>
+                                                      </div>
+                                                  </td>
+                                              </tr>
                                         ))}
                                     </tbody>
                                 </table>
