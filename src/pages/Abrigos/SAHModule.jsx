@@ -53,6 +53,7 @@ export default function SAHModule() {
         
         snapshot_desabrigados: 0,
         snapshot_desalojados: 0,
+        snapshot_kits_estoque: 0,
         snapshot_kits_entregues: 0,
         snapshot_deficit_kits: 0,
         
@@ -157,23 +158,32 @@ export default function SAHModule() {
             setLoading(true);
             
             const { data: occupants } = await supabase.from('shelter_occupants').select('*').eq('status', 'active');
-            const { data: inventory } = await supabase.from('shelter_inventory').select('*').eq('status', 'active');
+            const { data: inventory } = await supabase.from('shelter_inventory').select('*');
             const { data: distributions } = await supabase.from('shelter_distributions').select('*');
             
             const desabrigados = occupants ? occupants.length : 0;
             const desalojados = parseInt(sahData.snapshot_desalojados) || 0; 
             
             let kitsEntregues = 0;
-            if (distributions && inventory) {
+            let kitsEstoque = 0;
+            
+            if (distributions) {
                 kitsEntregues = distributions.length * 2; 
+            }
+            if (inventory) {
+                // Calcula uma métrica simples de kits disponíveis no estoque baseado na quantidade de itens básicos (alimento, higiene, limpeza)
+                kitsEstoque = inventory
+                    .filter(i => ['alimento', 'higiene', 'limpeza'].includes(i.category))
+                    .reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
             }
             
             const necessario = Math.ceil(desabrigados + (desalojados * 0.4));
-            const deficit = Math.max(0, necessario - kitsEntregues);
+            const deficit = Math.max(0, necessario - kitsEntregues - kitsEstoque);
             
             setSahData(prev => ({
                 ...prev,
                 snapshot_desabrigados: desabrigados,
+                snapshot_kits_estoque: kitsEstoque,
                 snapshot_kits_entregues: kitsEntregues,
                 snapshot_deficit_kits: deficit,
                 oficio_qtde_cesta_basica: deficit,
@@ -665,7 +675,7 @@ export default function SAHModule() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
                     <Building2 className="text-slate-400 mb-3" size={28} />
                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Desabrigados</span>
@@ -678,11 +688,17 @@ export default function SAHModule() {
                     <span className="text-4xl font-black text-slate-800">{sahData.snapshot_desalojados}</span>
                     <span className="text-[10px] text-slate-400 mt-2 font-semibold">Estimativa Manual</span>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
-                    <Archive className="text-slate-400 mb-3" size={28} />
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Kits Entregues</span>
-                    <span className="text-4xl font-black text-slate-800">{sahData.snapshot_kits_entregues}</span>
-                    <span className="text-[10px] text-slate-400 mt-2 font-semibold">Distribuição Local</span>
+                <div className="bg-white p-6 rounded-2xl border-2 border-blue-200 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
+                    <Archive className="text-blue-400 mb-3" size={28} />
+                    <span className="text-[10px] text-blue-500 font-black uppercase tracking-widest mb-1">Em Estoque</span>
+                    <span className="text-4xl font-black text-blue-800">{sahData.snapshot_kits_estoque || 0}</span>
+                    <span className="text-[10px] text-blue-400 mt-2 font-semibold">Módulo de Logística</span>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border-2 border-emerald-200 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
+                    <Archive className="text-emerald-400 mb-3" size={28} />
+                    <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mb-1">Kits Entregues</span>
+                    <span className="text-4xl font-black text-emerald-800">{sahData.snapshot_kits_entregues}</span>
+                    <span className="text-[10px] text-emerald-400 mt-2 font-semibold">Distribuição Local</span>
                 </div>
                 <div className="bg-red-600 p-6 rounded-2xl border-2 border-red-700 shadow-md shadow-red-200 flex flex-col items-center justify-center text-center relative overflow-hidden">
                     <AlertTriangle className="text-red-500/30 absolute -right-4 -bottom-4" size={100} />
