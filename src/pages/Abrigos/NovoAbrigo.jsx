@@ -22,7 +22,7 @@ const NovoAbrigo = () => {
         // TODO: Implement save logic with shelterApi and shelterDb
         setTimeout(() => {
             setSaving(false)
-            navigate('/abrigos')
+            navigate('/assisthumanitaria')
         }, 1000)
     }
 
@@ -31,7 +31,7 @@ const NovoAbrigo = () => {
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <button
-                    onClick={() => navigate('/abrigos')}
+                    onClick={() => navigate('/assisthumanitaria')}
                     className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-all"
                 >
                     <ArrowLeft size={20} className="text-slate-600" />

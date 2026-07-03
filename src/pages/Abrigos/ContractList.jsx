@@ -85,7 +85,7 @@ const ContractList = () => {
         <div className="min-h-screen bg-slate-50">
             <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-4 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/abrigos')} className="hover:bg-slate-100 rounded-full">
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/assisthumanitaria')} className="hover:bg-slate-100 rounded-full">
                         <ArrowLeft className="w-6 h-6 text-slate-700" />
                     </Button>
                     <h1 className="text-xl font-bold text-slate-800">Contratos de Emergência</h1>
@@ -100,7 +100,7 @@ const ContractList = () => {
                         <RefreshCw className="w-5 h-5" />
                     </Button>
                     <Button
-                        onClick={() => navigate('/abrigos/contratos/novo')}
+                        onClick={() => navigate('/assisthumanitaria/contratos/novo')}
                         className="bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-full px-4"
                     >
                         <Plus className="w-5 h-5 mr-1" />
@@ -140,7 +140,7 @@ const ContractList = () => {
                                             variant="ghost"
                                             size="icon"
                                             className="h-8 w-8 text-slate-400 hover:text-blue-600"
-                                            onClick={() => navigate(`/abrigos/contratos/editar/${contract.contract_id || contract.id}`)}
+                                            onClick={() => navigate(`/assisthumanitaria/contratos/editar/${contract.contract_id || contract.id}`)}
                                         >
                                             <Pencil className="w-4 h-4" />
                                         </Button>

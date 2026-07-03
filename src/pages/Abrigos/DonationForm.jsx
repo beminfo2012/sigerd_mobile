@@ -82,7 +82,7 @@ export function DonationForm() {
             });
 
             toast.success('Doação registrada!', `${formData.item_description} (${formData.quantity} ${formData.unit}) adicionado.`);
-            navigate(`/abrigos/${shelterId}`);
+            navigate(`/assisthumanitaria/${shelterId}`);
         } catch (error) {
             console.error('Error saving donation:', error);
             toast.error('Erro ao registrar', error.message || 'Tente novamente.');
@@ -98,7 +98,7 @@ export function DonationForm() {
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
                 <div className="text-center">
                     <h2 className="text-xl font-bold text-slate-800 mb-2">Abrigo não encontrado</h2>
-                    <Button onClick={() => navigate('/abrigos')}>Voltar ao Dashboard</Button>
+                    <Button onClick={() => navigate('/assisthumanitaria')}>Voltar ao Dashboard</Button>
                 </div>
             </div>
         );
@@ -110,7 +110,7 @@ export function DonationForm() {
                 {/* Header */}
                 <div className="mb-6">
                     <button
-                        onClick={() => navigate(`/abrigos/${shelterId}`)}
+                        onClick={() => navigate(`/assisthumanitaria/${shelterId}`)}
                         className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
@@ -262,7 +262,7 @@ export function DonationForm() {
                         <Button
                             type="button"
                             variant="secondary"
-                            onClick={() => navigate(`/abrigos/${shelterId}`)}
+                            onClick={() => navigate(`/assisthumanitaria/${shelterId}`)}
                             className="flex-1"
                         >
                             Cancelar

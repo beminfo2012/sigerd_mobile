@@ -1204,7 +1204,7 @@ const MobileDashboardView = ({
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight text-center">Pluviômetros</span>
                         </div>
                         {!isOperador && (
-                            <div onClick={() => navigate('/abrigos')} className="flex flex-col items-center gap-2.5 cursor-pointer">
+                            <div onClick={() => navigate('/assisthumanitaria')} className="flex flex-col items-center gap-2.5 cursor-pointer">
                                 <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-all">
                                     <Home size={28} />
                                 </div>
@@ -1833,7 +1833,7 @@ const WebViewDashboardView = ({
                         {[
                             { label: 'Vistorias', icon: ClipboardList, path: '/vistorias' },
                             { label: 'Ocorrências', icon: ClipboardList, path: '/ocorrencias' },
-                            { label: 'Assistência Humanitária', icon: Home, path: '/abrigos' },
+                            { label: 'Assistência Humanitária', icon: Home, path: '/assisthumanitaria' },
                             { label: 'Relatórios', icon: FileText, action: () => setShowReportMenu(!showReportMenu) },
                             { label: 'REDAP', icon: ClipboardCheck, path: '/redap' }
                         ].map((item, idx) => (

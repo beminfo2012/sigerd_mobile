@@ -379,87 +379,87 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/menu" element={<Menu userProfile={userProfile} onLogout={handleLogout} setUserProfile={setUserProfile} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
-                                <Route path="/abrigos" element={
+                                <Route path="/assisthumanitaria" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                         <ShelterMenu />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/lista" element={
+                                <Route path="/assisthumanitaria/lista" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterList />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/estoque" element={
+                                <Route path="/assisthumanitaria/estoque" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                         <StockHub />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/doacoes-central" element={
+                                <Route path="/assisthumanitaria/doacoes-central" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                         <DonationHub />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/logistica" element={
+                                <Route path="/assisthumanitaria/logistica" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                         <LogisticsHub />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/novo" element={
+                                <Route path="/assisthumanitaria/novo" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/:id" element={
+                                <Route path="/assisthumanitaria/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterDetail />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/editar/:id" element={
+                                <Route path="/assisthumanitaria/editar/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/:shelterId/abrigados/novo" element={
+                                <Route path="/assisthumanitaria/:shelterId/abrigados/novo" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <OccupantForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/:shelterId/doacoes/novo" element={
+                                <Route path="/assisthumanitaria/:shelterId/doacoes/novo" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                         <DonationForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/:shelterId/distribuicoes/novo" element={
+                                <Route path="/assisthumanitaria/:shelterId/distribuicoes/novo" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                         <DistributionForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/relatorios" element={
+                                <Route path="/assisthumanitaria/relatorios" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterReports />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/residentes" element={
+                                <Route path="/assisthumanitaria/residentes" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterResidents />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/contratos" element={
+                                <Route path="/assisthumanitaria/contratos" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ContractList />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/contratos/novo" element={
+                                <Route path="/assisthumanitaria/contratos/novo" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ContractForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/contratos/editar/:id" element={
+                                <Route path="/assisthumanitaria/contratos/editar/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ContractForm />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/abrigos/sah" element={
+                                <Route path="/assisthumanitaria/sah" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <SAHModule />
                                     </ProtectedRoute>

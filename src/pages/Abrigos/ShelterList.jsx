@@ -53,7 +53,7 @@ export default function ShelterList() {
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <button
-                        onClick={() => navigate('/abrigos')}
+                        onClick={() => navigate('/assisthumanitaria')}
                         className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
@@ -63,7 +63,7 @@ export default function ShelterList() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">Gestão de Abrigos</h1>
                         <Button
-                            onClick={() => navigate('/abrigos/novo')}
+                            onClick={() => navigate('/assisthumanitaria/novo')}
                             className="flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             <Plus size={18} />
@@ -111,7 +111,7 @@ export default function ShelterList() {
                         filteredShelters.map((shelter) => (
                             <Card
                                 key={shelter.id}
-                                onClick={() => navigate(`/abrigos/${shelter.id}`)}
+                                onClick={() => navigate(`/assisthumanitaria/${shelter.id}`)}
                                 className="p-4 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99] border border-transparent hover:border-blue-100"
                             >
                                 <div className="flex items-start justify-between mb-3">

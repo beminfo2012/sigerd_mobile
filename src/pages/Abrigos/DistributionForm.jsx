@@ -87,7 +87,7 @@ export function DistributionForm() {
                 shelter_id: idStr
             });
             alert('Distribuição registrada com sucesso!');
-            navigate(`/abrigos/${shelterId}`);
+            navigate(`/assisthumanitaria/${shelterId}`);
         } catch (error) {
             console.error('Error saving distribution:', error);
             alert(error.message || 'Erro ao registrar distribuição. Tente novamente.');
@@ -103,7 +103,7 @@ export function DistributionForm() {
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
                 <div className="text-center">
                     <h2 className="text-xl font-bold text-slate-800 mb-2">Abrigo não encontrado</h2>
-                    <Button onClick={() => navigate('/abrigos')}>Voltar ao Dashboard</Button>
+                    <Button onClick={() => navigate('/assisthumanitaria')}>Voltar ao Dashboard</Button>
                 </div>
             </div>
         );
@@ -117,7 +117,7 @@ export function DistributionForm() {
                 {/* Header */}
                 <div className="mb-6">
                     <button
-                        onClick={() => navigate(`/abrigos/${shelterId}`)}
+                        onClick={() => navigate(`/assisthumanitaria/${shelterId}`)}
                         className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
@@ -271,7 +271,7 @@ export function DistributionForm() {
                         <Button
                             type="button"
                             variant="secondary"
-                            onClick={() => navigate(`/abrigos/${shelterId}`)}
+                            onClick={() => navigate(`/assisthumanitaria/${shelterId}`)}
                             className="flex-1"
                         >
                             Cancelar

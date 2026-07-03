@@ -40,7 +40,7 @@ const ContractForm = () => {
                 });
             } else {
                 toast.error('Contrato não encontrado');
-                navigate('/abrigos/contratos');
+                navigate('/assisthumanitaria/contratos');
             }
         } catch (error) {
             console.error(error);
@@ -105,7 +105,7 @@ const ContractForm = () => {
                 await addContract(payload);
                 toast.success('Contrato salvo!');
             }
-            navigate('/abrigos/contratos');
+            navigate('/assisthumanitaria/contratos');
         } catch (error) {
             console.error('Error saving contract:', error);
             toast.error('Erro ao salvar contrato.');
@@ -118,7 +118,7 @@ const ContractForm = () => {
         <div className="min-h-screen bg-slate-50">
             <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-4 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/abrigos/contratos')} className="hover:bg-slate-100 rounded-full">
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/assisthumanitaria/contratos')} className="hover:bg-slate-100 rounded-full">
                         <ArrowLeft className="w-6 h-6 text-slate-700" />
                     </Button>
                     <h1 className="text-xl font-bold text-slate-800">

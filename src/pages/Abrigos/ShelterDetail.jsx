@@ -45,7 +45,7 @@ export function ShelterDetail() {
             try {
                 await deleteShelter(id);
                 alert('Abrigo excluído com sucesso.');
-                navigate('/abrigos/lista');
+                navigate('/assisthumanitaria/lista');
             } catch (error) {
                 console.error('Erro ao excluir:', error);
                 alert('Erro ao excluir abrigo.');
@@ -72,7 +72,7 @@ export function ShelterDetail() {
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Abrigo não encontrado</h1>
-                    <Button onClick={() => navigate('/abrigos')}>Voltar ao Dashboard</Button>
+                    <Button onClick={() => navigate('/assisthumanitaria')}>Voltar ao Dashboard</Button>
                 </div>
             </div>
         );
@@ -116,7 +116,7 @@ export function ShelterDetail() {
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <button
-                        onClick={() => navigate('/abrigos/lista')}
+                        onClick={() => navigate('/assisthumanitaria/lista')}
                         className="flex items-center gap-2 text-[#2a5299] font-semibold w-fit hover:text-blue-800 transition-colors"
                     >
                         <ArrowLeft size={20} />
@@ -131,7 +131,7 @@ export function ShelterDetail() {
                                     {statusLabels[shelter.status] || 'ATIVO'}
                                 </Badge>
                                 <button
-                                    onClick={() => navigate(`/abrigos/editar/${id}`)}
+                                    onClick={() => navigate(`/assisthumanitaria/editar/${id}`)}
                                     className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-xl transition-colors"
                                     title="Editar Abrigo"
                                 >
@@ -203,7 +203,7 @@ export function ShelterDetail() {
                         {/* Quick Actions */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Card
-                                onClick={() => navigate(`/abrigos/${id}/abrigados/novo`)}
+                                onClick={() => navigate(`/assisthumanitaria/${id}/abrigados/novo`)}
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-4">
@@ -222,7 +222,7 @@ export function ShelterDetail() {
                             </Card>
 
                             <Card
-                                onClick={() => navigate(`/abrigos/${id}/doacoes/novo`)}
+                                onClick={() => navigate(`/assisthumanitaria/${id}/doacoes/novo`)}
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-4">
@@ -241,7 +241,7 @@ export function ShelterDetail() {
                             </Card>
 
                             <Card
-                                onClick={() => navigate(`/abrigos/${id}/distribuicoes/novo`)}
+                                onClick={() => navigate(`/assisthumanitaria/${id}/distribuicoes/novo`)}
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-4">

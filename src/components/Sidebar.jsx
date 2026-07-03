@@ -170,7 +170,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
         {
             label: 'Assist. Humanitária',
             icon: HumanitarianIcon,
-            path: '/abrigos',
+            path: '/assisthumanitaria',
             roles: HUMANITARIAN_ROLES
         },
         {

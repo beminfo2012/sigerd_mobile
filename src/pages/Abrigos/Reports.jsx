@@ -94,7 +94,7 @@ export function Reports() {
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <button
-                        onClick={() => navigate('/abrigos')}
+                        onClick={() => navigate('/assisthumanitaria')}
                         className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />

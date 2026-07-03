@@ -105,7 +105,7 @@ export default function LogisticsHub() {
             }
 
             toast.success('Sucesso!', 'Distribuição realizada com sucesso.');
-            navigate('/abrigos');
+            navigate('/assisthumanitaria');
         } catch (error) {
             console.error(error);
             toast.error('Erro na operação', error.message);
@@ -124,7 +124,7 @@ export default function LogisticsHub() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
-                        onClick={() => navigate('/abrigos')}
+                        onClick={() => navigate('/assisthumanitaria')}
                         className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />

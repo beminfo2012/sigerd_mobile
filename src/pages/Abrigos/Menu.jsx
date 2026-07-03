@@ -216,7 +216,7 @@ export default function ShelterMenu() {
             title: 'Gestão de Abrigos',
             description: 'Gerencie ocupantes, capacidade e operações de cada abrigo.',
             icon: Building2,
-            path: '/abrigos/lista',
+            path: '/assisthumanitaria/lista',
             color: 'bg-blue-50 text-[#2a5299]',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
@@ -224,7 +224,7 @@ export default function ShelterMenu() {
             title: 'Estoque Municipal',
             description: 'Visualize e gerencie o estoque centralizado da prefeitura.',
             icon: Package,
-            path: '/abrigos/estoque',
+            path: '/assisthumanitaria/estoque',
             color: 'bg-emerald-50 text-emerald-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
@@ -232,7 +232,7 @@ export default function ShelterMenu() {
             title: 'Receber Doações',
             description: 'Registre a entrada de doações para o estoque ou abrigos.',
             icon: Gift,
-            path: '/abrigos/doacoes-central',
+            path: '/assisthumanitaria/doacoes-central',
             color: 'bg-amber-50 text-amber-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
@@ -240,7 +240,7 @@ export default function ShelterMenu() {
             title: 'Logística & Distribuição',
             description: 'Transfira itens do estoque municipal para os abrigos.',
             icon: Truck,
-            path: '/abrigos/logistica',
+            path: '/assisthumanitaria/logistica',
             color: 'bg-purple-50 text-purple-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
@@ -248,7 +248,7 @@ export default function ShelterMenu() {
             title: 'Relatórios Gerais',
             description: 'Consolidado de ocupação, doações e movimentações.',
             icon: FileText,
-            path: '/abrigos/relatorios',
+            path: '/assisthumanitaria/relatorios',
             color: 'bg-slate-50 text-slate-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
@@ -257,7 +257,7 @@ export default function ShelterMenu() {
             title: 'Contratos de Emergência',
             description: 'Contratos vigentes e suprimentos emergenciais.',
             icon: FileText,
-            path: '/abrigos/contratos',
+            path: '/assisthumanitaria/contratos',
             color: 'bg-amber-50 text-amber-700',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
@@ -265,7 +265,7 @@ export default function ShelterMenu() {
             title: 'Solicitação de Assistência (SAH)',
             description: 'Solicite kits e recursos à Defesa Civil Estadual/Nacional.',
             icon: AlertTriangle,
-            path: '/abrigos/sah',
+            path: '/assisthumanitaria/sah',
             color: 'bg-red-50 text-red-600',
             allowedRoles: ['admin', 'administrador', 'coordenador', 'coordenador de proteção e defesa civil', 'agente de defesa civil']
         }
@@ -319,29 +319,9 @@ export default function ShelterMenu() {
                 </div>
             </header>
 
-            <main className="p-4 space-y-6 max-w-4xl mx-auto">
-                {/* Tabs Switcher - estilo REDAP */}
-                <div className="flex p-1 bg-slate-200/50 rounded-2xl w-fit mx-auto">
-                    <button
-                        onClick={() => setActiveTab('dashboard')}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        <BarChart3 size={13} />
-                        Painel de Dados
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('operacoes')}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'operacoes' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        <LayoutDashboard size={13} />
-                        Gestão Operacional
-                    </button>
-                </div>
-
-                {activeTab === 'dashboard' && (
-                    <>
+            <main className="px-6 md:px-12 py-8 space-y-8 w-full max-w-[1700px] mx-auto">
                         {/* Summary KPI Cards */}
-                        <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                             {/* Gradient Card - Total Shelters */}
                             <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-[28px] shadow-lg border border-blue-400/20 dark:border-blue-500/30 relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2 relative z-10">
@@ -413,49 +393,9 @@ export default function ShelterMenu() {
                             </div>
                         </div>
 
-                        {/* ═══ PER-SHELTER OCCUPANCY BARS ═══ */}
-                        {shelterOccupancy.length > 0 && (
-                            <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                                        <Users className="text-blue-500" size={18} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Taxa de Ocupação por Abrigo</h3>
-                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Capacidade utilizada em cada unidade</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    {shelterOccupancy.map((s, i) => (
-                                        <div key={s.shelter_id || i}>
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[60%]">{s.name}</span>
-                                                <span className={`text-[10px] font-black ${s.percent >= 90 ? 'text-red-600' : s.percent >= 70 ? 'text-amber-600' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                                                    {s.occupancy}/{s.capacity} ({s.percent}%)
-                                                </span>
-                                            </div>
-                                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden relative">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-1000 ease-out relative
-                                                    ${s.percent >= 90 ? 'bg-gradient-to-r from-red-400 to-red-600' :
-                                                            s.percent >= 70 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
-                                                                'bg-gradient-to-r from-emerald-400 to-emerald-500'}`}
-                                                    style={{ width: `${s.percent}%` }}
-                                                >
-                                                    {s.percent >= 30 && (
-                                                        <div className="absolute inset-0 bg-white/20 dark:bg-black/20 animate-pulse rounded-full" style={{ animationDuration: '3s' }}></div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* ═══ LOW STOCK ALERTS ═══ */}
                         {lowStockAlerts.length > 0 && (
-                            <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 border border-slate-200 border border-red-100 dark:border-red-800 shadow-sm animate-in fade-in duration-700">
+                            <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 border border-slate-200 border border-red-100 dark:border-red-800 shadow-sm animate-in fade-in duration-700 rounded-3xl">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="p-2 bg-red-100 dark:bg-red-800 rounded-lg">
                                         <AlertTriangle className="text-red-500" size={18} />
@@ -465,7 +405,7 @@ export default function ShelterMenu() {
                                         <p className="text-[10px] text-red-400 dark:text-red-500 font-medium">Itens abaixo do nível mínimo</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                     {lowStockAlerts.map((item, i) => (
                                         <div key={i} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 border border-red-100 dark:border-red-800/30 flex items-center gap-3">
                                             <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -492,88 +432,127 @@ export default function ShelterMenu() {
                             </div>
                         )}
 
-                        {/* ═══ TIMELINE: DOAÇÕES vs DISTRIBUIÇÕES ═══ */}
-                        <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm animate-in fade-in duration-700">
-                            <div className="flex items-center gap-2 mb-4">
-                                <div className="p-2 bg-violet-50 dark:bg-violet-900/30 rounded-lg">
-                                    <TrendingUp className="text-violet-500" size={18} />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Doações vs Distribuições</h3>
-                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Últimos 30 dias</p>
-                                </div>
-                                <div className="flex gap-3">
-                                    <div className="flex items-center gap-1">
-                                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">Doações</span>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
+                            {/* ═══ PER-SHELTER OCCUPANCY BARS ═══ */}
+                            {shelterOccupancy.length > 0 && (
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                                            <Users className="text-blue-500" size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Ocupação por Abrigo</h3>
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Lotação das unidades</p>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
-                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">Distribuições</span>
+                                    <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 flex-1 max-h-[300px]">
+                                        {shelterOccupancy.map((s, i) => (
+                                            <div key={s.shelter_id || i}>
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[75%]" title={s.name}>{s.name}</span>
+                                                    <span className={`text-[11px] font-black ${s.percent >= 90 ? 'text-red-600' : s.percent >= 70 ? 'text-amber-600' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                                        {s.occupancy}/{s.capacity} ({s.percent}%)
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden relative">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-1000 ease-out relative
+                                                        ${s.percent >= 90 ? 'bg-gradient-to-r from-red-400 to-red-600' :
+                                                                s.percent >= 70 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                                                                    'bg-gradient-to-r from-emerald-400 to-emerald-500'}`}
+                                                        style={{ width: `${s.percent}%` }}
+                                                    >
+                                                        {s.percent >= 30 && (
+                                                            <div className="absolute inset-0 bg-white/20 dark:bg-black/20 animate-pulse rounded-full" style={{ animationDuration: '3s' }}></div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            </div>
-                            <div className="h-48 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={timelineData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="gradDoacoes" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="gradDist" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" opacity={0.1} />
-                                        <XAxis
-                                            dataKey="day"
-                                            tick={{ fontSize: 8, fill: '#94a3b8', fontWeight: 700 }}
-                                            tickLine={false}
-                                            axisLine={false}
-                                            interval={Math.floor(timelineData.length / 6)}
-                                        />
-                                        <YAxis
-                                            tick={{ fontSize: 9, fill: '#94a3b8' }}
-                                            tickLine={false}
-                                            axisLine={false}
-                                            allowDecimals={false}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{
-                                                borderRadius: '16px', border: 'none',
-                                                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-                                                fontSize: '11px', fontWeight: 700
-                                            }}
-                                        />
-                                        <Area type="monotone" dataKey="doacoes" stroke="#10b981" strokeWidth={2.5} fill="url(#gradDoacoes)" dot={false} name="Doações" />
-                                        <Area type="monotone" dataKey="distribuicoes" stroke="#3b82f6" strokeWidth={2.5} fill="url(#gradDist)" dot={false} name="Distribuições" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
+                            )}
 
-                        {/* ═══ ORIGINAL CHARTS (Top Items) ═══ */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Stock Chart */}
-                            <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
-                                        <Package className="text-emerald-500" size={18} />
+                            {/* ═══ TIMELINE: DOAÇÕES vs DISTRIBUIÇÕES ═══ */}
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2.5 bg-violet-50 dark:bg-violet-900/30 rounded-xl">
+                                        <TrendingUp className="text-violet-500" size={20} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Doações vs Distribuições</h3>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Últimos 30 dias</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 mb-4 justify-center">
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-full">
+                                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                        <span className="text-[9px] font-black text-emerald-600 uppercase">Doações</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 rounded-full">
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <span className="text-[9px] font-black text-blue-600 uppercase">Distribuições</span>
+                                    </div>
+                                </div>
+                                <div className="h-48 w-full flex-1 min-h-[200px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={timelineData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="gradDoacoes" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="gradDist" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" opacity={0.1} />
+                                            <XAxis
+                                                dataKey="day"
+                                                tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 700 }}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                interval={Math.floor(timelineData.length / 5)}
+                                            />
+                                            <YAxis
+                                                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                allowDecimals={false}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    borderRadius: '16px', border: 'none',
+                                                    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                                                    fontSize: '11px', fontWeight: 700
+                                                }}
+                                            />
+                                            <Area type="monotone" dataKey="doacoes" stroke="#10b981" strokeWidth={2.5} fill="url(#gradDoacoes)" dot={false} name="Doações" />
+                                            <Area type="monotone" dataKey="distribuicoes" stroke="#3b82f6" strokeWidth={2.5} fill="url(#gradDist)" dot={false} name="Distribuições" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* ═══ ORIGINAL CHARTS (Top Items) ═══ */}
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+                                        <Package className="text-emerald-500" size={20} />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Top Itens em Estoque</h3>
                                         <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Categorias com maior volume</p>
                                     </div>
                                 </div>
-                                <div className="h-40 w-full">
+                                <div className="h-48 w-full flex-1 min-h-[220px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart layout="vertical" data={chartData.inventory} margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                                        <BarChart layout="vertical" data={chartData.inventory} margin={{ top: 0, right: 30, left: 30, bottom: 0 }}>
                                             <XAxis type="number" hide />
-                                            <YAxis dataKey="name" type="category" width={70} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 700 }} tickLine={false} axisLine={false} />
-                                            <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }} />
-                                            <Bar dataKey="quantity" fill="#10b981" radius={[0, 4, 4, 0]} barSize={16}>
+                                            <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} tickLine={false} axisLine={false} />
+                                            <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '11px' }} />
+                                            <Bar dataKey="quantity" fill="#10b981" radius={[0, 6, 6, 0]} barSize={20}>
                                                 {chartData.inventory.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
@@ -582,41 +561,15 @@ export default function ShelterMenu() {
                                     </ResponsiveContainer>
                                 </div>
                             </div>
-
-                            {/* Occupancy Bar Chart */}
-                            <div className="bg-white dark:bg-slate-900 p-5 border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                                        <BarChart3 className="text-blue-500" size={18} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Ocupação por Abrigo</h3>
-                                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Unidades com maior lotação</p>
-                                    </div>
-                                </div>
-                                <div className="h-40 w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartData.occupancy} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                                            <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 700 }} tickLine={false} axisLine={false} interval={0} />
-                                            <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                                            <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '10px' }} />
-                                            <Bar dataKey="current" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
                         </div>
-                    </>
-                )}
 
-                {activeTab === 'operacoes' && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-4">
                         <div className="flex items-center gap-2 mb-4 px-2">
                             <LayoutDashboard size={16} className="text-slate-400 dark:text-slate-500" />
                             <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Módulos Operacionais</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             {filteredItems.map((item, index) => (
                                 <div
                                     key={index}
@@ -639,7 +592,6 @@ export default function ShelterMenu() {
                             ))}
                         </div>
                     </div>
-                )}
 
                 {/* Footer Info */}
                 <div className="text-center pt-8 border-t border-slate-100 dark:border-slate-800 mt-8">

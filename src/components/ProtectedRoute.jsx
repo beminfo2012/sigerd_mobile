@@ -8,7 +8,7 @@ import { Navigate, useLocation } from 'react-router-dom';
  * @param {React.ReactNode} props.children - The component to render if authorized
  * @param {Object} props.user - The user profile object containing the role
  * @param {Array<string>} props.allowedRoles - List of roles permitted to access this route
- * @param {string} props.fallbackPath - Path to redirect to if authorization fails (defaults to /abrigos for limited roles)
+ * @param {string} props.fallbackPath - Path to redirect to if authorization fails (defaults to /assisthumanitaria for limited roles)
  */
 const ProtectedRoute = ({ children, user, allowedRoles, fallbackPath }) => {
     const location = useLocation();
@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children, user, allowedRoles, fallbackPath }) => {
     if (!isAuthorized) {
         // If not authorized, redirect to the assigned fallback or a default safe zone
         const defaultFallback = (userRole === 'Assistente Social' || userRole === 'Voluntário')
-            ? '/abrigos'
+            ? '/assisthumanitaria'
             : '/';
 
         // Prevent infinite redirect loop if already at fallback path

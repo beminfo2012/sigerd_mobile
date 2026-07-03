@@ -121,7 +121,7 @@ export default function StockHub() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
-                        onClick={() => navigate('/abrigos')}
+                        onClick={() => navigate('/assisthumanitaria')}
                         className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
@@ -266,7 +266,7 @@ export default function StockHub() {
                             {search ? 'Tente outro termo de busca.' : 'Registre doações para popular o estoque.'}
                         </p>
                         {!search && (
-                            <Button onClick={() => navigate('/abrigos/doacoes-central')} className="mx-auto">
+                            <Button onClick={() => navigate('/assisthumanitaria/doacoes-central')} className="mx-auto">
                                 <Gift size={16} className="mr-2" /> Receber Doações
                             </Button>
                         )}

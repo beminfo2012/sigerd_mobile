@@ -109,7 +109,7 @@ export function Dashboard() {
                 </div>
                 <div className="flex gap-2">
                     <button
-                        onClick={() => navigate('/abrigos/novo')}
+                        onClick={() => navigate('/assisthumanitaria/novo')}
                         className="p-2 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-200 active:scale-95 transition-all"
                     >
                         <Plus className="w-5 h-5" />
@@ -274,7 +274,7 @@ export function Dashboard() {
                                 {filteredShelters.map((shelter) => (
                                     <div
                                         key={shelter.id}
-                                        onClick={() => navigate(`/abrigos/${shelter.id}`)}
+                                        onClick={() => navigate(`/assisthumanitaria/${shelter.id}`)}
                                         className="p-4 bg-white hover:bg-slate-50 transition-colors cursor-pointer group active:bg-blue-50/50"
                                     >
                                         <div className="flex items-center gap-3">

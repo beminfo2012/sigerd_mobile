@@ -42,7 +42,7 @@ export function Residents() {
         <div className="min-h-screen bg-slate-50 pb-12">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
                 <button
-                    onClick={() => navigate('/abrigos')}
+                    onClick={() => navigate('/assisthumanitaria')}
                     className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                 >
                     <ArrowLeft size={20} />
@@ -75,7 +75,7 @@ export function Residents() {
                             return (
                                 <Card
                                     key={resident.id}
-                                    onClick={() => navigate(`/abrigos/${resident.shelter_id}`)}
+                                    onClick={() => navigate(`/assisthumanitaria/${resident.shelter_id}`)}
                                     className="p-4 hover:shadow-md transition-shadow cursor-pointer"
                                 >
                                     <div className="flex items-center gap-4">

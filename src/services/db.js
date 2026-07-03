@@ -968,8 +968,10 @@ export const syncSingleItem = async (storeName, item, db) => {
             if (storeName === 'donations') {
                 delete payload.destination_type;
             } else if (storeName === 'inventory') {
-                payload.inventory_id = payload.item_id;
-                delete payload.item_id;
+                if (payload.item_id) {
+                    payload.inventory_id = payload.item_id;
+                    delete payload.item_id;
+                }
                 delete payload.min_quantity;
                 delete payload.status;
             }
@@ -997,7 +999,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                     const inv = await db.get('inventory', parseInt(payload.inventory_id));
                     if (inv && inv.supabase_id) invSupabaseId = inv.supabase_id;
                 } else if (String(payload.inventory_id).startsWith('INV-')) {
-                    const inv = await db.getFromIndex('inventory', 'item_id', payload.inventory_id);
+                    const allInv = await db.getAll('inventory');
+                    const inv = allInv.find(i => i.inventory_id === payload.inventory_id || i.item_id === payload.inventory_id);
                     if (inv && inv.supabase_id) invSupabaseId = inv.supabase_id;
                 }
                 if (invSupabaseId) payload.inventory_id = invSupabaseId;
@@ -1092,7 +1095,7 @@ export const pullAllData = async (force = false) => {
             { table: 'shelters', store: 'shelters', key: 'shelter_id' },
             { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
             { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
-            { table: 'shelter_inventory', store: 'inventory', key: 'item_id' },
+            { table: 'shelter_inventory', store: 'inventory', key: 'inventory_id' },
             { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' },
             { table: 'emergency_contracts', store: 'emergency_contracts', key: 'contract_id' },
             //{ table: 'despachos', store: 'despachos', key: 'despacho_id' },
@@ -1236,6 +1239,19 @@ export const pullAllData = async (force = false) => {
                         store.put(toStore);
                         totalPulled++;
                     }
+
+                    // Remove local items that were deleted on the server
+                    // Only apply to tables where we fetched everything (no limit applied)
+                    if (!['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(mod.table)) {
+                        const serverIds = new Set(data.map(d => d.id));
+                        for (const l of cleanLocal) {
+                            if (l.synced === true && l.supabase_id && !serverIds.has(l.supabase_id)) {
+                                console.log(`[Pull] Deleting local record ${l.id} from ${mod.store} because it was deleted on the server.`);
+                                store.delete(l.id);
+                            }
+                        }
+                    }
+
                     await tx.done;
                 } catch (e) {
                     console.warn(`[Pull] Write failed for ${mod.table}:`, e);

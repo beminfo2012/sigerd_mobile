@@ -10,26 +10,26 @@ const ShelterBottomNav = () => {
         {
             label: 'DASHBOARD',
             icon: LayoutDashboard,
-            path: '/abrigos',
-            active: path === '/abrigos'
+            path: '/assisthumanitaria',
+            active: path === '/assisthumanitaria'
         },
         {
             label: 'ABRIGOS',
             icon: Building2,
-            path: '/abrigos', // Simplified to index for now, but label matches
-            active: path === '/abrigos/lista'
+            path: '/assisthumanitaria', // Simplified to index for now, but label matches
+            active: path === '/assisthumanitaria/lista'
         },
         {
             label: 'RESIDENTES',
             icon: Users,
-            path: '/abrigos/residentes',
-            active: path === '/abrigos/residentes'
+            path: '/assisthumanitaria/residentes',
+            active: path === '/assisthumanitaria/residentes'
         },
         {
             label: 'RELATÓRIOS',
             icon: Gift,
-            path: '/abrigos/relatorios',
-            active: path === '/abrigos/relatorios'
+            path: '/assisthumanitaria/relatorios',
+            active: path === '/assisthumanitaria/relatorios'
         },
         {
             label: 'PERFIL',

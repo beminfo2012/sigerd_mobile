@@ -78,7 +78,7 @@ export default function DonationHub() {
             });
 
             toast.success('Doação registrada!', `${formData.item_description} (${formData.quantity} ${formData.unit}) adicionado ao estoque.`);
-            navigate('/abrigos');
+            navigate('/assisthumanitaria');
         } catch (error) {
             console.error('Error saving donation:', error);
             toast.error('Erro ao registrar', error.message || 'Tente novamente.');
@@ -94,7 +94,7 @@ export default function DonationHub() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
-                        onClick={() => navigate('/abrigos')}
+                        onClick={() => navigate('/assisthumanitaria')}
                         className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
@@ -288,7 +288,7 @@ export default function DonationHub() {
                     </Card>
 
                     <div className="flex gap-3">
-                        <Button type="button" variant="secondary" onClick={() => navigate('/abrigos')} className="flex-1">
+                        <Button type="button" variant="secondary" onClick={() => navigate('/assisthumanitaria')} className="flex-1">
                             Cancelar
                         </Button>
                         <Button type="submit" className="flex-1" disabled={isSubmitting || (!formData.item_description.trim() || !formData.quantity)}>

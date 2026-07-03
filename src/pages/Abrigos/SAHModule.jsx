@@ -865,25 +865,25 @@ export default function SAHModule() {
                 </div>
             </header>
 
-            <main className="p-4 md:p-6 max-w-6xl mx-auto mt-2">
+            <main className="p-4 md:p-8 w-full max-w-[1600px] mx-auto mt-2">
                 {view === 'list' && renderList()}
                 {view === 'detail' && selectedSah && renderDetail()}
                 
                 {view === 'wizard' && (
                     <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
                         {/* Header Wizard */}
-                        <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                        <div className="bg-white dark:bg-slate-900 px-8 py-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-b border-slate-100 dark:border-slate-800">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white/10 text-white rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+                                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center">
                                     <Archive size={28} />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-black text-white">{sahData.id ? 'Editar Solicitação' : 'Nova Solicitação SAH'}</h2>
-                                    <p className="text-sm text-slate-400 font-medium">{sahData.id ? 'Atualize os dados em rascunho' : 'Fluxo assistido de solicitação e prestação de contas'}</p>
+                                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">{sahData.id ? 'Editar Solicitação' : 'Nova Solicitação SAH'}</h2>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{sahData.id ? 'Atualize os dados em rascunho' : 'Fluxo assistido de solicitação e prestação de contas'}</p>
                                 </div>
                             </div>
-                            <div className="bg-white/10 text-white px-5 py-2.5 rounded-xl text-sm font-black border border-white/20 flex items-center gap-3">
-                                <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse"></span>
+                            <div className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-5 py-2.5 rounded-xl text-sm font-black border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
                                 {protocolo}
                             </div>
                         </div>
@@ -904,12 +904,17 @@ export default function SAHModule() {
                                 ))}
                             </div>
                             
-                            <div className="flex justify-between max-w-4xl mx-auto mt-5 px-1 hidden md:flex">
-                                <span className={`text-[10px] font-black uppercase tracking-widest w-12 text-center ${etapa >= 1 ? 'text-blue-600' : 'text-slate-400'}`}>Identificar</span>
-                                <span className={`text-[10px] font-black uppercase tracking-widest w-12 text-center ${etapa >= 2 ? 'text-blue-600' : 'text-slate-400'}`}>Snapshot</span>
-                                <span className={`text-[10px] font-black uppercase tracking-widest w-12 text-center ${etapa >= 3 ? 'text-blue-600' : 'text-slate-400'}`}>Dados</span>
-                                <span className={`text-[10px] font-black uppercase tracking-widest w-12 text-center ${etapa >= 4 ? 'text-blue-600' : 'text-slate-400'}`}>Docs</span>
-                                <span className={`text-[10px] font-black uppercase tracking-widest w-12 text-center ${etapa >= 5 ? 'text-blue-600' : 'text-slate-400'}`}>Enviar</span>
+                            <div className="flex justify-between max-w-4xl mx-auto mt-5 hidden md:flex">
+                                {['Identificar', 'Snapshot', 'Dados', 'Docs', 'Enviar'].map((label, index) => {
+                                    const step = index + 1;
+                                    return (
+                                        <div key={step} className="w-12 flex justify-center">
+                                            <span className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${etapa >= step ? 'text-blue-600' : 'text-slate-400'}`}>
+                                                {label}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
