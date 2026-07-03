@@ -49,11 +49,14 @@ const pullShelterModuleFromCloud = async () => {
                 console.error(`[Shelter] Error pulling ${mod.table}:`, error);
                 continue;
             }
-            if (!data || data.length === 0) continue;
+            if (!data) continue;
 
             const tx = db.transaction(mod.store, 'readwrite');
             const store = tx.objectStore(mod.store);
             const allLocal = await store.getAll();
+
+            // Build lookups for cloud data
+            const cloudIds = new Set(data.map(d => d.id));
 
             // Build lookup
             const localBySupabaseId = new Map();
@@ -61,6 +64,11 @@ const pullShelterModuleFromCloud = async () => {
             for (const local of allLocal) {
                 if (local.supabase_id) localBySupabaseId.set(local.supabase_id, local);
                 if (mod.key && local[mod.key]) localByKey.set(local[mod.key], local);
+                
+                // Hard delete detector: if local is synced and has a supabase_id, but not in cloud anymore, remove it locally
+                if (local.synced && local.supabase_id && !cloudIds.has(local.supabase_id)) {
+                    await store.delete(local.id);
+                }
             }
 
             for (const item of data) {
