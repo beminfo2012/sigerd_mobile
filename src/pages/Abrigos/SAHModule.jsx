@@ -835,14 +835,13 @@ export default function SAHModule() {
             {/* Minimal Header */}
             <header className="bg-white sticky top-0 z-30 border-b border-slate-200 px-6 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
-                    {view !== 'list' && (
-                        <button onClick={() => {
-                            if (view === 'wizard') setView('list');
-                            else if (view === 'detail') { setView('list'); setSelectedSah(null); }
-                        }} className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-colors">
-                            <ArrowLeft size={16} />
-                        </button>
-                    )}
+                    <button onClick={() => {
+                        if (view === 'wizard') setView('list');
+                        else if (view === 'detail') { setView('list'); setSelectedSah(null); }
+                        else if (view === 'list') navigate(-1);
+                    }} className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-colors">
+                        <ArrowLeft size={16} />
+                    </button>
                     <div>
                         <h1 className="text-sm font-black text-slate-800 tracking-wide">ASSISTÊNCIA HUMANITÁRIA</h1>
                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Módulo SAH • Defesa Civil</p>
