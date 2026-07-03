@@ -80,9 +80,21 @@ export default function SAHModule() {
         } else if (view === 'wizard') {
             loadInitialData();
             if (!sahData.id) {
-                const year = new Date().getFullYear();
-                const rand = Math.floor(1000 + Math.random() * 9000);
-                setProtocolo(`SAH-SMJ-${year}-${rand}`);
+                const generateProtocol = async () => {
+                    const year = new Date().getFullYear();
+                    try {
+                        const { count } = await supabase
+                            .from('sah_solicitacoes')
+                            .select('*', { count: 'exact', head: true })
+                            .like('protocolo', `SAH-SMJ-${year}-%`);
+                        const nextNum = (count || 0) + 1;
+                        setProtocolo(`SAH-SMJ-${year}-${String(nextNum).padStart(4, '0')}`);
+                    } catch (e) {
+                        const rand = Math.floor(1000 + Math.random() * 9000);
+                        setProtocolo(`SAH-SMJ-${year}-${rand}`);
+                    }
+                };
+                generateProtocol();
             }
         }
     }, [view]);
@@ -149,7 +161,7 @@ export default function SAHModule() {
             const { data: distributions } = await supabase.from('shelter_distributions').select('*');
             
             const desabrigados = occupants ? occupants.length : 0;
-            const desalojados = sahData.snapshot_desalojados || 0; 
+            const desalojados = parseInt(sahData.snapshot_desalojados) || 0; 
             
             let kitsEntregues = 0;
             if (distributions && inventory) {
@@ -180,7 +192,7 @@ export default function SAHModule() {
         setSahData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleRedapSelect = (eventoId) => {
+    const handleRedapSelect = async (eventoId) => {
         if (!eventoId) {
             handleInputChange('evento_id', '');
             return;
@@ -197,12 +209,34 @@ export default function SAHModule() {
             const cobradeCode = data.cobrade_codigo || '';
             const matchedCobrade = COBRADES.find(c => c.startsWith(cobradeCode)) || '';
             
+            let desalojados = 0;
+            let desabrigados = 0;
+            try {
+                const { data: secoes } = await supabase
+                    .from('redap_secoes')
+                    .select('dados_json')
+                    .eq('evento_id', eventoId)
+                    .eq('secao', 'DANOS_HUMANOS');
+                    
+                if (secoes && secoes.length > 0) {
+                    secoes.forEach(sec => {
+                        const json = sec.dados_json || {};
+                        desalojados += Number(json.desalojados || 0);
+                        desabrigados += Number(json.desabrigados || 0);
+                    });
+                }
+            } catch (err) {
+                console.error('Erro ao buscar dados humanos', err);
+            }
+            
             setSahData(prev => ({
                 ...prev,
                 evento_id: eventoId,
                 cobrade: matchedCobrade || prev.cobrade,
                 data_desastre: (ano && mes && dia) ? `${ano}-${mes}-${dia}` : prev.data_desastre,
-                decreto_emergencia: data.decreto_municipal_emergencia || prev.decreto_emergencia
+                decreto_emergencia: data.decreto_municipal_emergencia || prev.decreto_emergencia,
+                snapshot_desalojados: desalojados > 0 ? desalojados : prev.snapshot_desalojados,
+                snapshot_desabrigados: desabrigados > 0 ? desabrigados : prev.snapshot_desabrigados
             }));
             toast.success('Dados importados do evento com sucesso!');
         } else {
