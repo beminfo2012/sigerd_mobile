@@ -58,6 +58,7 @@ const DonationHub = lazy(() => import('./pages/Abrigos/DonationHub'))
 const LogisticsHub = lazy(() => import('./pages/Abrigos/LogisticsHub'))
 const ContractList = lazy(() => import('./pages/Abrigos/ContractList'))
 const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
+const SAHModule = lazy(() => import('./pages/Abrigos/SAHModule'))
 
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
@@ -456,6 +457,11 @@ const AppContent = ({
                                 <Route path="/abrigos/contratos/editar/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ContractForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/abrigos/sah" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <SAHModule />
                                     </ProtectedRoute>
                                 } />
 

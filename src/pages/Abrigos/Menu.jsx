@@ -58,6 +58,10 @@ export default function ShelterMenu() {
         'humanitario_leitura'
     ];
     const HUMANITARIAN_READ_ONLY = ['humanitario_leitura'];
+    const REDAP_ROLES = [
+        'Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil',
+        'Agente de Defesa Civil', 'Redap_Geral'
+    ];
 
     useEffect(() => {
         loadDashboardData();
@@ -256,6 +260,14 @@ export default function ShelterMenu() {
             path: '/abrigos/contratos',
             color: 'bg-amber-50 text-amber-700',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+        },
+        {
+            title: 'Solicitação de Assistência (SAH)',
+            description: 'Solicite kits e recursos à Defesa Civil Estadual/Nacional.',
+            icon: AlertTriangle,
+            path: '/abrigos/sah',
+            color: 'bg-red-50 text-red-600',
+            allowedRoles: ['admin', 'administrador', 'coordenador', 'coordenador de proteção e defesa civil', 'agente de defesa civil']
         }
     ];
 

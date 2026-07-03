@@ -782,23 +782,23 @@ export default function SAHModule() {
             <p className="text-slate-600 text-sm font-medium">O sistema estruturou os documentos baseados nos normativos da CEPDEC. Baixe-os para assinatura digital (e-Docs) ou física antes de finalizar a transmissão do pedido.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
-                <button className="flex items-center gap-4 p-5 bg-white border-2 border-slate-100 rounded-2xl hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100 transition-all text-left group">
+                <a href="/templates/Relatório Social da População Afetada (modelo).docx" download className="flex items-center gap-4 p-5 bg-white border-2 border-slate-100 rounded-2xl hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100 transition-all text-left group">
                     <div className="bg-blue-50 p-4 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all"><FileText size={28} /></div>
                     <div className="flex-1">
                         <div className="font-black text-slate-800 group-hover:text-blue-700 transition-colors">Relatório Social (.docx)</div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Modelo Oficial CEPDEC/ES</div>
                     </div>
                     <FileDown size={24} className="ml-auto text-slate-300 group-hover:text-blue-500" />
-                </button>
+                </a>
                 
-                <button className="flex items-center gap-4 p-5 bg-white border-2 border-slate-100 rounded-2xl hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-100 transition-all text-left group">
+                <a href="/templates/Ofício para solicitação de recursos materiais (modelo).docx" download className="flex items-center gap-4 p-5 bg-white border-2 border-slate-100 rounded-2xl hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-100 transition-all text-left group">
                     <div className="bg-emerald-50 p-4 rounded-xl text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all"><FileText size={28} /></div>
                     <div className="flex-1">
                         <div className="font-black text-slate-800 group-hover:text-emerald-700 transition-colors">Ofício de Solicitação (.docx)</div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Portaria 606-R/2022</div>
                     </div>
                     <FileDown size={24} className="ml-auto text-slate-300 group-hover:text-emerald-500" />
-                </button>
+                </a>
             </div>
 
             <div className="flex justify-between mt-10 border-t border-slate-100 pt-6">
