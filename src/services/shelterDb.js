@@ -285,7 +285,7 @@ export const getDonations = async (shelterId) => {
         items = await db.getAllFromIndex('donations', 'shelter_id', bid);
     } else if (shelterId === 'CENTRAL') {
         const all = await db.getAll('donations');
-        items = all.filter(d => d.shelter_id === 'CENTRAL');
+        items = all.filter(d => !d.shelter_id || d.shelter_id === 'CENTRAL' || d.shelter_id === 'null');
     } else {
         items = await db.getAll('donations');
     }
@@ -343,7 +343,7 @@ export const addDonation = async (donationData) => {
         await invStore.put(updatedItem);
     } else {
         const newItem = {
-            item_id: generateId('INV'),
+            inventory_id: generateId('INV'),
             shelter_id: shelterIdStr,
             item_name: newDonation.item_description,
             category: newDonation.donation_type,
@@ -380,7 +380,7 @@ export const getInventory = async (shelterId) => {
         items = await db.getAllFromIndex('inventory', 'shelter_id', bid);
     } else if (shelterId === 'CENTRAL') {
         const all = await db.getAll('inventory');
-        items = all.filter(i => i.shelter_id === 'CENTRAL');
+        items = all.filter(i => !i.shelter_id || i.shelter_id === 'CENTRAL' || i.shelter_id === 'null');
     } else {
         items = await db.getAll('inventory');
     }
@@ -436,7 +436,7 @@ export const transferStock = async (itemId, fromShelterId, toShelterId, quantity
         const newItem = {
             ...sourceItem,
             id: undefined, // Clear ID to auto-generate
-            item_id: generateId('INV'),
+            inventory_id: generateId('INV'),
             shelter_id: toShelterId,
             quantity: parseFloat(quantity),
             updated_at: new Date().toISOString(),
@@ -631,7 +631,7 @@ export const updateInventoryItem = async (id, changes) => {
     await auditStore.add({
         action: 'INVENTORY_EDIT',
         entity_type: 'inventory',
-        entity_id: item.item_id || String(id),
+        entity_id: item.inventory_id || String(id),
         details: `${item.item_name}: qty ${oldQty} -> ${changes.quantity || oldQty}`,
         timestamp: new Date().toISOString()
     });
@@ -657,6 +657,7 @@ export const deleteInventoryItem = async (id) => {
     const hasDistributions = allDistributions.some(d =>
         d.status !== 'deleted' &&
         (String(d.inventory_id) === String(item.id) ||
+            String(d.inventory_id) === String(item.inventory_id) ||
             String(d.inventory_id) === String(item.item_id) ||
             (d.item_name && item.item_name && d.item_name.toLowerCase() === item.item_name.toLowerCase() && String(d.shelter_id) === String(item.shelter_id)))
     );
@@ -697,7 +698,7 @@ export const deleteInventoryItem = async (id) => {
     await auditStore.add({
         action: 'INVENTORY_DELETE',
         entity_type: 'inventory',
-        entity_id: item.item_id || String(id),
+        entity_id: item.inventory_id || item.item_id || String(id),
         details: `Deleted: ${item.item_name} e arquivou ${matchingDonations.length} doação(ões)`,
         timestamp: new Date().toISOString()
     });
@@ -723,17 +724,17 @@ export const getDataConsistencyReport = async (shelterId) => {
 
     const allDonations = await db.getAll('donations');
     const donations = allDonations.filter(d =>
-        String(d.shelter_id) === String(sid) && d.status !== 'deleted'
+        (!d.shelter_id || String(d.shelter_id) === String(sid) || (sid === 'CENTRAL' && String(d.shelter_id) === 'null')) && d.status !== 'deleted'
     );
 
     const allDistributions = await db.getAll('distributions');
     const distributions = allDistributions.filter(d =>
-        String(d.shelter_id) === String(sid) && d.status !== 'deleted'
+        (!d.shelter_id || String(d.shelter_id) === String(sid) || (sid === 'CENTRAL' && String(d.shelter_id) === 'null')) && d.status !== 'deleted'
     );
 
     const allInventory = await db.getAll('inventory');
     const inventory = allInventory.filter(i =>
-        String(i.shelter_id) === String(sid) && i.status !== 'deleted'
+        (!i.shelter_id || String(i.shelter_id) === String(sid) || (sid === 'CENTRAL' && String(i.shelter_id) === 'null')) && i.status !== 'deleted'
     );
 
     const totalDonated = donations.reduce((acc, d) => acc + (parseFloat(d.quantity) || 0), 0);

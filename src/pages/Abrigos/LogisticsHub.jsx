@@ -48,8 +48,8 @@ export default function LogisticsHub() {
 
     // Toggle item selection
     const toggleItemSelection = (item) => {
-        if (selectedItems.find(i => (i.id || i.item_id) === (item.id || item.item_id))) {
-            setSelectedItems(selectedItems.filter(i => (i.id || i.item_id) !== (item.id || item.item_id)));
+        if (selectedItems.find(i => (i.id || i.inventory_id) === (item.id || item.inventory_id))) {
+            setSelectedItems(selectedItems.filter(i => (i.id || i.inventory_id) !== (item.id || item.inventory_id)));
         } else {
             setSelectedItems([...selectedItems, { ...item, transferQuantity: '' }]);
         }
@@ -57,7 +57,7 @@ export default function LogisticsHub() {
 
     const updateItemQuantity = (id, validQty) => {
         setSelectedItems(selectedItems.map(item => {
-            if ((item.id || item.item_id) === id) {
+            if ((item.id || item.inventory_id) === id) {
                 return { ...item, transferQuantity: validQty };
             }
             return item;
@@ -85,7 +85,7 @@ export default function LogisticsHub() {
             for (const item of selectedItems) {
                 if (destinationType === 'SHELTER') {
                     await transferStock(
-                        item.id || item.item_id,
+                        item.id || item.inventory_id,
                         'CENTRAL',
                         transferData.shelter_id,
                         item.transferQuantity
@@ -93,7 +93,7 @@ export default function LogisticsHub() {
                 } else {
                     await addDistribution({
                         shelter_id: 'CENTRAL',
-                        inventory_id: item.id || item.item_id,
+                        inventory_id: item.id || item.inventory_id,
                         item_name: item.item_name,
                         quantity: item.transferQuantity,
                         unit: item.unit,
@@ -190,10 +190,10 @@ export default function LogisticsHub() {
                                     </div>
                                 ) : (
                                     filteredStock.map(item => {
-                                        const isSelected = selectedItems.find(i => (i.id || i.item_id) === (item.id || item.item_id));
+                                        const isSelected = selectedItems.find(i => (i.id || i.inventory_id) === (item.id || item.inventory_id));
                                         return (
                                             <div
-                                                key={item.id || item.item_id}
+                                                key={item.id || item.inventory_id}
                                                 onClick={() => toggleItemSelection(item)}
                                                 className={`p-4 bg-white rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between group ${isSelected
                                                     ? 'border-[#2a5299] shadow-md bg-blue-50/20'
@@ -314,7 +314,7 @@ export default function LogisticsHub() {
                                             placeholder="0"
                                             className="w-full md:w-32 text-center font-bold"
                                             value={item.transferQuantity}
-                                            onChange={(e) => updateItemQuantity(item.id || item.item_id, e.target.value)}
+                                            onChange={(e) => updateItemQuantity(item.id || item.inventory_id, e.target.value)}
                                             max={parseFloat(item.quantity)}
                                         />
                                         <span className="text-xs font-bold text-slate-400 w-12">{item.unit}</span>
