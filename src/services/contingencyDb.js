@@ -42,7 +42,9 @@ export const contingencyDb = {
 
     async activatePlan(planData) {
         const db = await initDB()
+        const tempId = crypto.randomUUID()
         const newPlan = {
+            id: tempId,
             ...planData,
             status: 'Ativo',
             data_ativacao: new Date().toISOString(),
@@ -50,7 +52,8 @@ export const contingencyDb = {
             synced: false
         }
 
-        const id = await db.put('planos_contingencia', newPlan)
+        await db.put('planos_contingencia', newPlan)
+        const id = newPlan.id
         
         if (navigator.onLine) {
             const { data, error } = await supabase
@@ -202,20 +205,7 @@ export const contingencyDb = {
     async loadPlanoAtribuicoes(planoId) {
         const db = await initDB()
         const all = await db.getAllFromIndex('plano_atribuicoes', 'plano_id', planoId)
-        
-        if (navigator.onLine) {
-            const { data } = await supabase
-                .from('plano_atribuicoes')
-                .select('*')
-                .eq('plano_id', planoId)
-            
-            if (data) {
-                for (const item of data) {
-                    await db.put('plano_atribuicoes', { ...item, synced: true })
-                }
-                return data
-            }
-        }
+        // Supabase sync removed as plano_atribuicoes is replaced by org-based atribuicoes
         return all
     },
 
@@ -230,34 +220,14 @@ export const contingencyDb = {
 
         await db.put('plano_atribuicoes', newAtrib)
 
-        if (navigator.onLine) {
-            const { data, error } = await supabase
-                .from('plano_atribuicoes')
-                .insert([{
-                    plano_id: atribData.plano_id,
-                    ambito: atribData.ambito,
-                    secretaria: atribData.secretaria,
-                    descricao: atribData.descricao
-                }])
-                .select()
-                .single()
-            
-            if (data && !error) {
-                await db.delete('plano_atribuicoes', newAtrib.id)
-                await db.put('plano_atribuicoes', { ...data, synced: true })
-                return data
-            }
-        }
+        // Supabase sync removed
         return newAtrib
     },
 
     async removePlanoAtribuicao(atribId) {
         const db = await initDB()
         await db.delete('plano_atribuicoes', atribId)
-        
-        if (navigator.onLine && !String(atribId).startsWith('temp_')) {
-            await supabase.from('plano_atribuicoes').delete().eq('id', atribId)
-        }
+        // Supabase sync removed
     },
 
     // ADVANCED SCO (DYNAMIC ORGANOGRAM)
@@ -429,5 +399,101 @@ export const contingencyDb = {
         }
         const logs = await db.getAllFromIndex('sco_logs', 'plano_id', planoId)
         return logs.sort((a, b) => b.id.localeCompare(a.id))
+    },
+
+    // ----------------------------------------------------
+    // PLANO DE CONTINGÊNCIA - DADOS ESTRUTURAIS (PLACON)
+    // ----------------------------------------------------
+
+    async getOrgaos(usuarioId, isCoordenador) {
+        if (isCoordenador) {
+            const { data } = await supabase.from('orgaos').select('*').order('ordem_exibicao');
+            return data || [];
+        } else {
+            // Find user's bound organs
+            const { data: bindings } = await supabase
+                .from('usuario_orgao')
+                .select('orgao_id')
+                .eq('usuario_id', usuarioId);
+            
+            if (!bindings || bindings.length === 0) return [];
+            
+            const orgaoIds = bindings.map(b => b.orgao_id);
+            const { data } = await supabase
+                .from('orgaos')
+                .select('*')
+                .in('id', orgaoIds)
+                .order('ordem_exibicao');
+            return data || [];
+        }
+    },
+
+    async getOrgaoCompleto(orgaoId) {
+        // Fetch orgao
+        const { data: orgao } = await supabase.from('orgaos').select('*').eq('id', orgaoId).single();
+        if (!orgao) return null;
+
+        // Fetch contacts
+        const { data: contatos } = await supabase.from('contatos').select('*').eq('orgao_id', orgaoId);
+        
+        // Fetch atribuicoes
+        const { data: atribuicoes } = await supabase.from('atribuicoes').select('*').eq('orgao_id', orgaoId).order('fase');
+        
+        // Fetch recursos and merge with MCI data manually due to missing FK constraint
+        const { data: recursosBase } = await supabase.from('recursos_plano').select('*').eq('orgao_id', orgaoId);
+        let recursos = [];
+        
+        if (recursosBase && recursosBase.length > 0) {
+            const mciIds = recursosBase.map(r => r.mci_recurso_id);
+            const { data: mciData } = await supabase.from('mci_recursos').select('*').in('id', mciIds);
+            
+            recursos = recursosBase.map(r => ({
+                ...r,
+                mci_recursos: (mciData || []).find(m => m.id === r.mci_recurso_id) || null
+            }));
+        }
+
+        // Fetch assinaturas
+        const { data: assinaturas } = await supabase.from('plano_assinaturas').select('*').eq('orgao_id', orgaoId);
+
+        return {
+            ...orgao,
+            contatos: contatos || [],
+            atribuicoes: atribuicoes || [],
+            recursos: recursos || [],
+            assinaturas: assinaturas || []
+        };
+    },
+
+    async getAllAtribuicoes() {
+        const { data } = await supabase.from('atribuicoes').select('*, orgaos(*)').order('fase');
+        return data || [];
+    },
+
+    async createAtribuicao(atribuicaoData) {
+        const { data, error } = await supabase
+            .from('atribuicoes')
+            .insert([atribuicaoData])
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async getAllAssinaturas() {
+        const { data } = await supabase.from('plano_assinaturas').select('*, orgaos(*)');
+        return data || [];
+    },
+
+    async updateAlocadoNoPlano(recursoPlanoId, quantidade) {
+        const { data, error } = await supabase
+            .from('recursos_plano')
+            .update({ alocado_no_plano: quantidade, updated_at: new Date().toISOString() })
+            .eq('id', recursoPlanoId)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        return data;
     }
 }

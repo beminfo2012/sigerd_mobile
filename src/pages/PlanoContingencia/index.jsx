@@ -12,6 +12,7 @@ import {
 import { contingencyDb } from '../../services/contingencyDb'
 import { supabase } from '../../services/supabase'
 import { useToast } from '../../components/ToastNotification'
+import PlaconMatriz from './PlaconMatriz'
 
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet'
 import LimiteSMJLayer from '../../components/LimiteSMJLayer'
@@ -68,7 +69,7 @@ const PlanoContingencia = () => {
     })
     const [scoMembers, setScoMembers] = useState([])
     const [availableUsers, setAvailableUsers] = useState([])
-    const [activeTab, setActiveTab] = useState('Organograma') // Main Tab
+    const [activeTab, setActiveTab] = useState('Placon') // Main Tab
     const [sidebarTab, setSidebarTab] = useState('agentes') // Right sidebar tab
     const [searchTerm, setSearchTerm] = useState('')
 
@@ -499,7 +500,7 @@ const PlanoContingencia = () => {
         return (
             <div className="p-8 max-w-4xl mx-auto min-h-screen flex items-center justify-center">
                 <div className="bg-white dark:bg-slate-950 rounded-3xl p-10 border border-slate-200 dark:border-slate-800 shadow-2xl text-center space-y-8 animate-in fade-in zoom-in duration-300">
-                    <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-xl rotate-3">
+                    <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-xl">
                         <Shield size={40} />
                     </div>
                     <div className="space-y-2">
@@ -568,11 +569,7 @@ const PlanoContingencia = () => {
                             <button onClick={() => setOrgScale(s => Math.min(1.5, s + 0.1))} className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg text-slate-400"><Search size={12}/></button>
                         </div>
 
-                        <button onClick={() => setShowAtribuicaoPlanoModal(true)} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <ClipboardList size={14} className="text-blue-500" />
-                            <span className="text-[10px] font-black uppercase tracking-wider">Matriz</span>
-                        </button>
-                        
+
                         <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-1 pr-3 rounded-2xl border border-slate-100 dark:border-slate-800">
                             <img src={availableUsers.find(u => u.id === activePlan?.comandante)?.photo_url || `https://ui-avatars.com/api/?name=C`} className="w-8 h-8 rounded-xl object-cover shadow-sm bg-slate-200" />
                             <span className="text-[10px] font-black uppercase tracking-tight truncate max-w-[100px]">{availableUsers.find(u => u.id === activePlan?.comandante)?.full_name}</span>
@@ -586,12 +583,15 @@ const PlanoContingencia = () => {
                     {/* MAIN DASHBOARD CENTER */}
                     <div className="flex-1 overflow-hidden flex flex-col bg-[#f0f2f5] dark:bg-slate-950 relative">
                         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-1 rounded-2xl shadow-xl border border-white/5 flex gap-1">
+                             <button onClick={() => setActiveTab('Placon')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Placon' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>PLACON</button>
                              <button onClick={() => setActiveTab('Organograma')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Organograma' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Tático</button>
                              <button onClick={() => setActiveTab('Mapa')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Mapa' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Mapa</button>
                         </div>
 
                         <div className="flex-1 overflow-auto custom-scrollbar p-10 flex flex-col items-center">
-                            {activeTab === 'Mapa' ? (
+                            {activeTab === 'Placon' ? (
+                                <PlaconMatriz />
+                            ) : activeTab === 'Mapa' ? (
                                 <div className="w-full h-full bg-slate-50 dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl min-h-[500px]">
                                     <MapContainer center={[-20.0246, -40.7464]} zoom={15} style={{ height: '100%', width: '100%' }}>
                                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

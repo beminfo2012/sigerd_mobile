@@ -162,6 +162,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
+            label: 'Plano de Contingência',
+            icon: Shield,
+            path: '/contingencia',
+            roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin']
+        },
+        {
             label: 'REDAP',
             icon: ClipboardCheck,
             path: '/redap',

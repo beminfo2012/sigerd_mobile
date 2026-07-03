@@ -91,6 +91,7 @@ const AlertaCemadenDetail = lazy(() => import('./pages/AlertasCemaden/AlertaDeta
 
 // Contingency Plan (Lazy)
 const PlanoContingencia = lazy(() => import('./pages/PlanoContingencia'))
+const PlaconPublico = lazy(() => import('./pages/PlanoContingencia/PlaconPublico'))
 
 // Mapeamento de Capacidade Instalada (MCI)
 const MciDashboard = lazy(() => import('./pages/Mci'))
@@ -206,9 +207,28 @@ const AppContent = ({
     }, [isAuthenticated, userProfile, location.pathname, navigate]);
 
     if (!isAuthenticated || !userProfile) {
+        if (location.pathname === '/plano-contingencia/publico') {
+            return (
+                <ErrorBoundary>
+                    <Suspense fallback={<div className="p-20 text-center">Carregando...</div>}>
+                        <PlaconPublico />
+                    </Suspense>
+                </ErrorBoundary>
+            )
+        }
         return (
             <ErrorBoundary>
                 <Login onLogin={handleLogin} />
+            </ErrorBoundary>
+        )
+    }
+
+    if (location.pathname === '/plano-contingencia/publico') {
+        return (
+            <ErrorBoundary>
+                <Suspense fallback={<div className="p-20 text-center">Carregando...</div>}>
+                    <PlaconPublico />
+                </Suspense>
             </ErrorBoundary>
         )
     }
