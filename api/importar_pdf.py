@@ -6,6 +6,7 @@ import re
 import traceback
 
 app = FastAPI()
+handler = app
 
 app.add_middleware(
     CORSMiddleware,
