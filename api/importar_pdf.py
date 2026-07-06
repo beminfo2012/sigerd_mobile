@@ -51,61 +51,61 @@ async def importar_pdf(file: UploadFile = File(...), full_path: str = None):
         campos = {}
         envolvidos = []
 
-    if tipo == "e-COPS":
-        # Extração de campos do e-COPS usando regex ou split por quebra de linha
-        # Número
-        match_numero = re.search(r"Nº\.:?\s*(\d+)", text, re.IGNORECASE)
-        campos["numero_referencia"] = match_numero.group(1).strip() if match_numero else None
+        if tipo == "e-COPS":
+            # Extração de campos do e-COPS usando regex ou split por quebra de linha
+            # Número
+            match_numero = re.search(r"Nº\.:?\s*(\d+)", text, re.IGNORECASE)
+            campos["numero_referencia"] = match_numero.group(1).strip() if match_numero else None
         
-        # Incidente
-        match_incidente = re.search(r"Incidente\n(.*?)\n", text, re.IGNORECASE)
-        campos["natureza"] = match_incidente.group(1).strip() if match_incidente else None
+            # Incidente
+            match_incidente = re.search(r"Incidente\n(.*?)\n", text, re.IGNORECASE)
+            campos["natureza"] = match_incidente.group(1).strip() if match_incidente else None
         
-        # Quando
-        match_quando = re.search(r"Quando\n(.*?)\n", text, re.IGNORECASE)
-        campos["data_aproximada"] = match_quando.group(1).strip() if match_quando else None
+            # Quando
+            match_quando = re.search(r"Quando\n(.*?)\n", text, re.IGNORECASE)
+            campos["data_aproximada"] = match_quando.group(1).strip() if match_quando else None
 
-        # Município, Bairro, Rua
-        match_municipio = re.search(r"Município\n(.*?)\n", text, re.IGNORECASE)
-        match_bairro = re.search(r"Bairro\n(.*?)\n", text, re.IGNORECASE)
-        match_rua = re.search(r"Rua\n(.*?)\n", text, re.IGNORECASE)
+            # Município, Bairro, Rua
+            match_municipio = re.search(r"Município\n(.*?)\n", text, re.IGNORECASE)
+            match_bairro = re.search(r"Bairro\n(.*?)\n", text, re.IGNORECASE)
+            match_rua = re.search(r"Rua\n(.*?)\n", text, re.IGNORECASE)
         
-        campos["municipio"] = match_municipio.group(1).strip() if match_municipio else None
-        campos["bairro"] = match_bairro.group(1).strip() if match_bairro else None
-        campos["rua"] = match_rua.group(1).strip() if match_rua else None
+            campos["municipio"] = match_municipio.group(1).strip() if match_municipio else None
+            campos["bairro"] = match_bairro.group(1).strip() if match_bairro else None
+            campos["rua"] = match_rua.group(1).strip() if match_rua else None
         
-        # Referência
-        match_ref = re.search(r"Referência\n(.*?)\n", text, re.IGNORECASE)
-        campos["referencia"] = match_ref.group(1).strip() if match_ref else None
+            # Referência
+            match_ref = re.search(r"Referência\n(.*?)\n", text, re.IGNORECASE)
+            campos["referencia"] = match_ref.group(1).strip() if match_ref else None
 
-        # Características do Endereço
-        match_caracteristicas = re.search(r"Características do Endereço\n(.*?)\n", text, re.IGNORECASE)
-        campos["observacoes_local"] = match_caracteristicas.group(1).strip() if match_caracteristicas else None
+            # Características do Endereço
+            match_caracteristicas = re.search(r"Características do Endereço\n(.*?)\n", text, re.IGNORECASE)
+            campos["observacoes_local"] = match_caracteristicas.group(1).strip() if match_caracteristicas else None
 
-        # Descrição da Denúncia
-        match_desc = re.search(r"Descrição da Denúncia\n(.*?)(?=\nOs militares e os servidores|\Z)", text, re.IGNORECASE | re.DOTALL)
-        campos["descricao"] = match_desc.group(1).strip() if match_desc else None
+            # Descrição da Denúncia
+            match_desc = re.search(r"Descrição da Denúncia\n(.*?)(?=\nOs militares e os servidores|\Z)", text, re.IGNORECASE | re.DOTALL)
+            campos["descricao"] = match_desc.group(1).strip() if match_desc else None
 
-        # Extração Básica de Envolvidos
-        blocos_envolvidos = text.split("Dados dos Envolvidos")
-        if len(blocos_envolvidos) > 1:
-            texto_envolvidos = blocos_envolvidos[1]
-            envolvidos_parts = re.split(r"Nome\n", texto_envolvidos)
-            for part in envolvidos_parts[1:]:
-                linhas = part.split("\n")
-                nome = linhas[0].strip() if linhas else "Desconhecido"
-                if "Os militares e os servidores" in nome:
-                    break
-                envolvidos.append({
-                    "id": str(len(envolvidos) + 1),
-                    "nome": nome,
-                    "idade": None,
-                    "tipo_envolvimento": None
-                })
+            # Extração Básica de Envolvidos
+            blocos_envolvidos = text.split("Dados dos Envolvidos")
+            if len(blocos_envolvidos) > 1:
+                texto_envolvidos = blocos_envolvidos[1]
+                envolvidos_parts = re.split(r"Nome\n", texto_envolvidos)
+                for part in envolvidos_parts[1:]:
+                    linhas = part.split("\n")
+                    nome = linhas[0].strip() if linhas else "Desconhecido"
+                    if "Os militares e os servidores" in nome:
+                        break
+                    envolvidos.append({
+                        "id": str(len(envolvidos) + 1),
+                        "nome": nome,
+                        "idade": None,
+                        "tipo_envolvimento": None
+                    })
                 
-        return JSONResponse(status_code=200, content={
-            "tipo": tipo,
-            "campos": campos,
+            return JSONResponse(status_code=200, content={
+                "tipo": tipo,
+                "campos": campos,
             "envolvidos": envolvidos
         })
     except Exception as e:
