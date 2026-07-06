@@ -383,7 +383,11 @@ export const getPendingSyncCount = async () => {
             // IndexedDB filtering can be tricky with mixed types (0 vs false), so we grab all and filter
             // This is safer for ensuring the "Badge" is always correct
             const allItems = await db.getAll(storeName).catch(() => []);
-            const pending = allItems.filter(v => v.synced === false || v.synced === 0 || v.synced === undefined).length;
+            const pendingItems = allItems.filter(v => v.synced === false || v.synced === 0 || v.synced === undefined);
+            if (pendingItems.length > 0) {
+                console.log(`[Sync] Pending items in ${storeName}:`, pendingItems);
+            }
+            const pending = pendingItems.length;
 
             detail[storeName] = pending;
             detail.total += pending;
@@ -946,7 +950,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 capacity: parseInt(item.capacity) || 0,
                 responsible_name: item.responsible_name || item.contact_name || '',
                 responsible_phone: item.responsible_phone || item.contact_phone || '',
-                status: item.status || 'active',
+                status: item.status === 'deleted' ? 'inactive' : (item.status || 'active'),
                 observations: item.observations || '',
                 created_at: item.created_at || new Date().toISOString(),
                 updated_at: new Date().toISOString()
@@ -967,6 +971,8 @@ export const syncSingleItem = async (storeName, item, db) => {
             // Clean extraneous fields and map columns for specific tables
             if (storeName === 'donations') {
                 delete payload.destination_type;
+                delete payload.updated_at;
+                delete payload.operacao_id;
             } else if (storeName === 'inventory') {
                 if (payload.item_id) {
                     payload.inventory_id = payload.item_id;
@@ -974,10 +980,25 @@ export const syncSingleItem = async (storeName, item, db) => {
                 }
                 delete payload.min_quantity;
                 delete payload.status;
+                delete payload.operacao_id;
+                delete payload.updated_at;
+                delete payload.inventoryId;
+            } else if (storeName === 'distributions') {
+                delete payload.category;
+                delete payload.updated_at;
+                delete payload.operacao_id;
+                delete payload.min_quantity;
+                delete payload.distributionId;
             }
 
             // Properly nullify central or empty shelter_id 
-            if (payload.shelter_id === 'CENTRAL' || payload.shelter_id === '') {
+            if (payload.shelter_id === 'CENTRAL' || payload.shelter_id === 'SOLIDARY' || payload.shelter_id === '' || payload.shelter_id === 'null') {
+                const hubType = payload.shelter_id === 'SOLIDARY' ? 'SOLIDARY' : 'CENTRAL';
+                if (['donations', 'inventory', 'distributions'].includes(storeName)) {
+                    payload.observations = payload.observations 
+                        ? `${payload.observations} [HUB:${hubType}]`
+                        : `[HUB:${hubType}]`;
+                }
                 payload.shelter_id = null;
             }
 
@@ -993,9 +1014,11 @@ export const syncSingleItem = async (storeName, item, db) => {
                 }
                 if (shelterSupabaseId) payload.shelter_id = shelterSupabaseId;
             }
-            if (payload.inventory_id) {
+            if (payload.inventory_id && storeName !== 'inventory') {
                 let invSupabaseId = null;
-                if (!isNaN(parseInt(payload.inventory_id)) && String(payload.inventory_id).length < 8) {
+                const isNumericId = /^\d+$/.test(String(payload.inventory_id));
+                
+                if (isNumericId) {
                     const inv = await db.get('inventory', parseInt(payload.inventory_id));
                     if (inv && inv.supabase_id) invSupabaseId = inv.supabase_id;
                 } else if (String(payload.inventory_id).startsWith('INV-')) {
@@ -1003,7 +1026,13 @@ export const syncSingleItem = async (storeName, item, db) => {
                     const inv = allInv.find(i => i.inventory_id === payload.inventory_id || i.item_id === payload.inventory_id);
                     if (inv && inv.supabase_id) invSupabaseId = inv.supabase_id;
                 }
-                if (invSupabaseId) payload.inventory_id = invSupabaseId;
+                
+                if (invSupabaseId) {
+                    payload.inventory_id = invSupabaseId;
+                } else if (isNumericId) {
+                    console.log(`[Sync] Skipping ${storeName} because parent inventory item is not synced yet.`);
+                    return false; // Return to avoid invalid UUID syntax error
+                }
             }
         }
 
@@ -1028,8 +1057,15 @@ export const syncSingleItem = async (storeName, item, db) => {
 
         if (error) {
             console.error(`[Sync] Supabase Upsert Error (${table}):`, error);
-            toast.error(`Erro de Sincronização: ${table}`, error.message || 'Falha ao sincronizar item.');
-            return false;
+            
+            // Handle foreign key violation (parent was deleted in cloud) or invalid uuid syntax
+            if (error.code === '23503' || error.code === '22P02') {
+                console.warn(`[Sync] Unrecoverable schema/FK error for ${table}. Marking as synced to prevent infinite loop.`);
+                // We will let it fall through to mark as synced locally
+            } else {
+                toast.error(`Erro de Sincronização: ${table}\n${error.message || 'Falha ao sincronizar item.'}`);
+                return false;
+            }
         }
 
         const tx = db.transaction(storeName, 'readwrite');
@@ -1226,6 +1262,17 @@ export const pullAllData = async (force = false) => {
                             synced: true
                         };
 
+                        // Restore pseudo shelter_id from observations for humanitarian hubs
+                        if (['donations', 'inventory', 'distributions'].includes(mod.store) && toStore.observations) {
+                            if (toStore.observations.includes('[HUB:SOLIDARY]')) {
+                                toStore.shelter_id = 'SOLIDARY';
+                                toStore.observations = toStore.observations.replace('[HUB:SOLIDARY]', '').trim();
+                            } else if (toStore.observations.includes('[HUB:CENTRAL]')) {
+                                toStore.shelter_id = 'CENTRAL';
+                                toStore.observations = toStore.observations.replace('[HUB:CENTRAL]', '').trim();
+                            }
+                        }
+
                         // Ensure we always save BOTH snake_case and camelCase for key identifiers
                         if (mod.key) {
                             const val = getKeyValue(item, mod.key);
@@ -1234,7 +1281,13 @@ export const pullAllData = async (force = false) => {
                             toStore[camelKey] = val;
                         }
 
-                        if (!localMatch) delete toStore.id;
+                        if (!localMatch) {
+                            if (['redap_eventos', 'redap_registros', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(mod.store)) {
+                                toStore.id = supabaseId;
+                            } else {
+                                delete toStore.id;
+                            }
+                        }
 
                         store.put(toStore);
                         totalPulled++;

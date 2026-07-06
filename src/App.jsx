@@ -17,6 +17,7 @@ import { getLatestDraftRedap } from './services/redapDb'
 import Sidebar from './components/Sidebar'
 import DesktopHeader from './components/DesktopHeader'
 import { ativarSincronizacaoOfflineAutomatica } from './services/SincronizacaoVistorias'
+import { OperacaoProvider } from './contexts/OperacaoContext'
 
 
 // Lazy loaded components
@@ -54,8 +55,11 @@ const DistributionForm = lazy(() => import('./pages/Abrigos/DistributionForm'))
 const ShelterReports = lazy(() => import('./pages/Abrigos/Reports'))
 const ShelterResidents = lazy(() => import('./pages/Abrigos/Residents'))
 const StockHub = lazy(() => import('./pages/Abrigos/StockHub'))
+const OperacaoPainel = lazy(() => import('./pages/Abrigos/OperacaoPainel'))
+const OperacoesHistorico = lazy(() => import('./pages/Abrigos/OperacoesHistorico'))
 const DonationHub = lazy(() => import('./pages/Abrigos/DonationHub'))
 const LogisticsHub = lazy(() => import('./pages/Abrigos/LogisticsHub'))
+const ArrecadacaoSolidaria = lazy(() => import('./pages/Abrigos/ArrecadacaoSolidaria'))
 const ContractList = lazy(() => import('./pages/Abrigos/ContractList'))
 const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
 const SAHModule = lazy(() => import('./pages/Abrigos/SAHModule'))
@@ -234,7 +238,8 @@ const AppContent = ({
     }
 
     return (
-        <div className={`app-container ${isDarkMode ? 'dark' : ''} ${isPrintPage ? '!h-auto !overflow-visible' : ''}`}>
+        <OperacaoProvider municipioId={userProfile?.municipio_id || '00000000-0000-0000-0000-000000000000'}>
+            <div className={`app-container ${isDarkMode ? 'dark' : ''} ${isPrintPage ? '!h-auto !overflow-visible' : ''}`}>
             <SyncBackground />
             <PWAUpdater />
 
@@ -424,6 +429,11 @@ const AppContent = ({
                                         <LogisticsHub />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/assisthumanitaria/arrecadacao-solidaria" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <ArrecadacaoSolidaria />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/assisthumanitaria/novo" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterForm />
@@ -482,6 +492,16 @@ const AppContent = ({
                                 <Route path="/assisthumanitaria/sah" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <SAHModule />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/assisthumanitaria/operacoes/:id" element={
+                                    <ProtectedRoute allowedRoles={HUMANITARIAN_FULL_ROLES} user={userProfile}>
+                                        <OperacaoPainel />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/assisthumanitaria/historico" element={
+                                    <ProtectedRoute allowedRoles={HUMANITARIAN_FULL_ROLES} user={userProfile}>
+                                        <OperacoesHistorico />
                                     </ProtectedRoute>
                                 } />
 
@@ -706,6 +726,7 @@ const AppContent = ({
                 </div>
             </div>
         </div>
+        </OperacaoProvider>
     )
 }
 

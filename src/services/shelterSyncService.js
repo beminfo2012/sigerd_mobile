@@ -38,6 +38,55 @@ export const shelterSyncService = {
             delete recordToPush.lat;
             delete recordToPush.lng;
         }
+        
+        // Remove unsupported local columns
+        if (table === 'donations') {
+            delete recordToPush.updated_at;
+            delete recordToPush.operacao_id;
+            delete recordToPush.destination_type;
+        }
+        if (table === 'distributions') {
+            delete recordToPush.category;
+            delete recordToPush.updated_at;
+            delete recordToPush.operacao_id;
+            delete recordToPush.min_quantity;
+            delete recordToPush.distributionId;
+        }
+        if (table === 'inventory') {
+            delete recordToPush.operacao_id;
+            delete recordToPush.updated_at;
+            delete recordToPush.min_quantity;
+            delete recordToPush.status;
+            delete recordToPush.inventoryId;
+        }
+
+        // Map virtual shelter IDs to null for Supabase (Foreign Key constraint)
+        if (['donations', 'inventory', 'distributions'].includes(table) && 
+            (recordToPush.shelter_id === 'CENTRAL' || recordToPush.shelter_id === 'SOLIDARY' || recordToPush.shelter_id === 'null' || !recordToPush.shelter_id)) {
+            
+            const hubType = recordToPush.shelter_id === 'SOLIDARY' ? 'SOLIDARY' : 'CENTRAL';
+            recordToPush.observations = recordToPush.observations 
+                ? `${recordToPush.observations} [HUB:${hubType}]`
+                : `[HUB:${hubType}]`;
+            
+            recordToPush.shelter_id = null;
+        }
+
+        // Resolve Foreign Keys for distributions
+        if (table === 'distributions' && recordToPush.inventory_id) {
+            const isNumericId = /^\d+$/.test(String(recordToPush.inventory_id));
+            if (isNumericId) {
+                const db = await initDB();
+                const invStore = db.transaction('inventory', 'readonly').objectStore('inventory');
+                const invItem = await invStore.get(parseInt(recordToPush.inventory_id));
+                if (invItem && invItem.supabase_id) {
+                    recordToPush.inventory_id = invItem.supabase_id;
+                } else {
+                    console.log(`[shelterSyncService] Skipping distribution because parent inventory item is not synced yet.`);
+                    return true; // Skip gracefully
+                }
+            }
+        }
 
         try {
             const conflictKey = table === 'shelters' ? 'shelter_id' :
@@ -51,7 +100,13 @@ export const shelterSyncService = {
                 .from(remoteTable)
                 .upsert(recordToPush, { onConflict: conflictKey });
 
-            if (error) throw error;
+            if (error) {
+                if (error.code === '23503' || error.code === '22P02') {
+                    console.warn(`[shelterSyncService] Unrecoverable schema/FK error for ${table}. Marking as synced to prevent infinite loop.`);
+                } else {
+                    throw error;
+                }
+            }
 
             // Mark as synced locally
             const db = await initDB();
@@ -86,8 +141,9 @@ export const shelterSyncService = {
 
                 const tx = db.transaction(table, 'readonly');
                 const store = tx.objectStore(table);
-                const index = store.index('synced');
-                const pending = await index.getAll(false);
+                // Avoid using boolean in index.getAll to support older Safari/WebKit
+                const allRecords = await store.getAll();
+                const pending = allRecords.filter(r => r.synced === false);
 
                 for (const record of pending) {
                     await this.pushRecord(table, record);
@@ -160,12 +216,29 @@ export const shelterSyncService = {
                             }
 
                             if (!localIsUnsynced) {
-                                await store.put({
+                                // Restore virtual shelter IDs from observations
+                                if (['donations', 'inventory', 'distributions'].includes(table) && !item.shelter_id) {
+                                    if (item.observations && item.observations.includes('[HUB:')) {
+                                        const match = item.observations.match(/\[HUB:(.*?)\]/);
+                                        if (match) {
+                                            item.shelter_id = match[1];
+                                            item.observations = item.observations.replace(/\[HUB:.*?\]/, '').trim();
+                                        }
+                                    } else {
+                                        item.shelter_id = 'CENTRAL'; // Fallback for old records
+                                    }
+                                }
+
+                                const toStore = {
                                     ...item,
                                     supabase_id: item.id, // Store Supabase UUID separately
-                                    id: localId, // Keep local ID if exists (update), or undefined (add new)
                                     synced: true
-                                });
+                                };
+                                if (localId !== undefined) {
+                                    toStore.id = localId;
+                                }
+
+                                await store.put(toStore);
                             }
                         }
                     }
@@ -205,8 +278,20 @@ export const shelterSyncService = {
             const store = tx.objectStore(table);
             const count = await store.count();
             let syncedCount = 0;
-            if (store.indexNames.contains('synced')) {
-                syncedCount = await store.index('synced').count(true);
+            try {
+                // Try to count boolean true directly (supported in IndexedDB 2.0+)
+                const indexCount = await store.index('synced').count(true);
+                if (indexCount > 0 || count === 0) {
+                    syncedCount = indexCount;
+                } else {
+                    // If count is 0 but there are items, fallback to manual count to be safe
+                    const all = await store.getAll();
+                    syncedCount = all.filter(r => r.synced === true || r.synced === 1 || r.synced === 'true').length;
+                }
+            } catch (e) {
+                // Fallback to manual count if index fails
+                const all = await store.getAll();
+                syncedCount = all.filter(r => r.synced === true || r.synced === 1 || r.synced === 'true').length;
             }
 
             total += count;

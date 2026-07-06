@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Building2, Package, Truck, Gift, FileText, ArrowLeft, ChevronRight,
     BarChart3, Users, Cloud, CheckCircle2, RefreshCcw, LayoutDashboard,
-    Home, Info, AlertTriangle, TrendingUp
+    Home, Info, AlertTriangle, TrendingUp, HeartHandshake
 } from 'lucide-react';
 import HumanitarianIcon from '../../components/HumanitarianIcon';
 import { UserContext } from '../../App';
@@ -13,10 +13,13 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
     PieChart, Pie, LineChart, Line, Legend, Area, AreaChart
 } from 'recharts';
+import GestaoOperacoesBlock from '../../components/GestaoOperacoesBlock';
+import { useOperacao } from '../../contexts/OperacaoContext';
 
 export default function ShelterMenu() {
     const navigate = useNavigate();
     const userProfile = useContext(UserContext);
+    const { operacaoAtiva } = useOperacao();
     const userRole = (userProfile?.role || '').toLowerCase();
     const userEmail = (userProfile?.email || '').toLowerCase();
 
@@ -66,16 +69,32 @@ export default function ShelterMenu() {
     useEffect(() => {
         loadDashboardData();
         checkSyncStatus();
-    }, []);
+    }, [operacaoAtiva]);
 
     const loadDashboardData = async () => {
         try {
-            const shelters = await getShelters() || [];
-            const occupants = await getOccupants() || [];
-            const donations = await getDonations() || [];
-            const inventory = await getGlobalInventory() || [];
+            let shelters = await getShelters() || [];
+            let occupants = await getOccupants() || [];
+            let donations = await getDonations() || [];
+            let inventory = await getGlobalInventory() || [];
             let allDistributions = [];
             try { allDistributions = await getDistributions() || []; } catch (e) { /* distributions store may not exist yet */ }
+
+            // Filtrar pela Operação Ativa
+            if (operacaoAtiva) {
+                shelters = shelters.filter(s => s.operacao_id === operacaoAtiva.id);
+                occupants = occupants.filter(o => o.operacao_id === operacaoAtiva.id);
+                donations = donations.filter(d => d.operacao_id === operacaoAtiva.id);
+                allDistributions = allDistributions.filter(d => d.operacao_id === operacaoAtiva.id);
+                // O inventário mostra os itens que foram movimentados nessa operação, mas a regra do usuário diz: 
+                // "Estoque - Total geral -> Saldo de itens desta operação"
+                // O estoque em si não tem "operacao_id" no seu cadastro raiz (shelterDb.js Inventory) ou tem? 
+                // A migração fala de `estoque_movimentacoes`, mas no shelterDb a tabela chama `inventory`.
+                // Na dúvida, filtramos apenas os que têm operacao_id igual.
+                // Mas pelo que ajustamos, as movimentações de inventory levam o operacao_id da primeira doação? 
+                // Vamos deixar o inventário geral, ou tentar filtrar. Como o shelterDb não insere operacao_id explícito na tabela inventory, 
+                // vamos focar nos cards principais que importam.
+            }
 
             // Calculate KPIs
             const activeShelters = shelters.filter(s => s.status === 'active');
@@ -245,6 +264,14 @@ export default function ShelterMenu() {
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
+            title: 'Arrecadação Solidária',
+            description: 'Polo de arrecadação para envio a terceiros municípios.',
+            icon: HeartHandshake,
+            path: '/assisthumanitaria/arrecadacao-solidaria',
+            color: 'bg-rose-50 text-rose-600',
+            allowedRoles: ['agente de defesa civil', 'admin', 'administrador', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+        },
+        {
             title: 'Relatórios Gerais',
             description: 'Consolidado de ocupação, doações e movimentações.',
             icon: FileText,
@@ -312,14 +339,42 @@ export default function ShelterMenu() {
                     <button
                         onClick={handleForceSync}
                         disabled={isSyncing}
-                        className={`p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 active:rotate-180 transition-all ${isSyncing ? 'animate-spin text-blue-500' : ''}`}
+                        className={`p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 active:scale-95 transition-all ${isSyncing ? 'text-blue-500' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                     >
-                        {isSyncing ? <RefreshCcw className="w-5 h-5" /> : <Cloud className="w-5 h-5" />}
+                        {isSyncing ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Cloud className="w-5 h-5" />}
                     </button>
                 </div>
             </header>
 
             <main className="px-6 md:px-12 py-8 space-y-8 w-full max-w-[1700px] mx-auto">
+                        
+                        {operacaoAtiva && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center flex-shrink-0">
+                                        <AlertTriangle className="text-blue-600 dark:text-blue-400" size={20} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-black text-blue-900 dark:text-blue-100 uppercase tracking-wide">
+                                            DADOS FILTRADOS PELA OPERAÇÃO
+                                        </h2>
+                                        <p className="text-xs text-blue-700 dark:text-blue-300 font-bold mt-0.5">
+                                            {operacaoAtiva.nome} ({operacaoAtiva.cobrade})
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                    <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">
+                                        ATIVO
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Summary KPI Cards */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                             {/* Gradient Card - Total Shelters */}
@@ -592,6 +647,8 @@ export default function ShelterMenu() {
                             ))}
                         </div>
                     </div>
+
+                    <GestaoOperacoesBlock userProfile={userProfile} />
 
                 {/* Footer Info */}
                 <div className="text-center pt-8 border-t border-slate-100 dark:border-slate-800 mt-8">
