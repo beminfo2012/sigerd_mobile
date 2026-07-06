@@ -1,43 +1,54 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import pdfplumber
 import re
+import traceback
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def extrair_campo(texto, label_inicio, label_fim=None):
     padrao = re.escape(label_inicio) + r"(.*?)(?=" + (re.escape(label_fim) if label_fim else r"\n|$)")
     match = re.search(padrao, texto, re.IGNORECASE | re.DOTALL)
     return match.group(1).strip() if match else None
 
+@app.post("/api/importar_pdf")
 @app.post("/api/importar-pdf")
-async def importar_pdf(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(".pdf"):
-        return JSONResponse(status_code=400, content={"error": "invalid_format", "message": "Arquivo deve ser um PDF."})
-
-    text = ""
+@app.post("/")
+@app.post("/{full_path:path}")
+async def importar_pdf(file: UploadFile = File(...), full_path: str = None):
     try:
+        if not file.filename or not file.filename.lower().endswith(".pdf"):
+            return JSONResponse(status_code=400, content={"error": "invalid_format", "message": "Arquivo deve ser um PDF."})
+
+        text = ""
         with pdfplumber.open(file.file) as pdf:
             for page in pdf.pages:
                 page_text = page.extract_text()
                 if page_text:
                     text += page_text + "\n"
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"error": "pdf_corrompido", "message": "Erro ao ler o PDF."})
 
-    if not text.strip():
-        return JSONResponse(status_code=400, content={"error": "pdf_sem_texto_nativo", "message": "O documento parece ser uma imagem escaneada. Não foi possível extrair o texto."})
+        if not text.strip():
+            return JSONResponse(status_code=400, content={"error": "pdf_sem_texto_nativo", "message": "O documento parece ser uma imagem escaneada. Não foi possível extrair o texto."})
 
-    tipo = None
-    if "REGISTRO DA DENÚNCIA" in text or "e-COPS" in text:
-        tipo = "e-COPS"
-    elif "CIODES" in text:
-        tipo = "CIODES"
-    else:
-        return JSONResponse(status_code=400, content={"error": "tipo_nao_reconhecido", "message": "PDF não foi reconhecido como CIODES ou e-COPS."})
+        tipo = None
+        if "REGISTRO DA DENÚNCIA" in text or "e-COPS" in text:
+            tipo = "e-COPS"
+        elif "CIODES" in text:
+            tipo = "CIODES"
+        else:
+            return JSONResponse(status_code=400, content={"error": "tipo_nao_reconhecido", "message": "PDF não foi reconhecido como CIODES ou e-COPS."})
 
-    campos = {}
-    envolvidos = []
+        campos = {}
+        envolvidos = []
 
     if tipo == "e-COPS":
         # Extração de campos do e-COPS usando regex ou split por quebra de linha
@@ -91,8 +102,14 @@ async def importar_pdf(file: UploadFile = File(...)):
                     "tipo_envolvimento": None
                 })
                 
-    return JSONResponse(status_code=200, content={
-        "tipo": tipo,
-        "campos": campos,
-        "envolvidos": envolvidos
-    })
+        return JSONResponse(status_code=200, content={
+            "tipo": tipo,
+            "campos": campos,
+            "envolvidos": envolvidos
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={
+            "error": "internal_error",
+            "message": f"Erro interno ao processar PDF: {str(e)}"
+        })

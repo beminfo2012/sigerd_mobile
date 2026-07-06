@@ -272,7 +272,9 @@ export default function OcorrenciasForm() {
             const result = await response.json();
 
             if (!response.ok) {
-                toast.error(result.message || 'Erro ao importar PDF');
+                const errorMsg = result.message || (result.detail ? JSON.stringify(result.detail) : 'Erro ao importar PDF');
+                toast.error(errorMsg);
+                console.error('Erro na resposta da API:', result);
                 return;
             }
 
