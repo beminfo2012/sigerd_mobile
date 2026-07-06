@@ -1,29 +1,41 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
-    ArrowLeft, Save, MapPin, Navigation, Shield, Users, Info, Loader2,
-    RefreshCw, ShieldCheck, AlertTriangle, Sparkles, Trash2, Maximize2,
-    FileText, Edit2, CheckCircle, CheckCircle2, Circle, Camera, Search,
-    X, Phone, User, Fingerprint, Siren, ClipboardList, Share,
-    Download, ChevronLeft, ChevronRight, Printer, Briefcase
+    ArrowLeft, Save, MapPin, Share2, Camera, ShieldAlert,
+    ChevronDown, ChevronUp, CheckCircle, Plus, Minus, FileText, Share,
+    Edit2, Trash2, ChevronLeft, ChevronRight, X, Download, Sparkles, Search, FileUp, AlertCircle
 } from 'lucide-react';
-import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE, salvarOcorrenciaOperacional, deletarFotoStorage } from '../../services/ocorrenciasDb';
-import { initDB, searchInstallations } from '../../services/db';
-import { checkRiskArea } from '../../services/riskAreas';
+import FileInput from '../../components/FileInput';
+import ImageEditor from '../../components/ImageEditor';
+import SignaturePadComp from '../../components/SignaturePad';
+import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
+import { initDB } from '../../services/db';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/ToastNotification';
-import RiskAreaModal from '../../components/RiskAreaModal';
-import { CHECKLIST_DATA } from '../../data/checklists';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
 import { UserContext } from '../../App';
-import VoiceInput from '../../components/VoiceInput';
-import SignaturePadComp from '../../components/SignaturePad';
-import FileInput from '../../components/FileInput';
-import { refineReportText } from '../../services/ai';
-import { generatePDF } from '../../utils/pdfGenerator';
-import { compressImage, extractMetadata } from '../../utils/imageOptimizer';
-import ImageEditor from '../../components/ImageEditor';
+import bairrosDataRaw from '../../data/Bairros.json';
+import logradourosDataRaw from '../../data/nomesderuas.json';
+
+// CONSTANTS & OPTIONS
+const bairrosData = bairrosDataRaw;
+const logradourosData = logradourosDataRaw
+    .filter(item => item["Logradouro (Rua, Av. e etc)"])
+    .map(item => ({
+        nome: item["Logradouro (Rua, Av. e etc)"].trim(),
+        bairro: item["Bairro"] ? item["Bairro"].trim() : ""
+    }));
+const ORGAOS_OPTIONS = ['Defesa Civil', 'Bombeiros', 'SECOBR', 'Agropecuária', 'Saúde', 'Assistência Social', 'Outro'];
+const TIPO_OCORRENCIA_OPTIONS = [
+    'Poda/queda de árvore', 'Vistoria de imóvel', 'Reclamação de rachadura/trinca',
+    'Animal em via pública', 'Apoio a outro órgão', 'Deslizamento/escorregamento',
+    'Alagamento/enchente', 'Vendaval/destelhamento', 'Incêndio (encaminhar Bombeiros)',
+    'Acidente com vítima (encaminhar Bombeiros/SAMU)', 'Outros'
+];
+const NIVEL_GRAVIDADE_OPTIONS = ['Baixo', 'Médio', 'Alto', 'Iminente'];
+const DESCRICAO_CHIPS = [
+    'Sem risco aparente', 'Risco estrutural', 'Risco geológico', 'Área isolada',
+    'Família desalojada', 'Família desabrigada', 'Lona fornecida', 'Cesta básica fornecida'
+];
 
 const SearchableInput = ({
     label,
@@ -38,8 +50,8 @@ const SearchableInput = ({
     const [search, setSearch] = useState('');
     const [isOpen, setIsOpen] = useState(false);
 
-    const filteredOptions = options.filter(opt =>
-        opt.toLowerCase().includes(search.toLowerCase())
+    const filteredOptions = (options || []).filter(opt =>
+        opt && typeof opt === 'string' && opt.toLowerCase().includes((search || '').toLowerCase())
     );
 
     return (
@@ -51,7 +63,7 @@ const SearchableInput = ({
                     onClick={() => setIsOpen(true)}
                     className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[56px] flex items-center justify-between pr-4`}
                 >
-                    <span className={value ? 'text-slate-800 dark:text-black' : 'text-slate-300'}>
+                    <span className={value ? 'text-slate-800' : 'text-slate-400'}>
                         {value || placeholder}
                     </span>
                     <Search size={16} className="text-slate-300" />
@@ -60,11 +72,11 @@ const SearchableInput = ({
 
             {isOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
+                    <div className="bg-white border border-slate-200 w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl rounded-2xl">
+                        <div className="p-6 border-b border-slate-100 space-y-4">
                             <div className="flex justify-between items-center">
-                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
-                                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
+                                <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm">{label}</h3>
+                                <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                                     <X size={24} className="text-slate-400" />
                                 </button>
                             </div>
@@ -72,7 +84,7 @@ const SearchableInput = ({
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                 <input
                                     autoFocus
-                                    className={`${inputClasses} pl-12`}
+                                    className={`${inputClasses} pl-12 text-black`}
                                     placeholder="Comece a digitar para filtrar..."
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
@@ -89,20 +101,17 @@ const SearchableInput = ({
                                             setIsOpen(false);
                                             setSearch('');
                                         }}
-                                        className={`w-full text-left p-4 rounded-2xl font-bold transition-all flex items-center justify-between group mb-1 ${value === opt ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
+                                        className="w-full text-left p-4 hover:bg-slate-50 border-b border-slate-50 last:border-0 font-bold text-slate-600 transition-colors"
                                     >
-                                        <span className="flex-1">{opt}</span>
-                                        {value === opt && <CheckCircle size={18} className="ml-2" />}
+                                        {opt}
                                     </button>
                                 ))
                             ) : (
-                                <div className="p-10 text-center space-y-2 opacity-50">
-                                    <Search size={32} className="mx-auto text-slate-300" />
-                                    <p className="font-bold text-sm">Nenhum resultado encontrado</p>
+                                <div className="p-8 text-center text-slate-400 font-bold">
+                                    Nenhum resultado encontrado.
                                 </div>
                             )}
                         </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white dark:from-slate-800 to-transparent pointer-events-none h-20"></div>
                     </div>
                 </div>
             )}
@@ -110,157 +119,48 @@ const SearchableInput = ({
     );
 };
 
-const AsyncSearchableInput = ({
-    label,
-    value,
-    onChange,
-    onSearch,
-    placeholder,
-    icon: IconComponent,
-    labelClasses,
-    inputClasses
-}) => {
-    const [search, setSearch] = useState('');
-    const [isOpen, setIsOpen] = useState(false);
-    const [options, setOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            setSearch('');
-            setOptions([]);
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (!isOpen) return;
-        const delayDebounceFn = setTimeout(async () => {
-            if (search.length >= 3) {
-                setLoading(true);
-                try {
-                    const results = await onSearch(search);
-                    setOptions(results || []);
-                } catch (e) {
-                    setOptions([]);
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                setOptions([]);
-            }
-        }, 500);
-        return () => clearTimeout(delayDebounceFn);
-    }, [search, isOpen, onSearch]);
-
-    return (
-        <div className="relative">
-            <label className={labelClasses}>{label}</label>
-            <div className="relative group">
-                {IconComponent && <IconComponent size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400" />}
-                <div
-                    onClick={() => setIsOpen(true)}
-                    className={`${inputClasses} ${IconComponent ? 'pl-12' : ''} cursor-pointer min-h-[56px] flex items-center justify-between pr-4`}
-                >
-                    <span className={value ? 'text-slate-800 dark:text-black' : 'text-slate-300'}>
-                        {value || placeholder}
-                    </span>
-                    <Search size={16} className="text-slate-300" />
-                </div>
-            </div>
-
-            {isOpen && (
-                <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 w-full max-w-xl mx-auto flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 space-y-4">
-                            <div className="flex justify-between items-center">
-                                <h3 className="font-black text-slate-800 dark:text-white uppercase tracking-widest text-sm">{label}</h3>
-                                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
-                                    <X size={24} className="text-slate-400" />
-                                </button>
-                            </div>
-                            <div className="relative">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input
-                                    autoFocus
-                                    className={`${inputClasses} pl-12`}
-                                    placeholder="Comece a digitar para filtrar..."
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                />
-                                {loading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-blue-500" size={18} />}
-                            </div>
-                        </div>
-                        <div className="overflow-y-auto p-2 pb-20">
-                            {options.length > 0 ? (
-                                options.map((opt, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => {
-                                            onChange(opt);
-                                            setIsOpen(false);
-                                            setSearch('');
-                                        }}
-                                        className={`w-full text-left p-4 rounded-2xl transition-all flex items-center justify-between group mb-1 ${value === opt.label ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300'}`}
-                                    >
-                                        <div className="flex-1">
-                                            <div className="font-bold">{opt.label}</div>
-                                            {opt.sublabel && <div className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">{opt.sublabel}</div>}
-                                        </div>
-                                        {value === opt.label && <CheckCircle size={18} className="ml-2" />}
-                                    </button>
-                                ))
-                            ) : (
-                                <div className="p-10 text-center space-y-2 opacity-50">
-                                    <Search size={32} className="mx-auto text-slate-300" />
-                                    <p className="font-bold text-sm">
-                                        {search.length < 3 ? 'Digite pelo menos 3 caracteres' : 'Nenhum resultado encontrado'}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white dark:from-slate-800 to-transparent pointer-events-none h-20"></div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+const CHIPS_DESCRICAO = {
+    'Árvores e vegetação': ["Árvore caída na via", "Árvore com risco de queda", "Galho comprometendo rede elétrica", "Raiz danificando estrutura/calçada"],
+    'Estruturas e edificações': ["Rachadura visível na parede", "Trinca estrutural aparente", "Infiltração de água", "Telhado danificado/destelhado", "Muro com risco de desabamento", "Desabamento parcial de estrutura", "Desabamento total de estrutura", "Imóvel com recalque de fundação"],
+    'Água e drenagem': ["Residência alagada", "Via pública alagada", "Bueiro obstruído", "Transbordamento de córrego/rio", "Erosão às margens de curso d'água", "Assoreamento de drenagem"],
+    'Encostas e solo': ["Deslizamento de terra", "Escorregamento de talude", "Rachadura no solo", "Erosão em encosta", "Risco de deslizamento identificado"],
+    'Vias e trânsito': ["Via interditada", "Via parcialmente obstruída", "Ponte/passarela danificada", "Queda de poste/fiação", "Sinalização de trânsito danificada"],
+    'Pessoas e vulnerabilidade': ["Morador idoso em situação de risco", "Presença de pessoa com mobilidade reduzida", "Necessidade de evacuação imediata", "Família removida preventivamente", "Ausência de moradores no momento da vistoria"],
+    'Animais': ["Animal de grande porte na via", "Animal silvestre em área urbana", "Necessidade de resgate de animal"],
+    'Diversos / apoio': ["Solicitado apoio de outro órgão", "Local já monitorado anteriormente", "Reincidência de ocorrência no mesmo ponto", "Sem constatação de risco no momento da vistoria", "Vistoria realizada sem intercorrências"]
 };
 
+// COMPONENTS
+const StepperInput = ({ label, value, onChange }) => (
+    <div className="flex flex-col space-y-2 mb-4 w-full">
+        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+        <div className="flex items-center space-x-1 sm:space-x-2">
+            <button
+                type="button"
+                onClick={() => onChange(Math.max(0, (value || 0) - 1))}
+                className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 flex items-center justify-center bg-slate-100 rounded-lg active:bg-slate-200 transition-colors"
+            >
+                <Minus size={18} className="text-slate-600" />
+            </button>
+            <input
+                type="number"
+                value={value || ''}
+                onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+                className="w-full min-w-0 h-10 sm:h-12 text-center text-base sm:text-lg font-black bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+            />
+            <button
+                type="button"
+                onClick={() => onChange((value || 0) + 1)}
+                className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 flex items-center justify-center bg-blue-100 rounded-lg active:bg-blue-200 transition-colors"
+            >
+                <Plus size={18} className="text-blue-600" />
+            </button>
+        </div>
+    </div>
+);
 
-// Address Data Imports
-import logradourosDataRaw from '../../data/nomesderuas.json';
-import bairrosDataRaw from '../../data/Bairros.json';
-
-// Normalize Address Data
-const logradourosData = logradourosDataRaw
-    .filter(item => item["Logradouro (Rua, Av. e etc)"])
-    .map(item => ({
-        nome: item["Logradouro (Rua, Av. e etc)"].trim(),
-        bairro: item["Bairro"] ? item["Bairro"].trim() : ""
-    }));
-
-const bairrosData = bairrosDataRaw;
-
-const ENCAMINHAMENTOS_LIST = [
-    'Secretaria de Interior',
-    'Secretaria de Ação Social',
-    'Secretaria de Serviços Urbanos',
-    'Secretaria de Saúde',
-    'Secretaria de Defesa Social',
-    'Secretaria de Educação',
-    'Secretaria de Meio Ambiente',
-    'Secretaria de Agropecuária',
-    'Secretaria de Obras',
-    'Bombeiros Voluntários',
-    'Bombeiros Militar',
-    'Policia Militar',
-    'Policia Militar Ambiental',
-    'SAMU',
-    'Defesa Civil Estadual',
-    'Outros'
-];
-
-const OcorrenciasForm = () => {
+export default function OcorrenciasForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { toast } = useToast();
@@ -268,359 +168,146 @@ const OcorrenciasForm = () => {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [refining, setRefining] = useState(false);
+    const [importingPdf, setImportingPdf] = useState(false);
+    const [unrecognizedFields, setUnrecognizedFields] = useState({});
+    const fileInputPdfRef = useRef(null);
     const [formData, setFormData] = useState(INITIAL_OCORRENCIA_STATE);
-    const [gpsStatus, setGpsStatus] = useState('idle');
-    const [generating, setGenerating] = useState(false);
+    const [expandedCategory, setExpandedCategory] = useState(null);
 
-
-    // UI States
-    const [docType, setDocType] = useState('CPF');
-    const [showSignaturePad, setShowSignaturePad] = useState(false);
-    const [activeSignatureType, setActiveSignatureType] = useState('agente');
+    // Photo and Signature states
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
     const [editingPhotoIndex, setEditingPhotoIndex] = useState(null);
+    const [showSignaturePad, setShowSignaturePad] = useState(false);
+    const [activeSignatureType, setActiveSignatureType] = useState('agente');
+    const [docType, setDocType] = useState('CPF');
 
-    // Risk Area States
-    const [detectedRiskArea, setDetectedRiskArea] = useState(null);
-    const [showRiskModal, setShowRiskModal] = useState(false);
-
-    const RISK_DATA = {
-        'Outros': ['Outros'],
-        'Incêndios': [
-            'Incêndio em residência', 'Incêndio em estabelecimento comercial', 'Incêndio industrial',
-            'Incêndio em veículo', 'Incêndio florestal / em vegetação', 'Incêndio em terreno baldio',
-            'Incêndio em área de preservação', 'Outros'
-        ],
-        'Acidentes de Trânsito': [
-            'Colisão entre veículos', 'Capotamento', 'Atropelamento', 'Acidente com motocicleta',
-            'Acidente com vítima presa nas ferragens', 'Tombamento de caminhão', 'Derramamento de carga perigosa', 'Outros'
-        ],
-        'Quedas e Desabamentos': [
-            'Queda de árvore', 'Queda de galhos sobre via', 'Queda de poste', 'Desabamento de muro',
-            'Desabamento parcial de residência', 'Colapso estrutural de edificação', 'Risco estrutural em imóvel', 'Queda de Ponte de Madeira', 'Queda de Ponte de Concreto', 'Queda de passarela', 'Outros'
-        ],
-        'Eventos Naturais / Climáticos': [
-            'Alagamento', 'Enchente', 'Inundação', 'Enxurrada', 'Deslizamento de terra',
-            'Erosão', 'Vendaval', 'Granizo', 'Raios com danos estruturais', 'Outros'
-        ],
-        'Salvamentos': [
-            'Resgate de vítima em altura', 'Resgate veicular', 'Resgate aquático', 'Busca por desaparecido',
-            'Resgate em mata', 'Retirada de animal em situação de risco', 'Pessoa presa em elevador', 'Outros'
-        ],
-        'Produtos Perigosos': [
-            'Vazamento de gás', 'Vazamento de produto químico', 'Explosão', 'Risco de explosão',
-            'Derramamento de combustível', 'Contaminação ambiental', 'Outros'
-        ],
-        'Apoio Humanitário': [
-            'Distribuição de donativos', 'Abrigamento temporário', 'Cadastro de famílias atingidas',
-            'Avaliação de danos e prejuízos', 'Apoio em decretação de situação de emergência', 'Outros'
-        ],
-        'Atendimento Pré-Hospitalar': [
-            'Mal súbito', 'Parada cardiorrespiratória', 'Trauma', 'Queda da própria altura', 'Afogamento', 'Outros'
-        ],
-        'Ocorrências Urbanas Diversas': [
-            'Fiação elétrica caída', 'Obstrução de via', 'Rompimento de adutora', 'Pane em elevador',
-            'Abertura de residência (emergencial)', 'Ameaça de suicídio', 'Outros'
-        ]
+    const labelClasses = "text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block ml-1";
+    const baseInputClasses = "w-full p-3 rounded-xl border font-bold focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all";
+    const getInputClass = (fieldName) => {
+        if (unrecognizedFields[fieldName]) {
+            return `${baseInputClasses} border-amber-400 bg-amber-50 ring-2 ring-amber-400/20 text-amber-900`;
+        }
+        return `${baseInputClasses} border-slate-200 bg-slate-50 text-slate-800`;
     };
 
-    useEffect(() => {
-        if (id && id !== 'novo') {
-            loadRecord(id);
-        } else {
-            const init = async () => {
-                const now = new Date();
-                setFormData(prev => ({
-                    ...prev,
-                    data_ocorrencia: now.toLocaleDateString('pt-BR'),
-                    horario_ocorrencia: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                    agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
-                    matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
-                    cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Defesa Civil'
-                }));
-                await getNextId();
-                captureGPS(true);
-                setLoading(false);
-            }
-            init();
-        }
-    }, [id, userProfile]);
-
-    const getNextId = async () => {
-        const currentYear = new Date().getFullYear();
-        try {
-            let maxNum = 0;
-            const db = await initDB();
-            const localRecords = await db.getAll('ocorrencias_operacionais');
-            localRecords.forEach(r => {
-                const oid = r.ocorrencia_id_format;
-                if (oid && oid.includes(`/${currentYear}`)) {
-                    const num = parseInt(oid.split('/')[0]);
-                    if (!isNaN(num) && num > maxNum) maxNum = num;
-                }
-            });
-
-            if (navigator.onLine) {
-                const { data } = await supabase
-                    .from('ocorrencias_operacionais')
-                    .select('ocorrencia_id_format')
-                    .ilike('ocorrencia_id_format', `%/${currentYear}`)
-                    .order('created_at', { ascending: false })
-                    .limit(100);
-
-                if (data) {
-                    data.forEach(r => {
-                        if (r.ocorrencia_id_format) {
-                            const num = parseInt(r.ocorrencia_id_format.split('/')[0]);
-                            if (!isNaN(num) && num > maxNum) maxNum = num;
-                        }
-                    });
-                }
-            }
-
-            const nextId = `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`;
-            setFormData(prev => ({ ...prev, ocorrencia_id_format: nextId }));
-            return nextId;
-        } catch (e) {
-            console.error('Error calculating next ID:', e);
-            return null;
-        }
-    };
-
-    const loadRecord = async (recordId) => {
-        try {
-            const record = await getOcorrenciaById(recordId);
-            if (record) {
-                // Map snake_case to camelCase for form fields if they exist
-                const mappedRecord = {
-                    ...record,
-                    categoriaRisco: record.categoria_risco || record.categoriaRisco || '',
-                    subtiposRisco: record.subtipos_risco || record.subtiposRisco || [],
-                    subtipoRiscoOutros: record.subtipo_risco_outros || record.subtipoRiscoOutros || '',
-                    nivelRisco: record.nivel_risco || record.nivelRisco || '',
-                    informacoes_complementares: record.informacoes_complementares || record.informacoesComplementares || '',
-                    checklistRespostas: record.checklist_respostas || record.checklistRespostas || {},
-                    medidasTomadas: record.medidas_tomadas || record.medidasTomadas || [],
-                    encaminhamentos: record.encaminhamentos || record.encaminhamentos || [],
-                    unidade_consumidora: record.unidade_consumidora || '',
-                    assinaturaAgente: record.assinatura_agente || record.assinaturaAgente || null,
-                    assinaturaAssistido: record.assinatura_assistido || record.assinaturaAssistido || null,
-                    temSolicitanteEspecifico: record.tem_solicitante_especifico !== undefined ? record.tem_solicitante_especifico : (record.temSolicitanteEspecifico || (record.solicitante && record.solicitante !== "Coordenadoria Municipal de Proteção e Defesa Civil" && record.solicitante !== "Solicitante não informado")),
-                    temApoioTecnico: record.tem_apoio_tecnico !== undefined ? record.tem_apoio_tecnico : (record.temApoioTecnico || false),
-                    cargo: record.cargo || record.cargo_agente || 'Agente de Defesa Civil',
-                    apoioTecnico: record.apoio_tecnico || record.apoioTecnico || { nome: '', crea: '', matricula: '', cargo: '', assinatura: null }
-                };
-
-                setFormData({
-                    ...INITIAL_OCORRENCIA_STATE,
-                    ...mappedRecord
-                });
-                if (mappedRecord.cpf) {
-                    setDocType(mappedRecord.cpf.length > 14 ? 'CNPJ' : 'CPF');
-                }
-            }
-        } catch (error) {
-            toast.error('Erro ao carregar registro.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRiskDetection = (lat, lng) => {
-        if (!lat || !lng) return;
-        const riskInfo = checkRiskArea(parseFloat(lat), parseFloat(lng));
-        setDetectedRiskArea(riskInfo);
-
-        if (riskInfo) {
-            setShowRiskModal(true);
-            // Auto-append to observations if not already there
-            setFormData(prev => {
-                const riskNote = `[SISTEMA] Ocorrência em área de risco: ${riskInfo.name} (${riskInfo.source}).`;
-                if (!prev.observacoes.includes(riskNote)) {
-                    return {
-                        ...prev,
-                        observacoes: (prev.observacoes ? prev.observacoes + '\n\n' : '') + riskNote
-                    };
-                }
-                return prev;
-            });
-        }
-    };
-
-    const captureGPS = (isInitial = false) => {
-        if (!navigator.geolocation) {
-            setGpsStatus('error');
-            return;
-        }
-
-        setGpsStatus('locating');
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude, accuracy } = pos.coords;
-                setFormData(prev => ({
-                    ...prev,
-                    lat: latitude,
-                    lng: longitude,
-                    accuracy: accuracy,
-                    gps_timestamp: new Date().toISOString()
-                }));
-                setGpsStatus('success');
-                handleRiskDetection(latitude, longitude);
-                if (!isInitial) toast.success(`Localização atualizada! Precisão: ${accuracy.toFixed(1)}m`);
-            },
-            (err) => {
-                console.error('GPS Error:', err);
-                setGpsStatus('error');
-                if (!isInitial) toast.error('Não foi possível obter a localização.');
-            },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
-    };
-
-    const handleAIRefine = async () => {
-        if (!formData.observacoes) return;
-        setRefining(true);
-        try {
-            const result = await refineReportText(
-                formData.observacoes,
-                formData.categoriaRisco || 'Ocorrência Geral',
-                `Local: ${formData.endereco}, ${formData.bairro}.`
-            );
-            if (result && !result.startsWith('ERROR:')) {
-                setFormData(prev => ({ ...prev, observacoes: result }));
-                toast.success('Texto refinado com sucesso!');
-            } else {
-                toast.error(result || 'Falha no refinamento');
-            }
-        } catch (e) {
-            toast.error('Erro ao processar IA');
-        } finally {
-            setRefining(false);
-        }
-    };
-
+    // Handlers
     const handlePhotoSelect = async (files) => {
-        if (!files || !Array.isArray(files)) return;
-
-        // Try to get current location as fallback
-        let currentCoords = null;
-        if (formData.lat && formData.lng) {
-            currentCoords = { lat: formData.lat, lng: formData.lng };
-        } else if (navigator.geolocation) {
-            try {
-                const pos = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-                });
-                currentCoords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) };
-            } catch (e) {
-                console.warn("Geolocation fallback failed", e);
-            }
-        }
-
-        const processedPhotos = await Promise.all(files.map(async (file) => {
+        const currentFotos = Array.isArray(formData.fotos) ? formData.fotos : [];
+        const newFotos = await Promise.all(Array.from(files).map(file => {
             return new Promise((resolve) => {
+                // Se já for um objeto com dataUrl (da CameraModal, por ex)
+                if (file.dataUrl) {
+                    resolve({
+                        id: Math.random().toString(36).substr(2, 9),
+                        data: file.dataUrl,
+                        legenda: ''
+                    });
+                    return;
+                }
+                
+                // Se for um arquivo de galeria (File object)
                 const reader = new FileReader();
-                reader.onloadend = async () => {
-                    try {
-                        // Extract metadata from file
-                        const meta = await extractMetadata(file);
-
-                        // Use EXIF coords if available, otherwise fallback
-                        const finalCoords = meta.coords || currentCoords;
-                        // Use EXIF timestamp if available, otherwise current date
-                        const finalTimestamp = meta.timestamp || new Date();
-
-                        const compressed = await compressImage(reader.result, {
-                            coordinates: finalCoords,
-                            timestamp: finalTimestamp
-                        });
-
-                        resolve({
-                            id: crypto.randomUUID(),
-                            data: compressed,
-                            legenda: ''
-                        });
-                    } catch (err) {
-                        console.error("Error processing photo:", err);
-                        resolve({
-                            id: crypto.randomUUID(),
-                            data: reader.result,
-                            legenda: ''
-                        });
-                    }
+                reader.onloadend = () => {
+                    resolve({
+                        id: Math.random().toString(36).substr(2, 9),
+                        data: reader.result,
+                        legenda: ''
+                    });
                 };
                 reader.readAsDataURL(file);
             });
         }));
-
-        setFormData(prev => ({ ...prev, fotos: [...(prev.fotos || []), ...processedPhotos] }));
+        setFormData(prev => ({ ...prev, fotos: [...currentFotos, ...newFotos] }));
     };
 
-
-    const removePhoto = async (id) => {
-        const foto = formData.fotos.find(f => f.id === id);
-        if (foto && foto.data && foto.data.startsWith('http')) {
-            // Se já tem URL, significa que está na nuvem e precisamos deletar do Storage
-            // Usamos o UUID (ocorrencia_id) se existir, ou o id local.
-            await deletarFotoStorage(formData.ocorrencia_id || formData.id, id);
-        }
-        setFormData(prev => ({ ...prev, fotos: prev.fotos.filter(f => f.id !== id) }));
-    };
-
-    const updatePhotoCaption = (id, caption) => {
+    const removePhoto = (id) => {
         setFormData(prev => ({
             ...prev,
-            fotos: prev.fotos.map(f => f.id === id ? { ...f, legenda: caption } : f)
+            fotos: prev.fotos.filter(f => f.id !== id)
         }));
     };
 
-    const toggleArrayItem = (field, item) => {
+    const updatePhotoCaption = (id, legenda) => {
+        setFormData(prev => ({
+            ...prev,
+            fotos: prev.fotos.map(f => f.id === id ? { ...f, legenda } : f)
+        }));
+    };
+
+    const movePhoto = (id, direction) => {
         setFormData(prev => {
-            const current = prev[field] || [];
-            if (current.includes(item)) {
-                const newArr = current.filter(i => i !== item);
-                const updates = { [field]: newArr };
-                if (field === 'subtiposRisco' && item === 'Outros') {
-                    updates.subtipoRiscoOutros = '';
-                }
-                return { ...prev, ...updates };
+            const fotos = [...prev.fotos];
+            const idx = fotos.findIndex(f => f.id === id);
+            if (idx < 0) return prev;
+            if (direction === 'left' && idx > 0) {
+                [fotos[idx - 1], fotos[idx]] = [fotos[idx], fotos[idx - 1]];
+            } else if (direction === 'right' && idx < fotos.length - 1) {
+                [fotos[idx + 1], fotos[idx]] = [fotos[idx], fotos[idx + 1]];
             }
-            return { ...prev, [field]: [...current, item] };
+            return { ...prev, fotos };
         });
     };
 
-    const hasOrganSelected = (organ) => {
-        return (formData.encaminhamentos || []).some(item => {
-            if (typeof item === 'string') {
-                return item === organ || item.startsWith(organ + ':');
+    const prevPhoto = () => {
+        setSelectedPhotoIndex(p => p > 0 ? p - 1 : (formData.fotos?.length || 1) - 1);
+    };
+
+    const nextPhoto = () => {
+        setSelectedPhotoIndex(p => p < (formData.fotos?.length || 0) - 1 ? p + 1 : 0);
+    };
+
+    const handlePdfImport = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setImportingPdf(true);
+        const formPayload = new FormData();
+        formPayload.append('file', file);
+
+        try {
+            const response = await fetch('/api/importar_pdf', {
+                method: 'POST',
+                body: formPayload
+            });
+            const result = await response.json();
+
+            if (!response.ok) {
+                toast.error(result.message || 'Erro ao importar PDF');
+                return;
             }
-            return false;
-        });
-    };
 
-    const removeOrgan = (organ) => {
-        setFormData(prev => ({
-            ...prev,
-            encaminhamentos: (prev.encaminhamentos || []).filter(item => {
-                if (typeof item === 'string') {
-                    return item !== organ && !item.startsWith(organ + ':');
-                }
-                return true;
-            })
-        }));
-    };
+            const c = result.campos || {};
+            const updateFields = {
+                origem: 'importacao_pdf',
+                tipo_documento_origem: result.tipo,
+                nome_arquivo_original: file.name,
+                numero_referencia: c.numero_referencia || '',
+                tipo_ocorrencia: c.natureza || '',
+                data_aproximada: c.data_aproximada || '',
+                endereco: c.rua || '',
+                bairro: c.bairro || '',
+                referencia: c.referencia || '',
+                observacoes_local: c.observacoes_local || '',
+                descricao: c.descricao || ''
+            };
 
-    const updateOrganDetail = (organ, detail) => {
-        setFormData(prev => ({
-            ...prev,
-            encaminhamentos: (prev.encaminhamentos || []).map(item => {
-                if (typeof item === 'string' && (item === organ || item.startsWith(organ + ':'))) {
-                    return detail ? `${organ}: ${detail}` : organ;
-                }
-                return item;
-            })
-        }));
+            const unrecog = {
+                tipo_ocorrencia: !c.natureza,
+                endereco: !c.rua,
+                bairro: !c.bairro,
+                descricao: !c.descricao
+            };
+
+            setFormData(prev => ({ ...prev, ...updateFields }));
+            setUnrecognizedFields(unrecog);
+            toast.success(`PDF ${result.tipo} importado para revisão.`);
+        } catch (error) {
+            console.error('Erro na importação:', error);
+            toast.error('Erro ao conectar com o serviço de extração.');
+        } finally {
+            setImportingPdf(false);
+            if (fileInputPdfRef.current) fileInputPdfRef.current.value = '';
+        }
     };
 
     const downloadPhoto = (dataUrl, filename) => {
@@ -632,1126 +319,674 @@ const OcorrenciasForm = () => {
         document.body.removeChild(link);
     };
 
-    const nextPhoto = () => {
-        if (selectedPhotoIndex === null) return;
-        setSelectedPhotoIndex((selectedPhotoIndex + 1) % formData.fotos.length);
+    // Load data
+    useEffect(() => {
+        const init = async () => {
+            if (id && id !== 'novo') {
+                const record = await getOcorrenciaById(id);
+                if (record) {
+                    setFormData({ ...INITIAL_OCORRENCIA_STATE, ...record });
+                }
+            } else {
+                const now = new Date();
+                setFormData(prev => ({
+                    ...prev,
+                    data_chamado: now.toISOString(),
+                    agente: userProfile?.full_name || '',
+                    matricula: userProfile?.matricula || '',
+                    cargo: userProfile?.cargo || 'Agente'
+                }));
+            }
+            setLoading(false);
+        };
+        init();
+    }, [id, userProfile]);
+
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
     };
 
-    const prevPhoto = () => {
-        if (selectedPhotoIndex === null) return;
-        setSelectedPhotoIndex((selectedPhotoIndex - 1 + formData.fotos.length) % formData.fotos.length);
+    const handleChipClick = (texto) => {
+        setFormData(prev => {
+            const currentDesc = prev.descricao ? prev.descricao.trim() : '';
+            const newDesc = currentDesc ? `${currentDesc} - ${texto}` : texto;
+            return { ...prev, descricao: newDesc };
+        });
     };
 
-    const handleGeneratePDF = async () => {
-        const id = formData.id || formData.ocorrencia_id || formData.ocorrencia_id_format;
-        if (!id) {
-            toast.warning('Ação Necessária', 'Por favor, salve a ocorrência primeiro para gerar o PDF neste modelo.');
-            return;
-        }
-        window.open(`/ocorrencias/imprimir/${id}`, '_blank');
+    const getGPS = () => {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setFormData(prev => ({
+                    ...prev,
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy
+                }));
+                toast.success('Localização atualizada');
+            },
+            () => toast.error('Falha ao obter GPS'),
+            { enableHighAccuracy: true }
+        );
     };
 
+    const handleShare = () => {
+        const text = `*Ocorrência ${formData.tipo_ocorrencia || 'Não definida'}*\n` +
+                     `Gravidade: ${formData.nivel_gravidade || 'Não definida'}\n` +
+                     `Endereço: ${formData.endereco || 'Não informado'}, ${formData.bairro || 'Não informado'}\n` +
+                     `Coordenadas: ${formData.lat || ''}, ${formData.lng || ''}`;
+        const encodedUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(encodedUrl, '_blank');
+    };
 
-    const handleSave = async () => {
-        if (!formData.categoriaRisco) {
-            toast.error('Informe a categoria de risco (Bloco 5).');
-            return;
-        }
+    const isValid = () => {
+        if (!formData.solicitante_nome && !formData.solicitante) return false;
+        if (!formData.tipo_ocorrencia) return false;
+        if (!formData.nivel_gravidade) return false;
+        if (!formData.orgao_solicitado) return false;
+        if (!formData.orgao_atendeu) return false;
+        
+        // Foto validation
+        const totalFotos = formData.fotos?.length || 0;
+        if (formData.nivel_gravidade === 'Iminente' && totalFotos < 3) return false;
+        if (formData.nivel_gravidade === 'Alto' && totalFotos < 1) return false;
 
-        let currentId = formData.ocorrencia_id_format;
-        if (!currentId) {
-            toast.info('Gerando numeração...');
-            currentId = await getNextId();
-        }
+        return true;
+    };
 
+    const saveRecord = async (isDraft, resetAfter = false) => {
         setSaving(true);
         try {
             const finalData = {
                 ...formData,
-                ocorrencia_id_format: currentId,
-                solicitante: (formData.temSolicitanteEspecifico && formData.solicitante) 
-                    ? formData.solicitante 
-                    : (formData.solicitante && formData.solicitante !== "Coordenadoria Municipal de Proteção e Defesa Civil" && formData.solicitante !== "Solicitante não informado" ? formData.solicitante : "Coordenadoria Municipal de Proteção e Defesa Civil"),
-                status: 'finalized',
-                updated_at: new Date().toISOString()
+                status: isDraft ? 'Aberta' : 'Finalizada',
+                encaminhada: formData.orgao_solicitado !== formData.orgao_atendeu
             };
             
-            // 1. Salvar Localmente (Garante que os dados não se percam se a internet cair no meio)
-            // Pulamos o sync automático se estivermos online, pois chamaremos a função blindada logo abaixo
-            const localId = await saveOcorrenciaLocal(finalData, navigator.onLine);
+            await saveOcorrenciaLocal(finalData, !navigator.onLine);
             
-            // BUSCA O REGISTRO SALVO PARA OBTER O UUID (ocorrencia_id) SE FOR NOVO
-            const db = await initDB();
-            const savedLocal = await db.get('ocorrencias_operacionais', localId);
-            
-            // Atualiza o estado do formulário para que cliques subsequentes no mesmo formulário 
-            // não gerem registros duplicados se o usuário não sair da tela.
-            if (savedLocal) {
-                setFormData(prev => ({
-                    ...prev,
-                    id: savedLocal.id,
-                    ocorrencia_id: savedLocal.ocorrencia_id
-                }));
-            }
-
-            // 2. Acionamento Blindado para o Supabase (Se estiver Online)
-            if (navigator.onLine) {
-                toast.info('Sincronizando fotos e dados...');
-                const result = await salvarOcorrenciaOperacional({ ...finalData, id: localId, ocorrencia_id: savedLocal?.ocorrencia_id });
-                
-                if (result.sucesso) {
-                    // Atualiza o estado local para "sincronizado" e salva as URLs curtas das fotos
-                    const tx = db.transaction('ocorrencias_operacionais', 'readwrite');
-                    const store = tx.objectStore('ocorrencias_operacionais');
-                    
-                    const localItem = await store.get(localId);
-                    
-                    if (localItem) {
-                        localItem.synced = true;
-                        if (result.dados?.[0]?.fotos) {
-                            localItem.fotos = result.dados[0].fotos;
-                        }
-                        await store.put(localItem);
-                        
-                        // Atualiza o formulário com a versão final sincada (URLs das imagens)
-                        setFormData(prev => ({ ...prev, fotos: localItem.fotos }));
-                    }
-                    await tx.done;
-                    toast.success('Ocorrência salva e sincronizada com sucesso!');
-                } else {
-                    toast.warning('Salvo localmente', 'Os dados estão seguros no celular, mas a sincronização falhou: ' + result.mensagem);
-                }
+            toast.success('Ocorrência salva!');
+            if (resetAfter) {
+                setFormData({
+                    ...INITIAL_OCORRENCIA_STATE,
+                    data_chamado: new Date().toISOString(),
+                    agente: userProfile?.full_name || '',
+                    matricula: userProfile?.matricula || '',
+                    cargo: userProfile?.cargo || 'Agente'
+                });
+                window.scrollTo(0, 0);
             } else {
-                toast.success('Ocorrência registrada localmente (Offline)!');
+                navigate('/ocorrencias');
             }
-
-            navigate('/ocorrencias');
         } catch (error) {
-            console.error('Save error:', error);
-            toast.error('Falha ao salvar ocorrencia.');
+            console.error(error);
+            toast.error('Erro ao salvar.');
         } finally {
             setSaving(false);
         }
     };
 
+    if (loading) return <div className="p-8 text-center">Carregando...</div>;
 
-    const inputClasses = "w-full px-4 sm:px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-red-500/5 focus:border-red-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
-    const labelClasses = "block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1 text-left"
-
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900 gap-4">
-                <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
-                <p className="font-black text-[10px] text-slate-400 uppercase tracking-widest">Carregando formulário...</p>
-            </div>
-        );
-    }
+    const showEncaminhamento = formData.orgao_solicitado !== formData.orgao_atendeu && formData.orgao_solicitado && formData.orgao_atendeu;
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32 font-sans animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20 border-b border-slate-100 dark:border-slate-700 shadow-sm">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => navigate('/ocorrencias')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-95">
-                            <ArrowLeft size={24} />
-                        </button>
-                        <div>
-                            <h1 className="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-                                {id && id !== 'novo' ? 'Editar Ocorrência' : 'Nova Ocorrência'}
-                            </h1>
-                            <span className="text-[10px] font-black text-red-600 dark:text-red-500 uppercase tracking-[2px]">{formData.ocorrencia_id_format}</span>
-                        </div>
+        <div className="min-h-screen bg-slate-50 pb-32">
+            {/* Topbar */}
+            <div className="bg-white px-4 py-3 sticky top-0 z-30 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigate('/ocorrencias')} className="p-2 -ml-2 rounded-full active:bg-slate-100">
+                        <ArrowLeft size={24} className="text-slate-700" />
+                    </button>
+                    <div>
+                        <h1 className="font-black text-lg text-slate-800">Nova Ocorrência</h1>
+                        <p className="text-xs font-bold text-slate-400">{formData.data_chamado ? new Date(formData.data_chamado).toLocaleDateString('pt-BR') : ''}</p>
                     </div>
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20 px-6 h-12"
-                    >
-                        {saving ? <Loader2 size={18} className="animate-spin mr-2" /> : <Save size={18} className="mr-2" />}
-                        {saving ? 'SALVANDO...' : 'SALVAR'}
-                    </Button>
+                </div>
+                <div className="flex gap-2">
+                    <input type="file" accept="application/pdf" ref={fileInputPdfRef} className="hidden" onChange={handlePdfImport} />
+                    <button onClick={() => fileInputPdfRef.current?.click()} disabled={importingPdf} className="p-2 rounded-full text-purple-600 bg-purple-50 active:bg-purple-100 flex items-center gap-2 px-3">
+                        {importingPdf ? <span className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></span> : <FileUp size={18} />}
+                        <span className="text-xs font-bold hidden sm:block">Importar PDF</span>
+                    </button>
+                    <button onClick={handleShare} className="p-2 rounded-full text-blue-600 bg-blue-50 active:bg-blue-100">
+                        <Share size={20} />
+                    </button>
                 </div>
             </div>
 
-            <main className="p-5 max-w-5xl mx-auto space-y-6">
-
-                {/* 1. SEÇÃO: Identificação (Processo removido) */}
-                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8">1. Identificação</h3>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="p-4 space-y-4 max-w-5xl mx-auto">
+                {formData.origem === 'importacao_pdf' && (
+                    <div className="bg-purple-50 border border-purple-200 text-purple-800 p-4 rounded-xl flex gap-3 text-sm font-medium">
+                        <AlertCircle size={20} className="text-purple-600 flex-shrink-0" />
+                        <div>
+                            <strong>Importação em modo de revisão:</strong> Verifique e complete os campos abaixo antes de salvar.
+                            Alguns dados do documento original ({formData.nome_arquivo_original}) podem não ter sido reconhecidos.
+                        </div>
+                    </div>
+                )}
+                {/* SOLICITANTE */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Solicitante</h2>
+                    <div className="space-y-4">
                         <div className="space-y-2">
-                            <div className="flex justify-between items-center px-1">
-                                <label className={labelClasses}>Nº Ocorrência</label>
-                                <button
-                                    type="button"
-                                    onClick={getNextId}
-                                    className="text-blue-500 hover:text-blue-600 p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                >
-                                    <RefreshCw size={14} />
-                                </button>
-                            </div>
-                            <div className="text-xl font-black p-4 rounded-2xl border border-blue-100/50 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400 shadow-inner">
-                                {formData.ocorrencia_id_format}
-                            </div>
+                            <label className={labelClasses}>Nome Completo</label>
+                            <input
+                                type="text"
+                                className={getInputClass('solicitante_nome')}
+                                value={formData.solicitante_nome || formData.solicitante || ''}
+                                onChange={e => {
+                                    setFormData(prev => ({ ...prev, solicitante_nome: e.target.value, solicitante: e.target.value }));
+                                    setUnrecognizedFields(prev => ({ ...prev, solicitante_nome: false }));
+                                }}
+                                placeholder="Nome completo do solicitante/morador"
+                            />
                         </div>
-
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                            <div>
-                                <label className={labelClasses}>Data</label>
-                                <input
-                                    type="text"
-                                    className={inputClasses}
-                                    value={formData.data_ocorrencia}
-                                    onChange={(e) => setFormData({ ...formData, data_ocorrencia: e.target.value })}
-                                    placeholder="DD/MM/AAAA"
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClasses}>Horário</label>
-                                <input
-                                    type="text"
-                                    className={inputClasses}
-                                    value={formData.horario_ocorrencia}
-                                    onChange={(e) => setFormData({ ...formData, horario_ocorrencia: e.target.value })}
-                                    placeholder="HH:MM"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-
-                {/* 2. SEÇÃO: Responsável Técnico (Valores automáticos editáveis) */}
-                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8">2. Responsável Técnico</h3>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className={labelClasses}>Agente</label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input
-                                    type="text"
-                                    className={`${inputClasses} pl-12 bg-blue-50/30 dark:bg-blue-900/10`}
-                                    value={formData.agente}
-                                    onChange={e => setFormData({ ...formData, agente: e.target.value })}
-                                    placeholder="Carregando..."
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <label className={labelClasses}>Matrícula</label>
-                            <div className="relative">
-                                <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input
-                                    type="text"
-                                    className={`${inputClasses} pl-12 bg-blue-50/30 dark:bg-blue-900/10`}
-                                    value={formData.matricula}
-                                    onChange={e => setFormData({ ...formData, matricula: e.target.value })}
-                                    placeholder="Matrícula"
-                                />
-                            </div>
-                        </div>
-                        <div className="sm:col-span-2">
-                            <label className={labelClasses}>Cargo do Agente</label>
-                            <div className="relative">
-                                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input
-                                    type="text"
-                                    className={`${inputClasses} pl-12 bg-blue-50/30 dark:bg-blue-900/10`}
-                                    value={formData.cargo}
-                                    onChange={e => setFormData({ ...formData, cargo: e.target.value })}
-                                    placeholder="Ex: Agente de Defesa Civil, Engenheiro, etc."
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8 mb-6">
-<h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">3. Solicitante</h3>
-<div className="bg-white/10 px-3 py-1 rounded-sm"><button
-                            type="button"
-                            onClick={() => setFormData(prev => ({
-                                ...prev,
-                                temSolicitanteEspecifico: !prev.temSolicitanteEspecifico,
-                                solicitante: !prev.temSolicitanteEspecifico ? prev.solicitante : ''
-                            }))}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${formData.temSolicitanteEspecifico
-                                ? 'bg-blue-600 border-blue-600 text-white'
-                                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-400'
-                                }`}
-                        >
-                            {formData.temSolicitanteEspecifico ? <CheckCircle size={14} /> : <Circle size={14} />}
-                            {formData.temSolicitanteEspecifico ? 'REMOVER ESPECÍFICO' : 'REGISTRAR ESPECÍFICO'}
-                        </button>
-                    </div>
-</div>
-
-                    {!formData.temSolicitanteEspecifico ? (
-                        <div className="py-6 px-4 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800 text-center space-y-1">
-                            <p className="text-[11px] font-bold text-slate-500 uppercase">Solicitante automático:</p>
-                            <p className="text-sm font-black text-blue-600 dark:text-blue-400">Coordenadoria Municipal de Proteção e Defesa Civil</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div>
-                                <label className={labelClasses}>Nome Completo</label>
-                                <input
-                                    type="text"
-                                    className={inputClasses}
-                                    value={formData.solicitante}
-                                    onChange={(e) => setFormData({ ...formData, solicitante: e.target.value })}
-                                    placeholder="Nome completo do solicitante/morador"
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center px-1">
-                                        <label className={labelClasses}>{docType}</label>
-                                        <div className="flex bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setDocType('CPF')
-                                                    setFormData(prev => ({ ...prev, cpf: '' }))
-                                                }}
-                                                className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CPF' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                                            >
-                                                CPF
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setDocType('CNPJ')
-                                                    setFormData(prev => ({ ...prev, cpf: '' }))
-                                                }}
-                                                className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CNPJ' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                                            >
-                                                CNPJ
-                                            </button>
-                                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center px-1">
+                                    <label className={labelClasses}>{docType}</label>
+                                    <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setDocType('CPF');
+                                                setFormData(prev => ({ ...prev, cpf: '' }));
+                                            }}
+                                            className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CPF' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                        >
+                                            CPF
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setDocType('CNPJ');
+                                                setFormData(prev => ({ ...prev, cpf: '' }));
+                                            }}
+                                            className={`text-[9px] px-2 py-1 rounded-md font-black transition-all ${docType === 'CNPJ' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}
+                                        >
+                                            CNPJ
+                                        </button>
                                     </div>
+                                </div>
+                                <input
+                                    type="tel"
+                                    className={getInputClass('cpf')}
+                                    placeholder={docType === 'CPF' ? "000.000.000-00" : "00.000.000/0000-00"}
+                                    value={formData.cpf || ''}
+                                    onChange={e => {
+                                        let v = e.target.value.replace(/\D/g, '');
+                                        if (docType === 'CPF') {
+                                            if (v.length > 11) v = v.slice(0, 11);
+                                            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                                            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                        } else {
+                                            if (v.length > 14) v = v.slice(0, 14);
+                                            v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                                            v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                                            v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                                            v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                                        }
+                                        setFormData(prev => ({ ...prev, cpf: v }));
+                                    }}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Telefone</label>
+                                <div className="relative group">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none pointer-events-none group-focus-within:text-blue-500 transition-colors">(27)</span>
                                     <input
                                         type="tel"
-                                        className={inputClasses}
-                                        placeholder={docType === 'CPF' ? "000.000.000-00" : "00.000.000/0000-00"}
-                                        value={formData.cpf}
+                                        className={`${getInputClass('telefone')} pl-12`}
+                                        placeholder="90000-0000"
+                                        value={(formData.solicitante_telefone || formData.telefone || '').replace(/^\(27\) /, '')}
                                         onChange={e => {
                                             let v = e.target.value.replace(/\D/g, '');
-                                            if (docType === 'CPF') {
-                                                if (v.length > 11) v = v.slice(0, 11);
-                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                                                v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                                                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-                                            } else {
-                                                if (v.length > 14) v = v.slice(0, 14);
-                                                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
-                                                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-                                                v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
-                                                v = v.replace(/(\d{4})(\d)/, '$1-$2');
-                                            }
-                                            setFormData({ ...formData, cpf: v });
+                                            if (v.length > 9) v = v.slice(0, 9);
+                                            v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+                                            setFormData(prev => ({ ...prev, solicitante_telefone: `(27) ${v}`, telefone: `(27) ${v}` }));
                                         }}
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className={labelClasses}>Telefone</label>
-                                    <div className="relative group">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm select-none pointer-events-none group-focus-within:text-blue-500 transition-colors">(27)</span>
-                                        <input
-                                            type="tel"
-                                            className={`${inputClasses} pl-12`}
-                                            placeholder="90000-0000"
-                                            value={formData.telefone?.replace(/^\(27\) /, '')}
-                                            onChange={e => {
-                                                let v = e.target.value.replace(/\D/g, '');
-                                                if (v.length > 9) v = v.slice(0, 9);
-                                                v = v.replace(/^(\d{5})(\d)/, '$1-$2');
-                                                setFormData({ ...formData, telefone: `(27) ${v}` });
-                                            }}
-                                        />
-                                    </div>
-                                </div>
                             </div>
                         </div>
-                    )}
-                </Card>
+                    </div>
+                </div>
 
-
-                {/* 4. SEÇÃO: Localização (Refresh Coords e Accuracy) */}
-                <Card className="p-5 sm:p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8 mb-6">
-<h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">4. Localização</h3>
-<div className="bg-white/10 px-3 py-1 rounded-sm"><button
-                            type="button"
-                            onClick={() => captureGPS(false)}
-                            className="bg-blue-50 dark:bg-blue-900/30 p-2.5 rounded-xl text-blue-600 hover:bg-blue-100 transition-all border border-blue-100/50 flex items-center gap-2"
-                        >
-                            <RefreshCw size={14} className={gpsStatus === 'locating' ? 'animate-spin' : ''} />
-                            <span className="text-[10px] font-black uppercase tracking-wider">Atualizar GPS</span>
+                {/* LOCALIZAÇÃO */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <div className="flex justify-between items-center mb-3">
+                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Localização</h2>
+                        <button onClick={getGPS} type="button" className="text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+                            <MapPin size={14} /> OBTER GPS
                         </button>
                     </div>
-</div>
-
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <div className="space-y-2">
                             <SearchableInput
-                                label="Endereço da Ocorrência"
-                                placeholder="Selecione ou digite o logradouro..."
-                                value={formData.endereco}
+                                label="Endereço"
+                                placeholder="Nome da rua, avenida..."
+                                value={formData.endereco || ''}
+                                onChange={val => {
+                                    const found = logradourosData.find(l => l.nome.toLowerCase() === val.toLowerCase());
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        endereco: val,
+                                        bairro: found ? found.bairro : prev.bairro
+                                    }));
+                                    setUnrecognizedFields(prev => ({ ...prev, endereco: false }));
+                                }}
                                 options={logradourosData
                                     .filter(l => !formData.bairro || l.bairro === formData.bairro)
                                     .map(l => l.nome)
                                     .sort()}
-                                onChange={streetName => {
-                                    const found = logradourosData.find(l => l.nome.toLowerCase() === streetName.toLowerCase());
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        endereco: streetName,
-                                        bairro: found ? found.bairro : prev.bairro
-                                    }));
-                                }}
                                 icon={MapPin}
                                 labelClasses={labelClasses}
-                                inputClasses={inputClasses}
+                                inputClasses={getInputClass('endereco')}
                             />
                         </div>
-
-
-                        <div className="space-y-2">
-                            <SearchableInput
-                                label="Bairro"
-                                placeholder="Selecione o bairro..."
-                                value={formData.bairro}
-                                options={bairrosData.map(b => b.nome).sort()}
-                                onChange={val => setFormData({ ...formData, bairro: val })}
-                                labelClasses={labelClasses}
-                                inputClasses={inputClasses}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className={labelClasses}>Informações Complementares</label>
-                            <input
-                                type="text"
-                                placeholder="Ex: Próximo ao mercado, ponto de referência..."
-                                className={inputClasses}
-                                value={formData.informacoes_complementares}
-                                onChange={e => setFormData({ ...formData, informacoes_complementares: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <AsyncSearchableInput
-                                label="Unidade Consumidora (GeoRescue)"
-                                placeholder="Buscar por UC, nome ou endereço..."
-                                value={formData.unidade_consumidora}
-                                onSearch={async (query) => {
-                                    const results = await searchInstallations(query);
-                                    return results.slice(0, 10).map(r => ({
-                                        label: r.full_uc || r.id,
-                                        sublabel: `${r.name ? r.name + ' - ' : ''}${r.address || ''}`,
-                                        data: r
-                                    }));
-                                }}
-                                onChange={opt => {
-                                    const lat = opt.data?.lat || opt.data?.pee_lat || opt.data?.client_lat || null;
-                                    const lng = opt.data?.lng || opt.data?.pee_lng || opt.data?.client_lng || null;
-                                    
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        unidade_consumidora: opt.label,
-                                        // Auto-preencher endereço se vazio
-                                        endereco: prev.endereco ? prev.endereco : (opt.data?.address || opt.data?.LOGRADOURO || ''),
-                                        lat: prev.lat ? prev.lat : lat,
-                                        lng: prev.lng ? prev.lng : lng,
-                                    }));
-
-                                    if (lat && lng) {
-                                        handleRiskDetection(lat, lng);
-                                    }
-                                }}
-                                icon={Search}
-                                labelClasses={labelClasses}
-                                inputClasses={inputClasses}
-                            />
-                        </div>
-
-                        <div className={`rounded-3xl p-5 border-2 transition-all ${gpsStatus === 'success' ? (formData.accuracy < 15 ? 'bg-emerald-50/20 border-emerald-100/50' : 'bg-amber-50/20 border-amber-100/50') : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-700'}`}>
-                            <div className="grid grid-cols-2 gap-6 mb-4">
-                                <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">Latitude</label>
-                                    <input
-                                        type="number"
-                                        className="bg-transparent border-b border-slate-200 dark:border-slate-700 w-full font-mono text-sm font-bold p-1 outline-none focus:border-blue-500"
-                                        value={formData.lat || ''}
-                                        onChange={e => setFormData({ ...formData, lat: parseFloat(e.target.value) })}
-                                        step="0.0000001"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">Longitude</label>
-                                    <input
-                                        type="number"
-                                        className="bg-transparent border-b border-slate-200 dark:border-slate-700 w-full font-mono text-sm font-bold p-1 outline-none focus:border-blue-500"
-                                        value={formData.lng || ''}
-                                        onChange={e => setFormData({ ...formData, lng: parseFloat(e.target.value) })}
-                                        step="0.0000001"
-                                    />
-                                </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <SearchableInput
+                                    label="Bairro"
+                                    placeholder="Selecione o bairro..."
+                                    value={formData.bairro || ''}
+                                    onChange={val => {
+                                        setFormData(prev => ({ ...prev, bairro: val }));
+                                        setUnrecognizedFields(prev => ({ ...prev, bairro: false }));
+                                    }}
+                                    options={bairrosData.map(b => b.nome).sort()}
+                                    labelClasses={labelClasses}
+                                    inputClasses={getInputClass('bairro')}
+                                />
                             </div>
-                            {gpsStatus === 'success' && (
-                                <div className="space-y-1">
-                                    <p className={`text-[9px] font-bold flex items-center gap-1.5 uppercase tracking-wider ${formData.accuracy < 15 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                        <ShieldCheck size={12} /> Precisão do GPS: {formData.accuracy?.toFixed(1)}m
-                                        {formData.accuracy >= 15 && <span className="text-[8px] italic ml-2 opacity-70">(Aguarde estabilizar para melhor precisão)</span>}
-                                    </p>
-                                </div>
-                            )}
+                            <div className="space-y-2">
+                                <label className={labelClasses}>Complemento (opcional)</label>
+                                <input
+                                    type="text"
+                                    className={getInputClass('complemento')}
+                                    placeholder="Nº, Bloco, Referência..."
+                                    value={formData.complemento || ''}
+                                    onChange={e => {
+                                        setFormData(prev => ({ ...prev, complemento: e.target.value }));
+                                    }}
+                                />
+                            </div>
                         </div>
+                        {(formData.lat && formData.lng) && (
+                            <div className="text-xs font-bold text-slate-500 bg-slate-50 p-2 rounded-lg text-center">
+                                Lat: {Number(formData.lat).toFixed(6)}, Lng: {Number(formData.lng).toFixed(6)}
+                            </div>
+                        )}
                     </div>
-                </Card>
+                </div>
 
-                {/* 5. SEÇÃO: Tipologia e Risco */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8">5. Tipologia e Risco</h3>
-
-                    <div className="space-y-6">
+                {/* ATENDIMENTO */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Atendimento</h2>
+                    <div className="space-y-3">
                         <div>
-                            <label className={labelClasses}>Categoria de Risco</label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Órgão Solicitado</label>
                             <select
-                                className={inputClasses}
-                                value={formData.categoriaRisco}
-                                onChange={e => setFormData({ ...formData, categoriaRisco: e.target.value, subtiposRisco: [], checklistRespostas: {} })}
+                                name="orgao_solicitado"
+                                value={formData.orgao_solicitado || ''}
+                                onChange={handleInputChange}
+                                className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold mt-1 outline-none"
                             >
-                                <option value="">Selecione a Categoria</option>
-                                {Object.keys(RISK_DATA).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                <option value="">Selecione...</option>
+                                {ORGAOS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Órgão que Atendeu</label>
+                            <select
+                                name="orgao_atendeu"
+                                value={formData.orgao_atendeu || ''}
+                                onChange={handleInputChange}
+                                className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold mt-1 outline-none"
+                            >
+                                <option value="">Selecione...</option>
+                                {ORGAOS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                         </div>
 
-                        {formData.categoriaRisco && (
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {RISK_DATA[formData.categoriaRisco].map(sub => (
-                                        <button
-                                            key={sub}
-                                            type="button"
-                                            onClick={() => toggleArrayItem('subtiposRisco', sub)}
-                                            className={`p-4 rounded-xl text-left text-sm font-bold border-2 transition-all flex items-center justify-between ${formData.subtiposRisco?.includes(sub) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
-                                        >
-                                            {sub}
-                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${formData.subtiposRisco?.includes(sub) ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
-                                                {formData.subtiposRisco?.includes(sub) && <CheckCircle2 size={14} />}
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {formData.subtiposRisco?.includes('Outros') && (
-                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Especifique o Tipo de Risco</label>
-                                        <div className="relative group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500">
-                                                <Edit2 size={18} />
-                                            </div>
-                                            <input
-                                                type="text"
-                                                className={`${inputClasses} pl-12 border-indigo-100 bg-indigo-50/10 focus:ring-indigo-500/20`}
-                                                placeholder="Descreva o risco não listado acima..."
-                                                value={formData.subtipoRiscoOutros}
-                                                onChange={e => setFormData({ ...formData, subtipoRiscoOutros: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                        {showEncaminhamento && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mt-2 animate-in fade-in slide-in-from-top-2">
+                                <h3 className="text-xs font-bold text-orange-800 uppercase mb-2">Detalhes do Encaminhamento</h3>
+                                <input
+                                    type="text"
+                                    name="numero_ocorrencia_externa"
+                                    placeholder="Nº Ocorrência Externa (Opcional)"
+                                    value={formData.numero_ocorrencia_externa || ''}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-white p-2 rounded-lg border border-orange-200 font-bold text-sm outline-none mb-2"
+                                />
+                                <input
+                                    type="text"
+                                    name="observacao_encaminhamento"
+                                    placeholder="Observação"
+                                    value={formData.observacao_encaminhamento || ''}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-white p-2 rounded-lg border border-orange-200 font-bold text-sm outline-none"
+                                />
                             </div>
                         )}
-
-                        {formData.categoriaRisco && CHECKLIST_DATA[formData.categoriaRisco] && (
-                            <div className="pt-6 space-y-4">
-                                <label className={labelClasses}>Detalhamento Técnico (Checklist)</label>
-                                <div className="space-y-3">
-                                    {CHECKLIST_DATA[formData.categoriaRisco].map((item, index) => (
-                                        <div
-                                            key={index}
-                                            onClick={() => {
-                                                const current = formData.checklistRespostas || {};
-                                                setFormData({
-                                                    ...formData,
-                                                    checklistRespostas: {
-                                                        ...current,
-                                                        [item]: !current[item]
-                                                    }
-                                                });
-                                            }}
-                                            className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 ${formData.checklistRespostas?.[item] ? 'bg-emerald-50/50 border-emerald-500/30' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
-                                        >
-                                            <div className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${formData.checklistRespostas?.[item] ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'}`}>
-                                                {formData.checklistRespostas?.[item] && <CheckCircle size={14} />}
-                                            </div>
-                                            <span className={`text-[11px] font-bold leading-tight ${formData.checklistRespostas?.[item] ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{item}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="space-y-4 pt-4 border-t border-slate-50 dark:border-slate-700/50">
-                            <label className={labelClasses}>Nível de Gravidade</label>
-                            <div className="grid grid-cols-4 gap-2">
-                                {[
-                                    { id: 'Baixo', color: 'bg-emerald-500' },
-                                    { id: 'Médio', color: 'bg-amber-500' },
-                                    { id: 'Alto', color: 'bg-orange-600' },
-                                    { id: 'Iminente', color: 'bg-red-600' }
-                                ].map(nivel => (
-                                    <button
-                                        key={nivel.id}
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, nivelRisco: nivel.id })}
-                                        className={`p-3 rounded-xl font-black text-[10px] uppercase tracking-wider border-2 transition-all ${formData.nivelRisco === nivel.id
-                                            ? `${nivel.color} text-white border-transparent shadow-lg scale-105`
-                                            : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-700'
-                                            }`}
-                                    >
-                                        {nivel.id}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
                     </div>
-                </Card>
+                </div>
 
-                {/* 6. SEÇÃO: Danos Humanos */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 overflow-hidden">
-                    <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-8 -mt-8 mb-6">
-<h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">6. Danos Humanos</h3>
-<div className="bg-white/10 px-3 py-1 rounded-sm"><button
-                            type="button"
-                            onClick={() => setFormData(p => ({ ...p, tem_danos_humanos: !p.tem_danos_humanos }))}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${formData.tem_danos_humanos ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white text-slate-400 border-slate-100'}`}
-                        >
-                            {formData.tem_danos_humanos ? 'REMOVER DANOS' : 'INSERIR VALORES'}
-                        </button>
-                    </div>
-</div>
+                {/* CLASSIFICAÇÃO OPERACIONAL */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Classificação Operacional</h2>
+                    
+                    <select
+                        name="tipo_ocorrencia"
+                        value={formData.tipo_ocorrencia || ''}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold mb-4 outline-none"
+                    >
+                        <option value="">Tipo de Ocorrência...</option>
+                        {TIPO_OCORRENCIA_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
 
-                    {!formData.tem_danos_humanos ? (
-                        <div className="py-8 text-center space-y-3 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800">
-                            <Users size={40} className="mx-auto text-slate-200" />
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nenhum dano humano registrado inicialmente</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 animate-in zoom-in duration-300">
-                            {[
-                                { label: 'Óbitos', field: 'mortos' },
-                                { label: 'Feridos', field: 'feridos' },
-                                { label: 'Desabrigados', field: 'desabrigados' },
-                                { label: 'Desalojados', field: 'desalojados' },
-                                { label: 'Desaparecidos', field: 'desaparecidos' },
-                                { label: 'Outros Afetados', field: 'outros_afetados' }
-                            ].map((item) => (
-                                <div key={item.field} className="space-y-3">
-                                    <label className={labelClasses}>{item.label}</label>
-                                    <div className="flex items-center bg-slate-50 dark:bg-slate-900 rounded-2xl border-2 border-slate-100 dark:border-slate-800 overflow-hidden focus-within:border-blue-500/20 transition-all shadow-inner">
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(p => ({ ...p, [item.field]: Math.max(0, (p[item.field] || 0) - 1) }))}
-                                            className="w-14 h-14 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-bold"
-                                        >-</button>
-                                        <input
-                                            type="number"
-                                            className="w-full bg-transparent border-none text-center font-black text-xl text-slate-800 dark:text-white focus:ring-0"
-                                            value={formData[item.field] || 0}
-                                            onChange={(e) => setFormData({ ...formData, [item.field]: parseInt(e.target.value) || 0 })}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(p => ({ ...p, [item.field]: (p[item.field] || 0) + 1 }))}
-                                            className="w-14 h-14 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all font-bold"
-                                        >+</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </Card>
-
-                {/* 7. SEÇÃO: Danos Materiais e Notas */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8">7. Descrição e Notas</h3>
-
-                    <div className="space-y-6">
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center px-1">
-                                <label className={labelClasses}>Danos Materiais</label>
-                                <VoiceInput onResult={(text) => setFormData(prev => ({ ...prev, descricao_danos: prev.descricao_danos + ' ' + text }))} />
-                            </div>
-                            <textarea
-                                rows={4}
-                                className={`${inputClasses} resize-none min-h-[120px] py-4 leading-relaxed`}
-                                placeholder="Descreva os danos em residências, infraestrutura publica, pontes, etc..."
-                                value={formData.descricao_danos}
-                                onChange={(e) => setFormData({ ...formData, descricao_danos: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center px-1">
-                                <label className={labelClasses}>Observações Técnicas</label>
-                                <div className="flex gap-2">
-                                    <VoiceInput onResult={(text) => setFormData(prev => ({ ...prev, observacoes: prev.observacoes + ' ' + text }))} />
-                                    <button
-                                        type="button"
-                                        onClick={handleAIRefine}
-                                        disabled={refining}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 hover:scale-105 active:scale-95 transition-all shadow-sm"
-                                    >
-                                        <Sparkles size={12} className={refining ? 'animate-spin' : ''} />
-                                        {refining ? 'IA...' : 'Refinar IA'}
-                                    </button>
-                                </div>
-                            </div>
-                            <textarea
-                                rows={4}
-                                className={`${inputClasses} resize-none min-h-[120px] py-4 leading-relaxed`}
-                                placeholder="Notas adicionais, recomendações imediatas ou interdições efetuadas..."
-                                value={formData.observacoes}
-                                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                </Card>
-
-                {/* 8. SEÇÃO: Medidas Adotadas */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8">8. Medidas Adotadas</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                            'Monitoramento do Local', 'Isolamento da Área', 
-                            'Interdição Parcial', 'Interdição Total', 
-                            'Evacuação Preventiva', 'Corte de Árvores', 
-                            'Limpeza de Via', 'Desobstrução de Drenagem',
-                            'Lona Plástica Instalada', 'Outros'
-                        ].map(m => (
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Nível de Gravidade</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                        {NIVEL_GRAVIDADE_OPTIONS.map(nivel => (
                             <button
-                                key={m}
+                                key={nivel}
                                 type="button"
-                                onClick={() => toggleArrayItem('medidasTomadas', m)}
-                                className={`p-4 rounded-xl text-left text-[11px] font-black uppercase border-2 transition-all flex items-center justify-between ${formData.medidasTomadas?.includes(m) ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-700'}`}
+                                onClick={() => setFormData(prev => ({ ...prev, nivel_gravidade: nivel }))}
+                                className={`p-2 rounded-xl text-sm font-bold border transition-colors ${
+                                    formData.nivel_gravidade === nivel
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                }`}
                             >
-                                {m}
-                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${formData.medidasTomadas?.includes(m) ? 'bg-white border-white text-emerald-600' : 'border-slate-200 dark:border-slate-600'}`}>
-                                    {formData.medidasTomadas?.includes(m) && <CheckCircle2 size={14} />}
-                                </div>
+                                {nivel}
                             </button>
                         ))}
                     </div>
-                </Card>
 
-                {/* 9. SEÇÃO: Encaminhamentos e Responsabilidades */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8">9. Encaminhamentos e Responsabilidades</h3>
+                    <div className="mb-4">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Descrição Rápida (Chips)</label>
+                        <div className="bg-slate-50 rounded-xl p-2 border border-slate-100 space-y-2">
+                            {Object.entries(CHIPS_DESCRICAO).map(([categoria, chips]) => {
+                                const availableChips = chips.filter(c => !(formData.descricao || '').includes(c));
+                                if (availableChips.length === 0) return null;
+                                
+                                const isExpanded = expandedCategory === categoria;
+                                return (
+                                <div key={categoria} className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setExpandedCategory(isExpanded ? null : categoria)}
+                                        className="w-full flex justify-between items-center p-2 bg-slate-100/50 hover:bg-slate-100 transition-colors"
+                                    >
+                                        <span className="text-[10px] font-black text-slate-500 uppercase">{categoria} ({availableChips.length})</span>
+                                        {isExpanded ? <ChevronUp size={14} className="text-slate-400"/> : <ChevronDown size={14} className="text-slate-400"/>}
+                                    </button>
+                                    {isExpanded && (
+                                        <div className="p-2 flex flex-wrap gap-1.5 border-t border-slate-100">
+                                            {availableChips.map(chip => (
+                                                <button
+                                                    key={chip}
+                                                    type="button"
+                                                    onClick={() => handleChipClick(chip)}
+                                                    className="bg-white border border-slate-200 px-2 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:bg-blue-50 hover:border-blue-200 transition-colors text-left shadow-sm"
+                                                >
+                                                    {chip}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )})}
+                        </div>
+                    </div>
 
-                    <div className="space-y-4">
-                        <label className={labelClasses}>Órgão para Encaminhamento</label>
-                        <select
-                            className={inputClasses}
-                            value=""
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (val && !hasOrganSelected(val)) {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        encaminhamentos: [...(prev.encaminhamentos || []), val]
-                                    }));
-                                }
-                            }}
-                        >
-                            <option value="">Selecione para adicionar...</option>
-                            {ENCAMINHAMENTOS_LIST.map(enc => (
-                                <option key={enc} value={enc} disabled={hasOrganSelected(enc)}>
-                                    {enc}
-                                </option>
-                            ))}
-                        </select>
+                    <textarea
+                        name="descricao"
+                        placeholder="Descrição detalhada..."
+                        value={formData.descricao || ''}
+                        onChange={handleInputChange}
+                        rows={4}
+                        className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold outline-none resize-none text-sm"
+                    />
+                </div>
 
-                        {formData.encaminhamentos && formData.encaminhamentos.length > 0 && (
-                            <div className="space-y-3 mt-4">
-                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Detalhes por Órgão Destinatário</label>
-                                <div className="space-y-3">
-                                    {formData.encaminhamentos.map(item => {
-                                        let organ = item;
-                                        let detail = '';
-                                        if (typeof item === 'string' && item.includes(':')) {
-                                            const parts = item.split(':');
-                                            organ = parts[0].trim();
-                                            detail = parts.slice(1).join(':').trim();
-                                        }
-                                        return (
-                                            <div key={organ} className="p-4 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">{organ}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeOrgan(organ)}
-                                                        className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
-                                                    >
-                                                        <Trash2 size={12} /> Remover
-                                                    </button>
-                                                </div>
-                                                <textarea
-                                                    rows={2}
-                                                    placeholder={`Descreva a solicitação ou encaminhamento para ${organ}...`}
-                                                    className={`${inputClasses} h-auto py-3`}
-                                                    value={detail}
-                                                    onChange={(e) => updateOrganDetail(organ, e.target.value)}
-                                                />
-                                            </div>
-                                        );
-                                    })}
+                {/* BLOCO CONDICIONAL TÉCNICO */}
+                <div className={`p-4 rounded-2xl border transition-all duration-300 ${formData.risco_pessoas_estruturas ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100 shadow-sm'}`}>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                            <input
+                                type="checkbox"
+                                name="risco_pessoas_estruturas"
+                                checked={formData.risco_pessoas_estruturas || false}
+                                onChange={handleInputChange}
+                                className="peer sr-only"
+                            />
+                            <div className="w-6 h-6 rounded border-2 border-slate-300 peer-checked:bg-red-600 peer-checked:border-red-600 flex items-center justify-center transition-colors">
+                                <CheckCircle size={16} className="text-white opacity-0 peer-checked:opacity-100" />
+                            </div>
+                        </div>
+                        <span className="font-bold text-slate-700">Envolve risco a pessoas ou estruturas?</span>
+                    </label>
+
+                    {formData.risco_pessoas_estruturas && (
+                        <div className="mt-4 pt-4 border-t border-red-200 space-y-6 animate-in slide-in-from-top-4 fade-in">
+                            
+                            {/* COBRADE Placeholder */}
+                            <div>
+                                <h3 className="text-xs font-black text-red-800 uppercase tracking-widest mb-2">Classificação Técnica (COBRADE)</h3>
+                                <select
+                                    name="cobrade_grupo"
+                                    value={formData.cobrade_grupo || ''}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-white p-3 rounded-xl border border-red-200 font-bold outline-none text-sm"
+                                >
+                                    <option value="">Selecione o Grupo...</option>
+                                    <option value="Natural">Natural</option>
+                                    <option value="Tecnológico">Tecnológico</option>
+                                </select>
+                                {/* Cascading selects would go here in full implementation */}
+                            </div>
+
+                            {/* Danos Humanos */}
+                            <div>
+                                <h3 className="text-xs font-black text-red-800 uppercase tracking-widest mb-3">Danos Humanos</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <StepperInput label="Mortos" value={formData.mortos} onChange={(v) => setFormData(p => ({...p, mortos: v}))} />
+                                    <StepperInput label="Feridos" value={formData.feridos} onChange={(v) => setFormData(p => ({...p, feridos: v}))} />
+                                    <StepperInput label="Desaparecidos" value={formData.desaparecidos} onChange={(v) => setFormData(p => ({...p, desaparecidos: v}))} />
+                                    <StepperInput label="Desalojados" value={formData.desalojados} onChange={(v) => setFormData(p => ({...p, desalojados: v}))} />
+                                    <StepperInput label="Desabrigados" value={formData.desabrigados} onChange={(v) => setFormData(p => ({...p, desabrigados: v}))} />
                                 </div>
                             </div>
-                        )}
-                    </div>
-                </Card>
 
-                {/* 10. SEÇÃO: Fotos */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8 mb-6">
-<h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">10. Fotos</h3>
-<div className="bg-white/10 px-3 py-1 rounded-sm"><span className="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">{formData.fotos?.length || 0} fotos</span>
-                    </div>
-</div>
+                            {/* Medidas Adotadas Placeholder */}
+                            <div>
+                                <h3 className="text-xs font-black text-red-800 uppercase tracking-widest mb-2">Medidas Adotadas</h3>
+                                <textarea
+                                    name="observacoes"
+                                    placeholder="Descreva as medidas adotadas (isolamento, evacuação, etc)..."
+                                    value={formData.observacoes || ''}
+                                    onChange={handleInputChange}
+                                    rows={3}
+                                    className="w-full bg-white p-3 rounded-xl border border-red-200 font-bold outline-none text-sm resize-none"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <FileInput onFileSelect={handlePhotoSelect} className="h-32 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50" />
+                    {/* FOTOS E ASSINATURAS */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Registro Fotográfico ({formData.fotos?.length || 0})</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+                        <FileInput onFileSelect={handlePhotoSelect} className="h-24 sm:h-32" />
                         {formData.fotos?.map((foto, idx) => (
-                            <div key={foto.id} className="relative aspect-square rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 group shadow-sm">
+                            <div key={foto.id} className="relative aspect-square rounded-xl overflow-hidden border border-slate-100 group shadow-sm bg-slate-50">
                                 <img
-                                    src={foto.data}
-                                    className="w-full h-full object-cover cursor-zoom-in"
+                                    src={foto.data || foto}
+                                    className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
                                     onClick={() => setSelectedPhotoIndex(idx)}
                                 />
-                                <div className="absolute top-2 inset-x-2 flex justify-between opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditingPhotoIndex(idx)}
-                                        className="bg-blue-600 text-white p-2 rounded-xl shadow-lg hover:bg-blue-500 transition-colors"
-                                        title="Editar imagem"
-                                    >
-                                        <Edit2 size={16} />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => removePhoto(foto.id)}
-                                        className="bg-red-600 text-white p-2 rounded-xl shadow-lg hover:bg-red-500 transition-colors"
-                                        title="Remover imagem"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                <div className="absolute top-1 inset-x-1 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all z-20">
+                                    <div className="flex gap-0.5">
+                                        {idx > 0 && (
+                                            <button type="button" onClick={() => movePhoto(foto.id, 'left')} className="bg-slate-800/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-slate-700">
+                                                <ChevronLeft size={14} />
+                                            </button>
+                                        )}
+                                        {idx < formData.fotos.length - 1 && (
+                                            <button type="button" onClick={() => movePhoto(foto.id, 'right')} className="bg-slate-800/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-slate-700">
+                                                <ChevronRight size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-0.5">
+                                        <button type="button" onClick={() => setEditingPhotoIndex(idx)} className="bg-blue-600/90 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-blue-600">
+                                            <Edit2 size={14} />
+                                        </button>
+                                        <button type="button" onClick={() => removePhoto(foto.id)} className="bg-red-600/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-red-600">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur-md p-2">
+                                <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-1.5 z-10">
                                     <input
-                                        className="w-full bg-transparent border-none text-[9px] text-white placeholder-white/60 focus:ring-0 p-0 font-bold uppercase tracking-tight"
+                                        className="w-full bg-transparent border-none text-[9px] text-white placeholder-white/70 focus:ring-0 p-0 font-bold"
                                         placeholder="Legenda..."
-                                        value={foto.legenda}
+                                        value={foto.legenda || ''}
                                         onChange={e => updatePhotoCaption(foto.id, e.target.value)}
                                     />
                                 </div>
                             </div>
                         ))}
                     </div>
-                </Card>
 
-                {/* 11. SEÇÃO: Assinaturas (Auto-assinar e Apoio Técnico) */}
-                <Card className="p-8 border-slate-100 dark:border-slate-800 shadow-sm dark:bg-slate-800 space-y-6 overflow-hidden">
-                    <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 mb-6 -mx-5 -mt-5 sm:-mx-8 sm:-mt-8">11. Assinaturas</h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center px-1">
-                                <label className={labelClasses}>Assinatura do Agente</label>
+                    <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 mt-6">Assinaturas</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase">Assinatura do Agente</label>
                                 <div className="flex gap-2">
                                     {userProfile?.signature && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))}
-                                            className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
-                                        >
-                                            <Sparkles size={12} /> Auto-assinar
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))} className="text-[9px] font-black text-blue-600 uppercase flex items-center gap-1">
+                                            <Sparkles size={10} /> Auto
                                         </button>
                                     )}
                                     {formData.assinaturaAgente && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: null }))}
-                                            className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors"
-                                        >
-                                            <Trash2 size={12} /> Limpar
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: null }))} className="text-[9px] font-black text-red-500 uppercase flex items-center gap-1">
+                                            <Trash2 size={10} /> Limpar
                                         </button>
                                     )}
                                 </div>
                             </div>
                             <div
                                 onClick={() => { setActiveSignatureType('agente'); setShowSignaturePad(true); }}
-                                className="h-40 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500/50 transition-all shadow-inner"
+                                className="h-28 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500/50 hover:bg-blue-50/30 transition-all"
                             >
                                 {formData.assinaturaAgente ? (
-                                    <img src={formData.assinaturaAgente} className="h-full w-auto p-4" alt="Assinatura Agente" />
+                                    <img src={formData.assinaturaAgente} className="h-full w-auto p-2" alt="Agente" />
                                 ) : (
-                                    <div className="text-center space-y-2">
-                                        <Edit2 size={32} className="mx-auto text-slate-300" />
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Toque para Assinar</p>
+                                    <div className="text-center space-y-1">
+                                        <Edit2 size={20} className="mx-auto text-slate-300" />
+                                        <p className="text-[9px] font-black text-slate-400 uppercase">Assinar</p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center px-1">
-                                <label className={labelClasses}>Assinatura do Assistido</label>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase">Assinatura do Assistido</label>
                                 {formData.assinaturaAssistido && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, assinaturaAssistido: null }))}
-                                        className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors"
-                                    >
-                                        <Trash2 size={12} /> Limpar
+                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAssistido: null }))} className="text-[9px] font-black text-red-500 uppercase flex items-center gap-1">
+                                        <Trash2 size={10} /> Limpar
                                     </button>
                                 )}
                             </div>
                             <div
                                 onClick={() => { setActiveSignatureType('assistido'); setShowSignaturePad(true); }}
-                                className="h-40 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500/50 transition-all shadow-inner"
+                                className="h-28 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500/50 hover:bg-blue-50/30 transition-all"
                             >
                                 {formData.assinaturaAssistido ? (
-                                    <img src={formData.assinaturaAssistido} className="h-full w-auto p-4" alt="Assinatura Assistido" />
+                                    <img src={formData.assinaturaAssistido} className="h-full w-auto p-2" alt="Assistido" />
                                 ) : (
-                                    <div className="text-center space-y-2">
-                                        <Edit2 size={32} className="mx-auto text-slate-300" />
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Toque para Assinar</p>
+                                    <div className="text-center space-y-1">
+                                        <Edit2 size={20} className="mx-auto text-slate-300" />
+                                        <p className="text-[9px] font-black text-slate-400 uppercase">Assinar</p>
                                     </div>
                                 )}
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Toggle Houve Apoio Técnico */}
-                    <div className="flex justify-center pt-8 border-t border-slate-50 dark:border-slate-700/50">
-                        <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, temApoioTecnico: !prev.temApoioTecnico }))}
-                            className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[2px] transition-all border-2 shadow-sm ${formData.temApoioTecnico
-                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-indigo-200 dark:shadow-indigo-900/20'
-                                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700 text-slate-400'
-                                }`}
-                        >
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${formData.temApoioTecnico ? 'bg-white border-white text-indigo-600' : 'border-slate-200 dark:border-slate-600'}`}>
-                                {formData.temApoioTecnico && <CheckCircle size={14} />}
+                {/* BOTTOM ACTIONS */}
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+                    <div className="max-w-5xl mx-auto flex flex-col gap-2">
+                        {(!isValid() && !saving) && (
+                            <div className="text-[10px] text-center font-bold text-red-500 uppercase">
+                                Preencha os campos obrigatórios (Solicitante, Tipo, Gravidade, Órgãos)
+                                {(formData.nivel_gravidade === 'Iminente' || formData.nivel_gravidade === 'Alto') && ' e adicione as fotos mínimas necessárias'}
+                                para finalizar.
                             </div>
-                            Houve Apoio Técnico nesta Ocorrência?
-                        </button>
-                    </div>
-
-                    {/* Bloco de Apoio Técnico */}
-                    {formData.temApoioTecnico && (
-                        <div className="pt-6 space-y-6 animate-in slide-in-from-top-4 duration-300">
-                        <div className="bg-slate-50/50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-700/50 space-y-6">
-                                <div className="flex justify-between items-center px-1 border-b border-slate-100 dark:border-slate-800 pb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
-                                        <h4 className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">Detalhes do Apoio Técnico</h4>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (window.confirm("Deseja realmente limpar todos os dados do Apoio Técnico?")) {
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    temApoioTecnico: false,
-                                                    apoioTecnico: { nome: '', crea: '', matricula: '', cargo: '', assinatura: null }
-                                                }));
-                                            }
-                                        }}
-                                        className="text-[10px] font-black text-red-500 uppercase flex items-center gap-1 hover:text-red-700 transition-colors"
-                                    >
-                                        <Trash2 size={12} /> Limpar Dados
-                                    </button>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                    <div className="space-y-2">
-                                        <label className={labelClasses}>Nome do Técnico</label>
-                                        <input
-                                            type="text"
-                                            className={inputClasses}
-                                            value={formData.apoioTecnico.nome}
-                                            onChange={e => setFormData(prev => ({
-                                                ...prev,
-                                                apoioTecnico: { ...prev.apoioTecnico, nome: e.target.value }
-                                            }))}
-                                            placeholder="Nome completo"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className={labelClasses}>CREA/CAU</label>
-                                        <input
-                                            type="text"
-                                            className={inputClasses}
-                                            value={formData.apoioTecnico.crea}
-                                            onChange={e => setFormData(prev => ({
-                                                ...prev,
-                                                apoioTecnico: { ...prev.apoioTecnico, crea: e.target.value }
-                                            }))}
-                                            placeholder="Registro Profissional"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className={labelClasses}>Matrícula</label>
-                                        <input
-                                            type="text"
-                                            className={inputClasses}
-                                            value={formData.apoioTecnico.matricula}
-                                            onChange={e => setFormData(prev => ({
-                                                ...prev,
-                                                apoioTecnico: { ...prev.apoioTecnico, matricula: e.target.value }
-                                            }))}
-                                            placeholder="Matrícula"
-                                        />
-                                    </div>
-                                    <div className="space-y-2 sm:col-span-3">
-                                        <label className={labelClasses}>Cargo/Função</label>
-                                        <div className="relative">
-                                            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input
-                                                type="text"
-                                                className={`${inputClasses} pl-12`}
-                                                value={formData.apoioTecnico.cargo}
-                                                onChange={e => setFormData(prev => ({
-                                                    ...prev,
-                                                    apoioTecnico: { ...prev.apoioTecnico, cargo: e.target.value }
-                                                }))}
-                                                placeholder="Engenheiro, Arquiteto, etc."
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center px-1">
-                                        <label className={labelClasses}>Assinatura do Apoio</label>
-                                        <div className="flex gap-2">
-                                            {userProfile?.signature && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData(prev => ({ 
-                                                        ...prev, 
-                                                        apoioTecnico: { ...prev.apoioTecnico, assinatura: userProfile.signature } 
-                                                    }))}
-                                                    className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-blue-700 transition-colors"
-                                                >
-                                                    <Sparkles size={12} /> Auto-assinar
-                                                </button>
-                                            )}
-                                            {formData.apoioTecnico.assinatura && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData(prev => ({
-                                                        ...prev,
-                                                        apoioTecnico: { ...prev.apoioTecnico, assinatura: null }
-                                                    }))}
-                                                    className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1 hover:text-red-700 transition-colors"
-                                                >
-                                                    <Trash2 size={12} /> Limpar
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div
-                                        onClick={() => { setActiveSignatureType('apoio'); setShowSignaturePad(true); }}
-                                        className="h-32 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-indigo-500/50 transition-all shadow-inner"
-                                    >
-                                        {formData.apoioTecnico.assinatura ? (
-                                            <img src={formData.apoioTecnico.assinatura} className="h-full w-auto p-4" alt="Assinatura Apoio" />
-                                        ) : (
-                                            <div className="text-center space-y-2">
-                                                <Edit2 size={24} className="mx-auto text-slate-300" />
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Toque para Assinar</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                        )}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => saveRecord(true)}
+                                disabled={saving}
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg text-xs transition-colors uppercase tracking-wide"
+                            >
+                                Salvar Rascunho
+                            </button>
+                            <button
+                                onClick={() => saveRecord(false)}
+                                disabled={saving || !isValid()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-3 rounded-lg text-xs transition-colors uppercase tracking-wide shadow-md"
+                            >
+                                {saving ? 'Salvando...' : 'Finalizar'}
+                            </button>
                         </div>
-                    )}
-                </Card>
-
-                {/* Action Buttons */}
-                <div className="pt-8 space-y-4 pb-20">
-                    <Button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="w-full h-16 rounded-3xl text-lg relative overflow-hidden group border-none shadow-xl shadow-red-500/10"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-500 transition-transform group-hover:scale-105 duration-500"></div>
-                        <div className="relative flex items-center gap-3">
-                            {saving ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} />}
-                            <span className="font-black tracking-widest uppercase">Finalizar e Salvar</span>
                         </div>
-                    </Button>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleGeneratePDF}
-                            disabled={generating}
-                            className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm"
-                        >
-                            <Printer size={18} className="mr-2" />
-                            IMPRIMIR PDF
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => navigate('/ocorrencias')}
-                            className="h-14 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500"
-                        >
-                            <ArrowLeft size={18} className="mr-2" /> VOLTAR
-                        </Button>
                     </div>
                 </div>
-            </main>
 
-            {/* Signature Pad Modal */}
+            {/* Modals and Overlays */}
             {showSignaturePad && (
                 <SignaturePadComp
-                    title={`Assinatura do ${activeSignatureType === 'agente' ? 'Agente' : (activeSignatureType === 'apoio' ? 'Apoio Técnico' : 'Assistido')}`}
-                    onSave={(data) => {
-                        if (activeSignatureType === 'agente') setFormData(prev => ({ ...prev, signatureAgente: data, assinaturaAgente: data }));
-                        else if (activeSignatureType === 'apoio') setFormData(prev => ({ ...prev, apoioTecnico: { ...prev.apoioTecnico, assinatura: data } }));
-                        else setFormData(prev => ({ ...prev, signatureAssistido: data, assinaturaAssistido: data }));
+                    title={activeSignatureType === 'agente' ? "Assinatura do Agente" : "Assinatura do Assistido"}
+                    onCancel={() => setShowSignaturePad(false)}
+                    onSave={(dataUrl) => {
+                        if (activeSignatureType === 'agente') {
+                            setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }));
+                        } else {
+                            setFormData(prev => ({ ...prev, assinaturaAssistido: dataUrl }));
+                        }
                         setShowSignaturePad(false);
                     }}
-                    onCancel={() => setShowSignaturePad(false)}
                 />
             )}
 
-            {/* Photo Lightbox / Popup */}
+            {/* Foto Lightbox / Popup */}
             {selectedPhotoIndex !== null && (
                 <div
-                    className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[100] flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
+                    className="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-[6001] flex flex-col items-center justify-center p-4 animate-in fade-in duration-300"
                     onClick={() => setSelectedPhotoIndex(null)}
                 >
-                    {/* Toolbar Superior */}
                     <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-50">
                         <div className="flex flex-col">
                             <span className="text-white font-black text-sm uppercase tracking-widest drop-shadow-lg">
-                                Foto {selectedPhotoIndex + 1} de {formData.fotos.length}
+                                Foto {selectedPhotoIndex + 1} de {formData.fotos?.length}
                             </span>
-                            {formData.fotos[selectedPhotoIndex]?.legenda && (
+                            {formData.fotos?.[selectedPhotoIndex]?.legenda && (
                                 <span className="text-white/70 text-[10px] font-bold uppercase tracking-wider drop-shadow-md">
                                     {formData.fotos[selectedPhotoIndex].legenda}
                                 </span>
@@ -1762,103 +997,62 @@ const OcorrenciasForm = () => {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     const foto = formData.fotos[selectedPhotoIndex];
-                                    downloadPhoto(foto.data, `ocorrencia-${formData.ocorrencia_id_format.replace('/', '-')}-foto-${selectedPhotoIndex + 1}.jpg`);
+                                    downloadPhoto(foto.data || foto, `ocorrencia-foto-${selectedPhotoIndex + 1}.jpg`);
                                 }}
-                                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl backdrop-blur-md transition-all border border-white/10 shadow-xl active:scale-95"
-                                title="Baixar esta foto"
+                                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl backdrop-blur-md transition-all border border-white/10 shadow-xl"
                             >
                                 <Download size={22} />
                             </button>
-                            <button
-                                onClick={() => setSelectedPhotoIndex(null)}
-                                className="p-3 bg-red-600/20 hover:bg-red-600/40 text-red-100 rounded-2xl backdrop-blur-md transition-all border border-red-500/20 shadow-xl active:scale-95"
-                            >
+                            <button onClick={() => setSelectedPhotoIndex(null)} className="p-3 bg-red-600/20 hover:bg-red-600/40 text-red-100 rounded-2xl backdrop-blur-md transition-all border border-red-500/20 shadow-xl">
                                 <X size={22} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Botões de Navegação */}
-                    {formData.fotos.length > 1 && (
+                    {(formData.fotos?.length > 1) && (
                         <>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
-                            >
-                                <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+                            <button onClick={(e) => { e.stopPropagation(); prevPhoto(); }} className="absolute left-4 sm:left-24 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50">
+                                <ChevronLeft size={32} />
                             </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50 group active:scale-90"
-                            >
-                                <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+                            <button onClick={(e) => { e.stopPropagation(); nextPhoto(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-sm transition-all border border-white/5 z-50">
+                                <ChevronRight size={32} />
                             </button>
                         </>
                     )}
 
-                    {/* Imagem Central */}
-                    <div className="relative w-full max-h-[70vh] flex-1 flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                    <div className="relative w-full max-w-5xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
                         <img
-                            src={formData.fotos[selectedPhotoIndex]?.data}
-                            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
-                            alt="Visualização em tela cheia"
+                            src={formData.fotos[selectedPhotoIndex]?.data || formData.fotos[selectedPhotoIndex]}
+                            className="w-full h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
                         />
                     </div>
 
-                    {/* Painel Inferior: Legenda e Miniaturas */}
-                    <div
-                        className="w-full bg-gradient-to-t from-slate-950 via-slate-900/90 to-transparent pt-12 pb-6 px-6 flex flex-col items-center gap-6 z-50"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Legenda Editável */}
-                        <div className="w-full max-w-md">
-                            <p className="text-white font-black text-[10px] uppercase tracking-widest opacity-50 text-center mb-2">Edite a Legenda</p>
-                            <input
-                                type="text"
-                                placeholder="Adicione uma legenda..."
-                                className="w-full bg-white/10 border-2 border-white/10 rounded-2xl px-6 py-4 text-white font-bold text-center outline-none focus:border-white/30 transition-all shadow-inner"
-                                value={formData.fotos[selectedPhotoIndex]?.legenda || ''}
-                                onChange={(e) => updatePhotoCaption(formData.fotos[selectedPhotoIndex].id, e.target.value)}
-                            />
-                        </div>
-
-                        {/* Miniaturas */}
-                        <div className="flex gap-3 overflow-x-auto p-2 max-w-full no-scrollbar pb-4">
-                            {formData.fotos.map((f, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setSelectedPhotoIndex(i)}
-                                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${selectedPhotoIndex === i ? 'border-white scale-110 shadow-lg' : 'border-white/20 opacity-50 hover:opacity-100'}`}
-                                >
-                                    <img src={f.data} className="w-full h-full object-cover" />
-                                </button>
-                            ))}
-                        </div>
+                    <div className="absolute bottom-10 flex gap-2 overflow-x-auto p-4 max-w-full no-scrollbar" onClick={e => e.stopPropagation()}>
+                        {formData.fotos?.map((f, i) => (
+                            <button key={i} onClick={() => setSelectedPhotoIndex(i)} className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${selectedPhotoIndex === i ? 'border-white scale-110 shadow-lg' : 'border-white/20 opacity-50 hover:opacity-100'}`}>
+                                <img src={f.data || f} className="w-full h-full object-cover" />
+                            </button>
+                        ))}
                     </div>
                 </div>
             )}
 
             {editingPhotoIndex !== null && (
                 <ImageEditor
-                    imageUrl={formData.fotos[editingPhotoIndex].data}
+                    imageUrl={formData.fotos[editingPhotoIndex].data || formData.fotos[editingPhotoIndex]}
                     onSave={(newData) => {
                         const updatedFotos = [...formData.fotos];
-                        updatedFotos[editingPhotoIndex].data = newData;
+                        if (typeof updatedFotos[editingPhotoIndex] === 'string') {
+                            updatedFotos[editingPhotoIndex] = { id: crypto.randomUUID(), data: newData, legenda: '' };
+                        } else {
+                            updatedFotos[editingPhotoIndex].data = newData;
+                        }
                         setFormData({ ...formData, fotos: updatedFotos });
                         setEditingPhotoIndex(null);
-                        toast.success('Imagem editada com sucesso!');
                     }}
                     onCancel={() => setEditingPhotoIndex(null)}
                 />
             )}
-
-            <RiskAreaModal 
-                isOpen={showRiskModal}
-                onClose={() => setShowRiskModal(false)}
-                riskInfo={detectedRiskArea}
-            />
         </div>
     );
-};
-
-export default OcorrenciasForm;
+}

@@ -66,6 +66,10 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/cemaden/, '')
       },
+      '/api/importar_pdf': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true
+      },
       '/api': {
         target: 'https://sigerd-mobile.vercel.app', // Fallback para produção para evitar o erro local
         changeOrigin: true,

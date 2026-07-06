@@ -12,19 +12,36 @@ export const INITIAL_OCORRENCIA_STATE = {
     matricula: '',
     cargo: '',               // Cargo do Agente
     solicitante: '',
-    cpf: '',
+    solicitante_nome: '',
     telefone: '',
-    temSolicitanteEspecifico: false,
+    solicitante_telefone: '',
     endereco: '',
     bairro: '',
-    unidade_consumidora: '',
-    informacoes_complementares: '',
-    data_ocorrencia: new Date().toLocaleDateString('pt-BR'),
-    horario_ocorrencia: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     lat: null,
     lng: null,
     accuracy: null,
     gps_timestamp: null,
+
+    // NOVO BLOCO OPERACIONAL
+    orgao_solicitado: 'Defesa Civil',
+    orgao_atendeu: 'Defesa Civil',
+    tipo_ocorrencia: '',
+    nivel_gravidade: '',
+    descricao: '',
+    risco_pessoas_estruturas: false,
+    
+    // ENCAMINHAMENTO
+    encaminhada: false,
+    orgao_destino: '',
+    horario_encaminhamento: null,
+    numero_ocorrencia_externa: '',
+    observacao_encaminhamento: '',
+
+    data_ocorrencia: new Date().toLocaleDateString('pt-BR'),
+    horario_ocorrencia: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    data_chamado: new Date().toISOString(),
+    data_atendimento: new Date().toISOString(),
+
     mortos: 0,
     feridos: 0,
     enfermos: 0,
@@ -32,17 +49,22 @@ export const INITIAL_OCORRENCIA_STATE = {
     desabrigados: 0,
     desaparecidos: 0,
     outros_afetados: 0,
-    tem_danos_humanos: false,
-    categoriaRisco: '',
-    nivelRisco: '',
-    subtiposRisco: [],
-    subtipoRiscoOutros: '',
-    checklistRespostas: {},
-    descricao_danos: '',
-    observacoes: '',
-    medidasTomadas: [],
-    encaminhamentos: [],
-    unidade_consumidora: '',
+    vinculo_cvs: false,
+
+    // COBRADE
+    cobrade_grupo: '',
+    cobrade_subgrupo: '',
+    cobrade_tipo: '',
+    cobrade_subtipo: '',
+    categoriaRisco: '', // Legacy support
+
+    // MATERIAIS
+    danos_materiais: [],
+    
+    // MEDIDAS
+    medidas_adotadas: [],
+    medidasTomadas: [], // Legacy
+
     fotos: [],               // Photos array [ { id, data, legenda } ]
     assinaturaAgente: null,
     assinaturaAssistido: null,
@@ -54,7 +76,8 @@ export const INITIAL_OCORRENCIA_STATE = {
         cargo: '',
         assinatura: null
     },
-    status: 'Pendente',
+    status: 'Aberta',
+    historico_status: [],
     synced: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -346,17 +369,14 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
         // Ensure some snake_case mapping for database compatibility
         const payload = {
             ...ocorrenciaHigienizada,
-            categoria_risco: ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco,
-            subtipos_risco: ocorrenciaHigienizada.subtiposRisco || ocorrenciaHigienizada.subtipos_risco,
-            subtipo_risco_outros: ocorrenciaHigienizada.subtipoRiscoOutros || ocorrenciaHigienizada.subtipo_risco_outros,
-            nivel_risco: ocorrenciaHigienizada.nivelRisco || ocorrenciaHigienizada.nivel_risco,
+            categoria_risco: ocorrenciaHigienizada.cobrade_subtipo || ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco,
             tem_apoio_tecnico: ocorrenciaHigienizada.temApoioTecnico || ocorrenciaHigienizada.tem_apoio_tecnico,
             apoio_tecnico: ocorrenciaHigienizada.apoioTecnico || ocorrenciaHigienizada.apoio_tecnico,
-            tem_solicitante_especifico: ocorrenciaHigienizada.temSolicitanteEspecifico || ocorrenciaHigienizada.tem_solicitante_especifico,
-            checklist_respostas: ocorrenciaHigienizada.checklistRespostas || ocorrenciaHigienizada.checklist_respostas,
-            medidas_tomadas: ocorrenciaHigienizada.medidasTomadas || ocorrenciaHigienizada.medidas_tomadas,
+            medidas_tomadas: ocorrenciaHigienizada.medidas_adotadas || ocorrenciaHigienizada.medidasTomadas || ocorrenciaHigienizada.medidas_tomadas,
             assinatura_agente: ocorrenciaHigienizada.assinaturaAgente || ocorrenciaHigienizada.assinatura_agente,
             assinatura_assistido: ocorrenciaHigienizada.assinaturaAssistido || ocorrenciaHigienizada.assinatura_assistido,
+            solicitante: ocorrenciaHigienizada.solicitante_nome || ocorrenciaHigienizada.solicitante,
+            telefone: ocorrenciaHigienizada.solicitante_telefone || ocorrenciaHigienizada.telefone
         };
         
         // Delete all extra keys to keep DB clean and prevent schema errors
@@ -364,7 +384,7 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             'categoriaRisco', 'subtiposRisco', 'subtipoRiscoOutros', 'nivelRisco', 
             'temApoioTecnico', 'apoioTecnico', 'temSolicitanteEspecifico', 
             'checklistRespostas', 'medidasTomadas', 'assinaturaAgente', 
-            'assinaturaAssistido', 'id', 'synced'
+            'assinaturaAssistido', 'id', 'synced', 'solicitante_nome', 'solicitante_telefone'
         ];
         
         keysToDelete.forEach(key => delete payload[key]);
