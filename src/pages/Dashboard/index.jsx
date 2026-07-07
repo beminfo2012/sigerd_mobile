@@ -1835,7 +1835,7 @@ const WebViewDashboardView = ({
                             { label: 'Vistorias', icon: ClipboardList, path: '/vistorias' },
                             { label: 'Interdições', icon: Home, path: '/interdicao' },
                             { label: 'REDAP', icon: ClipboardCheck, path: '/redap' },
-                            { label: 'Relatórios', icon: FileText, action: () => setShowReportMenu(!showReportMenu) }
+                            { label: 'Rel. Situacional', icon: FileText, action: () => setShowReportMenu(!showReportMenu) }
                         ].map((item, idx) => (
                             <button
                                 key={idx}
