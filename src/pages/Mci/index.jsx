@@ -731,7 +731,15 @@ export default function MciDashboard() {
         if (filterCategory !== 'TODAS' && r.categoria !== filterCategory) return false;
         if (filterStatus !== 'TODOS' && r.status !== filterStatus) return false;
         if (filterSecretaria !== 'TODAS' && r.secretaria_id !== filterSecretaria) return false;
-        if (onlyAvailable && r.status !== 'DISPONIVEL') return false;
+        if (onlyAvailable) {
+            if (r.status !== 'DISPONIVEL') return false;
+            if (r.categoria === 'ESTOQUE') {
+                if (r.detalhes?.quantidade_estoque === 0) return false;
+                if (r.detalhes?.validade && new Date(r.detalhes.validade) < new Date()) return false;
+            }
+            if (r.categoria === 'EQUIPAMENTO' && r.detalhes?.estado_conservacao === 'inoperante') return false;
+            if (r.categoria === 'INSTALACAO' && (r.status === 'OCUPADO' || r.status === 'EM_REFORMA' || r.status === 'INDISPONIVEL')) return false;
+        }
         
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
