@@ -52,6 +52,40 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
     const [currentPolygon, setCurrentPolygon] = useState([]);
     const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
     const [loadingGPS, setLoadingGPS] = useState(false);
+    const [bairrosList, setBairrosList] = useState([]);
+    const [bairrosData, setBairrosData] = useState(null);
+    const [popupConfig, setPopupConfig] = useState({ isOpen: false, title: '', message: '', type: 'alert', onConfirm: null, onCancel: null });
+
+    const showPopup = (title, message, type = 'alert', onConfirm = null, onCancel = null) => {
+        setPopupConfig({ isOpen: true, title, message, type, onConfirm, onCancel });
+    };
+
+    const closePopup = () => {
+        if (popupConfig.onCancel) popupConfig.onCancel();
+        setPopupConfig({ isOpen: false, title: '', message: '', type: 'alert', onConfirm: null, onCancel: null });
+    };
+
+    const confirmPopup = () => {
+        if (popupConfig.onConfirm) popupConfig.onConfirm();
+        setPopupConfig({ isOpen: false, title: '', message: '', type: 'alert', onConfirm: null, onCancel: null });
+    };
+
+    useEffect(() => {
+        fetch('/Bairros.geojson')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.features) {
+                    setBairrosData(data);
+                    const nomes = data.features
+                        .map(f => f.properties?.nome)
+                        .filter(Boolean)
+                        .sort((a, b) => a.localeCompare(b));
+                    // Remove duplicates
+                    setBairrosList([...new Set(nomes)]);
+                }
+            })
+            .catch(err => console.error("Erro ao carregar bairros", err));
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -63,17 +97,21 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                     
                     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
                         if (Array.isArray(parsed.polygons)) {
-                            setPolygons(parsed.polygons);
+                            setPolygons(parsed.polygons.map((coords, i) => ({
+                                coords,
+                                name: parsed.metadata?.[i]?.name || `Região #${i + 1}`,
+                                type: parsed.metadata?.[i]?.type || 'manual'
+                            })));
                         }
                         const centroid = getCentroidOfPolygons(parsed.polygons || []);
                         if (centroid) setMapCenter([centroid.lat, centroid.lng]);
                     } else if (Array.isArray(parsed) && parsed.length > 0) {
                         if (Array.isArray(parsed[0][0])) {
-                            setPolygons(parsed);
+                            setPolygons(parsed.map((coords, i) => ({ coords, name: `Região #${i + 1}`, type: 'manual' })));
                             const centroid = getCentroidOfPolygons(parsed);
                             if (centroid) setMapCenter([centroid.lat, centroid.lng]);
                         } else {
-                            setPolygons([parsed]);
+                            setPolygons([{ coords: parsed, name: `Região #1`, type: 'manual' }]);
                             const latSum = parsed.reduce((acc, pt) => acc + pt[0], 0);
                             const lngSum = parsed.reduce((acc, pt) => acc + pt[1], 0);
                             setMapCenter([latSum / parsed.length, lngSum / parsed.length]);
@@ -85,7 +123,7 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
             } else if (initialLat && initialLng) {
                 const latNum = Number(initialLat);
                 const lngNum = Number(initialLng);
-                setPolygons([[[latNum, lngNum]]]);
+                setPolygons([{ coords: [[latNum, lngNum]], name: 'Ponto Inicial', type: 'manual' }]);
                 setMapCenter([latNum, lngNum]);
             } else {
                 setPolygons([]);
@@ -107,10 +145,10 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
 
     const handleAddPolygon = () => {
         if (currentPolygon.length >= 3) {
-            setPolygons(prev => [...prev, currentPolygon]);
+            setPolygons(prev => [...prev, { coords: currentPolygon, name: `Região Manual ${prev.filter(p => p.type === 'manual').length + 1}`, type: 'manual' }]);
             setCurrentPolygon([]);
         } else {
-            alert('A área atual precisa ter pelo menos 3 pontos antes de ser adicionada.');
+            showPopup('Atenção', 'A área atual precisa ter pelo menos 3 pontos antes de ser adicionada.', 'alert');
         }
     };
 
@@ -119,15 +157,15 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
     };
 
     const handleClearAll = () => {
-        if (window.confirm('Deseja realmente limpar todos os polígonos marcados?')) {
+        showPopup('Confirmar', 'Deseja realmente limpar todos os polígonos marcados?', 'confirm', () => {
             setPolygons([]);
             setCurrentPolygon([]);
-        }
+        });
     };
 
     const handleCaptureCurrentLocation = () => {
         if (!navigator.geolocation) {
-            alert('Geolocalização não é suportada pelo seu navegador.');
+            showPopup('Erro', 'Geolocalização não é suportada pelo seu navegador.', 'alert');
             return;
         }
 
@@ -141,63 +179,123 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
             },
             (error) => {
                 console.error('Erro ao obter localização:', error);
-                alert('Não foi possível obter sua localização.');
+                showPopup('Erro', 'Não foi possível obter sua localização.', 'alert');
                 setLoadingGPS(false);
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
     };
 
-    const handleSelectEntireMunicipality = async () => {
-        try {
-            const res = await fetch('/limite_smj.json');
-            const data = await res.json();
-            
-            let importedPolygons = [];
-            if (data && data.features) {
-                data.features.forEach(feature => {
+    const handleSelectEntireMunicipality = () => {
+        const executeSelection = async () => {
+            try {
+                const res = await fetch('/limite_smj.json');
+                const data = await res.json();
+                
+                let importedPolygons = [];
+                if (data && data.features) {
+                    data.features.forEach(feature => {
+                        if (feature.geometry.type === 'Polygon') {
+                            const rawCoords = feature.geometry.coordinates[0];
+                            const step = Math.max(1, Math.floor(rawCoords.length / 200));
+                            const coords = rawCoords.filter((_, i) => i % step === 0).map(c => [c[1], c[0]]);
+                            importedPolygons.push(coords);
+                        } else if (feature.geometry.type === 'MultiPolygon') {
+                            feature.geometry.coordinates.forEach(poly => {
+                                const rawCoords = poly[0];
+                                const step = Math.max(1, Math.floor(rawCoords.length / 200));
+                                const coords = rawCoords.filter((_, i) => i % step === 0).map(c => [c[1], c[0]]);
+                                importedPolygons.push(coords);
+                            });
+                        }
+                    });
+                }
+                
+                if (importedPolygons.length > 0) {
+                    const newPolys = importedPolygons.map(coords => ({ coords, name: 'Todo o Município', type: 'municipio' }));
+                    setPolygons(prev => [...prev.filter(p => p.type === 'manual'), ...newPolys]);
+                    const centroid = getCentroidOfPolygons(importedPolygons);
+                    if (centroid) setMapCenter([centroid.lat, centroid.lng]);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar limite do município:', error);
+                showPopup('Erro', 'Erro ao carregar o limite do município.', 'alert');
+            }
+        };
+
+        if (polygons.some(p => p.type === 'bairro' || p.type === 'municipio')) {
+            showPopup('Substituir Seleção', 'Isso irá substituir os bairros ou seleções atuais pelo município inteiro. Deseja continuar?', 'confirm', executeSelection);
+            return;
+        }
+        
+        executeSelection();
+    };
+
+    const handleSelectBairro = (e) => {
+        const bairroName = e.target.value;
+        if (!bairroName || !bairrosData) return;
+        
+        const executeSelection = () => {
+            try {
+                const feature = bairrosData.features.find(f => f.properties?.nome === bairroName);
+                if (feature) {
+                    let importedPolygons = [];
                     if (feature.geometry.type === 'Polygon') {
                         const rawCoords = feature.geometry.coordinates[0];
-                        const step = Math.max(1, Math.floor(rawCoords.length / 200));
-                        const coords = rawCoords.filter((_, i) => i % step === 0).map(c => [c[1], c[0]]);
+                        const coords = rawCoords.map(c => [c[1], c[0]]);
                         importedPolygons.push(coords);
                     } else if (feature.geometry.type === 'MultiPolygon') {
                         feature.geometry.coordinates.forEach(poly => {
                             const rawCoords = poly[0];
-                            const step = Math.max(1, Math.floor(rawCoords.length / 200));
-                            const coords = rawCoords.filter((_, i) => i % step === 0).map(c => [c[1], c[0]]);
+                            const coords = rawCoords.map(c => [c[1], c[0]]);
                             importedPolygons.push(coords);
                         });
                     }
-                });
+                    
+                    if (importedPolygons.length > 0) {
+                        const newPolys = importedPolygons.map(coords => ({ coords, name: bairroName, type: 'bairro' }));
+                        setPolygons(prev => [...prev.filter(p => p.type !== 'municipio'), ...newPolys]);
+                        const centroid = getCentroidOfPolygons(importedPolygons);
+                        if (centroid) setMapCenter([centroid.lat, centroid.lng]);
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar limite do bairro:', error);
+                showPopup('Erro', 'Erro ao carregar o limite do bairro.', 'alert');
             }
-            
-            if (importedPolygons.length > 0) {
-                setPolygons(prev => [...prev, ...importedPolygons]);
-                const centroid = getCentroidOfPolygons(importedPolygons);
-                if (centroid) setMapCenter([centroid.lat, centroid.lng]);
-            }
-        } catch (error) {
-            console.error('Erro ao carregar limite do município:', error);
-            alert('Erro ao carregar o limite do município.');
+        };
+        
+        if (polygons.some(p => p.type === 'municipio')) {
+            showPopup('Remover Seleção', 'Isso irá remover a seleção de todo o município. Deseja continuar?', 'confirm', () => {
+                executeSelection();
+                e.target.value = '';
+            }, () => {
+                e.target.value = '';
+            });
+            return;
         }
+        
+        executeSelection();
+        e.target.value = '';
     };
 
     const handleSave = () => {
         if (polygons.length === 0 && currentPolygon.length < 3) {
-            alert('Por favor, adicione pelo menos uma área poligonal no mapa antes de salvar.');
+            showPopup('Atenção', 'Por favor, adicione pelo menos uma área poligonal no mapa antes de salvar.', 'alert');
             return;
         }
 
         let finalPolygons = [...polygons];
         if (currentPolygon.length >= 3) {
-            finalPolygons.push(currentPolygon);
+            finalPolygons.push({ coords: currentPolygon, name: `Região Manual ${finalPolygons.filter(p => p.type === 'manual').length + 1}`, type: 'manual' });
         }
 
-        const centroid = getCentroidOfPolygons(finalPolygons) || { lat: mapCenter[0], lng: mapCenter[1] };
+        const coordsArray = finalPolygons.map(p => p.coords || p);
+        const centroid = getCentroidOfPolygons(coordsArray) || { lat: mapCenter[0], lng: mapCenter[1] };
         
         const resultObject = {
-            polygons: finalPolygons
+            polygons: coordsArray,
+            metadata: finalPolygons.map(p => ({ name: p.name || 'Região Manual', type: p.type || 'manual' }))
         };
 
         onSave(centroid.lat, centroid.lng, resultObject);
@@ -232,14 +330,37 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                         <div className="space-y-2">
                             <div className="flex items-center justify-between ml-1">
                                 <h3 className="text-[10px] font-black uppercase text-slate-450">Áreas Confirmadas ({polygons.length})</h3>
-                                <button onClick={handleSelectEntireMunicipality} className="text-[9px] font-black uppercase text-emerald-600 hover:underline">
+                                <button 
+                                    onClick={handleSelectEntireMunicipality} 
+                                    disabled={polygons.some(p => p.type === 'municipio')}
+                                    className={`text-[9px] font-black uppercase hover:underline ${polygons.some(p => p.type === 'municipio') ? 'text-slate-400 cursor-not-allowed' : 'text-emerald-600'}`}
+                                >
                                     + Todo o Município
                                 </button>
                             </div>
+                            {bairrosList.length > 0 && (
+                                <div className="ml-1 mt-2">
+                                    <select 
+                                        className="text-[10px] p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 w-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500 font-bold disabled:opacity-50"
+                                        onChange={handleSelectBairro}
+                                        value=""
+                                        disabled={polygons.some(p => p.type === 'municipio')}
+                                    >
+                                        <option value="" disabled>+ Adicionar Bairro</option>
+                                        {bairrosList
+                                            .filter(b => !polygons.some(p => p.type === 'bairro' && p.name === b))
+                                            .map(b => (
+                                                <option key={b} value={b}>
+                                                    {b}
+                                                </option>
+                                            ))}
+                                    </select>
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 {polygons.map((poly, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl">
-                                        <span className="text-xs font-bold">Região #{idx + 1} ({poly.length} pts)</span>
+                                        <span className="text-xs font-bold">{poly.name} ({poly.coords?.length || 0} pts)</span>
                                         <button onClick={() => handleDeletePolygon(idx)} className="text-rose-500"><Trash2 size={14} /></button>
                                     </div>
                                 ))}
@@ -258,7 +379,7 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                         <OrthofotsLayer />
                         {polygons.map((poly, idx) => (
-                            <Polygon key={`poly-${idx}`} positions={poly} pathOptions={{ color: '#4f46e5', fillOpacity: 0.2 }} />
+                            <Polygon key={`poly-${idx}`} positions={poly.coords || poly} pathOptions={{ color: '#4f46e5', fillOpacity: 0.2 }} />
                         ))}
                         {currentPolygon.length > 0 && (
                             <Polygon positions={currentPolygon} pathOptions={{ color: '#2563eb', fillOpacity: 0.35 }} />
@@ -288,6 +409,32 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                     </div>
                 </div>
             </div>
+
+            {popupConfig.isOpen && (
+                <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2rem] shadow-2xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col gap-4 animate-in zoom-in-95">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-xl">
+                                <HelpCircle size={24} />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">{popupConfig.title}</h3>
+                        </div>
+                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                            {popupConfig.message}
+                        </p>
+                        <div className="flex justify-end gap-2 mt-2">
+                            {popupConfig.type === 'confirm' && (
+                                <button onClick={closePopup} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors">
+                                    Cancelar
+                                </button>
+                            )}
+                            <button onClick={confirmPopup} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-colors shadow-lg shadow-blue-200 dark:shadow-none">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
