@@ -18,6 +18,8 @@ import { useToast } from '../../components/ToastNotification';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import CategoryTabs from './components/CategoryTabs';
+import ResourceCardFactory from './components/ResourceCardFactory';
 
 // Fix leaflet icon assets
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -735,6 +737,14 @@ export default function MciDashboard() {
         return days > 90;
     };
 
+    const categoriasList = [
+        { categoria: 'VEICULO', label: 'Veículos', icone: Truck, total: stats.veiculos },
+        { categoria: 'EQUIPAMENTO', label: 'Equipamentos', icone: Wrench, total: stats.equipamentos },
+        { categoria: 'ESTOQUE', label: 'Estoques', icone: Package, total: stats.estoques },
+        { categoria: 'PROFISSIONAL', label: 'Profissionais', icone: Users, total: stats.profissionais },
+        { categoria: 'INSTALACAO', label: 'Instalações', icone: MapPin, total: stats.instalacoes }
+    ];
+
     return (
         <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
             {/* Header */}
@@ -876,6 +886,13 @@ export default function MciDashboard() {
             {/* TAB: INVENTORY */}
             {activeTab === 'inventory' && (
                 <div className="space-y-4">
+                    {/* Category Tabs */}
+                    <CategoryTabs 
+                        categorias={categoriasList}
+                        categoriaAtiva={filterCategory}
+                        onChange={(cat) => setFilterCategory(cat)}
+                    />
+
                     {/* Search & Filters */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-3 bg-white dark:bg-slate-800/30 p-4 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
                         <div className="relative">
@@ -958,147 +975,18 @@ export default function MciDashboard() {
                                 const outdated = isOutdated(rec.ultima_atualizacao);
                                 const isRecommended = getRecursoRelevancia(rec);
                                 return (
-                                    <div 
-                                        key={rec.id} 
-                                        className={`bg-white dark:bg-slate-800/40 border rounded-xl p-5 relative overflow-hidden transition-all hover:bg-slate-100/50 dark:hover:bg-slate-800/60 ${
-                                            isRecommended 
-                                                ? 'border-blue-500 shadow-md shadow-blue-900/10' 
-                                                : outdated 
-                                                    ? 'border-red-500/40 dark:border-red-900/40 shadow-md shadow-red-900/5' 
-                                                    : 'border-slate-200 dark:border-slate-800'
-                                        }`}
-                                    >
-                                        {/* Status Badge */}
-                                        <div className="absolute top-4 right-4 flex items-center gap-1.5">
-                                            {outdated && (
-                                                <span className="bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-wide animate-pulse">
-                                                    Não Atualizado (90d+)
-                                                </span>
-                                            )}
-                                            {isRecommended && (
-                                                <span className="bg-blue-600 text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-wide">
-                                                    Recomendado
-                                                </span>
-                                            )}
-                                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                                                rec.status === 'DISPONIVEL' 
-                                                    ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
-                                                    : rec.status === 'EM_MANUTENCAO' 
-                                                        ? 'bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30' 
-                                                        : 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
-                                            }`}>
-                                                {rec.status}
-                                            </span>
-                                        </div>
-
-                                        {/* Title & Info */}
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
-                                                {rec.categoria === 'VEICULO' && <Truck className="text-blue-600 dark:text-blue-400 h-5 w-5" />}
-                                                {rec.categoria === 'EQUIPAMENTO' && <Wrench className="text-emerald-600 dark:text-emerald-400 h-5 w-5" />}
-                                                {rec.categoria === 'ESTOQUE' && <Package className="text-amber-600 dark:text-amber-400 h-5 w-5" />}
-                                                {rec.categoria === 'PROFISSIONAL' && <Users className="text-purple-600 dark:text-purple-400 h-5 w-5" />}
-                                                {rec.categoria === 'INSTALACAO' && <MapPin className="text-red-600 dark:text-red-400 h-5 w-5" />}
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase">{rec.nome}</h4>
-                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">
-                                                    Secretaria: {rec.secretaria_id}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Category Specific Info */}
-                                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80 text-xs space-y-1 text-slate-700 dark:text-slate-300">
-                                            {rec.categoria === 'VEICULO' && (
-                                                <>
-                                                    <p><strong>Tipo:</strong> {rec.detalhes?.tipo}</p>
-                                                    {rec.detalhes?.placa && <p><strong>Placa:</strong> {rec.detalhes?.placa}</p>}
-                                                    {rec.detalhes?.capacidade && <p><strong>Capacidade:</strong> {rec.detalhes?.capacidade}</p>}
-                                                    {rec.detalhes?.observacoes_operacionais && <p className="italic text-slate-500 dark:text-slate-400">"{rec.detalhes?.observacoes_operacionais}"</p>}
-                                                </>
-                                            )}
-                                            {rec.categoria === 'EQUIPAMENTO' && (
-                                                <>
-                                                    <p><strong>Estado:</strong> <span className="uppercase font-semibold">{rec.detalhes?.estado_conservacao}</span></p>
-                                                    <p><strong>Guarda:</strong> {rec.detalhes?.localizacao_guarda}</p>
-                                                    {rec.detalhes?.quantidade && <p><strong>Qtd:</strong> {rec.detalhes?.quantidade}</p>}
-                                                </>
-                                            )}
-                                            {rec.categoria === 'ESTOQUE' && (
-                                                <>
-                                                    <p><strong>Item:</strong> {rec.detalhes?.item}</p>
-                                                    <p><strong>Quantidade:</strong> {rec.detalhes?.quantidade_estoque} {rec.detalhes?.unidade_medida}</p>
-                                                    {rec.detalhes?.validade && <p><strong>Validade:</strong> {new Date(rec.detalhes?.validade).toLocaleDateString()}</p>}
-                                                    <p><strong>Local:</strong> {rec.detalhes?.local_armazenamento}</p>
-                                                </>
-                                            )}
-                                            {rec.categoria === 'PROFISSIONAL' && (
-                                                <>
-                                                    <p><strong>Especialidade:</strong> {rec.detalhes?.funcao}</p>
-                                                    <p><strong>Profissionais:</strong> {rec.detalhes?.profissionais_disponiveis}</p>
-                                                    <p><strong>Contato:</strong> {rec.detalhes?.contato_responsavel}</p>
-                                                </>
-                                            )}
-                                            {rec.categoria === 'INSTALACAO' && (
-                                                <>
-                                                    <p><strong>Tipo:</strong> {rec.detalhes?.tipo}</p>
-                                                    <p><strong>Endereço:</strong> {rec.detalhes?.endereco}</p>
-                                                    <p><strong>Capacidade:</strong> {rec.detalhes?.capacidade_abrigo} Pessoas</p>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/80 flex justify-between items-center text-xs">
-                                            <span className="text-[10px] text-slate-500">
-                                                Atualizado em: {new Date(rec.ultima_atualizacao).toLocaleDateString()}
-                                            </span>
-                                            <div className="flex gap-2 text-slate-700 dark:text-slate-350">
-                                                {/* Revalidar (se estiver desatualizado) */}
-                                                {outdated && (
-                                                    <button 
-                                                        onClick={() => handleRenewValidade(rec.id)}
-                                                        title="Confirmar validade atual dos dados"
-                                                        className="p-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded animate-pulse"
-                                                    >
-                                                        <CheckCircle2 size={16} />
-                                                    </button>
-                                                )}
-                                                {/* Requisitar Recurso (COMPDEC) */}
-                                                {isCOMPDEC && rec.status === 'DISPONIVEL' && (
-                                                    <button 
-                                                        onClick={() => handleOpenRequest(rec)}
-                                                        title="Requisitar este recurso para evento ativo"
-                                                        className="px-2.5 py-1 bg-blue-100 dark:bg-blue-600/30 hover:bg-blue-600 dark:hover:bg-blue-600 text-blue-600 dark:text-blue-300 hover:text-white rounded font-bold text-[10px] uppercase tracking-wider transition-colors"
-                                                    >
-                                                        Requisitar
-                                                    </button>
-                                                )}
-                                                <button 
-                                                    onClick={() => handleViewLogs(rec)}
-                                                    title="Histórico de alterações"
-                                                    className="p-1 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/30 rounded"
-                                                >
-                                                    <ClipboardList size={16} />
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleEditRecurso(rec)}
-                                                    title="Editar"
-                                                    className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded"
-                                                >
-                                                    <Edit3 size={16} />
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleDelete(rec.id)}
-                                                    title="Remover"
-                                                    className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ResourceCardFactory 
+                                        key={rec.id}
+                                        recurso={rec}
+                                        outdated={outdated}
+                                        isRecommended={isRecommended}
+                                        isCOMPDEC={isCOMPDEC}
+                                        onRenewValidade={handleRenewValidade}
+                                        onOpenRequest={handleOpenRequest}
+                                        onViewLogs={handleViewLogs}
+                                        onEditRecurso={handleEditRecurso}
+                                        onDelete={handleDelete}
+                                    />
                                 );
                             })}
                         </div>
