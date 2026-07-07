@@ -23,6 +23,7 @@ export default function ProfissionalCard(props) {
             iconColor="text-purple-600 dark:text-purple-400"
             statusBadge={getStatusBadge(recurso)}
             opacityClass={isIndisponivel ? 'opacity-60' : ''}
+            canRequest={!isIndisponivel}
         >
             <p><strong>Função:</strong> {recurso.detalhes?.funcao}</p>
             <p><strong>Disponibilidade:</strong> <span className="uppercase font-semibold">{recurso.status === 'EM_USO' ? 'Em Operação' : (recurso.status === 'DISPONIVEL' ? 'Disponível' : 'Indisponível')}</span></p>

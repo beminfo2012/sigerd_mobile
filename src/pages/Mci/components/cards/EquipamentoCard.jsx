@@ -26,6 +26,7 @@ export default function EquipamentoCard(props) {
             iconColor="text-emerald-600 dark:text-emerald-400"
             statusBadge={getStatusBadge(recurso)}
             opacityClass={isIndisponivel ? 'opacity-60' : ''}
+            canRequest={!isIndisponivel}
         >
             {recurso.detalhes?.quantidade && <p><strong>Quantidade:</strong> {recurso.detalhes?.quantidade}</p>}
             <p><strong>Condição:</strong> <span className="uppercase font-semibold">{recurso.detalhes?.estado_conservacao || 'bom'}</span></p>

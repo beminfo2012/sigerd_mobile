@@ -12,6 +12,7 @@ export default function BaseCard({
     isRecommended, 
     isCOMPDEC, 
     opacityClass = '',
+    canRequest = true,
     onRenewValidade, 
     onOpenRequest, 
     onViewLogs, 
@@ -79,7 +80,7 @@ export default function BaseCard({
                         </button>
                     )}
                     {/* Requisitar Recurso (COMPDEC) */}
-                    {isCOMPDEC && recurso.status === 'DISPONIVEL' && (
+                    {isCOMPDEC && canRequest && (
                         <button 
                             onClick={() => onOpenRequest(recurso)}
                             title="Requisitar este recurso para evento ativo"

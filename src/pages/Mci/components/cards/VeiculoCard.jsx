@@ -26,6 +26,7 @@ export default function VeiculoCard(props) {
             iconColor="text-blue-600 dark:text-blue-400"
             statusBadge={getStatusBadge(recurso)}
             opacityClass={isIndisponivel ? 'opacity-60' : ''}
+            canRequest={!isIndisponivel}
         >
             <p><strong>Tipo:</strong> {recurso.detalhes?.tipo}</p>
             {recurso.detalhes?.placa && <p><strong>Placa:</strong> {recurso.detalhes?.placa}</p>}

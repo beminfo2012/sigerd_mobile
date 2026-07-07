@@ -285,6 +285,7 @@ export default function MciDashboard() {
     // Request Form State
     const [requestJustification, setRequestJustification] = useState('');
     const [requestEventId, setRequestEventId] = useState('');
+    const [requestQuantidade, setRequestQuantidade] = useState(1);
 
     // Fetch initial data
     const loadData = async () => {
@@ -526,10 +527,26 @@ export default function MciDashboard() {
     const handleOpenRequest = (recurso) => {
         setSelectedRecursoForRequest(recurso);
         setRequestJustification('');
+        setRequestQuantidade(1);
         if (activeEvents.length > 0) {
             setRequestEventId(activeEvents[0].id);
         }
         setShowRequestModal(true);
+    };
+
+    const getMaxQuantity = (recurso) => {
+        if (!recurso) return 1;
+        let total = 1;
+        if (recurso.categoria === 'ESTOQUE') total = recurso.detalhes?.quantidade_estoque || 0;
+        else if (recurso.categoria === 'EQUIPAMENTO') total = recurso.detalhes?.quantidade || 1;
+        else if (recurso.categoria === 'PROFISSIONAL') total = recurso.detalhes?.profissionais_disponiveis || 1;
+        
+        // Subtract already requested and approved
+        const solicitados = requisicoes
+            .filter(r => r.recurso_id === recurso.id && r.status === 'APROVADO')
+            .reduce((acc, curr) => acc + (curr.quantidade_solicitada || 1), 0);
+            
+        return Math.max(0, total - solicitados);
     };
 
     const handleSubmitRequest = async (e) => {
@@ -538,12 +555,19 @@ export default function MciDashboard() {
             addToast('Selecione um evento ativo para vincular a requisição.', 'warning');
             return;
         }
+        
+        const maxQtd = getMaxQuantity(selectedRecursoForRequest);
+        if (requestQuantidade > maxQtd) {
+            addToast(`Quantidade solicitada excede o saldo disponível (${maxQtd}).`, 'warning');
+            return;
+        }
 
         try {
             await criarMciRequisicao({
                 recurso_id: selectedRecursoForRequest.id,
                 evento_id: requestEventId,
-                justificativa: requestJustification
+                justificativa: requestJustification,
+                quantidade_solicitada: requestQuantidade
             }, user?.id);
 
             addToast('Solicitação de recurso enviada à secretaria responsável!', 'success');
@@ -1068,8 +1092,8 @@ export default function MciDashboard() {
                                         <tr key={req.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 text-slate-850 dark:text-slate-300 transition-colors">
                                             <td className="p-4">
                                                 <div className="font-bold text-slate-900 dark:text-white">{req.recurso?.nome}</div>
-                                                <span className="text-[10px] text-slate-550 dark:text-slate-500">{req.recurso?.categoria}</span>
-                                            </td>
+                                                <span className="text-[10px] text-slate-550 dark:text-slate-500">{req.recurso?.categoria} {req.quantidade_solicitada ? `(${req.quantidade_solicitada} unid.)` : ''}</span>
+                                        </td>
                                             <td className="p-4">{req.recurso?.secretaria_id}</td>
                                             <td className="p-4 italic max-w-xs truncate" title={req.justificativa}>
                                                 "{req.justificativa}"
@@ -1171,10 +1195,18 @@ export default function MciDashboard() {
                                         className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-350 dark:border-slate-850 rounded text-slate-900 dark:text-white focus:outline-none"
                                     >
                                         <option value="DISPONIVEL">Disponível</option>
-                                        <option value="EM_MANUTENCAO">Em Manutenção</option>
-                                        <option value="EM_USO">Em Uso</option>
-                                        <option value="OCUPADO">Ocupado</option>
-                                        <option value="EM_REFORMA">Em Reforma</option>
+                                        {(formCategory === 'VEICULO' || formCategory === 'EQUIPAMENTO') && (
+                                            <option value="EM_MANUTENCAO">Em Manutenção</option>
+                                        )}
+                                        {(formCategory === 'VEICULO' || formCategory === 'EQUIPAMENTO' || formCategory === 'PROFISSIONAL') && (
+                                            <option value="EM_USO">Em Uso</option>
+                                        )}
+                                        {formCategory === 'INSTALACAO' && (
+                                            <>
+                                                <option value="OCUPADO">Ocupado</option>
+                                                <option value="EM_REFORMA">Em Reforma</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
                                 <div>
@@ -1385,6 +1417,22 @@ export default function MciDashboard() {
                                     {selectedRecursoForRequest.nome} ({selectedRecursoForRequest.secretaria_id})
                                 </div>
                             </div>
+
+                            {(selectedRecursoForRequest.categoria === 'ESTOQUE' || selectedRecursoForRequest.categoria === 'EQUIPAMENTO' || selectedRecursoForRequest.categoria === 'PROFISSIONAL') && (
+                                <div>
+                                    <label className="block text-slate-650 dark:text-slate-400 font-bold uppercase mb-1">Quantidade Solicitada</label>
+                                    <input 
+                                        type="number" 
+                                        min="1" 
+                                        max={getMaxQuantity(selectedRecursoForRequest)}
+                                        value={requestQuantidade}
+                                        onChange={(e) => setRequestQuantidade(parseInt(e.target.value) || 1)}
+                                        className="w-full p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded text-slate-900 dark:text-white focus:outline-none"
+                                    />
+                                    <p className="text-[10px] text-slate-500 mt-1">Saldo Disponível (já descontado aprovações): {getMaxQuantity(selectedRecursoForRequest)}</p>
+                                </div>
+                            )}
+
                             <div>
                                                   <select 
                                     value={requestEventId} 

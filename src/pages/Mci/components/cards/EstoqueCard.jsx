@@ -27,6 +27,7 @@ export default function EstoqueCard(props) {
             iconColor="text-amber-600 dark:text-amber-400"
             statusBadge={getStatusBadge(recurso)}
             opacityClass={isIndisponivel ? 'opacity-60' : ''}
+            canRequest={!isIndisponivel}
         >
             <p><strong>Item:</strong> {recurso.detalhes?.item}</p>
             <p><strong>Quantidade:</strong> {recurso.detalhes?.quantidade_estoque} {recurso.detalhes?.unidade_medida}</p>

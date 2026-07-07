@@ -20,6 +20,7 @@ export default function InstalacaoCard(props) {
             iconColor="text-red-600 dark:text-red-400"
             statusBadge={getStatusBadge(recurso)}
             opacityClass={isIndisponivel ? 'opacity-60' : ''}
+            canRequest={!isIndisponivel}
         >
             <p><strong>Tipo:</strong> {recurso.detalhes?.tipo}</p>
             <p><strong>Endereço:</strong> {recurso.detalhes?.endereco}</p>
