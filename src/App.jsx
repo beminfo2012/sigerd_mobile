@@ -102,10 +102,8 @@ const MciDashboard = lazy(() => import('./pages/Mci'))
 const MciPrint = lazy(() => import('./pages/Mci/MciPrint'))
 
 // NOPRER
-const NoprerDashboard = lazy(() => import('./pages/Noprer'))
-const NoprerForm = lazy(() => import('./pages/Noprer/NoprerForm'))
-const NoprerDetails = lazy(() => import('./pages/Noprer/NoprerDetails'))
-const NoprerPrint = lazy(() => import('./pages/Noprer/NoprerPrint'))
+const NoprerModule = lazy(() => import('./pages/Noprer'))
+
 
 // FIREGIS
 const FiregisList = lazy(() => import('./pages/Firegis/FiregisList'))
@@ -627,29 +625,9 @@ const AppContent = ({
                                 } />
 
                                 {/* NOPRER Routes */}
-                                <Route path="/noprer" element={
+                                <Route path="/noprer/*" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <NoprerDashboard />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/noprer/novo/:origem/:origemId" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <NoprerForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/noprer/editar/:id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <NoprerForm />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/noprer/detalhes/:id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <NoprerDetails />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/noprer/imprimir/:id" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <NoprerPrint />
+                                        <NoprerModule />
                                     </ProtectedRoute>
                                 } />
 

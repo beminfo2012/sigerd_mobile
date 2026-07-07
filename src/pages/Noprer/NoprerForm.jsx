@@ -1,474 +1,884 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { UserContext } from '../../App';
 import { supabase } from '../../services/supabase';
-import { 
-    ArrowLeft, ShieldAlert, Save, MapPin, Camera, User, 
-    FileText, Calendar, AlertTriangle, CheckCircle, ChevronDown
-} from 'lucide-react';
+import { useNoprer } from './hooks/useNoprer';
+import { usePrazo } from './hooks/usePrazo';
+import { RISK_TYPES } from './data/riskTypes';
+import { GRAUS } from './data/graus';
 import SignaturePad from '../../components/SignaturePad';
-import ConfirmModal from '../../components/ConfirmModal';
+import { 
+    ChevronRight, ChevronLeft, MapPin, Search, 
+    Camera, AlertTriangle, Info, Save, CheckCircle, X, Plus, Check, ShieldAlert
+} from 'lucide-react';
 
-const getSourceData = async (origem, origemId) => {
-    try {
-        if (origem === 'vistoria') {
-            // First check if getVistoriaFull works locally
-            let vistoria = null;
-            try {
-                const { getVistoriaFull } = await import('../../services/db');
-                vistoria = await getVistoriaFull(origemId);
-            } catch (err) { }
-            
-            if (vistoria) return vistoria;
-
-            // Otherwise, fetch direct from Supabase
-            const { data } = await supabase.from('vistorias').select('*').or(`id.eq.${origemId},vistoria_id.eq.${origemId}`).single();
-            return data;
-        } else {
-            // Fetch ocorrencia from Supabase
-            const { data } = await supabase.from('ocorrencias_operacionais').select('*').or(`id.eq.${origemId},ocorrencia_id.eq.${origemId},ocorrencia_id_format.eq.${origemId}`).single();
-            return data;
-        }
-    } catch (e) {
-        console.error('Erro ao buscar dados da origem:', e);
-        return null;
-    }
-};
-
-const RISK_TYPES = [
-    'Geológico', 'Hidrológico', 'Estrutural', 'Incêndio', 
-    'Tecnológico', 'Ambiental', 'Saúde Pública', 'Outro'
+const STEPS = [
+    { id: 1, label: 'Responsável' },
+    { id: 2, label: 'Risco' },
+    { id: 3, label: 'Evidências' },
+    { id: 4, label: 'Prazo' },
+    { id: 5, label: 'Assinatura' }
 ];
 
-const INTELLIGENT_CHECKLIST = {
-    'Geológico': [
-        'Executar drenagem superficial e captação de águas pluviais',
-        'Implantar contenção de talude/encosta',
-        'Contratar avaliação geotécnica complementar especializada',
-        'Monitoramento diário de trincas e infiltrações'
-    ],
-    'Hidrológico': [
-        'Desobstrução do sistema de drenagem local',
-        'Elevação de móveis e eletrodomésticos preventivamente',
-        'Evacuação em caso de alerta de chuvas intensas emitido pela COMPDEC',
-        'Limpeza de calhas e telhados'
-    ],
-    'Estrutural': [
-        'Contratar laudo estrutural de profissional habilitado (ART/RRT)',
-        'Executar escoramento emergencial',
-        'Isolamento parcial da área afetada',
-        'Reparo em rachaduras com indício de evolução'
-    ],
-    'Incêndio': [
-        'Revisão do sistema elétrico',
-        'Desobstrução de rotas de fuga',
-        'Isolamento de materiais inflamáveis'
-    ]
-};
-
 const NoprerForm = () => {
-    const { origem, origemId, id } = useParams();
     const navigate = useNavigate();
     const { userProfile } = useContext(UserContext);
-    
-    const [loading, setLoading] = useState(true);
-    const [sourceData, setSourceData] = useState(null);
-    const [existingNoprer, setExistingNoprer] = useState(null);
-    const [isSaving, setIsSaving] = useState(false);
+    const { criarNoprer, salvarNoprerRascunho, fetchRascunhoById, deletarRascunho } = useNoprer();
+    const [salvando, setSalvando] = useState(false);
+    const { calcularDatasFormulario } = usePrazo();
 
-    // Form State
-    const [formData, setFormData] = useState({
-        tipo_risco: '',
-        descricao: '',
-        medidas_mitigatorias: [],
-        prazo_dias: 30,
-        observacoes_assinatura: ''
-    });
+    const applyCpfCnpjMask = (value) => {
+        let v = value.replace(/\D/g, "");
+        if (v.length <= 11) {
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        } else {
+            v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+            v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+            v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+            v = v.replace(/(\d{4})(\d)/, "$1-$2");
+        }
+        return v.substring(0, 18);
+    };
 
-    // Signature State
-    const [signatureMode, setSignatureMode] = useState(null); // 'digital', 'recusa', null
-    const [signatureData, setSignatureData] = useState(null);
-    const [testemunhas, setTestemunhas] = useState({ t1: '', doc1: '', t2: '', doc2: '' });
+    const applyPhoneMask = (value) => {
+        let v = value.replace(/\D/g, "");
+        v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+        v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+        return v.substring(0, 15);
+    };
+
+    const [searchParams] = useSearchParams();
+    const draftId = searchParams.get('draftId');
+
+    const [step, setStep] = useState(1);
     
+    // Busca de Origens (Vistorias/Ocorrências)
+    const [modalVistoriaOpen, setModalVistoriaOpen] = useState(false);
+    const [buscaOrigem, setBuscaOrigem] = useState('');
+    const [origensEncontradas, setOrigensEncontradas] = useState([]);
+    const [buscandoOrigens, setBuscandoOrigens] = useState(false);
+
     useEffect(() => {
-        const loadData = async () => {
-            if (id) {
-                // Modo Edição
-                const { data, error } = await supabase.from('noprer').select('*').eq('id', id).single();
-                if (data) {
-                    setExistingNoprer(data);
-                    setFormData({
-                        tipo_risco: data.tipo_risco || '',
-                        descricao: data.descricao || '',
-                        medidas_mitigatorias: data.medidas_mitigatorias || [],
-                        prazo_dias: data.prazo_dias || 30
-                    });
-                    setSourceData({ 
-                        endereco: data.endereco, 
-                        solicitante: data.solicitante, 
-                        nivel_risco: data.risco, 
-                        vistoria_id: data.origem_id 
-                    });
-                    if (data.recusou_assinatura) {
-                        setSignatureMode('recusa');
-                        setTestemunhas(data.testemunhas || { t1: '', doc1: '', t2: '', doc2: '' });
-                    } else if (data.assinatura) {
-                        setSignatureMode('digital');
-                        setSignatureData(data.assinatura);
-                    }
-                }
-            } else {
-                // Modo Criação
-                const data = await getSourceData(origem, decodeURIComponent(origemId));
-                if (data) {
-                    setSourceData(data);
-                    
-                    const nivel = origem === 'vistoria' ? (data.nivelRisco || data.nivel_risco) : data.nivel_risco;
-                    let presumedType = '';
-                    if (data.categoriaRisco?.toLowerCase().includes('chuva') || data.categoria_risco?.toLowerCase().includes('chuva')) presumedType = 'Hidrológico';
-                    else if (data.categoriaRisco?.toLowerCase().includes('deslizamento') || data.categoria_risco?.toLowerCase().includes('deslizamento')) presumedType = 'Geológico';
-                    
-                    setFormData(prev => ({
-                        ...prev,
-                        tipo_risco: presumedType || '',
-                        descricao: `Risco ${nivel} identificado durante ${origem}. É necessário monitoramento e ações preventivas.`
-                    }));
+        if (!modalVistoriaOpen) return;
+        
+        // Debounce para Live Search
+        const timer = setTimeout(() => {
+            handleBuscarOrigens();
+        }, 500);
+        
+        return () => clearTimeout(timer);
+    }, [buscaOrigem, modalVistoriaOpen]);
+    
+    // Modal de Assinatura
+    const [sigModal, setSigModal] = useState(null); // null, 'notificado', 'agente', 'test1', 'test2'
+
+    // Carregar Rascunho se draftId existir
+    useEffect(() => {
+        const carregarDB = async () => {
+            if (draftId) {
+                const draft = await fetchRascunhoById(draftId);
+                if (draft) {
+                    setFormData(draft.form_data);
+                    setStep(draft.step || 1);
                 }
             }
-            setLoading(false);
         };
-        loadData();
-    }, [origem, origemId, id]);
+        carregarDB();
+    }, [draftId]);
 
-    const handleChecklistToggle = (item) => {
+    // Estado do Formulário
+    const [formData, setFormData] = useState({
+        vistoria_id: null,
+        vistoria_numero: '',
+        
+        // Etapa 1
+        nome_notificado: '',
+        cpf_notificado: '',
+        contato: '',
+        condicao: '',
+        endereco: '',
+        inscricao_imob: '',
+        coordenadas: '',
+        
+        // Etapa 2
+        tipo_risco: '',
+        sub_tipo: '',
+        grau_risco: '',
+        descricao_risco: '',
+        
+        // Etapa 3
+        fotos: [],
+        observacoes: '',
+        
+        // Etapa 4
+        prazo_dias: 30,
+        medidas: [],
+        medida_customizada: '',
+        nome_agente: userProfile?.full_name || '',
+        matricula_agente: userProfile?.matricula || '',
+        
+        // Etapa 5
+        termo_lido: false,
+        modo_assinatura: 'digital',
+        sign_notificado: null,
+        sign_agente: null,
+        test1_nome: '',
+        test1_cpf: '',
+        sign_test1: null,
+        test2_nome: '',
+        test2_cpf: '',
+        sign_test2: null,
+    });
+
+    // Calcula datas do prazo dinamicamente
+    const datas = calcularDatasFormulario(formData.prazo_dias);
+
+    // Validações por etapa
+    const isStepValid = () => {
+        if (step === 1) return formData.nome_notificado && formData.cpf_notificado && formData.condicao && formData.endereco;
+        if (step === 2) return formData.tipo_risco && formData.grau_risco && formData.descricao_risco.length >= 20;
+        if (step === 3) return true; // Fotos não são estritamente obrigatórias no schema
+        if (step === 4) return formData.medidas.length > 0;
+        if (step === 5) {
+            if (!formData.termo_lido || !formData.sign_agente) return false;
+            if (formData.modo_assinatura === 'digital') return !!formData.sign_notificado;
+            if (formData.modo_assinatura === 'recusa') {
+                return formData.test1_nome && formData.test1_cpf && formData.sign_test1 && formData.test2_nome && formData.test2_cpf && formData.sign_test2;
+            }
+        }
+        return true;
+    };
+
+    const handleBuscarOrigens = async () => {
+        setBuscandoOrigens(true);
+        let resultados = [];
+        try {
+            // Busca Vistorias
+            let qVist = supabase.from('vistorias').select('id, vistoria_id, endereco, solicitante, nivel_risco, created_at');
+            if (buscaOrigem && buscaOrigem.length >= 3) {
+                qVist = qVist.or(`vistoria_id.ilike.%${buscaOrigem}%,endereco.ilike.%${buscaOrigem}%,solicitante.ilike.%${buscaOrigem}%`).limit(10);
+            } else {
+                qVist = qVist.order('created_at', { ascending: false }).limit(10);
+            }
+            const { data: vData } = await qVist;
+            if (vData) {
+                resultados = [...resultados, ...vData.map(v => ({...v, tipo: 'Vistoria', titulo_id: v.vistoria_id}))];
+            }
+
+            // Busca Ocorrências
+            let qOcor = supabase.from('ocorrencias_operacionais').select('id, ocorrencia_id_format, ocorrencia_id, endereco, solicitante, nivel_risco, created_at');
+            if (buscaOrigem && buscaOrigem.length >= 3) {
+                qOcor = qOcor.or(`ocorrencia_id_format.ilike.%${buscaOrigem}%,endereco.ilike.%${buscaOrigem}%,solicitante.ilike.%${buscaOrigem}%`).limit(10);
+            } else {
+                qOcor = qOcor.order('created_at', { ascending: false }).limit(10);
+            }
+            const { data: oData } = await qOcor;
+            if (oData) {
+                resultados = [...resultados, ...oData.map(o => ({...o, tipo: 'Ocorrência', titulo_id: o.ocorrencia_id_format || o.ocorrencia_id}))];
+            }
+
+            // Ordena os resultados mistos por data
+            resultados.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            setOrigensEncontradas(resultados);
+        } catch (error) {
+            console.error('Erro na busca de origens:', error);
+        } finally {
+            setBuscandoOrigens(false);
+        }
+    };
+
+    const handleVincularVistoria = (v) => {
+        let mappedGrau = formData.grau_risco;
+        if (v.nivel_risco) {
+            const nivel = v.nivel_risco.toLowerCase();
+            if (nivel.includes('baixo')) mappedGrau = 'R1';
+            else if (nivel.includes('médio') || nivel.includes('medio')) mappedGrau = 'R2';
+            else if (nivel.includes('alto') && !nivel.includes('muito')) mappedGrau = 'R3';
+            else if (nivel.includes('muito alto') || nivel.includes('iminente')) mappedGrau = 'R4';
+        }
+
         setFormData(prev => ({
             ...prev,
-            medidas_mitigatorias: prev.medidas_mitigatorias.includes(item)
-                ? prev.medidas_mitigatorias.filter(i => i !== item)
-                : [...prev.medidas_mitigatorias, item]
+            vistoria_id: v.id,
+            vistoria_numero: v.titulo_id,
+            endereco: v.endereco || prev.endereco,
+            nome_notificado: v.solicitante || prev.nome_notificado,
+            grau_risco: mappedGrau
+        }));
+        setOrigensEncontradas([]);
+        setBuscaOrigem('');
+        setModalVistoriaOpen(false);
+    };
+
+    const captureLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                setFormData(p => ({ ...p, coordenadas: `${pos.coords.latitude}, ${pos.coords.longitude}` }));
+            }, err => alert('Erro ao capturar GPS. Verifique as permissões.'));
+        }
+    };
+
+    const toggleMedida = (medida) => {
+        setFormData(p => ({
+            ...p,
+            medidas: p.medidas.includes(medida) 
+                ? p.medidas.filter(m => m !== medida)
+                : [...p.medidas, medida]
         }));
     };
 
-    const generateNextNumber = async () => {
-        const year = new Date().getFullYear();
-        const { data } = await supabase
-            .from('noprer')
-            .select('numero_noprer')
-            .like('numero_noprer', `%/${year}`)
-            .order('numero_noprer', { ascending: false })
-            .limit(1);
-            
-        if (data && data.length > 0 && data[0].numero_noprer) {
-            const parts = data[0].numero_noprer.split('/');
-            if (parts.length > 1) {
-                const lastNum = parseInt(parts[0], 10);
-                if (!isNaN(lastNum)) {
-                    return `${(lastNum + 1).toString().padStart(4, '0')}/${year}`;
-                }
-            }
+    const addCustomMedida = () => {
+        if (formData.medida_customizada) {
+            setFormData(p => ({
+                ...p,
+                medidas: [...p.medidas, p.medida_customizada],
+                medida_customizada: ''
+            }));
         }
-        return `0001/${year}`;
     };
 
-    const handleSave = async () => {
-        setIsSaving(true);
+    const salvarRascunho = async () => {
         try {
-            const data_limite = new Date();
-            data_limite.setDate(data_limite.getDate() + formData.prazo_dias);
-
-            if (id && existingNoprer) {
-                // Update
-                const noprerObj = {
-                    tipo_risco: formData.tipo_risco,
-                    descricao: formData.descricao,
-                    medidas_mitigatorias: formData.medidas_mitigatorias,
-                    prazo_dias: formData.prazo_dias,
-                    data_limite: data_limite.toISOString(),
-                    status: signatureMode ? (signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO') : existingNoprer.status,
-                    assinatura: signatureData,
-                    testemunhas: signatureMode === 'recusa' ? testemunhas : null,
-                    recusou_assinatura: signatureMode === 'recusa'
-                };
-                const { error } = await supabase.from('noprer').update(noprerObj).eq('id', id);
-                if (error) {
-                    console.error("Supabase Update Error:", error);
-                    alert(`Falha ao atualizar a NOPRER: ${error.message}`);
-                    throw error;
-                }
-            } else {
-                // Insert
-                const data_emissao = new Date().toISOString();
-                const numeroNoprer = await generateNextNumber();
-                
-                const noprerObj = {
-                    numero_noprer: numeroNoprer,
-                    origem_tipo: origem,
-                    origem_id: sourceData.vistoria_id || sourceData.ocorrencia_id_format || sourceData.ocorrencia_id || origemId,
-                    data_emissao: data_emissao,
-                    risco: origem === 'vistoria' ? (sourceData.nivelRisco || sourceData.nivel_risco) : sourceData.nivel_risco,
-                    tipo_risco: formData.tipo_risco,
-                    descricao: formData.descricao,
-                    medidas_mitigatorias: formData.medidas_mitigatorias,
-                    prazo_dias: formData.prazo_dias,
-                    data_limite: data_limite.toISOString(),
-                    status: signatureMode === 'recusa' ? 'EMITIDA' : 'NOTIFICADO',
-                    endereco: sourceData.endereco,
-                    solicitante: sourceData.solicitante || sourceData.solicitante_nome,
-                    coordenadas: sourceData.coordenadas || (sourceData.latitude ? { lat: sourceData.latitude, lng: sourceData.longitude } : null),
-                    criado_por: userProfile?.full_name || 'Agente',
-                    assinatura: signatureData,
-                    testemunhas: signatureMode === 'recusa' ? testemunhas : null,
-                    recusou_assinatura: signatureMode === 'recusa'
-                };
-
-                const { error } = await supabase.from('noprer').insert([noprerObj]);
-                if (error) {
-                    console.error("Supabase Insert Error:", error);
-                    alert(`Falha ao inserir a NOPRER: ${error.message}`);
-                    throw error;
-                }
+            const savedDraft = await salvarNoprerRascunho(draftId, formData, step, userProfile?.nome || 'Agente');
+            alert('Rascunho salvo com sucesso no banco de dados!');
+            if (!draftId && savedDraft) {
+                navigate(`/noprer/novo?draftId=${savedDraft.id}`, { replace: true });
             }
-
-            navigate('/noprer');
-        } catch (e) {
-            console.error('Erro global ao salvar NOPRER:', e);
-        } finally {
-            setIsSaving(false);
+        } catch (err) {
+            alert('Erro ao salvar rascunho. Tente novamente.');
         }
     };
 
-    if (loading) {
-        return <div className="p-8 text-center">Carregando dados...</div>;
-    }
+    const handleSubmit = async () => {
+        try {
+            setSalvando(true);
+            // Ajusta formatação antes de enviar
+            const payload = { ...formData };
+            delete payload.vistoria_numero; // não vai pro banco NOPRER
+            delete payload.medida_customizada; 
+            delete payload.observacoes; // mock, schema não tem observacoes puras na NOPRER, seria na revistoria_inicial
 
-    if (!sourceData && !id) {
-        return <div className="p-8 text-center text-red-500">Erro: Registro de origem não encontrado.</div>;
-    }
+            const noprerCriada = await criarNoprer(payload);
+            
+            // Limpa o rascunho após emitir com sucesso
+            if (draftId) {
+                await deletarRascunho(draftId);
+            }
+            
+            navigate(`/noprer/sucesso?id=${noprerCriada.id}&numero=${noprerCriada.numero}`);
+        } catch (err) {
+            alert('Erro ao emitir NOPRER. Tente novamente.');
+        } finally {
+            setSalvando(false);
+        }
+    };
 
+    // Renderização Condicional das Etapas
     return (
-        <div className="bg-[#f0f4f8] dark:bg-slate-900 min-h-screen pb-32">
-            {/* Header */}
-            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-20 shadow-sm">
-                <div className="max-w-4xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                            <ArrowLeft size={24} className="text-slate-600 dark:text-slate-300" />
+        <div className="bg-[#F1F5F9] min-h-screen font-[Inter,sans-serif] pb-32">
+            {/* Header / Banner Sticky */}
+            <div className="sticky top-0 z-20 bg-[#1F3B5C] text-white shadow-md">
+                <div className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => navigate('/noprer')} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                            <ChevronLeft size={24} />
                         </button>
                         <div>
-                            <h1 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
-                                <ShieldAlert className="text-blue-600" /> 
-                                {id ? 'Editar NOPRER' : 'Emitir NOPRER'}
-                            </h1>
-                            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">
-                                {id ? `NOPRER ${existingNoprer?.numero_noprer}` : `Origem: ${origem?.toUpperCase() || ''} #${sourceData.vistoria_id || sourceData.ocorrencia_id || origemId || ''}`}
-                            </p>
+                            <h1 className="font-black text-lg">Emitir NOPRER</h1>
+                            <p className="text-[10px] text-blue-200 uppercase tracking-widest">Etapa {step} de 5</p>
                         </div>
                     </div>
                     <button 
-                        onClick={handleSave}
-                        disabled={isSaving || !formData.tipo_risco}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-sm font-bold flex items-center gap-2 shadow-sm shadow-blue-600/20 disabled:opacity-50 transition-all"
+                        onClick={salvarRascunho}
+                        className="text-xs font-bold text-blue-200 border border-blue-400 hover:bg-white/10 hover:text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
                     >
-                        <Save size={18} />
-                        {isSaving ? 'Emitindo...' : 'Finalizar Emissão'}
+                        <Save size={14} /> Rascunho
                     </button>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="flex items-center px-6 pb-4 max-w-5xl mx-auto w-full">
+                    {STEPS.map((s, idx) => (
+                        <React.Fragment key={s.id}>
+                            <div className="flex flex-col items-center gap-1 z-10 relative">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                                    step > s.id ? 'bg-[#86EFAC] text-[#166534]' : step === s.id ? 'bg-[#60A5FA] text-white ring-4 ring-[#60A5FA]/30' : 'bg-[#2E5C8A] text-white/50'
+                                }`}>
+                                    {step > s.id ? <CheckCircle size={14} /> : s.id}
+                                </div>
+                                <span className="text-[9px] absolute -bottom-4 whitespace-nowrap opacity-80">{s.label}</span>
+                            </div>
+                            {idx < STEPS.length - 1 && (
+                                <div className={`flex-1 h-1 mx-1 rounded-full transition-colors ${step > s.id ? 'bg-[#86EFAC]' : 'bg-[#2E5C8A]'}`} />
+                            )}
+                        </React.Fragment>
+                    ))}
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
-                
-                {/* Info Card */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-sm p-5 flex flex-col md:flex-row gap-4 justify-between items-start">
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Responsável Notificado</p>
-                        <p className="font-bold text-slate-800 dark:text-slate-200">{sourceData.solicitante || 'Não identificado'}</p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Localização</p>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                             {sourceData.endereco || 'Sem endereço'}
-                        </p>
-                    </div>
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Risco Avaliado</p>
-                        <p className="font-black text-orange-600">{origem === 'vistoria' ? sourceData.nivelRisco : sourceData.nivel_risco}</p>
-                    </div>
+            {/* Banner de Contexto (Aparece se houver dados preenchidos) */}
+            {(formData.nome_notificado || formData.grau_risco) && (
+                <div className="bg-white px-4 py-2 border-b text-xs flex gap-4 overflow-x-auto whitespace-nowrap shadow-sm">
+                    {formData.nome_notificado && <span className="font-bold text-slate-700">Notificado: <span className="font-normal">{formData.nome_notificado}</span></span>}
+                    {formData.tipo_risco && <span className="font-bold text-slate-700">Risco: <span className="font-normal">{formData.tipo_risco}</span></span>}
+                    {formData.grau_risco && <span className="font-bold text-slate-700">Grau: <span className="font-black text-orange-600">{formData.grau_risco}</span></span>}
                 </div>
+            )}
 
-                {/* Form Sections */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Left Column */}
-                    <div className="space-y-6">
-                        
-                        {/* Tipo de Risco */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
-                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
-                                
-                                1. Classificação do Risco
+            <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6 mt-4">
+                
+                {/* ETAPA 1 */}
+                {step === 1 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                        {/* Vínculo Vistoria */}
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <h3 className="text-sm font-black text-[#1F3B5C] mb-3 flex items-center gap-2">
+                                <Search size={16} className="text-blue-500"/> Origem (Opcional)
                             </h3>
                             
-                            <div className="grid grid-cols-2 gap-2 mb-4">
+                            {formData.vistoria_numero ? (
+                                <div className="bg-[#F0FDF4] border border-[#86EFAC] p-3 rounded-lg flex justify-between items-center">
+                                    <div>
+                                        <p className="text-[10px] text-[#166534] font-bold uppercase">Vistoria Vinculada</p>
+                                        <p className="text-sm font-black text-[#166534]">{formData.vistoria_numero}</p>
+                                    </div>
+                                    <button onClick={() => setFormData(p => ({...p, vistoria_id: null, vistoria_numero: ''}))} className="text-red-500 p-1 hover:bg-red-50 rounded">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={() => setModalVistoriaOpen(true)}
+                                    className="w-full flex items-center justify-between p-3 border border-slate-300 rounded-lg text-sm bg-slate-50 hover:bg-slate-100 transition-colors text-slate-600"
+                                >
+                                    <span>Clique para buscar e vincular uma vistoria...</span>
+                                    <Search size={16} className="text-blue-500" />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm space-y-4">
+                            <h3 className="text-sm font-black text-[#1F3B5C] border-b pb-2">Dados do Responsável / Imóvel</h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Nome Completo *</label>
+                                    <input type="text" value={formData.nome_notificado} onChange={e => setFormData(p => ({...p, nome_notificado: e.target.value}))} className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">CPF / CNPJ *</label>
+                                    <input type="text" value={formData.cpf_notificado} onChange={e => setFormData(p => ({...p, cpf_notificado: applyCpfCnpjMask(e.target.value)}))} placeholder="000.000.000-00" className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Telefone</label>
+                                    <input type="text" value={formData.contato} onChange={e => setFormData(p => ({...p, contato: applyPhoneMask(e.target.value)}))} placeholder="(27) 99999-9999" className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Condição *</label>
+                                    <select value={formData.condicao} onChange={e => setFormData(p => ({...p, condicao: e.target.value}))} className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500 bg-white">
+                                        <option value="">Selecione...</option>
+                                        <option value="Proprietário(a)">Proprietário(a)</option>
+                                        <option value="Inquilino(a)">Inquilino(a)</option>
+                                        <option value="Possuidor(a)">Possuidor(a)</option>
+                                        <option value="Representante legal">Representante legal</option>
+                                        <option value="Responsável ausente">Responsável (ausente no ato)</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Endereço Completo *</label>
+                                    <input type="text" value={formData.endereco} onChange={e => setFormData(p => ({...p, endereco: e.target.value}))} className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Inscrição Imobiliária</label>
+                                    <input type="text" value={formData.inscricao_imob} onChange={e => setFormData(p => ({...p, inscricao_imob: e.target.value}))} className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1 flex items-center justify-between">
+                                        Coordenadas GPS
+                                        <button onClick={captureLocation} className="text-blue-600 flex items-center gap-1 hover:underline"><MapPin size={12}/> Capturar</button>
+                                    </label>
+                                    <input type="text" value={formData.coordenadas} onChange={e => setFormData(p => ({...p, coordenadas: e.target.value}))} placeholder="-20.000, -40.000" className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ETAPA 2 */}
+                {step === 2 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <h3 className="text-sm font-black text-[#1F3B5C] mb-4">Tipo de Risco</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
                                 {RISK_TYPES.map(rt => (
-                                    <button
-                                        key={rt}
-                                        onClick={() => setFormData(p => ({ ...p, tipo_risco: rt }))}
-                                        className={`p-2.5 rounded-sm border text-xs font-bold transition-all ${
-                                            formData.tipo_risco === rt 
-                                            ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' 
-                                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-900/50 dark:border-slate-700 dark:text-slate-400'
+                                    <button 
+                                        key={rt.id} 
+                                        onClick={() => setFormData(p => ({...p, tipo_risco: rt.label, sub_tipo: ''}))}
+                                        className={`p-3 rounded-lg border text-xs font-bold flex flex-col items-center gap-2 transition-all ${
+                                            formData.tipo_risco === rt.label ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                                         }`}
                                     >
-                                        {rt}
+                                        <span className="text-xl">{rt.ico}</span>
+                                        {rt.label}
                                     </button>
                                 ))}
                             </div>
 
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 block">Descrição Técnica (O que foi constatado?)</label>
-                            <textarea
-                                value={formData.descricao}
-                                onChange={(e) => setFormData(p => ({ ...p, descricao: e.target.value }))}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-                                rows={4}
-                            />
+                            {/* Subtipos */}
+                            {formData.tipo_risco && (
+                                <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Subtipo Específico</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {RISK_TYPES.find(r => r.label === formData.tipo_risco)?.subs.map(sub => (
+                                            <button 
+                                                key={sub}
+                                                onClick={() => setFormData(p => ({...p, sub_tipo: sub}))}
+                                                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                                                    formData.sub_tipo === sub ? 'bg-[#1F3B5C] text-white border-[#1F3B5C]' : 'bg-white border-slate-300 text-slate-600 hover:border-slate-400'
+                                                }`}
+                                            >
+                                                {sub}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Prazos */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
-                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
-                                
-                                3. Prazos e Monitoramento
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <h3 className="text-sm font-black text-[#1F3B5C] mb-4">Grau de Risco</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                {GRAUS.map(g => (
+                                    <div 
+                                        key={g.id}
+                                        onClick={() => setFormData(p => ({...p, grau_risco: g.id}))}
+                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                            formData.grau_risco === g.id ? `${g.bgColor} ${g.borderColor} shadow-sm` : 'bg-white border-slate-200 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className={`font-black text-sm ${formData.grau_risco === g.id ? g.textColor : 'text-slate-700'}`}>{g.label}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 leading-snug">{g.descricao}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {formData.grau_risco === 'R4' && (
+                                <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3 mt-4">
+                                    <AlertTriangle className="text-red-600 shrink-0 mt-0.5" size={18} />
+                                    <div>
+                                        <p className="font-bold text-red-800 text-sm">Alerta de Risco Iminente</p>
+                                        <p className="text-xs text-red-600 mt-1">
+                                            Atenção: A NOPRER não possui força de interdição. Para riscos do tipo R4, avalie se a emissão de um Termo de Interdição não é o instrumento jurídico mais adequado.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Descrição Técnica do Risco *</label>
+                            <textarea 
+                                value={formData.descricao_risco}
+                                onChange={e => setFormData(p => ({...p, descricao_risco: e.target.value}))}
+                                placeholder="Descreva detalhadamente as anomalias, evolução e o cenário encontrado..."
+                                className="w-full p-4 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500 h-32"
+                            />
+                            <p className="text-xs text-slate-400 text-right mt-1 font-mono">{formData.descricao_risco.length} chars (mín: 20)</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ETAPA 3 - Omitindo Lógica Pesada de Upload, simulando UI */}
+                {step === 3 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <h3 className="text-sm font-black text-[#1F3B5C] mb-4 flex items-center gap-2">
+                                <Camera size={18} className="text-blue-500" /> Registro Fotográfico
                             </h3>
                             
-                            <div className="flex items-center gap-4">
-                                <div className="flex-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 block">Prazo (Dias)</label>
-                                    <input
-                                        type="number"
-                                        value={formData.prazo_dias}
-                                        onChange={(e) => setFormData(p => ({ ...p, prazo_dias: parseInt(e.target.value) || 0 }))}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm p-3 text-lg font-black focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
-                                    />
+                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex gap-3 items-start mb-6">
+                                <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-blue-800">Recomendado: mínimo 3 fotos (visão geral da fachada, detalhe do risco principal, e entorno/vizinhança).</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {/* Simulador de Fotos */}
+                                {formData.fotos.map((foto, idx) => (
+                                    <div key={idx} className="relative aspect-square bg-slate-200 rounded-lg overflow-hidden group">
+                                        <img src={foto} alt={`Evidência ${idx}`} className="w-full h-full object-cover" />
+                                        <button className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                                
+                                {formData.fotos.length < 5 && (
+                                    <button 
+                                        onClick={() => alert("Upload não implementado no protótipo")}
+                                        className="aspect-square bg-slate-50 border-2 border-dashed border-slate-300 hover:border-blue-400 rounded-lg flex flex-col items-center justify-center text-slate-500 transition-colors"
+                                    >
+                                        <Plus size={24} className="mb-2" />
+                                        <span className="text-xs font-bold">Adicionar Foto</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ETAPA 4 */}
+                {step === 4 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                        
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row gap-6">
+                            <div className="flex-1">
+                                <h3 className="text-sm font-black text-[#1F3B5C] mb-4">Prazo Concedido</h3>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {[15, 30, 45, 60, 90].map(d => (
+                                        <button 
+                                            key={d}
+                                            onClick={() => setFormData(p => ({...p, prazo_dias: d}))}
+                                            className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${
+                                                formData.prazo_dias === d ? 'bg-[#1F3B5C] text-white border-[#1F3B5C]' : 'bg-slate-50 border-slate-300 text-slate-600'
+                                            }`}
+                                        >
+                                            {d} dias
+                                        </button>
+                                    ))}
                                 </div>
-                                <div className="flex-[2] bg-blue-50 dark:bg-blue-900/20 rounded-sm p-3 border border-blue-100 dark:border-blue-800">
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider">Aviso de Revistoria</p>
-                                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                                        Uma Ordem de Serviço para Revistoria será agendada automaticamente para +3 dias após o vencimento.
-                                    </p>
+                                <div className="mt-2 flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-500">Outro prazo:</span>
+                                    <div className="flex items-center bg-white border border-slate-300 rounded-lg overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                                        <input 
+                                            type="number" 
+                                            min="1"
+                                            placeholder="Ex: 20"
+                                            value={![15, 30, 45, 60, 90].includes(formData.prazo_dias) ? formData.prazo_dias : ''}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (!isNaN(val) && val > 0) setFormData(p => ({...p, prazo_dias: val}));
+                                            }}
+                                            className="w-20 p-2 text-sm outline-none text-center font-bold"
+                                        />
+                                        <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-2.5 border-l border-slate-300">dias</span>
+                                    </div>
                                 </div>
+                            </div>
+                            
+                            <div className="flex-1 bg-[#FFFBEB] p-4 rounded-xl border border-[#FCD34D]">
+                                <p className="text-[10px] font-black text-[#92400E] uppercase tracking-widest mb-3">Cronograma Calculado</p>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center border-b border-amber-200/50 pb-2">
+                                        <span className="text-xs text-amber-800">Data Limite:</span>
+                                        <span className="text-sm font-black text-amber-900">{datas.dataLimite.toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs text-amber-800">Agendar Revistoria:</span>
+                                        <span className="text-sm font-black text-amber-900">{datas.dataRevistoria.toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                </div>
+                                <p className="text-[9px] text-amber-700 mt-3">* O sistema gerará a OS de revistoria automaticamente no encerramento do prazo.</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <h3 className="text-sm font-black text-[#1F3B5C] mb-4">Medidas Mitigatórias Sugeridas</h3>
+                            <p className="text-xs text-slate-500 mb-4">Selecione as ações que o responsável deve obrigatoriamente executar dentro do prazo.</p>
+                            
+                            <div className="space-y-2 mb-4">
+                                {(RISK_TYPES.find(r => r.label === formData.tipo_risco)?.medidas || []).map((m, idx) => {
+                                    const isSelected = formData.medidas.includes(m);
+                                    return (
+                                        <div 
+                                            key={idx} 
+                                            onClick={() => toggleMedida(m)}
+                                            className={`p-3 rounded-lg border cursor-pointer flex gap-3 items-start transition-colors ${
+                                                isSelected ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                                            }`}
+                                        >
+                                            <div className={`w-5 h-5 shrink-0 rounded border flex items-center justify-center mt-0.5 ${
+                                                isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-400 bg-white'
+                                            }`}>
+                                                {isSelected && <Check size={14} />}
+                                            </div>
+                                            <span className={`text-sm ${isSelected ? 'text-blue-900 font-medium' : 'text-slate-600'}`}>{m}</span>
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Renderiza as Medidas Customizadas que foram adicionadas */}
+                                {formData.medidas.filter(m => !(RISK_TYPES.find(r => r.label === formData.tipo_risco)?.medidas || []).includes(m)).map((customM, idx) => (
+                                    <div 
+                                        key={`custom-${idx}`} 
+                                        className="p-3 rounded-lg border cursor-pointer flex gap-3 items-start transition-colors bg-indigo-50 border-indigo-200"
+                                        onClick={() => toggleMedida(customM)}
+                                    >
+                                        <div className="w-5 h-5 shrink-0 rounded border flex items-center justify-center mt-0.5 bg-indigo-600 border-indigo-600 text-white">
+                                            <Check size={14} />
+                                        </div>
+                                        <span className="text-sm text-indigo-900 font-medium flex-1">{customM}</span>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); toggleMedida(customM); }}
+                                            className="text-indigo-400 hover:text-red-500 transition-colors"
+                                            title="Remover medida customizada"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex gap-2 mt-4">
+                                <input 
+                                    type="text" 
+                                    placeholder="Outra medida específica não listada..."
+                                    value={formData.medida_customizada}
+                                    onChange={e => setFormData(p => ({...p, medida_customizada: e.target.value}))}
+                                    onKeyUp={e => e.key === 'Enter' && addCustomMedida()}
+                                    className="flex-1 p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" 
+                                />
+                                <button onClick={addCustomMedida} className="bg-slate-800 text-white px-4 rounded-lg text-sm font-bold">Incluir</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ETAPA 5 */}
+                {step === 5 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                        
+                        <div className="bg-[#FFFBEB] p-5 rounded-xl border border-[#FCD34D]">
+                            <h3 className="text-sm font-black text-[#92400E] mb-2 uppercase tracking-widest flex items-center gap-2">
+                                <ShieldAlert size={16} /> Termo Legal
+                            </h3>
+                            <p className="text-xs text-[#92400E] text-justify leading-relaxed mb-4">
+                                Fica o responsável NOTIFICADO sobre o risco identificado, devendo adotar as medidas estipuladas no prazo máximo de <strong>{formData.prazo_dias} dias</strong>. Esta NOPRER <strong>NÃO</strong> constitui auto de interdição. A omissão das obrigações poderá acarretar responsabilidade civil, nos termos da Lei nº 12.608/2012 e legislação municipal vigente.
+                            </p>
+                            <label className="flex items-center gap-3 bg-white/60 p-3 rounded-lg border border-amber-200 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    checked={formData.termo_lido}
+                                    onChange={e => setFormData(p => ({...p, termo_lido: e.target.checked}))}
+                                    className="w-5 h-5 rounded border-amber-400 text-amber-600 focus:ring-amber-500" 
+                                />
+                                <span className="text-sm font-bold text-amber-900">Confirmo que o termo acima foi LIDO ao notificado(a) presente.</span>
+                            </label>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <h3 className="text-sm font-black text-[#1F3B5C] mb-4">Assinatura do Notificado</h3>
+                            
+                            <div className="flex gap-2 mb-4 bg-slate-100 p-1 rounded-lg">
+                                <button onClick={() => setFormData(p => ({...p, modo_assinatura: 'digital'}))} className={`flex-1 p-2 text-sm font-bold rounded-md transition-all ${formData.modo_assinatura === 'digital' ? 'bg-white shadow text-blue-600' : 'text-slate-500'}`}>✍️ Em Tela</button>
+                                <button onClick={() => setFormData(p => ({...p, modo_assinatura: 'recusa'}))} className={`flex-1 p-2 text-sm font-bold rounded-md transition-all ${formData.modo_assinatura === 'recusa' ? 'bg-white shadow text-red-600' : 'text-slate-500'}`}>✋ Recusou</button>
+                            </div>
+
+                            {formData.modo_assinatura === 'digital' ? (
+                                <div className="border border-slate-300 rounded-xl p-4 bg-slate-50 flex flex-col items-center">
+                                    {formData.sign_notificado ? (
+                                        <div className="relative border border-green-200 bg-white rounded-lg p-2">
+                                            <img src={formData.sign_notificado} alt="Assinatura Notificado" className="h-20 object-contain" />
+                                            <button onClick={() => setFormData(p => ({...p, sign_notificado: null}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={12}/></button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => setSigModal('notificado')} className="bg-[#1F3B5C] text-white px-6 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-800">Assinar na Tela</button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                                    <p className="text-xs text-red-800 font-bold mb-4">Necessário testemunho de duas pessoas para validade jurídica da NOPRER.</p>
+                                    
+                                    <div className="space-y-4">
+                                        <div className="bg-white p-4 rounded-lg border border-red-100 flex flex-col gap-2">
+                                            <p className="text-xs font-bold text-slate-500 uppercase mb-2">Testemunha 1</p>
+                                            <input type="text" placeholder="Nome" value={formData.test1_nome} onChange={e => setFormData(p => ({...p, test1_nome: e.target.value}))} className="w-full p-2 text-sm border rounded outline-none" />
+                                            <input type="text" placeholder="CPF" value={formData.test1_cpf} onChange={e => setFormData(p => ({...p, test1_cpf: e.target.value}))} className="w-full p-2 text-sm border rounded outline-none" />
+                                            
+                                            <div className="mt-2 flex justify-center">
+                                                {formData.sign_test1 ? (
+                                                    <div className="relative border border-green-200 bg-white rounded-lg p-2">
+                                                        <img src={formData.sign_test1} alt="Assinatura Testemunha 1" className="h-16 object-contain" />
+                                                        <button onClick={() => setFormData(p => ({...p, sign_test1: null}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={12}/></button>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => setSigModal('test1')} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-200 w-full">Assinar</button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-lg border border-red-100 flex flex-col gap-2">
+                                            <p className="text-xs font-bold text-slate-500 uppercase mb-2">Testemunha 2</p>
+                                            <input type="text" placeholder="Nome" value={formData.test2_nome} onChange={e => setFormData(p => ({...p, test2_nome: e.target.value}))} className="w-full p-2 text-sm border rounded outline-none" />
+                                            <input type="text" placeholder="CPF" value={formData.test2_cpf} onChange={e => setFormData(p => ({...p, test2_cpf: e.target.value}))} className="w-full p-2 text-sm border rounded outline-none" />
+                                            
+                                            <div className="mt-2 flex justify-center">
+                                                {formData.sign_test2 ? (
+                                                    <div className="relative border border-green-200 bg-white rounded-lg p-2">
+                                                        <img src={formData.sign_test2} alt="Assinatura Testemunha 2" className="h-16 object-contain" />
+                                                        <button onClick={() => setFormData(p => ({...p, sign_test2: null}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={12}/></button>
+                                                    </div>
+                                                ) : (
+                                                    <button onClick={() => setSigModal('test2')} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-200 w-full">Assinar</button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-sm font-black text-[#1F3B5C]">Assinatura do Agente *</h3>
+                            </div>
+                            
+                            <div className="border border-slate-300 rounded-xl p-4 bg-slate-50 flex flex-col items-center">
+                                {formData.sign_agente ? (
+                                    <div className="relative border border-green-200 bg-white rounded-lg p-2 flex flex-col items-center">
+                                        <img src={formData.sign_agente} alt="Assinatura Agente" className="h-20 object-contain" />
+                                        <span className="text-[10px] font-bold text-slate-500 mt-2">{formData.nome_agente}</span>
+                                        <button onClick={() => setFormData(p => ({...p, sign_agente: null, nome_agente: ''}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={12}/></button>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-3">
+                                        <button onClick={() => setSigModal('agente')} className="bg-[#1F3B5C] text-white px-6 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-800">
+                                            Assinar na Tela
+                                        </button>
+                                        {userProfile?.assinatura && (
+                                            <button 
+                                                onClick={() => setFormData(p => ({...p, sign_agente: userProfile.assinatura, nome_agente: userProfile.nome}))}
+                                                className="bg-emerald-100 text-emerald-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-emerald-200"
+                                            >
+                                                Auto-assinar
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                     </div>
-
-                    {/* Right Column */}
-                    <div className="space-y-6">
+                )}
+                
+                {/* FOOTER NAVIGATION */}
+                <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-30">
+                    <div className="max-w-5xl mx-auto flex justify-between items-center gap-4">
+                        <button 
+                            onClick={() => step === 1 ? navigate(-1) : setStep(s => Math.max(1, s - 1))}
+                            disabled={salvando}
+                            className="px-6 py-3 rounded-lg font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 transition-colors"
+                        >
+                            Voltar
+                        </button>
                         
-                        {/* Checklist Inteligente */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
-                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
-                                
-                                2. Medidas Mitigatórias
-                            </h3>
-                            
-                            {!formData.tipo_risco ? (
-                                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-sm font-medium rounded-sm border border-orange-100 dark:border-orange-800 text-center">
-                                    Selecione um Tipo de Risco primeiro para ver as sugestões.
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                        Sugestões para risco {formData.tipo_risco}:
-                                    </p>
-                                    {(INTELLIGENT_CHECKLIST[formData.tipo_risco] || []).map((medida, idx) => {
-                                        const isChecked = formData.medidas_mitigatorias.includes(medida);
-                                        return (
-                                            <div 
-                                                key={idx}
-                                                onClick={() => handleChecklistToggle(medida)}
-                                                className={`p-3 rounded-sm border flex items-start gap-3 cursor-pointer transition-all ${
-                                                    isChecked 
-                                                    ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/50' 
-                                                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100 dark:bg-slate-900/50 dark:border-slate-700'
-                                                }`}
-                                            >
-                                                <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center border ${isChecked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600'}`}>
-                                                    {isChecked && <span>✓</span>}
-                                                </div>
-                                                <span className={`text-sm font-medium ${isChecked ? 'text-emerald-900 dark:text-emerald-300' : 'text-slate-600 dark:text-slate-300'}`}>
-                                                    {medida}
-                                                </span>
-                                            </div>
-                                        )
-                                    })}
-
-                                    {/* Custom option could go here */}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Assinatura */}
-                        <div className="bg-white border border-slate-200 rounded-sm shadow-sm overflow-hidden p-6">
-                            <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs mb-6 -mx-6 -mt-6">
-                                
-                                4. Ciência e Assinatura
-                            </h3>
-
-                            {!signatureMode ? (
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={() => setSignatureMode('digital')}
-                                        className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-3 rounded-sm text-sm font-bold border border-indigo-200 transition-colors"
-                                    >
-                                        Assinatura em Tela
-                                    </button>
-                                    <button 
-                                        onClick={() => setSignatureMode('recusa')}
-                                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 p-3 rounded-sm text-sm font-bold border border-red-200 transition-colors"
-                                    >
-                                        Recusou Assinar
-                                    </button>
-                                </div>
-                            ) : signatureMode === 'digital' ? (
-                                <div className="space-y-4 animate-in fade-in">
-                                    <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded-sm border border-slate-200 dark:border-slate-700">
-                                        <SignaturePad onSave={(sig) => setSignatureData(sig)} />
-                                    </div>
-                                    <button 
-                                        onClick={() => { setSignatureMode(null); setSignatureData(null); }}
-                                        className="text-xs text-red-500 font-bold uppercase hover:underline"
-                                    >
-                                        Cancelar / Alterar Método
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="space-y-4 animate-in fade-in bg-red-50 dark:bg-red-900/10 p-4 rounded-sm border border-red-100 dark:border-red-900/50">
-                                    <p className="text-sm font-bold text-red-700 dark:text-red-400">Notificado recusou assinar.</p>
-                                    <p className="text-xs text-red-600 dark:text-red-300">Necessário qualificação de duas testemunhas.</p>
-                                    
-                                    <div className="grid grid-cols-2 gap-3 mt-4">
-                                        <div>
-                                            <input type="text" placeholder="Nome Testemunha 1" value={testemunhas.t1} onChange={e => setTestemunhas(p => ({...p, t1: e.target.value}))} className="w-full text-xs p-2 rounded border outline-none" />
-                                            <input type="text" placeholder="CPF/RG" value={testemunhas.doc1} onChange={e => setTestemunhas(p => ({...p, doc1: e.target.value}))} className="w-full text-xs p-2 rounded border outline-none mt-1" />
-                                        </div>
-                                        <div>
-                                            <input type="text" placeholder="Nome Testemunha 2" value={testemunhas.t2} onChange={e => setTestemunhas(p => ({...p, t2: e.target.value}))} className="w-full text-xs p-2 rounded border outline-none" />
-                                            <input type="text" placeholder="CPF/RG" value={testemunhas.doc2} onChange={e => setTestemunhas(p => ({...p, doc2: e.target.value}))} className="w-full text-xs p-2 rounded border outline-none mt-1" />
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={() => { setSignatureMode(null); setTestemunhas({t1:'', doc1:'', t2:'', doc2:''}); }}
-                                        className="text-xs text-slate-500 font-bold uppercase hover:underline mt-2 block"
-                                    >
-                                        Cancelar Recusa
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
+                        {step < 5 ? (
+                            <button 
+                                onClick={() => setStep(s => Math.min(5, s + 1))}
+                                disabled={!isStepValid()}
+                                className="flex-1 md:flex-none px-8 py-3 rounded-lg font-black text-white bg-[#1F3B5C] hover:bg-[#2E5C8A] disabled:opacity-50 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-[#1F3B5C]/20"
+                            >
+                                Avançar <ChevronRight size={18} />
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={handleSubmit}
+                                disabled={!isStepValid() || salvando}
+                                className="flex-1 md:flex-none px-8 py-3 rounded-lg font-black text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-green-600/30"
+                            >
+                                <Save size={18} />
+                                {salvando ? 'Processando...' : 'Finalizar Emissão'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
             </div>
+
+            {/* Modal de Busca de Vistoria */}
+            {modalVistoriaOpen && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh]">
+                        <div className="p-4 border-b flex justify-between items-center">
+                            <h2 className="font-black text-[#1F3B5C] flex items-center gap-2">
+                                <Search size={18} className="text-blue-500"/> Buscar Origem
+                            </h2>
+                            <button onClick={() => setModalVistoriaOpen(false)} className="text-slate-400 hover:text-red-500">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-4 border-b bg-slate-50 flex gap-2">
+                            <input 
+                                type="text" 
+                                value={buscaOrigem}
+                                onChange={e => setBuscaOrigem(e.target.value)}
+                                onKeyUp={e => e.key === 'Enter' && handleBuscarOrigens()}
+                                placeholder="Buscar por Nome, Nº ou Endereço..."
+                                className="flex-1 p-3 border border-slate-300 rounded-lg text-sm bg-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                autoFocus
+                            />
+                            <button onClick={handleBuscarOrigens} disabled={buscandoOrigens} className="bg-blue-600 text-white px-5 rounded-lg text-sm font-bold shadow-md hover:bg-blue-700 disabled:opacity-50">Buscar</button>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1 bg-white space-y-2">
+                            {buscandoOrigens ? (
+                                <div className="text-center text-slate-500 text-sm py-10">Buscando registros...</div>
+                            ) : origensEncontradas.length === 0 ? (
+                                <div className="text-center text-slate-500 text-sm py-10">
+                                    {buscaOrigem.length > 0 ? 'Nenhuma vistoria ou ocorrência encontrada.' : 'Nenhum registro recente encontrado.'}
+                                </div>
+                            ) : (
+                                origensEncontradas.map(v => (
+                                    <div 
+                                        key={v.id} 
+                                        onClick={() => handleVincularVistoria(v)} 
+                                        className="p-4 border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                                    >
+                                        <div className="flex justify-between items-start mb-1">
+                                            <div className="flex gap-2 items-center">
+                                                <span className={`font-black text-xs px-2 py-0.5 rounded-md ${v.tipo === 'Vistoria' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>{v.tipo}</span>
+                                                <span className="font-black text-sm text-[#1F3B5C] bg-slate-100 px-2 py-0.5 rounded-md">#{v.titulo_id}</span>
+                                            </div>
+                                            {v.nivel_risco && (
+                                                <span className="text-[10px] font-bold uppercase text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded">
+                                                    {v.nivel_risco}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-slate-700 font-bold mt-2">{v.solicitante || 'Sem solicitante'}</p>
+                                        <p className="text-xs text-slate-500 mt-1 flex items-start gap-1">
+                                            <MapPin size={12} className="mt-0.5 shrink-0" />
+                                            <span className="line-clamp-2">{v.endereco}</span>
+                                        </p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modais de Assinatura Renderizados Unicamente */}
+            {sigModal && (
+                <SignaturePad 
+                    title={`Assinatura - ${sigModal === 'notificado' ? 'Notificado' : sigModal === 'agente' ? 'Agente' : 'Testemunha'}`}
+                    onSave={(sig) => {
+                        setFormData(p => {
+                            const updates = {};
+                            if (sigModal === 'notificado') updates.sign_notificado = sig;
+                            if (sigModal === 'agente') {
+                                updates.sign_agente = sig;
+                                updates.nome_agente = userProfile?.nome || 'Agente';
+                            }
+                            if (sigModal === 'test1') updates.sign_test1 = sig;
+                            if (sigModal === 'test2') updates.sign_test2 = sig;
+                            return { ...p, ...updates };
+                        });
+                        setSigModal(null);
+                    }}
+                    onCancel={() => setSigModal(null)}
+                />
+            )}
         </div>
     );
 };
