@@ -8,19 +8,24 @@ import DiasBadge from './components/DiasBadge';
 import PrazoBar from './components/PrazoBar';
 import { 
     ArrowLeft, Download, MapPin, User, FileText, 
-    Clock, Plus, CheckCircle, ShieldAlert, AlertTriangle, X
+    Clock, Plus, CheckCircle, ShieldAlert, AlertTriangle, X, Upload, Check, FileImage, Trash2, Edit, Printer
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { supabase } from '../../services/supabase';
 
 const TelaDetalhe = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { userProfile } = useContext(UserContext);
-    const { fetchNoprerById, registrarRevistoria, loading } = useNoprer();
+    const userProfile = useContext(UserContext);
+    const { fetchNoprerById, registrarRevistoria, anexarDocumento, loading } = useNoprer();
     
     const [noprer, setNoprer] = useState(null);
-    const [modal, setModal] = useState(null); // 'revistoria', 'encerrar', 'escalar'
+    const [modal, setModal] = useState(null); // 'revistoria', 'encerrar', 'escalar', 'excluir'
     const [modalObs, setModalObs] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    const userRole = userProfile?.role?.toLowerCase() || '';
+    const hasAdminPrivilege = ['admin', 'administrador', 'coordenador', 'coordenador de proteção e defesa civil'].includes(userRole);
 
     useEffect(() => {
         carregarNoprer();
@@ -54,9 +59,55 @@ const TelaDetalhe = () => {
         }
     };
 
+    const handleExcluirNoprer = async () => {
+        setSubmitting(true);
+        try {
+            // Remove histórico primeiro
+            await supabase.from('noprer_revistoria').delete().eq('noprer_id', id);
+            // Remove NOPRER
+            const { error } = await supabase.from('noprer').delete().eq('id', id);
+            if (error) throw error;
+            
+            toast.success('NOPRER excluída com sucesso.');
+            navigate('/noprer');
+        } catch (err) {
+            console.error(err);
+            toast.error('Erro ao excluir NOPRER.');
+            setSubmitting(false);
+        }
+    };
+
+    const handleGeneratePDF = () => {
+        window.open(`/noprer/imprimir/${id}`, '_blank');
+    };
+
     if (loading && !noprer) {
         return <div className="p-8 text-center text-slate-500">Carregando detalhes...</div>;
     }
+
+    const handleUploadAnexo = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Limita o tamanho a 5MB
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('A imagem não pode ter mais de 5MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64 = reader.result;
+            try {
+                await anexarDocumento(id, base64);
+                toast.success('Documento anexado com sucesso!');
+                carregarNoprer();
+            } catch (err) {
+                toast.error('Erro ao anexar documento. Verifique sua conexão e banco de dados.');
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
     if (!noprer) {
         return <div className="p-8 text-center text-red-500">NOPRER não encontrada.</div>;
@@ -81,7 +132,7 @@ const TelaDetalhe = () => {
                             <div className="flex items-center gap-2 text-xs text-[#64748B] flex-wrap">
                                 {noprer.vistoria && (
                                     <span className="bg-slate-100 px-2 py-0.5 rounded border">
-                                        Origem: <span className="font-bold cursor-pointer hover:underline">{noprer.vistoria.numero}</span>
+                                        Origem: <span className="font-bold cursor-pointer hover:underline">{noprer.vistoria.vistoria_id}</span>
                                     </span>
                                 )}
                                 <span className="flex items-center gap-1"><MapPin size={12}/> {noprer.endereco}</span>
@@ -91,8 +142,27 @@ const TelaDetalhe = () => {
                     
                     {/* Botões de Ação Topo */}
                     <div className="flex items-center gap-2">
-                        <button className="bg-white hover:bg-slate-50 text-slate-700 border border-[#E2E8F0] px-3 py-2 rounded-lg font-bold flex items-center gap-2 text-sm transition-colors shadow-sm">
-                            <Download size={16} /> Exportar .docx
+                        {hasAdminPrivilege && (
+                            <>
+                                <button 
+                                    onClick={() => navigate(`/noprer/editar/${id}`)}
+                                    className="bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 px-3 py-2 rounded-lg font-bold flex items-center gap-2 text-sm transition-colors shadow-sm"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Editar
+                                </button>
+                                <button 
+                                    onClick={() => setModal('excluir')}
+                                    className="bg-white hover:bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg font-bold flex items-center gap-2 text-sm transition-colors shadow-sm"
+                                >
+                                    <Trash2 size={16} /> Excluir
+                                </button>
+                            </>
+                        )}
+                        <button 
+                            onClick={handleGeneratePDF}
+                            className="bg-[#1F3B5C] hover:bg-[#2E5C8A] text-white border border-[#2E5C8A] px-3 py-2 rounded-lg font-bold flex items-center gap-2 text-sm transition-colors shadow-sm"
+                        >
+                            <Printer size={16} /> Imprimir NOPRER
                         </button>
                     </div>
                 </div>
@@ -187,6 +257,39 @@ const TelaDetalhe = () => {
                                 ))}
                             </ul>
                         </div>
+
+                        {/* Upload de Assinatura Impressa */}
+                        {noprer.modo_assinatura === 'impresso' && (
+                            <div className="p-5 bg-emerald-50 border-t border-[#E2E8F0]">
+                                <h3 className="text-sm font-black text-emerald-900 flex items-center gap-2 mb-3">
+                                    <FileImage size={18}/> Documento Assinado (Físico)
+                                </h3>
+                                
+                                {noprer.documento_anexo ? (
+                                    <div className="flex flex-col gap-3">
+                                        <div className="bg-white p-3 rounded-lg border border-emerald-200 flex items-center gap-3">
+                                            <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full"><Check size={16}/></div>
+                                            <div>
+                                                <p className="text-sm font-bold text-emerald-900">Documento anexado com sucesso.</p>
+                                                <p className="text-xs text-emerald-700">A assinatura física foi digitalizada e arquivada.</p>
+                                            </div>
+                                        </div>
+                                        {noprer.documento_anexo.startsWith('data:image') && (
+                                            <img src={noprer.documento_anexo} alt="Documento Anexado" className="max-h-[300px] object-contain rounded-lg border border-slate-200" />
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p className="text-xs text-emerald-700 mb-3">Esta NOPRER foi configurada para ser assinada em papel. Por favor, digitalize ou tire uma foto legível da folha assinada pelo notificado e faça o upload abaixo.</p>
+                                        <label className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-emerald-400 bg-white hover:bg-emerald-100 rounded-xl cursor-pointer transition-colors">
+                                            <Upload size={20} className="text-emerald-600"/>
+                                            <span className="text-sm font-bold text-emerald-800">Fazer Upload do Documento</span>
+                                            <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUploadAnexo} disabled={submitting} />
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                 </div>
@@ -224,7 +327,7 @@ const TelaDetalhe = () => {
                         <h3 className="text-sm font-black text-[#1F3B5C] mb-6">Linha do Tempo</h3>
                         
                         <div className="relative pl-6 space-y-6 before:absolute before:inset-0 before:ml-2 before:translate-x-0.5 before:w-0.5 before:bg-slate-200 before:h-full">
-                            {(noprer.historico || []).map((evento, idx) => {
+                            {(noprer.historico && noprer.historico.length > 0) ? noprer.historico.map((evento, idx) => {
                                 // Define cores por tipo de evento
                                 let colorClass = 'bg-[#1F3B5C]'; // emissão
                                 if (evento.tipo === 'revistoria') colorClass = 'bg-[#92400E]';
@@ -241,7 +344,16 @@ const TelaDetalhe = () => {
                                         </div>
                                     </div>
                                 )
-                            })}
+                            }) : (
+                                <div className="relative">
+                                    <div className="absolute -left-[30px] w-3.5 h-3.5 rounded-full ring-4 ring-white bg-[#1F3B5C] top-1" />
+                                    <p className="text-xs font-bold text-slate-500 mb-1">{new Date(noprer.data_emissao).toLocaleDateString('pt-BR')} • {noprer.nome_agente}</p>
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <p className="text-sm font-bold text-slate-800 uppercase mb-1">emissao</p>
+                                        <p className="text-sm text-slate-600 leading-relaxed">Emissão inicial da Notificação Preliminar de Risco.</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -254,33 +366,41 @@ const TelaDetalhe = () => {
                     <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95">
                         <div className={`p-4 text-white flex justify-between items-center ${
                             modal === 'encerrar' ? 'bg-[#166534]' : 
-                            modal === 'escalar' ? 'bg-[#991B1B]' : 'bg-[#1F3B5C]'
+                            modal === 'escalar' ? 'bg-[#991B1B]' : 
+                            modal === 'excluir' ? 'bg-red-600' : 'bg-[#1F3B5C]'
                         }`}>
                             <h3 className="font-bold">
                                 {modal === 'encerrar' ? 'Encerrar NOPRER' : 
-                                 modal === 'escalar' ? 'Escalar para Interdição' : 'Registrar Revistoria'}
+                                 modal === 'escalar' ? 'Escalar para Interdição' : 
+                                 modal === 'excluir' ? 'Excluir NOPRER' : 'Registrar Revistoria'}
                             </h3>
                             <button onClick={() => {setModal(null); setModalObs('');}} className="text-white/70 hover:text-white"><X size={20}/></button>
                         </div>
                         <div className="p-6">
                             {modal === 'encerrar' && <p className="text-sm text-slate-600 mb-4">Ao encerrar, você confirma que o responsável cumpriu as exigências e o risco foi mitigado.</p>}
                             {modal === 'escalar' && <p className="text-sm text-red-600 font-bold mb-4">Atenção: O responsável será considerado negligente e a ocorrência será encaminhada para Interdição legal.</p>}
+                            {modal === 'excluir' && <p className="text-sm text-red-600 font-bold mb-4">Tem certeza que deseja excluir esta NOPRER e todo o seu histórico? Esta ação é irreversível.</p>}
                             
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Relato / Observações Técnicas *</label>
-                            <textarea 
-                                value={modalObs}
-                                onChange={e => setModalObs(e.target.value)}
-                                className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500 min-h-[120px]"
-                                placeholder="Descreva o que foi constatado na visita..."
-                            />
+                            {modal !== 'excluir' && (
+                                <>
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Relato / Observações Técnicas *</label>
+                                    <textarea 
+                                        value={modalObs}
+                                        onChange={e => setModalObs(e.target.value)}
+                                        className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500 min-h-[120px]"
+                                        placeholder="Descreva o que foi constatado na visita..."
+                                    />
+                                </>
+                            )}
                         </div>
                         <div className="p-4 border-t bg-slate-50 flex justify-end gap-3">
                             <button disabled={submitting} onClick={() => setModal(null)} className="px-4 py-2 font-bold text-slate-500 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
                             <button 
-                                disabled={submitting || !modalObs}
+                                disabled={submitting || (modal !== 'excluir' && !modalObs)}
                                 onClick={() => {
                                     if (modal === 'encerrar') handleAcao('encerramento', 'REGULARIZADA');
                                     else if (modal === 'escalar') handleAcao('escalada', 'ESCALADA');
+                                    else if (modal === 'excluir') handleExcluirNoprer();
                                     else handleAcao('revistoria', 'PARCIAL');
                                 }}
                                 className={`px-6 py-2 rounded-lg font-bold text-white transition-colors flex items-center gap-2 ${

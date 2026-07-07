@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, FileText, AlertTriangle, CheckCircle, ShieldAlert, Clock, ChevronRight } from 'lucide-react';
+import { Search, Plus, FileText, AlertTriangle, CheckCircle, ShieldAlert, Clock, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNoprer } from './hooks/useNoprer';
 import StatusBadge from './components/StatusBadge';
 import GrauBadge from './components/GrauBadge';
@@ -63,9 +63,14 @@ const TelaLista = () => {
         <div className="bg-[#F1F5F9] min-h-screen p-4 md:p-6 pb-24 font-[Inter,sans-serif]">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-black text-[#1F3B5C] tracking-tight">NOPRER</h1>
-                    <p className="text-sm text-[#64748B]">Notificações Preliminares de Risco</p>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-full hover:bg-slate-200 transition-colors">
+                        <ArrowLeft size={24} className="text-[#64748B]" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-black text-[#1F3B5C] tracking-tight">NOPRER</h1>
+                        <p className="text-sm text-[#64748B]">Notificações Preliminares de Risco</p>
+                    </div>
                 </div>
                 <button 
                     onClick={() => navigate('/noprer/novo')}
@@ -122,16 +127,16 @@ const TelaLista = () => {
             {/* Tabela */}
             <div className="bg-white border border-[#E2E8F0] rounded-b-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[800px]">
+                    <table className="w-full text-left border-collapse min-w-[900px]">
                         <thead>
                             <tr className="bg-[#F1F5F9] border-b border-[#E2E8F0]">
-                                <th className="p-3 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Nº NOPRER</th>
-                                <th className="p-3 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Endereço / Notificado</th>
-                                <th className="p-3 text-[11px] font-bold text-[#64748B] uppercase tracking-wider text-center">Risco</th>
-                                <th className="p-3 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Emissão</th>
-                                <th className="p-3 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-40">Prazo / Progresso</th>
-                                <th className="p-3 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Status</th>
-                                <th className="p-3"></th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-32">Nº NOPRER</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Endereço / Notificado</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider text-center w-24">Risco</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-28">Emissão</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-48">Prazo / Progresso</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-32">Status</th>
+                                <th className="p-4 w-10"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -150,28 +155,28 @@ const TelaLista = () => {
                                         onClick={() => noprer.isDraft ? navigate(`/noprer/novo?draftId=${noprer.id}`) : navigate(`/noprer/detalhes/${noprer.id}`)}
                                         className={`border-b border-[#E2E8F0] hover:bg-[#FAFBFD] cursor-pointer transition-colors ${noprer.statusCalculado === 'VENCIDA' ? 'bg-[#FEF2F2]/30 hover:bg-[#FEF2F2]/50' : ''} ${noprer.isDraft ? 'bg-amber-50/30' : ''}`}
                                     >
-                                        <td className="p-3 font-mono text-xs font-bold text-[#1F3B5C]">{noprer.numero}</td>
-                                        <td className="p-3">
-                                            <div className="text-xs font-bold text-slate-800 line-clamp-1">{noprer.endereco}</div>
-                                            <div className="text-[10px] text-[#64748B] truncate max-w-[200px]">{noprer.nome_notificado}</div>
+                                        <td className="p-4 font-mono text-xs font-bold text-[#1F3B5C]">{noprer.numero}</td>
+                                        <td className="p-4">
+                                            <div className="text-sm font-bold text-slate-800 line-clamp-1 mb-0.5">{noprer.endereco}</div>
+                                            <div className="text-xs text-[#64748B] truncate max-w-[250px]">{noprer.nome_notificado}</div>
                                         </td>
-                                        <td className="p-3 text-center">
+                                        <td className="p-4 text-center">
                                             <GrauBadge grau={noprer.grau_risco} />
                                         </td>
-                                        <td className="p-3 text-xs text-slate-600">
+                                        <td className="p-4 text-xs font-medium text-slate-600">
                                             {new Date(noprer.data_emissao).toLocaleDateString('pt-BR')}
                                         </td>
-                                        <td className="p-3">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="text-[10px] text-slate-500 font-medium">Até {new Date(noprer.data_limite).toLocaleDateString('pt-BR')}</span>
+                                        <td className="p-4">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <span className="text-[10px] text-slate-500 font-bold tracking-wide">Até {new Date(noprer.data_limite).toLocaleDateString('pt-BR')}</span>
                                                 <DiasBadge diasRestantes={noprer.diasRestantes} isVencida={noprer.isVencida} status={noprer.status} />
                                             </div>
                                             <PrazoBar progresso={noprer.progresso} statusCalculado={noprer.statusCalculado} />
                                         </td>
-                                        <td className="p-3">
+                                        <td className="p-4">
                                             <StatusBadge status={noprer.statusCalculado} />
                                         </td>
-                                        <td className="p-3 text-right">
+                                        <td className="p-4 text-right">
                                             <ChevronRight size={16} className="text-slate-400 inline-block" />
                                         </td>
                                     </tr>

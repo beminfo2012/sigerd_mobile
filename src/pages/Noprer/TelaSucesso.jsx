@@ -1,12 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, ArrowLeft, Download, Calendar } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Printer, Calendar } from 'lucide-react';
+import { supabase } from '../../services/supabase';
+import toast from 'react-hot-toast';
 
 const TelaSucesso = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const numero = searchParams.get('numero') || 'NOPRER';
     const id = searchParams.get('id');
+    const [noprerData, setNoprerData] = useState(null);
+
+    useEffect(() => {
+        if (id) {
+            supabase.from('noprer').select('*, vistoria:vistoria_id(vistoria_id)').eq('id', id).single()
+                .then(({ data }) => setNoprerData(data))
+                .catch(err => console.error(err));
+        }
+    }, [id]);
+
+    const handleGeneratePDF = () => {
+        if (!noprerData) {
+            toast.error('Dados da NOPRER não carregados.');
+            return;
+        }
+        window.open(`/noprer/imprimir/${id}`, '_blank');
+    };
 
     return (
         <div className="min-h-screen bg-[#F1F5F9] flex flex-col items-center justify-center p-6 font-[Inter,sans-serif]">
@@ -31,11 +50,12 @@ const TelaSucesso = () => {
 
                 <div className="flex flex-col gap-3 w-full mt-4">
                     <button 
-                        onClick={() => alert('Endpoint DOCX será acionado!')}
-                        className="w-full bg-[#1F3B5C] hover:bg-[#2E5C8A] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+                        onClick={handleGeneratePDF}
+                        disabled={!noprerData}
+                        className="w-full bg-[#1F3B5C] hover:bg-[#2E5C8A] disabled:opacity-50 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
                     >
-                        <Download size={18} />
-                        Exportar NOPRER (.docx)
+                        <Printer size={18} />
+                        Imprimir NOPRER Oficial
                     </button>
                     <button 
                         onClick={() => navigate('/noprer')}

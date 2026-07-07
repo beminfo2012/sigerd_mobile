@@ -1550,8 +1550,8 @@ const BoletinsCard = () => {
 // --- SUB-COMPONENT: ALERTAS CEMADEN CARD ---
 const NIVEL_CARD_STYLES = {
     'MUITO_ALTO': { bg: 'bg-red-500/10', text: 'text-red-600', icon: 'bg-red-500/10', label: 'Muito Alto' },
-    'ALTO':       { bg: 'bg-orange-500/10', text: 'text-orange-600', icon: 'bg-orange-500/10', label: 'Alto' },
-    'MODERADO':   { bg: 'bg-amber-400/10', text: 'text-amber-600', icon: 'bg-amber-400/10', label: 'Moderado' },
+    'ALTO': { bg: 'bg-orange-500/10', text: 'text-orange-600', icon: 'bg-orange-500/10', label: 'Alto' },
+    'MODERADO': { bg: 'bg-amber-400/10', text: 'text-amber-600', icon: 'bg-amber-400/10', label: 'Moderado' },
     'OBSERVACAO': { bg: 'bg-blue-500/10', text: 'text-blue-600', icon: 'bg-blue-500/10', label: 'Observação' },
 };
 const NIVEL_PRIORITY = ['MUITO_ALTO', 'ALTO', 'MODERADO', 'OBSERVACAO'];
@@ -1831,11 +1831,11 @@ const WebViewDashboardView = ({
                     {/* Blue Horizontal Nav Bar */}
                     <div className="bg-[#2a5299] rounded-[12px] p-0.5 flex items-center justify-between overflow-x-auto custom-scrollbar gap-1.5">
                         {[
-                            { label: 'Vistorias', icon: ClipboardList, path: '/vistorias' },
                             { label: 'Ocorrências', icon: ClipboardList, path: '/ocorrencias' },
-                            { label: 'Assistência Humanitária', icon: Home, path: '/assisthumanitaria' },
-                            { label: 'Relatórios', icon: FileText, action: () => setShowReportMenu(!showReportMenu) },
-                            { label: 'REDAP', icon: ClipboardCheck, path: '/redap' }
+                            { label: 'Vistorias', icon: ClipboardList, path: '/vistorias' },
+                            { label: 'Interdições', icon: Home, path: '/interdicao' },
+                            { label: 'REDAP', icon: ClipboardCheck, path: '/redap' },
+                            { label: 'Relatórios', icon: FileText, action: () => setShowReportMenu(!showReportMenu) }
                         ].map((item, idx) => (
                             <button
                                 key={idx}
@@ -2624,8 +2624,8 @@ const Dashboard = () => {
             try {
                 const nowIso = new Date().toISOString();
                 // Default to last 7 days if hours === 0
-                const limitIso = limitDate ? limitDate.toISOString() : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(); 
-                
+                const limitIso = limitDate ? limitDate.toISOString() : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
                 // Fetch INMET alerts active during the period (overlapping)
                 const { data: dbInmet } = await supabase
                     .from('alertas_inmet')
@@ -2633,7 +2633,7 @@ const Dashboard = () => {
                     .lte('inicio', nowIso)
                     .gte('fim', limitIso)
                     .order('inicio', { ascending: false });
-                
+
                 if (dbInmet) {
                     reportInmetAlerts = dbInmet.map(a => ({
                         id: a.id,
@@ -2655,7 +2655,7 @@ const Dashboard = () => {
                     .ne('status', 'EXCLUIDO')
                     .lte('data_abertura', nowIso)
                     .or(`data_cessar.is.null,data_cessar.gte.${limitIso}`);
-                
+
                 if (dbCemaden) {
                     reportCemadenAlerts = dbCemaden;
                 }

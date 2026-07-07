@@ -46,7 +46,7 @@ export function useNoprer() {
                 .from('noprer')
                 .select(`
                     *,
-                    vistoria:vistoria_id ( numero )
+                    vistoria:vistoria_id ( vistoria_id )
                 `)
                 .order('created_at', { ascending: false });
 
@@ -104,7 +104,7 @@ export function useNoprer() {
             const [noprerRes, historicoRes] = await Promise.all([
                 supabase
                     .from('noprer')
-                    .select('*, vistoria:vistoria_id(numero)')
+                    .select('*, vistoria:vistoria_id(vistoria_id)')
                     .eq('id', id)
                     .single(),
                 supabase
@@ -156,6 +156,7 @@ export function useNoprer() {
 
             // 3. Inserir Registro Inicial na Revistoria
             await supabase.from('noprer_revistoria').insert({
+                id: crypto.randomUUID(),
                 noprer_id: noprer.id,
                 tipo: 'emissao',
                 data: noprer.data_emissao,
@@ -166,6 +167,29 @@ export function useNoprer() {
             return noprer;
         } catch (err) {
             console.error('Erro ao emitir NOPRER:', err);
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 3.1 Atualizar NOPRER
+    const atualizarNoprer = async (id, payload) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error } = await supabase
+                .from('noprer')
+                .update(payload)
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (err) {
+            console.error('Erro ao atualizar NOPRER:', err);
             setError(err.message);
             throw err;
         } finally {
@@ -214,7 +238,28 @@ export function useNoprer() {
         }
     };
 
-    // 5. Salvar Rascunho no DB
+    // 5. Anexar documento (quando impresso)
+    const anexarDocumento = async (id, fileBase64) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { error: updateError } = await supabase
+                .from('noprer')
+                .update({ documento_anexo: fileBase64 })
+                .eq('id', id);
+
+            if (updateError) throw updateError;
+            return true;
+        } catch (err) {
+            console.error('Erro ao anexar documento:', err);
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 6. Salvar Rascunho no DB
     const salvarNoprerRascunho = async (id, formData, step, nomeAgente) => {
         setLoading(true);
         setError(null);
@@ -260,7 +305,7 @@ export function useNoprer() {
     };
 
     // 6. Buscar um Rascunho
-    const fetchRascunhoById = async (id) => {
+    const fetchRascunhoById = useCallback(async (id) => {
         try {
             const { data, error } = await supabase
                 .from('noprer_rascunhos')
@@ -273,17 +318,17 @@ export function useNoprer() {
             console.error('Erro ao buscar rascunho:', err);
             return null;
         }
-    };
+    }, []);
 
     // 7. Excluir Rascunho
-    const deletarRascunho = async (id) => {
+    const deletarRascunho = useCallback(async (id) => {
         if (!id || id.startsWith('draft_')) return;
         try {
             await supabase.from('noprer_rascunhos').delete().eq('id', id);
         } catch (err) {
             console.error('Erro ao deletar rascunho:', err);
         }
-    };
+    }, []);
 
     return {
         loading,
@@ -291,7 +336,9 @@ export function useNoprer() {
         fetchNoprers,
         fetchNoprerById,
         criarNoprer,
+        atualizarNoprer,
         registrarRevistoria,
+        anexarDocumento,
         salvarNoprerRascunho,
         fetchRascunhoById,
         deletarRascunho

@@ -4,6 +4,7 @@ import TelaLista from './TelaLista';
 import TelaDetalhe from './TelaDetalhe';
 import TelaSucesso from './TelaSucesso';
 import NoprerForm from './NoprerForm';
+import TelaImpressao from './TelaImpressao';
 
 const NoprerModule = () => {
     return (
@@ -12,7 +13,9 @@ const NoprerModule = () => {
             <Route path="/detalhes/:id" element={<TelaDetalhe />} />
             <Route path="/novo" element={<NoprerForm />} />
             <Route path="/novo/:origem/:origemId" element={<NoprerForm />} />
+            <Route path="/editar/:id" element={<NoprerForm />} />
             <Route path="/sucesso" element={<TelaSucesso />} />
+            <Route path="/imprimir/:id" element={<TelaImpressao />} />
         </Routes>
     );
 };

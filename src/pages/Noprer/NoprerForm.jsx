@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { UserContext } from '../../App';
 import { supabase } from '../../services/supabase';
 import { useNoprer } from './hooks/useNoprer';
@@ -11,6 +11,7 @@ import {
     ChevronRight, ChevronLeft, MapPin, Search, 
     Camera, AlertTriangle, Info, Save, CheckCircle, X, Plus, Check, ShieldAlert
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const STEPS = [
     { id: 1, label: 'Responsável' },
@@ -22,8 +23,8 @@ const STEPS = [
 
 const NoprerForm = () => {
     const navigate = useNavigate();
-    const { userProfile } = useContext(UserContext);
-    const { criarNoprer, salvarNoprerRascunho, fetchRascunhoById, deletarRascunho } = useNoprer();
+    const userProfile = useContext(UserContext);
+    const { fetchNoprerById, atualizarNoprer, criarNoprer, salvarNoprerRascunho, fetchRascunhoById, deletarRascunho } = useNoprer();
     const [salvando, setSalvando] = useState(false);
     const { calcularDatasFormulario } = usePrazo();
 
@@ -51,6 +52,7 @@ const NoprerForm = () => {
 
     const [searchParams] = useSearchParams();
     const draftId = searchParams.get('draftId');
+    const { id } = useParams();
 
     const [step, setStep] = useState(1);
     
@@ -74,10 +76,21 @@ const NoprerForm = () => {
     // Modal de Assinatura
     const [sigModal, setSigModal] = useState(null); // null, 'notificado', 'agente', 'test1', 'test2'
 
-    // Carregar Rascunho se draftId existir
+    // Carregar Rascunho ou Documento Existente
     useEffect(() => {
         const carregarDB = async () => {
-            if (draftId) {
+            if (id) {
+                const doc = await fetchNoprerById(id);
+                if (doc) {
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        ...doc, 
+                        vistoria_numero: doc.vistoria?.numero || doc.vistoria?.vistoria_id || doc.vistoria_id || '',
+                        termo_lido: true 
+                    }));
+                    setStep(1); // Pode iniciar no 1 ou no último, vamos colocar no 1
+                }
+            } else if (draftId) {
                 const draft = await fetchRascunhoById(draftId);
                 if (draft) {
                     setFormData(draft.form_data);
@@ -86,7 +99,7 @@ const NoprerForm = () => {
             }
         };
         carregarDB();
-    }, [draftId]);
+    }, [draftId, id, fetchNoprerById, fetchRascunhoById]);
 
     // Estado do Formulário
     const [formData, setFormData] = useState({
@@ -147,6 +160,7 @@ const NoprerForm = () => {
             if (formData.modo_assinatura === 'recusa') {
                 return formData.test1_nome && formData.test1_cpf && formData.sign_test1 && formData.test2_nome && formData.test2_cpf && formData.sign_test2;
             }
+            if (formData.modo_assinatura === 'impresso') return true;
         }
         return true;
     };
@@ -216,7 +230,7 @@ const NoprerForm = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
                 setFormData(p => ({ ...p, coordenadas: `${pos.coords.latitude}, ${pos.coords.longitude}` }));
-            }, err => alert('Erro ao capturar GPS. Verifique as permissões.'));
+            }, err => toast.error('Erro ao capturar GPS. Verifique as permissões.'));
         }
     };
 
@@ -242,12 +256,12 @@ const NoprerForm = () => {
     const salvarRascunho = async () => {
         try {
             const savedDraft = await salvarNoprerRascunho(draftId, formData, step, userProfile?.nome || 'Agente');
-            alert('Rascunho salvo com sucesso no banco de dados!');
+            toast.success('Rascunho salvo com sucesso no banco de dados!');
             if (!draftId && savedDraft) {
                 navigate(`/noprer/novo?draftId=${savedDraft.id}`, { replace: true });
             }
         } catch (err) {
-            alert('Erro ao salvar rascunho. Tente novamente.');
+            toast.error('Erro ao salvar rascunho. Tente novamente.');
         }
     };
 
@@ -255,12 +269,37 @@ const NoprerForm = () => {
         try {
             setSalvando(true);
             // Ajusta formatação antes de enviar
-            const payload = { ...formData };
+            const payload = { 
+                ...formData,
+                data_limite: datas.dataLimite.toISOString().split('T')[0],
+                data_revistoria: datas.dataRevistoria.toISOString().split('T')[0]
+            };
             delete payload.vistoria_numero; // não vai pro banco NOPRER
             delete payload.medida_customizada; 
             delete payload.observacoes; // mock, schema não tem observacoes puras na NOPRER, seria na revistoria_inicial
+            delete payload.prazo_dias; // virtual
+            delete payload.termo_lido; // virtual
+            
+            // Remove campos virtuais e calculados trazidos no modo edição
+            delete payload.vistoria;
+            delete payload.historico;
+            delete payload.statusCalculado;
+            delete payload.progresso;
+            delete payload.diasRestantes;
+            delete payload.isVencida;
+            delete payload.dataEmissaoStr;
+            delete payload.dataLimiteStr;
+            delete payload.dataRevistoriaStr;
 
-            const noprerCriada = await criarNoprer(payload);
+            let noprerCriada;
+            if (id) {
+                noprerCriada = await atualizarNoprer(id, payload);
+                toast.success('NOPRER atualizada com sucesso!');
+                navigate(`/noprer/detalhes/${id}`);
+                return;
+            } else {
+                noprerCriada = await criarNoprer(payload);
+            }
             
             // Limpa o rascunho após emitir com sucesso
             if (draftId) {
@@ -269,7 +308,7 @@ const NoprerForm = () => {
             
             navigate(`/noprer/sucesso?id=${noprerCriada.id}&numero=${noprerCriada.numero}`);
         } catch (err) {
-            alert('Erro ao emitir NOPRER. Tente novamente.');
+            toast.error('Erro ao salvar NOPRER. Verifique a conexão.');
         } finally {
             setSalvando(false);
         }
@@ -286,16 +325,19 @@ const NoprerForm = () => {
                             <ChevronLeft size={24} />
                         </button>
                         <div>
-                            <h1 className="font-black text-lg">Emitir NOPRER</h1>
+                            <h1 className="font-black text-lg">{id ? 'Editar NOPRER' : 'Emitir NOPRER'}</h1>
                             <p className="text-[10px] text-blue-200 uppercase tracking-widest">Etapa {step} de 5</p>
                         </div>
                     </div>
-                    <button 
-                        onClick={salvarRascunho}
-                        className="text-xs font-bold text-blue-200 border border-blue-400 hover:bg-white/10 hover:text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
-                    >
-                        <Save size={14} /> Rascunho
-                    </button>
+                    {!id && (
+                        <button 
+                            onClick={salvarRascunho}
+                            disabled={salvando}
+                            className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2 border border-white/20"
+                        >
+                            <Save size={14} /> Rascunho
+                        </button>
+                    )}
                 </div>
                 
                 {/* Progress Bar */}
@@ -674,10 +716,18 @@ const NoprerForm = () => {
                             
                             <div className="flex gap-2 mb-4 bg-slate-100 p-1 rounded-lg">
                                 <button onClick={() => setFormData(p => ({...p, modo_assinatura: 'digital'}))} className={`flex-1 p-2 text-sm font-bold rounded-md transition-all ${formData.modo_assinatura === 'digital' ? 'bg-white shadow text-blue-600' : 'text-slate-500'}`}>✍️ Em Tela</button>
+                                <button onClick={() => setFormData(p => ({...p, modo_assinatura: 'impresso'}))} className={`flex-1 p-2 text-sm font-bold rounded-md transition-all ${formData.modo_assinatura === 'impresso' ? 'bg-white shadow text-emerald-600' : 'text-slate-500'}`}>📄 Impresso</button>
                                 <button onClick={() => setFormData(p => ({...p, modo_assinatura: 'recusa'}))} className={`flex-1 p-2 text-sm font-bold rounded-md transition-all ${formData.modo_assinatura === 'recusa' ? 'bg-white shadow text-red-600' : 'text-slate-500'}`}>✋ Recusou</button>
                             </div>
 
-                            {formData.modo_assinatura === 'digital' ? (
+                            {formData.modo_assinatura === 'impresso' && (
+                                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+                                    <p className="text-sm text-emerald-800 font-medium">Você optou por assinar o documento impresso.</p>
+                                    <p className="text-xs text-emerald-600 mt-1">Após a emissão, você poderá digitalizar ou fotografar a folha assinada e fazer o upload no card desta NOPRER.</p>
+                                </div>
+                            )}
+
+                            {formData.modo_assinatura === 'digital' && (
                                 <div className="border border-slate-300 rounded-xl p-4 bg-slate-50 flex flex-col items-center">
                                     {formData.sign_notificado ? (
                                         <div className="relative border border-green-200 bg-white rounded-lg p-2">
@@ -688,7 +738,9 @@ const NoprerForm = () => {
                                         <button onClick={() => setSigModal('notificado')} className="bg-[#1F3B5C] text-white px-6 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-800">Assinar na Tela</button>
                                     )}
                                 </div>
-                            ) : (
+                            )}
+
+                            {formData.modo_assinatura === 'recusa' && (
                                 <div className="bg-red-50 p-4 rounded-xl border border-red-200">
                                     <p className="text-xs text-red-800 font-bold mb-4">Necessário testemunho de duas pessoas para validade jurídica da NOPRER.</p>
                                     
@@ -774,24 +826,30 @@ const NoprerForm = () => {
                             Voltar
                         </button>
                         
-                        {step < 5 ? (
-                            <button 
-                                onClick={() => setStep(s => Math.min(5, s + 1))}
-                                disabled={!isStepValid()}
-                                className="flex-1 md:flex-none px-8 py-3 rounded-lg font-black text-white bg-[#1F3B5C] hover:bg-[#2E5C8A] disabled:opacity-50 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-[#1F3B5C]/20"
-                            >
-                                Avançar <ChevronRight size={18} />
-                            </button>
-                        ) : (
-                            <button 
-                                onClick={handleSubmit}
-                                disabled={!isStepValid() || salvando}
-                                className="flex-1 md:flex-none px-8 py-3 rounded-lg font-black text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-green-600/30"
-                            >
-                                <Save size={18} />
-                                {salvando ? 'Processando...' : 'Finalizar Emissão'}
-                            </button>
-                        )}
+                        <div className="flex gap-2 flex-1 md:flex-none justify-end">
+                            {/* Botão de Avançar - sempre visível se não estiver na última etapa */}
+                            {step < 5 && (
+                                <button 
+                                    onClick={() => setStep(s => Math.min(5, s + 1))}
+                                    disabled={!isStepValid()}
+                                    className="flex-1 md:flex-none px-6 py-3 rounded-lg font-black text-white bg-[#1F3B5C] hover:bg-[#2E5C8A] disabled:opacity-50 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-[#1F3B5C]/20"
+                                >
+                                    Avançar <ChevronRight size={18} />
+                                </button>
+                            )}
+
+                            {/* Botão Salvar - Em modo de edição, sempre visível. No modo de emissão, apenas na última etapa. */}
+                            {(id || step === 5) && (
+                                <button 
+                                    onClick={handleSubmit}
+                                    disabled={!isStepValid() || salvando}
+                                    className="flex-1 md:flex-none px-6 py-3 rounded-lg font-black text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-green-600/30"
+                                >
+                                    <Save size={18} />
+                                    {salvando ? 'Processando...' : (id ? 'Salvar Alterações' : 'Finalizar Emissão')}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
