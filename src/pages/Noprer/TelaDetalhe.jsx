@@ -193,15 +193,15 @@ const TelaDetalhe = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="bg-white p-3 rounded-xl border border-[#E2E8F0]">
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Emissão</p>
-                            <p className="font-black text-slate-800">{new Date(noprer.data_emissao).toLocaleDateString('pt-BR')}</p>
+                            <p className="font-black text-slate-800">{noprer.data_emissao ? new Date(noprer.data_emissao + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}</p>
                         </div>
                         <div className="bg-white p-3 rounded-xl border border-[#E2E8F0]">
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Prazo Limite</p>
-                            <p className="font-black text-slate-800">{new Date(noprer.data_limite).toLocaleDateString('pt-BR')}</p>
+                            <p className="font-black text-slate-800">{noprer.data_limite ? new Date(noprer.data_limite + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}</p>
                         </div>
                         <div className="bg-white p-3 rounded-xl border border-[#E2E8F0]">
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Revistoria Prog.</p>
-                            <p className="font-black text-slate-800">{new Date(noprer.data_revistoria).toLocaleDateString('pt-BR')}</p>
+                            <p className="font-black text-slate-800">{noprer.data_revistoria ? new Date(noprer.data_revistoria + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}</p>
                         </div>
                         <div className="bg-white p-3 rounded-xl border border-[#E2E8F0]">
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Progresso do Prazo</p>
@@ -347,7 +347,7 @@ const TelaDetalhe = () => {
                             }) : (
                                 <div className="relative">
                                     <div className="absolute -left-[30px] w-3.5 h-3.5 rounded-full ring-4 ring-white bg-[#1F3B5C] top-1" />
-                                    <p className="text-xs font-bold text-slate-500 mb-1">{new Date(noprer.data_emissao).toLocaleDateString('pt-BR')} • {noprer.nome_agente}</p>
+                                    <p className="text-xs font-bold text-slate-500 mb-1">{noprer.data_emissao ? new Date(noprer.data_emissao + 'T12:00:00').toLocaleDateString('pt-BR') : '---'} • {noprer.nome_agente}</p>
                                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                                         <p className="text-sm font-bold text-slate-800 uppercase mb-1">emissao</p>
                                         <p className="text-sm text-slate-600 leading-relaxed">Emissão inicial da Notificação Preliminar de Risco.</p>

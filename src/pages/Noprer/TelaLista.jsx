@@ -164,11 +164,11 @@ const TelaLista = () => {
                                             <GrauBadge grau={noprer.grau_risco} />
                                         </td>
                                         <td className="p-4 text-xs font-medium text-slate-600">
-                                            {new Date(noprer.data_emissao).toLocaleDateString('pt-BR')}
+                                            {noprer.data_emissao ? new Date(noprer.data_emissao + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}
                                         </td>
                                         <td className="p-4">
                                             <div className="flex justify-between items-center mb-1.5">
-                                                <span className="text-[10px] text-slate-500 font-bold tracking-wide">Até {new Date(noprer.data_limite).toLocaleDateString('pt-BR')}</span>
+                                                <span className="text-[10px] text-slate-500 font-bold tracking-wide">Até {noprer.data_limite ? new Date(noprer.data_limite + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}</span>
                                                 <DiasBadge diasRestantes={noprer.diasRestantes} isVencida={noprer.isVencida} status={noprer.status} />
                                             </div>
                                             <PrazoBar progresso={noprer.progresso} statusCalculado={noprer.statusCalculado} />

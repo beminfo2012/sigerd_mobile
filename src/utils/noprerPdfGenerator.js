@@ -64,7 +64,7 @@ export const generateNoprerPDF = async (data, options = { autoOpen: true }) => {
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '---';
-        const d = new Date(dateStr);
+        const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00');
         return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('pt-BR');
     };
 

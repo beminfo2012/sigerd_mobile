@@ -40,7 +40,7 @@ const TelaImpressao = () => {
 
     const formatDate = (d) => {
         if (!d) return '---';
-        const date = new Date(d);
+        const date = new Date(d.includes('T') ? d : d + 'T12:00:00');
         return isNaN(date.getTime()) ? d : date.toLocaleDateString('pt-BR');
     };
 
