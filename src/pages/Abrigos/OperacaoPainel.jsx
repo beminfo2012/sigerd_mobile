@@ -47,11 +47,20 @@ export default function OperacaoPainel() {
                 const allDoa = await getDonations();
                 const allDis = await getDistributions();
 
-                const filteredDoacoes = (allDoa || []).filter(d => !d.operacao_id || String(d.operacao_id) === String(id));
-                const filteredSaidas = (allDis || []).filter(d => !d.operacao_id || String(d.operacao_id) === String(id));
+                const opStart = resumo.operacao.data_hora_inicio ? new Date(resumo.operacao.data_hora_inicio) : new Date(0);
+                const opEnd = resumo.operacao.data_hora_encerramento ? new Date(resumo.operacao.data_hora_encerramento) : new Date(8640000000000000);
 
-                setEstoque((allInv || []).filter(i => !i.operacao_id || String(i.operacao_id) === String(id)));
-                setAbrigos((allAbr || []).filter(a => !a.operacao_id || String(a.operacao_id) === String(id)));
+                const isWithinPeriod = (dateString) => {
+                    if (!dateString) return false;
+                    const date = new Date(dateString);
+                    return date >= opStart && date <= opEnd;
+                };
+
+                const filteredDoacoes = (allDoa || []).filter(d => String(d.operacao_id) === String(id) || isWithinPeriod(d.created_at));
+                const filteredSaidas = (allDis || []).filter(d => String(d.operacao_id) === String(id) || isWithinPeriod(d.created_at));
+
+                setEstoque((allInv || []).filter(i => String(i.operacao_id) === String(id) || isWithinPeriod(i.created_at || i.updated_at)));
+                setAbrigos((allAbr || []).filter(a => String(a.operacao_id) === String(id) || isWithinPeriod(a.created_at || a.updated_at)));
                 setDoacoes(filteredDoacoes);
                 setDistribuicoes(filteredSaidas);
 

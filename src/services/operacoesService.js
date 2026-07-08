@@ -150,13 +150,13 @@ export const operacoesService = {
   async getDiarioOperacao(operacaoId) {
     const { data, error } = await supabase
       .from('operacao_diario')
-      .select('*, profiles(nome)')
+      .select('*')
       .eq('operacao_id', operacaoId)
       .order('data_hora', { ascending: true });
 
     if (error) {
       console.error('Erro ao buscar diário:', error);
-      throw error;
+      return [];
     }
 
     return data;
@@ -187,9 +187,6 @@ export const operacoesService = {
 
   // Calcula o resumo operacional
   async calcularResumoOperacional(operacaoId) {
-    // Idealmente seria feito via RPC (Stored Procedure) no Supabase, 
-    // mas faremos agregações no client side por simplicidade ou usaremos múltiplas queries.
-    
     try {
       // 1. Operação
       const { data: op } = await supabase
@@ -197,32 +194,14 @@ export const operacoesService = {
         .select('*')
         .eq('id', operacaoId)
         .single();
-
-      // 2. Abrigos
-      const { data: abrigos } = await supabase
-        .from('shelters')
-        .select('id, capacity, current_occupancy')
-        .eq('operacao_id', operacaoId);
-
-      // 3. Abrigos Ocupação
-      const { data: ocupacoes } = await supabase
-        .from('shelter_occupants')
-        .select('id, status')
-        .eq('operacao_id', operacaoId);
-
-      // 4. Estoque
-      const { data: estoque } = await supabase
-        .from('shelter_inventory')
-        .select('id')
-        .eq('operacao_id', operacaoId);
       
       // Construir o resumo (simplificado)
       const resumo = {
         operacao: op,
         estatisticas: {
-          abrigosUtilizados: abrigos?.length || 0,
-          pessoasAcolhidas: ocupacoes?.filter(o => o.status === 'active')?.length || ocupacoes?.length || 0,
-          itensEstoque: estoque?.length || 0
+          abrigosUtilizados: 0, // Será calculado localmente via IndexedDB no componente
+          pessoasAcolhidas: 0,
+          itensEstoque: 0
         }
       };
 
