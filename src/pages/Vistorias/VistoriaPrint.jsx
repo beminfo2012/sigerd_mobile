@@ -8,6 +8,7 @@ import { getAllVistoriasLocal } from '../../services/db';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { FileText, Printer, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import PdfToImages from '../../components/PdfToImages';
 
 // Utility component to recalibrate map size and center
 const MapController = ({ lat, lng }) => {
@@ -1096,27 +1097,39 @@ const VistoriaPrint = () => {
                                     Total de registros: {photos.length} fotos | Data das fotos: {formatDateOnly(data.dataHora || data.data_hora)}
                                 </p>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {photos.map((photo, i) => (
-                                        <div key={i} className="border border-slate-200 rounded-lg p-2 bg-slate-50 flex flex-col justify-between avoid-break">
-                                            <div className="bg-white rounded border border-slate-100 overflow-hidden flex items-center justify-center min-h-[180px] max-h-[220px]">
-                                                <img
-                                                    src={photo.data || photo.url}
-                                                    alt={`Foto ${i + 1}`}
-                                                    className="max-w-full max-h-full object-contain"
-                                                    onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Erro+na+Imagem'; }}
-                                                />
+                                    {photos.filter(p => !(p.isPdf || (typeof (p.data || p.url) === 'string' && (p.data || p.url).startsWith('data:application/pdf')))).map((photo, i) => {
+                                        
+                                        // Metadata logic
+                                        let coordString = 'NÃO VERIFICADO';
+                                        if (photo.metadados_verificados && (photo.latitude && photo.longitude)) {
+                                            const extraLabel = photo.fonte_metadados === 'exif_original' ? ' (ARQUIVO)' : '';
+                                            coordString = `LAT: ${photo.latitude} | LNG: ${photo.longitude}${extraLabel}`;
+                                        } else if (photo.fonte_metadados === 'manual' || photo.tipo_captura === 'referencia_historica') {
+                                            coordString = 'NÃO VERIFICADO (REFERÊNCIA)';
+                                        }
+
+                                        return (
+                                            <div key={i} className="border border-slate-200 rounded-lg p-2 bg-slate-50 flex flex-col justify-between avoid-break">
+                                                <div className="bg-white rounded border border-slate-100 overflow-hidden flex items-center justify-center min-h-[180px] max-h-[220px]">
+                                                    <img
+                                                        src={photo.data || photo.url}
+                                                        alt={`Foto ${i + 1}`}
+                                                        className="max-w-full max-h-full object-contain"
+                                                        onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Erro+na+Imagem'; }}
+                                                    />
+                                                </div>
+                                                <div className="mt-2 text-[10px]">
+                                                    <span className="font-extrabold text-blue-600 block mb-1 uppercase">[ Foto {i + 1} ]</span>
+                                                    <p className="text-slate-700 font-bold leading-tight mb-2">
+                                                        {photo.legenda || photo.caption || 'Sem descrição cadastrada.'}
+                                                    </p>
+                                                    <span className="font-mono text-[8px] text-slate-400 block border-t border-slate-200 pt-1">
+                                                        {coordString}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="mt-2 text-[10px]">
-                                                <span className="font-extrabold text-blue-600 block mb-1 uppercase">[ Foto {i + 1} ]</span>
-                                                <p className="text-slate-700 font-bold leading-tight mb-2">
-                                                    {photo.legenda || photo.caption || 'Sem descrição cadastrada.'}
-                                                </p>
-                                                <span className="font-mono text-[8px] text-slate-400 block border-t border-slate-200 pt-1">
-                                                    LAT: {lat ? lat.toFixed(6) : '---'} | LNG: {lng ? lng.toFixed(6) : '---'} | {formatDateOnly(data.dataHora || data.data_hora)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </section>
                         )}
@@ -1186,7 +1199,12 @@ const VistoriaPrint = () => {
                             <span>Emissão: {formatDateOnly(data.dataHora || data.data_hora)}</span>
                             <span>Defesa Civil - SMJ</span>
                         </div>
-                        </div>
+                    </div>
+
+                    {/* PDF Attachments Rendered Here */}
+                    {photos.filter(p => (p.isPdf || (typeof (p.data || p.url) === 'string' && (p.data || p.url).startsWith('data:application/pdf')))).map((pdfPhoto, idx) => (
+                        <PdfToImages key={`pdf-${idx}`} base64Data={pdfPhoto.data || pdfPhoto.url} filename={pdfPhoto.name || `Anexo PDF ${idx + 1}`} />
+                    ))}
                 </div>
             </main>
         </div>

@@ -716,36 +716,81 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         }));
     };
 
-    const handlePhotoSelect = async (files) => {
-        // Prepare current form coords as fallback
-        const formCoords = formData.latitude && formData.longitude ? {
-            lat: formData.latitude,
-            lng: formData.longitude
-        } : null;
-
+    const handlePhotoSelect = async (files, source) => {
         const newPhotos = await Promise.all(files.map(async (file) => {
             return new Promise((resolve) => {
                 const reader = new FileReader()
                 reader.onloadend = async () => {
                     try {
-                        // Extract metadata from file
+                        if (file.type === 'application/pdf') {
+                            resolve({
+                                id: Date.now() + Math.random(),
+                                data: reader.result,
+                                name: file.name,
+                                legenda: '',
+                                latitude: null,
+                                longitude: null,
+                                data_hora_captura: null,
+                                metadados_verificados: false,
+                                fonte_metadados: 'ausente',
+                                tipo_captura: source,
+                                isPdf: true
+                            });
+                            return;
+                        }
+
                         const meta = await extractMetadata(file);
 
-                        // Prioritize EXIF coords, then form coords
-                        const finalCoords = meta.coords || formCoords;
-                        // Prioritize EXIF timestamp, then current date
-                        const finalTimestamp = meta.timestamp || new Date();
+                        let finalCoords = null;
+                        let finalTimestamp = null;
+                        let metadadosVerificados = false;
+                        let fonteMetadados = 'ausente';
+
+                        if (source === 'camera') {
+                            if (formData.latitude && formData.longitude) {
+                                finalCoords = { lat: formData.latitude, lng: formData.longitude };
+                                finalTimestamp = new Date();
+                                metadadosVerificados = true;
+                                fonteMetadados = 'gps_device';
+                            } else {
+                                alert("Não foi possível capturar GPS para a foto. A imagem será salva sem selo de localização verificado.");
+                            }
+                        } else if (source === 'gallery') {
+                            if (meta.coords && meta.timestamp) {
+                                finalCoords = meta.coords;
+                                finalTimestamp = meta.timestamp;
+                                metadadosVerificados = true;
+                                fonteMetadados = 'exif_original';
+                            } else if (meta.coords) {
+                                finalCoords = meta.coords;
+                                metadadosVerificados = false;
+                                fonteMetadados = 'exif_original'; // Parcial
+                            } else if (meta.timestamp) {
+                                finalTimestamp = meta.timestamp;
+                                metadadosVerificados = false;
+                                fonteMetadados = 'exif_original'; // Parcial
+                            }
+                        } else if (source === 'referencia_historica') {
+                            fonteMetadados = 'ausente';
+                        }
 
                         const compressed = await compressImage(reader.result, {
                             coordinates: finalCoords,
-                            timestamp: finalTimestamp
+                            timestamp: finalTimestamp,
+                            fonteMetadados
                         });
 
                         resolve({
                             id: Date.now() + Math.random(),
                             data: compressed,
                             name: file.name,
-                            legenda: ''
+                            legenda: '',
+                            latitude: finalCoords?.lat || null,
+                            longitude: finalCoords?.lng || null,
+                            data_hora_captura: finalTimestamp ? (finalTimestamp instanceof Date ? finalTimestamp.toISOString() : finalTimestamp) : null,
+                            metadados_verificados: metadadosVerificados,
+                            fonte_metadados: fonteMetadados,
+                            tipo_captura: source || 'upload_galeria'
                         })
                     } catch (e) {
                         console.error("Compression error:", e)
@@ -753,7 +798,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             id: Date.now() + Math.random(),
                             data: reader.result,
                             name: file.name,
-                            legenda: ''
+                            legenda: '',
+                            metadados_verificados: false,
+                            fonte_metadados: 'ausente'
                         })
                     }
                 }
@@ -2234,11 +2281,18 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             <FileInput onFileSelect={handlePhotoSelect} className="h-32" />
                             {formData.fotos.map((foto, idx) => (
                                 <div key={foto.id} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 group shadow-sm bg-slate-50 dark:bg-slate-900">
-                                    <img
-                                        src={foto.data || foto}
-                                        className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
-                                        onClick={() => setSelectedPhotoIndex(idx)}
-                                    />
+                                    {foto.isPdf || (foto.data && typeof foto.data === 'string' && foto.data.startsWith('data:application/pdf')) ? (
+                                        <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 text-red-500">
+                                            <FileText size={40} className="mb-1" />
+                                            <span className="text-[8px] font-bold uppercase truncate px-2 w-full text-center">{foto.name || 'Documento PDF'}</span>
+                                        </div>
+                                    ) : (
+                                        <img
+                                            src={foto.data || foto}
+                                            className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
+                                            onClick={() => setSelectedPhotoIndex(idx)}
+                                        />
+                                    )}
                                     <div className="absolute top-2 inset-x-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all z-20">
                                         <div className="flex gap-1">
                                             {idx > 0 && (

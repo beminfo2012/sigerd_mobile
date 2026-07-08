@@ -53,7 +53,13 @@ const normalizeData = (data, type) => {
                     return {
                         ...f,
                         data: f.data || f.url || f,
-                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
+                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim(),
+                        latitude: f.latitude || null,
+                        longitude: f.longitude || null,
+                        data_hora_captura: f.data_hora_captura || null,
+                        metadados_verificados: f.metadados_verificados || false,
+                        fonte_metadados: f.fonte_metadados || 'ausente',
+                        tipo_captura: f.tipo_captura || 'upload_galeria'
                     };
                 });
             })(),
@@ -86,7 +92,13 @@ const normalizeData = (data, type) => {
                 return {
                     ...f,
                     data: f.data || f.url || f,
-                    legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
+                    legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim(),
+                    latitude: f.latitude || null,
+                    longitude: f.longitude || null,
+                    data_hora_captura: f.data_hora_captura || null,
+                    metadados_verificados: f.metadados_verificados || false,
+                    fonte_metadados: f.fonte_metadados || 'ausente',
+                    tipo_captura: f.tipo_captura || 'upload_galeria'
                 };
             });
         })();
@@ -145,7 +157,13 @@ const normalizeData = (data, type) => {
                     return {
                         ...f,
                         data: f.data || f.url || f,
-                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim()
+                        legenda: String(f.legenda || f.caption || f.titulo || f.title || f.name || '').trim(),
+                        latitude: f.latitude || null,
+                        longitude: f.longitude || null,
+                        data_hora_captura: f.data_hora_captura || null,
+                        metadados_verificados: f.metadados_verificados || false,
+                        fonte_metadados: f.fonte_metadados || 'ausente',
+                        tipo_captura: f.tipo_captura || 'upload_galeria'
                     };
                 });
             })(),
@@ -253,6 +271,31 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                         n === 'Alto' ? 'R3 · Alto' :
                         n === 'Iminente' ? 'R4 · Muito Alto / Iminente' : n;
         return `<span style="color: ${colors[n] || '#64748b'}; font-size: 11px; font-weight: 900; border-bottom: 2px solid ${colors[n] || '#64748b'}; text-transform: uppercase;">${display}</span>`;
+    };
+
+    const renderPhotoMetadata = (f) => {
+        if (f.metadados_verificados && (f.latitude && f.longitude)) {
+            const extraLabel = f.fonte_metadados === 'exif_original' ? ' <span style="color: #64748b; font-size: 7px;">(EXTRAÍDO DO ARQUIVO)</span>' : '';
+            return `<div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: <span class="pdf-coord-link" data-lat="${f.latitude}" data-lng="${f.longitude}" style="color: #2a5299; text-decoration: underline;">${f.latitude}, ${f.longitude}</span>${extraLabel}</div>`;
+        } else if (f.fonte_metadados === 'manual' || f.tipo_captura === 'referencia_historica') {
+            return `<div style="margin-top: 4px; display: inline-block; background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; border: 1px solid #fde68a; font-size: 8px; font-weight: 800; text-transform: uppercase;">NÃO VERIFICADO</div>`;
+        }
+        // ausente
+        return '';
+    };
+
+    const renderPhotoElement = (f) => {
+        const isPdf = f.isPdf || (typeof f.data === 'string' && f.data.startsWith('data:application/pdf'));
+        if (isPdf) {
+            return `
+                <div style="width: 100%; height: 220px; display: flex; align-items: center; justify-content: center; background: #fef2f2; color: #ef4444; flex-direction: column; border-bottom: 1px solid #fee2e2;">
+                    <div style="font-size: 36px; margin-bottom: 8px;">📄</div>
+                    <div style="font-size: 11px; font-weight: 900; font-family: 'Inter', sans-serif;">ARQUIVO PDF ANEXADO</div>
+                    <div style="font-size: 9px; font-weight: 600; margin-top: 4px; max-width: 80%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${f.name || ''}</div>
+                </div>
+            `;
+        }
+        return `<img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />`;
     };
 
     let contentHtml = `<div style="padding: 0 40px 40px 40px;">`;
@@ -444,10 +487,10 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
                         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
-                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
+                            ${renderPhotoElement(f)}
                             <div style="padding: 12px; background: white;">
                                 <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
-                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: <span class="pdf-coord-link" data-lat="${data.latitude}" data-lng="${data.longitude}" style="color: #2a5299; text-decoration: underline;">${data.latitude}, ${data.longitude}</span></div>
+                                ${renderPhotoMetadata(f)}
                                 ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
                             </div>
                         </div>
@@ -505,9 +548,10 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
                         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
-                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
+                            ${renderPhotoElement(f)}
                             <div style="padding: 12px; background: white;">
                                 <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
+                                ${renderPhotoMetadata(f)}
                                 ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
                             </div>
                         </div>
@@ -598,10 +642,10 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     ${data.fotos.map((f, idx) => `
                         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); page-break-inside: avoid;">
-                            <img src="${f.data || f}" style="width: 100%; height: 220px; object-fit: contain; display: block; background: #f1f5f9;" crossorigin="anonymous" />
+                            ${renderPhotoElement(f)}
                             <div style="padding: 12px; background: white;">
                                 <div style="font-size: 10px; color: #2a5299; font-weight: 800; text-transform: uppercase;">REGISTRO FOTOGRÁFICO</div>
-                                <div style="font-size: 8px; color: #94a3b8; font-weight: 600; margin-top: 4px;">COORD: <span class="pdf-coord-link" data-lat="${data.latitude}" data-lng="${data.longitude}" style="color: #2a5299; text-decoration: underline;">${data.latitude}, ${data.longitude}</span></div>
+                                ${renderPhotoMetadata(f)}
                                 ${f.legenda ? `<div style="margin-top: 8px; font-size: 11px; color: #334155; font-weight: 700; line-height: 1.4;">${f.legenda}</div>` : ''}
                             </div>
                         </div>

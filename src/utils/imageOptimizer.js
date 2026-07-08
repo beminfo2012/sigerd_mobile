@@ -38,7 +38,8 @@ export const compressImage = (base64Str, options = {}) => {
         maxWidth = 1200,
         quality = 0.7,
         coordinates = null, // { lat, lng }
-        timestamp = true // can be boolean or Date object
+        timestamp = true, // can be boolean or Date object
+        fonteMetadados = 'ausente'
     } = options;
 
     return new Promise((resolve, reject) => {
@@ -80,12 +81,18 @@ export const compressImage = (base64Str, options = {}) => {
                 }
 
                 if (timestamp) {
-                    const dateObj = (timestamp instanceof Date) ? timestamp : new Date();
+                    const dateObj = (timestamp instanceof Date) ? timestamp : new Date(timestamp);
                     const formattedDate = dateObj.toLocaleString('pt-BR', {
                         year: 'numeric', month: '2-digit', day: '2-digit',
                         hour: '2-digit', minute: '2-digit', second: '2-digit'
                     });
                     lines.push(`DATA: ${formattedDate}`);
+                }
+                
+                if (fonteMetadados === 'exif_original') {
+                    lines.push(`FONTE: EXTRAÍDO DO ARQUIVO`);
+                } else if (fonteMetadados === 'gps_device') {
+                    lines.push(`FONTE: GPS DO DISPOSITIVO`);
                 }
 
                 if (lines.length > 0) {

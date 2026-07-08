@@ -4,6 +4,7 @@ import CameraModal from './CameraModal'
 
 const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAll = false, compact = false }) => {
     const galleryInputRef = useRef(null)
+    const refInputRef = useRef(null)
     const [isCameraOpen, setIsCameraOpen] = useState(false)
 
     const handleCameraClick = (e) => {
@@ -23,6 +24,8 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
         if (files.length > 0) {
             onFileSelect(files, source)
         }
+        // clear value to allow re-selection of the same file if needed
+        e.target.value = null;
     }
 
     const handleCameraCapture = (files) => {
@@ -56,7 +59,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
     }
 
     return (
-        <div className="grid grid-cols-2 gap-2 w-full">
+        <div className="grid grid-cols-3 gap-2 w-full">
             <CameraModal 
                 isOpen={isCameraOpen} 
                 onClose={() => setIsCameraOpen(false)} 
@@ -71,6 +74,16 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                 accept={acceptAll ? "*" : "image/*"}
                 multiple
                 onChange={(e) => handleChange(e, 'gallery')}
+            />
+
+            {/* Reference Input (Accepts Images and PDFs) */}
+            <input
+                type="file"
+                ref={refInputRef}
+                className="hidden"
+                accept="image/*,application/pdf"
+                multiple
+                onChange={(e) => handleChange(e, 'referencia_historica')}
             />
 
             <button
@@ -89,6 +102,22 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
             >
                 <ImageIcon size={28} strokeWidth={1.5} />
                 <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center">Galeria</span>
+            </button>
+
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (refInputRef.current) refInputRef.current.click();
+                }}
+                className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-500 hover:text-amber-500 transition-all relative group ${type === 'photo' ? 'aspect-square' : ''}`}
+            >
+                <div className="relative">
+                    <ImageIcon size={28} strokeWidth={1.5} />
+                    <span className="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[8px] px-1 rounded-full font-bold">REF</span>
+                </div>
+                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center">Referência</span>
             </button>
         </div>
     )
