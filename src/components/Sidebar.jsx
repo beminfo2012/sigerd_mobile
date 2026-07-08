@@ -155,12 +155,7 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             path: '/interdicao',
             roles: AGENT_ROLES
         },
-        {
-            label: 'FIREGIS',
-            icon: Flame,
-            path: '/firegis',
-            roles: AGENT_ROLES
-        },
+
         {
             label: 'Plano de Contingência',
             icon: Shield,
@@ -249,10 +244,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                                 <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
 
-                            {/* Separador após o ícone de FIREGIS */}
-                            {item.label === 'FIREGIS' && (
+                            {/* Separador após o ícone de Interdições */}
+                            {item.label === 'Interdições' && (
                                 <div className="h-[1px] bg-white/10 my-4 mx-2" />
                             )}
+
+
 
                             {/* Separador após o ícone de MCI - Recursos */}
                             {item.label === 'MCI - Recursos' && (

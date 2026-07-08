@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame, Calculator } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame, Calculator, Activity, Map } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData, pullAllData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
@@ -215,96 +215,167 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
             </div>
 
             {/* Menu Sections */}
-            <div className="space-y-4">
-                <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                    {/* Sync Option */}
-                    {userProfile?.role !== 'Operador' && (
-                        <button
-                            onClick={handleManualSync}
-                            disabled={syncing}
-                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
-                        >
-                            <div className="flex items-center">
-                                <div className={`p-3 rounded-2xl mr-4 ${syncDetail.total > 0 ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-500' : 'bg-green-50 dark:bg-green-950/30 text-green-500'}`}>
-                                    <Database size={22} className={syncing ? 'animate-spin' : ''} />
-                                </div>
-                                <div>
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Sincronizar Dados</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                        {syncDetail.total > 0 ? `${syncDetail.total} registros pendentes` : 'Tudo atualizado'}
-                                    </span>
-                                </div>
-                            </div>
-                            {syncDetail.total > 0 && <RefreshCcw size={18} className="text-slate-300" />}
-                            {syncDetail.total === 0 && <CheckCircle size={18} className="text-green-500" />}
-                        </button>
-                    )}
+            {/* Menu Sections */}
+            <div className="space-y-6">
 
-                    {/* Settings Option (Clear Cache Only) */}
-                    <button
-                        onClick={() => setShowClearCacheModal(true)}
-                        className="w-full p-5 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
-                    >
-                        <div className="p-3 bg-slate-50 dark:bg-slate-700 text-slate-500 rounded-2xl mr-4">
-                            <Settings size={22} />
-                        </div>
-                        <div>
-                            <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Limpar Cache</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Otimizar espaço local</span>
-                        </div>
-                    </button>
+                {/* SISTEMA */}
+                <div>
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 ml-2 flex items-center gap-2">
+                        <Settings size={12} /> Sistema & Sincronização
+                    </h3>
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl overflow-hidden flex flex-col">
+                        {userProfile?.role !== 'Operador' && (
+                            <button
+                                onClick={handleManualSync}
+                                disabled={syncing}
+                                className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                            >
+                                <div className="flex items-center">
+                                    <div className={`p-3 rounded-2xl mr-4 ${syncDetail.total > 0 ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-500' : 'bg-green-50 dark:bg-green-950/30 text-green-500'}`}>
+                                        <Database size={22} className={syncing ? 'animate-spin' : ''} />
+                                    </div>
+                                    <div>
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Sincronizar Dados</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                                            {syncDetail.total > 0 ? `${syncDetail.total} registros pendentes` : 'Tudo atualizado'}
+                                        </span>
+                                    </div>
+                                </div>
+                                {syncDetail.total > 0 && <RefreshCcw size={18} className="text-slate-300" />}
+                                {syncDetail.total === 0 && <CheckCircle size={18} className="text-green-500" />}
+                            </button>
+                        )}
 
-                    {/* Critical Reset - Only for Agents */}
-                    {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
                         <button
-                            onClick={() => setShowResetDBModal(true)}
-                            className="w-full p-5 flex items-center hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
+                            onClick={() => setShowClearCacheModal(true)}
+                            className={`w-full p-5 flex items-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left ${['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) ? 'border-b border-slate-50 dark:border-slate-700/50' : ''}`}
                         >
-                            <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-500 rounded-2xl mr-4">
-                                <ShieldAlert size={22} />
+                            <div className="p-3 bg-slate-50 dark:bg-slate-700 text-slate-500 rounded-2xl mr-4">
+                                <Settings size={22} />
                             </div>
                             <div>
-                                <span className="block font-bold text-red-600 text-sm">Resetar Aplicativo</span>
-                                <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight">Uso emergencial apenas</span>
+                                <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Limpar Cache</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Otimizar espaço local</span>
                             </div>
                         </button>
-                    )}
+
+                        {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
+                            <button
+                                onClick={() => setShowResetDBModal(true)}
+                                className="w-full p-5 flex items-center hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+                            >
+                                <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-500 rounded-2xl mr-4">
+                                    <ShieldAlert size={22} />
+                                </div>
+                                <div>
+                                    <span className="block font-bold text-red-600 text-sm">Resetar Aplicativo</span>
+                                    <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight">Uso emergencial apenas</span>
+                                </div>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Strategic Module - Plano de Contingência */}
-                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <button
-                            onClick={() => navigate('/contingencia')}
-                            className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 rounded-2xl mr-4">
-                                    <Shield size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Plano de Contingência</span>
-                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest leading-tight">Módulo Estratégico SCO</span>
-                                </div>
-                            </div>
-                            <div className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">MÁXIMO</div>
-                        </button>
+                {/* OPERACIONAL */}
+                {(['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Secretário', 'admin', 'Operador'].includes(userProfile?.role)) && (
+                    <div className="md:hidden">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 ml-2 flex items-center gap-2">
+                            <Activity size={12} /> Módulos Operacionais
+                        </h3>
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl overflow-hidden flex flex-col">
+                            
+                            {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
+                                <button
+                                    onClick={() => navigate('/noprer')}
+                                    className="w-full p-5 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                                >
+                                    <div className="flex items-center">
+                                        <div className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl mr-4">
+                                            <Shield size={22} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">NOPRER</span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-tight">Núcleo Operacional</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Operacional</div>
+                                </button>
+                            )}
+
+                            {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Operador'].includes(userProfile?.role) && (
+                                <button
+                                    onClick={() => navigate('/agenda')}
+                                    className="w-full p-5 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                                >
+                                    <div className="flex items-center">
+                                        <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 rounded-2xl mr-4">
+                                            <Calendar size={22} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Agenda de Prazos</span>
+                                            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest leading-tight">Painel Operacional</span>
+                                        </div>
+                                    </div>
+                                </button>
+                            )}
+
+                            {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
+                                <button
+                                    onClick={() => navigate('/voluntarios')}
+                                    className="w-full p-5 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors text-left"
+                                >
+                                    <div className="flex items-center">
+                                        <div className="p-3 bg-teal-50 dark:bg-teal-900/30 text-teal-600 rounded-2xl mr-4">
+                                            <HeartHandshake size={22} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Banco de Voluntários</span>
+                                            <span className="text-[10px] font-black text-teal-500 uppercase tracking-widest leading-tight">Gestão e Acionamento</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Novo</div>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
 
+                {/* ESTRATÉGICO & LOGÍSTICA */}
+                <div className="md:hidden">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 ml-2 flex items-center gap-2">
+                        <Map size={12} /> Estratégico & Logística
+                    </h3>
+                    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl overflow-hidden flex flex-col">
+                        
+                        {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
+                            <button
+                                onClick={() => navigate('/contingencia')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 rounded-2xl mr-4">
+                                        <Shield size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Plano de Contingência</span>
+                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest leading-tight">Módulo Estratégico SCO</span>
+                                    </div>
+                                </div>
+                                <div className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Máximo</div>
+                            </button>
+                        )}
 
-                {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin',
-                    'Redap_Geral', 'Redap_Setorial', 'Redap_Saude', 'Redap_Educacao', 'Redap_Obras', 'Redap_Agricultura',
-                    'Redap_Social', 'Redap_Interior', 'Redap_Administracao', 'Redap_CDL', 'Redap_Cesan', 'Redap_DefesaSocial',
-                    'Redap_EsporteTurismo', 'Redap_ServicosUrbanos', 'Redap_Transportes',
-                    'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura',
-                    'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
-                    'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
-                ].includes(userProfile?.role)) && (
-                        <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin',
+                            'Redap_Geral', 'Redap_Setorial', 'Redap_Saude', 'Redap_Educacao', 'Redap_Obras', 'Redap_Agricultura',
+                            'Redap_Social', 'Redap_Interior', 'Redap_Administracao', 'Redap_CDL', 'Redap_Cesan', 'Redap_DefesaSocial',
+                            'Redap_EsporteTurismo', 'Redap_ServicosUrbanos', 'Redap_Transportes',
+                            'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura',
+                            'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
+                            'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
+                        ].includes(userProfile?.role)) && (
                             <button
                                 onClick={() => navigate('/redap')}
-                                className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+                                className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
                             >
                                 <div className="flex items-center">
                                     <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-2xl mr-4">
@@ -317,182 +388,122 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                 </div>
                                 <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Nacional</div>
                             </button>
-                        </div>
-                    )}
+                        )}
 
-                {/* FIREGIS Module */}
-                {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <button
-                            onClick={() => navigate('/firegis')}
-                            className="w-full p-5 flex items-center justify-between hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 rounded-2xl mr-4">
-                                    <Flame size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">FIREGIS</span>
-                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest leading-tight">Gestão Integrada de Incêndios</span>
-                                </div>
-                            </div>
-                            <div className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Operacional</div>
-                        </button>
-                    </div>
-                )}
-
-                {/* MCI - Mapeamento de Capacidade Instalada */}
-                {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin',
-                    'Redap_Geral', 'Redap_Setorial', 'Redap_Saude', 'Redap_Educacao', 'Redap_Obras', 'Redap_Agricultura',
-                    'Redap_Social', 'Redap_Interior', 'Redap_Administracao', 'Redap_CDL', 'Redap_Cesan', 'Redap_DefesaSocial',
-                    'Redap_EsporteTurismo', 'Redap_ServicosUrbanos', 'Redap_Transportes',
-                    'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura',
-                    'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
-                    'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
-                ].includes(userProfile?.role)) && (
-                        <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin',
+                            'Redap_Geral', 'Redap_Setorial', 'Redap_Saude', 'Redap_Educacao', 'Redap_Obras', 'Redap_Agricultura',
+                            'Redap_Social', 'Redap_Interior', 'Redap_Administracao', 'Redap_CDL', 'Redap_Cesan', 'Redap_DefesaSocial',
+                            'Redap_EsporteTurismo', 'Redap_ServicosUrbanos', 'Redap_Transportes',
+                            'S2id_Geral', 'S2id_Setorial', 'S2id_Saude', 'S2id_Educacao', 'S2id_Obras', 'S2id_Agricultura',
+                            'S2id_Social', 'S2id_Interior', 'S2id_Administracao', 'S2id_CDL', 'S2id_Cesan', 'S2id_DefesaSocial',
+                            'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
+                        ].includes(userProfile?.role)) && (
                             <button
                                 onClick={() => navigate('/mci')}
-                                className="w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left"
+                                className={`w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left ${['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) ? 'border-b border-slate-50 dark:border-slate-700/50' : ''}`}
                             >
                                 <div className="flex items-center">
                                     <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl mr-4">
                                         <ClipboardList size={22} />
                                     </div>
                                     <div className="flex-1">
-                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Capacidade Instalada (MCI)</span>
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Logística e Recursos do Município</span>
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Capacidade Instalada</span>
+                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Logística e Recursos</span>
                                     </div>
                                 </div>
                                 <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Logística</div>
                             </button>
-                        </div>
-                    )}
+                        )}
 
-                {/* Management Section (Strategic) - FOR COORDINATORS AND ADMINS */}
+                        {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
+                            <button
+                                onClick={() => navigate('/monitoramento/legado')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors text-left"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-600 rounded-2xl mr-4">
+                                        <History size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Legado COMPDEC</span>
+                                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-tight">Histórico de Vistorias</span>
+                                    </div>
+                                </div>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* ADMINISTRAÇÃO */}
                 {['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <button
-                            onClick={() => navigate('/usuarios')}
-                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-600 rounded-2xl mr-4">
-                                    <Users size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Usuários</span>
-                                    <span className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest">Painel de Administração</span>
-                                </div>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/configuracoes')}
-                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-2xl mr-4">
-                                    <Globe size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Orthofotos</span>
-                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Configuração Global de Camadas GIS</span>
-                                </div>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/mrcr')}
-                            className="w-full p-5 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-600 rounded-2xl mr-4">
-                                    <Calculator size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo MRCR</span>
-                                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Módulo de Referências de Custo</span>
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                )}
-
-                {/* Legado Section */}
-                {['Agente de Defesa Civil', 'Técnico em Edificações', 'admin'].includes(userProfile?.role) && (
-                    <div className="bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <button
-                            onClick={() => navigate('/monitoramento/legado')}
-                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-600 rounded-2xl mr-4">
-                                    <History size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Legado COMPDEC</span>
-                                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Histórico de Vistorias</span>
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                )}
-
-                {/* Agenda Section */}
-                {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Operador'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <button
-                            onClick={() => navigate('/agenda')}
-                            className="w-full p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 rounded-2xl mr-4">
-                                    <Calendar size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Agenda de Prazos</span>
-                                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Painel Operacional</span>
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                )}
-
-                {/* Voluntários Section */}
-                {['Admin', 'Administrador', 'administrador', 'Agente de Defesa Civil', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <button
-                            onClick={() => navigate('/voluntarios')}
-                            className="w-full p-5 flex items-center justify-between hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors text-left"
-                        >
-                            <div className="flex items-center">
-                                <div className="p-3 bg-teal-50 dark:bg-teal-900/30 text-teal-600 rounded-2xl mr-4">
-                                    <HeartHandshake size={22} />
-                                </div>
-                                <div className="flex-1">
-                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Banco de Voluntários</span>
-                                    <span className="text-[10px] font-black text-teal-500 uppercase tracking-widest">Gestão e Acionamento</span>
-                                </div>
-                            </div>
-                            <div className="bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Novo</div>
-                        </button>
-                    </div>
-                )}
-
-                {/* Logout Card */}
-                <button
-                    onClick={handleLogoutClick}
-                    className="w-full bg-white dark:bg-slate-800 p-5 border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 dark:border-slate-700 flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
-                >
-                    <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-2xl mr-4">
-                        <LogOut size={22} />
-                    </div>
                     <div>
-                        <span className="block font-bold text-sm text-red-600 dark:text-red-500">Deslogar do Sistema</span>
-                        <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight">Encerrar sessão atual</span>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 ml-2 flex items-center gap-2">
+                            <Users size={12} /> Gestão & Administração
+                        </h3>
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl overflow-hidden flex flex-col">
+                            <button
+                                onClick={() => navigate('/usuarios')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-600 rounded-2xl mr-4">
+                                        <Users size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Usuários</span>
+                                        <span className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest leading-tight">Painel de Administração</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/configuracoes')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-2xl mr-4">
+                                        <Globe size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Orthofotos</span>
+                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Camadas GIS</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/mrcr')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-600 rounded-2xl mr-4">
+                                        <Calculator size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo MRCR</span>
+                                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-tight">Referências de Custo</span>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
                     </div>
-                </button>
+                )}
+
+                {/* LOGOUT */}
+                <div className="mt-8">
+                    <button
+                        onClick={handleLogoutClick}
+                        className="w-full bg-white dark:bg-slate-800 p-5 border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left"
+                    >
+                        <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-2xl mr-4">
+                            <LogOut size={22} />
+                        </div>
+                        <div>
+                            <span className="block font-bold text-sm text-red-600 dark:text-red-500">Deslogar do Sistema</span>
+                            <span className="text-[10px] font-bold text-red-300 uppercase tracking-tight leading-tight">Encerrar sessão atual</span>
+                        </div>
+                    </button>
+                </div>
             </div>
 
             {/* Profile Modal */}
