@@ -168,7 +168,7 @@ export default function DonationHub() {
                                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
                                         <option value="">Não especificar abrigo...</option>
-                                        {shelters.map(s => (
+                                        {shelters.filter(s => s.status === 'active').map(s => (
                                             <option key={s.id} value={s.id}>{s.name}</option>
                                         ))}
                                     </select>

@@ -40,7 +40,10 @@ export function Reports() {
     }, []);
 
     const getShelterName = (id) => {
-        const s = shelters.find(s => s.id === parseInt(id));
+        if (!id) return 'Desconhecido';
+        if (id === 'CENTRAL') return 'Base Central (MCI)';
+        if (id === 'SOLIDARY') return 'Hub Solidário';
+        const s = shelters.find(s => String(s.id) === String(id) || String(s.shelter_id) === String(id) || String(s.supabase_id) === String(id));
         return s ? s.name : 'Abrigo Desconhecido';
     };
 

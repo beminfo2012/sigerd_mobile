@@ -10,8 +10,9 @@ const SyncBackground = () => {
             if (!navigator.onLine) return
 
             try {
-                console.log('[SyncBackground] Full sync starting...')
+                // console.log('[SyncBackground] Full sync starting...')
                 await pullAllData()
+                window.dispatchEvent(new CustomEvent('sync-complete', { detail: { pulled: true } }));
                 await pushPendingChanges()
             } catch (error) {
                 console.error('[SyncBackground] Full sync failed:', error)
@@ -25,7 +26,7 @@ const SyncBackground = () => {
             try {
                 const pendingCount = await getPendingSyncCount()
                 if (pendingCount.total > 0) {
-                    console.log(`[SyncBackground] Syncing ${pendingCount.total} pending items...`)
+                    // console.log(`[SyncBackground] Syncing ${pendingCount.total} pending items...`)
                     const result = await syncPendingData()
                     if (result.success && result.count > 0) {
                         console.log(`[SyncBackground] Synced ${result.count} items. Refreshing local state...`)

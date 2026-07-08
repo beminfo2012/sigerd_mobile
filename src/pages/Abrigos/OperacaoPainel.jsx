@@ -15,6 +15,10 @@ export default function OperacaoPainel() {
     
     const [operacao, setOperacao] = useState(null);
     const [diario, setDiario] = useState([]);
+    const [estoque, setEstoque] = useState([]);
+    const [abrigos, setAbrigos] = useState([]);
+    const [doacoes, setDoacoes] = useState([]);
+    const [distribuicoes, setDistribuicoes] = useState([]);
     const [novoRegistro, setNovoRegistro] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('diario');
@@ -34,6 +38,45 @@ export default function OperacaoPainel() {
             
             const historicoDiario = await operacoesService.getDiarioOperacao(id);
             setDiario(historicoDiario || []);
+
+            // Carregar dados de logística
+            try {
+                const { getGlobalInventory, getShelters, getDonations, getDistributions } = await import('../../services/shelterDb.js');
+                const allInv = await getGlobalInventory();
+                const allAbr = await getShelters();
+                const allDoa = await getDonations();
+                const allDis = await getDistributions();
+
+                const filteredDoacoes = (allDoa || []).filter(d => !d.operacao_id || String(d.operacao_id) === String(id));
+                const filteredSaidas = (allDis || []).filter(d => !d.operacao_id || String(d.operacao_id) === String(id));
+
+                setEstoque((allInv || []).filter(i => !i.operacao_id || String(i.operacao_id) === String(id)));
+                setAbrigos((allAbr || []).filter(a => !a.operacao_id || String(a.operacao_id) === String(id)));
+                setDoacoes(filteredDoacoes);
+                setDistribuicoes(filteredSaidas);
+
+                // Mix logistics events into the diary
+                const logEventos = [
+                    ...(historicoDiario || []),
+                    ...filteredDoacoes.map(d => ({
+                        id: `doa-${d.id || d.donation_id}`,
+                        origem: 'automatico',
+                        data_hora: d.created_at,
+                        descricao: `📦 ENTRADA DE ESTOQUE\nItem: ${d.item_name || d.item_description}\nQuantidade: ${d.quantity} ${d.unit}\nDestino: ${!d.shelter_id || d.shelter_id === 'CENTRAL' ? 'Estoque Central (Logística)' : 'Abrigo'}`
+                    })),
+                    ...filteredSaidas.map(s => ({
+                        id: `sai-${s.id || s.distribution_id}`,
+                        origem: 'automatico',
+                        data_hora: s.created_at,
+                        descricao: `🚚 SAÍDA DE ESTOQUE\nItem: ${s.item_name}\nQuantidade: ${s.quantity} ${s.unit}\nDestino: ${s.destination_shelter_id ? `Transferência para Abrigo ${s.destination_shelter_id}` : (s.recipient_name || 'Desconhecido')}`
+                    }))
+                ].sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora));
+
+                setDiario(logEventos);
+            } catch (e) {
+                console.warn('Não foi possível carregar dados locais do IndexedDB para o painel', e);
+                setDiario(historicoDiario || []);
+            }
         } catch (error) {
             console.error(error);
             toast.error('Erro ao carregar painel da operação');
@@ -211,13 +254,74 @@ export default function OperacaoPainel() {
                         </div>
                     )}
                     
-                    {(activeTab === 'abrigos' || activeTab === 'estoque') && (
-                        <div className="py-10 text-center">
-                            <h4 className="font-bold text-slate-400 mb-2">Aba de {activeTab === 'abrigos' ? 'Abrigos' : 'Estoque'}</h4>
-                            <p className="text-sm text-slate-500">
-                                Esta seção lista os dados filtrados especificamente para esta operação. 
-                                (Funcionalidade de expansão de abas conectada aos componentes nativos do SIGERD).
-                            </p>
+                    {activeTab === 'abrigos' && (
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                                <Building2 className="text-blue-500" size={20} />
+                                <h3 className="font-bold text-lg">Abrigos da Operação</h3>
+                            </div>
+                            
+                            {abrigos.length === 0 ? (
+                                <p className="text-sm text-slate-500 text-center py-10">Nenhum abrigo vinculado a esta operação.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {abrigos.map(a => (
+                                        <div key={a.id} className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                            <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-1">{a.name}</h4>
+                                            <div className="flex justify-between text-xs text-slate-500 mt-2">
+                                                <span>Lotação: {a.current_occupancy || 0}/{a.capacity || '?'}</span>
+                                                <span className={`px-2 py-0.5 rounded-full font-bold uppercase ${a.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
+                                                    {a.status === 'active' ? 'Ativo' : a.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    
+                    {activeTab === 'estoque' && (
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                                <Package className="text-blue-500" size={20} />
+                                <h3 className="font-bold text-lg">Logística da Operação</h3>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-center">
+                                    <p className="text-2xl font-black text-blue-700 dark:text-blue-400">{estoque.length}</p>
+                                    <p className="text-xs font-bold text-blue-600 dark:text-blue-500 uppercase">Tipos em Estoque</p>
+                                </div>
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-center">
+                                    <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{doacoes.length}</p>
+                                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase">Doações Recibidas</p>
+                                </div>
+                                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl text-center">
+                                    <p className="text-2xl font-black text-amber-700 dark:text-amber-400">{distribuicoes.length}</p>
+                                    <p className="text-xs font-bold text-amber-600 dark:text-amber-500 uppercase">Saídas / Transfers</p>
+                                </div>
+                            </div>
+                            
+                            <h4 className="font-bold text-sm text-slate-500 uppercase tracking-widest mb-3">Inventário Atual</h4>
+                            {estoque.length === 0 ? (
+                                <p className="text-sm text-slate-500 text-center py-6">Nenhum item em estoque para esta operação.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    {estoque.map(item => (
+                                        <div key={item.id} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm flex justify-between items-center">
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{item.item_name}</p>
+                                                <p className="text-xs text-slate-500 capitalize">{item.category}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0 ml-2">
+                                                <p className="font-black text-blue-600 text-lg">{item.quantity}</p>
+                                                <p className="text-[10px] text-slate-400 font-bold">{item.unit || 'un.'}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

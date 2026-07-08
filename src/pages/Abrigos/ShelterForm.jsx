@@ -20,6 +20,7 @@ export function ShelterForm() {
         responsible_name: '',
         responsible_phone: '',
         observations: '',
+        status: 'active'
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +43,7 @@ export function ShelterForm() {
                             responsible_name: shelter.responsible_name || '',
                             responsible_phone: shelter.responsible_phone || '',
                             observations: shelter.observations || '',
+                            status: shelter.status || 'active',
                         });
                     }
                 } catch (error) {
@@ -239,6 +241,29 @@ export function ShelterForm() {
                             <FileText size={20} className="text-[#2a5299]" />
                             Informações Adicionais
                         </h2>
+
+                        <div className="space-y-4 mb-4">
+                            <label className="block text-sm font-semibold text-slate-700">Status Operacional</label>
+                            <div className="flex gap-2">
+                                <button 
+                                    type="button"
+                                    onClick={() => setFormData({...formData, status: 'active'})}
+                                    className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.status === 'active' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400'}`}
+                                >
+                                    🟢 Ativo (Aberto)
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => setFormData({...formData, status: 'inactive'})}
+                                    className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.status === 'inactive' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-slate-200 bg-white text-slate-400'}`}
+                                >
+                                    🟡 Inativo (Fechado)
+                                </button>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Abrigos inativos ficam fechados para recebimento de novas doações e novos abrigados.
+                            </p>
+                        </div>
 
                         <div className="space-y-2">
                             <label className="block text-sm font-semibold text-slate-700">

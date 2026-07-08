@@ -43,8 +43,6 @@ const VectorOverlay = ({ url, opacidade }) => {
 const OrthofotsLayer = () => {
     const { orthofotos } = useOrthofotos();
 
-    console.log('[OrthofotsLayer] Rendering with layers:', orthofotos);
-
     if (!orthofotos || orthofotos.length === 0) return null;
 
     return (
@@ -53,11 +51,6 @@ const OrthofotsLayer = () => {
                  if (orto.tipo === 'TILES') {
                      const isTms = orto.url.includes('{-y}');
                      const urlToUse = orto.url.replace(/{-y}/g, '{y}');
-                     console.log(`[OrthofotsLayer] Rendering TileLayer for ${orto.nome}:`, {
-                         urlToUse,
-                         isTms,
-                         opacity: orto.opacidade
-                     });
                      return (
                          <TileLayer
                              key={orto.id}

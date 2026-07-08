@@ -48,12 +48,13 @@ export const shelterSyncService = {
         if (table === 'distributions') {
             delete recordToPush.category;
             delete recordToPush.updated_at;
-            delete recordToPush.operacao_id;
             delete recordToPush.min_quantity;
             delete recordToPush.distributionId;
+            delete recordToPush.document;
+            delete recordToPush.destination_shelter_id;
+            delete recordToPush.type;
         }
         if (table === 'inventory') {
-            delete recordToPush.operacao_id;
             delete recordToPush.updated_at;
             delete recordToPush.min_quantity;
             delete recordToPush.status;

@@ -9,7 +9,7 @@ import {
 import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { Badge } from '../../components/Shelter/ui/Badge.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
-import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter, exitOccupant } from '../../services/shelterDb.js';
+import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter, exitOccupant, getShelterTransfers } from '../../services/shelterDb.js';
 import { calculateShelterNeeds } from '../../utils/needsCalculator';
 
 export function ShelterDetail() {
@@ -21,7 +21,13 @@ export function ShelterDetail() {
     const [shelter, setShelter] = useState(undefined);
     const [occupants, setOccupants] = useState([]);
     const [donations, setDonations] = useState([]);
+    const [distributions, setDistributions] = useState([]);
     const [inventory, setInventory] = useState([]);
+    
+    // Modal states
+    const [isDonationsModalOpen, setIsDonationsModalOpen] = useState(false);
+    const [isDistributionsModalOpen, setIsDistributionsModalOpen] = useState(false);
+    const [isToggleModalOpen, setIsToggleModalOpen] = useState(false);
 
     useEffect(() => {
         const loadData = async () => {
@@ -31,11 +37,25 @@ export function ShelterDetail() {
             const o = await getOccupants(id);
             const d = await getDonations(id);
             const i = await getInventory(id);
+            const t = await getShelterTransfers(id);
 
             setShelter(s || null); // null indicates "not found", undefined "loading"
             setOccupants(o || []);
-            setDonations(d || []);
             setInventory(i || []);
+
+            // Mesclar doações com transferências recebidas
+            const receivedTransfers = (t.incoming || []).map(tr => ({
+                id: tr.id || tr.distribution_id,
+                item_description: tr.item_name,
+                quantity: tr.quantity,
+                unit: tr.unit,
+                donor_name: 'Transferência Interna (MCI)',
+                donation_date: tr.distribution_date || tr.created_at
+            }));
+            setDonations([...(d || []), ...receivedTransfers].sort((a,b) => new Date(b.donation_date) - new Date(a.donation_date)));
+            
+            // Gravar saídas no estado
+            setDistributions(t.outgoing || []);
         };
         loadData();
     }, [id]);
@@ -62,6 +82,22 @@ export function ShelterDetail() {
                 console.error('Error exiting occupant:', error);
                 alert('Erro ao registrar saída.');
             }
+        }
+    };
+
+    const handleToggleStatus = () => {
+        setIsToggleModalOpen(true);
+    };
+
+    const confirmToggleStatus = async () => {
+        setIsToggleModalOpen(false);
+        const newStatus = shelter.status === 'active' ? 'inactive' : 'active';
+        try {
+            await updateShelter(id, { status: newStatus });
+            setShelter({ ...shelter, status: newStatus });
+        } catch (error) {
+            console.error('Erro ao alterar status:', error);
+            alert('Erro ao alterar status do abrigo.');
         }
     };
 
@@ -112,6 +148,26 @@ export function ShelterDetail() {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-12">
+            {isToggleModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 dark:border-slate-800">
+                        <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Building2 size={32} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Alterar Status</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                            Deseja alterar o abrigo para <strong className={shelter.status === 'active' ? 'text-amber-600' : 'text-emerald-600'}>{shelter.status === 'active' ? 'INATIVO (Fechado)' : 'ATIVO (Aberto)'}</strong>?
+                        </p>
+                        <div className="flex gap-3">
+                            <Button type="button" variant="secondary" onClick={() => setIsToggleModalOpen(false)} className="flex-1">Cancelar</Button>
+                            <Button type="button" onClick={confirmToggleStatus} className={`flex-1 text-white ${shelter.status === 'active' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                                Confirmar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4">
@@ -130,13 +186,23 @@ export function ShelterDetail() {
                                 <Badge status={shelter.status || 'active'}>
                                     {statusLabels[shelter.status] || 'ATIVO'}
                                 </Badge>
-                                <button
-                                    onClick={() => navigate(`/assisthumanitaria/editar/${id}`)}
-                                    className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-xl transition-colors"
-                                    title="Editar Abrigo"
-                                >
-                                    <Edit size={20} />
-                                </button>
+                                <div className="flex bg-white rounded-xl shadow-sm border border-slate-100 p-1 ml-2">
+                                    <button
+                                        onClick={handleToggleStatus}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${shelter.status === 'active' ? 'hover:bg-amber-50 text-amber-600' : 'hover:bg-emerald-50 text-emerald-600'}`}
+                                        title={shelter.status === 'active' ? 'Fechar Abrigo' : 'Reabrir Abrigo'}
+                                    >
+                                        {shelter.status === 'active' ? 'Inativar' : 'Ativar'}
+                                    </button>
+                                    <div className="w-px bg-slate-100 my-1 mx-1"></div>
+                                    <button
+                                        onClick={() => navigate(`/assisthumanitaria/editar/${id}`)}
+                                        className="p-1.5 text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Editar Abrigo"
+                                    >
+                                        <Edit size={16} />
+                                    </button>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 text-slate-500 text-sm">
                                 <MapPin size={16} />
@@ -383,11 +449,11 @@ export function ShelterDetail() {
                                     <h2 className="text-lg font-bold text-slate-800">Estoque do Abrigo</h2>
                                     <Package className="w-5 h-5 text-slate-400" />
                                 </div>
-                                {inventory.length === 0 ? (
+                                {inventory.filter(i => parseFloat(i.quantity || 0) > 0).length === 0 ? (
                                     <p className="text-sm text-slate-500 text-center py-4 italic">Nenhum item em estoque.</p>
                                 ) : (
                                     <div className="space-y-3">
-                                        {inventory.map((item) => {
+                                        {inventory.filter(i => parseFloat(i.quantity || 0) > 0).map((item) => {
                                             const isLowStock = item.quantity <= (item.minimum_stock || 5);
                                             return (
                                                 <div key={item.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
@@ -512,8 +578,45 @@ export function ShelterDetail() {
                                         </div>
                                     ))}
                                     {donations.length > 3 && (
-                                        <button className="w-full text-center text-xs font-bold text-[#2a5299] py-2">
-                                            Ver todas as doações
+                                        <button 
+                                            onClick={() => setIsDonationsModalOpen(true)}
+                                            className="w-full text-center text-xs font-bold text-[#2a5299] py-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                        >
+                                            Ver todas as entradas ({donations.length})
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </Card>
+
+                        {/* Distributions Summary Card */}
+                        <Card className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-bold text-slate-800">Saídas / Distribuições</h2>
+                                <TrendingUp className="w-5 h-5 text-slate-400" />
+                            </div>
+                            {distributions.length === 0 ? (
+                                <p className="text-sm text-slate-500 text-center py-4 italic">Nenhuma distribuição realizada.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {distributions.slice(0, 3).map((dist) => (
+                                        <div key={dist.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-sm font-semibold text-slate-800 truncate">
+                                                    {dist.item_name}
+                                                </div>
+                                                <div className="text-xs text-slate-500">
+                                                    {dist.quantity} {dist.unit} • Para: {dist.recipient_name}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {distributions.length > 3 && (
+                                        <button 
+                                            onClick={() => setIsDistributionsModalOpen(true)}
+                                            className="w-full text-center text-xs font-bold text-[#2a5299] py-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                        >
+                                            Ver todas as saídas ({distributions.length})
                                         </button>
                                     )}
                                 </div>
@@ -563,6 +666,62 @@ export function ShelterDetail() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Doações/Entradas */}
+            {isDonationsModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl">
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                <Gift className="w-5 h-5 text-[#2a5299]" /> Histórico de Entradas
+                            </h3>
+                            <button onClick={() => setIsDonationsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">✕</button>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50/50">
+                            {donations.map((donation) => (
+                                <div key={donation.id} className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-sm border border-slate-100">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-bold text-slate-800 truncate">{donation.item_description}</div>
+                                        <div className="text-xs text-slate-500">{donation.quantity} {donation.unit} • Origem: {donation.donor_name || 'Anônimo'}</div>
+                                        <div className="text-[10px] text-slate-400 mt-1">{new Date(donation.donation_date).toLocaleDateString('pt-BR')} {new Date(donation.donation_date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 border-t border-slate-100">
+                            <Button className="w-full" onClick={() => setIsDonationsModalOpen(false)}>Fechar</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Saídas/Distribuições */}
+            {isDistributionsModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl">
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                <TrendingUp className="w-5 h-5 text-[#2a5299]" /> Histórico de Saídas
+                            </h3>
+                            <button onClick={() => setIsDistributionsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">✕</button>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50/50">
+                            {distributions.map((dist) => (
+                                <div key={dist.id} className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-sm border border-slate-100">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-bold text-slate-800 truncate">{dist.item_name}</div>
+                                        <div className="text-xs text-slate-500">{dist.quantity} {dist.unit} • Para: {dist.recipient_name}</div>
+                                        <div className="text-[10px] text-slate-400 mt-1">{new Date(dist.distribution_date || dist.created_at).toLocaleDateString('pt-BR')} {new Date(dist.distribution_date || dist.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 border-t border-slate-100">
+                            <Button className="w-full" onClick={() => setIsDistributionsModalOpen(false)}>Fechar</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -201,7 +201,7 @@ export default function LogisticsHub() {
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-[#2a5299] text-white rotate-6' : 'bg-slate-50 text-slate-400 group-hover:bg-white'}`}>
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isSelected ? 'bg-[#2a5299] text-white scale-105' : 'bg-slate-50 text-slate-400 group-hover:bg-white'}`}>
                                                         {isSelected ? <CheckCircle2 size={24} /> : <Package size={24} />}
                                                     </div>
                                                     <div>
@@ -266,8 +266,8 @@ export default function LogisticsHub() {
                                         onChange={(e) => setTransferData({ ...transferData, shelter_id: e.target.value })}
                                     >
                                         <option value="">Selecione um abrigo...</option>
-                                        {shelters.map(s => (
-                                            <option key={s.id} value={s.id}>{s.name} ({s.status === 'active' ? 'Ativo' : 'Inativo'})</option>
+                                        {shelters.filter(s => s.status === 'active').map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
                                         ))}
                                     </select>
                                 </div>

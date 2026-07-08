@@ -16,7 +16,11 @@ import { toast } from '../../components/ToastNotification';
 
 export default function StockHub() {
     const navigate = useNavigate();
-    const [items, setItems] = useState([]);
+    const [centralItems, setCentralItems] = useState([]);
+    const [shelterItems, setShelterItems] = useState([]);
+    const [sheltersDict, setSheltersDict] = useState({});
+    const [activeTab, setActiveTab] = useState('CENTRAL');
+    
     const [search, setSearch] = useState('');
     const [filterCategory, setFilterCategory] = useState('');
     const [loading, setLoading] = useState(true);
@@ -32,8 +36,22 @@ export default function StockHub() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const inv = await getInventory('CENTRAL');
-            setItems(inv || []);
+            const { getGlobalInventory, getShelters } = await import('../../services/shelterDb.js');
+            const central = await getInventory('CENTRAL');
+            setCentralItems(central || []);
+            
+            const allGlobal = await getGlobalInventory();
+            const others = allGlobal.filter(i => i.shelter_id !== 'CENTRAL' && i.shelter_id !== 'SOLIDARY' && i.shelter_id && i.shelter_id !== 'null');
+            setShelterItems(others || []);
+            
+            const sh = await getShelters();
+            const sDict = {};
+            (sh || []).forEach(s => {
+                sDict[s.id] = s.name;
+                if(s.supabase_id) sDict[s.supabase_id] = s.name;
+            });
+            setSheltersDict(sDict);
+
             const report = await getDataConsistencyReport('CENTRAL');
             setConsistency(report);
         } catch (e) {
@@ -104,19 +122,28 @@ export default function StockHub() {
         }
     };
 
-    const filteredItems = items.filter(item => {
+    const allItems = [...centralItems, ...shelterItems];
+    const filteredCentral = centralItems.filter(item => {
+        const matchSearch = !search || (item.item_name && item.item_name.toLowerCase().includes(search.toLowerCase()));
+        const matchCategory = !filterCategory || item.category === filterCategory;
+        return matchSearch && matchCategory;
+    });
+    
+    const filteredShelters = shelterItems.filter(item => {
         const matchSearch = !search || (item.item_name && item.item_name.toLowerCase().includes(search.toLowerCase()));
         const matchCategory = !filterCategory || item.category === filterCategory;
         return matchSearch && matchCategory;
     });
 
-    const categories = [...new Set(items.map(i => i.category).filter(Boolean))];
-    const totalItems = items.reduce((acc, i) => acc + (parseFloat(i.quantity) || 0), 0);
-    const lowStockCount = items.filter(i => parseFloat(i.quantity) <= (i.min_quantity || 5)).length;
+    const activeItems = activeTab === 'CENTRAL' ? filteredCentral : filteredShelters;
+
+    const categories = [...new Set(allItems.map(i => i.category).filter(Boolean))];
+    const totalItems = allItems.reduce((acc, i) => acc + (parseFloat(i.quantity) || 0), 0);
+    const lowStockCount = allItems.filter(i => parseFloat(i.quantity) <= (i.min_quantity || 5)).length;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-12">
-            <div className="max-w-3xl mx-auto px-4 py-6">
+            <div className="max-w-6xl mx-auto px-4 py-6">
 
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
@@ -131,17 +158,17 @@ export default function StockHub() {
                         <div>
                             <h1 className="text-2xl font-black text-slate-800 dark:text-white">Estoque Municipal</h1>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                {items.length} tipos de itens • {totalItems.toLocaleString('pt-BR')} unidades no total
+                                {allItems.length} tipos de itens • {totalItems.toLocaleString('pt-BR')} unidades no município
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                    <Card className="p-3 text-center">
-                        <Package size={18} className="mx-auto text-blue-500 mb-1" />
-                        <p className="text-lg font-black text-slate-800 dark:text-white">{items.length}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                    <Card className="p-4 text-center">
+                        <Package size={22} className="mx-auto text-blue-500 mb-2" />
+                        <p className="text-2xl font-black text-slate-800 dark:text-white">{new Set(allItems.map(i=>i.item_name)).size}</p>
                         <p className="text-[10px] text-slate-500 font-semibold uppercase">Tipos</p>
                     </Card>
                     <Card className="p-3 text-center">
@@ -250,13 +277,29 @@ export default function StockHub() {
                     )}
                 </div>
 
+                {/* Accordion Tabs */}
+                <div className="flex bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-1 mb-6">
+                    <button 
+                        onClick={() => setActiveTab('CENTRAL')}
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${activeTab === 'CENTRAL' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+                    >
+                        Estoque Central ({centralItems.length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('SHELTERS')}
+                        className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${activeTab === 'SHELTERS' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+                    >
+                        Estoque nos Abrigos ({shelterItems.length})
+                    </button>
+                </div>
+
                 {/* Item List */}
                 {loading ? (
                     <div className="text-center py-16">
                         <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3" />
                         <p className="text-sm text-slate-500">Carregando estoque...</p>
                     </div>
-                ) : filteredItems.length === 0 ? (
+                ) : activeItems.length === 0 ? (
                     <Card className="p-10 text-center">
                         <Package size={48} className="mx-auto text-slate-200 dark:text-slate-700 mb-4" />
                         <h3 className="text-lg font-bold text-slate-400 dark:text-slate-500 mb-1">
@@ -272,10 +315,11 @@ export default function StockHub() {
                         )}
                     </Card>
                 ) : (
-                    <div className="space-y-3">
-                        {filteredItems.map(item => {
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {activeItems.map(item => {
                             const isLow = parseFloat(item.quantity) <= (item.min_quantity || 5);
                             const isEditing = editingItem === item.id;
+                            const shelterName = activeTab === 'SHELTERS' ? (sheltersDict[item.shelter_id] || `Abrigo ${item.shelter_id}`) : null;
 
                             return (
                                 <Card key={item.id} className={`overflow-hidden transition-all ${isLow ? 'border-amber-200 dark:border-amber-500/30' : ''}`}>
@@ -344,8 +388,13 @@ export default function StockHub() {
                                                         )}
                                                     </div>
                                                     {item.category && (
-                                                        <span className="inline-block mt-1 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-bold capitalize">
+                                                        <span className="inline-block mt-1 mr-1 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full font-bold capitalize">
                                                             {item.category}
+                                                        </span>
+                                                    )}
+                                                    {shelterName && (
+                                                        <span className="inline-block mt-1 text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                                                            📍 {shelterName}
                                                         </span>
                                                     )}
                                                 </div>
@@ -381,13 +430,13 @@ export default function StockHub() {
                 )}
 
                 {/* Admin Actions */}
-                {items.length > 0 && (
+                {centralItems.length > 0 && activeTab === 'CENTRAL' && (
                     <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
                         <button
                             onClick={() => setShowClearModal(true)}
-                            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                            className="w-full md:w-auto px-8 mx-auto flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                         >
-                            <Trash2 size={16} /> Limpar Todo o Estoque
+                            <Trash2 size={16} /> Limpar Estoque Central
                         </button>
                     </div>
                 )}
@@ -398,8 +447,8 @@ export default function StockHub() {
                 isOpen={showClearModal}
                 onClose={() => setShowClearModal(false)}
                 onConfirm={handleClearAll}
-                title="Limpar Todo o Estoque?"
-                message={`Essa ação irá arquivar ${items.length} itens do estoque municipal. Os dados podem ser recuperados pelo administrador.`}
+                title="Limpar Estoque Central?"
+                message={`Essa ação irá arquivar ${centralItems.length} itens do estoque central. Os dados podem ser recuperados pelo administrador.`}
                 confirmText="Limpar Estoque"
                 type="danger"
                 requireTypedConfirmation={true}

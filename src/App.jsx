@@ -58,6 +58,7 @@ const StockHub = lazy(() => import('./pages/Abrigos/StockHub'))
 const OperacaoPainel = lazy(() => import('./pages/Abrigos/OperacaoPainel'))
 const OperacoesHistorico = lazy(() => import('./pages/Abrigos/OperacoesHistorico'))
 const DonationHub = lazy(() => import('./pages/Abrigos/DonationHub'))
+const DistributionManager = lazy(() => import('./pages/Abrigos/DistributionManager'))
 const LogisticsHub = lazy(() => import('./pages/Abrigos/LogisticsHub'))
 const ArrecadacaoSolidaria = lazy(() => import('./pages/Abrigos/ArrecadacaoSolidaria'))
 const ContractList = lazy(() => import('./pages/Abrigos/ContractList'))
@@ -418,6 +419,11 @@ const AppContent = ({
                                 } />
                                 <Route path="/assisthumanitaria/logistica" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <DistributionManager />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/assisthumanitaria/logistica/novo" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
                                         <LogisticsHub />
                                     </ProtectedRoute>
                                 } />
@@ -776,7 +782,7 @@ function App() {
                 const fresh = { ...result.data, role: result.data.role || 'Agente de Defesa Civil' };
                 setUserProfile(fresh);
                 localStorage.setItem('userProfile', JSON.stringify(fresh));
-                console.log('[Profile] Refreshed from server:', fresh.full_name);
+                // console.log('[Profile] Refreshed from server:', fresh.full_name);
             }
         }).catch(err => console.warn('[Profile] Background refresh failed:', err));
     }

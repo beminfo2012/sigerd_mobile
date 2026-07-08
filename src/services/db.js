@@ -385,7 +385,7 @@ export const getPendingSyncCount = async () => {
             const allItems = await db.getAll(storeName).catch(() => []);
             const pendingItems = allItems.filter(v => v.synced === false || v.synced === 0 || v.synced === undefined);
             if (pendingItems.length > 0) {
-                console.log(`[Sync] Pending items in ${storeName}:`, pendingItems);
+                // Log removido para evitar excesso no console
             }
             const pending = pendingItems.length;
 
@@ -989,6 +989,9 @@ export const syncSingleItem = async (storeName, item, db) => {
                 delete payload.operacao_id;
                 delete payload.min_quantity;
                 delete payload.distributionId;
+                delete payload.document;
+                delete payload.destination_shelter_id;
+                delete payload.type;
             }
 
             // Properly nullify central or empty shelter_id 
@@ -1030,7 +1033,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 if (invSupabaseId) {
                     payload.inventory_id = invSupabaseId;
                 } else if (isNumericId) {
-                    console.log(`[Sync] Skipping ${storeName} because parent inventory item is not synced yet.`);
+                    // console.log(`[Sync] Skipping ${storeName} because parent inventory item is not synced yet.`);
                     return false; // Return to avoid invalid UUID syntax error
                 }
             }
@@ -1150,7 +1153,7 @@ export const pullAllData = async (force = false) => {
         const results = [];
 
         for (const mod of modules) {
-            console.log(`[Pull] Fetching ${mod.table}...`);
+            // console.log(`[Pull] Fetching ${mod.table}...`);
             const tableStartTime = Date.now();
 
             try {
@@ -1178,11 +1181,11 @@ export const pullAllData = async (force = false) => {
                 }
 
                 if (!data || data.length === 0) {
-                    console.log(`[Pull] ${mod.table}: No data found.`);
+                    // console.log(`[Pull] ${mod.table}: No data found.`);
                     continue;
                 }
 
-                console.log(`[Pull] ${mod.table}: Fetched ${data.length} records in ${Date.now() - tableStartTime}ms`);
+                // console.log(`[Pull] ${mod.table}: Fetched ${data.length} records in ${Date.now() - tableStartTime}ms`);
 
                 try {
                     const tx = db.transaction(mod.store, 'readwrite');

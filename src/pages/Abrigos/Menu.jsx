@@ -69,6 +69,24 @@ export default function ShelterMenu() {
     useEffect(() => {
         loadDashboardData();
         checkSyncStatus();
+
+        // Recarregar os dados caso o sincronizador em background avise que terminou de puxar da nuvem
+        const handleSync = () => {
+            loadDashboardData();
+            checkSyncStatus();
+        };
+        window.addEventListener('sync-complete', handleSync);
+
+        // Fallback de segurança: recarregar a tela após 2 segundos caso o banco local estivesse vazio
+        // (Garante que se o IDB demorou a responder no start, a tela será preenchida corretamente)
+        const fallbackTimer = setTimeout(() => {
+            loadDashboardData();
+        }, 2000);
+
+        return () => {
+            window.removeEventListener('sync-complete', handleSync);
+            clearTimeout(fallbackTimer);
+        };
     }, [operacaoAtiva]);
 
     const loadDashboardData = async () => {
@@ -80,20 +98,22 @@ export default function ShelterMenu() {
             let allDistributions = [];
             try { allDistributions = await getDistributions() || []; } catch (e) { /* distributions store may not exist yet */ }
 
+            console.log("[Menu] Raw Data BEFORE Filter:", {
+                shelters,
+                occupants,
+                donations,
+                inventory,
+                allDistributions,
+                operacaoAtivaId: operacaoAtiva ? operacaoAtiva.id : null
+            });
+
             // Filtrar pela Operação Ativa
             if (operacaoAtiva) {
-                shelters = shelters.filter(s => s.operacao_id === operacaoAtiva.id);
-                occupants = occupants.filter(o => o.operacao_id === operacaoAtiva.id);
-                donations = donations.filter(d => d.operacao_id === operacaoAtiva.id);
-                allDistributions = allDistributions.filter(d => d.operacao_id === operacaoAtiva.id);
-                // O inventário mostra os itens que foram movimentados nessa operação, mas a regra do usuário diz: 
-                // "Estoque - Total geral -> Saldo de itens desta operação"
-                // O estoque em si não tem "operacao_id" no seu cadastro raiz (shelterDb.js Inventory) ou tem? 
-                // A migração fala de `estoque_movimentacoes`, mas no shelterDb a tabela chama `inventory`.
-                // Na dúvida, filtramos apenas os que têm operacao_id igual.
-                // Mas pelo que ajustamos, as movimentações de inventory levam o operacao_id da primeira doação? 
-                // Vamos deixar o inventário geral, ou tentar filtrar. Como o shelterDb não insere operacao_id explícito na tabela inventory, 
-                // vamos focar nos cards principais que importam.
+                // Aceitamos itens que tenham o ID correto OU que não tenham operacao_id (pois a nuvem não salva esse campo atualmente)
+                shelters = shelters.filter(s => !s.operacao_id || s.operacao_id === operacaoAtiva.id);
+                occupants = occupants.filter(o => !o.operacao_id || o.operacao_id === operacaoAtiva.id);
+                donations = donations.filter(d => !d.operacao_id || d.operacao_id === operacaoAtiva.id);
+                allDistributions = allDistributions.filter(d => !d.operacao_id || d.operacao_id === operacaoAtiva.id);
             }
 
             // Calculate KPIs
@@ -377,19 +397,23 @@ export default function ShelterMenu() {
 
                         {/* Summary KPI Cards */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                            {/* Gradient Card - Total Shelters */}
+                            {/* Gradient Card - Active Shelters */}
                             <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-[28px] shadow-lg border border-blue-400/20 dark:border-blue-500/30 relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2 relative z-10">
                                     <Building2 className="text-white/60" size={20} />
-                                    {stats.activeShelters > 0 && (
-                                        <div className="text-[9px] bg-white/20 px-2 py-0.5 rounded-full text-white font-bold backdrop-blur-sm border border-white/10">
-                                            {stats.activeShelters} ATIVOS
-                                        </div>
-                                    )}
+                                    <div className="text-[9px] bg-white/20 px-2 py-0.5 rounded-full text-white font-bold backdrop-blur-sm border border-white/10">
+                                        {stats.totalShelters} CADASTRADOS
+                                    </div>
                                 </div>
-                                <div className="text-3xl font-black text-white relative z-10">{stats.totalShelters}</div>
-                                <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest mt-1 relative z-10">Total de Abrigos</div>
-                                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-400/30 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
+                                <div className="text-3xl font-black text-white relative z-10 flex items-center gap-2">
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400"></span>
+                                    </span>
+                                    {stats.activeShelters}
+                                </div>
+                                <div className="text-[10px] font-bold text-emerald-100 uppercase tracking-widest mt-1 relative z-10">Abrigos Ativos (Abertos)</div>
+                                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-emerald-400/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
                             </div>
 
                             {/* Families vs Capacity */}

@@ -21,22 +21,14 @@ const getOperacaoId = () => {
 
 // Cloud-first sync: debounced per session to avoid repeated pulls
 let _lastShelterPull = 0;
+let _activePullPromise = null;
 const PULL_DEBOUNCE_MS = 30000; // 30s between pulls
 
 /**
  * Pull all shelter-related data from Supabase and merge into local IndexedDB.
- * Debounced to avoid excessive API calls.
+ * Returns a shared Promise if a pull is currently active to prevent race conditions.
  */
-const pullShelterModuleFromCloud = async () => {
-    if (!navigator.onLine) return;
-
-    const now = Date.now();
-    if (now - _lastShelterPull < PULL_DEBOUNCE_MS) {
-        console.log('[Shelter] Skipping pull (debounce)');
-        return;
-    }
-    _lastShelterPull = now;
-
+const _performPull = async () => {
     const modules = [
         { table: 'shelters', store: 'shelters', key: 'shelter_id' },
         { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
@@ -60,38 +52,26 @@ const pullShelterModuleFromCloud = async () => {
             const store = tx.objectStore(mod.store);
             const allLocal = await store.getAll();
 
-            // Build lookups for cloud data
             const cloudIds = new Set(data.map(d => d.id));
-
-            // Build lookup
             const localBySupabaseId = new Map();
             const localByKey = new Map();
+
             for (const local of allLocal) {
                 if (local.supabase_id) localBySupabaseId.set(local.supabase_id, local);
                 if (mod.key && local[mod.key]) localByKey.set(local[mod.key], local);
                 
-                // Hard delete detector: if local is synced and has a supabase_id, but not in cloud anymore, remove it locally
-                if (local.synced && local.supabase_id && !cloudIds.has(local.supabase_id)) {
+                // Apenas deleta itens locais se a nuvem retornou dados (evita wipe-out por falta de token RLS)
+                if (data.length > 0 && local.synced && local.supabase_id && !cloudIds.has(local.supabase_id)) {
                     await store.delete(local.id);
                 }
             }
 
             for (const item of data) {
-                const localMatch =
-                    localBySupabaseId.get(item.id) ||
-                    (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
-
-                // Skip if local has unsynced changes
+                const localMatch = localBySupabaseId.get(item.id) || (mod.key && item[mod.key] ? localByKey.get(item[mod.key]) : null);
                 if (localMatch && localMatch.synced === false) continue;
 
-                const toStore = {
-                    ...item,
-                    supabase_id: item.id,
-                    synced: true
-                };
-                if (localMatch && localMatch.id !== undefined) {
-                    toStore.id = localMatch.id;
-                }
+                const toStore = { ...item, supabase_id: item.id, synced: true };
+                if (localMatch && localMatch.id !== undefined) toStore.id = localMatch.id;
 
                 if (['shelter_donations', 'shelter_inventory', 'shelter_distributions'].includes(mod.table) && toStore.observations) {
                     if (toStore.observations.includes('[HUB:SOLIDARY]')) {
@@ -109,14 +89,35 @@ const pullShelterModuleFromCloud = async () => {
             console.error(`[Shelter] Critical error pulling ${mod.table}:`, e);
         }
     }
-
     console.log('[Shelter] Cloud pull complete.');
+};
+
+const safePullShelterModuleFromCloud = async () => {
+    if (!navigator.onLine) return;
+    const now = Date.now();
+
+    if (_activePullPromise) {
+        console.log('[Shelter] Waiting for active pull to complete...');
+        return _activePullPromise;
+    }
+
+    if (now - _lastShelterPull < PULL_DEBOUNCE_MS) {
+        console.log('[Shelter] Skipping pull (debounce)');
+        return;
+    }
+    
+    _lastShelterPull = now;
+    _activePullPromise = _performPull().finally(() => {
+        _activePullPromise = null;
+    });
+
+    return _activePullPromise;
 };
 
 // --- SHELTERS ---
 
 export const getShelters = async () => {
-    await pullShelterModuleFromCloud();
+    await safePullShelterModuleFromCloud();
     const db = await initDB();
     const all = await db.getAll('shelters');
 
@@ -142,7 +143,7 @@ export const getShelters = async () => {
 
 export const getShelterById = async (id) => {
     if (!id) return null;
-    await pullShelterModuleFromCloud();
+    await safePullShelterModuleFromCloud();
     const db = await initDB();
 
     // 1. Try numeric local ID
@@ -179,31 +180,29 @@ export const addShelter = async (shelterData) => {
 };
 
 export const updateShelter = async (id, changes) => {
-    const db = await initDB();
-    const tx = db.transaction('shelters', 'readwrite');
-    const store = tx.objectStore('shelters');
-    const shelter = await store.get(parseInt(id));
-
+    const shelter = await getShelterById(id);
     if (shelter) {
+        const db = await initDB();
+        const tx = db.transaction('shelters', 'readwrite');
+        const store = tx.objectStore('shelters');
         const updated = { ...shelter, ...changes, updated_at: new Date().toISOString(), synced: false };
         await store.put(updated);
+        await tx.done;
         triggerSync();
     }
-    await tx.done;
 };
 
 export const deleteShelter = async (id) => {
-    const db = await initDB();
-    const tx = db.transaction('shelters', 'readwrite');
-    const store = tx.objectStore('shelters');
-    const shelter = await store.get(parseInt(id));
-
+    const shelter = await getShelterById(id);
     if (shelter) {
+        const db = await initDB();
+        const tx = db.transaction('shelters', 'readwrite');
+        const store = tx.objectStore('shelters');
         const updated = { ...shelter, status: 'deleted', updated_at: new Date().toISOString(), synced: false };
         await store.put(updated);
+        await tx.done;
         triggerSync();
     }
-    await tx.done;
 };
 
 // --- OCCUPANTS ---
@@ -213,11 +212,11 @@ const resolveToBusinessShelterId = async (id) => {
     if (!id) return null;
     if (String(id).startsWith('ABR-')) return String(id);
     const s = await getShelterById(id);
-    return s ? s.shelter_id : String(id);
+    return s ? (s.supabase_id || s.shelter_id || String(s.id)) : String(id);
 };
 
 export const getOccupants = async (shelterId) => {
-    await pullShelterModuleFromCloud();
+    await safePullShelterModuleFromCloud();
     const db = await initDB();
     let all = [];
     if (shelterId) {
@@ -304,7 +303,7 @@ export const exitOccupant = async (occupantId, shelterId) => {
 // --- INVENTORY & DONATIONS ---
 
 export const getDonations = async (shelterId) => {
-    await pullShelterModuleFromCloud();
+    await safePullShelterModuleFromCloud();
     const db = await initDB();
     const all = await db.getAll('donations');
     let items;
@@ -323,6 +322,7 @@ export const getDonations = async (shelterId) => {
 };
 
 export const addDonation = async (donationData) => {
+    console.log('[ShelterDB][Verificação] Iniciando addDonation com payload:', donationData);
     // --- VALIDATION: prevent empty records ---
     if (!donationData.item_description || !donationData.item_description.trim()) {
         throw new Error('Descrição do item é obrigatória. Não é possível salvar doação sem descrição.');
@@ -338,9 +338,11 @@ export const addDonation = async (donationData) => {
         ...donationData,
         operacao_id: getOperacaoId(),
         donation_id: generateId('DOA'),
+        status: 'received',
         shelter_id: bid,
         donation_date: new Date().toISOString(),
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         synced: false
     };
 
@@ -379,6 +381,7 @@ export const addDonation = async (donationData) => {
     } else {
         const newItem = {
             inventory_id: generateId('INV'),
+            operacao_id: getOperacaoId(),
             shelter_id: shelterIdStr,
             item_name: newDonation.item_description,
             category: newDonation.donation_type,
@@ -407,9 +410,7 @@ export const addDonation = async (donationData) => {
 };
 
 export const getInventory = async (shelterId, forceLocal = false) => {
-    if (!forceLocal) {
-        await pullShelterModuleFromCloud();
-    }
+    if (!forceLocal) await safePullShelterModuleFromCloud();
     const db = await initDB();
     const all = await db.getAll('inventory');
     let items;
@@ -417,32 +418,46 @@ export const getInventory = async (shelterId, forceLocal = false) => {
         const bid = await resolveToBusinessShelterId(shelterId);
         items = all.filter(i => String(i.shelter_id) === String(bid));
     } else if (shelterId === 'SOLIDARY') {
-        // Use filter instead of index to avoid IDB index mismatches after sync
         items = all.filter(i => i.shelter_id === 'SOLIDARY');
     } else if (shelterId === 'CENTRAL') {
         items = all.filter(i => (!i.shelter_id || i.shelter_id === 'CENTRAL' || i.shelter_id === 'null') && i.shelter_id !== 'SOLIDARY');
     } else {
         items = all.filter(i => i.shelter_id !== 'SOLIDARY');
     }
-    // Filter out soft-deleted items
-    return (items || []).filter(i => i.status !== 'deleted');
+    return (items || []).filter(i => i.status !== 'deleted' && parseFloat(i.quantity || 0) > 0);
 };
 
 export const getGlobalInventory = async () => {
     const db = await initDB();
     const all = await db.getAll('inventory');
-    return all.filter(i => i.status !== 'deleted' && i.shelter_id !== 'SOLIDARY');
+    return all.filter(i => i.status !== 'deleted' && i.shelter_id !== 'SOLIDARY' && parseFloat(i.quantity || 0) > 0);
 };
 
 export const transferStock = async (itemId, fromShelterId, toShelterId, quantity) => {
+    console.log(`[ShelterDB][Verificação] Iniciando transferStock: itemId=${itemId}, from=${fromShelterId}, to=${toShelterId}, qty=${quantity}`);
+    
+    // Resolve IDs BEFORE opening the transaction to prevent TransactionInactiveError
+    const destBusinessId = await resolveToBusinessShelterId(toShelterId);
+    const sourceBusinessId = (fromShelterId === 'CENTRAL' || fromShelterId === 'SOLIDARY') 
+        ? fromShelterId 
+        : await resolveToBusinessShelterId(fromShelterId);
+
     const db = await initDB();
     const tx = db.transaction(['inventory', 'distributions'], 'readwrite');
     const invStore = tx.objectStore('inventory');
     const distStore = tx.objectStore('distributions');
 
     // 1. Get Source Item
-    const sourceItem = await invStore.get(parseInt(itemId));
-    if (!sourceItem) throw new Error('Item de origem não encontrado.');
+    let sourceItem;
+    const isNumeric = /^\d+$/.test(String(itemId));
+    if (isNumeric) {
+        sourceItem = await invStore.get(parseInt(itemId));
+    }
+    if (!sourceItem) {
+        const allItems = await invStore.getAll();
+        sourceItem = allItems.find(i => String(i.inventory_id) === String(itemId) || String(i.id) === String(itemId));
+    }
+    if (!sourceItem || sourceItem.status === 'deleted') throw new Error('Item de origem não encontrado.');
 
     if (parseFloat(sourceItem.quantity) < parseFloat(quantity)) {
         throw new Error('Estoque insuficiente na origem.');
@@ -460,7 +475,7 @@ export const transferStock = async (itemId, fromShelterId, toShelterId, quantity
     // 3. Increment/Create Destination
     const allInv = await invStore.getAll();
     let destItem = allInv.find(i =>
-        String(i.shelter_id) === String(toShelterId) &&
+        String(i.shelter_id) === String(destBusinessId) &&
         i.item_name.toLowerCase() === sourceItem.item_name.toLowerCase()
     );
 
@@ -475,29 +490,33 @@ export const transferStock = async (itemId, fromShelterId, toShelterId, quantity
     } else {
         const newItem = {
             ...sourceItem,
-            id: undefined, // Clear ID to auto-generate
             inventory_id: generateId('INV'),
-            shelter_id: toShelterId,
+            shelter_id: destBusinessId,
             quantity: parseFloat(quantity),
             updated_at: new Date().toISOString(),
             synced: false
         };
+        delete newItem.id; // Remover ID para forçar auto-generate do IDB
+        delete newItem.supabase_id; // Remover identidade da nuvem para não clonar o item da origem
         await invStore.add(newItem);
     }
 
-    // 4. Record Transfer (as Distribution from Source)
+    // 4. Record Transfer
     const transferRecord = {
         distribution_id: generateId('TRF'),
         operacao_id: getOperacaoId(),
-        shelter_id: fromShelterId, // "Distributed from"
-        destination_shelter_id: toShelterId, // "To"
+        type: 'transfer',
+        inventory_id: sourceItem.id,
         item_name: sourceItem.item_name,
         quantity: quantity,
         unit: sourceItem.unit,
-        recipient_name: `TRANSFERÊNCIA -> ${toShelterId}`,
+        shelter_id: sourceBusinessId,
+        destination_shelter_id: destBusinessId,
+        recipient_name: `TRANSFERÊNCIA -> ${destBusinessId}`,
         distribution_date: new Date().toISOString(),
-        type: 'transfer',
         created_at: new Date().toISOString(),
+        status: 'active',
+        observations: `[HUB:${sourceBusinessId || 'CENTRAL'}]`,
         synced: false
     };
     await distStore.add(transferRecord);
@@ -525,7 +544,28 @@ export const getDistributions = async (shelterId) => {
     return (items || []).filter(d => d.status !== 'deleted');
 };
 
+export const getShelterTransfers = async (shelterId) => {
+    const db = await initDB();
+    const all = await db.getAll('distributions');
+    const bid = await resolveToBusinessShelterId(shelterId);
+    
+    // Saídas realizadas pelo abrigo
+    const outgoing = all.filter(d => d.status !== 'deleted' && String(d.shelter_id) === String(bid));
+    
+    // Entradas recebidas de outros abrigos/central
+    const incoming = all.filter(d => {
+        if (d.status === 'deleted') return false;
+        const isTransfer = d.type === 'transfer' || (d.recipient_name && d.recipient_name.includes('TRANSFERÊNCIA ->'));
+        if (!isTransfer) return false;
+        const destId = d.destination_shelter_id || (d.recipient_name ? d.recipient_name.replace('TRANSFERÊNCIA ->', '').trim() : '');
+        return String(destId) === String(bid) || String(destId) === String(shelterId);
+    });
+    
+    return { outgoing, incoming };
+};
+
 export const addDistribution = async (distribution) => {
+    console.log('[ShelterDB][Verificação] Iniciando addDistribution com payload:', distribution);
     const db = await initDB();
     const tx = db.transaction(['inventory', 'distributions', 'audit_log'], 'readwrite');
     const invStore = tx.objectStore('inventory');
@@ -582,28 +622,29 @@ export const addDistribution = async (distribution) => {
     await invStore.put(updatedItem);
 
     // 3. Add Distribution
-    const newDist = {
+    const distributionRecord = {
         ...distribution,
         operacao_id: getOperacaoId(),
-        distribution_id: generateId('DIST'),
+        distribution_id: generateId('DST'),
         distribution_date: new Date().toISOString(),
         created_at: new Date().toISOString(),
+        status: 'active',
         synced: false
     };
-    await distStore.add(newDist);
+    await distStore.add(distributionRecord);
 
     // 4. Audit log
     await auditStore.add({
         action: 'DISTRIBUTION',
         entity_type: 'distribution',
-        entity_id: newDist.distribution_id,
+        entity_id: distributionRecord.distribution_id,
         details: `${distribution.item_name}: -${distribution.quantity} ${distribution.unit || ''} -> ${distribution.recipient_name || distribution.shelter_id || 'N/A'}`,
         timestamp: new Date().toISOString()
     });
 
     await tx.done;
     triggerSync();
-    return newDist;
+    return distributionRecord;
 };
 
 // --- DATA CLEARANCE (Admin features) ---
@@ -760,13 +801,34 @@ export const deleteDonation = async (id) => {
 
 export const deleteDistribution = async (id) => {
     const db = await initDB();
+    const isNumeric = /^\\d+$/.test(String(id));
+    
+    // Pré-busca do item fora da transação para resolver IDs sem bloquear
+    let tempItem;
+    if (isNumeric) {
+        tempItem = await db.get('distributions', parseInt(id));
+    }
+    if (!tempItem) {
+        const allDist = await db.getAll('distributions');
+        tempItem = allDist.find(d => String(d.distribution_id) === String(id) || String(d.id) === String(id));
+    }
+    if (!tempItem) throw new Error('Distribuição não encontrada.');
+
+    // Se for transferência, resolver o destino
+    let destBusinessId = null;
+    const isTransfer = tempItem.type === 'transfer' || (tempItem.recipient_name && tempItem.recipient_name.includes('TRANSFERÊNCIA ->'));
+    if (isTransfer) {
+        const destIdRaw = tempItem.destination_shelter_id || (tempItem.recipient_name ? tempItem.recipient_name.replace('TRANSFERÊNCIA ->', '').trim() : '');
+        destBusinessId = await resolveToBusinessShelterId(destIdRaw);
+    }
+
     const tx = db.transaction(['distributions', 'audit_log', 'inventory'], 'readwrite');
     const store = tx.objectStore('distributions');
     const auditStore = tx.objectStore('audit_log');
     const invStore = tx.objectStore('inventory');
 
-    const item = await store.get(parseInt(id));
-    if (!item) throw new Error('Distribuição não encontrada.');
+    const item = await store.get(tempItem.id || parseInt(id));
+    if (!item) throw new Error('Erro ao abrir item para exclusão.');
 
     const updated = {
         ...item,
@@ -793,6 +855,22 @@ export const deleteDistribution = async (id) => {
         await invStore.put(inventoryItem);
     }
 
+    // Se for transferência, retirar do destino também
+    if (isTransfer && destBusinessId) {
+        const destInventoryItem = allInv.find(i => 
+            i.status !== 'deleted' && 
+            String(i.shelter_id) === String(destBusinessId) &&
+            i.item_name.toLowerCase() === (item.item_name || '').toLowerCase()
+        );
+        if (destInventoryItem) {
+            destInventoryItem.quantity = parseFloat(destInventoryItem.quantity || 0) - parseFloat(item.quantity || 0);
+            if (destInventoryItem.quantity < 0) destInventoryItem.quantity = 0;
+            destInventoryItem.updated_at = new Date().toISOString();
+            destInventoryItem.synced = false;
+            await invStore.put(destInventoryItem);
+        }
+    }
+
     await auditStore.add({
         action: 'DISTRIBUTION_DELETE',
         user_id: 'local',
@@ -807,14 +885,25 @@ export const deleteDistribution = async (id) => {
 
 export const deleteInventoryItem = async (id) => {
     const db = await initDB();
+    const isNumeric = /^\\d+$/.test(String(id));
+    let tempItem;
+    if (isNumeric) {
+        tempItem = await db.get('inventory', parseInt(id));
+    }
+    if (!tempItem) {
+        const allInv = await db.getAll('inventory');
+        tempItem = allInv.find(i => String(i.inventory_id) === String(id) || String(i.id) === String(id));
+    }
+    if (!tempItem) throw new Error('Item não encontrado.');
+
     const tx = db.transaction(['inventory', 'distributions', 'donations', 'audit_log'], 'readwrite');
     const store = tx.objectStore('inventory');
     const distStore = tx.objectStore('distributions');
     const donStore = tx.objectStore('donations');
     const auditStore = tx.objectStore('audit_log');
 
-    const item = await store.get(parseInt(id));
-    if (!item) throw new Error('Item não encontrado.');
+    const item = await store.get(tempItem.id);
+    if (!item) throw new Error('Erro ao abrir item para exclusão.');
 
     // Verifica se há alguma distribuição utilizando este item
     const allDistributions = await distStore.getAll();

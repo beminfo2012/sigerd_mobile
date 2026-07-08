@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Package, TrendingUp, User, Users as UsersIcon, Hash, ArrowLeft } from 'lucide-react';
+import { Package, TrendingUp, User, Users as UsersIcon, Hash, ArrowLeft, Gift } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
