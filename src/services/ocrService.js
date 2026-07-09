@@ -25,7 +25,7 @@ async function fileToGenerativePart(file) {
             resolve({
                 inlineData: {
                     data: base64Data,
-                    mimeType: file.type
+                    mimeType: file.type || 'image/jpeg'
                 },
             });
         };
@@ -71,6 +71,7 @@ export async function scanDocument(file) {
             Extraia os seguintes dados deste documento de identificação (RG/CPF/CNH/Documento do Abrigo):
             - Nome Completo
             - CPF (somente números)
+            - Data de Nascimento (no formato YYYY-MM-DD)
             - Idade (se disponível, ou calcule a partir da data de nascimento)
             - Gênero (masculino/feminino/outro)
 
@@ -78,8 +79,9 @@ export async function scanDocument(file) {
             {
                 "full_name": "NOME",
                 "cpf": "00000000000",
+                "birth_date": "YYYY-MM-DD",
                 "age": "00",
-                "gender": "masculino/feminino/outro"
+                "gender": "masculino"
             }
         `;
 

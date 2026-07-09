@@ -125,12 +125,13 @@ const CameraModal = ({ isOpen, onClose, onCapture }) => {
                     
                     {/* Overlay Controls */}
                     <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
-                        <button onClick={onClose} className="p-3 bg-white/10 rounded-full text-white backdrop-blur-md">
+                        <button type="button" onClick={onClose} className="p-3 bg-white/10 rounded-full text-white backdrop-blur-md">
                             <X size={24} />
                         </button>
                         
                         <div className="flex gap-4">
                             <button 
+                                type="button"
                                 onClick={toggleFlash} 
                                 className={`p-3 rounded-full backdrop-blur-md flex flex-col items-center gap-1 min-w-[60px] transition-all ${flashMode !== 'off' ? 'bg-yellow-500 text-black' : 'bg-white/10 text-white'}`}
                             >
@@ -138,7 +139,7 @@ const CameraModal = ({ isOpen, onClose, onCapture }) => {
                                 <span className="text-[8px] font-black uppercase">{flashMode}</span>
                             </button>
                             
-                            <button onClick={toggleFacingMode} className="p-3 bg-white/10 rounded-full text-white backdrop-blur-md">
+                            <button type="button" onClick={toggleFacingMode} className="p-3 bg-white/10 rounded-full text-white backdrop-blur-md">
                                 <RotateCw size={24} />
                             </button>
                         </div>
@@ -147,6 +148,7 @@ const CameraModal = ({ isOpen, onClose, onCapture }) => {
                     {/* Bottom Controls */}
                     <div className="absolute bottom-0 inset-x-0 p-12 flex justify-center items-center bg-gradient-to-t from-black/80 to-transparent">
                         <button 
+                            type="button"
                             onClick={capturePhoto}
                             disabled={isStarting}
                             className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 group active:scale-90 transition-all"
@@ -169,12 +171,14 @@ const CameraModal = ({ isOpen, onClose, onCapture }) => {
                     
                     <div className="absolute bottom-12 inset-x-0 px-8 flex justify-between items-center">
                         <button 
+                            type="button"
                             onClick={() => setCapturedImage(null)}
                             className="flex-1 mr-4 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-xs tracking-widest border border-white/10"
                         >
                             Tentar Novamente
                         </button>
                         <button 
+                            type="button"
                             onClick={handleConfirm}
                             className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2"
                         >
