@@ -4,7 +4,7 @@ import {
     MapPin, Users, Phone, User, ArrowLeft,
     Plus, Gift, TrendingUp, Heart, LogOut,
     Crown, ChevronDown, ChevronUp, Package, Building2,
-    Droplets, Bed, Shirt, Calculator, Edit
+    Droplets, Bed, Shirt, Calculator, Edit, FileText
 } from 'lucide-react';
 import { Card } from '../../components/Shelter/ui/Card.jsx';
 import { Badge } from '../../components/Shelter/ui/Badge.jsx';
@@ -12,6 +12,7 @@ import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { getShelterById, getOccupants, getDonations, getInventory, updateShelter, deleteShelter, exitOccupant, getShelterTransfers } from '../../services/shelterDb.js';
 import { calculateShelterNeeds } from '../../utils/needsCalculator';
 import { useOperacao } from '../../contexts/OperacaoContext';
+import { operacoesService } from '../../services/operacoesService';
 import toast from 'react-hot-toast';
 
 export function ShelterDetail() {
@@ -38,6 +39,11 @@ export function ShelterDetail() {
     const [isToggleModalOpen, setIsToggleModalOpen] = useState(false);
     const [isExitModalOpen, setIsExitModalOpen] = useState(false);
     const [occupantToExit, setOccupantToExit] = useState(null);
+
+    // Report Modal
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [operationsList, setOperationsList] = useState([]);
+    const [selectedOperationId, setSelectedOperationId] = useState('all');
 
     useEffect(() => {
         const loadData = async () => {
@@ -122,6 +128,28 @@ export function ShelterDetail() {
             console.error('Erro ao alterar status:', error);
             alert('Erro ao alterar status do abrigo.');
         }
+    };
+
+    const handleOpenReportModal = async () => {
+        setIsReportModalOpen(true);
+        if (operationsList.length === 0) {
+            try {
+                const ops = await operacoesService.getAllOperacoes();
+                setOperationsList(ops || []);
+                if (operacaoAtiva) {
+                    setSelectedOperationId(operacaoAtiva.id);
+                }
+            } catch (error) {
+                console.error("Erro ao carregar operações", error);
+            }
+        } else if (operacaoAtiva && selectedOperationId === 'all') {
+            setSelectedOperationId(operacaoAtiva.id);
+        }
+    };
+
+    const generateSpecificReport = () => {
+        setIsReportModalOpen(false);
+        window.open(`/assisthumanitaria/${id}/imprimir?operacao_id=${selectedOperationId}`, '_blank');
     };
 
     if (shelter === undefined) return null; // Loading state
@@ -226,6 +254,39 @@ export function ShelterDetail() {
                     </div>
                 </div>
             )}
+
+            {isReportModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 dark:border-slate-800">
+                        <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FileText size={32} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Gerar Relatório</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                            Selecione a operação para a qual deseja gerar o relatório deste abrigo.
+                        </p>
+                        <div className="mb-6 text-left">
+                            <label className="block text-xs font-bold text-slate-500 mb-2">Operação Relacionada</label>
+                            <select 
+                                value={selectedOperationId} 
+                                onChange={(e) => setSelectedOperationId(e.target.value)}
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value="all">Todas (Visão Geral)</option>
+                                {operationsList.map(op => (
+                                    <option key={op.id} value={op.id}>{op.nome} ({op.status})</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button type="button" variant="secondary" onClick={() => setIsReportModalOpen(false)} className="flex-1">Cancelar</Button>
+                            <Button type="button" onClick={generateSpecificReport} className="flex-1 text-white bg-blue-600 hover:bg-blue-700">
+                                Gerar PDF
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
                 {/* Header */}
@@ -260,6 +321,14 @@ export function ShelterDetail() {
                                         title="Editar Abrigo"
                                     >
                                         <Edit size={16} />
+                                    </button>
+                                    <div className="w-px bg-slate-100 my-1 mx-1"></div>
+                                    <button
+                                        onClick={handleOpenReportModal}
+                                        className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Gerar Relatório"
+                                    >
+                                        <FileText size={16} />
                                     </button>
                                 </div>
                             </div>

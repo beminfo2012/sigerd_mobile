@@ -65,6 +65,7 @@ const ContractList = lazy(() => import('./pages/Abrigos/ContractList'))
 const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
 const SAHModule = lazy(() => import('./pages/Abrigos/SAHModule'))
 const OperacaoPrint = lazy(() => import('./pages/Abrigos/OperacaoPrint'))
+const ShelterPrint = lazy(() => import('./pages/Abrigos/ShelterPrint'))
 
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
@@ -441,6 +442,11 @@ const AppContent = ({
                                 <Route path="/assisthumanitaria/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterDetail />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/assisthumanitaria/:id/imprimir" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <ShelterPrint />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/assisthumanitaria/editar/:id" element={
