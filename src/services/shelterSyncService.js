@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { initDB } from './db';
 
-const TABLES = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'emergency_contracts'];
+const TABLES = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'emergency_contracts', 'shelter_history'];
 
 export const shelterSyncService = {
     /**
@@ -15,7 +15,8 @@ export const shelterSyncService = {
             'donations': 'shelter_donations',
             'inventory': 'shelter_inventory',
             'distributions': 'shelter_distributions',
-            'emergency_contracts': 'emergency_contracts'
+            'emergency_contracts': 'emergency_contracts',
+            'shelter_history': 'shelter_activation_history'
         };
 
         const remoteTable = remoteTableMap[table] || table;
@@ -166,7 +167,8 @@ export const shelterSyncService = {
             'donations': 'shelter_donations',
             'inventory': 'shelter_inventory',
             'distributions': 'shelter_distributions',
-            'emergency_contracts': 'emergency_contracts'
+            'emergency_contracts': 'emergency_contracts',
+            'shelter_history': 'shelter_activation_history'
         };
 
         const db = await initDB();

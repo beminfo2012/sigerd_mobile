@@ -181,6 +181,18 @@ export const addShelter = async (shelterData) => {
         synced: false // Pending Sync
     };
     const id = await db.add('shelters', newShelter);
+    
+    // Log activation history
+    await db.add('shelter_history', {
+        shelter_id: newShelter.shelter_id,
+        operacao_id: newShelter.operacao_id,
+        activation_date: new Date().toISOString(),
+        inactivation_date: null,
+        status: newShelter.status,
+        created_at: new Date().toISOString(),
+        synced: false
+    });
+
     triggerSync();
     return id;
 };
@@ -193,6 +205,35 @@ export const updateShelter = async (id, changes) => {
         const store = tx.objectStore('shelters');
         const updated = { ...shelter, ...changes, updated_at: new Date().toISOString(), synced: false };
         await store.put(updated);
+
+        // Record history if status changed
+        if (changes.status && changes.status !== shelter.status) {
+            const historyStore = tx.objectStore('shelter_history');
+            if (changes.status === 'inactive') {
+                // Inactivation
+                await historyStore.add({
+                    shelter_id: updated.shelter_id || updated.supabase_id || id,
+                    operacao_id: getOperacaoId(),
+                    activation_date: shelter.created_at || new Date().toISOString(), // Fallback
+                    inactivation_date: new Date().toISOString(),
+                    status: 'inactive',
+                    created_at: new Date().toISOString(),
+                    synced: false
+                });
+            } else if (changes.status === 'active') {
+                // Reactivation
+                await historyStore.add({
+                    shelter_id: updated.shelter_id || updated.supabase_id || id,
+                    operacao_id: getOperacaoId(),
+                    activation_date: new Date().toISOString(),
+                    inactivation_date: null,
+                    status: 'active',
+                    created_at: new Date().toISOString(),
+                    synced: false
+                });
+            }
+        }
+
         await tx.done;
         triggerSync();
     }

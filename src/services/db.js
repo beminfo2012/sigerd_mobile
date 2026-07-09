@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 33
+const DB_VERSION = 34
 
 
 let dbPromise = null;
@@ -49,13 +49,13 @@ export const initDB = async () => {
             }
 
             // Humanitarian / Shelter Module
-            const shelterStores = ['shelters', 'occupants', 'donations', 'inventory', 'distributions'];
+            const shelterStores = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'shelter_history'];
             shelterStores.forEach(name => {
                 if (!db.objectStoreNames.contains(name)) {
                     const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
                     store.createIndex('synced', 'synced', { unique: false });
                     // Add shelter_id index for donations, inventory, distributions, occupants
-                    if (['occupants', 'donations', 'inventory', 'distributions', 'shelters'].includes(name)) {
+                    if (['occupants', 'donations', 'inventory', 'distributions', 'shelters', 'shelter_history'].includes(name)) {
                         store.createIndex('shelter_id', 'shelter_id', { unique: false });
                     }
                     if (name === 'inventory') {
@@ -67,7 +67,7 @@ export const initDB = async () => {
                 } else {
                     ensureSyncedIndex(name);
                     // Ensure shelter_id index exists on humanitarian stores
-                    if (['occupants', 'donations', 'inventory', 'distributions', 'shelters'].includes(name)) {
+                    if (['occupants', 'donations', 'inventory', 'distributions', 'shelters', 'shelter_history'].includes(name)) {
                         const store = transaction.objectStore(name);
                         if (!store.indexNames.contains('shelter_id')) {
                             store.createIndex('shelter_id', 'shelter_id', { unique: false });
