@@ -71,7 +71,13 @@ const _performPull = async () => {
                 if (localMatch && localMatch.synced === false) continue;
 
                 const toStore = { ...item, supabase_id: item.id, synced: true };
-                if (localMatch && localMatch.id !== undefined) toStore.id = localMatch.id;
+                if (localMatch && localMatch.id !== undefined) {
+                    toStore.id = localMatch.id;
+                    // Preserve operacao_id if it exists locally but not in cloud
+                    if (localMatch.operacao_id && !item.operacao_id) {
+                        toStore.operacao_id = localMatch.operacao_id;
+                    }
+                }
 
                 if (['shelter_donations', 'shelter_inventory', 'shelter_distributions'].includes(mod.table) && toStore.observations) {
                     if (toStore.observations.includes('[HUB:SOLIDARY]')) {

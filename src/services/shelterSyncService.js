@@ -42,7 +42,6 @@ export const shelterSyncService = {
         // Remove unsupported local columns
         if (table === 'donations') {
             delete recordToPush.updated_at;
-            delete recordToPush.operacao_id;
             delete recordToPush.destination_type;
         }
         if (table === 'distributions') {
@@ -237,6 +236,10 @@ export const shelterSyncService = {
                                 };
                                 if (localId !== undefined) {
                                     toStore.id = localId;
+                                    const localRecord = await store.get(localId);
+                                    if (localRecord && localRecord.operacao_id && !item.operacao_id) {
+                                        toStore.operacao_id = localRecord.operacao_id;
+                                    }
                                 }
 
                                 await store.put(toStore);
