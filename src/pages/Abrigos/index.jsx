@@ -11,10 +11,11 @@ import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { getShelters, getOccupants, getDonations, deleteShelter } from '../../services/shelterDb.js';
 import { shelterSyncService } from '../../services/shelterSyncService';
-import { generateShelterReport } from '../../services/pdfReportService';
+import { useOperacao } from '../../contexts/OperacaoContext';
 
 export function Dashboard() {
     const navigate = useNavigate();
+    const { operacaoAtiva } = useOperacao();
     const [searchQuery, setSearchQuery] = useState('');
     const [syncPercentage, setSyncPercentage] = useState(100);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -109,6 +110,13 @@ export function Dashboard() {
                 </div>
                 <div className="flex gap-2">
                     <button
+                        onClick={() => window.open(`/assisthumanitaria/relatorio-geral?operacao_id=${operacaoAtiva?.id || 'all'}`, '_blank')}
+                        className="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 hover:text-red-500 transition-all"
+                        title="Relatório Geral de Abrigos"
+                    >
+                        <FileText className="w-5 h-5" />
+                    </button>
+                    <button
                         onClick={() => navigate('/assisthumanitaria/novo')}
                         className="p-2 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-200 active:scale-95 transition-all"
                     >
@@ -178,12 +186,6 @@ export function Dashboard() {
                     <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
                         <div className="flex justify-between items-start mb-2">
                             <Gift className="text-amber-500" size={20} />
-                            <button
-                                onClick={() => generateShelterReport(shelters, donationsList, occupantsList)}
-                                className="text-slate-400 hover:text-red-500 transition-colors"
-                            >
-                                <FileText size={16} />
-                            </button>
                         </div>
                         <div className="text-3xl font-black text-slate-800">{stats.totalDonations}</div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Doações</div>

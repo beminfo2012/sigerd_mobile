@@ -11,7 +11,8 @@ const ShelterPrint = () => {
 
     const [data, setData] = useState({
         shelter: null,
-        occupants: [],
+        activeOccupants: [],
+        exitedOccupants: [],
         donations: [],
         distributions: [],
         inventory: [],
@@ -50,6 +51,7 @@ const ShelterPrint = () => {
                 const rawInventory = await getInventory(id);
 
                 const activeOccupants = filterByOperation(rawOccupants).filter(o => o.status !== 'exited');
+                const exitedOccupants = filterByOperation(rawOccupants).filter(o => o.status === 'exited');
                 
                 const receivedTransfers = (rawTransfers.incoming || []).map(tr => ({
                     id: tr.id || tr.distribution_id,
@@ -68,7 +70,8 @@ const ShelterPrint = () => {
 
                 setData({
                     shelter: s,
-                    occupants: activeOccupants,
+                    activeOccupants: activeOccupants,
+                    exitedOccupants: exitedOccupants,
                     donations: filteredDonations,
                     distributions: filteredDistributions,
                     inventory: filteredInventory,
@@ -89,7 +92,7 @@ const ShelterPrint = () => {
     if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando visualização...</div>;
     if (!data.shelter) return <div className="flex items-center justify-center min-h-screen">Abrigo não encontrado.</div>;
 
-    const { shelter, occupants, donations, distributions, inventory, operation } = data;
+    const { shelter, activeOccupants, exitedOccupants, donations, distributions, inventory, operation } = data;
 
     const formatDateOnly = (dateString) => {
         if (!dateString) return '---';
@@ -101,7 +104,7 @@ const ShelterPrint = () => {
         return `${day}/${month}/${year}`;
     };
 
-    const families = occupants.reduce((acc, occ) => {
+    const families = activeOccupants.reduce((acc, occ) => {
         const group = occ.family_group || 'Sem Grupo';
         if (!acc[group]) acc[group] = [];
         acc[group].push(occ);
@@ -171,37 +174,38 @@ const ShelterPrint = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="bg-slate-50 border border-slate-200 p-4 rounded text-center">
-                        <div className="text-3xl font-black text-slate-800">{occupants.length}</div>
-                        <div className="text-xs font-bold text-slate-500 uppercase">Abrigados (Pessoas)</div>
+                        <div className="text-3xl font-black text-slate-800">{activeOccupants.length}</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Abrigados (Ativos)</div>
                     </div>
                     <div className="bg-slate-50 border border-slate-200 p-4 rounded text-center">
                         <div className="text-3xl font-black text-slate-800">{Object.keys(families).length}</div>
-                        <div className="text-xs font-bold text-slate-500 uppercase">Grupos Familiares</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Grupos Familiares (Ativos)</div>
                     </div>
                     <div className="bg-slate-50 border border-slate-200 p-4 rounded text-center">
-                        <div className="text-3xl font-black text-slate-800">{shelter.capacity > 0 ? Math.round((occupants.length / shelter.capacity) * 100) : 0}%</div>
-                        <div className="text-xs font-bold text-slate-500 uppercase">Taxa de Ocupação</div>
+                        <div className="text-3xl font-black text-slate-800">{shelter.capacity > 0 ? Math.round((activeOccupants.length / shelter.capacity) * 100) : 0}%</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Taxa de Ocupação Atual</div>
                     </div>
                 </div>
             </section>
 
             <section className="mb-6 avoid-break">
                 <div className="section-header">
-                    <span className="section-header-title">3. Pessoas Abrigadas</span>
+                    <span className="section-header-title">3. Histórico de Pessoas Abrigadas (Ativos)</span>
                     <div className="section-header-line"></div>
                 </div>
-                {occupants.length > 0 ? (
+                {activeOccupants.length > 0 ? (
                     <table className="report-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '40%' }}>Nome Completo</th>
-                                <th style={{ width: '15%', textAlign: 'center' }}>Idade</th>
-                                <th style={{ width: '15%', textAlign: 'center' }}>Sexo</th>
-                                <th style={{ width: '30%', textAlign: 'center' }}>Grupo Familiar</th>
+                                <th style={{ width: '30%' }}>Nome Completo</th>
+                                <th style={{ width: '10%', textAlign: 'center' }}>Idade</th>
+                                <th style={{ width: '10%', textAlign: 'center' }}>Sexo</th>
+                                <th style={{ width: '25%', textAlign: 'center' }}>Grupo Familiar</th>
+                                <th style={{ width: '25%', textAlign: 'center' }}>Data Entrada</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {occupants.map(o => (
+                            {activeOccupants.map(o => (
                                 <tr key={o.id}>
                                     <td>
                                         {o.full_name}
@@ -210,6 +214,7 @@ const ShelterPrint = () => {
                                     <td style={{ textAlign: 'center' }}>{o.age || '---'}</td>
                                     <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>{o.gender || '---'}</td>
                                     <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
+                                    <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -218,6 +223,35 @@ const ShelterPrint = () => {
                     <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhuma pessoa abrigada ativamente.</p>
                 )}
             </section>
+
+            {exitedOccupants.length > 0 && (
+            <section className="mb-6 avoid-break">
+                <div className="section-header">
+                    <span className="section-header-title">3.1. Histórico de Pessoas que Saíram</span>
+                    <div className="section-header-line"></div>
+                </div>
+                <table className="report-table">
+                    <thead>
+                        <tr>
+                            <th style={{ width: '30%' }}>Nome Completo</th>
+                            <th style={{ width: '20%', textAlign: 'center' }}>Grupo Familiar</th>
+                            <th style={{ width: '25%', textAlign: 'center' }}>Data Entrada</th>
+                            <th style={{ width: '25%', textAlign: 'center' }}>Data Saída</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {exitedOccupants.map(o => (
+                            <tr key={o.id} style={{ opacity: 0.8 }}>
+                                <td>{o.full_name}</td>
+                                <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
+                                <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
+                                <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{formatDateOnly(o.exit_date)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </section>
+            )}
 
             <section className="mb-6 avoid-break">
                 <div className="section-header">
@@ -250,7 +284,7 @@ const ShelterPrint = () => {
 
             <section className="mb-6 avoid-break">
                 <div className="section-header">
-                    <span className="section-header-title">5. Doações Recebidas (Recentes)</span>
+                    <span className="section-header-title">5. Doações Recebidas (Histórico Completo)</span>
                     <div className="section-header-line"></div>
                 </div>
                 {donations.length > 0 ? (
@@ -264,7 +298,7 @@ const ShelterPrint = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {donations.slice(0, 10).map(d => (
+                            {donations.map(d => (
                                 <tr key={d.id}>
                                     <td>{formatDateOnly(d.donation_date)}</td>
                                     <td>{d.item_description}</td>
@@ -277,12 +311,11 @@ const ShelterPrint = () => {
                 ) : (
                     <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhuma doação registrada nesta operação.</p>
                 )}
-                {donations.length > 10 && <p className="text-xs text-slate-500 text-center mt-2">+ {donations.length - 10} doações (ocultas para brevidade)</p>}
             </section>
 
             <section className="mb-6 avoid-break">
                 <div className="section-header">
-                    <span className="section-header-title">6. Distribuições / Saídas (Recentes)</span>
+                    <span className="section-header-title">6. Distribuições / Saídas (Histórico Completo)</span>
                     <div className="section-header-line"></div>
                 </div>
                 {distributions.length > 0 ? (
@@ -296,7 +329,7 @@ const ShelterPrint = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {distributions.slice(0, 10).map(d => (
+                            {distributions.map(d => (
                                 <tr key={d.id}>
                                     <td>{formatDateOnly(d.distribution_date || d.created_at)}</td>
                                     <td>{d.item_name}</td>
@@ -309,7 +342,6 @@ const ShelterPrint = () => {
                 ) : (
                     <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhuma saída registrada nesta operação.</p>
                 )}
-                {distributions.length > 10 && <p className="text-xs text-slate-500 text-center mt-2">+ {distributions.length - 10} distribuições (ocultas para brevidade)</p>}
             </section>
         </PrintLayout>
     );
