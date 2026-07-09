@@ -245,5 +245,20 @@ export const operacoesService = {
     }
 
     return true;
+  },
+
+  // Retorna todas as operações (para relatórios globais)
+  async getAllOperacoes() {
+    const { data, error } = await supabase
+      .from('operacao_assistencia_humanitaria')
+      .select('*')
+      .order('data_hora_inicio', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao buscar todas as operações:', error);
+      throw error;
+    }
+
+    return data;
   }
 };
