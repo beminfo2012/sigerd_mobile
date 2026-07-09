@@ -42,10 +42,14 @@ export default function OperacaoPainel() {
             // Carregar dados de logística
             try {
                 const { getGlobalInventory, getShelters, getDonations, getDistributions } = await import('../../services/shelterDb.js');
+                const { initDB } = await import('../../services/db.js');
+                const db = await initDB();
+
                 const allInv = await getGlobalInventory();
                 const allAbr = await getShelters();
                 const allDoa = await getDonations();
                 const allDis = await getDistributions();
+                const allHist = await db.getAll('shelter_history').catch(() => []);
 
                 const opStart = resumo.operacao.data_hora_inicio ? new Date(resumo.operacao.data_hora_inicio) : new Date(0);
                 const opEnd = resumo.operacao.data_hora_encerramento ? new Date(resumo.operacao.data_hora_encerramento) : new Date(8640000000000000);
@@ -59,8 +63,19 @@ export default function OperacaoPainel() {
                 const filteredDoacoes = (allDoa || []).filter(d => String(d.operacao_id) === String(id) || isWithinPeriod(d.created_at));
                 const filteredSaidas = (allDis || []).filter(d => String(d.operacao_id) === String(id) || isWithinPeriod(d.created_at));
 
-                setEstoque((allInv || []).filter(i => String(i.operacao_id) === String(id) || isWithinPeriod(i.created_at || i.updated_at)));
-                setAbrigos((allAbr || []).filter(a => String(a.operacao_id) === String(id) || isWithinPeriod(a.created_at || a.updated_at)));
+                setEstoque((allInv || []).filter(i => String(i.operacao_id) === String(id) || isWithinPeriod(i.created_at) || isWithinPeriod(i.updated_at)));
+                
+                const abrigosDestaOp = (allAbr || []).filter(a => {
+                    if (String(a.operacao_id) === String(id)) return true;
+                    if (isWithinPeriod(a.created_at) || isWithinPeriod(a.updated_at)) return true;
+                    
+                    const hasHistory = allHist.some(h => 
+                        (h.shelter_id === a.shelter_id || h.shelter_id === a.id || h.shelter_id === a.supabase_id) && 
+                        String(h.operacao_id) === String(id)
+                    );
+                    return hasHistory;
+                });
+                setAbrigos(abrigosDestaOp);
                 setDoacoes(filteredDoacoes);
                 setDistribuicoes(filteredSaidas);
 

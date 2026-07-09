@@ -10,7 +10,8 @@ import VoiceInput from '../../components/VoiceInput';
 import { toast } from '../../components/ToastNotification';
 
 const applyCpfMask = (value) => {
-    return value
+    if (!value) return '';
+    return String(value)
         .replace(/\D/g, '') // remove non-digits
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1.$2')

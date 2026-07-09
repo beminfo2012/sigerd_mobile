@@ -65,7 +65,50 @@ export async function performOCR(imageFile) {
  */
 export async function scanDocument(file) {
     try {
-        const imagePart = await fileToGenerativePart(file);
+        // First convert File to base64 for compression
+        const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        // Compress image to ensure it's not too large for Gemini API (max 1600px width)
+        const compressImage = async (base64) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = base64;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let { width, height } = img;
+                    const maxWidth = 1600;
+                    if (width > maxWidth || height > maxWidth) {
+                        if (width > height) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        } else {
+                            width *= maxWidth / height;
+                            height = maxWidth;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                img.onerror = () => resolve(base64); // Fallback to original
+            });
+        };
+
+        const compressedBase64 = await compressImage(base64Data);
+        
+        const imagePart = {
+            inlineData: {
+                data: compressedBase64.split(',')[1],
+                mimeType: 'image/jpeg'
+            }
+        };
 
         const prompt = `
             Extraia os seguintes dados deste documento de identificação (RG/CPF/CNH/Documento do Abrigo):
@@ -88,6 +131,8 @@ export async function scanDocument(file) {
         const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
         const text = response.text().trim();
+        
+        console.log("[OCR] Gemini Response:", text);
 
         // Cleanup potential markdown backticks if Gemini includes them
         const jsonMatch = text.match(/\{[\s\S]*\}/);

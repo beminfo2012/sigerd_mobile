@@ -1040,6 +1040,10 @@ export const syncSingleItem = async (storeName, item, db) => {
                 }
             }
         }
+        if (storeName === 'donations') {
+            delete payload.donation_subtype;
+            delete payload.destination_type;
+        }
 
         console.log(`[Sync] Upserting to Supabase table '${table}'...`, payload);
         const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {

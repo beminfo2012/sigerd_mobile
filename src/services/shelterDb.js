@@ -201,8 +201,13 @@ export const updateShelter = async (id, changes) => {
     const shelter = await getShelterById(id);
     if (shelter) {
         const db = await initDB();
-        const tx = db.transaction('shelters', 'readwrite');
+        const tx = db.transaction(['shelters', 'shelter_history'], 'readwrite');
         const store = tx.objectStore('shelters');
+        // If activating, tie the shelter's primary operacao_id to the current active operation
+        if (changes.status === 'active' && !changes.operacao_id) {
+            changes.operacao_id = getOperacaoId();
+        }
+
         const updated = { ...shelter, ...changes, updated_at: new Date().toISOString(), synced: false };
         await store.put(updated);
 

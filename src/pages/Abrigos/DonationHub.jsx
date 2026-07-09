@@ -95,8 +95,10 @@ export default function DonationHub() {
                 ? formData.item_description 
                 : (formData.item_description ? `${formData.donation_subtype} - ${formData.item_description}` : formData.donation_subtype);
 
+            const { donation_subtype, destination_type, ...dataToSave } = formData;
+
             await addDonation({
-                ...formData,
+                ...dataToSave,
                 item_description: finalDesc,
                 shelter_id: formData.destination_type === 'CENTRAL' ? 'CENTRAL' : formData.shelter_id
             });
@@ -332,7 +334,7 @@ export default function DonationHub() {
                         <Button type="button" variant="secondary" onClick={() => navigate('/assisthumanitaria')} className="flex-1">
                             Cancelar
                         </Button>
-                        <Button type="submit" className="flex-1" disabled={isSubmitting || (!formData.item_description.trim() || !formData.quantity)}>
+                        <Button type="submit" className="flex-1" disabled={isSubmitting || (formData.donation_subtype === 'Outros' && !formData.item_description.trim()) || !formData.quantity}>
                             {isSubmitting ? 'Salvando...' : 'Confirmar Doação'}
                         </Button>
                     </div>

@@ -126,7 +126,7 @@ export function ShelterDetail() {
             setShelter({ ...shelter, status: newStatus });
         } catch (error) {
             console.error('Erro ao alterar status:', error);
-            alert('Erro ao alterar status do abrigo.');
+            toast.error('Erro ao alterar status do abrigo.');
         }
     };
 
