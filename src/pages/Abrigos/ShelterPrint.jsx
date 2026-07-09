@@ -16,7 +16,8 @@ const ShelterPrint = () => {
         donations: [],
         distributions: [],
         inventory: [],
-        operation: null
+        operation: null,
+        allOperacoesMap: {}
     });
     const [loading, setLoading] = useState(true);
 
@@ -32,11 +33,15 @@ const ShelterPrint = () => {
 
                 // Carrega operação se houver operacao_id
                 let operation = null;
+                const operacoes = await operacoesService.getAllOperacoes();
+                const allOperacoesMap = operacoes.reduce((acc, op) => {
+                    acc[op.id] = op.nome;
+                    return acc;
+                }, {});
+
                 if (operacaoId && operacaoId !== 'all') {
-                    const operacoes = await operacoesService.getAllOperacoes();
                     operation = operacoes.find(op => String(op.id) === String(operacaoId));
                 } else if (s.operacao_id) {
-                    const operacoes = await operacoesService.getAllOperacoes();
                     operation = operacoes.find(op => String(op.id) === String(s.operacao_id));
                 }
 
@@ -75,7 +80,8 @@ const ShelterPrint = () => {
                     donations: filteredDonations,
                     distributions: filteredDistributions,
                     inventory: filteredInventory,
-                    operation: operation
+                    operation: operation,
+                    allOperacoesMap: allOperacoesMap
                 });
 
                 document.title = `Relatório do Abrigo - ${s.name}`;
@@ -92,7 +98,9 @@ const ShelterPrint = () => {
     if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando visualização...</div>;
     if (!data.shelter) return <div className="flex items-center justify-center min-h-screen">Abrigo não encontrado.</div>;
 
-    const { shelter, activeOccupants, exitedOccupants, donations, distributions, inventory, operation } = data;
+    const { shelter, activeOccupants, exitedOccupants, donations, distributions, inventory, operation, allOperacoesMap } = data;
+
+    const getOpName = (opId) => allOperacoesMap[opId] || 'Operação Desconhecida';
 
     const formatDateOnly = (dateString) => {
         if (!dateString) return '---';
@@ -117,6 +125,8 @@ const ShelterPrint = () => {
             reportTitle="Relatório de Atividades do Abrigo"
             subtitle={
                 <>
+                    {(!operacaoId || operacaoId === 'all') ? <span className="text-blue-200">Visão Geral: Todas as Operações</span> : <span className="text-emerald-200">Operação: {operation?.nome}</span>}
+                    <span>•</span>
                     <span>Status: {shelter.status === 'active' ? 'ATIVO' : shelter.status === 'full' ? 'LOTADO' : 'INATIVO'}</span>
                     <span>•</span>
                     <span>Emissão: {new Date().toLocaleString('pt-BR')}</span>
@@ -151,15 +161,24 @@ const ShelterPrint = () => {
                             <td>{shelter.responsible_phone || shelter.contact_phone || '---'}</td>
                             <td>{shelter.capacity || '---'} pessoas</td>
                         </tr>
-                        {operation && (
+                        {operation && operacaoId !== 'all' ? (
                         <>
                             <tr>
-                                <th colSpan="3" style={{ background: '#e2e8f0', color: '#1e293b' }}>Operação Vinculada</th>
+                                <th colSpan="3" style={{ background: '#e2e8f0', color: '#1e293b' }}>Foco do Relatório: Operação Específica</th>
                             </tr>
                             <tr>
                                 <td><strong>{operation.nome}</strong></td>
                                 <td>Data Início: {formatDateOnly(operation.data_hora_inicio || operation.created_at)}</td>
                                 <td>Nível (Cobrade): {operation.cobrade || 'Não Informado'}</td>
+                            </tr>
+                        </>
+                        ) : (
+                        <>
+                            <tr>
+                                <th colSpan="3" style={{ background: '#e2e8f0', color: '#1e293b' }}>Foco do Relatório: Histórico Completo de Todas as Operações</th>
+                            </tr>
+                            <tr>
+                                <td colSpan="3" style={{ textAlign: 'center' }}>Este relatório exibe o histórico de movimentações, abrigados e estoques vinculados a todas as operações que este abrigo participou.</td>
                             </tr>
                         </>
                         )}
@@ -200,8 +219,9 @@ const ShelterPrint = () => {
                                 <th style={{ width: '30%' }}>Nome Completo</th>
                                 <th style={{ width: '10%', textAlign: 'center' }}>Idade</th>
                                 <th style={{ width: '10%', textAlign: 'center' }}>Sexo</th>
-                                <th style={{ width: '25%', textAlign: 'center' }}>Grupo Familiar</th>
-                                <th style={{ width: '25%', textAlign: 'center' }}>Data Entrada</th>
+                                <th style={{ width: '20%', textAlign: 'center' }}>Grupo Familiar</th>
+                                <th style={{ width: '20%', textAlign: 'center' }}>Operação</th>
+                                <th style={{ width: '15%', textAlign: 'center' }}>Data Entrada</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -214,6 +234,7 @@ const ShelterPrint = () => {
                                     <td style={{ textAlign: 'center' }}>{o.age || '---'}</td>
                                     <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>{o.gender || '---'}</td>
                                     <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
+                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                                     <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                 </tr>
                             ))}
@@ -235,8 +256,9 @@ const ShelterPrint = () => {
                         <tr>
                             <th style={{ width: '30%' }}>Nome Completo</th>
                             <th style={{ width: '20%', textAlign: 'center' }}>Grupo Familiar</th>
-                            <th style={{ width: '25%', textAlign: 'center' }}>Data Entrada</th>
-                            <th style={{ width: '25%', textAlign: 'center' }}>Data Saída</th>
+                            <th style={{ width: '20%', textAlign: 'center' }}>Data Entrada</th>
+                            <th style={{ width: '20%', textAlign: 'center' }}>Data Saída</th>
+                            <th style={{ width: '20%', textAlign: 'center' }}>Operação</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -246,6 +268,7 @@ const ShelterPrint = () => {
                                 <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
                                 <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{formatDateOnly(o.exit_date)}</td>
+                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                             </tr>
                         ))}
                     </tbody>
@@ -291,10 +314,11 @@ const ShelterPrint = () => {
                     <table className="report-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '20%' }}>Data</th>
-                                <th style={{ width: '40%' }}>Item</th>
-                                <th style={{ width: '20%', textAlign: 'center' }}>Doador/Origem</th>
-                                <th style={{ width: '20%', textAlign: 'right' }}>Quantidade</th>
+                                <th style={{ width: '15%' }}>Data</th>
+                                <th style={{ width: '35%' }}>Item</th>
+                                <th style={{ width: '20%', textAlign: 'center' }}>Operação</th>
+                                <th style={{ width: '15%', textAlign: 'center' }}>Origem</th>
+                                <th style={{ width: '15%', textAlign: 'right' }}>Qtd</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -302,6 +326,7 @@ const ShelterPrint = () => {
                                 <tr key={d.id}>
                                     <td>{formatDateOnly(d.donation_date)}</td>
                                     <td>{d.item_description}</td>
+                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                     <td style={{ textAlign: 'center' }}>{d.donor_name || 'Anônimo'}</td>
                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                 </tr>
@@ -322,10 +347,11 @@ const ShelterPrint = () => {
                     <table className="report-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '20%' }}>Data</th>
-                                <th style={{ width: '40%' }}>Item</th>
-                                <th style={{ width: '20%', textAlign: 'center' }}>Destinatário</th>
-                                <th style={{ width: '20%', textAlign: 'right' }}>Quantidade</th>
+                                <th style={{ width: '15%' }}>Data</th>
+                                <th style={{ width: '35%' }}>Item</th>
+                                <th style={{ width: '20%', textAlign: 'center' }}>Operação</th>
+                                <th style={{ width: '15%', textAlign: 'center' }}>Destinatário</th>
+                                <th style={{ width: '15%', textAlign: 'right' }}>Qtd</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -333,6 +359,7 @@ const ShelterPrint = () => {
                                 <tr key={d.id}>
                                     <td>{formatDateOnly(d.distribution_date || d.created_at)}</td>
                                     <td>{d.item_name}</td>
+                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                     <td style={{ textAlign: 'center' }}>{d.recipient_name}</td>
                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                 </tr>

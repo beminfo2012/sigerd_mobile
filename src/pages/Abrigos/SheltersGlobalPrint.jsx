@@ -10,7 +10,8 @@ const SheltersGlobalPrint = () => {
 
     const [data, setData] = useState({
         sheltersData: [],
-        operation: null
+        operation: null,
+        allOperacoesMap: {}
     });
     const [loading, setLoading] = useState(true);
 
@@ -18,8 +19,13 @@ const SheltersGlobalPrint = () => {
         const fetchData = async () => {
             try {
                 let operation = null;
+                const operacoes = await operacoesService.getAllOperacoes();
+                const allOperacoesMap = operacoes.reduce((acc, op) => {
+                    acc[op.id] = op.nome;
+                    return acc;
+                }, {});
+
                 if (operacaoId && operacaoId !== 'all') {
-                    const operacoes = await operacoesService.getAllOperacoes();
                     operation = operacoes.find(op => String(op.id) === String(operacaoId));
                 }
 
@@ -84,7 +90,8 @@ const SheltersGlobalPrint = () => {
 
                 setData({
                     sheltersData,
-                    operation
+                    operation,
+                    allOperacoesMap
                 });
 
                 document.title = `Relatório Geral de Abrigos${operation ? ` - ${operation.nome}` : ''}`;
@@ -99,7 +106,9 @@ const SheltersGlobalPrint = () => {
 
     if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando relatório geral...</div>;
 
-    const { sheltersData, operation } = data;
+    const { sheltersData, operation, allOperacoesMap } = data;
+
+    const getOpName = (opId) => allOperacoesMap[opId] || 'Operação Desconhecida';
 
     const formatDateOnly = (dateString) => {
         if (!dateString) return '---';
@@ -206,8 +215,9 @@ const SheltersGlobalPrint = () => {
                                             <th style={{ width: '30%' }}>Nome Completo</th>
                                             <th style={{ width: '10%', textAlign: 'center' }}>Idade</th>
                                             <th style={{ width: '10%', textAlign: 'center' }}>Sexo</th>
-                                            <th style={{ width: '25%', textAlign: 'center' }}>Grupo Familiar</th>
-                                            <th style={{ width: '25%', textAlign: 'center' }}>Data Entrada</th>
+                                            <th style={{ width: '20%', textAlign: 'center' }}>Grupo Familiar</th>
+                                            <th style={{ width: '15%', textAlign: 'center' }}>Operação</th>
+                                            <th style={{ width: '15%', textAlign: 'center' }}>Data Entrada</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -220,6 +230,7 @@ const SheltersGlobalPrint = () => {
                                                 <td style={{ textAlign: 'center' }}>{o.age || '---'}</td>
                                                 <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>{o.gender || '---'}</td>
                                                 <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
+                                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                                                 <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                             </tr>
                                         ))}
@@ -241,8 +252,9 @@ const SheltersGlobalPrint = () => {
                                         <tr>
                                             <th style={{ width: '30%' }}>Nome Completo</th>
                                             <th style={{ width: '20%', textAlign: 'center' }}>Grupo Familiar</th>
-                                            <th style={{ width: '25%', textAlign: 'center' }}>Data Entrada</th>
-                                            <th style={{ width: '25%', textAlign: 'center' }}>Data Saída</th>
+                                            <th style={{ width: '15%', textAlign: 'center' }}>Data Entrada</th>
+                                            <th style={{ width: '15%', textAlign: 'center' }}>Data Saída</th>
+                                            <th style={{ width: '20%', textAlign: 'center' }}>Operação</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -252,6 +264,7 @@ const SheltersGlobalPrint = () => {
                                                 <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
                                                 <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{formatDateOnly(o.exit_date)}</td>
+                                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -299,8 +312,9 @@ const SheltersGlobalPrint = () => {
                                         <thead>
                                             <tr>
                                                 <th style={{ width: '20%' }}>Data</th>
-                                                <th style={{ width: '50%' }}>Item</th>
-                                                <th style={{ width: '30%', textAlign: 'right' }}>Qtd</th>
+                                                <th style={{ width: '40%' }}>Item</th>
+                                                <th style={{ width: '20%', textAlign: 'center' }}>Operação</th>
+                                                <th style={{ width: '20%', textAlign: 'right' }}>Qtd</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -308,6 +322,7 @@ const SheltersGlobalPrint = () => {
                                                 <tr key={d.id}>
                                                     <td>{formatDateOnly(d.donation_date)}</td>
                                                     <td>{d.item_description} <br/><span className="text-[9px] text-slate-400">Origem: {d.donor_name || 'Anônimo'}</span></td>
+                                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                                 </tr>
                                             ))}
@@ -328,8 +343,9 @@ const SheltersGlobalPrint = () => {
                                         <thead>
                                             <tr>
                                                 <th style={{ width: '20%' }}>Data</th>
-                                                <th style={{ width: '50%' }}>Item</th>
-                                                <th style={{ width: '30%', textAlign: 'right' }}>Qtd</th>
+                                                <th style={{ width: '40%' }}>Item</th>
+                                                <th style={{ width: '20%', textAlign: 'center' }}>Operação</th>
+                                                <th style={{ width: '20%', textAlign: 'right' }}>Qtd</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -337,6 +353,7 @@ const SheltersGlobalPrint = () => {
                                                 <tr key={d.id}>
                                                     <td>{formatDateOnly(d.distribution_date || d.created_at)}</td>
                                                     <td>{d.item_name} <br/><span className="text-[9px] text-slate-400">Destino: {d.recipient_name}</span></td>
+                                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                                 </tr>
                                             ))}
