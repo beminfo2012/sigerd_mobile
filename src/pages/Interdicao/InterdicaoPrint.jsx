@@ -5,8 +5,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import { getAllInterdicoesLocal } from '../../services/db';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import PrintLayout from '../../components/PrintLayout';
 
 // Utility component to recalibrate map size and center
 const MapController = ({ lat, lng }) => {
@@ -138,7 +137,19 @@ const InterdicaoPrint = () => {
     })();
 
     return (
-        <div className="bg-slate-100 min-h-screen font-sans text-slate-800 print:bg-white print:p-0 p-8 flex justify-center">
+        <PrintLayout
+            documentTitle={`Interdição nº ${(data.interdicaoId || data.interdicao_id || id).replace('/', '-')} - ${data.responsavel_nome || data.responsavelNome || 'Proprietário'}`}
+            reportTitle="Auto de Interdição"
+            subtitle={
+                <>
+                    <span>Emissão: {new Date().toLocaleString('pt-BR')}</span>
+                    <span>•</span>
+                    <span>ID: {data.interdicaoId || data.interdicao_id || '---'}</span>
+                </>
+            }
+            isLoading={loading}
+            onPrint={handlePrint}
+        >
             <style>{`
                 @media screen and (max-width: 768px) {
                     .print-preview-wrapper { 
@@ -167,41 +178,6 @@ const InterdicaoPrint = () => {
                     .print-map-wrapper { display: block !important; height: 350px !important; min-height: 350px !important; position: relative !important; background-color: #f1f5f9; border: 1px solid #e2e8f0; break-inside: avoid; }
                 }
             `}</style>
-
-            <div className="no-print fixed top-0 left-0 right-0 bg-[#0f172a] text-white p-4 flex justify-between items-center z-[9999] shadow-md">
-                <h1 className="font-bold text-lg">Visualização de Impressão (Interdição)</h1>
-                <div className="flex gap-4">
-                    <button onClick={() => window.close()} className="px-4 py-2 hover:bg-slate-700 rounded transition-colors text-sm font-bold uppercase">Fechar</button>
-                    <button onClick={handlePrint} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold uppercase text-sm flex items-center gap-2 transition-colors">
-                        <span className="material-symbols-outlined text-sm">print</span> Imprimir / Salvar PDF
-                    </button>
-                </div>
-            </div>
-
-            <main className="flex flex-col items-center pt-20 print:pt-0 w-full print-preview-wrapper">
-                <div className="w-[210mm] bg-white print:shadow-none shadow-2xl min-h-[297mm] p-10 md:p-14 print:p-0 mb-10 print:mb-0 relative print-container">
-
-                    {/* Header */}
-                    <header className="flex flex-col items-center mb-10 border-b-4 border-red-600 pb-6">
-                        <div className="w-full flex justify-between items-center mb-6 px-4">
-                            <div className="w-[100px] flex items-center justify-center">
-                                <img src={LOGO_DEFESA_CIVIL} alt="Defesa Civil" className="h-[85px] w-auto object-contain" />
-                            </div>
-                            <div className="text-center flex-1 px-4">
-                                <h3 className="text-slate-900 font-extrabold text-sm uppercase leading-tight">PREFEITURA MUNICIPAL DE<br />SANTA MARIA DE JETIBÁ</h3>
-                                <p className="text-slate-600 text-[10px] uppercase font-bold tracking-widest mt-1">COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</p>
-                            </div>
-                            <div className="w-[100px] flex items-center justify-center text-right">
-                                <img src={LOGO_SIGERD} alt="SIGERD" className="h-[85px] w-auto object-contain" />
-                            </div>
-                        </div>
-                        <h1 className="text-2xl font-black text-red-600 uppercase tracking-wide text-center">Auto de Interdição</h1>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100 mt-2">
-                            <span>Emissão: {new Date().toLocaleString('pt-BR')}</span>
-                            <span>•</span>
-                            <span>ID: {data.interdicaoId || data.interdicao_id || '---'}</span>
-                        </div>
-                    </header>
 
                     {/* 1. Identificação da Interdição */}
                     <section className="mb-8 avoid-break">
@@ -488,9 +464,7 @@ const InterdicaoPrint = () => {
                             <p className="text-[8px] text-slate-300 mt-1 uppercase font-mono tracking-tighter">CERTIFICAÇÃO OFICIAL - INTERDIÇÃO Nº {data.interdicaoId || data.interdicao_id}</p>
                         </div>
                     </footer>
-                </div>
-            </main>
-        </div>
+        </PrintLayout>
     );
 };
 

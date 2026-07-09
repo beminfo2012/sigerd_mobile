@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOperacao } from '../contexts/OperacaoContext';
 import { operacoesService } from '../services/operacoesService';
+import { getShelters } from '../services/shelterDb';
 import { ClipboardList, Plus, History, PlayCircle, StopCircle, CheckSquare, X, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { COBRADE_LIST } from '../utils/cobradeData';
@@ -11,6 +12,8 @@ export default function GestaoOperacoesBlock({ userProfile }) {
     const { operacaoAtiva, isLoadingOperacao, refreshOperacao } = useOperacao();
     const [isNovoModalOpen, setIsNovoModalOpen] = useState(false);
     const [isEncerrarModalOpen, setIsEncerrarModalOpen] = useState(false);
+    const [isBlockingModalOpen, setIsBlockingModalOpen] = useState(false);
+    const [blockingShelters, setBlockingShelters] = useState([]);
     
     // Novo Operação Form
     const [novaOp, setNovaOp] = useState({
@@ -29,9 +32,20 @@ export default function GestaoOperacoesBlock({ userProfile }) {
     const canCreate = ['admin', 'administrador', 'coordenador', 'coordenador de proteção e defesa civil'].includes(userProfile?.role?.toLowerCase());
 
     const openEncerrarModal = async () => {
-        setIsEncerrarModalOpen(true);
         setIsCarregandoResumo(true);
         try {
+            const abrigos = await getShelters();
+            const ativos = (abrigos || []).filter(a => 
+                (a.status === 'active' || a.status === 'full') && 
+                (!a.operacao_id || a.operacao_id === operacaoAtiva.id)
+            );
+            if (ativos.length > 0) {
+                setBlockingShelters(ativos);
+                setIsBlockingModalOpen(true);
+                setIsCarregandoResumo(false);
+                return;
+            }
+            setIsEncerrarModalOpen(true);
             const resumo = await operacoesService.calcularResumoOperacional(operacaoAtiva.id);
             setResumoOperacional(resumo?.estatisticas || null);
         } catch (e) {
@@ -298,6 +312,38 @@ export default function GestaoOperacoesBlock({ userProfile }) {
                                 <button type="submit" disabled={!confirmacaoEncerramento} className="flex-1 py-2.5 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Confirmar Encerramento</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Bloqueio por Abrigos Ativos */}
+            {isBlockingModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-amber-100 dark:border-amber-900/30 bg-amber-50 dark:bg-amber-900/10 flex items-center justify-between">
+                            <h3 className="font-bold text-lg text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                                <AlertTriangle size={20} /> Encerramento Bloqueado
+                            </h3>
+                            <button onClick={() => setIsBlockingModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-slate-600 dark:text-slate-300">
+                                Não é possível encerrar a operação <strong>{operacaoAtiva.nome}</strong> porque ainda existem abrigos em andamento. Inative os seguintes abrigos antes de continuar:
+                            </p>
+                            <div className="max-h-48 overflow-y-auto bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-2 space-y-2">
+                                {blockingShelters.map(shelter => (
+                                    <div key={shelter.shelter_id || shelter.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
+                                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{shelter.name}</span>
+                                        <span className="text-[10px] font-bold px-2 py-1 bg-amber-100 text-amber-700 rounded-md">Ativo</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="pt-4">
+                                <button type="button" onClick={() => setIsBlockingModalOpen(false)} className="w-full py-2.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Entendi</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

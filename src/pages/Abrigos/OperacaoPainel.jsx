@@ -4,7 +4,7 @@ import { operacoesService } from '../../services/operacoesService';
 import { UserContext } from '../../App';
 import { 
     ArrowLeft, ClipboardList, BookOpen, Building2, Users, Package, 
-    Gift, Truck, FileText, Send, Clock, ShieldAlert, BadgeInfo 
+    Gift, Truck, FileText, Send, Clock, ShieldAlert, BadgeInfo, Printer 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -142,16 +142,35 @@ export default function OperacaoPainel() {
                     <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-black leading-tight text-slate-800 dark:text-slate-100">Painel da Operação</h1>
-                            {isEncerrada ? (
-                                <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">ENCERRADA</span>
-                            ) : (
-                                <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">EM ANDAMENTO</span>
-                            )}
+                    <div className="flex flex-1 items-center justify-between">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-lg font-black leading-tight text-slate-800 dark:text-slate-100">Painel da Operação</h1>
+                                {isEncerrada ? (
+                                    <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">ENCERRADA</span>
+                                ) : (
+                                    <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">EM ANDAMENTO</span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 font-medium truncate max-w-sm">{operacao.nome}</p>
                         </div>
-                        <p className="text-xs text-slate-500 font-medium truncate max-w-sm">{operacao.nome}</p>
+                        <div className="flex items-center gap-2">
+                            {operacao.status === 'aberta' && (
+                                <button 
+                                    className="px-3 py-1.5 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold transition-colors"
+                                    onClick={handleFinalizarOperacao}
+                                >
+                                    Finalizar
+                                </button>
+                            )}
+                            <button 
+                                className="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-bold transition-colors flex items-center gap-1"
+                                onClick={() => window.open(`/assisthumanitaria/operacoes/imprimir/${operacao.id}`, '_blank')}
+                            >
+                                <Printer size={14} />
+                                Imprimir PDF
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -236,30 +255,69 @@ export default function OperacaoPainel() {
                     )}
                     
                     {activeTab === 'resumo' && (
-                        <div>
-                             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div className="space-y-6">
+                             <div className="flex items-center gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
                                 <BadgeInfo className="text-blue-500" size={20} />
                                 <h3 className="font-bold text-lg">Resumo Operacional</h3>
                             </div>
-                            <div className="space-y-4">
-                                <p><strong>Nome:</strong> {operacao.nome}</p>
-                                <p><strong>Início:</strong> {new Date(operacao.data_hora_inicio).toLocaleString('pt-BR')}</p>
-                                {operacao.data_hora_encerramento && <p><strong>Encerramento:</strong> {new Date(operacao.data_hora_encerramento).toLocaleString('pt-BR')}</p>}
-                                <p><strong>COBRADE:</strong> {operacao.cobrade} ({operacao.tipo_desastre})</p>
-                                <p><strong>Status:</strong> <span className="uppercase">{operacao.status}</span></p>
-                                {operacao.descricao && (
-                                    <div className="mt-4">
-                                        <strong>Descrição Inicial:</strong>
-                                        <p className="bg-slate-50 p-3 rounded mt-1 text-sm">{operacao.descricao}</p>
-                                    </div>
-                                )}
-                                {operacao.parecer_final && (
-                                    <div className="mt-4">
-                                        <strong>Parecer Técnico / Conclusão:</strong>
-                                        <p className="bg-red-50 text-red-900 p-3 rounded mt-1 text-sm border border-red-100">{operacao.parecer_final}</p>
-                                    </div>
-                                )}
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Início da Operação</span>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">{new Date(operacao.data_hora_inicio).toLocaleString('pt-BR')}</p>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Encerramento</span>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">{operacao.data_hora_encerramento ? new Date(operacao.data_hora_encerramento).toLocaleString('pt-BR') : 'Em andamento'}</p>
+                                </div>
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Classificação COBRADE</span>
+                                    <p className="text-sm font-black text-blue-700 dark:text-blue-400 mt-1">{operacao.cobrade || '---'} ({operacao.tipo_desastre || 'Não definido'})</p>
+                                </div>
+                                <div className={`p-4 rounded-xl border ${isEncerrada ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'}`}>
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isEncerrada ? 'text-red-500' : 'text-emerald-500'}`}>Status Atual</span>
+                                    <p className={`text-sm font-black mt-1 uppercase ${isEncerrada ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>{operacao.status}</p>
+                                </div>
                             </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800 text-center flex flex-col items-center justify-center">
+                                    <Users className="text-indigo-500 mb-2" size={24} />
+                                    <p className="text-2xl font-black text-indigo-700 dark:text-indigo-400">{abrigos.reduce((sum, a) => sum + Number(a.current_occupancy || 0), 0)}</p>
+                                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-500 uppercase tracking-widest">Pessoas Acolhidas</p>
+                                </div>
+                                <div className="bg-cyan-50 dark:bg-cyan-900/20 p-4 rounded-xl border border-cyan-200 dark:border-cyan-800 text-center flex flex-col items-center justify-center">
+                                    <Building2 className="text-cyan-500 mb-2" size={24} />
+                                    <p className="text-2xl font-black text-cyan-700 dark:text-cyan-400">{abrigos.length}</p>
+                                    <p className="text-[10px] font-bold text-cyan-600 dark:text-cyan-500 uppercase tracking-widest">Abrigos Vinculados</p>
+                                </div>
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center flex flex-col items-center justify-center">
+                                    <Gift className="text-emerald-500 mb-2" size={24} />
+                                    <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{doacoes.length}</p>
+                                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest">Doações (Registros)</p>
+                                </div>
+                                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800 text-center flex flex-col items-center justify-center">
+                                    <Truck className="text-amber-500 mb-2" size={24} />
+                                    <p className="text-2xl font-black text-amber-700 dark:text-amber-400">{distribuicoes.length}</p>
+                                    <p className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest">Saídas Logísticas</p>
+                                </div>
+                            </div>
+
+                            {operacao.descricao && (
+                                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contexto / Descrição Inicial</span>
+                                    <p className="text-sm text-slate-700 dark:text-slate-300 mt-2 whitespace-pre-wrap leading-relaxed">{operacao.descricao}</p>
+                                </div>
+                            )}
+
+                            {operacao.parecer_final && (
+                                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-4 rounded-xl">
+                                    <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex items-center gap-1">
+                                        <ShieldAlert size={12} /> Parecer Técnico / Conclusão
+                                    </span>
+                                    <p className="text-sm text-amber-900 dark:text-amber-200 mt-2 whitespace-pre-wrap leading-relaxed font-medium">{operacao.parecer_final}</p>
+                                </div>
+                            )}
                         </div>
                     )}
                     
@@ -297,40 +355,80 @@ export default function OperacaoPainel() {
                                 <h3 className="font-bold text-lg">Logística da Operação</h3>
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-center">
-                                    <p className="text-2xl font-black text-blue-700 dark:text-blue-400">{estoque.length}</p>
-                                    <p className="text-xs font-bold text-blue-600 dark:text-blue-500 uppercase">Tipos em Estoque</p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center text-emerald-600">
+                                        <Gift size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                                            {doacoes.reduce((sum, d) => sum + Number(d.quantity || 0), 0).toLocaleString('pt-BR')}
+                                        </p>
+                                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase">Itens Recebidos</p>
+                                    </div>
                                 </div>
-                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-center">
-                                    <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{doacoes.length}</p>
-                                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase">Doações Recibidas</p>
+                                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center text-amber-600">
+                                        <Truck size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-black text-amber-700 dark:text-amber-400">
+                                            {distribuicoes.reduce((sum, d) => sum + Number(d.quantity || 0), 0).toLocaleString('pt-BR')}
+                                        </p>
+                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-500 uppercase">Itens Distribuídos</p>
+                                    </div>
                                 </div>
-                                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl text-center">
-                                    <p className="text-2xl font-black text-amber-700 dark:text-amber-400">{distribuicoes.length}</p>
-                                    <p className="text-xs font-bold text-amber-600 dark:text-amber-500 uppercase">Saídas / Transfers</p>
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-600">
+                                        <ClipboardList size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-black text-blue-700 dark:text-blue-400">
+                                            {doacoes.length + distribuicoes.length}
+                                        </p>
+                                        <p className="text-xs font-bold text-blue-600 dark:text-blue-500 uppercase">Movimentações logísticas</p>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <h4 className="font-bold text-sm text-slate-500 uppercase tracking-widest mb-3">Inventário Atual</h4>
-                            {estoque.length === 0 ? (
-                                <p className="text-sm text-slate-500 text-center py-6">Nenhum item em estoque para esta operação.</p>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    {estoque.map(item => (
-                                        <div key={item.id} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm flex justify-between items-center">
-                                            <div className="min-w-0">
-                                                <p className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{item.item_name}</p>
-                                                <p className="text-xs text-slate-500 capitalize">{item.category}</p>
+                            <h4 className="font-bold text-sm text-slate-500 uppercase tracking-widest mb-3">Material Consumido / Distribuído</h4>
+                            {(() => {
+                                const consumed = distribuicoes.reduce((acc, curr) => {
+                                    const key = `${curr.item_name}-${curr.category}`;
+                                    if (!acc[key]) {
+                                        acc[key] = {
+                                            item_name: curr.item_name,
+                                            category: curr.category,
+                                            quantity: 0,
+                                            unit: curr.unit || 'un.'
+                                        };
+                                    }
+                                    acc[key].quantity += Number(curr.quantity || 0);
+                                    return acc;
+                                }, {});
+                                const consumedList = Object.values(consumed);
+
+                                if (consumedList.length === 0) {
+                                    return <p className="text-sm text-slate-500 text-center py-6">Nenhum consumo registrado durante o período da operação.</p>;
+                                }
+
+                                return (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        {consumedList.map((item, idx) => (
+                                            <div key={idx} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm flex justify-between items-center">
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{item.item_name}</p>
+                                                    <p className="text-xs text-slate-500 capitalize">{item.category || 'Geral'}</p>
+                                                </div>
+                                                <div className="text-right flex-shrink-0 ml-2">
+                                                    <p className="font-black text-rose-600 text-lg">-{item.quantity}</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold">{item.unit}</p>
+                                                </div>
                                             </div>
-                                            <div className="text-right flex-shrink-0 ml-2">
-                                                <p className="font-black text-blue-600 text-lg">{item.quantity}</p>
-                                                <p className="text-[10px] text-slate-400 font-bold">{item.unit || 'un.'}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                        ))}
+                                    </div>
+                                );
+                            })()}
                         </div>
                     )}
                 </div>

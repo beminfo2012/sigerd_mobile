@@ -19,6 +19,7 @@ export default function DonationHub() {
         donor_name: '',
         donor_phone: '',
         donation_type: 'alimento',
+        donation_subtype: 'Água',
         item_description: '',
         quantity: '',
         unit: 'unidades',
@@ -37,11 +38,29 @@ export default function DonationHub() {
         loadShelters();
     }, []);
 
+    const subTypesMap = {
+        alimento: ['Água', 'Cesta Básica', 'Perecíveis', 'Não Perecíveis', 'Outros'],
+        higiene: ['Kit de Limpeza', 'Kit de Higiene Pessoal', 'Água Sanitária/Desinfetante', 'Outros'],
+        roupa: ['Fardo de Roupas', 'Cobertores/Mantas', 'Colchões', 'Travesseiros/Lençóis', 'Outros'],
+        medicamento: ['Uso Contínuo', 'Primeiros Socorros', 'Analgésicos/Térmicos', 'Outros'],
+        outro: ['Diversos', 'Móveis', 'Eletrodomésticos', 'Outros']
+    };
+
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+        const { name, value } = e.target;
+        if (name === 'donation_type') {
+            setFormData({
+                ...formData,
+                donation_type: value,
+                donation_subtype: subTypesMap[value] ? subTypesMap[value][0] : 'Outros',
+                item_description: ''
+            });
+        } else {
+            setFormData({
+                ...formData,
+                [name]: value,
+            });
+        }
     };
 
     const handleVoiceResult = (transcript) => {
@@ -52,8 +71,8 @@ export default function DonationHub() {
 
     const validateForm = () => {
         const e = {};
-        if (!formData.item_description || !formData.item_description.trim()) {
-            e.item_description = 'Descrição do item é obrigatória';
+        if (formData.donation_subtype === 'Outros' && (!formData.item_description || !formData.item_description.trim())) {
+            e.item_description = 'Descrição do item é obrigatória quando subtipo for "Outros"';
         }
         const qty = parseFloat(formData.quantity);
         if (!qty || qty <= 0 || isNaN(qty)) {
@@ -72,12 +91,17 @@ export default function DonationHub() {
         setIsSubmitting(true);
 
         try {
+            const finalDesc = formData.donation_subtype === 'Outros' 
+                ? formData.item_description 
+                : (formData.item_description ? `${formData.donation_subtype} - ${formData.item_description}` : formData.donation_subtype);
+
             await addDonation({
                 ...formData,
+                item_description: finalDesc,
                 shelter_id: formData.destination_type === 'CENTRAL' ? 'CENTRAL' : formData.shelter_id
             });
 
-            toast.success('Doação registrada!', `${formData.item_description} (${formData.quantity} ${formData.unit}) adicionado ao estoque.`);
+            toast.success('Doação registrada!', `${finalDesc} (${formData.quantity} ${formData.unit}) adicionado ao estoque.`);
             navigate('/assisthumanitaria');
         } catch (error) {
             console.error('Error saving donation:', error);
@@ -213,33 +237,50 @@ export default function DonationHub() {
                             Detalhes da Doação
                         </h2>
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">
-                                    Tipo de Doação <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    name="donation_type"
-                                    value={formData.donation_type}
-                                    onChange={handleChange}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
-                                >
-                                    <option value="alimento">Alimento</option>
-                                    <option value="roupa">Vestuário/Cama/Banho</option>
-                                    <option value="higiene">Higiene Limpeza</option>
-                                    <option value="medicamento">Medicamentos</option>
-                                    <option value="outro">Outros</option>
-                                </select>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-semibold text-slate-700">
+                                        Tipo de Doação <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        name="donation_type"
+                                        value={formData.donation_type}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                    >
+                                        <option value="alimento">Alimento</option>
+                                        <option value="roupa">Vestuário/Cama/Banho</option>
+                                        <option value="higiene">Higiene Limpeza</option>
+                                        <option value="medicamento">Medicamentos</option>
+                                        <option value="outro">Outros</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-semibold text-slate-700">
+                                        Subtipo <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        name="donation_subtype"
+                                        value={formData.donation_subtype}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                    >
+                                        {subTypesMap[formData.donation_type]?.map(st => (
+                                            <option key={st} value={st}>{st}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             <Input
-                                label="Descrição do Item"
+                                label={formData.donation_subtype === 'Outros' ? "Descrição do Item *" : "Descrição do Item (Opcional)"}
                                 name="item_description"
                                 value={formData.item_description}
                                 onChange={(e) => { handleChange(e); if (errors.item_description) setErrors(prev => ({ ...prev, item_description: '' })); }}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
-                                required
+                                required={formData.donation_subtype === 'Outros'}
                                 icon={Package}
-                                placeholder="Ex: Cesta Básica, Colchão..."
+                                placeholder={formData.donation_subtype === 'Outros' ? "Especifique o item..." : "Detalhes adicionais..."}
                             />
                             {errors.item_description && (
                                 <p className="text-xs text-red-500 font-semibold flex items-center gap-1 -mt-2">

@@ -992,6 +992,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                 delete payload.document;
                 delete payload.destination_shelter_id;
                 delete payload.type;
+            } else if (storeName === 'occupants') {
+                delete payload.operacao_id;
             }
 
             // Properly nullify central or empty shelter_id 

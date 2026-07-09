@@ -1,32 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import * as redapService from '../../services/redapService';
-import { FileText, Printer, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import { MapContainer, TileLayer, Polygon, CircleMarker, ImageOverlay, Rectangle, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-
-const MapBoundsAligner = ({ polygons }) => {
-    const map = useMap();
-    useEffect(() => {
-        if (polygons && polygons.length > 0) {
-            const bounds = [];
-            polygons.forEach(poly => {
-                if (Array.isArray(poly)) {
-                    poly.forEach(pt => {
-                        if (Array.isArray(pt) && pt.length >= 2 && !isNaN(pt[0]) && !isNaN(pt[1])) {
-                            bounds.push(pt);
-                        }
-                    });
-                }
-            });
-            if (bounds.length > 0) {
-                map.fitBounds(bounds, { padding: [30, 30] });
-            }
-        }
-    }, [polygons, map]);
-    return null;
-};
+import PrintLayout from '../../components/PrintLayout';
 
 const RedapPrint = () => {
     const { id } = useParams();
@@ -34,19 +9,7 @@ const RedapPrint = () => {
     const [secoes, setSecoes] = useState([]);
     const [assinaturas, setAssinaturas] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [zoom, setZoom] = useState(1.0);
 
-    const handleZoomIn = () => {
-        setZoom(prev => Math.min(1.5, prev + 0.1));
-    };
-
-    const handleZoomOut = () => {
-        setZoom(prev => Math.max(0.5, prev - 0.1));
-    };
-
-    const handleResetZoom = () => {
-        setZoom(1.0);
-    };
 
     const ENUM_TITLES = {
         'DANOS_HUMANOS': 'Seção 2: Danos Humanos',
@@ -130,91 +93,22 @@ const RedapPrint = () => {
     const dObs = secObs?.dados_json || { parecer_tecnico: '', observacoes_complementares: '' };
 
     return (
-        <div className="bg-slate-100 min-h-screen text-slate-800 print:bg-white print:p-0 p-8 flex justify-center report-root-wrapper">
+        <PrintLayout
+            documentTitle={`REDAP - ${event.id_sigerd || 'PENDENTE'} - ${event.cobrade || 'Desastre'}`}
+            reportTitle="Relatório de Danos e Prejuízos (REDAP)"
+            subtitle={
+                <>
+                    <span>CÓDIGO SIGERD: {event.id_sigerd || 'PENDENTE'}</span>
+                    <span>•</span>
+                    <span>STATUS: {event.status_evento || 'EM PROCESSAMENTO'}</span>
+                    <span>•</span>
+                    <span>EMISSÃO: {new Date().toLocaleDateString('pt-BR')}</span>
+                </>
+            }
+            isLoading={loading}
+            onPrint={handlePrint}
+        >
             <style>{`
-                :root {
-                    --navy:   #0B1F3A;
-                    --navy2:  #122848;
-                    --navy3:  #1B3A5E;
-                    --orange: #f97316;
-                    --orange-bg: #fff7ed;
-                    --blue:   #1A6FBF;
-                    --blue-bg: #E8F1FA;
-                    --gray-border: #cbd5e1;
-                    --gray-bg: #f8fafc;
-                    --text-color: #1e293b;
-                }
-
-                @media screen {
-                    .print-container {
-                        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-                        border-radius: 12px;
-                        border: 1px solid #e2e8f0;
-                        transform: scale(var(--report-zoom));
-                        transform-origin: top center;
-                        margin-bottom: calc(-297mm * (1 - var(--report-zoom)) + 20px);
-                    }
-                }
-
-                @media screen and (max-width: 768px) {
-                    .print-preview-wrapper { 
-                        overflow-x: auto; 
-                        overflow-y: visible;
-                        padding: 10px; 
-                        display: block; 
-                        width: 100%;
-                    }
-                    .print-container { 
-                        min-width: 210mm; 
-                        transform: scale(0.45); 
-                        transform-origin: top center; 
-                        margin-bottom: -150mm;
-                    }
-                }
-
-                @media print {
-                    @page {
-                        margin-top: 15mm;
-                        margin-bottom: 12mm;
-                        margin-left: 12mm;
-                        margin-right: 12mm;
-                        size: A4;
-                    }
-                    body {
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                        background-color: white !important;
-                    }
-                    .report-root-wrapper {
-                        display: block !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        background-color: white !important;
-                    }
-                    .no-print { display: none !important; }
-                    .page-break { page-break-before: always; }
-                    .avoid-break { break-inside: avoid !important; page-break-inside: avoid !important; }
-                    .print-container {
-                        width: 100% !important;
-                        max-width: 100% !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        box-shadow: none !important;
-                        border: none !important;
-                        transform: none !important;
-                        display: block !important;
-                    }
-                    main {
-                        display: block !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    .report-table tr {
-                        break-inside: avoid !important;
-                        page-break-inside: avoid !important;
-                    }
-                }
-
                 /* Structured Data Table Styling */
                 .report-table {
                     width: 100%;
@@ -267,82 +161,6 @@ const RedapPrint = () => {
                     letter-spacing: 0.02em;
                 }
             `}</style>
-
-            {/* BARRA DE OPÇÕES SUPERIOR (FIXA) */}
-            <div className="no-print fixed top-0 left-0 right-0 h-16 bg-[#0B1F3A]/95 backdrop-blur-md border-b border-white/10 z-[9999] flex items-center justify-between px-6 shadow-xl">
-                {/* Left Section */}
-                <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-lg bg-orange-600/10 flex items-center justify-center border border-orange-500/20">
-                        <FileText size={16} className="text-orange-400" />
-                    </div>
-                    <div>
-                        <h1 className="text-sm font-black text-white uppercase tracking-wider leading-none">Relatório REDAP Consolidado</h1>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Painel de Impressão Oficial</span>
-                    </div>
-                </div>
-
-                {/* Center Section - Zoom Controls */}
-                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1.5">
-                    <button 
-                        onClick={handleZoomOut}
-                        className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-all text-slate-300 hover:text-white"
-                        title="Diminuir Zoom"
-                    >
-                        <ZoomOut size={16} />
-                    </button>
-                    <button 
-                        onClick={handleResetZoom}
-                        className="h-8 px-3 rounded-lg hover:bg-white/10 flex items-center justify-center gap-1 transition-all text-xs font-bold text-slate-300 hover:text-white"
-                        title="Restaurar Zoom"
-                    >
-                        <RotateCcw size={12} /> {Math.round(zoom * 100)}%
-                    </button>
-                    <button 
-                        onClick={handleZoomIn}
-                        className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-all text-slate-300 hover:text-white"
-                        title="Aumentar Zoom"
-                    >
-                        <ZoomIn size={16} />
-                    </button>
-                </div>
-
-                {/* Right Section */}
-                <div className="flex items-center gap-3">
-                    <button onClick={() => window.close()} className="h-10 px-5 hover:bg-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-2">
-                        <X size={16} /> Fechar
-                    </button>
-                    <button onClick={handlePrint} className="h-10 px-6 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all shadow-lg shadow-blue-600/20">
-                        <Printer size={16} /> Imprimir Relatório
-                    </button>
-                </div>
-            </div>
-
-            <main className="flex flex-col items-center pt-20 print:pt-0 w-full print-preview-wrapper" style={{ '--report-zoom': zoom }}>
-                <div className="w-[210mm] bg-white print:shadow-none shadow-2xl min-h-[297mm] p-10 md:p-14 print:p-0 mb-10 print:mb-0 relative print-container flex flex-col justify-between">
-                    <div className="relative">
-                        {/* Header Oficial */}
-                        <header className="flex flex-col items-center mb-8 border-b-4 border-orange-500 pb-6">
-                            <div className="w-full flex justify-between items-center mb-6 px-4">
-                                <div className="w-[100px] flex items-center justify-center">
-                                    <img src={LOGO_DEFESA_CIVIL} alt="Defesa Civil" className="h-[80px] w-auto object-contain" />
-                                </div>
-                                <div className="text-center flex-1 px-4">
-                                    <h1 className="text-slate-900 font-extrabold text-sm uppercase leading-tight">PREFEITURA MUNICIPAL DE<br />SANTA MARIA DE JETIBÁ</h1>
-                                    <p className="text-slate-600 text-[9px] uppercase font-bold tracking-widest mt-1">COORDENADORIA MUNICIPAL DE PROTEÇÃO E DEFESA CIVIL</p>
-                                </div>
-                                <div className="w-[100px] flex items-center justify-center text-right">
-                                    <img src={LOGO_SIGERD} alt="SIGERD" className="h-[80px] w-auto object-contain" />
-                                </div>
-                            </div>
-                            <h2 className="text-xl font-black text-blue-900 uppercase tracking-wide text-center">Relatório de Danos e Prejuízos (REDAP)</h2>
-                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100 mt-2">
-                                <span>CÓDIGO SIGERD: {event.id_sigerd || 'PENDENTE'}</span>
-                                <span>•</span>
-                                <span>STATUS: {event.status_evento || 'EM PROCESSAMENTO'}</span>
-                                <span>•</span>
-                                <span>EMISSÃO: {new Date().toLocaleDateString('pt-BR')}</span>
-                            </div>
-                        </header>
 
                         {/* Seção 1: Identificação Institucional */}
                         <section className="mb-6 avoid-break">
@@ -833,16 +651,13 @@ const RedapPrint = () => {
                                 </div>
                             </section>
                         )}
-                    </div>
 
                     {/* Footer com selo oficial */}
                     <footer className="text-center font-bold text-[8px] text-slate-400 uppercase tracking-widest pt-6 border-t border-slate-100 mt-8">
                         SIGERD • SISTEMA INTEGRADO DE GESTÃO E RELATÓRIOS DE DESASTRES
                         <br/><span className="text-[6.5px] font-medium text-slate-400/80 mt-1 block tracking-wider normal-case">* Os custos estimados de recuperação estrutural baseiam-se nos referenciais de preços oficiais (SINAPI, SICRO e DER-ES) cadastrados via Módulo MRCR, aplicados conforme tipologia informada.</span>
                     </footer>
-                </div>
-            </main>
-        </div>
+        </PrintLayout>
     );
 };
 

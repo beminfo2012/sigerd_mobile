@@ -64,6 +64,7 @@ const ArrecadacaoSolidaria = lazy(() => import('./pages/Abrigos/ArrecadacaoSolid
 const ContractList = lazy(() => import('./pages/Abrigos/ContractList'))
 const ContractForm = lazy(() => import('./pages/Abrigos/ContractForm'))
 const SAHModule = lazy(() => import('./pages/Abrigos/SAHModule'))
+const OperacaoPrint = lazy(() => import('./pages/Abrigos/OperacaoPrint'))
 
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
@@ -495,6 +496,11 @@ const AppContent = ({
                                 <Route path="/assisthumanitaria/operacoes/:id" element={
                                     <ProtectedRoute allowedRoles={HUMANITARIAN_FULL_ROLES} user={userProfile}>
                                         <OperacaoPainel />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/assisthumanitaria/operacoes/imprimir/:id" element={
+                                    <ProtectedRoute allowedRoles={HUMANITARIAN_FULL_ROLES} user={userProfile}>
+                                        <OperacaoPrint />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/assisthumanitaria/historico" element={

@@ -7,6 +7,28 @@ import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { addOccupant, getShelterById, getOccupants, updateShelter } from '../../services/shelterDb.js';
 import { scanDocument } from '../../services/ocrService';
 import VoiceInput from '../../components/VoiceInput';
+import { toast } from '../../components/ToastNotification';
+
+const applyCpfMask = (value) => {
+    return value
+        .replace(/\D/g, '') // remove non-digits
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+        .replace(/(-\d{2})\d+?$/, '$1'); // max 14 chars
+};
+
+const calculateAge = (dob) => {
+    if (!dob) return '';
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+};
 
 export function OccupantForm() {
     const { shelterId } = useParams();
@@ -31,6 +53,7 @@ export function OccupantForm() {
     const [formData, setFormData] = useState({
         full_name: '',
         cpf: '',
+        birth_date: '',
         age: '',
         gender: 'nao_informado',
         family_group: '',
@@ -41,6 +64,8 @@ export function OccupantForm() {
 
     const [showFamilySuggestions, setShowFamilySuggestions] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [actionType, setActionType] = useState('save');
+
     const [isScanning, setIsScanning] = useState(false);
     const [lastFocusedField, setLastFocusedField] = useState(null);
 
@@ -55,9 +80,18 @@ export function OccupantForm() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData({
-            ...formData,
-            [name]: type === 'checkbox' ? checked : value,
+        let newValue = type === 'checkbox' ? checked : value;
+        
+        if (name === 'cpf') {
+            newValue = applyCpfMask(newValue);
+        }
+
+        setFormData(prev => {
+            const updated = { ...prev, [name]: newValue };
+            if (name === 'birth_date') {
+                updated.age = calculateAge(newValue);
+            }
+            return updated;
         });
     };
 
@@ -75,7 +109,8 @@ export function OccupantForm() {
             setFormData(prev => ({
                 ...prev,
                 full_name: result.full_name || prev.full_name,
-                cpf: result.cpf || prev.cpf,
+                cpf: applyCpfMask(result.cpf || prev.cpf),
+                birth_date: result.birth_date || prev.birth_date,
                 age: result.age || prev.age,
                 gender: result.gender || prev.gender
             }));
@@ -112,7 +147,23 @@ export function OccupantForm() {
             }
 
             toast.success('Cadastrado!', 'Abrigado cadastrado com sucesso!');
-            navigate(`/assisthumanitaria/${shelterId}`);
+            
+            if (actionType === 'save_and_add') {
+                setFormData(prev => ({
+                    full_name: '',
+                    cpf: '',
+                    birth_date: '',
+                    age: '',
+                    gender: 'nao_informado',
+                    family_group: prev.family_group,
+                    is_family_head: false,
+                    special_needs: '',
+                    observations: '',
+                }));
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                navigate(`/assisthumanitaria/${shelterId}`);
+            }
         } catch (error) {
             console.error('Error saving occupant:', error);
             toast.error('Erro ao cadastrar', 'Tente novamente.');
@@ -136,7 +187,7 @@ export function OccupantForm() {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-6">
-            <div className="max-w-3xl mx-auto px-4 py-6">
+            <div className="max-w-7xl mx-auto px-4 py-6">
                 {/* Header */}
                 <div className="mb-6">
                     <button
@@ -210,7 +261,7 @@ export function OccupantForm() {
                                 placeholder="Ex: João da Silva"
                             />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <Input
                                     label="CPF"
                                     name="cpf"
@@ -219,6 +270,17 @@ export function OccupantForm() {
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     icon={CreditCard}
                                     placeholder="000.000.000-00"
+                                    maxLength="14"
+                                />
+
+                                <Input
+                                    label="Data de Nascimento"
+                                    name="birth_date"
+                                    type="date"
+                                    value={formData.birth_date}
+                                    onChange={handleChange}
+                                    onFocusCapture={(e) => setLastFocusedField(e.target.name)}
+                                    icon={Calendar}
                                 />
 
                                 <Input
@@ -230,6 +292,7 @@ export function OccupantForm() {
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     icon={Calendar}
                                     placeholder="Ex: 35"
+                                    readOnly={!!formData.birth_date}
                                 />
                             </div>
 
@@ -351,7 +414,7 @@ export function OccupantForm() {
                     </Card>
 
                     {/* Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                         <Button
                             type="button"
                             variant="secondary"
@@ -362,10 +425,19 @@ export function OccupantForm() {
                         </Button>
                         <Button
                             type="submit"
+                            onClick={() => setActionType('save_and_add')}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                            disabled={isSubmitting}
+                        >
+                            Salvar e Adicionar Familiar
+                        </Button>
+                        <Button
+                            type="submit"
+                            onClick={() => setActionType('save')}
                             className="flex-1"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Salvando...' : 'Cadastrar Abrigado'}
+                            {isSubmitting ? 'Salvando...' : 'Salvar e Concluir'}
                         </Button>
                     </div>
                 </form>

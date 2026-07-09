@@ -6,9 +6,12 @@ import { Input } from '../../components/Shelter/ui/Input.jsx';
 import { Button } from '../../components/Shelter/ui/Button.jsx';
 import { addShelter, getShelterById, updateShelter } from '../../services/shelterDb.js';
 import VoiceInput from '../../components/VoiceInput';
+import { useOperacao } from '../../contexts/OperacaoContext';
+import toast from 'react-hot-toast';
 
 export function ShelterForm() {
     const navigate = useNavigate();
+    const { operacaoAtiva } = useOperacao();
 
     const { id } = useParams();
     const [formData, setFormData] = useState({
@@ -74,23 +77,29 @@ export function ShelterForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (formData.status === 'active' && !operacaoAtiva) {
+            toast.error('Não é possível ter um abrigo ativo sem uma operação em andamento.');
+            return;
+        }
+        
         setIsSubmitting(true);
 
         try {
             if (id) {
                 await updateShelter(id, formData);
-                alert('Abrigo atualizado com sucesso!');
+                toast.success('Abrigo atualizado com sucesso!');
             } else {
                 await addShelter({
                     ...formData,
                     current_occupancy: 0
                 });
-                alert('Abrigo cadastrado com sucesso!');
+                toast.success('Abrigo cadastrado com sucesso!');
             }
             navigate(id ? `/assisthumanitaria/${id}` : '/assisthumanitaria/lista');
         } catch (error) {
             console.error('Error saving shelter:', error);
-            alert(`Erro ao salvar abrigo: ${error.message}`);
+            toast.error(`Erro ao salvar abrigo: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -247,7 +256,13 @@ export function ShelterForm() {
                             <div className="flex gap-2">
                                 <button 
                                     type="button"
-                                    onClick={() => setFormData({...formData, status: 'active'})}
+                                    onClick={() => {
+                                        if (!operacaoAtiva) {
+                                            toast.error('Não é possível ativar um abrigo sem uma operação em andamento.');
+                                            return;
+                                        }
+                                        setFormData({...formData, status: 'active'});
+                                    }}
                                     className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.status === 'active' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400'}`}
                                 >
                                     🟢 Ativo (Aberto)
