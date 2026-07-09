@@ -50,6 +50,25 @@ export const plantaBaixaService = {
     };
   },
 
+  async getHistoricoPlantas(abrigoId) {
+    const { data, error } = await supabase
+      .from('abrigo_planta_baixa')
+      .select('*')
+      .eq('abrigo_id', abrigoId)
+      .eq('ativo', false)
+      .order('versao', { ascending: false });
+
+    if (error) throw error;
+    
+    // Gerar URLs para as plantas do histórico
+    return data.map(p => {
+      const { data: urlData } = supabase.storage
+        .from('shelters')
+        .getPublicUrl(p.caminho_storage);
+      return { ...p, url_visualizacao: urlData.publicUrl };
+    });
+  },
+
   async uploadPlanta(abrigoId, arquivo, usuarioId) {
     // 1. Inativar plantas anteriores
     await supabase

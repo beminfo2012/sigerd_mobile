@@ -24,15 +24,32 @@ export function PdfAnnotator({
   const [pdfDimensions, setPdfDimensions] = useState({ width: 800, height: 600 });
   const [isLoading, setIsLoading] = useState(true);
   const [draggingPoint, setDraggingPoint] = useState(null); // { shapeId, pointIndex }
+  const [pageNumber, setPageNumber] = useState(1);
+  const [numPages, setNumPages] = useState(1);
+  const [pdfDoc, setPdfDoc] = useState(null);
 
   useEffect(() => {
-    let renderTask = null;
-    const loadPdf = async () => {
+    const initPdf = async () => {
       try {
         setIsLoading(true);
         const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
         const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
+        setPdfDoc(pdf);
+        setNumPages(pdf.numPages);
+      } catch (err) {
+        console.error('Error loading PDF document:', err);
+      }
+    };
+    if (pdfUrl) initPdf();
+  }, [pdfUrl]);
+
+  useEffect(() => {
+    let renderTask = null;
+    const renderPage = async () => {
+      if (!pdfDoc) return;
+      try {
+        setIsLoading(true);
+        const page = await pdfDoc.getPage(pageNumber);
         
         const viewport = page.getViewport({ scale: 2.0 }); // High quality scale
         const canvas = canvasRef.current;
@@ -47,15 +64,17 @@ export function PdfAnnotator({
         renderTask = page.render(renderContext);
         await renderTask.promise;
       } catch (err) {
-        console.error('Error rendering PDF:', err);
+        if(err.name !== 'RenderingCancelledException') {
+          console.error('Error rendering PDF page:', err);
+        }
       } finally {
         setIsLoading(false);
       }
     };
-    if (pdfUrl) loadPdf();
+    renderPage();
     
     return () => { if(renderTask) renderTask.cancel(); };
-  }, [pdfUrl]);
+  }, [pdfDoc, pageNumber]);
 
   const [mouseDownPos, setMouseDownPos] = useState(null);
 
@@ -121,7 +140,8 @@ export function PdfAnnotator({
         type: 'polygon',
         points: currentPolygon,
         color: activeCategoryColor,
-        categoryId: activeCategoryId
+        categoryId: activeCategoryId,
+        page: pageNumber
       };
       onShapesChange([...shapes, newShape]);
       setSelectedShapeId(newShape.id);
@@ -218,7 +238,7 @@ export function PdfAnnotator({
                 className="relative inline-block origin-top-left" 
                 style={{ width: pdfDimensions.width, height: pdfDimensions.height }}
               >
-                <canvas ref={canvasRef} className="absolute top-0 left-0" style={{ width: pdfDimensions.width, height: pdfDimensions.height }} />
+                <canvas key={pageNumber} ref={canvasRef} className="absolute top-0 left-0" style={{ width: pdfDimensions.width, height: pdfDimensions.height }} />
                 
                 <svg 
                   className="absolute top-0 left-0" 
@@ -230,8 +250,8 @@ export function PdfAnnotator({
                   onMouseUp={handleSvgMouseUp}
                   onMouseLeave={handleSvgMouseUp}
                 >
-                  {/* Saved Shapes */}
-                  {shapes.map((s) => {
+                  {/* Saved Shapes for Current Page */}
+                  {shapes.filter(s => Number(s.page || 1) === Number(pageNumber)).map((s) => {
                     const pts = s.type === 'polygon' && s.points ? s.points : 
                                 // Fallback for old rects
                                 [{x: s.x, y: s.y}, {x: s.x + s.width, y: s.y}, {x: s.x + s.width, y: s.y + s.height}, {x: s.x, y: s.y + s.height}];
@@ -326,6 +346,27 @@ export function PdfAnnotator({
       {!readOnly && !isDrawing && selectedShapeId && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg opacity-90 z-20 pointer-events-none">
           Arraste os pontos brancos para ajustar. Botão direito num ponto para excluí-lo.
+        </div>
+      )}
+
+      {/* Page Navigation Controls */}
+      {numPages > 1 && (
+        <div className="absolute bottom-4 left-4 z-20 flex items-center gap-3 bg-white/90 px-3 py-1.5 rounded-xl shadow-md backdrop-blur-sm">
+          <button 
+            disabled={pageNumber <= 1}
+            onClick={() => setPageNumber(p => p - 1)}
+            className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold disabled:opacity-50"
+          >
+            &lt;
+          </button>
+          <span className="text-xs font-bold text-slate-700">Pág. {pageNumber} / {numPages}</span>
+          <button 
+            disabled={pageNumber >= numPages}
+            onClick={() => setPageNumber(p => p + 1)}
+            className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold disabled:opacity-50"
+          >
+            &gt;
+          </button>
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { plantaBaixaService } from "../../services/plantaBaixaService";
 import { supabase } from "../../services/supabase";
 import toast from "react-hot-toast";
 import { PdfAnnotator } from "./PdfAnnotator";
+import { gerarEImprimirPlanta } from "../../utils/plantaPdfGenerator";
 
 const PALETTE = [
   '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', 
@@ -23,6 +24,8 @@ export default function PlantaBaixaAbrigo({ abrigoId }) {
   const [carregando, setCarregando] = useState(true);
   const [uploadAberto, setUploadAberto] = useState(false);
   const [legendaAberta, setLegendaAberta] = useState(false);
+  const [historicoAberto, setHistoricoAberto] = useState(false);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
   const [userId, setUserId] = useState(null);
 
   const carregar = useCallback(async () => {
@@ -47,11 +50,25 @@ export default function PlantaBaixaAbrigo({ abrigoId }) {
 
   useEffect(() => { carregar(); }, [carregar]);
 
-  const imprimir = () => {
-    // Para simplificar, na versão frontend a "impressão" pode apenas abrir o PDF em nova guia,
-    // ou no futuro ter uma rota React /abrigos/:id/planta-baixa/imprimir que constrói a tela.
+  const imprimir = async () => {
     if (planta && planta.url_visualizacao) {
-      window.open(planta.url_visualizacao, "_blank");
+      setGerandoPdf(true);
+      toast.loading("Gerando arquivo PDF da planta com etiquetas...", { id: "pdf-gen" });
+      try {
+        const shapesParaImprimir = planta.areas_vinculadas.filter(v => v.coordenadas_json).map(v => ({
+          ...v.coordenadas_json,
+          label: v.identificador_planta || v.area_doutrina.nome,
+          color: getColorForId(v.area_doutrina.id, catalogo),
+          categoryId: v.area_doutrina.id
+        }));
+        await gerarEImprimirPlanta(planta.url_visualizacao, shapesParaImprimir, catalogo);
+        toast.success("PDF gerado com sucesso!", { id: "pdf-gen" });
+      } catch (err) {
+        console.error("Erro ao gerar PDF", err);
+        toast.error("Não foi possível gerar a planta PDF com etiquetas.", { id: "pdf-gen" });
+      } finally {
+        setGerandoPdf(false);
+      }
     }
   };
 
@@ -69,16 +86,22 @@ export default function PlantaBaixaAbrigo({ abrigoId }) {
                       className="flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
                 <Tag className="h-3.5 w-3.5" /> Divisões
               </button>
-              <button onClick={imprimir}
-                      className="flex items-center gap-1 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
-                <Printer className="h-3.5 w-3.5" /> Abrir PDF
+              <button onClick={imprimir} disabled={gerandoPdf}
+                      className="flex items-center gap-1 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50">
+                <Printer className="h-3.5 w-3.5" /> {gerandoPdf ? "Gerando..." : "Abrir PDF"}
               </button>
             </>
           )}
-          <button onClick={() => setUploadAberto(true)}
-                  className="flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
-            <Upload className="h-3.5 w-3.5" /> {planta ? "Nova versão" : "Enviar planta"}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setHistoricoAberto(true)}
+                    className="flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+              Histórico
+            </button>
+            <button onClick={() => setUploadAberto(true)}
+                    className="flex items-center gap-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+              <Upload className="h-3.5 w-3.5" /> Nova versão
+            </button>
+          </div>
         </div>
       </header>
 
@@ -91,7 +114,7 @@ export default function PlantaBaixaAbrigo({ abrigoId }) {
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 relative">
-            <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50 relative">
+            <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50 relative h-[450px]">
               <PdfAnnotator 
                 pdfUrl={planta.url_visualizacao}
                 shapes={planta.areas_vinculadas.filter(v => v.coordenadas_json).map(v => ({
@@ -102,6 +125,7 @@ export default function PlantaBaixaAbrigo({ abrigoId }) {
                   y: v.coordenadas_json.y,
                   width: v.coordenadas_json.width,
                   height: v.coordenadas_json.height,
+                  page: v.coordenadas_json.page || 1,
                   color: getColorForId(v.area_doutrina.id, catalogo),
                   label: v.identificador_planta || v.area_doutrina.nome
                 }))}
@@ -162,7 +186,63 @@ export default function PlantaBaixaAbrigo({ abrigoId }) {
           onSalvo={async () => { setLegendaAberta(false); await carregar(); }}
         />
       )}
+      {historicoAberto && (
+        <ModalHistoricoPlantas abrigoId={abrigoId} onClose={() => setHistoricoAberto(false)} />
+      )}
     </section>
+  );
+}
+
+function ModalHistoricoPlantas({ abrigoId, onClose }) {
+  const [historico, setHistorico] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    const fetchHistorico = async () => {
+      try {
+        const dados = await plantaBaixaService.getHistoricoPlantas(abrigoId);
+        setHistorico(dados);
+      } catch (e) {
+        toast.error("Erro ao carregar o histórico.");
+      } finally {
+        setCarregando(false);
+      }
+    };
+    fetchHistorico();
+  }, [abrigoId]);
+
+  return (
+    <ModalShell titulo="Histórico de Plantas" onClose={onClose}>
+      {carregando ? (
+        <p className="text-sm text-slate-500 py-4 text-center">Carregando histórico...</p>
+      ) : historico.length === 0 ? (
+        <p className="text-sm text-slate-500 py-4 text-center">Nenhuma planta arquivada encontrada.</p>
+      ) : (
+        <ul className="space-y-3">
+          {historico.map(p => (
+            <li key={p.id} className="flex items-center justify-between p-3 border rounded-xl bg-slate-50">
+              <div>
+                <p className="text-sm font-bold text-slate-800">Versão {p.versao}</p>
+                <p className="text-xs text-slate-500">
+                  Enviada em: {new Date(p.data_upload).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+              <a 
+                href={p.url_visualizacao} 
+                target="_blank" 
+                rel="noreferrer"
+                className="px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+              >
+                Visualizar PDF
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-6 flex justify-end">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">Fechar</button>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -219,6 +299,7 @@ function ModalEditarLegenda({ planta, catalogo, onClose, onSalvo }) {
       y: v.coordenadas_json.y,
       width: v.coordenadas_json.width,
       height: v.coordenadas_json.height,
+      page: v.coordenadas_json.page || 1,
       color: getColorForId(v.area_doutrina.id, catalogo),
       categoryId: v.area_doutrina.id,
       label: v.identificador_planta || v.area_doutrina.nome
@@ -254,7 +335,7 @@ function ModalEditarLegenda({ planta, catalogo, onClose, onSalvo }) {
       const payload = shapes.map((s, idx) => ({
         area_doutrina_id: s.categoryId,
         identificador_planta: s.label,
-        coordenadas_json: s.type === 'polygon' ? { type: 'polygon', points: s.points } : { x: s.x, y: s.y, width: s.width, height: s.height },
+        coordenadas_json: s.type === 'polygon' ? { type: 'polygon', points: s.points, page: s.page || 1 } : { x: s.x, y: s.y, width: s.width, height: s.height, page: s.page || 1 },
         ordem: idx
       }));
       await plantaBaixaService.atualizarAreasVinculadas(planta.id, payload);
