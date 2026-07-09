@@ -14,6 +14,7 @@ import { calculateShelterNeeds } from '../../utils/needsCalculator';
 import { useOperacao } from '../../contexts/OperacaoContext';
 import { operacoesService } from '../../services/operacoesService';
 import toast from 'react-hot-toast';
+import PlantaBaixaAbrigo from '../../components/Shelter/PlantaBaixaAbrigo.jsx';
 
 export function ShelterDetail() {
     const { id } = useParams();
@@ -619,6 +620,9 @@ export function ShelterDetail() {
                                     </div>
                                 )}
                             </Card>
+
+                            {/* Planta Baixa */}
+                            <PlantaBaixaAbrigo abrigoId={id} />
                         </div>
                     </div>
 

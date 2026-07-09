@@ -119,7 +119,7 @@ export function OccupantForm() {
             toast.success('Documento lido!', 'Dados preenchidos automaticamente. Verifique se estão corretos.');
         } catch (error) {
             console.error('Scan Error:', error);
-            toast.error('Erro na leitura', 'Não foi possível ler os dados do documento. Tente uma foto mais clara ou preencha manualmente.');
+            toast.error('Erro na leitura', error.message || 'Não foi possível ler os dados do documento. Tente uma foto mais clara ou preencha manualmente.');
         } finally {
             setIsScanning(false);
             if (fileInputRef.current) fileInputRef.current.value = '';

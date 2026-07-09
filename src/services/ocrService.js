@@ -102,10 +102,14 @@ export async function scanDocument(file) {
         };
 
         const compressedBase64 = await compressImage(base64Data);
+        const dataStr = compressedBase64.split(',')[1];
+        if (!dataStr) {
+            throw new Error("Falha ao preparar a imagem para leitura.");
+        }
         
         const imagePart = {
             inlineData: {
-                data: compressedBase64.split(',')[1],
+                data: dataStr,
                 mimeType: 'image/jpeg'
             }
         };
@@ -143,6 +147,9 @@ export async function scanDocument(file) {
         return JSON.parse(text);
     } catch (error) {
         console.error("Erro no scanDocument:", error);
-        throw error;
+        if (error instanceof SyntaxError) {
+            throw new Error("A IA retornou um formato inválido. Tente novamente.");
+        }
+        throw new Error(error.message || "Erro desconhecido na leitura.");
     }
 }
