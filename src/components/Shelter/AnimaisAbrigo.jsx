@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { PawPrint, Plus, X, MapPin, Syringe, ArrowRightCircle, Search } from "lucide-react";
+import { PawPrint, Plus, X, MapPin, Syringe, ArrowRightCircle, Search, Eye, Edit2, Trash2, AlertCircle } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import toast from "react-hot-toast";
+import { useOperacao } from "../../contexts/OperacaoContext";
 
 const STATUS_LABEL = {
   aguardando_encaminhamento: { texto: "Aguardando encaminhamento", cor: "bg-amber-100 text-amber-700" },
@@ -35,6 +36,8 @@ export default function AnimaisAbrigo({ abrigoId, abrigoInfo }) {
   const [cadastroAberto, setCadastroAberto] = useState(false);
   const [historicoAberto, setHistoricoAberto] = useState(false);
   const [encaminharAnimal, setEncaminharAnimal] = useState(null);
+  const [animalDetalhes, setAnimalDetalhes] = useState(null);
+  const [animalEdicao, setAnimalEdicao] = useState(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -102,7 +105,10 @@ export default function AnimaisAbrigo({ abrigoId, abrigoInfo }) {
             Histórico Completo
           </button>
           <button
-            onClick={() => setCadastroAberto(true)}
+            onClick={() => {
+              setAnimalEdicao(null);
+              setCadastroAberto(true);
+            }}
             className="flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors"
           >
             <Plus className="h-4 w-4" /> Cadastrar Animal
@@ -157,14 +163,23 @@ export default function AnimaisAbrigo({ abrigoId, abrigoInfo }) {
                   )}
                 </div>
               </div>
-              {!a.encaminhamento_ativo && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setEncaminharAnimal(a)}
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 hover:border-indigo-200 transition-colors shadow-sm"
+                  onClick={() => setAnimalDetalhes(a)}
+                  className="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  title="Detalhes do animal"
                 >
-                  <ArrowRightCircle className="h-4 w-4" /> Encaminhar
+                  <Eye className="h-4 w-4" />
                 </button>
-              )}
+                {!a.encaminhamento_ativo && (
+                  <button
+                    onClick={() => setEncaminharAnimal(a)}
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 hover:border-indigo-200 transition-colors shadow-sm"
+                  >
+                    <ArrowRightCircle className="h-4 w-4" /> Encaminhar
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -173,9 +188,14 @@ export default function AnimaisAbrigo({ abrigoId, abrigoInfo }) {
       {cadastroAberto && (
         <ModalCadastrarAnimal
           abrigoId={abrigoId}
-          onClose={() => setCadastroAberto(false)}
+          animalEditando={animalEdicao}
+          onClose={() => {
+            setCadastroAberto(false);
+            setAnimalEdicao(null);
+          }}
           onCadastrado={async () => {
             setCadastroAberto(false);
+            setAnimalEdicao(null);
             await carregar();
           }}
         />
@@ -197,7 +217,127 @@ export default function AnimaisAbrigo({ abrigoId, abrigoInfo }) {
           onClose={() => setHistoricoAberto(false)}
         />
       )}
+      {animalDetalhes && (
+        <ModalDetalhesAnimal
+          animal={animalDetalhes}
+          onClose={() => setAnimalDetalhes(null)}
+          onEdit={() => {
+            setAnimalEdicao(animalDetalhes);
+            setAnimalDetalhes(null);
+            setCadastroAberto(true);
+          }}
+          onDelete={async () => {
+            if (window.confirm("Deseja realmente excluir este animal? Esta ação é irreversível.")) {
+              try {
+                const { error } = await supabase.from("animal_estimacao").delete().eq("id", animalDetalhes.id);
+                if (error) throw error;
+                toast.success("Animal excluído com sucesso.");
+                setAnimalDetalhes(null);
+                carregar();
+              } catch (e) {
+                toast.error("Erro ao excluir animal.");
+              }
+            }
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function ModalDetalhesAnimal({ animal, onClose, onEdit, onDelete }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl flex flex-col overflow-hidden">
+        <div className="bg-slate-50 p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+              <PawPrint className="text-indigo-600 h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-800 leading-tight">{animal.nome}</h2>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{ESPECIE_LABEL[animal.especie] || animal.especie}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-xl p-2 bg-slate-100 text-slate-500 hover:bg-slate-200">
+            <X className="h-4 w-4 font-bold" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-slate-400 font-bold uppercase mb-0.5">Tutor</p>
+              <p className="font-semibold text-slate-800">{animal.tutor?.full_name || "Não informado"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-bold uppercase mb-0.5">Raça</p>
+              <p className="font-semibold text-slate-800">{animal.raca || "SRD"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-bold uppercase mb-0.5">Porte</p>
+              <p className="font-semibold text-slate-800 capitalize">{animal.porte}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-bold uppercase mb-0.5">Idade Estimada</p>
+              <p className="font-semibold text-slate-800">{animal.idade_estimada_anos ? `${animal.idade_estimada_anos} anos` : "N/I"}</p>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
+            <p className="text-xs text-slate-400 font-bold uppercase mb-1">Status de Saúde / Vacina</p>
+            <div className="flex items-center gap-2">
+              {animal.vacinado_antirrabica ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold">
+                  <Syringe className="h-3 w-3" /> Vacinado (Antirrábica)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-bold">
+                  <AlertCircle className="h-3 w-3" /> Sem confirmação
+                </span>
+              )}
+              {animal.castrado && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-bold">
+                  Castrado
+                </span>
+              )}
+            </div>
+          </div>
+
+          {(animal.temperamento_observacoes || animal.condicao_saude_observacoes) && (
+            <div className="pt-2 border-t border-slate-100 space-y-3">
+              {animal.temperamento_observacoes && (
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-0.5">Temperamento</p>
+                  <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded-lg">{animal.temperamento_observacoes}</p>
+                </div>
+              )}
+              {animal.condicao_saude_observacoes && (
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-0.5">Condição de Saúde</p>
+                  <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded-lg">{animal.condicao_saude_observacoes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+          >
+            <Trash2 className="h-4 w-4" /> Excluir
+          </button>
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-colors"
+          >
+            <Edit2 className="h-4 w-4" /> Editar
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -283,17 +423,22 @@ function ModalHistoricoAnimais({ animais, onClose }) {
   );
 }
 
-function ModalCadastrarAnimal({ abrigoId, onClose, onCadastrado }) {
-  const [form, setForm] = useState({
-    tutor_pessoa_id: "",
-    nome: "",
-    especie: "cao",
-    raca: "",
-    porte: "medio",
-    vacinado_antirrabica: false,
-    temperamento_observacoes: "",
-    condicao_saude_observacoes: "",
-  });
+function ModalCadastrarAnimal({ abrigoId, onClose, onCadastrado, animalEditando }) {
+  const { operacaoAtiva } = useOperacao();
+  const [form, setForm] = useState(
+    animalEditando || {
+      tutor_pessoa_id: "",
+      nome: "",
+      especie: "cao",
+      raca: "",
+      porte: "medio",
+      vacinado_antirrabica: false,
+      temperamento_observacoes: "",
+      condicao_saude_observacoes: "",
+      idade_estimada_anos: "",
+      castrado: false,
+    }
+  );
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState(null);
   const [tutores, setTutores] = useState([]);
@@ -322,12 +467,22 @@ function ModalCadastrarAnimal({ abrigoId, onClose, onCadastrado }) {
     }
     setSalvando(true);
     try {
-      const { error } = await supabase.from("animal_estimacao").insert({
+      const payload = {
+        ...form,
         abrigo_humano_id: abrigoId,
-        ...form
-      });
-      if (error) throw error;
-      toast.success("Animal cadastrado!");
+        operacao_id: operacaoAtiva?.id || null,
+        idade_estimada_anos: form.idade_estimada_anos ? parseFloat(form.idade_estimada_anos) : null,
+      };
+
+      if (animalEditando) {
+        const { error } = await supabase.from("animal_estimacao").update(payload).eq("id", animalEditando.id);
+        if (error) throw error;
+        toast.success("Animal atualizado!");
+      } else {
+        const { error } = await supabase.from("animal_estimacao").insert(payload);
+        if (error) throw error;
+        toast.success("Animal cadastrado!");
+      }
       onCadastrado();
     } catch (e) {
       setErro("Não foi possível cadastrar o animal.");
@@ -337,7 +492,7 @@ function ModalCadastrarAnimal({ abrigoId, onClose, onCadastrado }) {
   };
 
   return (
-    <ModalShell titulo="Cadastrar Animal de Estimação" onClose={onClose}>
+    <ModalShell titulo={animalEditando ? "Editar Animal" : "Cadastrar Animal de Estimação"} onClose={onClose}>
       <div className="grid grid-cols-2 gap-4">
         <label className="col-span-2 flex flex-col gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-widest">
           Tutor (pessoa abrigada)
@@ -436,7 +591,7 @@ function ModalCadastrarAnimal({ abrigoId, onClose, onCadastrado }) {
           disabled={salvando}
           className="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition-colors"
         >
-          {salvando ? "Salvando..." : "Cadastrar Animal"}
+          {salvando ? "Salvando..." : (animalEditando ? "Salvar Alterações" : "Cadastrar Animal")}
         </button>
       </div>
     </ModalShell>

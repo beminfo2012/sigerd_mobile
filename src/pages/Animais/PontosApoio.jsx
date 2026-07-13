@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { MapPin, Plus, Search, ArrowLeft, Building, Trash2 } from 'lucide-react';
+import { MapPin, Plus, Search, ArrowLeft, Building, Trash2, PawPrint } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from '../../components/ConfirmModal';
+import { useOperacao } from '../../contexts/OperacaoContext';
 
 export default function PontosApoio() {
   const navigate = useNavigate();
@@ -12,6 +13,12 @@ export default function PontosApoio() {
   const [cadastroAberto, setCadastroAberto] = useState(false);
   const [pontoGerenciamento, setPontoGerenciamento] = useState(null);
   const [busca, setBusca] = useState("");
+  const [kpis, setKpis] = useState({ locaisAtivos: 0, vagasTotais: 0, animaisAcolhidos: 0 });
+  const { operacaoAtiva } = useOperacao();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const carregar = async () => {
     setCarregando(true);
@@ -42,6 +49,13 @@ export default function PontosApoio() {
         ocupacao_atual: ocupacaoMap[p.id] || 0
       }));
 
+      const activePontos = pontosComLotacao.filter(p => p.ativo);
+      setKpis({
+        locaisAtivos: activePontos.length,
+        vagasTotais: activePontos.reduce((acc, p) => acc + (p.capacidade_maxima || 0), 0),
+        animaisAcolhidos: activePontos.reduce((acc, p) => acc + (p.ocupacao_atual || 0), 0),
+      });
+
       setPontos(pontosComLotacao);
     } catch (e) {
       console.error(e);
@@ -56,6 +70,15 @@ export default function PontosApoio() {
   }, []);
 
   const toggleAtivo = async (ponto) => {
+    if (!ponto.ativo && !operacaoAtiva) {
+      toast.error("Não é possível ativar sem uma operação aberta.");
+      return;
+    }
+    if (ponto.ativo && ponto.ocupacao_atual > 0) {
+      toast.error("Não é possível inativar: ainda há animais no local.");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("ponto_apoio_animal")
@@ -76,11 +99,11 @@ export default function PontosApoio() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6 pb-24 font-sans transition-colors duration-300 dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-50 p-4 pt-24 md:p-6 md:pt-24 pb-24 font-sans transition-colors duration-300 dark:bg-slate-900">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/menu')}
+            onClick={() => navigate('/assisthumanitaria')}
             className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-500 shadow-sm transition-all hover:text-indigo-600 hover:shadow dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-indigo-400"
           >
             <ArrowLeft size={20} />
@@ -98,16 +121,33 @@ export default function PontosApoio() {
         </button>
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input
-            type="text"
-            placeholder="Buscar por nome ou endereço..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="w-full rounded-2xl border-none bg-white py-4 pl-12 pr-4 text-slate-800 shadow-sm outline-none ring-1 ring-slate-200 transition-all focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
-          />
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center">
+            <Building className="text-indigo-600 dark:text-indigo-400" size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Locais Ativos</p>
+            <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{kpis.locaisAtivos}</p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center">
+            <PawPrint className="text-emerald-600 dark:text-emerald-400" size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Animais Acolhidos</p>
+            <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{kpis.animaisAcolhidos}</p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center">
+            <MapPin className="text-amber-600 dark:text-amber-400" size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vagas Totais (Capacidade)</p>
+            <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{kpis.vagasTotais}</p>
+          </div>
         </div>
       </div>
 

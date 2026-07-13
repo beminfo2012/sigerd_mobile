@@ -253,6 +253,7 @@ export default function ShelterMenu() {
     const menuItems = [
         {
             title: 'Gestão de Abrigos',
+            category: 'Abrigamento e Pessoas',
             description: 'Gerencie ocupantes, capacidade e operações de cada abrigo.',
             icon: Building2,
             path: '/assisthumanitaria/lista',
@@ -261,6 +262,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Estoque Municipal',
+            category: 'Logística e Suprimentos',
             description: 'Visualize e gerencie o estoque centralizado da prefeitura.',
             icon: Package,
             path: '/assisthumanitaria/estoque',
@@ -269,6 +271,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Receber Doações',
+            category: 'Logística e Suprimentos',
             description: 'Registre a entrada de doações para o estoque ou abrigos.',
             icon: Gift,
             path: '/assisthumanitaria/doacoes-central',
@@ -277,6 +280,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Logística & Distribuição',
+            category: 'Logística e Suprimentos',
             description: 'Transfira itens do estoque municipal para os abrigos.',
             icon: Truck,
             path: '/assisthumanitaria/logistica',
@@ -285,6 +289,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Arrecadação Solidária',
+            category: 'Logística e Suprimentos',
             description: 'Polo de arrecadação para envio a terceiros municípios.',
             icon: HeartHandshake,
             path: '/assisthumanitaria/arrecadacao-solidaria',
@@ -293,6 +298,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Relatórios Gerais',
+            category: 'Gestão e Planejamento',
             description: 'Consolidado de ocupação, doações e movimentações.',
             icon: FileText,
             path: '/assisthumanitaria/relatorios',
@@ -301,6 +307,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Pontos de Apoio Animal',
+            category: 'Abrigamento e Pessoas',
             description: 'Gerencie abrigos temporários, clínicas e ONGs.',
             icon: PawPrint,
             path: '/pontos-apoio',
@@ -309,6 +316,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Contratos de Emergência',
+            category: 'Gestão e Planejamento',
             description: 'Contratos vigentes e suprimentos emergenciais.',
             icon: FileText,
             path: '/assisthumanitaria/contratos',
@@ -317,6 +325,7 @@ export default function ShelterMenu() {
         },
         {
             title: 'Solicitação de Assistência (SAH)',
+            category: 'Gestão e Planejamento',
             description: 'Solicite kits e recursos à Defesa Civil Estadual/Nacional.',
             icon: AlertTriangle,
             path: '/assisthumanitaria/sah',
@@ -649,34 +658,44 @@ export default function ShelterMenu() {
                             </div>
                         </div>
 
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-4">
-                        <div className="flex items-center gap-2 mb-4 px-2">
-                            <LayoutDashboard size={16} className="text-slate-400 dark:text-slate-500" />
-                            <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Módulos Operacionais</h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {filteredItems.map((item, index) => (
-                                <div
-                                    key={index}
-                                    onClick={() => navigate(item.path)}
-                                    className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex items-center gap-4"
-                                >
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.color} dark:bg-opacity-20 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                                        <item.icon size={24} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-base text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                                            {item.title}
-                                        </h3>
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-1 line-clamp-2">
-                                            {item.description}
-                                        </p>
-                                    </div>
-                                    <ChevronRight className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors" size={18} />
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-4 space-y-8">
+                        {Object.entries(
+                            filteredItems.reduce((acc, item) => {
+                                const cat = item.category || 'Módulos Operacionais';
+                                if (!acc[cat]) acc[cat] = [];
+                                acc[cat].push(item);
+                                return acc;
+                            }, {})
+                        ).map(([category, items], catIndex) => (
+                            <div key={catIndex}>
+                                <div className="flex items-center gap-2 mb-4 px-2">
+                                    <LayoutDashboard size={16} className="text-slate-400 dark:text-slate-500" />
+                                    <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{category}</h2>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {items.map((item, index) => (
+                                        <div
+                                            key={index}
+                                            onClick={() => navigate(item.path)}
+                                            className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-md transition-all active:scale-[0.98] group flex items-center gap-4"
+                                        >
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.color} dark:bg-opacity-20 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                                                <item.icon size={24} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-base text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                                                    {item.title}
+                                                </h3>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight mt-1 line-clamp-2">
+                                                    {item.description}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors" size={18} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
                     <GestaoOperacoesBlock userProfile={userProfile} />
