@@ -48,6 +48,9 @@ const OcorrenciasPrint = lazy(() => import('./pages/Ocorrencias/OcorrenciasPrint
 const ShelterMenu = lazy(() => import('./pages/Abrigos/Menu'))
 const ShelterList = lazy(() => import('./pages/Abrigos/ShelterList'))
 const ShelterDetail = lazy(() => import('./pages/Abrigos/ShelterDetail'))
+
+// Animais Module (Lazy)
+const PontosApoioAnimal = lazy(() => import('./pages/Animais/PontosApoio'))
 const ShelterForm = lazy(() => import('./pages/Abrigos/ShelterForm'))
 const OccupantForm = lazy(() => import('./pages/Abrigos/OccupantForm'))
 const DonationForm = lazy(() => import('./pages/Abrigos/DonationForm'))
@@ -67,6 +70,7 @@ const SAHModule = lazy(() => import('./pages/Abrigos/SAHModule'))
 const OperacaoPrint = lazy(() => import('./pages/Abrigos/OperacaoPrint'))
 const ShelterPrint = lazy(() => import('./pages/Abrigos/ShelterPrint'))
 const SheltersGlobalPrint = lazy(() => import('./pages/Abrigos/SheltersGlobalPrint'))
+const RotinaAbrigoPrint = lazy(() => import('./pages/Abrigos/RotinaAbrigoPrint'))
 
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
@@ -445,9 +449,19 @@ const AppContent = ({
                                         <ShelterDetail />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/pontos-apoio" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <PontosApoioAnimal />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/assisthumanitaria/:id/imprimir" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/assisthumanitaria/:id/rotina/imprimir" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
+                                        <RotinaAbrigoPrint />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/assisthumanitaria/relatorio-geral" element={

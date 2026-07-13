@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { getShelterById, getOccupants, getDonations, getInventory, getShelterTransfers } from '../../services/shelterDb';
 import { operacoesService } from '../../services/operacoesService';
 import PrintLayout from '../../components/PrintLayout';
+import { supabase } from '../../services/supabase';
 
 const ShelterPrint = () => {
     const { id } = useParams();
@@ -17,7 +18,8 @@ const ShelterPrint = () => {
         distributions: [],
         inventory: [],
         operation: null,
-        allOperacoesMap: {}
+        allOperacoesMap: {},
+        animals: []
     });
     const [loading, setLoading] = useState(true);
 
@@ -73,6 +75,12 @@ const ShelterPrint = () => {
                 const filteredDistributions = filterByOperation(rawTransfers.outgoing || []);
                 const filteredInventory = filterByOperation(rawInventory);
 
+                const { data: rawAnimals } = await supabase
+                    .from('animal_estimacao')
+                    .select('*, tutor:tutor_pessoa_id(full_name), encaminhamentos:animal_encaminhamento(status, ponto_apoio_id, ponto_apoio_animal(nome))')
+                    .eq('abrigo_humano_id', id)
+                    .eq('ativo', true);
+
                 setData({
                     shelter: s,
                     activeOccupants: activeOccupants,
@@ -81,7 +89,8 @@ const ShelterPrint = () => {
                     distributions: filteredDistributions,
                     inventory: filteredInventory,
                     operation: operation,
-                    allOperacoesMap: allOperacoesMap
+                    allOperacoesMap: allOperacoesMap,
+                    animals: rawAnimals || []
                 });
 
                 document.title = `Relatório do Abrigo - ${s.name}`;
@@ -98,7 +107,7 @@ const ShelterPrint = () => {
     if (loading) return <div className="flex items-center justify-center min-h-screen">Carregando visualização...</div>;
     if (!data.shelter) return <div className="flex items-center justify-center min-h-screen">Abrigo não encontrado.</div>;
 
-    const { shelter, activeOccupants, exitedOccupants, donations, distributions, inventory, operation, allOperacoesMap } = data;
+    const { shelter, activeOccupants, exitedOccupants, donations, distributions, inventory, operation, allOperacoesMap, animals } = data;
 
     const getOpName = (opId) => allOperacoesMap[opId] || 'Operação Desconhecida';
 
@@ -242,6 +251,58 @@ const ShelterPrint = () => {
                     </table>
                 ) : (
                     <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhuma pessoa abrigada ativamente.</p>
+                )}
+            </section>
+
+            <section className="mb-6 avoid-break">
+                <div className="section-header">
+                    <span className="section-header-title">4. Histórico de Animais Cadastrados</span>
+                    <div className="section-header-line"></div>
+                </div>
+                {animals.length > 0 ? (
+                    <table className="report-table">
+                        <thead>
+                            <tr>
+                                <th style={{ width: '25%' }}>Nome do Animal</th>
+                                <th style={{ width: '15%', textAlign: 'center' }}>Espécie/Porte</th>
+                                <th style={{ width: '25%', textAlign: 'center' }}>Tutor</th>
+                                <th style={{ width: '35%', textAlign: 'center' }}>Status / Local</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {animals.map(a => {
+                                const lastEncaminhamento = a.encaminhamentos && a.encaminhamentos.length > 0 
+                                    ? a.encaminhamentos[a.encaminhamentos.length - 1] 
+                                    : null;
+                                    
+                                let statusText = 'No Abrigo (Sem encaminhamento)';
+                                if (lastEncaminhamento) {
+                                    if (lastEncaminhamento.status === 'devolvido_ao_tutor') statusText = 'Devolvido ao Tutor';
+                                    else if (lastEncaminhamento.status === 'obito') statusText = 'Óbito';
+                                    else statusText = `Encaminhado: ${lastEncaminhamento.ponto_apoio_animal?.nome || 'Ponto de Apoio'}`;
+                                }
+
+                                return (
+                                    <tr key={a.id}>
+                                        <td>
+                                            <strong>{a.nome}</strong>
+                                        </td>
+                                        <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>
+                                            {a.especie} {a.porte ? `(${a.porte})` : ''}
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>{a.tutor?.full_name || 'Desconhecido'}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold">
+                                                {statusText}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhum animal cadastrado neste abrigo.</p>
                 )}
             </section>
 

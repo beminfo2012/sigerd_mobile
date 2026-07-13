@@ -13,8 +13,9 @@ import { getShelterById, getOccupants, getDonations, getInventory, updateShelter
 import { calculateShelterNeeds } from '../../utils/needsCalculator';
 import { useOperacao } from '../../contexts/OperacaoContext';
 import { operacoesService } from '../../services/operacoesService';
-import toast from 'react-hot-toast';
 import PlantaBaixaAbrigo from '../../components/Shelter/PlantaBaixaAbrigo.jsx';
+import RotinaAbrigo from '../../components/Shelter/RotinaAbrigo.jsx';
+import AnimaisAbrigo from '../../components/Shelter/AnimaisAbrigo.jsx';
 
 export function ShelterDetail() {
     const { id } = useParams();
@@ -621,8 +622,19 @@ export function ShelterDetail() {
                                 )}
                             </Card>
 
+                            {/* Rotina do Abrigo */}
+                            <RotinaAbrigo 
+                                abrigoId={id} 
+                                operacaoId={operacaoAtiva?.id} 
+                                dataAbertura={shelter?.opening_date || shelter?.created_at} 
+                                dataAberturaOperacao={operacaoAtiva?.data_hora_inicio || operacaoAtiva?.created_at}
+                            />
+
                             {/* Planta Baixa */}
                             <PlantaBaixaAbrigo abrigoId={id} />
+
+                            {/* Animais do Abrigo */}
+                            <AnimaisAbrigo abrigoId={id} abrigoInfo={shelter} />
                         </div>
                     </div>
 

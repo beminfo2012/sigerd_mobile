@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Building2, Package, Truck, Gift, FileText, ArrowLeft, ChevronRight,
     BarChart3, Users, Cloud, CheckCircle2, RefreshCcw, LayoutDashboard,
-    Home, Info, AlertTriangle, TrendingUp, HeartHandshake
+    Home, Info, AlertTriangle, TrendingUp, HeartHandshake, PawPrint
 } from 'lucide-react';
 import HumanitarianIcon from '../../components/HumanitarianIcon';
 import { UserContext } from '../../App';
@@ -299,7 +299,14 @@ export default function ShelterMenu() {
             color: 'bg-slate-50 text-slate-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
-
+        {
+            title: 'Pontos de Apoio Animal',
+            description: 'Gerencie abrigos temporários, clínicas e ONGs.',
+            icon: PawPrint,
+            path: '/pontos-apoio',
+            color: 'bg-indigo-50 text-indigo-600',
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+        },
         {
             title: 'Contratos de Emergência',
             description: 'Contratos vigentes e suprimentos emergenciais.',
