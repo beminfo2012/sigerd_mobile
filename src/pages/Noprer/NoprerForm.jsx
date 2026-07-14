@@ -170,7 +170,7 @@ const NoprerForm = () => {
         let resultados = [];
         try {
             // Busca Vistorias
-            let qVist = supabase.from('vistorias').select('id, vistoria_id, endereco, solicitante, nivel_risco, created_at');
+            let qVist = supabase.from('vistorias').select('id, vistoria_id, endereco, solicitante, nivel_risco, created_at, categoria_risco, subtipos_risco, informacoes_complementares, coordenadas, latitude, longitude');
             if (buscaOrigem && buscaOrigem.length >= 3) {
                 qVist = qVist.or(`vistoria_id.ilike.%${buscaOrigem}%,endereco.ilike.%${buscaOrigem}%,solicitante.ilike.%${buscaOrigem}%`).limit(10);
             } else {
@@ -213,13 +213,44 @@ const NoprerForm = () => {
             else if (nivel.includes('muito alto') || nivel.includes('iminente')) mappedGrau = 'R4';
         }
 
+        let mappedCategoria = prev => prev.tipo_risco;
+        if (v.categoria_risco) {
+            if (v.categoria_risco.includes('Geológico')) mappedCategoria = 'Geológico';
+            else if (v.categoria_risco.includes('Sanitário')) mappedCategoria = 'Saúde Pública';
+            else mappedCategoria = v.categoria_risco;
+        }
+
+        let mappedCoordenadas = v.coordenadas;
+        if (!mappedCoordenadas && v.latitude && v.longitude) {
+            mappedCoordenadas = `${v.latitude}, ${v.longitude}`;
+        }
+
+        let firstSubtipo = '';
+        if (v.subtipos_risco) {
+            let arr = [];
+            if (Array.isArray(v.subtipos_risco)) arr = v.subtipos_risco;
+            else if (typeof v.subtipos_risco === 'string') {
+                try {
+                    const parsed = JSON.parse(v.subtipos_risco);
+                    arr = Array.isArray(parsed) ? parsed : [v.subtipos_risco];
+                } catch(e) {
+                    arr = [v.subtipos_risco];
+                }
+            }
+            if (arr.length > 0) firstSubtipo = arr[0];
+        }
+
         setFormData(prev => ({
             ...prev,
             vistoria_id: v.id,
             vistoria_numero: v.titulo_id,
             endereco: v.endereco || prev.endereco,
             nome_notificado: v.solicitante || prev.nome_notificado,
-            grau_risco: mappedGrau
+            grau_risco: mappedGrau,
+            tipo_risco: mappedCategoria === (p => p.tipo_risco) ? prev.tipo_risco : mappedCategoria,
+            sub_tipo: firstSubtipo || prev.sub_tipo,
+            descricao_risco: v.informacoes_complementares || prev.descricao_risco,
+            coordenadas: mappedCoordenadas || prev.coordenadas
         }));
         setOrigensEncontradas([]);
         setBuscaOrigem('');

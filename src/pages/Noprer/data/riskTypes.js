@@ -4,11 +4,18 @@ export const RISK_TYPES = [
         label: 'Geológico',
         ico: '⛰️',
         subs: [
-            'Instabilidade de talude',
-            'Movimento de massa',
-            'Erosão em ravina/voçoroca',
-            'Queda de bloco/rochoso',
-            'Recalque de terreno'
+            'Deslizamento Planar',
+            'Deslizamento Rotacional',
+            'Deslizamento em Cunha',
+            'Rastejo',
+            'Corrida de Massa / Fluxo de Detritos',
+            'Queda / Rolamento de Blocos Rochosos',
+            'Erosão Laminar',
+            'Erosão em Sulco',
+            'Ravina',
+            'Voçoroca',
+            'Subsidência (colapso de vazios subterrâneos)',
+            'Recalque Diferencial do Solo'
         ],
         medidas: [
             'Executar drenagem superficial e captação de águas pluviais',
@@ -27,10 +34,18 @@ export const RISK_TYPES = [
         ico: '🌊',
         subs: [
             'Alagamento',
-            'Inundação gradual',
+            'Inundação',
             'Enxurrada',
-            'Erosão marginal (solapamento)',
-            'Transbordamento de calha'
+            'Transbordamento de Rio',
+            'Transbordamento de Córrego',
+            'Assoreamento',
+            'Obstrução de Drenagem',
+            'Rompimento de Galeria Pluvial',
+            'Erosão Marginal',
+            'Retorno de Esgoto',
+            'Enchente Repentina',
+            'Rompimento de Barragem / Açude',
+            'Elevação do Lençol Frático'
         ],
         medidas: [
             'Desobstruir calhas, ralos e sistema de drenagem da edificação',
@@ -47,12 +62,20 @@ export const RISK_TYPES = [
         label: 'Estrutural',
         ico: '🏗️',
         subs: [
-            'Trincas e fissuras em alvenaria',
-            'Corrosão de armaduras',
-            'Recalque de fundação',
-            'Risco de queda de telhado/cobertura',
-            'Fadiga de materiais',
-            'Obras irregulares adjacentes'
+            'Risco de Desabamento',
+            'Colapso Parcial',
+            'Colapso Total',
+            'Fissuras Estruturais',
+            'Trincas',
+            'Rachaduras',
+            'Muro de Arrimo com Risco',
+            'Laje com Risco',
+            'Marquise com Risco',
+            'Edificação Abandonada',
+            'Estrutura Pós-Incêndio',
+            'Estrutura Comprometida por Infiltração',
+            'Fundação Aparente',
+            'Pilar / Viga Comprometidos'
         ],
         medidas: [
             'Suspender imediatamente obras e sobrecargas na edificação',
@@ -68,6 +91,8 @@ export const RISK_TYPES = [
         label: 'Incêndio',
         ico: '🔥',
         subs: [
+            'Incêndio Florestal',
+            'Queimada Irregular',
             'Fiação exposta ou curto-circuito',
             'Armazenamento irregular de inflamáveis',
             'Ausência/falha de rotas de fuga',
@@ -88,10 +113,17 @@ export const RISK_TYPES = [
         label: 'Ambiental',
         ico: '🌿',
         subs: [
-            'Contaminação de solo/água',
-            'Descarte irregular de resíduos',
-            'Desmatamento em APP',
-            'Queimada ilegal'
+            'Queda de Árvore Inteira (Tombamento)',
+            'Queda de Galho ou Ramo',
+            'Fratura ou Quebra de Tronco',
+            'Desenraizamento / Falha Radicular',
+            'Galhos em Conflito com Rede Elétrica ou Via Pública',
+            'Supressão Vegetal Irregular',
+            'Contaminação do Solo',
+            'Contaminação da Água',
+            'Assoreamento Ambiental',
+            'Risco Associado à Fauna',
+            'Descarte irregular de resíduos'
         ],
         medidas: [
             'Cessar imediatamente o descarte irregular',
@@ -106,8 +138,9 @@ export const RISK_TYPES = [
         label: 'Saúde Pública',
         ico: '🏥',
         subs: [
-            'Foco de vetores (dengue, etc.)',
             'Esgoto a céu aberto',
+            'Infestação de vetores',
+            'Contaminação biológica',
             'Acúmulo de lixo/entulho',
             'Animais peçonhentos'
         ],
@@ -124,10 +157,19 @@ export const RISK_TYPES = [
         label: 'Tecnológico',
         ico: '⚙️',
         subs: [
-            'Vazamento de produtos químicos',
-            'Risco em barragem',
-            'Rompiemento de tubulação pressurizada',
-            'Rádio-atividade (improvável, mas possível)'
+            'Vazamento de Gás',
+            'Vazamento de Produto Químico',
+            'Derramamento de Combustível',
+            'Derramamento de Óleo',
+            'Explosão',
+            'Incêndio Industrial',
+            'Risco Elétrico',
+            'Poste com Risco de Queda',
+            'Fiação Exposta',
+            'Acidente com Carga Perigosa',
+            'Colapso de Infraestrutura Crítica',
+            'Falha em Equipamento Industrial',
+            'Contaminação Química'
         ],
         medidas: [
             'Isolar a área afetada imediatamente',
@@ -141,7 +183,9 @@ export const RISK_TYPES = [
         label: 'Outro',
         ico: '📋',
         subs: [
-            'Situação atípica não listada'
+            'Outro Risco (descrever)',
+            'Situação Atípica',
+            'Risco Não Classificado'
         ],
         medidas: [
             'Adotar medida cautelar imediata de isolamento',
