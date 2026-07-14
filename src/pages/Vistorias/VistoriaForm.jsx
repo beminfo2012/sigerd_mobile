@@ -747,8 +747,32 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         let fonteMetadados = 'ausente';
 
                         if (source === 'camera') {
-                            if (formData.latitude && formData.longitude) {
-                                finalCoords = { lat: formData.latitude, lng: formData.longitude };
+                            let currentLat = formData.latitude;
+                            let currentLng = formData.longitude;
+
+                            if (!currentLat || !currentLng) {
+                                try {
+                                    if (navigator.geolocation) {
+                                        const pos = await new Promise((res, rej) => {
+                                            navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 5000 });
+                                        });
+                                        currentLat = pos.coords.latitude.toFixed(6);
+                                        currentLng = pos.coords.longitude.toFixed(6);
+                                        
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            latitude: currentLat,
+                                            longitude: currentLng,
+                                            coordenadas: `${currentLat}, ${currentLng}`
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.warn("Could not capture GPS on the spot:", e);
+                                }
+                            }
+
+                            if (currentLat && currentLng) {
+                                finalCoords = { lat: currentLat, lng: currentLng };
                                 finalTimestamp = new Date();
                                 metadadosVerificados = true;
                                 fonteMetadados = 'gps_device';
