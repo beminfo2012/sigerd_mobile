@@ -40,7 +40,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                     type="file"
                     ref={galleryInputRef}
                     className="hidden"
-                    accept={acceptAll ? "*" : "image/*"}
+                    accept={acceptAll ? "*" : ".jpg,.jpeg,.png,.heic,image/jpeg,image/png,image/heic"}
                     multiple
                     onChange={(e) => handleChange(e, 'gallery')}
                 />
@@ -71,7 +71,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                 type="file"
                 ref={galleryInputRef}
                 className="hidden"
-                accept={acceptAll ? "*" : "image/*"}
+                accept={acceptAll ? "*" : ".jpg,.jpeg,.png,.heic,image/jpeg,image/png,image/heic"}
                 multiple
                 onChange={(e) => handleChange(e, 'gallery')}
             />
