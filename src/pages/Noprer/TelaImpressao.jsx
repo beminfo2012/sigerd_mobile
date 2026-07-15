@@ -22,12 +22,12 @@ const TelaImpressao = () => {
                     .select('*, vistoria:vistoria_id(vistoria_id)')
                     .eq('id', id)
                     .single();
-                
+
                 if (error) {
                     console.error('Erro supabase:', error);
                     return;
                 }
-                
+
                 setNoprer(data);
             } catch (err) {
                 console.error('Erro na impressão:', err);
@@ -46,7 +46,8 @@ const TelaImpressao = () => {
 
     return (
         <div className="bg-slate-100 min-h-screen text-slate-800 print:bg-white print:p-0 p-8 flex justify-center report-root-wrapper font-[Inter,sans-serif]">
-            <style dangerouslySetInnerHTML={{__html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 :root {
                     --navy:   #0B1F3A;
                     --navy2:  #122848;
@@ -117,191 +118,191 @@ const TelaImpressao = () => {
 
             <main className="flex flex-col items-center pt-24 print:pt-0 w-full print-preview-wrapper" style={{ '--report-zoom': zoom }}>
                 <div className="w-[210mm] bg-white print:shadow-none shadow-2xl min-h-[297mm] p-10 md:p-12 print:p-0 mb-10 print:mb-0 relative print-container flex flex-col">
-                    
+
                     {/* Cabeçalho */}
                     <div className="flex justify-between items-center border-b-4 border-red-700 pb-4 mb-6">
                         <div className="w-[100px] flex items-center justify-center">
                             <img src={LOGO_DEFESA_CIVIL} alt="Defesa Civil" className="h-[85px] w-auto object-contain" />
                         </div>
-                    <div className="text-center flex-1 px-4">
-                        <h1 className="text-xl font-black uppercase m-0 leading-tight">Prefeitura Municipal de<br/>Santa Maria de Jetibá</h1>
-                        <h2 className="text-sm font-bold uppercase mt-1">Coordenadoria Municipal de Proteção e Defesa Civil</h2>
-                    </div>
-                    <img src={LOGO_SIGERD} alt="SIGERD" className="h-20 object-contain" />
-                </div>
-
-                <div className="text-center mb-8">
-                    <h1 className="text-xl font-black text-red-700 uppercase tracking-widest">Notificação Preliminar de Risco - NOPRER</h1>
-                </div>
-
-                {/* 1. Identificação */}
-                <div className="mb-6">
-                    <div className="border-l-4 border-red-700 pl-3 mb-3">
-                        <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">1. Identificação do Documento</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Número NOPRER</span>
-                            <span className="block text-sm font-bold">{noprer.numero ? noprer.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}</span>
+                        <div className="text-center flex-1 px-4">
+                            <h1 className="text-xl font-black uppercase m-0 leading-tight">Prefeitura Municipal de<br />Santa Maria de Jetibá</h1>
+                            <h2 className="text-sm font-bold uppercase mt-1">Coordenadoria Municipal de Proteção e Defesa Civil</h2>
                         </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Data de Emissão</span>
-                            <span className="block text-sm font-bold">{formatDate(noprer.data_emissao)}</span>
-                        </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Vistoria Vinculada</span>
-                            <span className="block text-sm font-bold">{noprer.vistoria_id ? 'Sim' : 'Sem vínculo'}</span>
-                        </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Agente Emissor</span>
-                            <span className="block text-sm font-bold">{noprer.nome_agente}</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 2. Notificado */}
-                <div className="mb-6">
-                    <div className="border-l-4 border-red-700 pl-3 mb-3">
-                        <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">2. Identificação do Notificado</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                        <div className="col-span-2 border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Nome do Notificado</span>
-                            <span className="block text-sm font-bold">{noprer.nome_notificado}</span>
-                        </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">CPF / CNPJ</span>
-                            <span className="block text-sm font-bold">{noprer.cpf_notificado}</span>
-                        </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Contato</span>
-                            <span className="block text-sm font-bold">{noprer.contato || '---'}</span>
-                        </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Condição</span>
-                            <span className="block text-sm font-bold">{noprer.condicao}</span>
-                        </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Tipo de Ocupação</span>
-                            <span className="block text-sm font-bold">{noprer.tipo_ocupacao || '---'}</span>
-                        </div>
-                        <div className="col-span-2 border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Endereço</span>
-                            <span className="block text-sm font-bold">{noprer.endereco}</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 3. Diagnóstico */}
-                <div className="mb-6 avoid-break">
-                    <div className="border-l-4 border-red-700 pl-3 mb-3">
-                        <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">3. Diagnóstico do Risco</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 mb-4">
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Tipo de Risco</span>
-                            <span className="block text-sm font-bold">{noprer.tipo_risco}</span>
-                        </div>
-                        <div className="border-b border-gray-100 pb-1">
-                            <span className="block text-[10px] font-bold text-gray-500 uppercase">Grau de Risco</span>
-                            <span className="block text-sm font-bold">{noprer.grau_risco}</span>
-                        </div>
-                    </div>
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                        <span className="block text-[10px] font-black text-red-800 uppercase mb-2">Descrição do Risco</span>
-                        <p className="text-sm font-semibold text-red-900 leading-relaxed m-0">{noprer.descricao_risco}</p>
-                    </div>
-                </div>
-
-                {/* 4. Medidas */}
-                <div className="mb-6 avoid-break">
-                    <div className="border-l-4 border-red-700 pl-3 mb-3">
-                        <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">4. Medidas Preventivas / Mitigadoras Estipuladas</h3>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-5">
-                        <span className="block text-[10px] font-black text-slate-500 uppercase mb-3">Providências a serem adotadas pelo notificado</span>
-                        <ul className="space-y-2 m-0 pl-0 list-none">
-                            {(noprer.medidas || []).map((m, i) => (
-                                <li key={i} className="flex gap-2 items-start bg-white p-2 rounded border border-slate-100 shadow-sm">
-                                    <span className="font-black text-red-700">➜</span>
-                                    <span className="text-sm font-bold text-slate-700">{m}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <img src={LOGO_SIGERD} alt="SIGERD" className="h-20 object-contain" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-center">
-                            <span className="block text-[10px] font-black text-amber-800 uppercase mb-1">Prazo para Regularização</span>
-                            <span className="block text-lg font-black text-amber-900">Até {formatDate(noprer.data_limite)}</span>
-                        </div>
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-center">
-                            <span className="block text-[10px] font-black text-blue-800 uppercase mb-1">Data Prevista para Revistoria</span>
-                            <span className="block text-lg font-black text-blue-900">{formatDate(noprer.data_revistoria)}</span>
-                        </div>
+                    <div className="text-center mb-8">
+                        <h1 className="text-xl font-black text-red-700 uppercase tracking-widest">Notificação Preliminar de Risco - NOPRER</h1>
                     </div>
-                </div>
 
-                {/* Termo e Assinaturas */}
-                <div className="mt-8 p-6 border-2 border-slate-400 rounded-xl avoid-break">
-                    <h3 className="text-center font-black uppercase text-sm mb-4">Termo de Responsabilidade e Ciência</h3>
-                    <p className="text-xs text-justify leading-relaxed text-slate-700 mb-0">
-                        O NOTIFICADO acima qualificado, proprietário/posseiro/ocupante do imóvel em questão, declara ter recebido 
-                        formalmente as orientações técnicas exaradas pela Defesa Civil Municipal através deste documento (NOPRER). 
-                        Reconhece a condição de risco informada e concorda expressamente em cumprir as medidas preventivas e 
-                        mitigadoras indicadas no prazo assinalado, estando ciente de que o não cumprimento poderá resultar em 
-                        sanções administrativas e medidas coercitivas, bem como sua responsabilização em caso de agravamento da 
-                        situação que possa colocar em risco a vida ou o patrimônio de terceiros.
-                    </p>
-                </div>
-
-                <div className="mt-12 bg-slate-50 p-8 border border-slate-200 rounded-xl avoid-break">
-                    {noprer.modo_assinatura === 'recusa' ? (
-                        <>
-                            <div className="text-center text-red-700 font-black mb-8 text-sm">O NOTIFICADO SE RECUSOU A ASSINAR ESTE DOCUMENTO.</div>
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="text-center">
-                                    <div className="h-16 flex items-end justify-center border-b border-slate-400 mb-2">
-                                        {noprer.sign_test1 && <img src={noprer.sign_test1} alt="Testemunha 1" className="max-h-12" />}
-                                    </div>
-                                    <p className="font-bold text-sm m-0">Testemunha 1: {noprer.test1_nome}</p>
-                                    <p className="text-xs text-slate-500 m-0">CPF: {noprer.test1_cpf}</p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="h-16 flex items-end justify-center border-b border-slate-400 mb-2">
-                                        {noprer.sign_test2 && <img src={noprer.sign_test2} alt="Testemunha 2" className="max-h-12" />}
-                                    </div>
-                                    <p className="font-bold text-sm m-0">Testemunha 2: {noprer.test2_nome}</p>
-                                    <p className="text-xs text-slate-500 m-0">CPF: {noprer.test2_cpf}</p>
-                                </div>
+                    {/* 1. Identificação */}
+                    <div className="mb-6">
+                        <div className="border-l-4 border-red-700 pl-3 mb-3">
+                            <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">1. Identificação do Documento</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Número NOPRER</span>
+                                <span className="block text-sm font-bold">{noprer.numero ? noprer.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}</span>
                             </div>
-                        </>
-                    ) : noprer.modo_assinatura === 'digital' ? (
-                        <div className="text-center mb-8">
-                            <div className="h-20 w-3/4 mx-auto flex items-end justify-center border-b border-slate-400 mb-2">
-                                {noprer.sign_notificado && <img src={noprer.sign_notificado} alt="Notificado" className="max-h-16" />}
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Data de Emissão</span>
+                                <span className="block text-sm font-bold">{formatDate(noprer.data_emissao)}</span>
                             </div>
-                            <p className="font-bold text-sm m-0">{noprer.nome_notificado}</p>
-                            <p className="text-xs text-slate-500 m-0">NOTIFICADO (Assinatura Digital)</p>
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Vistoria Vinculada</span>
+                                <span className="block text-sm font-bold">{noprer.vistoria_id ? 'Sim' : 'Sem vínculo'}</span>
+                            </div>
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Agente Emissor</span>
+                                <span className="block text-sm font-bold">{noprer.nome_agente}</span>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="text-center mb-8">
-                            <div className="h-16 w-3/4 mx-auto border-b border-slate-400 mb-2"></div>
-                            <p className="font-bold text-sm m-0">{noprer.nome_notificado}</p>
-                            <p className="text-xs text-slate-500 m-0">NOTIFICADO (Assinatura Física Requerida)</p>
-                        </div>
-                    )}
+                    </div>
 
-                    <div className="text-center mt-12">
-                        <div className="h-20 w-3/4 mx-auto flex items-end justify-center border-b-2 border-red-700 mb-2">
-                            {noprer.sign_agente && <img src={noprer.sign_agente} alt="Agente" className="max-h-16" />}
+                    {/* 2. Notificado */}
+                    <div className="mb-6">
+                        <div className="border-l-4 border-red-700 pl-3 mb-3">
+                            <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">2. Identificação do Notificado</h3>
                         </div>
-                        <p className="font-black text-red-900 text-sm m-0 uppercase">{noprer.nome_agente}</p>
-                        <p className="text-xs font-bold text-slate-600 m-0 uppercase">Agente de Defesa Civil</p>
-                        {noprer.matricula_agente && <p className="text-[10px] text-slate-400 m-0">Matrícula: {noprer.matricula_agente}</p>}
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                            <div className="col-span-2 border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Nome do Notificado</span>
+                                <span className="block text-sm font-bold">{noprer.nome_notificado}</span>
+                            </div>
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">CPF / CNPJ</span>
+                                <span className="block text-sm font-bold">{noprer.cpf_notificado}</span>
+                            </div>
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Contato</span>
+                                <span className="block text-sm font-bold">{noprer.contato || '---'}</span>
+                            </div>
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Condição</span>
+                                <span className="block text-sm font-bold">{noprer.condicao}</span>
+                            </div>
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Tipo de Ocupação</span>
+                                <span className="block text-sm font-bold">{noprer.tipo_ocupacao || '---'}</span>
+                            </div>
+                            <div className="col-span-2 border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Endereço</span>
+                                <span className="block text-sm font-bold">{noprer.endereco}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. Diagnóstico */}
+                    <div className="mb-6 avoid-break">
+                        <div className="border-l-4 border-red-700 pl-3 mb-3">
+                            <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">3. Diagnóstico do Risco</h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-3 mb-4">
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Tipo de Risco</span>
+                                <span className="block text-sm font-bold">{noprer.tipo_risco}</span>
+                            </div>
+                            <div className="border-b border-gray-100 pb-1">
+                                <span className="block text-[10px] font-bold text-gray-500 uppercase">Grau de Risco</span>
+                                <span className="block text-sm font-bold">{noprer.grau_risco}</span>
+                            </div>
+                        </div>
+                        <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                            <span className="block text-[10px] font-black text-red-800 uppercase mb-2">Descrição do Risco</span>
+                            <p className="text-sm font-semibold text-red-900 leading-relaxed m-0">{noprer.descricao_risco}</p>
+                        </div>
+                    </div>
+
+                    {/* 4. Medidas */}
+                    <div className="mb-6 avoid-break">
+                        <div className="border-l-4 border-red-700 pl-3 mb-3">
+                            <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">4. Medidas Preventivas / Mitigadoras Estipuladas</h3>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-5">
+                            <span className="block text-[10px] font-black text-slate-500 uppercase mb-3">Providências a serem adotadas pelo notificado</span>
+                            <ul className="space-y-2 m-0 pl-0 list-none">
+                                {(noprer.medidas || []).map((m, i) => (
+                                    <li key={i} className="flex gap-2 items-start bg-white p-2 rounded border border-slate-100 shadow-sm">
+                                        <span className="font-black text-red-700">➜</span>
+                                        <span className="text-sm font-bold text-slate-700">{m}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-center">
+                                <span className="block text-[10px] font-black text-amber-800 uppercase mb-1">Prazo para Regularização</span>
+                                <span className="block text-lg font-black text-amber-900">Até {formatDate(noprer.data_limite)}</span>
+                            </div>
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-center">
+                                <span className="block text-[10px] font-black text-blue-800 uppercase mb-1">Data Prevista para Revistoria</span>
+                                <span className="block text-lg font-black text-blue-900">{formatDate(noprer.data_revistoria)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Termo e Assinaturas */}
+                    <div className="mt-8 p-6 border-2 border-slate-400 rounded-xl avoid-break">
+                        <h3 className="text-center font-black uppercase text-sm mb-4">Termo de Responsabilidade e Ciência</h3>
+                        <p className="text-xs text-justify leading-relaxed text-slate-700 mb-0">
+                            O NOTIFICADO acima qualificado, declara ter recebido
+                            formalmente as orientações técnicas exaradas pela Defesa Civil Municipal através deste documento (NOPRER).
+                            Reconhece a condição de risco informada e concorda expressamente em cumprir as medidas preventivas e
+                            mitigadoras indicadas no prazo assinalado, estando ciente de que o não cumprimento poderá resultar em
+                            sanções administrativas e medidas coercitivas, bem como sua responsabilização em caso de agravamento da
+                            situação que possa colocar em risco a vida ou o patrimônio de terceiros.
+                        </p>
+                    </div>
+
+                    <div className="mt-12 bg-slate-50 p-8 border border-slate-200 rounded-xl avoid-break">
+                        {noprer.modo_assinatura === 'recusa' ? (
+                            <>
+                                <div className="text-center text-red-700 font-black mb-8 text-sm">O NOTIFICADO SE RECUSOU A ASSINAR ESTE DOCUMENTO.</div>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div className="text-center">
+                                        <div className="h-16 flex items-end justify-center border-b border-slate-400 mb-2">
+                                            {noprer.sign_test1 && <img src={noprer.sign_test1} alt="Testemunha 1" className="max-h-12" />}
+                                        </div>
+                                        <p className="font-bold text-sm m-0">Testemunha 1: {noprer.test1_nome}</p>
+                                        <p className="text-xs text-slate-500 m-0">CPF: {noprer.test1_cpf}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="h-16 flex items-end justify-center border-b border-slate-400 mb-2">
+                                            {noprer.sign_test2 && <img src={noprer.sign_test2} alt="Testemunha 2" className="max-h-12" />}
+                                        </div>
+                                        <p className="font-bold text-sm m-0">Testemunha 2: {noprer.test2_nome}</p>
+                                        <p className="text-xs text-slate-500 m-0">CPF: {noprer.test2_cpf}</p>
+                                    </div>
+                                </div>
+                            </>
+                        ) : noprer.modo_assinatura === 'digital' ? (
+                            <div className="text-center mb-8">
+                                <div className="h-20 w-3/4 mx-auto flex items-end justify-center border-b border-slate-400 mb-2">
+                                    {noprer.sign_notificado && <img src={noprer.sign_notificado} alt="Notificado" className="max-h-16" />}
+                                </div>
+                                <p className="font-bold text-sm m-0">{noprer.nome_notificado}</p>
+                                <p className="text-xs text-slate-500 m-0">NOTIFICADO (Assinatura Digital)</p>
+                            </div>
+                        ) : (
+                            <div className="text-center mb-8">
+                                <div className="h-16 w-3/4 mx-auto border-b border-slate-400 mb-2"></div>
+                                <p className="font-bold text-sm m-0">{noprer.nome_notificado}</p>
+                                <p className="text-xs text-slate-500 m-0">NOTIFICADO (Assinatura Física Requerida)</p>
+                            </div>
+                        )}
+
+                        <div className="text-center mt-12">
+                            <div className="h-20 w-3/4 mx-auto flex items-end justify-center border-b-2 border-red-700 mb-2">
+                                {noprer.sign_agente && <img src={noprer.sign_agente} alt="Agente" className="max-h-16" />}
+                            </div>
+                            <p className="font-black text-red-900 text-sm m-0 uppercase">{noprer.nome_agente}</p>
+                            <p className="text-xs font-bold text-slate-600 m-0 uppercase">Agente de Defesa Civil</p>
+                            {noprer.matricula_agente && <p className="text-[10px] text-slate-400 m-0">Matrícula: {noprer.matricula_agente}</p>}
+                        </div>
                     </div>
                 </div>
-            </div>
             </main>
         </div>
     );

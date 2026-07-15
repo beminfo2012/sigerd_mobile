@@ -325,7 +325,7 @@ export default function StockHub() {
                                 <Card key={item.id} className={`overflow-hidden transition-all ${isLow ? 'border-amber-200 dark:border-amber-500/30' : ''}`}>
                                     {isEditing ? (
                                         /* Edit Mode */
-                                        <div className="p-4 space-y-3 bg-blue-50 dark:bg-blue-900/20/50 dark:bg-blue-500/5">
+                                        <div className="p-4 space-y-3 bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-500/5">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-sm font-bold text-blue-700 dark:text-blue-400">Editando Item</p>
                                                 <button onClick={() => setEditingItem(null)} className="p-1.5 rounded-lg hover:bg-white dark:bg-slate-900/80 dark:hover:bg-slate-800 text-slate-400">

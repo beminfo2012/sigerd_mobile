@@ -489,7 +489,7 @@ export default function SAHModule() {
 
                         <div>
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Responsável Técnico (Social)</h4>
-                            <div className="grid grid-cols-2 gap-4 bg-blue-50 dark:bg-blue-900/20/50 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                            <div className="grid grid-cols-2 gap-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50">
                                 <div>
                                     <span className="block text-[10px] font-bold text-blue-600 uppercase">Nome</span>
                                     <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{selectedSah.assistente_social_nome || 'N/I'}</span>
@@ -519,8 +519,8 @@ export default function SAHModule() {
                                     <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{selectedSah.snapshot_kits_entregues}</span>
                                 </div>
                                 <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 shadow-sm">
-                                    <span className="block text-[10px] font-bold text-red-600 uppercase">Déficit Total Calc.</span>
-                                    <span className="text-2xl font-black text-red-700">{selectedSah.snapshot_deficit_kits}</span>
+                                    <span className="block text-[10px] font-bold text-red-600 dark:text-red-400 uppercase">Déficit Total Calc.</span>
+                                    <span className="text-2xl font-black text-red-700 dark:text-red-300">{selectedSah.snapshot_deficit_kits}</span>
                                 </div>
                             </div>
                         </div>
@@ -847,7 +847,7 @@ export default function SAHModule() {
     );
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-800/50/50 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 selection:bg-blue-200">
+        <div className="bg-slate-50 dark:bg-slate-800/50 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 selection:bg-blue-200">
             {/* Minimal Header */}
             <header className="bg-white dark:bg-slate-900 sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 px-6 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">

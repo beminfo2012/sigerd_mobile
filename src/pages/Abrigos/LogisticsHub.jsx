@@ -196,7 +196,7 @@ export default function LogisticsHub() {
                                                 key={item.id || item.inventory_id}
                                                 onClick={() => toggleItemSelection(item)}
                                                 className={`p-4 bg-white dark:bg-slate-900 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between group ${isSelected
-                                                    ? 'border-[#2a5299] shadow-md bg-blue-50 dark:bg-blue-900/20/20'
+                                                    ? 'border-[#2a5299] shadow-md bg-blue-50 dark:bg-blue-900/20'
                                                     : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:border-slate-600 shadow-sm'
                                                     }`}
                                             >

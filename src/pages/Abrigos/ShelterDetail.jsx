@@ -551,7 +551,7 @@ export function ShelterDetail() {
                                                 </button>
 
                                                 {expandedFamilies[groupName] && (
-                                                    <div className="bg-slate-50 dark:bg-slate-800/50/50 p-3 space-y-2 border-t border-slate-50">
+                                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 space-y-2 border-t border-slate-50">
                                                         {members.map(member => (
                                                             <div key={member.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/50">
                                                                 <div className="flex items-center gap-3 min-w-0">
@@ -783,7 +783,7 @@ export function ShelterDetail() {
                                 {estimatedNeeds.map((need, index) => {
                                     const Icon = iconMap[need.icon] || Package;
                                     return (
-                                        <div key={index} className="flex items-start gap-4 p-3 bg-blue-50 dark:bg-blue-900/20/50 rounded-xl border border-blue-100 dark:border-blue-900/50/50">
+                                        <div key={index} className="flex items-start gap-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/50">
                                             <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm">
                                                 <Icon size={20} className="text-[#2a5299]" />
                                             </div>
@@ -827,7 +827,7 @@ export function ShelterDetail() {
                             </h3>
                             <button onClick={() => setIsDonationsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-2">✕</button>
                         </div>
-                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50/50">
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50">
                             {donations.map((donation) => (
                                 <div key={donation.id} className="flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                     <div className="flex-1 min-w-0">
@@ -855,7 +855,7 @@ export function ShelterDetail() {
                             </h3>
                             <button onClick={() => setIsDistributionsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-2">✕</button>
                         </div>
-                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50/50">
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50">
                             {distributions.map((dist) => (
                                 <div key={dist.id} className="flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                     <div className="flex-1 min-w-0">
@@ -904,7 +904,7 @@ export function ShelterDetail() {
                             </div>
                         </div>
 
-                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50/50 custom-scrollbar">
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50 custom-scrollbar">
                             {occupants.length === 0 ? (
                                 <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8 italic">Nenhum histórico encontrado.</p>
                             ) : modalViewMode === 'individual' ? (
@@ -954,7 +954,7 @@ export function ShelterDetail() {
                                             </button>
 
                                             {expandedModalFamilies[groupName] && (
-                                                <div className="bg-slate-50 dark:bg-slate-800/50/50 p-3 space-y-2 border-t border-slate-50">
+                                                <div className="bg-slate-50 dark:bg-slate-800/50 p-3 space-y-2 border-t border-slate-50">
                                                     {members.map(member => (
                                                         <div key={member.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/50">
                                                             <div className="flex items-center gap-3 min-w-0">

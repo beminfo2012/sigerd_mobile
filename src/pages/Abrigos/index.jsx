@@ -277,7 +277,7 @@ export function Dashboard() {
                                     <div
                                         key={shelter.id}
                                         onClick={() => navigate(`/assisthumanitaria/${shelter.id}`)}
-                                        className="p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer group active:bg-blue-50 dark:bg-blue-900/20/50"
+                                        className="p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer group active:bg-blue-50 dark:bg-blue-900/20"
                                     >
                                         <div className="flex items-center gap-3">
                                             {/* Status Dot */}
