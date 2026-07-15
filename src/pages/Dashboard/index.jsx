@@ -1797,7 +1797,7 @@ const WebViewDashboardView = ({
     }
 
     return (
-        <div className="bg-[#f0f2f5] dark:bg-slate-950 min-h-screen font-sans flex flex-col">
+        <div className="bg-[#f0f2f5] dark:bg-slate-950 min-h-screen font-sans flex flex-col md:-mb-8">
             <div className="max-w-[1700px] mx-auto w-full p-6 space-y-6 flex-1">
 
                 {/* --- 🏁 1. HEADER & TOP CARDS CONTAINER --- */}
@@ -2286,13 +2286,13 @@ const WebViewDashboardView = ({
                 </div>
             </div>
 
-            <footer className="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 mt-auto">
-                <div className="flex flex-col">
-                    <span className="text-sm font-black text-slate-800 dark:text-slate-100">SIGERD WEB INTERFACE</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Prefeitura Municipal de Santa Maria de Jetibá</span>
+            <footer className="pt-3 pb-2 px-8 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 mt-auto shrink-0">
+                <div className="flex flex-col justify-center gap-0.5">
+                    <span className="text-sm font-black text-slate-800 dark:text-slate-100 leading-none">SIGERD WEB INTERFACE</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase leading-none">Prefeitura Municipal de Santa Maria de Jetibá</span>
                 </div>
-                <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Version {APP_VERSION}</span>
+                <div className="flex items-center">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mt-1">Version {APP_VERSION}</span>
                 </div>
             </footer>
         </div >
