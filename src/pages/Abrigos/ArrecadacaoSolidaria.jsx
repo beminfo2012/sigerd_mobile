@@ -352,21 +352,21 @@ export default function ArrecadacaoSolidaria() {
     };
 
     if (loading) {
-        return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        return <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 flex items-center justify-center">
             <RefreshCw className="animate-spin text-rose-500" size={32} />
         </div>;
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 text-slate-800 dark:text-slate-100 font-sans">
-            <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between shadow-sm transition-all">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 pb-24 text-slate-800 dark:text-slate-100 font-sans">
+            <header className="bg-white dark:bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 dark:border-slate-800 px-4 h-16 flex items-center justify-between shadow-sm transition-all">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/assisthumanitaria')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
+                    <button onClick={() => navigate('/assisthumanitaria')} className="p-2 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-300 dark:text-slate-400">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <h1 className="text-base font-black leading-tight text-rose-600 dark:text-rose-400">ARRECADAÇÃO SOLIDÁRIA</h1>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Apoio a Terceiros Municípios</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Apoio a Terceiros Municípios</p>
                     </div>
                 </div>
             </header>
@@ -393,7 +393,7 @@ export default function ArrecadacaoSolidaria() {
                             <Gift size={28} />
                         </div>
                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Receber Arrecadação</h3>
-                        <p className="text-xs text-slate-500 mt-1">Registrar entrada no polo</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Registrar entrada no polo</p>
                     </button>
 
                     <button 
@@ -404,7 +404,7 @@ export default function ArrecadacaoSolidaria() {
                             <Truck size={28} />
                         </div>
                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Despachar para Município</h3>
-                        <p className="text-xs text-slate-500 mt-1">Registrar saída do polo</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Registrar saída do polo</p>
                     </button>
                 </div>
 
@@ -414,7 +414,7 @@ export default function ArrecadacaoSolidaria() {
                 </h3>
 
                 {inventory.filter(i => i.quantity > 0).length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-10 text-center shadow-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 dark:border-slate-800 p-10 text-center shadow-sm">
                         <AlertCircle className="mx-auto text-slate-300 mb-4" size={48} />
                         <h4 className="font-bold text-lg text-slate-600 dark:text-slate-300">Nenhum item no polo solidário</h4>
                         <p className="text-sm text-slate-400">O estoque de passagem está vazio no momento.</p>
@@ -426,7 +426,7 @@ export default function ArrecadacaoSolidaria() {
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h4 className="font-bold text-slate-800 dark:text-slate-100">{item.item_name}</h4>
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase">{item.category || 'Outros'}</span>
+                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">{item.category || 'Outros'}</span>
                                     </div>
                                     <div className="text-right">
                                         <div className="text-xl font-black text-rose-600">{item.quantity}</div>
@@ -446,7 +446,7 @@ export default function ArrecadacaoSolidaria() {
                         </h3>
                         <button 
                             onClick={() => setShowHistoryModal(true)}
-                            className="text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300 py-2 px-4 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+                            className="text-xs font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-800 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300 py-2 px-4 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
                         >
                             <Filter size={14} />
                             Ver Completo
@@ -454,14 +454,14 @@ export default function ArrecadacaoSolidaria() {
                     </div>
                     
                     {[...donations, ...distributions].length === 0 ? (
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 text-center shadow-sm">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 dark:border-slate-800 p-8 text-center shadow-sm">
                             <p className="text-sm text-slate-400">Nenhum histórico registrado.</p>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm whitespace-nowrap">
-                                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                                         <tr>
                                             <th className="px-6 py-4">Data</th>
                                             <th className="px-6 py-4">Movimento</th>
@@ -475,11 +475,11 @@ export default function ArrecadacaoSolidaria() {
                                             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                                             .slice(0, 5)
                                             .map(mov => (
-                                            <tr key={mov.id || mov.created_at} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                                <td className="px-6 py-4 text-slate-500">{new Date(mov.created_at).toLocaleString('pt-BR')}</td>
+                                            <tr key={mov.id || mov.created_at} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800/30 transition-colors">
+                                                <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{new Date(mov.created_at).toLocaleString('pt-BR')}</td>
                                                 <td className="px-6 py-4">
                                                     {mov.type === 'IN' ? (
-                                                        <span className="flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md w-max">
+                                                        <span className="flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 dark:bg-emerald-900/20 px-2 py-1 rounded-md w-max">
                                                             <ArrowDownToLine size={14} /> Entrada
                                                         </span>
                                                     ) : (
@@ -488,13 +488,13 @@ export default function ArrecadacaoSolidaria() {
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">
+                                                <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300">
                                                     {mov.item_description || mov.item_name}
                                                 </td>
                                                 <td className="px-6 py-4 font-black">
                                                     {mov.type === 'IN' ? '+' : '-'}{mov.quantity} {mov.unit}
                                                 </td>
-                                                <td className="px-6 py-4 text-slate-500">
+                                                <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
                                                     {mov.type === 'IN' ? 'Doação Externa' : mov.recipient_name}
                                                 </td>
                                             </tr>
@@ -510,12 +510,12 @@ export default function ArrecadacaoSolidaria() {
             {/* Modal Entrada */}
             {isDonating && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <form onSubmit={handleReceive} className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+                    <form onSubmit={handleReceive} className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-800 animate-in zoom-in-95 duration-200">
                         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Receber Arrecadação</h3>
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Item Arrecadado <span className="text-red-500">*</span></label>
-                                <input required type="text" list="common_items_list" value={itemDesc} onChange={e => setItemDesc(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Ex: Fardo de Água" />
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400 mb-1">Item Arrecadado <span className="text-red-500">*</span></label>
+                                <input required type="text" list="common_items_list" value={itemDesc} onChange={e => setItemDesc(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="Ex: Fardo de Água" />
                                 <datalist id="common_items_list">
                                     {COMMON_ITEMS.map(i => <option key={i} value={i} />)}
                                     {inventory.filter(inv => !COMMON_ITEMS.includes(inv.item_name)).map(i => <option key={i.id} value={i.item_name} />)}
@@ -523,12 +523,12 @@ export default function ArrecadacaoSolidaria() {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Qtd. <span className="text-red-500">*</span></label>
-                                    <input required type="number" step="0.01" value={itemQty} onChange={e => setItemQty(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="0" />
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400 mb-1">Qtd. <span className="text-red-500">*</span></label>
+                                    <input required type="number" step="0.01" value={itemQty} onChange={e => setItemQty(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/50" placeholder="0" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Unidade</label>
-                                    <select value={itemUnit} onChange={e => setItemUnit(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none">
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400 mb-1">Unidade</label>
+                                    <select value={itemUnit} onChange={e => setItemUnit(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none">
                                         <option value="unidades">Unidades</option>
                                         <option value="kg">Kg</option>
                                         <option value="litros">Litros</option>
@@ -539,7 +539,7 @@ export default function ArrecadacaoSolidaria() {
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button type="button" onClick={() => setIsDonating(false)} className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm transition-colors">Cancelar</button>
+                            <button type="button" onClick={() => setIsDonating(false)} className="flex-1 py-3 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 dark:text-slate-300 rounded-xl font-bold text-sm transition-colors">Cancelar</button>
                             <button type="submit" className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-colors">Confirmar Entrada</button>
                         </div>
                     </form>
@@ -549,12 +549,12 @@ export default function ArrecadacaoSolidaria() {
             {/* Modal Saída Lote */}
             {isDispatching && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-800 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
                         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Despachar Itens em Lote</h3>
                         
                         <div className="mb-6 bg-purple-50 dark:bg-purple-900/10 p-4 rounded-2xl border border-purple-100 dark:border-purple-800/30">
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Destino (Município) <span className="text-red-500">*</span></label>
-                            <input required type="text" list="recipients_list" value={recipient} onChange={e => setRecipient(e.target.value)} className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/50" placeholder="Ex: Muçum / RS" />
+                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 mb-2">Destino (Município) <span className="text-red-500">*</span></label>
+                            <input required type="text" list="recipients_list" value={recipient} onChange={e => setRecipient(e.target.value)} className="w-full bg-white dark:bg-slate-900 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/50" placeholder="Ex: Muçum / RS" />
                             <datalist id="recipients_list">
                                 {uniqueRecipients.map(r => <option key={r} value={r} />)}
                             </datalist>
@@ -562,20 +562,20 @@ export default function ArrecadacaoSolidaria() {
 
                         <form onSubmit={addToDispatchList} className="space-y-4 mb-6 border-b border-slate-100 dark:border-slate-800 pb-6">
                             <div>
-                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Item a despachar (Selecione) <span className="text-red-500">*</span></label>
+                                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400 mb-1">Item a despachar (Selecione) <span className="text-red-500">*</span></label>
                                 <select required value={itemDesc} onChange={e => {
                                     setItemDesc(e.target.value);
                                     const it = inventory.find(i => i.item_name === e.target.value);
                                     if(it) setItemUnit(it.unit);
-                                }} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none">
+                                }} className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none">
                                     <option value="" disabled>Selecione um item em estoque...</option>
                                     {inventory.filter(i => i.quantity > 0).map(i => <option key={i.id} value={i.item_name}>{i.item_name} (Disp: {i.quantity} {i.unit})</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-3 items-end">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Qtd. Envio <span className="text-red-500">*</span></label>
-                                    <input required type="number" step="0.01" max={inventory.find(i => i.item_name === itemDesc)?.quantity || ''} value={itemQty} onChange={e => setItemQty(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/50" placeholder="0" />
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400 mb-1">Qtd. Envio <span className="text-red-500">*</span></label>
+                                    <input required type="number" step="0.01" max={inventory.find(i => i.item_name === itemDesc)?.quantity || ''} value={itemQty} onChange={e => setItemQty(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-purple-500/50" placeholder="0" />
                                 </div>
                                 <button type="submit" className="py-2.5 px-4 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl font-bold text-sm transition-colors w-full">Adicionar</button>
                             </div>
@@ -583,16 +583,16 @@ export default function ArrecadacaoSolidaria() {
 
                         {dispatchList.length > 0 && (
                             <div className="mb-6">
-                                <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">Itens na Carga ({dispatchList.length})</h4>
+                                <h4 className="text-sm font-bold text-slate-600 dark:text-slate-300 dark:text-slate-400 mb-2">Itens na Carga ({dispatchList.length})</h4>
                                 <ul className="space-y-2">
                                     {dispatchList.map((item, idx) => (
                                         <li key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                                             <div>
-                                                <span className="font-bold text-slate-700 dark:text-slate-300">{item.item_name}</span>
+                                                <span className="font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300">{item.item_name}</span>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="font-black text-purple-600">{item.quantity} {item.unit}</span>
-                                                <button onClick={() => setDispatchList(dispatchList.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600 p-1 bg-red-50 dark:bg-red-900/20 rounded-md">
+                                                <button onClick={() => setDispatchList(dispatchList.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600 p-1 bg-red-50 dark:bg-red-900/20 dark:bg-red-900/20 rounded-md">
                                                     &times;
                                                 </button>
                                             </div>
@@ -603,7 +603,7 @@ export default function ArrecadacaoSolidaria() {
                         )}
 
                         <div className="flex gap-3">
-                            <button type="button" onClick={() => setIsDispatching(false)} className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm transition-colors">Cancelar</button>
+                            <button type="button" onClick={() => setIsDispatching(false)} className="flex-1 py-3 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 dark:text-slate-300 rounded-xl font-bold text-sm transition-colors">Cancelar</button>
                             <button onClick={submitDispatch} disabled={dispatchList.length === 0} className="flex-1 py-3 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-colors">Confirmar Envio Lote</button>
                         </div>
                     </div>
@@ -613,8 +613,8 @@ export default function ArrecadacaoSolidaria() {
             {/* Modal Histórico Completo */}
             {showHistoryModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-900/50">
                             <div>
                                 <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                     <History size={24} className="text-rose-500" />
@@ -622,7 +622,7 @@ export default function ArrecadacaoSolidaria() {
                                 </h3>
                                 <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Painel de Auditoria do Polo Solidário</p>
                             </div>
-                            <button onClick={() => setShowHistoryModal(false)} className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
+                            <button onClick={() => setShowHistoryModal(false)} className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 shadow-sm border border-slate-100 dark:border-slate-800 dark:border-slate-700 transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -635,7 +635,7 @@ export default function ArrecadacaoSolidaria() {
                                     value={historyLocationFilter} 
                                     onChange={e => setHistoryLocationFilter(e.target.value)} 
                                     placeholder="Buscar..." 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm"
                                 />
                             </div>
                             <div className="flex-1 min-w-[120px]">
@@ -645,7 +645,7 @@ export default function ArrecadacaoSolidaria() {
                                     value={historyItemFilter} 
                                     onChange={e => setHistoryItemFilter(e.target.value)} 
                                     placeholder="Ex: Água..." 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm"
                                 />
                             </div>
                             <div className="w-[110px]">
@@ -653,7 +653,7 @@ export default function ArrecadacaoSolidaria() {
                                 <select 
                                     value={historyTypeFilter} 
                                     onChange={e => setHistoryTypeFilter(e.target.value)} 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm dark:text-white"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm dark:text-white"
                                 >
                                     <option value="">Todos</option>
                                     <option value="IN">Entrada</option>
@@ -667,7 +667,7 @@ export default function ArrecadacaoSolidaria() {
                                         type="date" 
                                         value={historyDateStartFilter} 
                                         onChange={e => setHistoryDateStartFilter(e.target.value)} 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm dark:text-white"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm dark:text-white"
                                     />
                                 </div>
                                 <div className="flex-1">
@@ -676,7 +676,7 @@ export default function ArrecadacaoSolidaria() {
                                         type="date" 
                                         value={historyDateEndFilter} 
                                         onChange={e => setHistoryDateEndFilter(e.target.value)} 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm dark:text-white"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-2 outline-none focus:ring-2 focus:ring-rose-500/50 text-sm dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -730,7 +730,7 @@ export default function ArrecadacaoSolidaria() {
 
                         <div className="flex-1 overflow-y-auto p-0">
                             <table className="w-full text-left text-sm whitespace-nowrap">
-                                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 shadow-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 shadow-sm">
                                     <tr>
                                         <th className="px-6 py-4">Data</th>
                                         <th className="px-6 py-4">Movimento</th>
@@ -762,11 +762,11 @@ export default function ArrecadacaoSolidaria() {
                                             return true;
                                         })
                                         .map(mov => (
-                                        <tr key={mov.id || mov.created_at} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                            <td className="px-6 py-4 text-slate-500 font-medium">{new Date(mov.created_at).toLocaleString('pt-BR')}</td>
+                                        <tr key={mov.id || mov.created_at} className="hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-medium">{new Date(mov.created_at).toLocaleString('pt-BR')}</td>
                                             <td className="px-6 py-4">
                                                 {mov.type === 'IN' ? (
-                                                    <span className="flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md w-max">
+                                                    <span className="flex items-center gap-1 text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 dark:bg-emerald-900/20 px-2 py-1 rounded-md w-max">
                                                         <ArrowDownToLine size={14} /> Entrada
                                                     </span>
                                                 ) : (
@@ -775,20 +775,20 @@ export default function ArrecadacaoSolidaria() {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">
+                                            <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300">
                                                 {mov.item_description || mov.item_name}
                                             </td>
                                             <td className="px-6 py-4 font-black">
                                                 {mov.type === 'IN' ? '+' : '-'}{mov.quantity} {mov.unit}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-500 font-medium">
+                                            <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-medium">
                                                 {mov.type === 'IN' ? 'Doação Externa' : mov.recipient_name}
                                             </td>
                                             {isAdminOrCoord && (
                                                 <td className="px-6 py-4 text-right">
                                                     <button 
                                                         onClick={() => handleDeleteHistory(mov)}
-                                                        className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center ml-auto"
+                                                        className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 dark:bg-red-900/20 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center ml-auto"
                                                         title="Excluir Registro"
                                                     >
                                                         <Trash2 size={16} />

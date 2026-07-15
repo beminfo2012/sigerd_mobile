@@ -257,7 +257,7 @@ export default function ShelterMenu() {
             description: 'Gerencie ocupantes, capacidade e operações de cada abrigo.',
             icon: Building2,
             path: '/assisthumanitaria/lista',
-            color: 'bg-blue-50 text-[#2a5299]',
+            color: 'bg-blue-50 dark:bg-blue-900/20 text-[#2a5299]',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
@@ -266,7 +266,7 @@ export default function ShelterMenu() {
             description: 'Visualize e gerencie o estoque centralizado da prefeitura.',
             icon: Package,
             path: '/assisthumanitaria/estoque',
-            color: 'bg-emerald-50 text-emerald-600',
+            color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
         {
@@ -275,7 +275,7 @@ export default function ShelterMenu() {
             description: 'Registre a entrada de doações para o estoque ou abrigos.',
             icon: Gift,
             path: '/assisthumanitaria/doacoes-central',
-            color: 'bg-amber-50 text-amber-600',
+            color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'voluntário', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
@@ -302,7 +302,7 @@ export default function ShelterMenu() {
             description: 'Consolidado de ocupação, doações e movimentações.',
             icon: FileText,
             path: '/assisthumanitaria/relatorios',
-            color: 'bg-slate-50 text-slate-600',
+            color: 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
         {
@@ -320,7 +320,7 @@ export default function ShelterMenu() {
             description: 'Contratos vigentes e suprimentos emergenciais.',
             icon: FileText,
             path: '/assisthumanitaria/contratos',
-            color: 'bg-amber-50 text-amber-700',
+            color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
         },
         {
@@ -329,7 +329,7 @@ export default function ShelterMenu() {
             description: 'Solicite kits e recursos à Defesa Civil Estadual/Nacional.',
             icon: AlertTriangle,
             path: '/assisthumanitaria/sah',
-            color: 'bg-red-50 text-red-600',
+            color: 'bg-red-50 dark:bg-red-900/20 text-red-600',
             allowedRoles: ['admin', 'administrador', 'coordenador', 'coordenador de proteção e defesa civil', 'agente de defesa civil']
         }
     ];
@@ -344,28 +344,28 @@ export default function ShelterMenu() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+            <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-800/50">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="font-bold text-slate-600 text-xs uppercase tracking-widest">Carregando Dados...</span>
+                    <span className="font-bold text-slate-600 dark:text-slate-300 text-xs uppercase tracking-widest">Carregando Dados...</span>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100">
+        <div className="bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100">
             {/* Header Sticky Glass */}
-            <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between shadow-sm transition-all">
+            <header className="bg-white dark:bg-slate-900/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 dark:border-slate-800 px-4 h-16 flex items-center justify-between shadow-sm transition-all">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors active:scale-95 text-slate-600 dark:text-slate-400">
+                    <button onClick={() => navigate('/')} className="p-2 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-800 rounded-full transition-colors active:scale-95 text-slate-600 dark:text-slate-300 dark:text-slate-400">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <h1 className="text-base font-black text-slate-800 dark:text-slate-100 leading-tight">ASSIST. HUMANITÁRIA</h1>
                         <div className="flex items-center gap-1.5 overflow-hidden">
                             <span className={`w-1.5 h-1.5 rounded-full ${syncPercentage === 100 ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'} flex-shrink-0`} />
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">
                                 {syncPercentage === 100 ? 'Dados Sincronizados' : 'Sincronização Pendente'}
                             </p>
                         </div>
@@ -375,7 +375,7 @@ export default function ShelterMenu() {
                     <button
                         onClick={handleForceSync}
                         disabled={isSyncing}
-                        className={`p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 active:scale-95 transition-all ${isSyncing ? 'text-blue-500' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                        className={`p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 active:scale-95 transition-all ${isSyncing ? 'text-blue-500' : 'hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-700'}`}
                     >
                         {isSyncing ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Cloud className="w-5 h-5" />}
                     </button>
@@ -385,7 +385,7 @@ export default function ShelterMenu() {
             <main className="px-6 md:px-12 py-8 space-y-8 w-full max-w-[1700px] mx-auto">
                         
                         {operacaoAtiva && (
-                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 dark:border-blue-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center flex-shrink-0">
                                         <AlertTriangle className="text-blue-600 dark:text-blue-400" size={20} />
@@ -417,7 +417,7 @@ export default function ShelterMenu() {
                             <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-[28px] shadow-lg border border-blue-400/20 dark:border-blue-500/30 relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2 relative z-10">
                                     <Building2 className="text-white/60" size={20} />
-                                    <div className="text-[9px] bg-white/20 px-2 py-0.5 rounded-full text-white font-bold backdrop-blur-sm border border-white/10">
+                                    <div className="text-[9px] bg-white dark:bg-slate-900/20 px-2 py-0.5 rounded-full text-white font-bold backdrop-blur-sm border border-white/10">
                                         {stats.totalShelters} CADASTRADOS
                                     </div>
                                 </div>
@@ -461,7 +461,7 @@ export default function ShelterMenu() {
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2">
                                     <Gift className="text-amber-500" size={20} />
-                                    <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
+                                    <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
                                         +{stats.totalDistributions} distribuídos
                                     </div>
                                 </div>
@@ -474,11 +474,11 @@ export default function ShelterMenu() {
                                 <div className="flex justify-between items-start mb-2">
                                     <Package className="text-purple-500" size={20} />
                                     {lowStockAlerts.length > 0 ? (
-                                        <div className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center gap-1 animate-pulse">
+                                        <div className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-50 dark:bg-red-900/20 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center gap-1 animate-pulse">
                                             <AlertTriangle size={10} /> {lowStockAlerts.length} ALERTA{lowStockAlerts.length > 1 ? 'S' : ''}
                                         </div>
                                     ) : consistency && (
-                                        <div className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${consistency.isConsistent ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
+                                        <div className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${consistency.isConsistent ? 'bg-emerald-50 dark:bg-emerald-900/20 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-900/20 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}>
                                             {consistency.isConsistent ? '✓ OK' : '⚠ DIVERGÊNCIA'}
                                         </div>
                                     )}
@@ -490,9 +490,9 @@ export default function ShelterMenu() {
 
                         {/* ═══ LOW STOCK ALERTS ═══ */}
                         {lowStockAlerts.length > 0 && (
-                            <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 border border-slate-200 border border-red-100 dark:border-red-800 shadow-sm animate-in fade-in duration-700 rounded-3xl">
+                            <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 p-5 border border-slate-200 dark:border-slate-700 border border-red-100 dark:border-red-800 shadow-sm animate-in fade-in duration-700 rounded-3xl">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-red-100 dark:bg-red-800 rounded-lg">
+                                    <div className="p-2 bg-red-100 dark:bg-red-900/30 dark:bg-red-800 rounded-lg">
                                         <AlertTriangle className="text-red-500" size={18} />
                                     </div>
                                     <div>
@@ -502,8 +502,8 @@ export default function ShelterMenu() {
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                     {lowStockAlerts.map((item, i) => (
-                                        <div key={i} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 border border-red-100 dark:border-red-800/30 flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <div key={i} className="bg-white dark:bg-slate-900/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 border border-red-100 dark:border-red-800/30 flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 dark:bg-red-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
                                                 <span className="text-lg">📦</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -514,7 +514,7 @@ export default function ShelterMenu() {
                                                     </span>
                                                     <span className="text-[9px] text-slate-400 dark:text-slate-500">/ mín. {item.min_quantity}</span>
                                                 </div>
-                                                <div className="w-full bg-red-100 rounded-full h-1 mt-1 overflow-hidden">
+                                                <div className="w-full bg-red-100 dark:bg-red-900/30 rounded-full h-1 mt-1 overflow-hidden">
                                                     <div
                                                         className="h-full bg-red-500 rounded-full"
                                                         style={{ width: `${Math.min((item.quantity / item.min_quantity) * 100, 100)}%` }}
@@ -530,9 +530,9 @@ export default function ShelterMenu() {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-700">
                             {/* ═══ PER-SHELTER OCCUPANCY BARS ═══ */}
                             {shelterOccupancy.length > 0 && (
-                                <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 dark:border-slate-700 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/30 rounded-xl">
                                             <Users className="text-blue-500" size={20} />
                                         </div>
                                         <div>
@@ -544,7 +544,7 @@ export default function ShelterMenu() {
                                         {shelterOccupancy.map((s, i) => (
                                             <div key={s.shelter_id || i}>
                                                 <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[75%]" title={s.name}>{s.name}</span>
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-300 truncate max-w-[75%]" title={s.name}>{s.name}</span>
                                                     <span className={`text-[11px] font-black ${s.percent >= 90 ? 'text-red-600' : s.percent >= 70 ? 'text-amber-600' : 'text-emerald-600 dark:text-emerald-400'}`}>
                                                         {s.occupancy}/{s.capacity} ({s.percent}%)
                                                     </span>
@@ -558,7 +558,7 @@ export default function ShelterMenu() {
                                                         style={{ width: `${s.percent}%` }}
                                                     >
                                                         {s.percent >= 30 && (
-                                                            <div className="absolute inset-0 bg-white/20 dark:bg-black/20 animate-pulse rounded-full" style={{ animationDuration: '3s' }}></div>
+                                                            <div className="absolute inset-0 bg-white dark:bg-slate-900/20 dark:bg-black/20 animate-pulse rounded-full" style={{ animationDuration: '3s' }}></div>
                                                         )}
                                                     </div>
                                                 </div>
@@ -569,7 +569,7 @@ export default function ShelterMenu() {
                             )}
 
                             {/* ═══ TIMELINE: DOAÇÕES vs DISTRIBUIÇÕES ═══ */}
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 dark:border-slate-700 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
                                 <div className="flex items-center gap-3 mb-6">
                                     <div className="p-2.5 bg-violet-50 dark:bg-violet-900/30 rounded-xl">
                                         <TrendingUp className="text-violet-500" size={20} />
@@ -580,11 +580,11 @@ export default function ShelterMenu() {
                                     </div>
                                 </div>
                                 <div className="flex gap-4 mb-4 justify-center">
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-full">
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-full">
                                         <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                                         <span className="text-[9px] font-black text-emerald-600 uppercase">Doações</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 rounded-full">
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
                                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                         <span className="text-[9px] font-black text-blue-600 uppercase">Distribuições</span>
                                     </div>
@@ -631,9 +631,9 @@ export default function ShelterMenu() {
                             </div>
 
                             {/* ═══ ORIGINAL CHARTS (Top Items) ═══ */}
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 dark:border-slate-700 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col h-full">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+                                    <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 dark:bg-emerald-900/30 rounded-xl">
                                         <Package className="text-emerald-500" size={20} />
                                     </div>
                                     <div>

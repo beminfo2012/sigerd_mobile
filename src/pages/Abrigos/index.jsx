@@ -91,15 +91,15 @@ export function Dashboard() {
     };
 
     return (
-        <div className="bg-slate-50 min-h-screen pb-24 font-sans text-slate-800">
+        <div className="bg-slate-50 dark:bg-slate-800/50 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100">
             {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-4 h-16 flex items-center justify-between shadow-sm">
+            <header className="bg-white dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 px-4 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95 text-slate-600">
+                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:bg-slate-800 rounded-full transition-colors active:scale-95 text-slate-600 dark:text-slate-300">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h1 className="text-base font-black text-slate-800 leading-tight">ASSIST. HUMANITÁRIA</h1>
+                        <h1 className="text-base font-black text-slate-800 dark:text-slate-100 leading-tight">ASSIST. HUMANITÁRIA</h1>
                         <div className="flex items-center gap-1.5 overflow-hidden">
                             <span className={`w-1 h-1 rounded-full ${syncPercentage === 100 ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'} flex-shrink-0`} />
                             <p className={`text-[10px] font-bold uppercase tracking-wider truncate ${syncPercentage === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
@@ -111,7 +111,7 @@ export function Dashboard() {
                 <div className="flex gap-2">
                     <button
                         onClick={() => window.open(`/assisthumanitaria/relatorio-geral?operacao_id=${operacaoAtiva?.id || 'all'}`, '_blank')}
-                        className="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 hover:text-red-500 transition-all"
+                        className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:bg-slate-700 hover:text-red-500 transition-all"
                         title="Relatório Geral de Abrigos"
                     >
                         <FileText className="w-5 h-5" />
@@ -125,7 +125,7 @@ export function Dashboard() {
                     <button
                         onClick={handleForceSync}
                         disabled={isSyncing}
-                        className={`p-2 bg-slate-100 rounded-xl text-slate-500 active:rotate-180 transition-all ${isSyncing ? 'animate-spin text-blue-500' : ''}`}
+                        className={`p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 active:rotate-180 transition-all ${isSyncing ? 'animate-spin text-blue-500' : ''}`}
                     >
                         {isSyncing ? <RefreshCcw className="w-5 h-5" /> : <Cloud className="w-5 h-5" />}
                     </button>
@@ -140,7 +140,7 @@ export function Dashboard() {
                     <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-3xl shadow-lg border border-blue-400/20 relative overflow-hidden">
                         <div className="flex justify-between items-start mb-2 relative z-10">
                             <Building2 className="text-white/60" size={20} />
-                            <div className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full text-white font-bold backdrop-blur-sm border border-white/10">
+                            <div className="text-[10px] bg-white dark:bg-slate-900/20 px-2 py-0.5 rounded-full text-white font-bold backdrop-blur-sm border border-white/10">
                                 {stats.activeShelters} ativos
                             </div>
                         </div>
@@ -152,11 +152,11 @@ export function Dashboard() {
                     </div>
 
                     {/* Stats Card - Occupants */}
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
                         <div className="flex justify-between items-start mb-2">
                             <Users className="text-emerald-500" size={20} />
                         </div>
-                        <div className="text-3xl font-black text-slate-800">{stats.totalOccupants}</div>
+                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{stats.totalOccupants}</div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Abrigados</div>
                     </div>
                 </div>
@@ -164,17 +164,17 @@ export function Dashboard() {
                 {/* KPI Cards Row 2 */}
                 <div className="grid grid-cols-2 gap-3">
                     {/* Stats Card - Occupancy Rate */}
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
                         <div className="flex justify-between items-start mb-2">
                             <div className={`text-[9px] font-black ${stats.occupancyRate > 90 ? 'text-red-500' : 'text-slate-400'}`}>
                                 {stats.totalOccupancy}/{stats.totalCapacity} VAGAS
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-slate-800">{stats.occupancyRate}<span className="text-sm ml-0.5">%</span></div>
+                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{stats.occupancyRate}<span className="text-sm ml-0.5">%</span></div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Taxa Ocupação</div>
 
                         {/* Progress Bar */}
-                        <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div className="mt-3 h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full ${stats.occupancyRate > 90 ? 'bg-red-500' : 'bg-blue-500'}`}
                                 style={{ width: `${Math.min(stats.occupancyRate, 100)}%` }}
@@ -183,25 +183,25 @@ export function Dashboard() {
                     </div>
 
                     {/* Stats Card - Donations */}
-                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
                         <div className="flex justify-between items-start mb-2">
                             <Gift className="text-amber-500" size={20} />
                         </div>
-                        <div className="text-3xl font-black text-slate-800">{stats.totalDonations}</div>
+                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{stats.totalDonations}</div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Doações</div>
                     </div>
                 </div>
 
                 {/* Main Content Section (List) */}
-                <div className="bg-white p-1 border border-slate-200 border border-slate-100 shadow-lg ring-4 ring-slate-100 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 p-1 border border-slate-200 dark:border-slate-700 border border-slate-100 dark:border-slate-800 shadow-lg ring-4 ring-slate-100 overflow-hidden">
                     {/* Search and Filters Header */}
-                    <div className="p-4 border-b border-slate-50 bg-white sticky top-0 z-10">
+                    <div className="p-4 border-b border-slate-50 bg-white dark:bg-slate-900 sticky top-0 z-10">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="p-2 bg-blue-50 rounded-lg">
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                 <Home className="text-blue-500" size={18} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-slate-800 text-sm">Lista de Abrigos</h3>
+                                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Lista de Abrigos</h3>
                                 <div className="flex items-center gap-1">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
@@ -219,12 +219,12 @@ export function Dashboard() {
                                     placeholder="Buscar abrigo..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400"
+                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400"
                                 />
                             </div>
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
-                                className={`p-2 rounded-xl transition-all active:scale-95 ${showFilters ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}
+                                className={`p-2 rounded-xl transition-all active:scale-95 ${showFilters ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border border-blue-100 dark:border-blue-900/50' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 border border-slate-100 dark:border-slate-800'}`}
                             >
                                 <Filter className="w-4 h-4" />
                             </button>
@@ -236,19 +236,19 @@ export function Dashboard() {
                                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                                     <button
                                         onClick={() => setStatusFilter('all')}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap transition-colors ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap transition-colors ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}
                                     >
                                         Todos
                                     </button>
                                     <button
                                         onClick={() => setStatusFilter('active')}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap transition-colors ${statusFilter === 'active' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap transition-colors ${statusFilter === 'active' ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}
                                     >
                                         Ativos
                                     </button>
                                     <button
                                         onClick={() => setStatusFilter('full')}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap transition-colors ${statusFilter === 'full' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'}`}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase whitespace-nowrap transition-colors ${statusFilter === 'full' ? 'bg-amber-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}
                                     >
                                         Lotados
                                     </button>
@@ -258,13 +258,13 @@ export function Dashboard() {
                     </div>
 
                     {/* List Content */}
-                    <div className="bg-slate-50 min-h-[300px]">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 min-h-[300px]">
                         {filteredShelters.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-3 shadow-sm">
+                                <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center mb-3 shadow-sm">
                                     <Search className="w-6 h-6 text-slate-300" />
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-600 mb-1">
+                                <h3 className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-1">
                                     Nenhum abrigo encontrado
                                 </h3>
                                 <p className="text-[10px] text-slate-400 px-8">
@@ -277,17 +277,17 @@ export function Dashboard() {
                                     <div
                                         key={shelter.id}
                                         onClick={() => navigate(`/assisthumanitaria/${shelter.id}`)}
-                                        className="p-4 bg-white hover:bg-slate-50 transition-colors cursor-pointer group active:bg-blue-50/50"
+                                        className="p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors cursor-pointer group active:bg-blue-50 dark:bg-blue-900/20/50"
                                     >
                                         <div className="flex items-center gap-3">
                                             {/* Status Dot */}
                                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${shelter.status === 'active' ? 'bg-emerald-500' :
-                                                shelter.status === 'full' ? 'bg-amber-500' : 'bg-slate-300'
+                                                shelter.status === 'full' ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'
                                                 }`} />
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-start">
-                                                    <h4 className="text-sm font-bold text-slate-800 truncate pr-2 group-hover:text-blue-600 transition-colors">
+                                                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate pr-2 group-hover:text-blue-600 transition-colors">
                                                         {shelter.name}
                                                     </h4>
                                                     <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-400 transition-colors" />
@@ -297,7 +297,7 @@ export function Dashboard() {
                                                 </p>
 
                                                 <div className="flex items-center gap-3 mt-2">
-                                                    <div className="text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                                                    <div className="text-[9px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded flex items-center gap-1">
                                                         <Users size={10} className="text-slate-400" />
                                                         {shelter.current_occupancy || 0}/{shelter.capacity}
                                                     </div>
@@ -311,7 +311,7 @@ export function Dashboard() {
 
                                             <button
                                                 onClick={(e) => handleDeleteShelter(e, shelter.id)}
-                                                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 active:opacity-100"
+                                                className="w-8 h-8 flex items-center justify-center rounded-full text-slate-300 hover:bg-red-50 dark:bg-red-900/20 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 active:opacity-100"
                                             >
                                                 <Trash2 size={14} />
                                             </button>

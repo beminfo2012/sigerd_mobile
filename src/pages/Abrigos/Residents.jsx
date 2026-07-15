@@ -39,19 +39,19 @@ export function Residents() {
     });
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 pb-12">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
                 <button
                     onClick={() => navigate('/assisthumanitaria')}
-                    className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
+                    className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 dark:text-blue-200 transition-colors w-fit"
                 >
                     <ArrowLeft size={20} />
                     Voltar ao Menu
                 </button>
 
                 <div>
-                    <h1 className="text-2xl font-black text-slate-800 mb-1">Residentes</h1>
-                    <p className="text-sm text-slate-500">Lista geral de pessoas abrigadas em todas as unidades</p>
+                    <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-1">Residentes</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Lista geral de pessoas abrigadas em todas as unidades</p>
                 </div>
 
                 <div className="relative">
@@ -79,13 +79,13 @@ export function Residents() {
                                     className="p-4 hover:shadow-md transition-shadow cursor-pointer"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                        <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
                                             <User className="w-6 h-6 text-emerald-600" />
                                         </div>
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2 mb-1">
-                                                <h3 className="text-sm font-bold text-slate-800 truncate">
+                                                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
                                                     {resident.full_name}
                                                 </h3>
                                                 {resident.special_needs && (
@@ -94,7 +94,7 @@ export function Residents() {
                                             </div>
 
                                             <div className="flex flex-col gap-1">
-                                                <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
                                                     <span className="font-bold">{resident.age} anos</span>
                                                     <span>•</span>
                                                     <span className="uppercase">{resident.gender === 'masculino' ? 'Masc' : resident.gender === 'feminino' ? 'Fem' : 'Outro'}</span>

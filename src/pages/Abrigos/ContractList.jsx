@@ -45,8 +45,8 @@ const ContractList = () => {
         const threeMonths = new Date();
         threeMonths.setMonth(now.getMonth() + 3);
 
-        if (end < now) return 'text-red-500 bg-red-50'; // Expired
-        if (end < threeMonths) return 'text-amber-500 bg-amber-50'; // Expiring soon
+        if (end < now) return 'text-red-500 bg-red-50 dark:bg-red-900/20'; // Expired
+        if (end < threeMonths) return 'text-amber-500 bg-amber-50 dark:bg-amber-900/20'; // Expiring soon
         return 'text-green-500 bg-green-50'; // Active
     };
 
@@ -58,14 +58,14 @@ const ContractList = () => {
 
         if (end < now) {
             return (
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-full border border-red-100 uppercase">
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-red-50 dark:bg-red-900/20 text-red-600 text-[10px] font-bold rounded-full border border-red-100 uppercase">
                     <AlertCircle size={10} /> Expirado
                 </span>
             );
         }
         if (end < threeMonths) {
             return (
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-full border border-amber-100 uppercase">
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 text-[10px] font-bold rounded-full border border-amber-100 uppercase">
                     <AlertCircle size={10} /> Vencendo
                 </span>
             );
@@ -82,20 +82,20 @@ const ContractList = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-4 h-16 flex items-center justify-between shadow-sm">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50">
+            <header className="bg-white dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 px-4 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/assisthumanitaria')} className="hover:bg-slate-100 rounded-full">
-                        <ArrowLeft className="w-6 h-6 text-slate-700" />
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/assisthumanitaria')} className="hover:bg-slate-100 dark:bg-slate-800 rounded-full">
+                        <ArrowLeft className="w-6 h-6 text-slate-700 dark:text-slate-200" />
                     </Button>
-                    <h1 className="text-xl font-bold text-slate-800">Contratos de Emergência</h1>
+                    <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Contratos de Emergência</h1>
                 </div>
                 <div className="flex gap-2">
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={handleManualSync}
-                        className={`rounded-full hover:bg-slate-100 ${syncing ? 'animate-spin text-blue-600' : 'text-slate-600'}`}
+                        className={`rounded-full hover:bg-slate-100 dark:bg-slate-800 ${syncing ? 'animate-spin text-blue-600' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                         <RefreshCw className="w-5 h-5" />
                     </Button>
@@ -115,10 +115,10 @@ const ContractList = () => {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                     </div>
                 ) : contracts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
+                    <div className="flex flex-col items-center justify-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-600">
                         <FileText className="w-12 h-12 text-slate-300 mb-3" />
                         <h3 className="text-lg font-medium text-slate-900">Nenhum contrato registrado</h3>
-                        <p className="text-slate-500 text-sm mb-4">Clique em "Novo Contrato" para adicionar.</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Clique em "Novo Contrato" para adicionar.</p>
                         <p className="text-xs text-slate-300 mt-2">Versão local: {contracts.length} registros</p>
                     </div>
                 ) : (
@@ -129,7 +129,7 @@ const ContractList = () => {
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">
+                                                <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">
                                                     {contract.contract_number}
                                                 </span>
                                                 {getStatusBadge(contract)}
@@ -146,8 +146,8 @@ const ContractList = () => {
                                         </Button>
                                     </div>
 
-                                    <div className="space-y-2 text-sm text-slate-600">
-                                        <div className="flex justify-between border-b border-slate-100 pb-1">
+                                    <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
                                             <span>Vigência:</span>
                                             <span className="font-medium">
                                                 {new Date(contract.start_date).toLocaleDateString()} - {new Date(contract.end_date).toLocaleDateString()}
@@ -155,7 +155,7 @@ const ContractList = () => {
                                         </div>
                                         <div className="flex justify-between pt-1">
                                             <span>Valor Total:</span>
-                                            <span className="font-bold text-slate-800 text-base">{formatCurrency(contract.total_value)}</span>
+                                            <span className="font-bold text-slate-800 dark:text-slate-100 text-base">{formatCurrency(contract.total_value)}</span>
                                         </div>
                                     </div>
                                 </div>

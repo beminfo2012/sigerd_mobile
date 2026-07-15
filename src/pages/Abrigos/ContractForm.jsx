@@ -115,74 +115,74 @@ const ContractForm = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-4 h-16 flex items-center justify-between shadow-sm">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50">
+            <header className="bg-white dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 px-4 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/assisthumanitaria/contratos')} className="hover:bg-slate-100 rounded-full">
-                        <ArrowLeft className="w-6 h-6 text-slate-700" />
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/assisthumanitaria/contratos')} className="hover:bg-slate-100 dark:bg-slate-800 rounded-full">
+                        <ArrowLeft className="w-6 h-6 text-slate-700 dark:text-slate-200" />
                     </Button>
-                    <h1 className="text-xl font-bold text-slate-800">
+                    <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                         {id ? 'Editar Contrato' : 'Novo Contrato'}
                     </h1>
                 </div>
             </header>
 
             <main className="max-w-2xl mx-auto px-4 py-6">
-                <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-6">
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Número do Contrato *</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Número do Contrato *</label>
                         <input
                             type="text"
                             name="contract_number"
                             value={formData.contract_number}
                             onChange={handleChange}
                             placeholder="Ex: 2025-1V6400"
-                            className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                            className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Objeto *</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Objeto *</label>
                         <input
                             type="text"
                             name="object_description"
                             value={formData.object_description}
                             onChange={handleChange}
                             placeholder="Ex: Cestas Básicas, Marmitas, Colchões..."
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm font-medium"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm font-medium bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
                             required
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Início da Vigência *</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Início da Vigência *</label>
                             <input
                                 type="date"
                                 name="start_date"
                                 value={formData.start_date}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Término da Vigência *</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Término da Vigência *</label>
                             <input
                                 type="date"
                                 name="end_date"
                                 value={formData.end_date}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
                                 required
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Valor Total *</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Valor Total *</label>
                         <div className="relative group">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold group-focus-within:text-blue-500 transition-colors">R$</span>
                             <input
@@ -198,7 +198,7 @@ const ContractForm = () => {
                                     setFormData(prev => ({ ...prev, total_value: val }));
                                 }}
                                 placeholder="0,00"
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-black text-slate-800 text-lg shadow-sm"
+                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-black text-slate-800 dark:text-slate-100 text-lg shadow-sm bg-white dark:bg-slate-800"
                                 required
                             />
                         </div>

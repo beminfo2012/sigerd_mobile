@@ -110,14 +110,14 @@ export default function DistributionManager() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 pb-12">
             <div className="max-w-4xl mx-auto px-4 py-6">
                 
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
                         onClick={() => navigate('/assisthumanitaria')}
-                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
+                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:text-blue-200 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
@@ -150,11 +150,11 @@ export default function DistributionManager() {
                 {/* List */}
                 <div className="space-y-4">
                     {isLoading ? (
-                        <div className="text-center py-10 text-slate-500">Carregando histórico...</div>
+                        <div className="text-center py-10 text-slate-500 dark:text-slate-400">Carregando histórico...</div>
                     ) : displayGroups.length === 0 ? (
                         <Card className="p-10 text-center flex flex-col items-center justify-center border-dashed border-2 bg-transparent shadow-none">
                             <AlertCircle className="text-slate-300 mb-2 w-10 h-10" />
-                            <h3 className="text-slate-600 font-bold">Nenhuma remessa encontrada</h3>
+                            <h3 className="text-slate-600 dark:text-slate-300 font-bold">Nenhuma remessa encontrada</h3>
                             <p className="text-slate-400 text-sm">Realize uma nova solicitação para iniciar o histórico.</p>
                         </Card>
                     ) : (
@@ -167,7 +167,7 @@ export default function DistributionManager() {
                                                 <Calendar size={12} />
                                                 {new Date(group.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' })}
                                             </div>
-                                            <h3 className="font-black text-lg text-slate-800 flex items-center gap-2">
+                                            <h3 className="font-black text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                                 Remessa #{String(group.id).substring(0,8).toUpperCase()}
                                                 {group.isTransfer && (
                                                     <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-1 rounded-full uppercase tracking-widest font-bold">Transferência Interna</span>
@@ -177,36 +177,36 @@ export default function DistributionManager() {
                                     </div>
                                     
                                     {/* Items in this group */}
-                                    <div className="bg-slate-50 rounded-lg p-3 mb-4 border border-slate-100">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 mb-4 border border-slate-100 dark:border-slate-800">
                                         <div className="text-xs font-bold text-slate-400 uppercase mb-2">Produtos da Remessa ({group.items.length})</div>
                                         <ul className="space-y-1">
                                             {group.items.map((item, idx) => (
                                                 <li key={idx} className="flex justify-between text-sm">
-                                                    <span className="font-medium text-slate-700">{item.name}</span>
+                                                    <span className="font-medium text-slate-700 dark:text-slate-200">{item.name}</span>
                                                     <span className="font-black text-[#2a5299]">{item.qty} {item.unit}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
                                         <div className="flex items-start gap-2 text-sm">
                                             <Package size={16} className="text-slate-400 mt-0.5" />
                                             <div>
                                                 <div className="text-xs font-bold text-slate-400 uppercase">Origem</div>
-                                                <div className="font-semibold text-slate-700">{getShelterName(group.origin)}</div>
+                                                <div className="font-semibold text-slate-700 dark:text-slate-200">{getShelterName(group.origin)}</div>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-2 text-sm">
                                             <MapPin size={16} className="text-[#2a5299] mt-0.5" />
                                             <div>
                                                 <div className="text-xs font-bold text-[#2a5299] uppercase">Destino</div>
-                                                <div className="font-black text-slate-800">{group.isTransfer ? getShelterName(group.destination) : (group.destination || 'Destinatário não informado')}</div>
+                                                <div className="font-black text-slate-800 dark:text-slate-100">{group.isTransfer ? getShelterName(group.destination) : (group.destination || 'Destinatário não informado')}</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-slate-50 p-4 border-t md:border-t-0 md:border-l border-slate-100 flex flex-row md:flex-col items-center justify-center gap-2 md:w-32">
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 flex flex-row md:flex-col items-center justify-center gap-2 md:w-32">
                                     <Button 
                                         variant="secondary"
                                         className="w-full flex justify-center text-sm py-2"
@@ -215,7 +215,7 @@ export default function DistributionManager() {
                                         Editar
                                     </Button>
                                     <button 
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors w-full flex justify-center mt-2"
+                                        className="p-2 text-red-500 hover:bg-red-50 dark:bg-red-900/20 rounded-xl transition-colors w-full flex justify-center mt-2"
                                         title="Excluir/Estornar Romaneio"
                                         onClick={() => setItemToDelete(group)}
                                     >

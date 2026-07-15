@@ -1,4 +1,4 @@
-export function Input({ label, required, error, icon, ...props }) {
+export function Input({ label, required, error, icon, className, ...props }) {
     return (
         <div className="space-y-2">
             {label && (
@@ -9,7 +9,7 @@ export function Input({ label, required, error, icon, ...props }) {
             )}
             <div className="relative">
                 <input
-                    className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all ${error ? 'border-red-500' : ''}`}
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all ${error ? 'border-red-500' : ''} ${className || ''}`}
                     {...props}
                 />
             </div>

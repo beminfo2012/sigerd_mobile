@@ -47,14 +47,14 @@ export default function ShelterList() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 pb-12">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <button
                         onClick={() => navigate('/assisthumanitaria')}
-                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
+                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:text-blue-200 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
@@ -89,7 +89,7 @@ export default function ShelterList() {
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all uppercase ${statusFilter === status
                                     ? 'bg-[#2a5299] dark:bg-blue-600 text-white'
-                                    : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                                    : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:border-slate-800'
                                     }`}
                             >
                                 {status === 'all' ? 'Todos' : statusLabels[status]}
@@ -102,20 +102,20 @@ export default function ShelterList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredShelters.length === 0 ? (
                         <div className="col-span-full py-12 text-center">
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
                                 <Search size={32} />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-700">Nenhum abrigo encontrado</h3>
+                            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">Nenhum abrigo encontrado</h3>
                         </div>
                     ) : (
                         filteredShelters.map((shelter) => (
                             <Card
                                 key={shelter.id}
                                 onClick={() => navigate(`/assisthumanitaria/${shelter.id}`)}
-                                className="p-4 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99] border border-transparent hover:border-blue-100"
+                                className="p-4 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99] border border-transparent hover:border-blue-100 dark:border-blue-900/50"
                             >
                                 <div className="flex items-start justify-between mb-3">
-                                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#2a5299]">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[#2a5299]">
                                         <Building2 size={20} />
                                     </div>
                                     <Badge status={shelter.status || 'active'}>
@@ -123,15 +123,15 @@ export default function ShelterList() {
                                     </Badge>
                                 </div>
 
-                                <h3 className="text-sm font-bold text-slate-800 truncate mb-1">
+                                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate mb-1">
                                     {shelter.name}
                                 </h3>
-                                <p className="text-xs text-slate-500 font-medium truncate mb-4">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate mb-4">
                                     {shelter.address}
                                 </p>
 
                                 <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-600">
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-600 dark:text-slate-300">
                                         <span className="flex items-center gap-1">
                                             <Users size={12} />
                                             {shelter.current_occupancy || 0}/{shelter.capacity}
@@ -140,7 +140,7 @@ export default function ShelterList() {
                                             {Math.round(((shelter.current_occupancy || 0) / shelter.capacity) * 100)}% Lotado
                                         </span>
                                     </div>
-                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-[#2a5299] rounded-full transition-all duration-500"
                                             style={{
@@ -150,10 +150,10 @@ export default function ShelterList() {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                     <button
                                         onClick={(e) => handleDeleteShelter(e, shelter.id)}
-                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:bg-red-900/20 rounded-lg transition-colors"
                                     >
                                         <Trash2 size={16} />
                                     </button>

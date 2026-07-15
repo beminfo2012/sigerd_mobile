@@ -100,9 +100,9 @@ export function DistributionForm() {
 
     if (!shelter) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">Abrigo não encontrado</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Abrigo não encontrado</h2>
                     <Button onClick={() => navigate('/assisthumanitaria')}>Voltar ao Dashboard</Button>
                 </div>
             </div>
@@ -112,21 +112,21 @@ export function DistributionForm() {
     const selectedItem = inventoryItems.find(i => i.id === parseInt(formData.inventory_id));
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-6">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 pb-6">
             <div className="max-w-3xl mx-auto px-4 py-6">
                 {/* Header */}
                 <div className="mb-6">
                     <button
                         onClick={() => navigate(`/assisthumanitaria/${shelterId}`)}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 dark:text-blue-200 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800">Distribuir Itens</h1>
-                            <p className="text-sm text-slate-500 mt-1">
+                            <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">Distribuir Itens</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 Abrigo: {shelter.name}
                             </p>
                         </div>
@@ -137,14 +137,14 @@ export function DistributionForm() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Item Selection */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <Package size={20} className="text-[#2a5299]" />
                             Selecionar Item do Estoque
                         </h2>
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     Item <span className="text-red-500">*</span>
                                 </label>
                                 <select
@@ -152,7 +152,7 @@ export function DistributionForm() {
                                     value={formData.inventory_id}
                                     onChange={handleChange}
                                     required
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
                                     <option value="">Selecione um item</option>
                                     {inventoryItems.map((item) => (
@@ -164,20 +164,20 @@ export function DistributionForm() {
                             </div>
 
                             {selectedItem && (
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl">
                                     <div className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-2">
                                         ESTOQUE DISPONÍVEL
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
-                                            <span className="text-slate-600">Categoria:</span>
-                                            <span className="ml-2 font-bold text-slate-800 capitalize">
+                                            <span className="text-slate-600 dark:text-slate-300">Categoria:</span>
+                                            <span className="ml-2 font-bold text-slate-800 dark:text-slate-100 capitalize">
                                                 {selectedItem.category}
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="text-slate-600">Quantidade:</span>
-                                            <span className="ml-2 font-bold text-slate-800">
+                                            <span className="text-slate-600 dark:text-slate-300">Quantidade:</span>
+                                            <span className="ml-2 font-bold text-slate-800 dark:text-slate-100">
                                                 {selectedItem.quantity} {selectedItem.unit}
                                             </span>
                                         </div>
@@ -203,7 +203,7 @@ export function DistributionForm() {
 
                     {/* Recipient Information */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <Gift size={20} className="text-[#2a5299]" />
                             Informações do Destinatário
                         </h2>
@@ -230,7 +230,7 @@ export function DistributionForm() {
                             />
 
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     Observações
                                 </label>
                                 <textarea
@@ -239,7 +239,7 @@ export function DistributionForm() {
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     rows={3}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Informações adicionais sobre a distribuição..."
                                 />
                             </div>
@@ -248,9 +248,9 @@ export function DistributionForm() {
 
                     {/* Warning */}
                     {selectedItem && formData.quantity && parseFloat(formData.quantity) > selectedItem.quantity && (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl">
                             <div className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
                                     <span className="text-red-600 text-sm font-bold">!</span>
                                 </div>
                                 <div>

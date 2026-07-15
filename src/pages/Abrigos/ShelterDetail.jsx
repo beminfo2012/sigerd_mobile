@@ -158,7 +158,7 @@ export function ShelterDetail() {
 
     if (!shelter) {
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Abrigo não encontrado</h1>
                     <Button onClick={() => navigate('/assisthumanitaria')}>Voltar ao Dashboard</Button>
@@ -216,7 +216,7 @@ export function ShelterDetail() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 pb-12">
             {isToggleModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
                     <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 dark:border-slate-800">
@@ -240,7 +240,7 @@ export function ShelterDetail() {
             {isExitModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
                     <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 dark:border-slate-800">
-                        <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
                             <LogOut size={32} />
                         </div>
                         <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Registrar Saída</h3>
@@ -268,11 +268,11 @@ export function ShelterDetail() {
                             Selecione a operação para a qual deseja gerar o relatório deste abrigo.
                         </p>
                         <div className="mb-6 text-left">
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Operação Relacionada</label>
+                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Operação Relacionada</label>
                             <select 
                                 value={selectedOperationId} 
                                 onChange={(e) => setSelectedOperationId(e.target.value)}
-                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             >
                                 <option value="all">Todas (Visão Geral)</option>
                                 {operationsList.map(op => (
@@ -295,7 +295,7 @@ export function ShelterDetail() {
                 <div className="flex flex-col gap-4">
                     <button
                         onClick={() => navigate('/assisthumanitaria/lista')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold w-fit hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold w-fit hover:text-blue-800 dark:text-blue-200 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar à Lista
@@ -304,37 +304,37 @@ export function ShelterDetail() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <h1 className="text-2xl font-black text-slate-800">{shelter.name}</h1>
+                                <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">{shelter.name}</h1>
                                 <Badge status={shelter.status || 'active'}>
                                     {statusLabels[shelter.status] || 'ATIVO'}
                                 </Badge>
-                                <div className="flex bg-white rounded-xl shadow-sm border border-slate-100 p-1 ml-2">
+                                <div className="flex bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-1 ml-2">
                                     <button
                                         onClick={handleToggleStatus}
-                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${shelter.status === 'active' ? 'hover:bg-amber-50 text-amber-600' : 'hover:bg-emerald-50 text-emerald-600'}`}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${shelter.status === 'active' ? 'hover:bg-amber-50 dark:bg-amber-900/20 text-amber-600' : 'hover:bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'}`}
                                         title={shelter.status === 'active' ? 'Fechar Abrigo' : 'Reabrir Abrigo'}
                                     >
                                         {shelter.status === 'active' ? 'Inativar' : 'Ativar'}
                                     </button>
-                                    <div className="w-px bg-slate-100 my-1 mx-1"></div>
+                                    <div className="w-px bg-slate-100 dark:bg-slate-800 my-1 mx-1"></div>
                                     <button
                                         onClick={() => navigate(`/assisthumanitaria/editar/${id}`)}
-                                        className="p-1.5 text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors"
+                                        className="p-1.5 text-[#2a5299] hover:bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors"
                                         title="Editar Abrigo"
                                     >
                                         <Edit size={16} />
                                     </button>
-                                    <div className="w-px bg-slate-100 my-1 mx-1"></div>
+                                    <div className="w-px bg-slate-100 dark:bg-slate-800 my-1 mx-1"></div>
                                     <button
                                         onClick={handleOpenReportModal}
-                                        className="p-1.5 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:bg-red-900/20 rounded-lg transition-colors"
                                         title="Gerar Relatório"
                                     >
                                         <FileText size={16} />
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500 text-sm">
+                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                                 <MapPin size={16} />
                                 {shelter.address}{shelter.bairro ? ` - ${shelter.bairro}` : ''}
                             </div>
@@ -344,11 +344,11 @@ export function ShelterDetail() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card className="p-4 bg-white">
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    <Card className="p-4 bg-white dark:bg-slate-900">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                             OCUPAÇÃO
                         </div>
-                        <div className="text-xl font-black text-slate-800">
+                        <div className="text-xl font-black text-slate-800 dark:text-slate-100">
                             {shelter.current_occupancy || 0}/{shelter.capacity}
                         </div>
                         <div className="text-[10px] text-slate-400 font-bold">
@@ -356,11 +356,11 @@ export function ShelterDetail() {
                         </div>
                     </Card>
 
-                    <Card className="p-4 bg-white">
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    <Card className="p-4 bg-white dark:bg-slate-900">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                             ABRIGADOS
                         </div>
-                        <div className="text-xl font-black text-slate-800">
+                        <div className="text-xl font-black text-slate-800 dark:text-slate-100">
                             {activeOccupants.length}
                         </div>
                         <div className="text-[10px] text-slate-400 font-bold">
@@ -368,11 +368,11 @@ export function ShelterDetail() {
                         </div>
                     </Card>
 
-                    <Card className="p-4 bg-white">
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    <Card className="p-4 bg-white dark:bg-slate-900">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                             DOAÇÕES
                         </div>
-                        <div className="text-xl font-black text-slate-800">
+                        <div className="text-xl font-black text-slate-800 dark:text-slate-100">
                             {donations.length}
                         </div>
                         <div className="text-[10px] text-slate-400 font-bold">
@@ -380,11 +380,11 @@ export function ShelterDetail() {
                         </div>
                     </Card>
 
-                    <Card className="p-4 bg-white">
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    <Card className="p-4 bg-white dark:bg-slate-900">
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">
                             ESTOQUE
                         </div>
-                        <div className="text-xl font-black text-slate-800">
+                        <div className="text-xl font-black text-slate-800 dark:text-slate-100">
                             {inventory.length}
                         </div>
                         <div className="text-[10px] text-slate-400 font-bold">
@@ -403,14 +403,14 @@ export function ShelterDetail() {
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
                                         <Plus className="w-6 h-6 text-emerald-600" />
                                     </div>
                                     <div className="flex-1">
-                                        <div className="text-sm font-bold text-slate-800">
+                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                             Cadastrar Abrigado
                                         </div>
-                                        <div className="text-xs text-slate-500">
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
                                             Adicionar nova pessoa
                                         </div>
                                     </div>
@@ -422,14 +422,14 @@ export function ShelterDetail() {
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
                                         <Gift className="w-6 h-6 text-amber-600" />
                                     </div>
                                     <div className="flex-1">
-                                        <div className="text-sm font-bold text-slate-800">
+                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                             Registrar Doação
                                         </div>
-                                        <div className="text-xs text-slate-500">
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
                                             Nova doação recebida
                                         </div>
                                     </div>
@@ -441,14 +441,14 @@ export function ShelterDetail() {
                                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                                         <TrendingUp className="w-6 h-6 text-blue-600" />
                                     </div>
                                     <div className="flex-1">
-                                        <div className="text-sm font-bold text-slate-800">
+                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                             Distribuir Itens
                                         </div>
-                                        <div className="text-xs text-slate-500">
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
                                             Controle de estoque
                                         </div>
                                     </div>
@@ -462,7 +462,7 @@ export function ShelterDetail() {
                             <Card className="p-6">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                     <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-bold text-slate-800">Pessoas Abrigadas</h2>
+                                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Pessoas Abrigadas</h2>
                                         <Badge status="active">{activeOccupants.length}</Badge>
                                         <button 
                                             onClick={() => setIsOccupantsModalOpen(true)}
@@ -472,17 +472,17 @@ export function ShelterDetail() {
                                         </button>
                                     </div>
 
-                                    <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+                                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
                                         <button
                                             onClick={() => setViewMode('individual')}
-                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'individual' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500'
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'individual' ? 'bg-white dark:bg-slate-900 shadow-sm text-[#2a5299]' : 'text-slate-500 dark:text-slate-400'
                                                 }`}
                                         >
                                             INDIVIDUAL
                                         </button>
                                         <button
                                             onClick={() => setViewMode('family')}
-                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'family' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500'
+                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'family' ? 'bg-white dark:bg-slate-900 shadow-sm text-[#2a5299]' : 'text-slate-500 dark:text-slate-400'
                                                 }`}
                                         >
                                             POR FAMÍLIA
@@ -491,24 +491,24 @@ export function ShelterDetail() {
                                 </div>
 
                                 {activeOccupants.length === 0 ? (
-                                    <p className="text-sm text-slate-500 text-center py-8 italic">Nenhum abrigado cadastrado.</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8 italic">Nenhum abrigado cadastrado.</p>
                                 ) : viewMode === 'individual' ? (
                                     <div className="space-y-3">
                                         {activeOccupants.map((occupant) => (
-                                            <div key={occupant.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl group relative overflow-hidden">
+                                            <div key={occupant.id} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl group relative overflow-hidden">
                                                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                                                     <User size={20} className="text-emerald-600" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="text-sm font-semibold text-slate-800 truncate">
+                                                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                                                             {occupant.full_name}
                                                         </div>
                                                         {occupant.is_family_head && (
                                                             <Crown size={12} className="text-amber-500" title="Responsável Familiar" />
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-slate-500">
+                                                    <div className="text-xs text-slate-500 dark:text-slate-400">
                                                         {occupant.age} anos • {occupant.gender === 'masculino' ? 'M' : occupant.gender === 'feminino' ? 'F' : 'Outro'}
                                                         {occupant.family_group && ` • Grp: ${occupant.family_group}`}
                                                     </div>
@@ -519,7 +519,7 @@ export function ShelterDetail() {
                                                     )}
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleExitClick(occupant.id); }}
-                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:bg-red-900/20 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100"
                                                         title="Registrar Saída"
                                                     >
                                                         <LogOut size={16} />
@@ -531,17 +531,17 @@ export function ShelterDetail() {
                                 ) : (
                                     <div className="space-y-4">
                                         {Object.entries(families).map(([groupName, members]) => (
-                                            <div key={groupName} className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                                            <div key={groupName} className="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
                                                 <button
                                                     onClick={() => toggleFamily(groupName)}
-                                                    className="w-full flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors"
+                                                    className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors"
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                                                             <Users size={20} className="text-[#2a5299]" />
                                                         </div>
                                                         <div className="text-left">
-                                                            <div className="text-sm font-bold text-slate-800">{groupName}</div>
+                                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{groupName}</div>
                                                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                                                                 {members.length} {members.length === 1 ? 'Membro' : 'Membros'}
                                                             </div>
@@ -551,16 +551,16 @@ export function ShelterDetail() {
                                                 </button>
 
                                                 {expandedFamilies[groupName] && (
-                                                    <div className="bg-slate-50/50 p-3 space-y-2 border-t border-slate-50">
+                                                    <div className="bg-slate-50 dark:bg-slate-800/50/50 p-3 space-y-2 border-t border-slate-50">
                                                         {members.map(member => (
-                                                            <div key={member.id} className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border border-slate-100/50">
+                                                            <div key={member.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/50">
                                                                 <div className="flex items-center gap-3 min-w-0">
-                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${member.is_family_head ? 'bg-amber-50' : 'bg-slate-50'}`}>
+                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${member.is_family_head ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-slate-50 dark:bg-slate-800/50'}`}>
                                                                         {member.is_family_head ? <Crown size={14} className="text-amber-600" /> : <User size={14} className="text-slate-400" />}
                                                                     </div>
                                                                     <div className="min-w-0">
-                                                                        <div className="text-xs font-bold text-slate-800 truncate">{member.full_name}</div>
-                                                                        <div className="text-[10px] text-slate-500">{member.age} anos • {member.gender}</div>
+                                                                        <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{member.full_name}</div>
+                                                                        <div className="text-[10px] text-slate-500 dark:text-slate-400">{member.age} anos • {member.gender}</div>
                                                                     </div>
                                                                 </div>
                                                                 <button
@@ -582,31 +582,31 @@ export function ShelterDetail() {
                             {/* Inventory List */}
                             <Card className="p-6">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-bold text-slate-800">Estoque do Abrigo</h2>
+                                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Estoque do Abrigo</h2>
                                     <Package className="w-5 h-5 text-slate-400" />
                                 </div>
                                 {inventory.filter(i => parseFloat(i.quantity || 0) > 0).length === 0 ? (
-                                    <p className="text-sm text-slate-500 text-center py-4 italic">Nenhum item em estoque.</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4 italic">Nenhum item em estoque.</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {inventory.filter(i => parseFloat(i.quantity || 0) > 0).map((item) => {
                                             const isLowStock = item.quantity <= (item.minimum_stock || 5);
                                             return (
-                                                <div key={item.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isLowStock ? 'bg-red-100' : 'bg-blue-100'
+                                                <div key={item.id} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isLowStock ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100'
                                                         }`}>
                                                         <Package size={20} className={isLowStock ? 'text-red-600' : 'text-blue-600'} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="text-sm font-semibold text-slate-800 truncate">
+                                                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                                                             {item.item_name}
                                                         </div>
-                                                        <div className="text-xs text-slate-500 capitalize">
+                                                        <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">
                                                             {item.category} • {item.location || 'Sem localização'}
                                                         </div>
                                                     </div>
                                                     <div className="text-right flex-shrink-0">
-                                                        <div className={`text-sm font-bold ${isLowStock ? 'text-red-600' : 'text-slate-800'}`}>
+                                                        <div className={`text-sm font-bold ${isLowStock ? 'text-red-600' : 'text-slate-800 dark:text-slate-100'}`}>
                                                             {item.quantity} {item.unit}
                                                         </div>
                                                         {isLowStock && (
@@ -641,7 +641,7 @@ export function ShelterDetail() {
                     <div className="space-y-6">
                         {/* Information Card */}
                         <Card className="p-6">
-                            <h2 className="text-lg font-bold text-slate-800 mb-4">Informações</h2>
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Informações</h2>
 
                             <div className="space-y-4">
                                 <div className="flex gap-3">
@@ -650,7 +650,7 @@ export function ShelterDetail() {
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                                             ENDEREÇO
                                         </div>
-                                        <p className="text-sm text-slate-700 leading-relaxed text-wrap break-words">
+                                        <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed text-wrap break-words">
                                             {shelter.address ? (shelter.bairro ? `${shelter.address}, ${shelter.bairro}` : shelter.address) : (shelter.bairro || 'Endereço não informado')}
                                         </p>
                                         {(shelter.lat || shelter.coordenadas) && (
@@ -668,7 +668,7 @@ export function ShelterDetail() {
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                                             CAPACIDADE
                                         </div>
-                                        <p className="text-sm text-slate-700 font-bold">
+                                        <p className="text-sm text-slate-700 dark:text-slate-200 font-bold">
                                             {shelter.capacity} Pessoas
                                         </p>
                                     </div>
@@ -680,11 +680,11 @@ export function ShelterDetail() {
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                                             RESPONSÁVEL
                                         </div>
-                                        <p className="text-sm text-slate-700 font-bold">
+                                        <p className="text-sm text-slate-700 dark:text-slate-200 font-bold">
                                             {shelter.responsible_name || shelter.contact_name || 'Não informado'}
                                         </p>
                                         {(shelter.responsible_phone || shelter.contact_phone) && (
-                                            <div className="flex items-center gap-1 text-slate-500 mt-1">
+                                            <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 mt-1">
                                                 <Phone size={12} />
                                                 <span className="text-xs">{shelter.responsible_phone || shelter.contact_phone}</span>
                                             </div>
@@ -693,11 +693,11 @@ export function ShelterDetail() {
                                 </div>
 
                                 {shelter.observations && (
-                                    <div className="pt-4 border-t border-slate-100">
+                                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                                             OBSERVAÇÕES
                                         </div>
-                                        <p className="text-xs text-slate-600 leading-relaxed italic">
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed italic">
                                             "{shelter.observations}"
                                         </p>
                                     </div>
@@ -708,20 +708,20 @@ export function ShelterDetail() {
                         {/* Donation Summary Card */}
                         <Card className="p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-slate-800">Doações</h2>
+                                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Doações</h2>
                                 <Gift className="w-5 h-5 text-slate-400" />
                             </div>
                             {donations.length === 0 ? (
-                                <p className="text-sm text-slate-500 text-center py-4 italic">Nenhuma doação registrada.</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4 italic">Nenhuma doação registrada.</p>
                             ) : (
                                 <div className="space-y-3">
                                     {donations.slice(0, 3).map((donation) => (
-                                        <div key={donation.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                                        <div key={donation.id} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                                             <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-semibold text-slate-800 truncate">
+                                                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                                                     {donation.item_description}
                                                 </div>
-                                                <div className="text-xs text-slate-500">
+                                                <div className="text-xs text-slate-500 dark:text-slate-400">
                                                     {donation.quantity} {donation.unit} • {donation.donor_name || 'Anônimo'}
                                                 </div>
                                             </div>
@@ -730,7 +730,7 @@ export function ShelterDetail() {
                                     {donations.length > 3 && (
                                         <button 
                                             onClick={() => setIsDonationsModalOpen(true)}
-                                            className="w-full text-center text-xs font-bold text-[#2a5299] py-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                            className="w-full text-center text-xs font-bold text-[#2a5299] py-2 hover:bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors"
                                         >
                                             Ver todas as entradas ({donations.length})
                                         </button>
@@ -742,20 +742,20 @@ export function ShelterDetail() {
                         {/* Distributions Summary Card */}
                         <Card className="p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-slate-800">Saídas / Distribuições</h2>
+                                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Saídas / Distribuições</h2>
                                 <TrendingUp className="w-5 h-5 text-slate-400" />
                             </div>
                             {distributions.length === 0 ? (
-                                <p className="text-sm text-slate-500 text-center py-4 italic">Nenhuma distribuição realizada.</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4 italic">Nenhuma distribuição realizada.</p>
                             ) : (
                                 <div className="space-y-3">
                                     {distributions.slice(0, 3).map((dist) => (
-                                        <div key={dist.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                                        <div key={dist.id} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                                             <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-semibold text-slate-800 truncate">
+                                                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
                                                     {dist.item_name}
                                                 </div>
-                                                <div className="text-xs text-slate-500">
+                                                <div className="text-xs text-slate-500 dark:text-slate-400">
                                                     {dist.quantity} {dist.unit} • Para: {dist.recipient_name}
                                                 </div>
                                             </div>
@@ -764,7 +764,7 @@ export function ShelterDetail() {
                                     {distributions.length > 3 && (
                                         <button 
                                             onClick={() => setIsDistributionsModalOpen(true)}
-                                            className="w-full text-center text-xs font-bold text-[#2a5299] py-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                            className="w-full text-center text-xs font-bold text-[#2a5299] py-2 hover:bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors"
                                         >
                                             Ver todas as saídas ({distributions.length})
                                         </button>
@@ -776,27 +776,27 @@ export function ShelterDetail() {
                         {/* Estimated Needs Card */}
                         <Card className="p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-slate-800">Necessidades (7 dias)</h2>
+                                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Necessidades (7 dias)</h2>
                                 <Calculator className="w-5 h-5 text-slate-400" />
                             </div>
                             <div className="space-y-4">
                                 {estimatedNeeds.map((need, index) => {
                                     const Icon = iconMap[need.icon] || Package;
                                     return (
-                                        <div key={index} className="flex items-start gap-4 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
-                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <div key={index} className="flex items-start gap-4 p-3 bg-blue-50 dark:bg-blue-900/20/50 rounded-xl border border-blue-100 dark:border-blue-900/50/50">
+                                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center flex-shrink-0 shadow-sm">
                                                 <Icon size={20} className="text-[#2a5299]" />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-start">
-                                                    <div className="text-xs font-bold text-slate-800 uppercase tracking-tight">
+                                                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
                                                         {need.category}
                                                     </div>
                                                     <div className="text-sm font-black text-[#2a5299]">
                                                         {need.quantity} {need.unit}
                                                     </div>
                                                 </div>
-                                                <div className="text-[10px] text-slate-500 font-bold mb-1">
+                                                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mb-1">
                                                     {need.item}
                                                 </div>
                                                 <div className="text-[9px] text-slate-400 italic">
@@ -807,7 +807,7 @@ export function ShelterDetail() {
                                     );
                                 })}
                             </div>
-                            <div className="mt-6 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                            <div className="mt-6 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100">
                                 <p className="text-[10px] text-amber-700 font-bold text-center uppercase tracking-widest">
                                     Cálculo baseado na ocupação atual
                                 </p>
@@ -820,25 +820,25 @@ export function ShelterDetail() {
             {/* Modal de Doações/Entradas */}
             {isDonationsModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl">
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl">
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                 <Gift className="w-5 h-5 text-[#2a5299]" /> Histórico de Entradas
                             </h3>
-                            <button onClick={() => setIsDonationsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">✕</button>
+                            <button onClick={() => setIsDonationsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-2">✕</button>
                         </div>
-                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50/50">
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50/50">
                             {donations.map((donation) => (
-                                <div key={donation.id} className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-sm border border-slate-100">
+                                <div key={donation.id} className="flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-bold text-slate-800 truncate">{donation.item_description}</div>
-                                        <div className="text-xs text-slate-500">{donation.quantity} {donation.unit} • Origem: {donation.donor_name || 'Anônimo'}</div>
+                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{donation.item_description}</div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">{donation.quantity} {donation.unit} • Origem: {donation.donor_name || 'Anônimo'}</div>
                                         <div className="text-[10px] text-slate-400 mt-1">{new Date(donation.donation_date).toLocaleDateString('pt-BR')} {new Date(donation.donation_date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <div className="p-4 border-t border-slate-100">
+                        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
                             <Button className="w-full" onClick={() => setIsDonationsModalOpen(false)}>Fechar</Button>
                         </div>
                     </div>
@@ -848,25 +848,25 @@ export function ShelterDetail() {
             {/* Modal de Saídas/Distribuições */}
             {isDistributionsModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl">
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-xl">
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-[#2a5299]" /> Histórico de Saídas
                             </h3>
-                            <button onClick={() => setIsDistributionsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">✕</button>
+                            <button onClick={() => setIsDistributionsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-2">✕</button>
                         </div>
-                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50/50">
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50/50">
                             {distributions.map((dist) => (
-                                <div key={dist.id} className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-sm border border-slate-100">
+                                <div key={dist.id} className="flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-bold text-slate-800 truncate">{dist.item_name}</div>
-                                        <div className="text-xs text-slate-500">{dist.quantity} {dist.unit} • Para: {dist.recipient_name}</div>
+                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{dist.item_name}</div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">{dist.quantity} {dist.unit} • Para: {dist.recipient_name}</div>
                                         <div className="text-[10px] text-slate-400 mt-1">{new Date(dist.distribution_date || dist.created_at).toLocaleDateString('pt-BR')} {new Date(dist.distribution_date || dist.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <div className="p-4 border-t border-slate-100">
+                        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
                             <Button className="w-full" onClick={() => setIsDistributionsModalOpen(false)}>Fechar</Button>
                         </div>
                     </div>
@@ -876,54 +876,54 @@ export function ShelterDetail() {
             {/* Modal de Histórico de Abrigados */}
             {isOccupantsModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-xl">
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-xl">
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                 <Users className="w-5 h-5 text-[#2a5299]" /> Histórico Completo de Abrigados
                             </h3>
-                            <button onClick={() => setIsOccupantsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2">✕</button>
+                            <button onClick={() => setIsOccupantsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300 p-2">✕</button>
                         </div>
                         
-                        <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                            <div className="text-sm text-slate-600 font-bold">
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+                            <div className="text-sm text-slate-600 dark:text-slate-300 font-bold">
                                 Total: {occupants.length} registros ({activeOccupants.length} ativos)
                             </div>
-                            <div className="flex bg-slate-200 p-1 rounded-xl w-fit">
+                            <div className="flex bg-slate-200 dark:bg-slate-700 p-1 rounded-xl w-fit">
                                 <button
                                     onClick={() => setModalViewMode('individual')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${modalViewMode === 'individual' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${modalViewMode === 'individual' ? 'bg-white dark:bg-slate-900 shadow-sm text-[#2a5299]' : 'text-slate-500 dark:text-slate-400'}`}
                                 >
                                     INDIVIDUAL
                                 </button>
                                 <button
                                     onClick={() => setModalViewMode('family')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${modalViewMode === 'family' ? 'bg-white shadow-sm text-[#2a5299]' : 'text-slate-500'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${modalViewMode === 'family' ? 'bg-white dark:bg-slate-900 shadow-sm text-[#2a5299]' : 'text-slate-500 dark:text-slate-400'}`}
                                 >
                                     POR FAMÍLIA
                                 </button>
                             </div>
                         </div>
 
-                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50/50 custom-scrollbar">
+                        <div className="p-4 overflow-y-auto flex-1 space-y-3 bg-slate-50 dark:bg-slate-800/50/50 custom-scrollbar">
                             {occupants.length === 0 ? (
-                                <p className="text-sm text-slate-500 text-center py-8 italic">Nenhum histórico encontrado.</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8 italic">Nenhum histórico encontrado.</p>
                             ) : modalViewMode === 'individual' ? (
                                 <div className="space-y-3">
                                     {occupants.map((occupant) => (
-                                        <div key={occupant.id} className="flex items-center gap-4 p-3 bg-white rounded-xl shadow-sm border border-slate-100">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${occupant.status === 'exited' ? 'bg-slate-100' : 'bg-emerald-100'}`}>
+                                        <div key={occupant.id} className="flex items-center gap-4 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${occupant.status === 'exited' ? 'bg-slate-100 dark:bg-slate-800' : 'bg-emerald-100'}`}>
                                                 <User size={20} className={occupant.status === 'exited' ? 'text-slate-400' : 'text-emerald-600'} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`text-sm font-semibold truncate ${occupant.status === 'exited' ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
+                                                    <div className={`text-sm font-semibold truncate ${occupant.status === 'exited' ? 'text-slate-500 dark:text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
                                                         {occupant.full_name}
                                                     </div>
                                                     {occupant.status === 'exited' && (
-                                                        <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold uppercase">Saiu</span>
+                                                        <span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-md font-bold uppercase">Saiu</span>
                                                     )}
                                                 </div>
-                                                <div className="text-xs text-slate-500">
+                                                <div className="text-xs text-slate-500 dark:text-slate-400">
                                                     {occupant.age} anos • {occupant.gender === 'masculino' ? 'M' : occupant.gender === 'feminino' ? 'F' : 'Outro'}
                                                     {occupant.family_group && ` • Grp: ${occupant.family_group}`}
                                                 </div>
@@ -934,17 +934,17 @@ export function ShelterDetail() {
                             ) : (
                                 <div className="space-y-4">
                                     {Object.entries(allFamilies).map(([groupName, members]) => (
-                                        <div key={groupName} className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <div key={groupName} className="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
                                             <button
                                                 onClick={() => toggleModalFamily(groupName)}
-                                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors"
+                                                className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:bg-slate-800/50 transition-colors"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                                                         <Users size={20} className="text-[#2a5299]" />
                                                     </div>
                                                     <div className="text-left">
-                                                        <div className="text-sm font-bold text-slate-800">{groupName}</div>
+                                                        <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{groupName}</div>
                                                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                                                             {members.length} {members.length === 1 ? 'Membro' : 'Membros'}
                                                         </div>
@@ -954,18 +954,18 @@ export function ShelterDetail() {
                                             </button>
 
                                             {expandedModalFamilies[groupName] && (
-                                                <div className="bg-slate-50/50 p-3 space-y-2 border-t border-slate-50">
+                                                <div className="bg-slate-50 dark:bg-slate-800/50/50 p-3 space-y-2 border-t border-slate-50">
                                                     {members.map(member => (
-                                                        <div key={member.id} className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border border-slate-100/50">
+                                                        <div key={member.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800/50">
                                                             <div className="flex items-center gap-3 min-w-0">
-                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${member.status === 'exited' ? 'bg-slate-100' : member.is_family_head ? 'bg-amber-50' : 'bg-slate-50'}`}>
+                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${member.status === 'exited' ? 'bg-slate-100 dark:bg-slate-800' : member.is_family_head ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-slate-50 dark:bg-slate-800/50'}`}>
                                                                     {member.status === 'exited' ? <User size={14} className="text-slate-400" /> : member.is_family_head ? <Crown size={14} className="text-amber-600" /> : <User size={14} className="text-slate-400" />}
                                                                 </div>
                                                                 <div className="min-w-0">
-                                                                    <div className={`text-xs font-bold truncate ${member.status === 'exited' ? 'text-slate-500 line-through' : 'text-slate-800'}`}>
+                                                                    <div className={`text-xs font-bold truncate ${member.status === 'exited' ? 'text-slate-500 dark:text-slate-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
                                                                         {member.full_name}
                                                                     </div>
-                                                                    <div className="text-[10px] text-slate-500">
+                                                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
                                                                         {member.age} anos • {member.status === 'exited' ? 'Saiu do abrigo' : 'Ativo'}
                                                                     </div>
                                                                 </div>
@@ -979,7 +979,7 @@ export function ShelterDetail() {
                                 </div>
                             )}
                         </div>
-                        <div className="p-4 border-t border-slate-100">
+                        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
                             <Button className="w-full" onClick={() => setIsOccupantsModalOpen(false)}>Fechar Histórico</Button>
                         </div>
                     </div>

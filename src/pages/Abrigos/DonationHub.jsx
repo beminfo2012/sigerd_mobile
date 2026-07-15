@@ -114,22 +114,22 @@ export default function DonationHub() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 pb-12">
             <div className="max-w-3xl mx-auto px-4 py-6">
 
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
                         onClick={() => navigate('/assisthumanitaria')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 dark:text-blue-200 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
                     </button>
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800">Recebimento de Doações</h1>
-                            <p className="text-sm text-slate-500 mt-1">
+                            <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">Recebimento de Doações</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 Centralize o recebimento de doações para o estoque municipal ou abrigos específicos.
                             </p>
                         </div>
@@ -141,14 +141,14 @@ export default function DonationHub() {
 
                     {/* Destination Selection */}
                     <Card className="p-6 border-l-4 border-l-[#2a5299]">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <Building2 size={20} className="text-[#2a5299]" />
                             Destino da Doação
                         </h2>
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     Enviar para
                                 </label>
                                 <div className="grid grid-cols-2 gap-3">
@@ -156,11 +156,11 @@ export default function DonationHub() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, destination_type: 'CENTRAL', shelter_id: '' })}
                                         className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.destination_type === 'CENTRAL'
-                                            ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
-                                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 shadow-sm'
+                                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50'
                                             }`}
                                     >
-                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
                                             <Package size={20} className={formData.destination_type === 'CENTRAL' ? 'text-blue-600' : 'text-slate-400'} />
                                         </div>
                                         <span className="text-sm font-bold">Estoque Municipal</span>
@@ -170,11 +170,11 @@ export default function DonationHub() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, destination_type: 'SHELTER' })}
                                         className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.destination_type === 'SHELTER'
-                                            ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
-                                            : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 shadow-sm'
+                                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50'
                                             }`}
                                     >
-                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                        <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
                                             <Building2 size={20} className={formData.destination_type === 'SHELTER' ? 'text-blue-600' : 'text-slate-400'} />
                                         </div>
                                         <span className="text-sm font-bold">Abrigo Específico</span>
@@ -184,14 +184,14 @@ export default function DonationHub() {
 
                             {formData.destination_type === 'SHELTER' && (
                                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <label className="block text-sm font-semibold text-slate-700">
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                         Selecione o Abrigo <span className="text-slate-400 font-normal ml-1">(Opcional)</span>
                                     </label>
                                     <select
                                         name="shelter_id"
                                         value={formData.shelter_id}
                                         onChange={handleChange}
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
                                         <option value="">Não especificar abrigo...</option>
                                         {shelters.filter(s => s.status === 'active').map(s => (
@@ -205,7 +205,7 @@ export default function DonationHub() {
 
                     {/* Donor Info */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <User size={20} className="text-[#2a5299]" />
                             Informações do Doador
                         </h2>
@@ -234,21 +234,21 @@ export default function DonationHub() {
 
                     {/* Details */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <Gift size={20} className="text-[#2a5299]" />
                             Detalhes da Doação
                         </h2>
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                         Tipo de Doação <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         name="donation_type"
                                         value={formData.donation_type}
                                         onChange={handleChange}
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
                                         <option value="alimento">Alimento</option>
                                         <option value="roupa">Vestuário/Cama/Banho</option>
@@ -258,14 +258,14 @@ export default function DonationHub() {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                         Subtipo <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         name="donation_subtype"
                                         value={formData.donation_subtype}
                                         onChange={handleChange}
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
                                         {subTypesMap[formData.donation_type]?.map(st => (
                                             <option key={st} value={st}>{st}</option>
@@ -309,14 +309,14 @@ export default function DonationHub() {
                                     </p>
                                 )}
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                         Unidade
                                     </label>
                                     <select
                                         name="unit"
                                         value={formData.unit}
                                         onChange={handleChange}
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
                                         <option value="unidades">Unidades</option>
                                         <option value="kg">Kg</option>

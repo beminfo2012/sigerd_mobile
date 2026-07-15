@@ -177,9 +177,9 @@ export function OccupantForm() {
 
     if (!shelter) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">Abrigo não encontrado</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Abrigo não encontrado</h2>
                     <Button onClick={() => navigate('/assisthumanitaria')}>Voltar ao Dashboard</Button>
                 </div>
             </div>
@@ -187,21 +187,21 @@ export function OccupantForm() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-6">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 pb-6">
             <div className="max-w-7xl mx-auto px-4 py-6">
                 {/* Header */}
                 <div className="mb-6">
                     <button
                         onClick={() => navigate(`/assisthumanitaria/${shelterId}`)}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 dark:text-blue-200 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800">Cadastrar Abrigado</h1>
-                            <p className="text-sm text-slate-500 mt-1">
+                            <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">Cadastrar Abrigado</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 Abrigo: {shelter.name}
                             </p>
                         </div>
@@ -210,7 +210,7 @@ export function OccupantForm() {
                 </div>
 
                 {/* Scan Button - Prominent */}
-                <Card className="p-4 mb-6 bg-blue-50 border-blue-100">
+                <Card className="p-4 mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-900/50">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-[#2a5299] mb-1">Agilizar Cadastro</h3>
@@ -245,7 +245,7 @@ export function OccupantForm() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Personal Information */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <User size={20} className="text-[#2a5299]" />
                             Informações Pessoais
                         </h2>
@@ -298,7 +298,7 @@ export function OccupantForm() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     Gênero
                                 </label>
                                 <select
@@ -306,7 +306,7 @@ export function OccupantForm() {
                                     value={formData.gender}
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
                                     <option value="nao_informado">Não informado</option>
                                     <option value="masculino">Masculino</option>
@@ -319,7 +319,7 @@ export function OccupantForm() {
 
                     {/* Family and Special Needs */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <UsersIcon size={20} className="text-[#2a5299]" />
                             Grupo Familiar e Necessidades
                         </h2>
@@ -340,7 +340,7 @@ export function OccupantForm() {
                                 />
 
                                 {showFamilySuggestions && familyGroups.length > 0 && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-40 overflow-y-auto">
                                         <div className="p-2 border-b border-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">
                                             Grupos Existentes
                                         </div>
@@ -356,7 +356,7 @@ export function OccupantForm() {
                                                         setFormData({ ...formData, family_group: group });
                                                         setShowFamilySuggestions(false);
                                                     }}
-                                                    className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+                                                    className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:bg-slate-800/50 border-b border-slate-50 last:border-0 transition-colors"
                                                 >
                                                     {group}
                                                 </button>
@@ -369,7 +369,7 @@ export function OccupantForm() {
                                                 setFormData({ ...formData, family_group: newId, is_family_head: true });
                                                 setShowFamilySuggestions(false);
                                             }}
-                                            className="w-full text-left px-4 py-3 text-xs font-bold text-[#2a5299] hover:bg-blue-50 transition-colors sticky bottom-0 bg-white border-t border-slate-100"
+                                            className="w-full text-left px-4 py-3 text-xs font-bold text-[#2a5299] hover:bg-blue-50 dark:bg-blue-900/20 transition-colors sticky bottom-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800"
                                         >
                                             + Gerar novo código de família
                                         </button>
@@ -377,7 +377,7 @@ export function OccupantForm() {
                                 )}
                             </div>
 
-                            <label className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors">
+                            <label className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors">
                                 <div className="flex items-center justify-center">
                                     <input
                                         type="checkbox"
@@ -387,7 +387,7 @@ export function OccupantForm() {
                                     />
                                 </div>
                                 <div>
-                                    <div className="text-sm font-bold text-blue-800">
+                                    <div className="text-sm font-bold text-blue-800 dark:text-blue-200">
                                         Responsável Familiar
                                     </div>
                                     <div className="text-[10px] text-[#2a5299] uppercase font-black">
@@ -397,7 +397,7 @@ export function OccupantForm() {
                             </label>
 
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700 flex items-center gap-2">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
                                     <Heart size={16} className="text-slate-400" />
                                     Necessidades Especiais
                                 </label>
@@ -407,7 +407,7 @@ export function OccupantForm() {
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     rows={3}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Ex: Hipertensão, mobilidade reduzida, medicação contínua..."
                                 />
                             </div>

@@ -356,10 +356,10 @@ export default function SAHModule() {
 
     const renderList = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Painel de Assistência</h2>
-                    <p className="text-sm text-slate-500 mt-1">Gerencie solicitações de recursos estaduais e federais (SAH).</p>
+                    <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Painel de Assistência</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Gerencie solicitações de recursos estaduais e federais (SAH).</p>
                 </div>
                 <button 
                     onClick={() => { setSahData(defaultSahData); setEtapa(1); setView('wizard'); }}
@@ -372,45 +372,45 @@ export default function SAHModule() {
             {loading ? (
                 <div className="flex justify-center p-12"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>
             ) : solicitacoes.length === 0 ? (
-                <div className="text-center py-24 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <Archive size={48} className="mx-auto text-slate-300 mb-4" />
-                    <h3 className="text-xl font-bold text-slate-700">Nenhuma SAH Encontrada</h3>
-                    <p className="text-sm text-slate-500 max-w-md mx-auto mt-2">Você ainda não registrou nenhuma solicitação. Clique em "Nova Solicitação" para abrir um processo.</p>
+                    <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200">Nenhuma SAH Encontrada</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-2">Você ainda não registrou nenhuma solicitação. Clique em "Nova Solicitação" para abrir um processo.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {solicitacoes.map((sah) => (
-                        <div key={sah.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all overflow-hidden flex flex-col">
-                            <div className="p-5 border-b border-slate-100 flex-1">
+                        <div key={sah.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-blue-200 dark:border-blue-800/50 transition-all overflow-hidden flex flex-col">
+                            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex-1">
                                 <div className="flex justify-between items-start mb-4">
-                                    <span className="text-xs font-black bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md">{sah.protocolo}</span>
+                                    <span className="text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-md">{sah.protocolo}</span>
                                     <span className={`text-[10px] font-bold uppercase px-3 py-1 rounded-full ${
                                         sah.status === 'enviado' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 
                                         sah.status === 'recebido' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 
-                                        'bg-slate-100 text-slate-600 border border-slate-200'
+                                        'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                                     }`}>
                                         {sah.status}
                                     </span>
                                 </div>
-                                <h4 className="font-bold text-slate-800 line-clamp-1" title={sah.cobrade}>{sah.cobrade || 'Sem COBRADE'}</h4>
-                                <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-2 mb-4">
+                                <h4 className="font-bold text-slate-800 dark:text-slate-100 line-clamp-1" title={sah.cobrade}>{sah.cobrade || 'Sem COBRADE'}</h4>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-2 mb-4">
                                     <Clock size={12} /> Data Evento: {new Date(sah.data_desastre).toLocaleDateString('pt-BR')}
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl">
+                                <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
                                     <div className="text-center">
-                                        <span className="block text-xl font-black text-slate-700">{sah.snapshot_deficit_kits}</span>
+                                        <span className="block text-xl font-black text-slate-700 dark:text-slate-200">{sah.snapshot_deficit_kits}</span>
                                         <span className="text-[9px] text-slate-400 font-bold uppercase">Déficit Calc.</span>
                                     </div>
-                                    <div className="text-center border-l border-slate-200">
-                                        <span className="block text-xl font-black text-slate-700">{sah.oficio_qtde_cesta_basica}</span>
+                                    <div className="text-center border-l border-slate-200 dark:border-slate-700">
+                                        <span className="block text-xl font-black text-slate-700 dark:text-slate-200">{sah.oficio_qtde_cesta_basica}</span>
                                         <span className="text-[9px] text-slate-400 font-bold uppercase">Cestas Req.</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 bg-slate-50">
+                            <div className="grid grid-cols-2 bg-slate-50 dark:bg-slate-800/50">
                                 <button 
                                     onClick={() => { setSelectedSah(sah); setView('detail'); }}
-                                    className="py-3 text-blue-600 hover:bg-blue-50 font-bold text-sm transition-colors flex justify-center items-center gap-2 border-r border-slate-200"
+                                    className="py-3 text-blue-600 hover:bg-blue-50 dark:bg-blue-900/20 font-bold text-sm transition-colors flex justify-center items-center gap-2 border-r border-slate-200 dark:border-slate-700"
                                 >
                                     <Eye size={16} /> Detalhes
                                 </button>
@@ -418,7 +418,7 @@ export default function SAHModule() {
                                     {(sah.status === 'rascunho' || isAdminOrCoord) && (
                                         <button 
                                             onClick={() => openEdit(sah)}
-                                            className="flex-1 py-3 text-slate-600 hover:bg-slate-200 font-bold transition-colors flex justify-center items-center" title="Editar"
+                                            className="flex-1 py-3 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:bg-slate-700 font-bold transition-colors flex justify-center items-center" title="Editar"
                                         >
                                             <Edit2 size={16} />
                                         </button>
@@ -426,7 +426,7 @@ export default function SAHModule() {
                                     {(isAdminOrCoord) && (
                                         <button 
                                             onClick={() => handleDelete(sah.id)}
-                                            className="flex-1 py-3 text-red-500 hover:bg-red-50 font-bold transition-colors flex justify-center items-center" title="Excluir"
+                                            className="flex-1 py-3 text-red-500 hover:bg-red-50 dark:bg-red-900/20 font-bold transition-colors flex justify-center items-center" title="Excluir"
                                         >
                                             <Trash2 size={16} />
                                         </button>
@@ -442,7 +442,7 @@ export default function SAHModule() {
 
     const renderDetail = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative">
                 
                 {/* Detail Header */}
                 <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-8 py-8 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
@@ -462,7 +462,7 @@ export default function SAHModule() {
                     </div>
                     <div className="flex gap-2">
                         {(selectedSah.status === 'rascunho' || isAdminOrCoord) && (
-                            <button onClick={() => openEdit(selectedSah)} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold transition-colors">Editar</button>
+                            <button onClick={() => openEdit(selectedSah)} className="px-4 py-2 bg-white dark:bg-slate-900/10 hover:bg-white dark:bg-slate-900/20 text-white rounded-lg text-sm font-bold transition-colors">Editar</button>
                         )}
                         {isAdminOrCoord && (
                             <button onClick={() => handleDelete(selectedSah.id)} className="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-200 rounded-lg text-sm font-bold transition-colors border border-red-500/30">Excluir</button>
@@ -477,26 +477,26 @@ export default function SAHModule() {
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Informações do Desastre</h4>
                             <div className="space-y-4">
                                 <div>
-                                    <span className="block text-xs font-bold text-slate-500">Decreto de Emergência</span>
-                                    <span className="text-sm font-semibold text-slate-800">{selectedSah.decreto_emergencia || 'Nenhum'}</span>
+                                    <span className="block text-xs font-bold text-slate-500 dark:text-slate-400">Decreto de Emergência</span>
+                                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{selectedSah.decreto_emergencia || 'Nenhum'}</span>
                                 </div>
                                 <div>
-                                    <span className="block text-xs font-bold text-slate-500">Descrição Situacional</span>
-                                    <p className="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl mt-1 leading-relaxed border border-slate-100">{selectedSah.descricao_situacao || 'Sem descrição.'}</p>
+                                    <span className="block text-xs font-bold text-slate-500 dark:text-slate-400">Descrição Situacional</span>
+                                    <p className="text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl mt-1 leading-relaxed border border-slate-100 dark:border-slate-800">{selectedSah.descricao_situacao || 'Sem descrição.'}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div>
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Responsável Técnico (Social)</h4>
-                            <div className="grid grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                            <div className="grid grid-cols-2 gap-4 bg-blue-50 dark:bg-blue-900/20/50 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50">
                                 <div>
                                     <span className="block text-[10px] font-bold text-blue-600 uppercase">Nome</span>
-                                    <span className="text-sm font-bold text-slate-800">{selectedSah.assistente_social_nome || 'N/I'}</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{selectedSah.assistente_social_nome || 'N/I'}</span>
                                 </div>
                                 <div>
                                     <span className="block text-[10px] font-bold text-blue-600 uppercase">CRESS</span>
-                                    <span className="text-sm font-bold text-slate-800">{selectedSah.assistente_social_cress || 'N/I'}</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{selectedSah.assistente_social_cress || 'N/I'}</span>
                                 </div>
                             </div>
                         </div>
@@ -505,20 +505,20 @@ export default function SAHModule() {
                     <div className="space-y-8">
                         <div>
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Métricas (Snapshot)</h4>
-                            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                                    <span className="block text-[10px] font-bold text-slate-500 uppercase">Desabrigados</span>
-                                    <span className="text-2xl font-black text-slate-800">{selectedSah.snapshot_desabrigados}</span>
+                            <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm">
+                                    <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Desabrigados</span>
+                                    <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{selectedSah.snapshot_desabrigados}</span>
                                 </div>
-                                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                                    <span className="block text-[10px] font-bold text-slate-500 uppercase">Desalojados</span>
-                                    <span className="text-2xl font-black text-slate-800">{selectedSah.snapshot_desalojados}</span>
+                                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm">
+                                    <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Desalojados</span>
+                                    <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{selectedSah.snapshot_desalojados}</span>
                                 </div>
-                                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                                    <span className="block text-[10px] font-bold text-slate-500 uppercase">Kits já Entregues</span>
-                                    <span className="text-2xl font-black text-slate-800">{selectedSah.snapshot_kits_entregues}</span>
+                                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800 shadow-sm">
+                                    <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Kits já Entregues</span>
+                                    <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{selectedSah.snapshot_kits_entregues}</span>
                                 </div>
-                                <div className="bg-red-50 p-3 rounded-lg border border-red-100 shadow-sm">
+                                <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 shadow-sm">
                                     <span className="block text-[10px] font-bold text-red-600 uppercase">Déficit Total Calc.</span>
                                     <span className="text-2xl font-black text-red-700">{selectedSah.snapshot_deficit_kits}</span>
                                 </div>
@@ -528,28 +528,28 @@ export default function SAHModule() {
                         <div>
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Itens Solicitados ao Estado</h4>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
-                                    <span className="text-3xl font-black text-slate-800 block">{selectedSah.oficio_qtde_cesta_basica}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase mt-1 block">Cestas</span>
+                                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100 block">{selectedSah.oficio_qtde_cesta_basica}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-1 block">Cestas</span>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
-                                    <span className="text-3xl font-black text-slate-800 block">{selectedSah.oficio_qtde_kit_higiene_limpeza}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase mt-1 block">Higiene</span>
+                                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100 block">{selectedSah.oficio_qtde_kit_higiene_limpeza}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-1 block">Higiene</span>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
-                                    <span className="text-3xl font-black text-slate-800 block">{selectedSah.oficio_qtde_colchao}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase mt-1 block">Colchões</span>
+                                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100 block">{selectedSah.oficio_qtde_colchao}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-1 block">Colchões</span>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border border-slate-200 text-center">
-                                    <span className="text-3xl font-black text-slate-800 block">{selectedSah.oficio_qtde_jogo_lencol}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase mt-1 block">Dormitório</span>
+                                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                                    <span className="text-3xl font-black text-slate-800 dark:text-slate-100 block">{selectedSah.oficio_qtde_jogo_lencol}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-1 block">Dormitório</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-slate-50 p-6 border-t border-slate-200 flex flex-col sm:flex-row justify-end gap-4">
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-end gap-4">
                     {selectedSah.status === 'rascunho' && (
                         <button 
                             onClick={() => handleUpdateStatus('enviado')} 
@@ -575,12 +575,12 @@ export default function SAHModule() {
 
     const renderEtapa1 = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <h3 className="text-xl font-black text-slate-800 border-b border-slate-100 pb-3">1. Identificação do Desastre</h3>
+            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-3">1. Identificação do Desastre</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide">Vincular REDAP (Opcional)</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wide">Vincular REDAP (Opcional)</label>
                     <select 
-                        className="w-full p-3.5 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 transition-colors bg-slate-50"
+                        className="w-full p-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 dark:text-slate-200 transition-colors bg-slate-50 dark:bg-slate-800/50"
                         value={sahData.evento_id || ''}
                         onChange={(e) => handleRedapSelect(e.target.value)}
                     >
@@ -591,9 +591,9 @@ export default function SAHModule() {
                     </select>
                 </div>
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide">COBRADE (Opcional)</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wide">COBRADE (Opcional)</label>
                     <select 
-                        className="w-full p-3.5 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 transition-colors bg-slate-50"
+                        className="w-full p-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 dark:text-slate-200 transition-colors bg-slate-50 dark:bg-slate-800/50"
                         value={sahData.cobrade}
                         onChange={(e) => handleInputChange('cobrade', e.target.value)}
                     >
@@ -602,29 +602,29 @@ export default function SAHModule() {
                     </select>
                 </div>
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide">Data do Desastre</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wide">Data do Desastre</label>
                     <input 
                         type="date" 
-                        className="w-full p-3.5 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 transition-colors bg-slate-50" 
+                        className="w-full p-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 dark:text-slate-200 transition-colors bg-slate-50 dark:bg-slate-800/50" 
                         value={sahData.data_desastre} 
                         onChange={(e) => handleInputChange('data_desastre', e.target.value)}
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide">Decreto de Emergência (Opcional)</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wide">Decreto de Emergência (Opcional)</label>
                     <input 
                         type="text" 
-                        className="w-full p-3.5 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 transition-colors bg-slate-50" 
+                        className="w-full p-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-0 font-semibold text-slate-700 dark:text-slate-200 transition-colors bg-slate-50 dark:bg-slate-800/50" 
                         placeholder="Nº do Decreto Municipal..." 
                         value={sahData.decreto_emergencia}
                         onChange={(e) => handleInputChange('decreto_emergencia', e.target.value)}
                     />
                 </div>
                 <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide">Pessoas Desalojadas (Estimativa Manual)</label>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wide">Pessoas Desalojadas (Estimativa Manual)</label>
                     <input 
                         type="number" 
-                        className="w-full md:w-1/2 p-3.5 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 font-black text-slate-800 transition-colors bg-slate-50" 
+                        className="w-full md:w-1/2 p-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-0 font-black text-slate-800 dark:text-slate-100 transition-colors bg-slate-50 dark:bg-slate-800/50" 
                         placeholder="Qtd. Desalojados fora dos abrigos..." 
                         value={sahData.snapshot_desalojados || ''}
                         onChange={(e) => handleInputChange('snapshot_desalojados', parseInt(e.target.value) || 0)}
@@ -634,17 +634,17 @@ export default function SAHModule() {
             </div>
             
             <div className="mt-6">
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2 tracking-wide">Descrição Situacional Rápida</label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 tracking-wide">Descrição Situacional Rápida</label>
                 <textarea 
                     rows={4} 
-                    className="w-full p-4 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-0 font-medium text-slate-700 transition-colors bg-slate-50 resize-none" 
+                    className="w-full p-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-0 font-medium text-slate-700 dark:text-slate-200 transition-colors bg-slate-50 dark:bg-slate-800/50 resize-none" 
                     placeholder="Descreva o cenário e os principais danos registrados para constar no ofício..."
                     value={sahData.descricao_situacao}
                     onChange={(e) => handleInputChange('descricao_situacao', e.target.value)}
                 />
             </div>
             
-            <div className="flex justify-end mt-8 border-t border-slate-100 pt-6">
+            <div className="flex justify-end mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
                 <button 
                     onClick={() => {
                         fetchCrossReferenceData();
@@ -660,14 +660,14 @@ export default function SAHModule() {
 
     const renderEtapa2 = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-3 gap-4">
-                <h3 className="text-xl font-black text-slate-800">2. Cálculo do Snapshot (Déficit)</h3>
-                <button onClick={fetchCrossReferenceData} className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-bold bg-blue-50 hover:bg-blue-100 transition-colors px-4 py-2 rounded-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-4">
+                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">2. Cálculo do Snapshot (Déficit)</h3>
+                <button onClick={fetchCrossReferenceData} className="text-blue-600 hover:text-blue-800 dark:text-blue-200 flex items-center gap-2 text-sm font-bold bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 transition-colors px-4 py-2 rounded-xl">
                     <RefreshCcw size={16} className={loading ? 'animate-spin' : ''} /> Recalcular 
                 </button>
             </div>
             
-            <div className="bg-amber-50 border border-amber-200 p-5 rounded-xl mb-6 flex gap-4 items-start shadow-sm">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-5 rounded-xl mb-6 flex gap-4 items-start shadow-sm">
                 <Info className="text-amber-500 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800 font-medium leading-relaxed">
                     Os dados abaixo representam a <strong>fotografia do momento</strong>. 
@@ -676,25 +676,25 @@ export default function SAHModule() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
                     <Building2 className="text-slate-400 mb-3" size={28} />
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Desabrigados</span>
-                    <span className="text-4xl font-black text-slate-800">{sahData.snapshot_desabrigados}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mb-1">Desabrigados</span>
+                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100">{sahData.snapshot_desabrigados}</span>
                     <span className="text-[10px] text-slate-400 mt-2 font-semibold">Sistema de Abrigos</span>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
                     <Users className="text-slate-400 mb-3" size={28} />
-                    <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Desalojados</span>
-                    <span className="text-4xl font-black text-slate-800">{sahData.snapshot_desalojados}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mb-1">Desalojados</span>
+                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100">{sahData.snapshot_desalojados}</span>
                     <span className="text-[10px] text-slate-400 mt-2 font-semibold">Estimativa Manual</span>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border-2 border-blue-200 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-blue-200 dark:border-blue-800/50 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
                     <Archive className="text-blue-400 mb-3" size={28} />
                     <span className="text-[10px] text-blue-500 font-black uppercase tracking-widest mb-1">Em Estoque</span>
-                    <span className="text-4xl font-black text-blue-800">{sahData.snapshot_kits_estoque || 0}</span>
+                    <span className="text-4xl font-black text-blue-800 dark:text-blue-200">{sahData.snapshot_kits_estoque || 0}</span>
                     <span className="text-[10px] text-blue-400 mt-2 font-semibold">Módulo de Logística</span>
                 </div>
-                <div className="bg-white p-6 rounded-2xl border-2 border-emerald-200 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-emerald-200 shadow-sm flex flex-col items-center justify-center text-center group transition-colors">
                     <Archive className="text-emerald-400 mb-3" size={28} />
                     <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mb-1">Kits Entregues</span>
                     <span className="text-4xl font-black text-emerald-800">{sahData.snapshot_kits_entregues}</span>
@@ -708,8 +708,8 @@ export default function SAHModule() {
                 </div>
             </div>
 
-            <div className="flex justify-between mt-10 border-t border-slate-100 pt-6">
-                <button onClick={() => setEtapa(1)} className="px-6 py-3 border-2 border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-bold">Voltar</button>
+            <div className="flex justify-between mt-10 border-t border-slate-100 dark:border-slate-800 pt-6">
+                <button onClick={() => setEtapa(1)} className="px-6 py-3 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 transition-all font-bold">Voltar</button>
                 <button onClick={() => setEtapa(3)} className="px-8 py-3 bg-slate-800 text-white rounded-xl hover:bg-slate-900 shadow-md transition-all font-black flex items-center gap-2">Próxima Etapa <ArrowLeft className="rotate-180" size={18}/></button>
             </div>
         </div>
@@ -717,48 +717,48 @@ export default function SAHModule() {
 
     const renderEtapa3 = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <h3 className="text-xl font-black text-slate-800 border-b border-slate-100 pb-3">3. Dados Complementares (Ofício/Relatório)</h3>
+            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-3">3. Dados Complementares (Ofício/Relatório)</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
-                    <h4 className="font-black text-slate-800 flex items-center gap-2 mb-5 text-sm uppercase tracking-wide"><Users size={18} className="text-blue-600"/> Téc. Assistência Social</h4>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h4 className="font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-5 text-sm uppercase tracking-wide"><Users size={18} className="text-blue-600"/> Téc. Assistência Social</h4>
                     <div className="space-y-4">
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest">Nome Completo</label>
-                            <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-semibold text-slate-700" placeholder="Nome do Profissional..." value={sahData.assistente_social_nome} onChange={e => handleInputChange('assistente_social_nome', e.target.value)} />
+                            <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-semibold text-slate-700 dark:text-slate-200" placeholder="Nome do Profissional..." value={sahData.assistente_social_nome} onChange={e => handleInputChange('assistente_social_nome', e.target.value)} />
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest">Registro CRESS</label>
-                            <input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-semibold text-slate-700" placeholder="Ex: 1234/ES" value={sahData.assistente_social_cress} onChange={e => handleInputChange('assistente_social_cress', e.target.value)} />
+                            <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-semibold text-slate-700 dark:text-slate-200" placeholder="Ex: 1234/ES" value={sahData.assistente_social_cress} onChange={e => handleInputChange('assistente_social_cress', e.target.value)} />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border-2 border-slate-100 shadow-sm">
-                    <h4 className="font-black text-slate-800 flex items-center gap-2 mb-5 text-sm uppercase tracking-wide"><MapPin size={18} className="text-blue-600"/> Encaminhamentos Adotados</h4>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h4 className="font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-5 text-sm uppercase tracking-wide"><MapPin size={18} className="text-blue-600"/> Encaminhamentos Adotados</h4>
                     <div className="grid grid-cols-2 gap-3">
-                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_cras ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-200 hover:border-blue-300'}`}>
+                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_cras ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}>
                             <input type="checkbox" className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" checked={sahData.encaminhamentos_cras} onChange={e => handleInputChange('encaminhamentos_cras', e.target.checked)} /> 
-                            <span className={`text-sm font-bold ${sahData.encaminhamentos_cras ? 'text-blue-800' : 'text-slate-600'}`}>CRAS</span>
+                            <span className={`text-sm font-bold ${sahData.encaminhamentos_cras ? 'text-blue-800 dark:text-blue-200' : 'text-slate-600 dark:text-slate-300'}`}>CRAS</span>
                         </label>
-                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_creas ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-200 hover:border-blue-300'}`}>
+                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_creas ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}>
                             <input type="checkbox" className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" checked={sahData.encaminhamentos_creas} onChange={e => handleInputChange('encaminhamentos_creas', e.target.checked)} /> 
-                            <span className={`text-sm font-bold ${sahData.encaminhamentos_creas ? 'text-blue-800' : 'text-slate-600'}`}>CREAS</span>
+                            <span className={`text-sm font-bold ${sahData.encaminhamentos_creas ? 'text-blue-800 dark:text-blue-200' : 'text-slate-600 dark:text-slate-300'}`}>CREAS</span>
                         </label>
-                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_abrigo ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-200 hover:border-blue-300'}`}>
+                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_abrigo ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}>
                             <input type="checkbox" className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" checked={sahData.encaminhamentos_abrigo} onChange={e => handleInputChange('encaminhamentos_abrigo', e.target.checked)} /> 
-                            <span className={`text-sm font-bold ${sahData.encaminhamentos_abrigo ? 'text-blue-800' : 'text-slate-600'}`}>Abrigo</span>
+                            <span className={`text-sm font-bold ${sahData.encaminhamentos_abrigo ? 'text-blue-800 dark:text-blue-200' : 'text-slate-600 dark:text-slate-300'}`}>Abrigo</span>
                         </label>
-                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_aluguel_social ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-200 hover:border-blue-300'}`}>
+                        <label className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all ${sahData.encaminhamentos_aluguel_social ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}>
                             <input type="checkbox" className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" checked={sahData.encaminhamentos_aluguel_social} onChange={e => handleInputChange('encaminhamentos_aluguel_social', e.target.checked)} /> 
-                            <span className={`text-sm font-bold ${sahData.encaminhamentos_aluguel_social ? 'text-blue-800' : 'text-slate-600'}`}>Aluguel Social</span>
+                            <span className={`text-sm font-bold ${sahData.encaminhamentos_aluguel_social ? 'text-blue-800 dark:text-blue-200' : 'text-slate-600 dark:text-slate-300'}`}>Aluguel Social</span>
                         </label>
                     </div>
                 </div>
             </div>
 
             <div className="mt-8">
-                <h4 className="font-black text-slate-800 flex items-center gap-2 mb-4 text-sm uppercase tracking-wide"><Archive size={18} className="text-blue-600" /> Tabela Final da Solicitação</h4>
+                <h4 className="font-black text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 text-sm uppercase tracking-wide"><Archive size={18} className="text-blue-600" /> Tabela Final da Solicitação</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-slate-800 p-5 rounded-2xl shadow-sm text-center">
                         <label className="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Cestas Básicas</label>
@@ -779,8 +779,8 @@ export default function SAHModule() {
                 </div>
             </div>
 
-            <div className="flex justify-between mt-10 border-t border-slate-100 pt-6">
-                <button onClick={() => setEtapa(2)} className="px-6 py-3 border-2 border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-bold">Voltar</button>
+            <div className="flex justify-between mt-10 border-t border-slate-100 dark:border-slate-800 pt-6">
+                <button onClick={() => setEtapa(2)} className="px-6 py-3 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 transition-all font-bold">Voltar</button>
                 <button onClick={() => setEtapa(4)} className="px-8 py-3 bg-slate-800 text-white rounded-xl hover:bg-slate-900 shadow-md transition-all font-black flex items-center gap-2">Revisão e Documentos <ArrowLeft className="rotate-180" size={18}/></button>
             </div>
         </div>
@@ -788,37 +788,37 @@ export default function SAHModule() {
 
     const renderEtapa4 = () => (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row justify-between md:items-end border-b border-slate-100 pb-3 gap-4">
-                <h3 className="text-xl font-black text-slate-800">4. Geração de Documentos</h3>
-                <button onClick={() => handleSaveToDB('rascunho')} disabled={loading} className="text-sm font-black text-slate-600 bg-slate-100 border border-slate-200 px-5 py-2.5 rounded-xl hover:bg-slate-200 transition-colors shadow-sm flex items-center gap-2">
+            <div className="flex flex-col md:flex-row justify-between md:items-end border-b border-slate-100 dark:border-slate-800 pb-3 gap-4">
+                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">4. Geração de Documentos</h3>
+                <button onClick={() => handleSaveToDB('rascunho')} disabled={loading} className="text-sm font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-2.5 rounded-xl hover:bg-slate-200 dark:bg-slate-700 transition-colors shadow-sm flex items-center gap-2">
                     {loading ? 'Salvando...' : <><Archive size={16}/> Salvar Rascunho</>}
                 </button>
             </div>
             
-            <p className="text-slate-600 text-sm font-medium">O sistema estruturou os documentos baseados nos normativos da CEPDEC. Baixe-os para assinatura digital (e-Docs) ou física antes de finalizar a transmissão do pedido.</p>
+            <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">O sistema estruturou os documentos baseados nos normativos da CEPDEC. Baixe-os para assinatura digital (e-Docs) ou física antes de finalizar a transmissão do pedido.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
-                <a href="/templates/Relatório Social da População Afetada (modelo).docx" download className="flex items-center gap-4 p-5 bg-white border-2 border-slate-100 rounded-2xl hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100 transition-all text-left group">
-                    <div className="bg-blue-50 p-4 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all"><FileText size={28} /></div>
+                <a href="/templates/Relatório Social da População Afetada (modelo).docx" download className="flex items-center gap-4 p-5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100 transition-all text-left group">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-blue-600 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all"><FileText size={28} /></div>
                     <div className="flex-1">
-                        <div className="font-black text-slate-800 group-hover:text-blue-700 transition-colors">Relatório Social (.docx)</div>
+                        <div className="font-black text-slate-800 dark:text-slate-100 group-hover:text-blue-700 transition-colors">Relatório Social (.docx)</div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Modelo Oficial CEPDEC/ES</div>
                     </div>
                     <FileDown size={24} className="ml-auto text-slate-300 group-hover:text-blue-500" />
                 </a>
                 
-                <a href="/templates/Ofício para solicitação de recursos materiais (modelo).docx" download className="flex items-center gap-4 p-5 bg-white border-2 border-slate-100 rounded-2xl hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-100 transition-all text-left group">
-                    <div className="bg-emerald-50 p-4 rounded-xl text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all"><FileText size={28} /></div>
+                <a href="/templates/Ofício para solicitação de recursos materiais (modelo).docx" download className="flex items-center gap-4 p-5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-100 transition-all text-left group">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-emerald-600 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all"><FileText size={28} /></div>
                     <div className="flex-1">
-                        <div className="font-black text-slate-800 group-hover:text-emerald-700 transition-colors">Ofício de Solicitação (.docx)</div>
+                        <div className="font-black text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 transition-colors">Ofício de Solicitação (.docx)</div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-wider">Portaria 606-R/2022</div>
                     </div>
                     <FileDown size={24} className="ml-auto text-slate-300 group-hover:text-emerald-500" />
                 </a>
             </div>
 
-            <div className="flex justify-between mt-10 border-t border-slate-100 pt-6">
-                <button onClick={() => setEtapa(3)} className="px-6 py-3 border-2 border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-bold">Voltar</button>
+            <div className="flex justify-between mt-10 border-t border-slate-100 dark:border-slate-800 pt-6">
+                <button onClick={() => setEtapa(3)} className="px-6 py-3 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 transition-all font-bold">Voltar</button>
                 <button onClick={() => setEtapa(5)} className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md transition-all font-black flex items-center gap-2">
                     Avançar para Envio <CheckCircle size={18} />
                 </button>
@@ -831,12 +831,12 @@ export default function SAHModule() {
             <div className="mx-auto bg-emerald-100 text-emerald-600 w-28 h-28 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-100 border-4 border-white ring-4 ring-emerald-50">
                 <Send size={48} className="ml-2" />
             </div>
-            <h3 className="text-3xl font-black text-slate-800">Finalizar Protocolo SAH</h3>
-            <p className="text-slate-600 max-w-md mx-auto text-sm mt-2 leading-relaxed font-medium">
-                Ao transmitir, os quantitativos e as informações sociais atuais serão travados no histórico deste protocolo <strong className="text-slate-800 bg-slate-100 px-2 py-0.5 rounded">{protocolo}</strong> para posterior prestação de contas.
+            <h3 className="text-3xl font-black text-slate-800 dark:text-slate-100">Finalizar Protocolo SAH</h3>
+            <p className="text-slate-600 dark:text-slate-300 max-w-md mx-auto text-sm mt-2 leading-relaxed font-medium">
+                Ao transmitir, os quantitativos e as informações sociais atuais serão travados no histórico deste protocolo <strong className="text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">{protocolo}</strong> para posterior prestação de contas.
             </p>
             <div className="mt-12 flex flex-col sm:flex-row justify-center gap-4">
-                <button onClick={() => setEtapa(4)} className="px-8 py-3.5 border-2 border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-bold">
+                <button onClick={() => setEtapa(4)} className="px-8 py-3.5 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:bg-slate-800/50 transition-all font-bold">
                     Revisar Documentos
                 </button>
                 <button onClick={() => handleSaveToDB('enviado')} disabled={loading} className="px-8 py-3.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 shadow-xl shadow-emerald-200/50 transition-all font-black flex items-center justify-center gap-2 transform hover:-translate-y-1">
@@ -847,19 +847,19 @@ export default function SAHModule() {
     );
 
     return (
-        <div className="bg-slate-50/50 min-h-screen pb-24 font-sans text-slate-800 selection:bg-blue-200">
+        <div className="bg-slate-50 dark:bg-slate-800/50/50 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 selection:bg-blue-200">
             {/* Minimal Header */}
-            <header className="bg-white sticky top-0 z-30 border-b border-slate-200 px-6 h-16 flex items-center justify-between shadow-sm">
+            <header className="bg-white dark:bg-slate-900 sticky top-0 z-30 border-b border-slate-200 dark:border-slate-700 px-6 h-16 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
                     <button onClick={() => {
                         if (view === 'wizard') setView('list');
                         else if (view === 'detail') { setView('list'); setSelectedSah(null); }
                         else if (view === 'list') navigate(-1);
-                    }} className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-colors">
+                    }} className="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full transition-colors">
                         <ArrowLeft size={16} />
                     </button>
                     <div>
-                        <h1 className="text-sm font-black text-slate-800 tracking-wide">ASSISTÊNCIA HUMANITÁRIA</h1>
+                        <h1 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-wide">ASSISTÊNCIA HUMANITÁRIA</h1>
                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Módulo SAH • Defesa Civil</p>
                     </div>
                 </div>
@@ -870,11 +870,11 @@ export default function SAHModule() {
                 {view === 'detail' && selectedSah && renderDetail()}
                 
                 {view === 'wizard' && (
-                    <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                         {/* Header Wizard */}
                         <div className="bg-white dark:bg-slate-900 px-8 py-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4 border-b border-slate-100 dark:border-slate-800">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center">
+                                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center">
                                     <Archive size={28} />
                                 </div>
                                 <div>
@@ -882,22 +882,22 @@ export default function SAHModule() {
                                     <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{sahData.id ? 'Atualize os dados em rascunho' : 'Fluxo assistido de solicitação e prestação de contas'}</p>
                                 </div>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-5 py-2.5 rounded-xl text-sm font-black border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 dark:text-slate-300 px-5 py-2.5 rounded-xl text-sm font-black border border-slate-200 dark:border-slate-700 flex items-center gap-3">
                                 <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
                                 {protocolo}
                             </div>
                         </div>
 
                         {/* Stepper */}
-                        <div className="px-8 py-10 border-b border-slate-100 bg-white">
+                        <div className="px-8 py-10 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                             <div className="flex justify-between relative max-w-4xl mx-auto">
-                                <div className="absolute top-1/2 left-0 w-full h-2 bg-slate-100 -z-10 -translate-y-1/2 rounded-full"></div>
+                                <div className="absolute top-1/2 left-0 w-full h-2 bg-slate-100 dark:bg-slate-800 -z-10 -translate-y-1/2 rounded-full"></div>
                                 <div className="absolute top-1/2 left-0 h-2 bg-blue-600 -z-10 -translate-y-1/2 transition-all duration-700 ease-in-out rounded-full shadow-sm" style={{ width: `${(etapa - 1) * 25}%` }}></div>
                                 
                                 {[1, 2, 3, 4, 5].map((step) => (
                                     <div key={step} className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black shadow-sm transition-all duration-500 ease-out transform
                                         ${etapa === step ? 'bg-blue-600 text-white scale-110 shadow-lg shadow-blue-200 ring-4 ring-blue-50' : 
-                                          etapa > step ? 'bg-blue-50 text-blue-600 border-2 border-blue-200' : 'bg-white text-slate-300 border-2 border-slate-100'}
+                                          etapa > step ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-2 border-blue-200 dark:border-blue-800/50' : 'bg-white dark:bg-slate-900 text-slate-300 border-2 border-slate-100 dark:border-slate-800'}
                                     `}>
                                         {etapa > step ? <CheckCircle size={24} /> : step}
                                     </div>
@@ -919,7 +919,7 @@ export default function SAHModule() {
                         </div>
 
                         {/* Content Body */}
-                        <div className="p-8 md:p-12 min-h-[500px] bg-white">
+                        <div className="p-8 md:p-12 min-h-[500px] bg-white dark:bg-slate-900">
                             {etapa === 1 && renderEtapa1()}
                             {etapa === 2 && renderEtapa2()}
                             {etapa === 3 && renderEtapa3()}

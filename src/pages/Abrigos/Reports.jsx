@@ -92,13 +92,13 @@ export function Reports() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-12">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 pb-12">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
                 {/* Header */}
                 <div className="flex flex-col gap-4">
                     <button
                         onClick={() => navigate('/assisthumanitaria')}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 transition-colors w-fit"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold hover:text-blue-800 dark:text-blue-200 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar ao Menu
@@ -106,14 +106,14 @@ export function Reports() {
 
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800 mb-1">Relatórios e Registros</h1>
-                            <p className="text-sm text-slate-500">Histórico de doações e movimentações de estoque</p>
+                            <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-1">Relatórios e Registros</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Histórico de doações e movimentações de estoque</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
                                 variant="secondary"
                                 onClick={() => setShowClearModal(true)}
-                                className="flex-1 md:flex-none flex items-center justify-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-100 print:hidden"
+                                className="flex-1 md:flex-none flex items-center justify-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:bg-red-900/20 border-red-100 print:hidden"
                             >
                                 <Trash2 size={18} />
                                 <span className="whitespace-nowrap">Limpar Histórico</span>
@@ -135,14 +135,14 @@ export function Reports() {
                     <section className="space-y-4">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
                                     <Gift className="w-4 h-4 text-amber-600" />
                                 </div>
-                                <h2 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Doações Recebidas</h2>
+                                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">Doações Recebidas</h2>
                             </div>
                             <button
                                 onClick={() => exportToCSV(donations, 'relatorio_doacoes', 'donations')}
-                                className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors print:hidden"
+                                className="p-2 text-[#2a5299] hover:bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors print:hidden"
                                 title="Exportar CSV"
                             >
                                 <Download size={18} />
@@ -154,7 +154,7 @@ export function Reports() {
                         ) : (
                             <div className="space-y-3">
                                 {donations.map((donation) => (
-                                    <Card key={donation.id} className={`p-4 border-l-4 ${(!donation.item_description || !donation.item_description.trim() || !donation.quantity) ? 'border-l-red-400 bg-red-50/30' : 'border-l-amber-500'}`}>
+                                    <Card key={donation.id} className={`p-4 border-l-4 ${(!donation.item_description || !donation.item_description.trim() || !donation.quantity) ? 'border-l-red-400 bg-red-50 dark:bg-red-900/20/30' : 'border-l-amber-500'}`}>
                                         {(!donation.item_description || !donation.item_description.trim() || !donation.quantity) && (
                                             <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold mb-2">
                                                 <AlertTriangle size={10} /> Registro Incompleto
@@ -162,8 +162,8 @@ export function Reports() {
                                         )}
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
-                                                <h3 className="font-bold text-slate-800 capitalize">{donation.item_description}</h3>
-                                                <div className="text-xs text-slate-500 flex items-center gap-1">
+                                                <h3 className="font-bold text-slate-800 dark:text-slate-100 capitalize">{donation.item_description}</h3>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                                     <Calendar size={12} />
                                                     {new Date(donation.donation_date).toLocaleDateString('pt-BR')}
                                                 </div>
@@ -178,11 +178,11 @@ export function Reports() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 pt-3 border-t border-slate-50">
-                                            <div className="text-xs text-slate-600 flex items-center gap-1">
+                                            <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1">
                                                 <MapPin size={12} className="text-[#2a5299]" />
                                                 {getShelterName(donation.shelter_id)}
                                             </div>
-                                            <div className="text-xs text-slate-600 flex items-center gap-1">
+                                            <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1">
                                                 <User size={12} className="text-[#2a5299]" />
                                                 {donation.donor_name || 'Doador Anônimo'}
                                             </div>
@@ -197,14 +197,14 @@ export function Reports() {
                     <section className="space-y-4">
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                                     <TrendingUp className="w-4 h-4 text-blue-600" />
                                 </div>
-                                <h2 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Distribuições Realizadas</h2>
+                                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">Distribuições Realizadas</h2>
                             </div>
                             <button
                                 onClick={() => exportToCSV(distributions, 'relatorio_distribuicoes', 'distributions')}
-                                className="p-2 text-[#2a5299] hover:bg-blue-50 rounded-lg transition-colors print:hidden"
+                                className="p-2 text-[#2a5299] hover:bg-blue-50 dark:bg-blue-900/20 rounded-lg transition-colors print:hidden"
                                 title="Exportar CSV"
                             >
                                 <Download size={18} />
@@ -219,8 +219,8 @@ export function Reports() {
                                     <Card key={dist.id} className="p-4 border-l-4 border-l-blue-500">
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
-                                                <h3 className="font-bold text-slate-800">{dist.item_name}</h3>
-                                                <div className="text-xs text-slate-500 flex items-center gap-1">
+                                                <h3 className="font-bold text-slate-800 dark:text-slate-100">{dist.item_name}</h3>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                                     <Calendar size={12} />
                                                     {new Date(dist.distribution_date).toLocaleDateString('pt-BR')}
                                                 </div>
@@ -232,11 +232,11 @@ export function Reports() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4 pt-3 border-t border-slate-50">
-                                            <div className="text-xs text-slate-600 flex items-center gap-1">
+                                            <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1">
                                                 <MapPin size={12} className="text-[#2a5299]" />
                                                 {getShelterName(dist.shelter_id)}
                                             </div>
-                                            <div className="text-xs text-slate-600 flex items-center gap-1">
+                                            <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1">
                                                 <User size={12} className="text-[#2a5299]" />
                                                 {dist.recipient_name || 'Destinatário não informado'} {dist.family_group ? `(${dist.family_group})` : ''}
                                             </div>

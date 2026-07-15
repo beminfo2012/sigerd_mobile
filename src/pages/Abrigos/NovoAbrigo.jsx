@@ -27,14 +27,14 @@ const NovoAbrigo = () => {
     }
 
     return (
-        <div className="bg-slate-50 min-h-screen p-5 pb-24 font-sans">
+        <div className="bg-slate-50 dark:bg-slate-800/50 min-h-screen p-5 pb-24 font-sans">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <button
                     onClick={() => navigate('/assisthumanitaria')}
-                    className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-all"
+                    className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 active:scale-95 transition-all"
                 >
-                    <ArrowLeft size={20} className="text-slate-600" />
+                    <ArrowLeft size={20} className="text-slate-600 dark:text-slate-300" />
                 </button>
                 <div>
                     <h1 className="text-xl font-black text-gray-800 tracking-tight">Novo Abrigo</h1>
@@ -45,8 +45,8 @@ const NovoAbrigo = () => {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Basic Info Card */}
-                <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm">
-                    <h3 className="text-sm font-black text-slate-800 mb-4 uppercase tracking-wide">Informações Básicas</h3>
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-4 uppercase tracking-wide">Informações Básicas</h3>
 
                     <div className="space-y-4">
                         <div>
@@ -60,7 +60,7 @@ const NovoAbrigo = () => {
                                     required
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 dark:text-slate-100"
                                     placeholder="Ex: Ginásio Municipal"
                                 />
                             </div>
@@ -77,7 +77,7 @@ const NovoAbrigo = () => {
                                     required
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 dark:text-slate-100"
                                     placeholder="Rua, número, complemento"
                                 />
                             </div>
@@ -91,7 +91,7 @@ const NovoAbrigo = () => {
                                 type="text"
                                 value={formData.bairro}
                                 onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-                                className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
+                                className="w-full bg-slate-50 dark:bg-slate-800/50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 dark:text-slate-100"
                                 placeholder="Nome do bairro"
                             />
                         </div>
@@ -106,7 +106,7 @@ const NovoAbrigo = () => {
                                 min="1"
                                 value={formData.capacity}
                                 onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                                className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
+                                className="w-full bg-slate-50 dark:bg-slate-800/50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 dark:text-slate-100"
                                 placeholder="Número de pessoas"
                             />
                         </div>
@@ -114,8 +114,8 @@ const NovoAbrigo = () => {
                 </div>
 
                 {/* Responsible Person Card */}
-                <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm">
-                    <h3 className="text-sm font-black text-slate-800 mb-4 uppercase tracking-wide">Responsável</h3>
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-4 uppercase tracking-wide">Responsável</h3>
 
                     <div className="space-y-4">
                         <div>
@@ -128,7 +128,7 @@ const NovoAbrigo = () => {
                                     type="text"
                                     value={formData.responsible_name}
                                     onChange={(e) => setFormData({ ...formData, responsible_name: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 dark:text-slate-100"
                                     placeholder="Nome completo"
                                 />
                             </div>
@@ -144,7 +144,7 @@ const NovoAbrigo = () => {
                                     type="tel"
                                     value={formData.responsible_phone}
                                     onChange={(e) => setFormData({ ...formData, responsible_phone: e.target.value })}
-                                    className="w-full bg-slate-50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 pl-12 pr-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 dark:text-slate-100"
                                     placeholder="(00) 00000-0000"
                                 />
                             </div>
@@ -153,14 +153,14 @@ const NovoAbrigo = () => {
                 </div>
 
                 {/* Observations Card */}
-                <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm">
-                    <h3 className="text-sm font-black text-slate-800 mb-4 uppercase tracking-wide">Observações</h3>
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-4 uppercase tracking-wide">Observações</h3>
 
                     <textarea
                         value={formData.observations}
                         onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
                         rows={4}
-                        className="w-full bg-slate-50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 resize-none"
+                        className="w-full bg-slate-50 dark:bg-slate-800/50 px-4 py-4 rounded-2xl border-none outline-none focus:ring-2 focus:ring-[#2a5299]/20 font-bold text-slate-800 dark:text-slate-100 resize-none"
                         placeholder="Informações adicionais sobre o abrigo..."
                     />
                 </div>

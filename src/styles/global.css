@@ -89,6 +89,12 @@
     --border: 217 32% 17.5%;
     --input: 217 32% 17.5%;
     --ring: 224 76% 48%;
+
+    /* SIGERD WEB Design Tokens Dark Mode Overrides */
+    --web-bg: hsl(222, 47%, 11%);
+    --web-primary: #1e293b;
+    --web-header-gradient: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+    --web-sidebar-gradient: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   }
 }
 

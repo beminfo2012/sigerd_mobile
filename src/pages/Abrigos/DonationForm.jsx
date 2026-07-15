@@ -95,9 +95,9 @@ export function DonationForm() {
 
     if (!shelter) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center">
                 <div className="text-center">
-                    <h2 className="text-xl font-bold text-slate-800 mb-2">Abrigo não encontrado</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Abrigo não encontrado</h2>
                     <Button onClick={() => navigate('/assisthumanitaria')}>Voltar ao Dashboard</Button>
                 </div>
             </div>
@@ -105,21 +105,21 @@ export function DonationForm() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-6">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 pb-6">
             <div className="max-w-3xl mx-auto px-4 py-6">
                 {/* Header */}
                 <div className="mb-6">
                     <button
                         onClick={() => navigate(`/assisthumanitaria/${shelterId}`)}
-                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 transition-colors"
+                        className="flex items-center gap-2 text-[#2a5299] font-semibold mb-4 hover:text-blue-800 dark:text-blue-200 transition-colors"
                     >
                         <ArrowLeft size={20} />
                         Voltar
                     </button>
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-black text-slate-800">Registrar Doação</h1>
-                            <p className="text-sm text-slate-500 mt-1">
+                            <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">Registrar Doação</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 Abrigo: {shelter.name}
                             </p>
                         </div>
@@ -130,7 +130,7 @@ export function DonationForm() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Donor Information */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <User size={20} className="text-[#2a5299]" />
                             Informações do Doador
                         </h2>
@@ -161,14 +161,14 @@ export function DonationForm() {
 
                     {/* Donation Details */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <Gift size={20} className="text-[#2a5299]" />
                             Detalhes da Doação
                         </h2>
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     Tipo de Doação <span className="text-red-500">*</span>
                                 </label>
                                 <select
@@ -177,7 +177,7 @@ export function DonationForm() {
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     required
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                 >
                                     <option value="alimento">Alimento</option>
                                     <option value="cesta_basica">Cestas Básicas</option>
@@ -219,7 +219,7 @@ export function DonationForm() {
                                 />
 
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-semibold text-slate-700">
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                         Unidade <span className="text-red-500">*</span>
                                     </label>
                                     <select
@@ -228,7 +228,7 @@ export function DonationForm() {
                                         onChange={handleChange}
                                         onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                         required
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all font-semibold"
                                     >
                                         <option value="unidades">Unidades</option>
                                         <option value="kg">Kg</option>
@@ -241,7 +241,7 @@ export function DonationForm() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                     Observações
                                 </label>
                                 <textarea
@@ -250,7 +250,7 @@ export function DonationForm() {
                                     onChange={handleChange}
                                     onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                     rows={3}
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                     placeholder="Informações adicionais sobre a doação..."
                                 />
                             </div>

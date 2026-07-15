@@ -107,7 +107,7 @@ export function ShelterForm() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-[#2a5299] dark:border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando dados...</p>
@@ -117,13 +117,13 @@ export function ShelterForm() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-6">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-800/50 dark:bg-slate-950 pb-6">
             <div className="max-w-3xl mx-auto px-4 py-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 mb-6">
                     <button
                         onClick={() => navigate(id ? `/assisthumanitaria/${id}` : '/assisthumanitaria/lista')}
-                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:hover:text-blue-300 transition-colors w-fit"
+                        className="flex items-center gap-2 text-[#2a5299] dark:text-blue-400 font-semibold hover:text-blue-800 dark:text-blue-200 dark:hover:text-blue-300 transition-colors w-fit"
                     >
                         <ArrowLeft size={20} />
                         Voltar
@@ -213,7 +213,7 @@ export function ShelterForm() {
 
                     {/* Responsible Person */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <User size={20} className="text-[#2a5299]" />
                             Responsável
                         </h2>
@@ -246,13 +246,13 @@ export function ShelterForm() {
 
                     {/* Additional Information */}
                     <Card className="p-6">
-                        <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                             <FileText size={20} className="text-[#2a5299]" />
                             Informações Adicionais
                         </h2>
 
                         <div className="space-y-4 mb-4">
-                            <label className="block text-sm font-semibold text-slate-700">Status Operacional</label>
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Status Operacional</label>
                             <div className="flex gap-2">
                                 <button 
                                     type="button"
@@ -263,25 +263,25 @@ export function ShelterForm() {
                                         }
                                         setFormData({...formData, status: 'active'});
                                     }}
-                                    className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.status === 'active' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400'}`}
+                                    className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.status === 'active' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-400'}`}
                                 >
                                     🟢 Ativo (Aberto)
                                 </button>
                                 <button 
                                     type="button"
                                     onClick={() => setFormData({...formData, status: 'inactive'})}
-                                    className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.status === 'inactive' ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-slate-200 bg-white text-slate-400'}`}
+                                    className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.status === 'inactive' ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-700' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-400'}`}
                                 >
                                     🟡 Inativo (Fechado)
                                 </button>
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 Abrigos inativos ficam fechados para recebimento de novas doações e novos abrigados.
                             </p>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-slate-700">
+                            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                                 Observações
                             </label>
                             <textarea
@@ -291,7 +291,7 @@ export function ShelterForm() {
                                 onChange={handleChange}
                                 onFocusCapture={(e) => setLastFocusedField(e.target.name)}
                                 rows={4}
-                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
+                                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#2a5299]/20 transition-all resize-none"
                                 placeholder="Informações adicionais sobre o abrigo..."
                             />
                         </div>
