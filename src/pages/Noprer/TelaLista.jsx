@@ -131,7 +131,7 @@ const TelaLista = () => {
                         <thead>
                             <tr className="bg-[#F1F5F9] border-b border-[#E2E8F0]">
                                 <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-32">Nº NOPRER</th>
-                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Endereço / Notificado</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Notificado / Endereço</th>
                                 <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider text-center w-24">Risco</th>
                                 <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-28">Emissão</th>
                                 <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-48">Prazo / Progresso</th>
@@ -155,10 +155,12 @@ const TelaLista = () => {
                                         onClick={() => noprer.isDraft ? navigate(`/noprer/novo?draftId=${noprer.id}`) : navigate(`/noprer/detalhes/${noprer.id}`)}
                                         className={`border-b border-[#E2E8F0] hover:bg-[#FAFBFD] cursor-pointer transition-colors ${noprer.statusCalculado === 'VENCIDA' ? 'bg-[#FEF2F2]/30 hover:bg-[#FEF2F2]/50' : ''} ${noprer.isDraft ? 'bg-amber-50/30' : ''}`}
                                     >
-                                        <td className="p-4 font-mono text-xs font-bold text-[#1F3B5C]">{noprer.numero}</td>
+                                        <td className="p-4 font-mono text-xs font-bold text-[#1F3B5C]">
+                                            {noprer.numero ? noprer.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}
+                                        </td>
                                         <td className="p-4">
-                                            <div className="text-sm font-bold text-slate-800 line-clamp-1 mb-0.5">{noprer.endereco}</div>
-                                            <div className="text-xs text-[#64748B] truncate max-w-[250px]">{noprer.nome_notificado}</div>
+                                            <div className="text-sm font-bold text-slate-800 line-clamp-1 mb-0.5">{noprer.nome_notificado}</div>
+                                            <div className="text-xs text-[#64748B] truncate max-w-[250px]">{noprer.endereco}</div>
                                         </td>
                                         <td className="p-4 text-center">
                                             <GrauBadge grau={noprer.grau_risco} />

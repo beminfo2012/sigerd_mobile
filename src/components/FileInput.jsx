@@ -21,9 +21,21 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
 
     const handleChange = (e, source) => {
         const files = Array.from(e.target.files)
-        if (files.length > 0) {
-            onFileSelect(files, source)
+        
+        if (source === 'gallery' && !acceptAll) {
+            // Verifica se os arquivos são imagens
+            const imageFiles = files.filter(f => f.type.startsWith('image/'));
+            if (imageFiles.length > 0) {
+                onFileSelect(imageFiles, source)
+            } else if (files.length > 0) {
+                alert("Por favor, selecione apenas arquivos de imagem.");
+            }
+        } else {
+            if (files.length > 0) {
+                onFileSelect(files, source)
+            }
         }
+        
         // clear value to allow re-selection of the same file if needed
         e.target.value = null;
     }
@@ -40,7 +52,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                     type="file"
                     ref={galleryInputRef}
                     className="hidden"
-                    accept={acceptAll ? "*" : ".jpg,.jpeg,.png,.heic,image/jpeg,image/png,image/heic"}
+                    accept={acceptAll ? "*" : "*/*"} // Usando */* força o Android a abrir o explorador de arquivos (bypassa o Photo Picker)
                     multiple
                     onChange={(e) => handleChange(e, 'gallery')}
                 />
@@ -71,7 +83,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                 type="file"
                 ref={galleryInputRef}
                 className="hidden"
-                accept={acceptAll ? "*" : ".jpg,.jpeg,.png,.heic,image/jpeg,image/png,image/heic"}
+                accept={acceptAll ? "*" : "*/*"} // Usando */* força o Android a abrir o explorador de arquivos
                 multiple
                 onChange={(e) => handleChange(e, 'gallery')}
             />

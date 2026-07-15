@@ -142,7 +142,7 @@ const TelaImpressao = () => {
                     <div className="grid grid-cols-2 gap-x-8 gap-y-3">
                         <div className="border-b border-gray-100 pb-1">
                             <span className="block text-[10px] font-bold text-gray-500 uppercase">Número NOPRER</span>
-                            <span className="block text-sm font-bold">{noprer.numero}</span>
+                            <span className="block text-sm font-bold">{noprer.numero ? noprer.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}</span>
                         </div>
                         <div className="border-b border-gray-100 pb-1">
                             <span className="block text-[10px] font-bold text-gray-500 uppercase">Data de Emissão</span>
@@ -251,7 +251,7 @@ const TelaImpressao = () => {
                         Reconhece a condição de risco informada e concorda expressamente em cumprir as medidas preventivas e 
                         mitigadoras indicadas no prazo assinalado, estando ciente de que o não cumprimento poderá resultar em 
                         sanções administrativas e medidas coercitivas, bem como sua responsabilização em caso de agravamento da 
-                        situação que possa colocar em risco a vida própria ou de terceiros.
+                        situação que possa colocar em risco a vida ou o patrimônio de terceiros.
                     </p>
                 </div>
 

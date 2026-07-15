@@ -27,7 +27,7 @@ export const generateNoprerPDF = async (data, options = { autoOpen: true }) => {
         urlToBase64(LOGO_SIGERD)
     ]);
 
-    const num = data.numero || '---';
+    const num = data.numero ? data.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---';
     const filename = `NOPRER nº ${num} - ${data.nome_notificado || 'Notificado'}.pdf`.replace(/[\/\\]/g, '_');
 
     const container = document.createElement('div');
@@ -73,7 +73,7 @@ export const generateNoprerPDF = async (data, options = { autoOpen: true }) => {
     contentHtml += `
         ${sectionTitle('1. Identificação do Documento')}
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
-            ${renderField('Número NOPRER', data.numero)}
+            ${renderField('Número NOPRER', num)}
             ${renderField('Data de Emissão', formatDate(data.data_emissao))}
             ${renderField('Vistoria Vinculada', data.vistoria ? data.vistoria.numero : 'Sem vínculo')}
             ${renderField('Agente Emissor', data.nome_agente)}
@@ -138,7 +138,7 @@ export const generateNoprerPDF = async (data, options = { autoOpen: true }) => {
                 Reconhece a condição de risco informada e concorda expressamente em cumprir as medidas preventivas e 
                 mitigadoras indicadas no prazo assinalado, estando ciente de que o não cumprimento poderá resultar em 
                 sanções administrativas e medidas coercitivas, bem como sua responsabilização em caso de agravamento da 
-                situação que possa colocar em risco a vida própria ou de terceiros.
+                situação que possa colocar em risco a vida ou o patrimônio de terceiros.
             </p>
         </div>
     `;

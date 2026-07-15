@@ -155,10 +155,10 @@ const NoprerForm = () => {
         if (step === 3) return true; // Fotos não são estritamente obrigatórias no schema
         if (step === 4) return formData.medidas.length > 0;
         if (step === 5) {
-            if (!formData.termo_lido || !formData.sign_agente) return false;
-            if (formData.modo_assinatura === 'digital') return !!formData.sign_notificado;
+            if (!formData.termo_lido) return false;
+            if (formData.modo_assinatura === 'digital') return !!formData.sign_agente && !!formData.sign_notificado;
             if (formData.modo_assinatura === 'recusa') {
-                return formData.test1_nome && formData.test1_cpf && formData.sign_test1 && formData.test2_nome && formData.test2_cpf && formData.sign_test2;
+                return !!formData.sign_agente && formData.test1_nome && formData.test1_cpf && formData.sign_test1 && formData.test2_nome && formData.test2_cpf && formData.sign_test2;
             }
             if (formData.modo_assinatura === 'impresso') return true;
         }
@@ -463,10 +463,7 @@ const NoprerForm = () => {
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Endereço Completo *</label>
                                     <input type="text" value={formData.endereco} onChange={e => setFormData(p => ({...p, endereco: e.target.value}))} className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
                                 </div>
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Inscrição Imobiliária</label>
-                                    <input type="text" value={formData.inscricao_imob} onChange={e => setFormData(p => ({...p, inscricao_imob: e.target.value}))} className="w-full p-3 border border-slate-300 rounded-lg text-sm outline-none focus:border-blue-500" />
-                                </div>
+
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1 flex items-center justify-between">
                                         Coordenadas GPS
@@ -815,7 +812,7 @@ const NoprerForm = () => {
 
                         <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-sm font-black text-[#1F3B5C]">Assinatura do Agente *</h3>
+                                <h3 className="text-sm font-black text-[#1F3B5C]">Assinatura do Agente {formData.modo_assinatura !== 'impresso' && '*'}</h3>
                             </div>
                             
                             <div className="border border-slate-300 rounded-xl p-4 bg-slate-50 flex flex-col items-center">

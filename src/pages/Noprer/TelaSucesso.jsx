@@ -38,7 +38,7 @@ const TelaSucesso = () => {
                 
                 <div className="bg-[#EBF1F8] border border-[#2E5C8A]/30 px-6 py-3 rounded-lg my-4">
                     <p className="text-xs text-[#64748B] uppercase font-bold tracking-widest mb-1">Nº do Documento</p>
-                    <p className="font-mono text-xl font-black text-[#1F3B5C]">{numero}</p>
+                    <p className="font-mono text-xl font-black text-[#1F3B5C]">{numero ? numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}</p>
                 </div>
 
                 <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-left w-full my-4 flex gap-3">

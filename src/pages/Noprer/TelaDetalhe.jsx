@@ -126,7 +126,9 @@ const TelaDetalhe = () => {
                         </button>
                         <div>
                             <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-xl md:text-2xl font-black text-[#1F3B5C] font-mono tracking-tight">{noprer.numero}</h1>
+                                <h1 className="text-xl md:text-2xl font-black text-[#1F3B5C] font-mono tracking-tight">
+                                    {noprer.numero ? noprer.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}
+                                </h1>
                                 <StatusBadge status={noprer.statusCalculado} />
                             </div>
                             <div className="flex items-center gap-2 text-xs text-[#64748B] flex-wrap">
@@ -267,12 +269,35 @@ const TelaDetalhe = () => {
                                 
                                 {noprer.documento_anexo ? (
                                     <div className="flex flex-col gap-3">
-                                        <div className="bg-white p-3 rounded-lg border border-emerald-200 flex items-center gap-3">
-                                            <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full"><Check size={16}/></div>
-                                            <div>
-                                                <p className="text-sm font-bold text-emerald-900">Documento anexado com sucesso.</p>
-                                                <p className="text-xs text-emerald-700">A assinatura física foi digitalizada e arquivada.</p>
+                                        <div className="bg-white p-3 rounded-lg border border-emerald-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-emerald-100 text-emerald-600 p-2 rounded-full shrink-0"><Check size={16}/></div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-emerald-900">Documento anexado com sucesso.</p>
+                                                    <p className="text-xs text-emerald-700">A assinatura física foi digitalizada e arquivada.</p>
+                                                </div>
                                             </div>
+                                            <button 
+                                                onClick={() => {
+                                                    fetch(noprer.documento_anexo)
+                                                        .then(res => res.blob())
+                                                        .then(blob => {
+                                                            const url = URL.createObjectURL(blob);
+                                                            window.open(url, '_blank');
+                                                        })
+                                                        .catch(err => {
+                                                            console.error('Erro ao abrir documento:', err);
+                                                            // Fallback caso o fetch falhe
+                                                            const link = document.createElement('a');
+                                                            link.href = noprer.documento_anexo;
+                                                            link.download = `NOPRER_${noprer.numero.replace('.', '_')}_Assinada`;
+                                                            link.click();
+                                                        });
+                                                }}
+                                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-2 text-xs transition-colors shadow-sm whitespace-nowrap shrink-0"
+                                            >
+                                                <FileText size={14} /> Visualizar Documento
+                                            </button>
                                         </div>
                                         {noprer.documento_anexo.startsWith('data:image') && (
                                             <img src={noprer.documento_anexo} alt="Documento Anexado" className="max-h-[300px] object-contain rounded-lg border border-slate-200" />

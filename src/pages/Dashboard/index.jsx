@@ -69,7 +69,7 @@ const getMarkerColor = (loc) => {
 import {
     getPendingSyncCount, syncPendingData, getAllVistoriasLocal,
     getRemoteVistoriasCache, pullAllData, resetDatabase, getManualReadings,
-    getAllInterdicoesLocal
+    getAllInterdicoesLocal, getAllAgendaLocal
 } from '../../services/db'
 import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
 import { getShelters, getOccupants, getInventory } from '../../services/shelterDb'
@@ -81,6 +81,7 @@ import { useToast } from '../../components/ToastNotification'
 import { APP_VERSION } from '../../version'
 import { contingencyDb } from '../../services/contingencyDb'
 import { supabase } from '../../services/supabase'
+import { useNoprer } from '../Noprer/hooks/useNoprer'
 
 // --- HELPER FUNCTIONS ---
 const processBreakdown = (records) => {
@@ -1436,6 +1437,152 @@ const MobileDashboardView = ({
 };
 
 // --- SUB-COMPONENT: BOLETINS CARD ---
+// --- PRAZOS E ALERTAS CARD ---
+const PrazosAlertasCard = () => {
+    const navigate = useNavigate();
+    const [prazos, setPrazos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { fetchNoprers } = useNoprer();
+
+    useEffect(() => {
+        const loadPrazos = async () => {
+            setLoading(true);
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // Fetch Agendas
+                const agendas = await getAllAgendaLocal().catch(() => []);
+                
+                // Fetch NOPRERs via hook to get correctly calculated statuses
+                const noprers = await fetchNoprers().catch(() => []);
+
+                const processadosAgenda = agendas
+                    .filter(item => !item.concluido)
+                    .map(item => {
+                        const protocoloDate = item.data_abertura ? new Date(item.data_abertura) : new Date();
+                        let prazoDias = 10;
+                        const cat = (item.categoria_risco || '').toLowerCase();
+
+                        if (cat.includes('estrutural') || cat.includes('predial')) prazoDias = 3;
+                        else if (cat.includes('geológico') || cat.includes('geotécnico')) prazoDias = 3;
+                        else if (cat.includes('arvore') || cat.includes('árvore')) prazoDias = 10;
+                        else if (cat.includes('hidrológico') || cat.includes('alagamento')) prazoDias = 2;
+
+                        if (item.categoria_risco === 'Outros' && item.data_prevista) {
+                            const dataLimite = new Date(item.data_prevista);
+                            prazoDias = Math.floor((dataLimite - protocoloDate) / (1000 * 60 * 60 * 24));
+                        }
+
+                        const dLimite = new Date(protocoloDate);
+                        dLimite.setDate(dLimite.getDate() + prazoDias);
+                        dLimite.setHours(0, 0, 0, 0);
+
+                        const diasRestantes = Math.floor((dLimite - today) / (1000 * 60 * 60 * 24));
+
+                        return { 
+                            diasRestantes,
+                            titulo: (item.categoria_risco && item.categoria_risco !== 'Outros' ? item.categoria_risco : (item.observacao_outro || 'Agenda Geral')),
+                            local: item.solicitante || item.endereco || 'Sem local',
+                            tipo: 'agenda',
+                            id: item.id
+                        };
+                    });
+
+                const processadosNoprer = (noprers || [])
+                    .filter(item => !item.isDraft && item.statusCalculado !== 'REGULARIZADA' && item.statusCalculado !== 'ESCALADA')
+                    .map(item => {
+                        return {
+                            diasRestantes: item.diasRestantes,
+                            titulo: item.numero ? item.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : 'NOPRER - S/N',
+                            local: item.nome_notificado || item.endereco || 'Sem local',
+                            tipo: 'noprer',
+                            id: item.id
+                        };
+                    });
+
+                const todos = [...processadosAgenda, ...processadosNoprer]
+                    .sort((a, b) => a.diasRestantes - b.diasRestantes)
+                    .slice(0, 4);
+
+                setPrazos(todos);
+            } catch (err) {
+                console.error('Erro ao carregar prazos:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadPrazos();
+    }, [fetchNoprers]);
+
+    const getColor = (dias) => {
+        if (dias < 0) return 'bg-red-500';
+        if (dias <= 1) return 'bg-orange-500';
+        if (dias <= 5) return 'bg-yellow-500';
+        return 'bg-emerald-500';
+    };
+
+    const getDiasText = (dias) => {
+        if (dias < 0) return `atrasado há ${Math.abs(dias)} dia(s)`;
+        if (dias === 0) return 'vence hoje';
+        if (dias === 1) return 'vence amanhã';
+        return `vence em ${dias} dias`;
+    };
+
+    return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[24px] shadow-sm flex flex-col overflow-hidden h-full">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest flex items-center gap-2">
+                    <Clock size={16} className="text-blue-500" />
+                    Prazos e Alertas
+                </h3>
+                <div className="flex gap-3">
+                    <button onClick={() => navigate('/noprer')} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 uppercase tracking-widest transition-colors">
+                        NOPRERs
+                    </button>
+                    <button onClick={() => navigate('/agenda')} className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-widest transition-colors">
+                        Ver Agenda
+                    </button>
+                </div>
+            </div>
+            <div className="p-2 flex-1 flex flex-col justify-start">
+                {loading ? (
+                    <div className="text-center py-6">
+                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2"></div>
+                    </div>
+                ) : prazos.length > 0 ? (
+                    <div className="flex flex-col">
+                        {prazos.map((prazo, idx) => (
+                            <div key={idx} className="flex items-start gap-4 p-4 border-b border-slate-50 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer" onClick={() => navigate(prazo.tipo === 'noprer' ? `/noprer/detalhes/${prazo.id}` : '/agenda')}>
+                                <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shadow-sm shrink-0 ${getColor(prazo.diasRestantes)}`} />
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                                        {prazo.titulo} — {prazo.local}
+                                    </span>
+                                    <div className="mt-1.5 flex">
+                                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${
+                                            prazo.diasRestantes < 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800' :
+                                            prazo.diasRestantes <= 1 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800' :
+                                            prazo.diasRestantes <= 5 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800' :
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                        }`}>
+                                            {getDiasText(prazo.diasRestantes)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-6 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                        Nenhum prazo próximo
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const BoletinsCard = () => {
     const [activeTab, setActiveTab] = useState('ext');
     const [boletinsMet, setBoletinsMet] = useState([]);
@@ -2122,19 +2269,8 @@ const WebViewDashboardView = ({
                     {/* Left Column (Sync & Event Log) */}
                     <div className="lg:col-span-8 flex flex-col gap-6">
                         <div className={`grid grid-cols-1 ${!isOperador ? 'md:grid-cols-2' : ''} gap-6 h-full`}>
-                            {/* Sync Summary */}
-                            {!isOperador && (
-                                <div onClick={handleSync} className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 group cursor-pointer hover:bg-slate-50 transition-all justify-center">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-xl group-hover:scale-110 transition-transform ${syncing ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30'}`}>
-                                            <CheckCircle size={18} className={syncing ? 'animate-spin' : ''} />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sincronização do Sistema</span>
-                                    </div>
-                                    <div className="text-2xl font-black text-slate-800 dark:text-slate-100">Atualizar</div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] italic">Forçar sincronização</span>
-                                </div>
-                            )}
+                            {/* Sync Summary Replaced by Prazos e Alertas */}
+                            <PrazosAlertasCard />
 
                             {/* Event Log Card (Replaces Vistoria Card block) */}
                             <div className="flex flex-col border border-transparent">
@@ -2144,7 +2280,7 @@ const WebViewDashboardView = ({
                     </div>
 
                     {/* Right Column (Boletins Card) */}
-                    <div className="lg:col-span-4 h-full">
+                    <div className="lg:col-span-4 h-full flex flex-col">
                         <BoletinsCard />
                     </div>
                 </div>
