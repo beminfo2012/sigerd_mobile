@@ -60,16 +60,16 @@ const TelaLista = () => {
     });
 
     return (
-        <div className="bg-[#F1F5F9] min-h-screen p-4 md:p-6 pb-24 font-[Inter,sans-serif]">
+        <div className="bg-[#F1F5F9] dark:bg-slate-900 min-h-screen p-4 md:p-6 pb-24 font-[Inter,sans-serif]">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-full hover:bg-slate-200 transition-colors">
-                        <ArrowLeft size={24} className="text-[#64748B]" />
+                    <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+                        <ArrowLeft size={24} className="text-[#64748B] dark:text-slate-400" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-black text-[#1F3B5C] tracking-tight">NOPRER</h1>
-                        <p className="text-sm text-[#64748B]">Notificações Preliminares de Risco</p>
+                        <h1 className="text-2xl font-black text-[#1F3B5C] dark:text-slate-100 tracking-tight">NOPRER</h1>
+                        <p className="text-sm text-[#64748B] dark:text-slate-400">Notificações Preliminares de Risco</p>
                     </div>
                 </div>
                 <button 
@@ -91,7 +91,7 @@ const TelaLista = () => {
             </div>
 
             {/* Filters & Search */}
-            <div className="bg-white p-4 rounded-t-xl border border-[#E2E8F0] border-b-0">
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-t-xl border border-[#E2E8F0] dark:border-slate-700 border-b-0">
                 <div className="flex flex-col md:flex-row justify-between gap-4">
                     {/* Abas */}
                     <div className="flex overflow-x-auto hide-scrollbar gap-1">
@@ -101,8 +101,8 @@ const TelaLista = () => {
                                 onClick={() => setFiltroAtivo(f.id)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition-colors ${
                                     filtroAtivo === f.id 
-                                    ? 'bg-[#EBF1F8] text-[#1F3B5C]' 
-                                    : 'text-[#64748B] hover:bg-slate-50'
+                                    ? 'bg-[#EBF1F8] dark:bg-blue-900/30 text-[#1F3B5C] dark:text-slate-100 dark:text-blue-300' 
+                                    : 'text-[#64748B] dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-700/50'
                                 }`}
                             >
                                 {f.label}
@@ -118,59 +118,59 @@ const TelaLista = () => {
                             placeholder="Buscar NOPRER..." 
                             value={busca}
                             onChange={e => setBusca(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 border border-[#E2E8F0] rounded-lg text-sm outline-none focus:border-[#2E5C8A] focus:ring-1 focus:ring-[#2E5C8A]"
+                            className="w-full pl-9 pr-3 py-2 border border-[#E2E8F0] dark:border-slate-700 bg-white dark:bg-slate-800 dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-lg text-sm outline-none focus:border-[#2E5C8A] focus:ring-1 focus:ring-[#2E5C8A]"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Tabela */}
-            <div className="bg-white border border-[#E2E8F0] rounded-b-xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-b-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[900px]">
                         <thead>
-                            <tr className="bg-[#F1F5F9] border-b border-[#E2E8F0]">
-                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-32">Nº NOPRER</th>
-                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Notificado / Endereço</th>
-                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider text-center w-24">Risco</th>
-                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-28">Emissão</th>
-                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-48">Prazo / Progresso</th>
-                                <th className="p-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider w-32">Status</th>
+                            <tr className="bg-[#F1F5F9] dark:bg-slate-900/50 border-b border-[#E2E8F0] dark:border-slate-700">
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider w-32">Nº NOPRER</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider">Notificado / Endereço</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider text-center w-24">Risco</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider w-28">Emissão</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider w-48">Prazo / Progresso</th>
+                                <th className="p-4 text-[11px] font-bold text-[#64748B] dark:text-slate-400 uppercase tracking-wider w-32">Status</th>
                                 <th className="p-4 w-10"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan="7" className="p-8 text-center text-[#64748B] text-sm">Carregando dados...</td>
+                                    <td colSpan="7" className="p-8 text-center text-[#64748B] dark:text-slate-400 text-sm">Carregando dados...</td>
                                 </tr>
                             ) : dadosFiltrados.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="p-8 text-center text-[#64748B] text-sm">Nenhuma notificação encontrada.</td>
+                                    <td colSpan="7" className="p-8 text-center text-[#64748B] dark:text-slate-400 text-sm">Nenhuma notificação encontrada.</td>
                                 </tr>
                             ) : (
                                 dadosFiltrados.map((noprer) => (
                                     <tr 
                                         key={noprer.id} 
                                         onClick={() => noprer.isDraft ? navigate(`/noprer/novo?draftId=${noprer.id}`) : navigate(`/noprer/detalhes/${noprer.id}`)}
-                                        className={`border-b border-[#E2E8F0] hover:bg-[#FAFBFD] cursor-pointer transition-colors ${noprer.statusCalculado === 'VENCIDA' ? 'bg-[#FEF2F2]/30 hover:bg-[#FEF2F2]/50' : ''} ${noprer.isDraft ? 'bg-amber-50/30' : ''}`}
+                                        className={`border-b border-[#E2E8F0] dark:border-slate-700 hover:bg-[#FAFBFD] dark:bg-slate-800 dark:hover:bg-slate-700/50 cursor-pointer transition-colors ${noprer.statusCalculado === 'VENCIDA' ? 'bg-[#FEF2F2] dark:bg-red-900/30/30 dark:bg-red-900/20 hover:bg-[#FEF2F2] dark:bg-red-900/30/50 dark:hover:bg-red-900/30' : ''} ${noprer.isDraft ? 'bg-amber-50/30 dark:bg-amber-900/20' : ''}`}
                                     >
-                                        <td className="p-4 font-mono text-xs font-bold text-[#1F3B5C]">
+                                        <td className="p-4 font-mono text-xs font-bold text-[#1F3B5C] dark:text-slate-100 dark:text-blue-300">
                                             {noprer.numero ? noprer.numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}
                                         </td>
                                         <td className="p-4">
-                                            <div className="text-sm font-bold text-slate-800 line-clamp-1 mb-0.5">{noprer.nome_notificado}</div>
-                                            <div className="text-xs text-[#64748B] truncate max-w-[250px]">{noprer.endereco}</div>
+                                            <div className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1 mb-0.5">{noprer.nome_notificado}</div>
+                                            <div className="text-xs text-[#64748B] dark:text-slate-400 truncate max-w-[250px]">{noprer.endereco}</div>
                                         </td>
                                         <td className="p-4 text-center">
                                             <GrauBadge grau={noprer.grau_risco} />
                                         </td>
-                                        <td className="p-4 text-xs font-medium text-slate-600">
+                                        <td className="p-4 text-xs font-medium text-slate-600 dark:text-slate-400">
                                             {noprer.data_emissao ? new Date(noprer.data_emissao + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}
                                         </td>
                                         <td className="p-4">
                                             <div className="flex justify-between items-center mb-1.5">
-                                                <span className="text-[10px] text-slate-500 font-bold tracking-wide">Até {noprer.data_limite ? new Date(noprer.data_limite + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}</span>
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wide">Até {noprer.data_limite ? new Date(noprer.data_limite + 'T12:00:00').toLocaleDateString('pt-BR') : '---'}</span>
                                                 <DiasBadge diasRestantes={noprer.diasRestantes} isVencida={noprer.isVencida} status={noprer.status} />
                                             </div>
                                             <PrazoBar progresso={noprer.progresso} statusCalculado={noprer.statusCalculado} />
@@ -194,11 +194,11 @@ const TelaLista = () => {
 
 const StatCard = ({ icon, label, value, cor }) => {
     const cores = {
-        blue: 'bg-blue-50 text-blue-600 border-blue-100',
-        indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-        red: 'bg-red-50 text-red-600 border-red-100',
-        emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-        purple: 'bg-purple-50 text-purple-600 border-purple-100',
+        blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900',
+        indigo: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900',
+        red: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900',
+        emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900',
+        purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900',
     };
 
     const estilos = cores[cor] || cores.blue;

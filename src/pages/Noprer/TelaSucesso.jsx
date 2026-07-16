@@ -28,17 +28,17 @@ const TelaSucesso = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F1F5F9] flex flex-col items-center justify-center p-6 font-[Inter,sans-serif]">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#E2E8F0] max-w-md w-full text-center flex flex-col items-center animate-in zoom-in-95 duration-500">
+        <div className="min-h-screen bg-[#F1F5F9] dark:bg-slate-900 flex flex-col items-center justify-center p-6 font-[Inter,sans-serif]">
+            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-[#E2E8F0] dark:border-slate-700 max-w-md w-full text-center flex flex-col items-center animate-in zoom-in-95 duration-500">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                    <CheckCircle className="text-green-600" size={40} />
+                    <CheckCircle className="text-green-600 dark:text-green-400" size={40} />
                 </div>
                 
-                <h1 className="text-2xl font-black text-[#1F3B5C] mb-2">NOPRER Emitida com Sucesso!</h1>
+                <h1 className="text-2xl font-black text-[#1F3B5C] dark:text-slate-100 mb-2">NOPRER Emitida com Sucesso!</h1>
                 
-                <div className="bg-[#EBF1F8] border border-[#2E5C8A]/30 px-6 py-3 rounded-lg my-4">
-                    <p className="text-xs text-[#64748B] uppercase font-bold tracking-widest mb-1">Nº do Documento</p>
-                    <p className="font-mono text-xl font-black text-[#1F3B5C]">{numero ? numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}</p>
+                <div className="bg-[#EBF1F8] dark:bg-blue-900/30 border border-[#2E5C8A]/30 px-6 py-3 rounded-lg my-4">
+                    <p className="text-xs text-[#64748B] dark:text-slate-400 uppercase font-bold tracking-widest mb-1">Nº do Documento</p>
+                    <p className="font-mono text-xl font-black text-[#1F3B5C] dark:text-slate-100">{numero ? numero.replace(/NOPRER-(\d{4})\.(\d+)/, 'NOPRER - $2/$1') : '---'}</p>
                 </div>
 
                 <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-left w-full my-4 flex gap-3">
@@ -59,7 +59,7 @@ const TelaSucesso = () => {
                     </button>
                     <button 
                         onClick={() => navigate('/noprer')}
-                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+                        className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
                     >
                         <ArrowLeft size={18} />
                         Voltar para a Lista
