@@ -5,8 +5,8 @@
 
 CREATE TABLE IF NOT EXISTS public.nortis_sugestoes_curadoria (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-    usuario_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    tenant_id UUID NOT NULL,
+    usuario_id UUID NOT NULL,
     tipo_sugestao VARCHAR(50) DEFAULT 'LEGISLACAO', -- LEI, DECRETO, NOTA_TECNICA, MANUAL
     titulo VARCHAR(500) NOT NULL,
     url_origem VARCHAR(1000) NOT NULL,
@@ -34,6 +34,14 @@ CREATE POLICY "Apenas administradores podem atualizar o status"
     USING (auth.role() = 'authenticated');
 
 -- Trigger para updated_at
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 CREATE TRIGGER update_nortis_sugestoes_curadoria_updated_at
     BEFORE UPDATE ON public.nortis_sugestoes_curadoria
     FOR EACH ROW
