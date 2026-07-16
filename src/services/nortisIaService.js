@@ -105,6 +105,8 @@ REGRAS INVIOLÁVEIS
 5. ATENÇÃO: Você tem acesso à pesquisa web do Google. Pesquise em fontes oficiais (ex: planalto.gov.br, in.gov.br, tcu.gov.br) para complementar. Responda APENAS em JSON bruto.`;
       }
 
+      systemPrompt += `
+
 FORMATO DE SAÍDA OBRIGATORIAMENTE EM JSON VÁLIDO (retorne apenas as chaves exatas e nenhum texto extra, sem crases markdown):
 {
   "casos_similares": [],
