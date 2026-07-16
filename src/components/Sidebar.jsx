@@ -30,7 +30,8 @@ import {
     Calendar,
     Calculator,
     HeartHandshake,
-    Flame
+    Flame,
+    Book
 } from 'lucide-react';
 import HumanitarianIcon from './HumanitarianIcon';
 import { syncPendingData, getPendingSyncCount, clearLocalData } from '../services/db';
@@ -161,6 +162,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             icon: Shield,
             path: '/contingencia',
             roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin']
+        },
+        {
+            label: 'NORTIS',
+            icon: () => <img src="/nortis_icon_white.png" className="w-5 h-5 object-contain" alt="Nortis" />,
+            path: '/nortis',
+            roles: AGENT_ROLES
         },
         {
             label: 'REDAP',

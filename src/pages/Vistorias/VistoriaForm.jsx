@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
+import NortisQuickSearch from '../../components/NortisQuickSearch'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
@@ -387,6 +388,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [gettingLoc, setGettingLoc] = useState(false)
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [showRiskModal, setShowRiskModal] = useState(false)
+    const [showNortisModal, setShowNortisModal] = useState(false)
 
     // Update agent info when user profile loads (if fields are empty)
     useEffect(() => {
@@ -1017,6 +1019,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             </p>
                         </div>
                     </div>
+                    <button 
+                        type="button"
+                        onClick={() => setShowNortisModal(true)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-bold transition-all text-sm shadow-sm"
+                    >
+                        <img src="/nortis_icon_white.png" className="w-4 h-4 object-contain" alt="Nortis" /> <span className="hidden sm:inline">NORTIS</span>
+                    </button>
                 </div>
             </div>
 
@@ -2632,6 +2641,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 onClose={() => setShowRiskModal(false)}
                 riskInfo={detectedRiskArea}
             />
+
+            {showNortisModal && (
+                <NortisQuickSearch onClose={() => setShowNortisModal(false)} />
+            )}
         </div >
     )
 }

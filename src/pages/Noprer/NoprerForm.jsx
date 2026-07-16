@@ -9,9 +9,10 @@ import { GRAUS } from './data/graus';
 import SignaturePad from '../../components/SignaturePad';
 import { 
     ChevronRight, ChevronLeft, MapPin, Search, 
-    Camera, AlertTriangle, Info, Save, CheckCircle, X, Plus, Check, ShieldAlert
+    Camera, AlertTriangle, Info, Save, CheckCircle, X, Plus, Check, ShieldAlert, BookOpen
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import NortisQuickSearch from '../../components/NortisQuickSearch';
 
 const STEPS = [
     { id: 1, label: 'Responsável' },
@@ -61,6 +62,7 @@ const NoprerForm = () => {
     const [buscaOrigem, setBuscaOrigem] = useState('');
     const [origensEncontradas, setOrigensEncontradas] = useState([]);
     const [buscandoOrigens, setBuscandoOrigens] = useState(false);
+    const [showNortisModal, setShowNortisModal] = useState(false);
 
     useEffect(() => {
         if (!modalVistoriaOpen) return;
@@ -360,15 +362,23 @@ const NoprerForm = () => {
                             <p className="text-[10px] text-blue-200 uppercase tracking-widest">Etapa {step} de 5</p>
                         </div>
                     </div>
-                    {!id && (
+                    <div className="flex items-center gap-2">
+                        {!id && (
+                            <button 
+                                onClick={salvarRascunho}
+                                disabled={salvando}
+                                className="bg-white dark:bg-slate-800/10 hover:bg-white dark:bg-slate-800/20 px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2 border border-white/20"
+                            >
+                                <Save size={14} /> <span className="hidden sm:inline">Rascunho</span>
+                            </button>
+                        )}
                         <button 
-                            onClick={salvarRascunho}
-                            disabled={salvando}
-                            className="bg-white dark:bg-slate-800/10 hover:bg-white dark:bg-slate-800/20 px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2 border border-white/20"
+                            onClick={() => setShowNortisModal(true)}
+                            className="bg-indigo-600 hover:bg-indigo-700 border border-indigo-500 px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-2 text-white"
                         >
-                            <Save size={14} /> Rascunho
+                            <img src="/nortis_icon_white.png" className="w-3.5 h-3.5 object-contain" alt="Nortis" /> <span className="hidden sm:inline">NORTIS</span>
                         </button>
-                    )}
+                    </div>
                 </div>
                 
                 {/* Progress Bar */}
@@ -964,6 +974,9 @@ const NoprerForm = () => {
                     }}
                     onCancel={() => setSigModal(null)}
                 />
+            )}
+            {showNortisModal && (
+                <NortisQuickSearch onClose={() => setShowNortisModal(false)} />
             )}
         </div>
     );

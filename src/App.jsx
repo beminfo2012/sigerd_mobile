@@ -112,6 +112,8 @@ const MciPrint = lazy(() => import('./pages/Mci/MciPrint'))
 // NOPRER
 const NoprerModule = lazy(() => import('./pages/Noprer'))
 
+// NORTIS
+const NortisModule = lazy(() => import('./pages/Nortis'))
 
 
 
@@ -663,6 +665,12 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
 
+                                {/* NORTIS Routes */}
+                                <Route path="/nortis/*" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <NortisModule />
+                                    </ProtectedRoute>
+                                } />
 
                                 <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>

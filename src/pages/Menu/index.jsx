@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame, Calculator, Activity, Map } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame, Calculator, Activity, Map, Book } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData, pullAllData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
@@ -364,6 +364,23 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                 <div className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Máximo</div>
                             </button>
                         )}
+
+                        <button
+                            onClick={() => navigate('/nortis')}
+                            className="w-full p-5 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                        >
+                            <div className="flex items-center">
+                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 rounded-2xl mr-4">
+                                    <Book size={22} />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Módulo NORTIS</span>
+                                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest leading-tight">Central de Legislação</span>
+                                </div>
+                            </div>
+                            <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Novo</div>
+                        </button>
+
 
                         {(['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin',
                             'Redap_Geral', 'Redap_Setorial', 'Redap_Saude', 'Redap_Educacao', 'Redap_Obras', 'Redap_Agricultura',
