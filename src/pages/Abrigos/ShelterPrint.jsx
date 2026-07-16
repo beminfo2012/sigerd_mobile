@@ -201,17 +201,17 @@ const ShelterPrint = () => {
                     <div className="section-header-line"></div>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-4 rounded text-center">
-                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{activeOccupants.length}</div>
-                        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Abrigados (Ativos)</div>
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded text-center">
+                        <div className="text-3xl font-black text-slate-800">{activeOccupants.length}</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Abrigados (Ativos)</div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-4 rounded text-center">
-                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{Object.keys(families).length}</div>
-                        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Grupos Familiares (Ativos)</div>
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded text-center">
+                        <div className="text-3xl font-black text-slate-800">{Object.keys(families).length}</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Grupos Familiares (Ativos)</div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-4 rounded text-center">
-                        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{shelter.capacity > 0 ? Math.round((activeOccupants.length / shelter.capacity) * 100) : 0}%</div>
-                        <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Taxa de Ocupação Atual</div>
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded text-center">
+                        <div className="text-3xl font-black text-slate-800">{shelter.capacity > 0 ? Math.round((activeOccupants.length / shelter.capacity) * 100) : 0}%</div>
+                        <div className="text-xs font-bold text-slate-500 uppercase">Taxa de Ocupação Atual</div>
                     </div>
                 </div>
             </section>
@@ -243,14 +243,14 @@ const ShelterPrint = () => {
                                     <td style={{ textAlign: 'center' }}>{o.age || '---'}</td>
                                     <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>{o.gender || '---'}</td>
                                     <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
-                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
+                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                                     <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-4 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">Nenhuma pessoa abrigada ativamente.</p>
+                    <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhuma pessoa abrigada ativamente.</p>
                 )}
             </section>
 
@@ -292,7 +292,7 @@ const ShelterPrint = () => {
                                         </td>
                                         <td style={{ textAlign: 'center' }}>{a.tutor?.full_name || 'Desconhecido'}</td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2 py-1 rounded font-bold">
+                                            <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold">
                                                 {statusText}
                                             </span>
                                         </td>
@@ -302,7 +302,7 @@ const ShelterPrint = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-4 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">Nenhum animal cadastrado neste abrigo.</p>
+                    <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhum animal cadastrado neste abrigo.</p>
                 )}
             </section>
 
@@ -329,7 +329,7 @@ const ShelterPrint = () => {
                                 <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
                                 <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{formatDateOnly(o.exit_date)}</td>
-                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
+                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                             </tr>
                         ))}
                     </tbody>
@@ -362,7 +362,7 @@ const ShelterPrint = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-4 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">Estoque vazio.</p>
+                    <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Estoque vazio.</p>
                 )}
             </section>
 
@@ -387,7 +387,7 @@ const ShelterPrint = () => {
                                 <tr key={d.id}>
                                     <td>{formatDateOnly(d.donation_date)}</td>
                                     <td>{d.item_description}</td>
-                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
+                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                     <td style={{ textAlign: 'center' }}>{d.donor_name || 'Anônimo'}</td>
                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                 </tr>
@@ -395,7 +395,7 @@ const ShelterPrint = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-4 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">Nenhuma doação registrada nesta operação.</p>
+                    <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhuma doação registrada nesta operação.</p>
                 )}
             </section>
 
@@ -420,7 +420,7 @@ const ShelterPrint = () => {
                                 <tr key={d.id}>
                                     <td>{formatDateOnly(d.distribution_date || d.created_at)}</td>
                                     <td>{d.item_name}</td>
-                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
+                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                     <td style={{ textAlign: 'center' }}>{d.recipient_name}</td>
                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                 </tr>
@@ -428,7 +428,7 @@ const ShelterPrint = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-4 bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-slate-700 text-center">Nenhuma saída registrada nesta operação.</p>
+                    <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded border border-slate-200 text-center">Nenhuma saída registrada nesta operação.</p>
                 )}
             </section>
         </PrintLayout>

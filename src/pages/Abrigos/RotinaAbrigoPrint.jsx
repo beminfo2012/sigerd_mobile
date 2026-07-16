@@ -85,7 +85,7 @@ const RotinaAbrigoPrint = () => {
                     <div className="section-header-line"></div>
                 </div>
                 {regras.length > 0 ? (
-                    <ul className="list-decimal pl-8 space-y-3 mt-4 text-base text-slate-800 dark:text-slate-100">
+                    <ul className="list-decimal pl-8 space-y-3 mt-4 text-base text-slate-800">
                         {regras.map(r => (
                             <li key={r.id} className="pl-2 leading-relaxed">
                                 {r.texto_regra}
@@ -93,7 +93,7 @@ const RotinaAbrigoPrint = () => {
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-4 text-center">Nenhuma regra de convivência cadastrada.</p>
+                    <p className="text-sm text-slate-500 italic p-4 text-center">Nenhuma regra de convivência cadastrada.</p>
                 )}
             </section>
 
@@ -132,7 +132,7 @@ const RotinaAbrigoPrint = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-4 text-center">Nenhuma rotina cadastrada para este abrigo.</p>
+                    <p className="text-sm text-slate-500 italic p-4 text-center">Nenhuma rotina cadastrada para este abrigo.</p>
                 )}
             </section>
         </PrintLayout>

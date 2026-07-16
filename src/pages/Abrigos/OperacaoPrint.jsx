@@ -246,12 +246,12 @@ const OperacaoPrint = () => {
                                 </div>
                                 <div className="space-y-3">
                                     {diario.map(d => (
-                                        <div key={d.id} className="avoid-break bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-3 rounded-lg flex flex-col gap-1">
-                                            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 mb-2">
-                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">{formatDateForHeader(d.created_at)}</span>
+                                        <div key={d.id} className="avoid-break bg-slate-50 border border-slate-200 p-3 rounded-lg flex flex-col gap-1">
+                                            <div className="flex justify-between items-center border-b border-slate-200 pb-2 mb-2">
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase">{formatDateForHeader(d.created_at)}</span>
                                                 <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase">{d.entry_type}</span>
                                             </div>
-                                            <p className="text-xs text-slate-700 dark:text-slate-200 font-medium whitespace-pre-wrap">{d.content}</p>
+                                            <p className="text-xs text-slate-700 font-medium whitespace-pre-wrap">{d.content}</p>
                                         </div>
                                     ))}
                                 </div>

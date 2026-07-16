@@ -123,7 +123,7 @@ const SheltersGlobalPrint = () => {
     if (sheltersData.length === 0) {
         return (
             <PrintLayout documentTitle="Relatório Geral de Abrigos" reportTitle="Relatório Geral de Abrigos" isLoading={false}>
-                <div className="text-center p-12 text-slate-500 dark:text-slate-400">Nenhum abrigo encontrado para esta operação.</div>
+                <div className="text-center p-12 text-slate-500">Nenhum abrigo encontrado para esta operação.</div>
             </PrintLayout>
         );
     }
@@ -141,11 +141,11 @@ const SheltersGlobalPrint = () => {
             }
             isLoading={loading}
         >
-            <div className="mb-8 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded text-center avoid-break">
-                <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 uppercase">Resumo da Operação</h2>
+            <div className="mb-8 p-4 bg-slate-50 border border-slate-200 rounded text-center avoid-break">
+                <h2 className="text-lg font-black text-slate-800 uppercase">Resumo da Operação</h2>
                 <div className="flex justify-center gap-8 mt-2">
-                    <div><span className="text-sm font-bold text-slate-500 dark:text-slate-400">Total de Abrigos:</span> <span className="text-lg font-black text-slate-800 dark:text-slate-100">{sheltersData.length}</span></div>
-                    <div><span className="text-sm font-bold text-slate-500 dark:text-slate-400">Total de Abrigados Ativos:</span> <span className="text-lg font-black text-slate-800 dark:text-slate-100">{sheltersData.reduce((acc, curr) => acc + curr.activeOccupants.length, 0)}</span></div>
+                    <div><span className="text-sm font-bold text-slate-500">Total de Abrigos:</span> <span className="text-lg font-black text-slate-800">{sheltersData.length}</span></div>
+                    <div><span className="text-sm font-bold text-slate-500">Total de Abrigados Ativos:</span> <span className="text-lg font-black text-slate-800">{sheltersData.reduce((acc, curr) => acc + curr.activeOccupants.length, 0)}</span></div>
                 </div>
             </div>
 
@@ -163,7 +163,7 @@ const SheltersGlobalPrint = () => {
                     <div key={shelter.id} className="mb-12" style={{ pageBreakBefore: index > 0 ? 'always' : 'auto' }}>
                         <div className="bg-blue-900 text-white p-3 rounded mb-4 font-black uppercase flex justify-between items-center">
                             <span>ABRIGO: {shelter.name}</span>
-                            <span className="text-xs bg-white dark:bg-slate-900 text-blue-900 px-2 py-1 rounded">
+                            <span className="text-xs bg-white text-blue-900 px-2 py-1 rounded">
                                 {shelter.status === 'active' ? 'ATIVO' : shelter.status === 'full' ? 'LOTADO' : 'INATIVO'}
                             </span>
                         </div>
@@ -188,17 +188,17 @@ const SheltersGlobalPrint = () => {
                                 </tbody>
                             </table>
                             <div className="grid grid-cols-3 gap-4 mt-4">
-                                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-3 rounded text-center">
-                                    <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{activeOccupants.length} / {shelter.capacity}</div>
-                                    <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Ocupação / Vagas</div>
+                                <div className="bg-slate-50 border border-slate-200 p-3 rounded text-center">
+                                    <div className="text-2xl font-black text-slate-800">{activeOccupants.length} / {shelter.capacity}</div>
+                                    <div className="text-[10px] font-bold text-slate-500 uppercase">Ocupação / Vagas</div>
                                 </div>
-                                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-3 rounded text-center">
-                                    <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{Object.keys(families).length}</div>
-                                    <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Grupos Familiares</div>
+                                <div className="bg-slate-50 border border-slate-200 p-3 rounded text-center">
+                                    <div className="text-2xl font-black text-slate-800">{Object.keys(families).length}</div>
+                                    <div className="text-[10px] font-bold text-slate-500 uppercase">Grupos Familiares</div>
                                 </div>
-                                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-3 rounded text-center">
-                                    <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{exitedOccupants.length}</div>
-                                    <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Saídas Registradas</div>
+                                <div className="bg-slate-50 border border-slate-200 p-3 rounded text-center">
+                                    <div className="text-2xl font-black text-slate-800">{exitedOccupants.length}</div>
+                                    <div className="text-[10px] font-bold text-slate-500 uppercase">Saídas Registradas</div>
                                 </div>
                             </div>
                         </section>
@@ -230,14 +230,14 @@ const SheltersGlobalPrint = () => {
                                                 <td style={{ textAlign: 'center' }}>{o.age || '---'}</td>
                                                 <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>{o.gender || '---'}</td>
                                                 <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
-                                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
+                                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                                                 <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             ) : (
-                                <p className="text-sm text-slate-500 dark:text-slate-400 italic p-2 border border-slate-200 dark:border-slate-700 text-center">Nenhum ativo.</p>
+                                <p className="text-sm text-slate-500 italic p-2 border border-slate-200 text-center">Nenhum ativo.</p>
                             )}
                         </section>
 
@@ -264,7 +264,7 @@ const SheltersGlobalPrint = () => {
                                                 <td style={{ textAlign: 'center' }}>{o.family_group || 'Sem Grupo'}</td>
                                                 <td style={{ textAlign: 'center' }}>{formatDateOnly(o.entry_date || o.created_at)}</td>
                                                 <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{formatDateOnly(o.exit_date)}</td>
-                                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
+                                                <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(o.operacao_id)}</span></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -297,7 +297,7 @@ const SheltersGlobalPrint = () => {
                                     </tbody>
                                 </table>
                             ) : (
-                                <p className="text-sm text-slate-500 dark:text-slate-400 italic p-2 border border-slate-200 dark:border-slate-700 text-center">Estoque vazio.</p>
+                                <p className="text-sm text-slate-500 italic p-2 border border-slate-200 text-center">Estoque vazio.</p>
                             )}
                         </section>
 
@@ -322,14 +322,14 @@ const SheltersGlobalPrint = () => {
                                                 <tr key={d.id}>
                                                     <td>{formatDateOnly(d.donation_date)}</td>
                                                     <td>{d.item_description} <br/><span className="text-[9px] text-slate-400">Origem: {d.donor_name || 'Anônimo'}</span></td>
-                                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
+                                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 ) : (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-2 border border-slate-200 dark:border-slate-700 text-center">Nenhuma entrada.</p>
+                                    <p className="text-sm text-slate-500 italic p-2 border border-slate-200 text-center">Nenhuma entrada.</p>
                                 )}
                             </div>
                             
@@ -353,14 +353,14 @@ const SheltersGlobalPrint = () => {
                                                 <tr key={d.id}>
                                                     <td>{formatDateOnly(d.distribution_date || d.created_at)}</td>
                                                     <td>{d.item_name} <br/><span className="text-[9px] text-slate-400">Destino: {d.recipient_name}</span></td>
-                                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
+                                                    <td style={{ textAlign: 'center' }}><span className="text-[9px] bg-slate-100 text-slate-600 px-1 py-0.5 rounded uppercase font-bold">{getOpName(d.operacao_id)}</span></td>
                                                     <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{d.quantity} {d.unit}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 ) : (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 italic p-2 border border-slate-200 dark:border-slate-700 text-center">Nenhuma saída.</p>
+                                    <p className="text-sm text-slate-500 italic p-2 border border-slate-200 text-center">Nenhuma saída.</p>
                                 )}
                             </div>
                         </div>

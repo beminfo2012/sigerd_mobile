@@ -45,7 +45,7 @@ const TelaImpressao = () => {
     };
 
     return (
-        <div className="bg-slate-100 dark:bg-slate-800 min-h-screen text-slate-800 dark:text-slate-200 print:bg-white dark:bg-slate-800 print:p-0 p-8 flex justify-center report-root-wrapper font-[Inter,sans-serif]">
+        <div className="bg-slate-100 min-h-screen text-slate-800 print:bg-white print:p-0 p-8 flex justify-center report-root-wrapper font-[Inter,sans-serif]">
             <style dangerouslySetInnerHTML={{
                 __html: `
                 :root {
@@ -100,14 +100,14 @@ const TelaImpressao = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-white dark:bg-slate-800/5 border border-white/10 rounded-xl p-1.5 hidden md:flex">
-                    <button onClick={handleZoomOut} className="w-8 h-8 rounded-lg hover:bg-white dark:bg-slate-800/10 flex items-center justify-center transition-all text-slate-300 hover:text-white" title="Diminuir Zoom"><ZoomOut size={16} /></button>
-                    <button onClick={handleResetZoom} className="h-8 px-3 rounded-lg hover:bg-white dark:bg-slate-800/10 flex items-center justify-center gap-1 transition-all text-xs font-bold text-slate-300 hover:text-white" title="Restaurar Zoom"><RotateCcw size={12} /> {Math.round(zoom * 100)}%</button>
-                    <button onClick={handleZoomIn} className="w-8 h-8 rounded-lg hover:bg-white dark:bg-slate-800/10 flex items-center justify-center transition-all text-slate-300 hover:text-white" title="Aumentar Zoom"><ZoomIn size={16} /></button>
+                <div className="flex items-center gap-2 bg-white border border-white/10 rounded-xl p-1.5 hidden md:flex">
+                    <button onClick={handleZoomOut} className="w-8 h-8 rounded-lg hover:bg-white flex items-center justify-center transition-all text-slate-300 hover:text-white" title="Diminuir Zoom"><ZoomOut size={16} /></button>
+                    <button onClick={handleResetZoom} className="h-8 px-3 rounded-lg hover:bg-white flex items-center justify-center gap-1 transition-all text-xs font-bold text-slate-300 hover:text-white" title="Restaurar Zoom"><RotateCcw size={12} /> {Math.round(zoom * 100)}%</button>
+                    <button onClick={handleZoomIn} className="w-8 h-8 rounded-lg hover:bg-white flex items-center justify-center transition-all text-slate-300 hover:text-white" title="Aumentar Zoom"><ZoomIn size={16} /></button>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button onClick={() => window.close()} className="h-10 px-5 hover:bg-white dark:bg-slate-800/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-2">
+                    <button onClick={() => window.close()} className="h-10 px-5 hover:bg-white rounded-xl transition-all text-[10px] font-black uppercase tracking-wider text-white flex items-center gap-2">
                         <X size={16} /> Fechar
                     </button>
                     <button onClick={() => window.print()} className="h-10 px-6 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all shadow-lg shadow-blue-600/20">
@@ -117,7 +117,7 @@ const TelaImpressao = () => {
             </div>
 
             <main className="flex flex-col items-center pt-24 print:pt-0 w-full print-preview-wrapper" style={{ '--report-zoom': zoom }}>
-                <div className="w-[210mm] bg-white dark:bg-slate-800 print:shadow-none shadow-2xl min-h-[297mm] p-10 md:p-12 print:p-0 mb-10 print:mb-0 relative print-container flex flex-col">
+                <div className="w-[210mm] bg-white print:shadow-none shadow-2xl min-h-[297mm] p-10 md:p-12 print:p-0 mb-10 print:mb-0 relative print-container flex flex-col">
 
                     {/* Cabeçalho */}
                     <div className="flex justify-between items-center border-b-4 border-red-700 pb-4 mb-6">
@@ -219,13 +219,13 @@ const TelaImpressao = () => {
                         <div className="border-l-4 border-red-700 pl-3 mb-3">
                             <h3 className="font-black text-red-900 uppercase text-sm tracking-wide">4. Medidas Preventivas / Mitigadoras Estipuladas</h3>
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700 mb-5">
-                            <span className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase mb-3">Providências a serem adotadas pelo notificado</span>
+                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-5">
+                            <span className="block text-[10px] font-black text-slate-500 uppercase mb-3">Providências a serem adotadas pelo notificado</span>
                             <ul className="space-y-2 m-0 pl-0 list-none">
                                 {(noprer.medidas || []).map((m, i) => (
-                                    <li key={i} className="flex gap-2 items-start bg-white dark:bg-slate-800 p-2 rounded border border-slate-100 shadow-sm">
+                                    <li key={i} className="flex gap-2 items-start bg-white p-2 rounded border border-slate-100 shadow-sm">
                                         <span className="font-black text-red-700">➜</span>
-                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{m}</span>
+                                        <span className="text-sm font-bold text-slate-700">{m}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -246,7 +246,7 @@ const TelaImpressao = () => {
                     {/* Termo e Assinaturas */}
                     <div className="mt-8 p-6 border-2 border-slate-400 rounded-xl avoid-break">
                         <h3 className="text-center font-black uppercase text-sm mb-4">Termo de Responsabilidade e Ciência</h3>
-                        <p className="text-xs text-justify leading-relaxed text-slate-700 dark:text-slate-300 mb-0">
+                        <p className="text-xs text-justify leading-relaxed text-slate-700 mb-0">
                             O NOTIFICADO acima qualificado, declara ter recebido
                             formalmente as orientações técnicas exaradas pela Defesa Civil Municipal através deste documento (NOPRER).
                             Reconhece a condição de risco informada e concorda expressamente em cumprir as medidas preventivas e
@@ -256,7 +256,7 @@ const TelaImpressao = () => {
                         </p>
                     </div>
 
-                    <div className="mt-12 bg-slate-50 dark:bg-slate-800/50 p-8 border border-slate-200 dark:border-slate-700 rounded-xl avoid-break">
+                    <div className="mt-12 bg-slate-50 p-8 border border-slate-200 rounded-xl avoid-break">
                         {noprer.modo_assinatura === 'recusa' ? (
                             <>
                                 <div className="text-center text-red-700 font-black mb-8 text-sm">O NOTIFICADO SE RECUSOU A ASSINAR ESTE DOCUMENTO.</div>
@@ -266,14 +266,14 @@ const TelaImpressao = () => {
                                             {noprer.sign_test1 && <img src={noprer.sign_test1} alt="Testemunha 1" className="max-h-12" />}
                                         </div>
                                         <p className="font-bold text-sm m-0">Testemunha 1: {noprer.test1_nome}</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 m-0">CPF: {noprer.test1_cpf}</p>
+                                        <p className="text-xs text-slate-500 m-0">CPF: {noprer.test1_cpf}</p>
                                     </div>
                                     <div className="text-center">
                                         <div className="h-16 flex items-end justify-center border-b border-slate-400 mb-2">
                                             {noprer.sign_test2 && <img src={noprer.sign_test2} alt="Testemunha 2" className="max-h-12" />}
                                         </div>
                                         <p className="font-bold text-sm m-0">Testemunha 2: {noprer.test2_nome}</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 m-0">CPF: {noprer.test2_cpf}</p>
+                                        <p className="text-xs text-slate-500 m-0">CPF: {noprer.test2_cpf}</p>
                                     </div>
                                 </div>
                             </>
@@ -283,13 +283,13 @@ const TelaImpressao = () => {
                                     {noprer.sign_notificado && <img src={noprer.sign_notificado} alt="Notificado" className="max-h-16" />}
                                 </div>
                                 <p className="font-bold text-sm m-0">{noprer.nome_notificado}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 m-0">NOTIFICADO (Assinatura Digital)</p>
+                                <p className="text-xs text-slate-500 m-0">NOTIFICADO (Assinatura Digital)</p>
                             </div>
                         ) : (
                             <div className="text-center mb-8">
                                 <div className="h-16 w-3/4 mx-auto border-b border-slate-400 mb-2"></div>
                                 <p className="font-bold text-sm m-0">{noprer.nome_notificado}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 m-0">NOTIFICADO (Assinatura Física Requerida)</p>
+                                <p className="text-xs text-slate-500 m-0">NOTIFICADO (Assinatura Física Requerida)</p>
                             </div>
                         )}
 
@@ -298,7 +298,7 @@ const TelaImpressao = () => {
                                 {noprer.sign_agente && <img src={noprer.sign_agente} alt="Agente" className="max-h-16" />}
                             </div>
                             <p className="font-black text-red-900 text-sm m-0 uppercase">{noprer.nome_agente}</p>
-                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400 m-0 uppercase">Agente de Defesa Civil</p>
+                            <p className="text-xs font-bold text-slate-600 m-0 uppercase">Agente de Defesa Civil</p>
                             {noprer.matricula_agente && <p className="text-[10px] text-slate-400 m-0">Matrícula: {noprer.matricula_agente}</p>}
                         </div>
                     </div>
