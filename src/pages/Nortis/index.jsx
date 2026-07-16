@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import { Book, Search, Plus, Filter, FileText } from 'lucide-react';
+import { Book, Search, Plus, Filter, FileText, ArrowLeft } from 'lucide-react';
 import NortisSearch from './NortisSearch';
 import NortisForm from './NortisForm';
 import NortisView from './NortisView';
@@ -12,9 +12,12 @@ const NortisMenu = () => {
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
-            <img src="/nortis_icon_white.png" className="w-6 h-6 object-contain" alt="NORTIS Logo" />
-          </div>
+          <button 
+            onClick={() => navigate('/')}
+            className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-600 dark:text-slate-400 shrink-0"
+          >
+            <ArrowLeft size={24} />
+          </button>
           <div>
             <h1 className="text-xl font-bold text-slate-800 dark:text-white leading-tight">
               NORTIS

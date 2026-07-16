@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import NortisQuickSearch from '../../components/NortisQuickSearch';
+import NortisIAValidation from '../../components/NortisIAValidation';
+import { nortisIaService } from '../../services/nortisIaService';
 
 const STEPS = [
     { id: 1, label: 'Responsável' },
@@ -26,6 +28,7 @@ const NoprerForm = () => {
     const navigate = useNavigate();
     const userProfile = useContext(UserContext);
     const { fetchNoprerById, atualizarNoprer, criarNoprer, salvarNoprerRascunho, fetchRascunhoById, deletarRascunho } = useNoprer();
+    const userProfile = useContext(UserContext);
     const [salvando, setSalvando] = useState(false);
     const { calcularDatasFormulario } = usePrazo();
 
@@ -63,6 +66,9 @@ const NoprerForm = () => {
     const [origensEncontradas, setOrigensEncontradas] = useState([]);
     const [buscandoOrigens, setBuscandoOrigens] = useState(false);
     const [showNortisModal, setShowNortisModal] = useState(false);
+    const [sugestoesIA, setSugestoesIA] = useState(null);
+    const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
+    const [analyzingIA, setAnalyzingIA] = useState(false);
 
     useEffect(() => {
         if (!modalVistoriaOpen) return;
@@ -347,6 +353,32 @@ const NoprerForm = () => {
         }
     };
 
+    const handleNortisIA = async () => {
+        const relatoContext = formData.descricao_risco || '';
+        if (relatoContext.trim().length < 15) {
+            toast.error('Descreva o risco com mais detalhes para que a IA possa analisar o contexto.');
+            return;
+        }
+
+        setAnalyzingIA(true);
+        try {
+            const sugestoes = await nortisIaService.analisarRelato(
+                relatoContext, 
+                'noprer', 
+                null, 
+                userProfile?.tenant_id, 
+                userProfile?.id
+            );
+            setSugestoesIA(sugestoes);
+            setIsNortisIAOpen(true);
+        } catch (error) {
+            console.error('Erro NORTIS IA:', error);
+            toast.error('Não foi possível analisar o relato com o NORTIS IA no momento.');
+        } finally {
+            setAnalyzingIA(false);
+        }
+    };
+
     // Renderização Condicional das Etapas
     return (
         <div className="bg-[#F1F5F9] dark:bg-slate-900 min-h-screen font-[Inter,sans-serif] pb-32">
@@ -568,6 +600,18 @@ const NoprerForm = () => {
                                 className="w-full p-4 border border-slate-300 dark:border-slate-600 rounded-lg text-sm outline-none focus:border-blue-500 h-32"
                             />
                             <p className="text-xs text-slate-400 text-right mt-1 font-mono">{formData.descricao_risco.length} chars (mín: 20)</p>
+                            
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleNortisIA}
+                                    disabled={analyzingIA}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 transition-all shadow-md"
+                                >
+                                    <BookOpen size={14} className={analyzingIA ? 'animate-pulse' : ''} />
+                                    {analyzingIA ? 'Analisando...' : 'Analisar com NORTIS IA'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -977,6 +1021,23 @@ const NoprerForm = () => {
             )}
             {showNortisModal && (
                 <NortisQuickSearch onClose={() => setShowNortisModal(false)} />
+            )}
+            
+            {/* Sidebar NORTIS Validação de Citações */}
+            {isNortisIAOpen && (
+                <div className="fixed inset-0 z-[99999] flex justify-end bg-slate-900/20 backdrop-blur-sm transition-opacity">
+                    <NortisIAValidation 
+                        sugestoesGeradas={sugestoesIA}
+                        user={userProfile} 
+                        onClose={() => setIsNortisIAOpen(false)} 
+                        onAcceptCitation={(citacao) => {
+                            setFormData(prev => ({ 
+                                ...prev, 
+                                descricao_risco: prev.descricao_risco ? `${prev.descricao_risco}\n\n${citacao}` : citacao 
+                            }));
+                        }}
+                    />
+                </div>
             )}
         </div>
     );

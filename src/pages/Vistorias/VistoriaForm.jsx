@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import NortisQuickSearch from '../../components/NortisQuickSearch'
+import NortisIAValidation from '../../components/NortisIAValidation'
+import { nortisIaService } from '../../services/nortisIaService'
 import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
@@ -389,6 +391,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [showRiskModal, setShowRiskModal] = useState(false)
     const [showNortisModal, setShowNortisModal] = useState(false)
+    const [sugestoesIA, setSugestoesIA] = useState(null);
+    const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
+    const [analyzingIA, setAnalyzingIA] = useState(false);
 
     // Update agent info when user profile loads (if fields are empty)
     useEffect(() => {
@@ -841,8 +846,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [comparisonContent, setComparisonContent] = useState(null) // { original: '', refined: '' }
 
     const handleAIRefine = async () => {
-        if (!formData.observacoes.trim()) {
-            toast.warning("Aviso", "Digite algo nas observações primeiro.");
+        if (!formData.observacoes || formData.observacoes.trim().length < 10) {
+            alert('Descreva um pouco mais as observações antes de pedir para a IA refinar.');
             return;
         }
 
@@ -872,6 +877,32 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             setRefining(false);
         }
     }
+
+    const handleNortisIA = async () => {
+        const relatoContext = formData.observacoes || formData.descricaoProblema || '';
+        if (relatoContext.trim().length < 15) {
+            toast.error('Relato Insuficiente', 'Descreva o problema ou as observações técnicas com mais detalhes para que a IA possa analisar o contexto.');
+            return;
+        }
+
+        setAnalyzingIA(true);
+        try {
+            const sugestoes = await nortisIaService.analisarRelato(
+                relatoContext, 
+                'vistoria', 
+                null, 
+                userProfile?.tenant_id, 
+                userProfile?.id
+            );
+            setSugestoesIA(sugestoes);
+            setIsNortisIAOpen(true);
+        } catch (error) {
+            console.error('Erro NORTIS IA:', error);
+            toast.error('Erro', 'Não foi possível analisar o relato com o NORTIS IA no momento.');
+        } finally {
+            setAnalyzingIA(false);
+        }
+    };
 
     const applyRefinement = () => {
         if (comparisonContent?.refined) {
@@ -1965,12 +1996,21 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         <VoiceInput onResult={(text) => setFormData(prev => ({ ...prev, observacoes: prev.observacoes + ' ' + text }))} />
                                         <button
                                             type="button"
+                                            onClick={handleNortisIA}
+                                            disabled={analyzingIA}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 transition-all shadow-md"
+                                        >
+                                            <BookOpen size={12} className={analyzingIA ? 'animate-pulse' : ''} />
+                                            {analyzingIA ? 'Analisando...' : 'NORTIS IA'}
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={handleAIRefine}
                                             disabled={refining}
                                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 hover:scale-105 active:scale-95 transition-all"
                                         >
                                             <Sparkles size={12} className={refining ? 'animate-spin' : ''} />
-                                            {refining ? 'Processando...' : 'IA Refinear'}
+                                            {refining ? 'Processando...' : 'IA Refinar'}
                                         </button>
                                     </div>
                                 </div>
@@ -2644,6 +2684,23 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
             {showNortisModal && (
                 <NortisQuickSearch onClose={() => setShowNortisModal(false)} />
+            )}
+
+            {/* Sidebar NORTIS Validação de Citações */}
+            {isNortisIAOpen && (
+                <div className="fixed inset-0 z-[99999] flex justify-end bg-slate-900/20 backdrop-blur-sm transition-opacity">
+                    <NortisIAValidation 
+                        sugestoesGeradas={sugestoesIA} 
+                        user={userProfile}
+                        onClose={() => setIsNortisIAOpen(false)} 
+                        onAcceptCitation={(citacao) => {
+                            setFormData(prev => ({ 
+                                ...prev, 
+                                observacoes: prev.observacoes ? `${prev.observacoes}\n\n${citacao}` : citacao 
+                            }));
+                        }}
+                    />
+                </div>
             )}
         </div >
     )
