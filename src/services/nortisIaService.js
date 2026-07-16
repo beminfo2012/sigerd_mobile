@@ -1,7 +1,37 @@
 import { supabase } from './supabase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_API_KEY);
+// Suporta múltiplas chaves separadas por vírgula no .env
+const apiKeys = (import.meta.env.VITE_GOOGLE_API_KEY || '').split(',').map(k => k.trim()).filter(k => k);
+let currentKeyIndex = 0;
+
+function getGenAI() {
+  if (apiKeys.length === 0) throw new Error("Chave de API do Google não configurada.");
+  return new GoogleGenerativeAI(apiKeys[currentKeyIndex]);
+}
+
+// Wrapper para rodízio automático de chaves em caso de erro 429
+async function executeWithKeyRotation(apiCallFunction) {
+  let attempt = 0;
+  let lastError;
+  
+  while (attempt < Math.max(1, apiKeys.length)) {
+    try {
+      const genAI = getGenAI();
+      return await apiCallFunction(genAI);
+    } catch (error) {
+      lastError = error;
+      if (error?.message?.includes('429') && apiKeys.length > 1) {
+        console.warn(`[NORTIS] Chave ${currentKeyIndex + 1} bloqueada (429). Trocando para a próxima chave...`);
+        currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+        attempt++;
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw lastError;
+}
 
 export const nortisIaService = {
   classificarFonte(url) {
@@ -15,14 +45,17 @@ export const nortisIaService = {
    * Obtém o embedding para um texto usando o modelo text-embedding-004 do Gemini
    */
   async getEmbedding(text) {
-    try {
-      const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
-      const result = await model.embedContent(text);
-      return result.embedding.values;
-    } catch (error) {
-      console.error('Erro ao gerar embedding:', error);
-      return null;
-    }
+    return executeWithKeyRotation(async (genAI) => {
+      try {
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await model.embedContent(text);
+        return result.embedding.values;
+      } catch (error) {
+        if (error?.message?.includes('429')) throw error;
+        console.error('Erro ao gerar embedding:', error);
+        return null;
+      }
+    });
   },
 
   async buscarContexto(relato) {
@@ -156,12 +189,13 @@ RELATO DO USUÁRIO (${contextoModulo}):
           modelConfig.tools = [{ googleSearch: {} }];
       }
 
-      const model = genAI.getGenerativeModel(modelConfig);
-
-      const result = await model.generateContent([
-        { text: systemPrompt },
-        { text: userPrompt }
-      ]);
+      const result = await executeWithKeyRotation(async (genAI) => {
+          const model = genAI.getGenerativeModel(modelConfig);
+          return await model.generateContent([
+            { text: systemPrompt },
+            { text: userPrompt }
+          ]);
+      });
 
       let responseText = result.response.text();
       
