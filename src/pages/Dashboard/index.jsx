@@ -285,7 +285,7 @@ const EventLogCard = ({ data, rainfall, cemadenAlerts }) => {
                 </div>
                 <span className="text-[9px] font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-full uppercase tabular-nums tracking-widest">100 Últimos</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar max-h-[300px]">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar max-h-[250px]">
                 {events.length === 0 && <div className="text-center text-slate-400 text-[10px] my-6 uppercase font-bold tracking-widest">Nenhum evento registrado</div>}
                 {events.map(ev => (
                     <div key={ev.id} className="flex gap-2.5 relative group items-start">
@@ -1642,7 +1642,7 @@ const BoletinsCard = () => {
             </div>
 
             {/* SCROLLABLE LIST */}
-            <div className="p-2 flex-1 flex flex-col overflow-hidden relative min-h-[140px] max-h-[200px]">
+            <div className="p-2 flex-1 flex flex-col overflow-hidden relative min-h-[140px] max-h-[250px]">
                 {loading ? (
                     <div className="absolute inset-0 flex justify-center items-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm z-10">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-300 border-t-slate-800"></div>
