@@ -18,36 +18,34 @@ export const nortisIaService = {
     }
   },
 
-  /**
-   * Busca híbrida (Semântica + Léxica)
-   * Depende de uma RPC no Supabase `nortis_hybrid_search`
-   * Como fallback temporal, usaremos apenas a busca léxica caso o embedding falhe ou não haja RPC
-   */
   async buscarContexto(relato) {
-    // Busca léxica avançada
     const normalize = str => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const termosBusca = normalize(relato).split(' ').filter(w => w.length > 3).join(' | ');
+    const stopWords = ['sobre', 'entre', 'quando', 'onde', 'qual', 'quem', 'este', 'esse', 'isso', 'aquilo', 'muito', 'pouco', 'mais', 'menos', 'ainda', 'assim', 'apenas', 'mesmo', 'tambem', 'entao', 'hoje', 'ontem', 'amanha', 'aqui', 'ali', 'agora', 'deve', 'pode', 'estado', 'devido', 'causados', 'estava', 'sendo'];
+    
+    // Extrair até 5 palavras-chave mais significativas do relato
+    const words = normalize(relato)
+      .split(/[^a-z0-9]/)
+      .filter(w => w.length > 4 && !stopWords.includes(w))
+      .slice(0, 5);
 
-    let { data: normasFts, error: ftsError } = await supabase
+    if (words.length === 0) return [];
+
+    // Busca de fallback usando ilike para garantir que a IA tenha algum contexto para cruzar
+    const orConditions = words.map(w => `ementa.ilike.%${w}%,texto_integral.ilike.%${w}%`).join(',');
+
+    const { data, error } = await supabase
       .from('nortis_normas')
       .select('id, tipo, numero, ano, ementa, texto_integral, orgao_emissor, situacao')
-      .textSearch('busca_vetor', termosBusca)
+      .or(orConditions)
+      .order('ano', { ascending: false })
       .limit(10);
 
-    if (ftsError || !normasFts) {
-        // Fallback para ilike se textSearch der erro
-        const { data } = await supabase
-          .from('nortis_normas')
-          .select('id, tipo, numero, ano, ementa, texto_integral, orgao_emissor, situacao')
-          .limit(10);
-        
-        normasFts = (data || []).filter(d => 
-            normalize(d.ementa || '').includes(normalize(relato)) ||
-            normalize(d.texto_integral || '').includes(normalize(relato))
-        ).slice(0, 10);
+    if (error) {
+      console.error('Erro NORTIS IA buscarContexto:', error);
+      return [];
     }
 
-    return normasFts || [];
+    return data || [];
   },
 
   /**
