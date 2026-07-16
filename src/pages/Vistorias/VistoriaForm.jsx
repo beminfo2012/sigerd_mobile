@@ -899,7 +899,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             setIsNortisIAOpen(true);
         } catch (error) {
             console.error('Erro NORTIS IA:', error);
-            toast.error('Erro', 'Não foi possível analisar o relato com o NORTIS IA no momento.');
+            
+            let errorMessage = 'Não foi possível analisar o relato com o NORTIS IA no momento.';
+            if (error?.message?.includes('429')) {
+                errorMessage = 'Muitas requisições (Rate Limit). O Google bloqueou a consulta temporariamente. Aguarde 30 segundos e tente novamente.';
+            } else if (error?.message?.includes('503')) {
+                errorMessage = 'O serviço da IA do Google está enfrentando alta demanda no momento (Erro 503). Tente novamente em alguns segundos.';
+            } else if (error?.message) {
+                errorMessage = error.message;
+            }
+
+            toast.error('Erro na Inteligência Artificial', errorMessage);
         } finally {
             setAnalyzingIA(false);
         }
