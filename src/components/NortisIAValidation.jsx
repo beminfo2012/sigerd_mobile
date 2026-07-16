@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X, EyeOff, ExternalLink, Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
+import { Check, X, EyeOff, ExternalLink, Sparkles, AlertTriangle, Loader2, Database } from 'lucide-react';
 import { nortisIaService } from '../services/nortisIaService';
 import { toast } from './ToastNotification';
 
@@ -40,6 +40,21 @@ export default function NortisIAValidation({ sugestoesGeradas, onClose, onAccept
       toast.error("Erro", "Falha ao registrar decisão.");
     } finally {
       setLoadingAction(null);
+    }
+  };
+
+  const handleSalvarNoNortis = async (item, groupIndex, itemIndex) => {
+    const key = `${groupIndex}-${itemIndex}`;
+    setLoadingAction(`save-${key}`);
+    try {
+        await nortisIaService.salvarNormativaDireta(item, user?.tenant_id, user?.id);
+        toast.success("Sucesso", "Normativa adicionada ao acervo do NORTIS!");
+        // Opcional: aceitar automaticamente após salvar
+        await handleAction(item, groupIndex, itemIndex, 'aceitar');
+    } catch (error) {
+        toast.error("Erro ao salvar", error.message || "Não foi possível cadastrar a norma no acervo.");
+    } finally {
+        setLoadingAction(null);
     }
   };
 
@@ -108,29 +123,41 @@ export default function NortisIAValidation({ sugestoesGeradas, onClose, onAccept
                 </p>
 
                 {!decision ? (
-                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                    <button
-                      onClick={() => handleAction(item, groupIndex, itemIndex, 'aceitar')}
-                      disabled={loadingAction === key || item.nivel_fonte === 'NIVEL_C'}
-                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
-                    >
-                      <Check size={14} /> {item.nivel_fonte === 'NIVEL_C' ? 'Bloqueado (Nível C)' : 'Aceitar (Copiar)'}
-                    </button>
-                    <button
-                      onClick={() => handleAction(item, groupIndex, itemIndex, 'rejeitar')}
-                      disabled={loadingAction === key}
-                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
-                    >
-                      <X size={14} /> Rejeitar (Ruim)
-                    </button>
-                    <button
-                      onClick={() => handleAction(item, groupIndex, itemIndex, 'ignorar')}
-                      disabled={loadingAction === key}
-                      className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 py-2 rounded-lg text-xs font-bold transition-colors"
-                      title="Ignorar"
-                    >
-                      <EyeOff size={14} />
-                    </button>
+                  <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleAction(item, groupIndex, itemIndex, 'aceitar')}
+                          disabled={loadingAction === key || item.nivel_fonte === 'NIVEL_C'}
+                          className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <Check size={14} /> {item.nivel_fonte === 'NIVEL_C' ? 'Bloqueado (Nível C)' : 'Copiar Citação'}
+                        </button>
+                        <button
+                          onClick={() => handleAction(item, groupIndex, itemIndex, 'rejeitar')}
+                          disabled={loadingAction === key}
+                          className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <X size={14} /> Rejeitar (Ruim)
+                        </button>
+                        <button
+                          onClick={() => handleAction(item, groupIndex, itemIndex, 'ignorar')}
+                          disabled={loadingAction === key}
+                          className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 py-2 rounded-lg text-xs font-bold transition-colors"
+                          title="Ignorar"
+                        >
+                          <EyeOff size={14} />
+                        </button>
+                    </div>
+                    {item.link_externo && (item.nivel_fonte === 'NIVEL_A' || item.nivel_fonte === 'NIVEL_B') && (
+                        <button
+                          onClick={() => handleSalvarNoNortis(item, groupIndex, itemIndex)}
+                          disabled={loadingAction === `save-${key}`}
+                          className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors border border-indigo-200 dark:border-indigo-800"
+                        >
+                          {loadingAction === `save-${key}` ? <Loader2 size={14} className="animate-spin" /> : <Database size={14} />}
+                          Adicionar ao Acervo Interno do NORTIS
+                        </button>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center pt-2 text-xs font-bold uppercase tracking-widest text-slate-400">

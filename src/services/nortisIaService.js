@@ -61,11 +61,8 @@ export const nortisIaService = {
    */
   async analisarRelato(relato, contextoModulo, registroOrigemId = null, tenantId = null, userId = null, tipoPesquisa = 'interno') {
     try {
-      // 1. Busca contexto interno
-      let documentos = [];
-      if (tipoPesquisa === 'interno' || tipoPesquisa === 'ambos') {
-        documentos = await this.buscarContexto(relato);
-      }
+      // 1. Busca contexto interno SEMPRE, para saber o que já temos
+      const documentos = await this.buscarContexto(relato);
 
       if (documentos.length === 0 && tipoPesquisa === 'interno') {
         return { 
@@ -100,9 +97,12 @@ REGRAS INVIOLÁVEIS
 3. Repasse a situação das leis se informado.
 4. Nunca decida sozinho que uma sugestão é aprovada.`;
 
-      if (tipoPesquisa === 'externo' || tipoPesquisa === 'ambos') {
+      if (tipoPesquisa === 'externo') {
         systemPrompt += `
-5. ATENÇÃO: Você tem acesso à pesquisa web do Google. Pesquise em fontes oficiais (ex: planalto.gov.br, in.gov.br, tcu.gov.br) para complementar. Responda APENAS em JSON bruto.`;
+5. ATENÇÃO: Esta é uma pesquisa puramente EXTERNA (WEB). NÃO retorne nenhuma das normativas listadas no CONTEXTO RECUPERADO INTERNAMENTE. Traga APENAS novidades e links externos oficiais que não possuímos. Responda APENAS em JSON bruto.`;
+      } else if (tipoPesquisa === 'ambos') {
+        systemPrompt += `
+5. ATENÇÃO: Esta é uma pesquisa HÍBRIDA. Você tem acesso à pesquisa web do Google. Priorize o CONTEXTO RECUPERADO INTERNAMENTE, mas complemente com fontes oficiais externas (ex: planalto.gov.br) se faltar embasamento. Responda APENAS em JSON bruto.`;
       }
 
       systemPrompt += `
@@ -120,7 +120,12 @@ FORMATO DE SAÍDA OBRIGATORIAMENTE EM JSON VÁLIDO (retorne apenas as chaves exa
       "justificativa": "como embasa o relato",
       "confianca": "alta | media | baixa",
       "link_interno": "/nortis/visualizar/uuid",
-      "link_externo": "url se externa"
+      "link_externo": "url se externa",
+      "meta_tipo": "lei | decreto | portaria",
+      "meta_numero": "X",
+      "meta_ano": 2012,
+      "meta_orgao": "Orgao emissor",
+      "meta_ementa": "ementa resumida"
     }
   ],
   "observacao": "preencher apenas se algum campo ficou vazio",
@@ -131,7 +136,7 @@ FORMATO DE SAÍDA OBRIGATORIAMENTE EM JSON VÁLIDO (retorne apenas as chaves exa
 ${contextText}
 `;
 
-      const userPrompt = `Analise o seguinte relato e forneça as fundamentações baseadas APENAS no contexto recuperado.
+      const userPrompt = `Analise o seguinte relato e forneça as fundamentações baseadas APENAS no contexto recuperado ou na pesquisa web permitida.
 RELATO DO USUÁRIO (${contextoModulo}):
 "${relato}"`;
 
@@ -258,5 +263,49 @@ RELATO DO USUÁRIO (${contextoModulo}):
       
     if (error) throw error;
     return true;
+  },
+
+  /**
+   * Salva a normativa e o trecho destacado diretamente no Acervo NORTIS
+   */
+  async salvarNormativaDireta(item, tenantId, userId) {
+    if (!item.meta_numero || !item.meta_ementa) {
+        throw new Error('A IA não conseguiu extrair os metadados necessários para salvamento automático.');
+    }
+
+    // 1. Cadastra a Norma base
+    const { data: norma, error: errNorma } = await supabase
+      .from('nortis_normas')
+      .insert({
+        tenant_id: tenantId,
+        tipo: item.meta_tipo?.substring(0, 30) || 'outros',
+        numero: item.meta_numero?.substring(0, 50) || 'S/N',
+        ano: item.meta_ano || new Date().getFullYear(),
+        ambito: 'federal', // Assumido para pesquisa WEB Google (Grounding)
+        orgao_emissor: item.meta_orgao?.substring(0, 150) || 'Fonte Externa',
+        ementa: item.meta_ementa,
+        url_fonte_oficial: item.link_externo,
+        criado_por: userId,
+        situacao: 'vigente'
+      })
+      .select('id')
+      .single();
+
+    if (errNorma) throw errNorma;
+
+    // 2. Cadastra o dispositivo lido
+    const { error: errDisp } = await supabase
+      .from('nortis_dispositivos')
+      .insert({
+        norma_id: norma.id,
+        tenant_id: tenantId,
+        tipo: 'Artigo', 
+        numero: item.referencia?.substring(0, 50) || 'Art. 1',
+        texto_integral: item.trecho_destacado,
+        criado_por: userId
+      });
+
+    if (errDisp) throw errDisp;
+    return norma.id;
   }
 };
