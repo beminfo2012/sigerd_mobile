@@ -118,7 +118,7 @@ RELATO DO USUÁRIO (${contextoModulo}):
 
       // 4. Chamada ao Gemini
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         generationConfig: {
           responseMimeType: "application/json",
           temperature: 0.1, // baixa temperatura para evitar alucinações
