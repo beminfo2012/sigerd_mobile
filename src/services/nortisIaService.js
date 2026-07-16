@@ -4,6 +4,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_API_KEY);
 
 export const nortisIaService = {
+  classificarFonte(url) {
+    if (!url) return 'NIVEL_C';
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.match(/\.(gov\.br|jus\.br|leg\.br|mp\.br|defesacivil)/)) return 'NIVEL_A';
+    if (lowerUrl.match(/\.(edu\.br|org\.br)|scielo/)) return 'NIVEL_B';
+    return 'NIVEL_C';
+  },
   /**
    * Obtém o embedding para um texto usando o modelo text-embedding-004 do Gemini
    */
@@ -49,20 +56,24 @@ export const nortisIaService = {
   },
 
   /**
-   * Chama o Gemini 1.5 Flash para atuar como Assistente NORTIS
+   * Chama o Gemini 2.5 Flash para atuar como Assistente NORTIS
+   * Agora suporta Pesquisa em Fontes Externas (Grounding)
    */
-  async analisarRelato(relato, contextoModulo, registroOrigemId = null, tenantId = null, userId = null) {
+  async analisarRelato(relato, contextoModulo, registroOrigemId = null, tenantId = null, userId = null, tipoPesquisa = 'interno') {
     try {
-      // 1. Busca contexto
-      const documentos = await this.buscarContexto(relato);
+      // 1. Busca contexto interno
+      let documentos = [];
+      if (tipoPesquisa === 'interno' || tipoPesquisa === 'ambos') {
+        documentos = await this.buscarContexto(relato);
+      }
 
-      if (!documentos || documentos.length === 0) {
+      if (documentos.length === 0 && tipoPesquisa === 'interno') {
         return { 
           casos_similares: [], 
           normas_tecnicas_aplicaveis: [], 
           legislacao_aplicavel: [], 
-          observacao: "Nenhum documento encontrado no acervo do NORTIS que corresponda aos temas descritos.",
-          aviso: "Sugestão gerada por IA — validação humana obrigatória antes de uso em ato oficial."
+          observacao: "Nenhum documento encontrado no acervo interno do NORTIS que corresponda aos temas descritos. Tente expandir para 'Fontes Externas'.",
+          aviso: "Pesquisa restrita ao acervo local."
         };
       }
 
@@ -78,37 +89,43 @@ EMENTA: ${d.ementa}
 TEXTO: ${d.texto_integral ? d.texto_integral.substring(0, 3000) : ''}...
 `).join('\n---\n');
 
-      // 3. Monta o Prompt do Sistema (Anexo A da Especificação)
-      const systemPrompt = `Você é o Agente NORTIS, assistente de pesquisa jurídico-técnica do SIGERD.
+      // 3. Monta o Prompt do Sistema
+      let systemPrompt = `Você é o Agente NORTIS, assistente de pesquisa jurídico-técnica do SIGERD.
 
-Sua função é ORGANIZAR, EXPLICAR e CALIBRAR A CONFIANÇA dos documentos recuperados — nunca buscar, inventar ou complementar com conhecimento que não esteja no CONTEXTO RECUPERADO.
+Sua função é ORGANIZAR, EXPLICAR e CALIBRAR A CONFIANÇA dos documentos recuperados ou encontrados na web.
 
 REGRAS INVIOLÁVEIS
-1. NUNCA cite número de lei, artigo, parágrafo ou data que não esteja literalmente presente no CONTEXTO RECUPERADO.
-2. Todo "trecho_destacado" que você produzir deve ser CÓPIA LITERAL de um trecho do documento correspondente.
-3. Sempre repasse o campo situacao do documento de origem.
-4. Nunca decida sozinho que uma sugestão é aprovada.
+1. Se basear nas informações recuperadas (contexto local ou resultados de busca web).
+2. Todo "trecho_destacado" deve ser CÓPIA LITERAL.
+3. Repasse a situação das leis se informado.
+4. Nunca decida sozinho que uma sugestão é aprovada.`;
 
-FORMATO DE SAÍDA OBRIGATORIAMENTE EM JSON VÁLIDO:
+      if (tipoPesquisa === 'externo' || tipoPesquisa === 'ambos') {
+        systemPrompt += `
+5. ATENÇÃO: Você tem acesso à pesquisa web do Google. Pesquise em fontes oficiais (ex: planalto.gov.br, in.gov.br, tcu.gov.br) para complementar. Responda APENAS em JSON bruto.`;
+      }
+
+FORMATO DE SAÍDA OBRIGATORIAMENTE EM JSON VÁLIDO (retorne apenas as chaves exatas e nenhum texto extra, sem crases markdown):
 {
   "casos_similares": [],
   "normas_tecnicas_aplicaveis": [],
   "legislacao_aplicavel": [
     {
-      "origem_id": "uuid",
+      "origem_id": "uuid se local",
       "referencia": "Lei Federal nº X, Art. Y",
       "situacao": "vigente",
       "trecho_destacado": "cópia literal",
       "justificativa": "como embasa o relato",
       "confianca": "alta | media | baixa",
-      "link_interno": "/nortis/visualizar/uuid"
+      "link_interno": "/nortis/visualizar/uuid",
+      "link_externo": "url se externa"
     }
   ],
   "observacao": "preencher apenas se algum campo ficou vazio",
-  "aviso": "Sugestão gerada por IA — validação humana obrigatória antes de uso em ato oficial."
+  "aviso": "Sugestão gerada por IA — validação humana obrigatória."
 }
 
---- CONTEXTO RECUPERADO ---
+--- CONTEXTO RECUPERADO INTERNAMENTE ---
 ${contextText}
 `;
 
@@ -117,21 +134,69 @@ RELATO DO USUÁRIO (${contextoModulo}):
 "${relato}"`;
 
       // 4. Chamada ao Gemini
-      const model = genAI.getGenerativeModel({ 
+      const modelConfig = { 
         model: "gemini-2.5-flash",
         generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.1, // baixa temperatura para evitar alucinações
+          temperature: 0.2, // um pouco maior para grounding
         }
-      });
+      };
+
+      if (tipoPesquisa === 'interno') {
+          modelConfig.generationConfig.responseMimeType = "application/json";
+      } else {
+          // Quando ativamos o Grounding, alguns SDKs/Modelos não suportam force JSON MimeType, 
+          // então tiramos e extraímos o JSON manualmente do texto markdown.
+          modelConfig.tools = [{ googleSearch: {} }];
+      }
+
+      const model = genAI.getGenerativeModel(modelConfig);
 
       const result = await model.generateContent([
         { text: systemPrompt },
         { text: userPrompt }
       ]);
 
-      const responseText = result.response.text();
-      const respostaGerada = JSON.parse(responseText);
+      let responseText = result.response.text();
+      
+      // Extract JSON se veio com markdown
+      if (responseText.includes('\`\`\`json')) {
+        responseText = responseText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+      } else if (responseText.includes('\`\`\`')) {
+        responseText = responseText.replace(/\`\`\`/g, '').trim();
+      }
+
+      let respostaGerada = {};
+      try {
+        respostaGerada = JSON.parse(responseText);
+      } catch(e) {
+        console.error("Falha ao fazer parse do JSON:", responseText);
+        throw new Error("A IA não retornou um formato JSON válido.");
+      }
+
+      // Analisar metadados do Grounding (Links visitados)
+      const grounding = result.response.candidates?.[0]?.groundingMetadata;
+      if (grounding && grounding.groundingChunks) {
+          const linksWeb = grounding.groundingChunks.filter(c => c.web).map(c => c.web.uri);
+          
+          if (linksWeb.length > 0 && respostaGerada.legislacao_aplicavel) {
+              // Aplica URLs às sugestões vazias e avalia nível de confiança
+              respostaGerada.legislacao_aplicavel.forEach(item => {
+                  if (!item.link_interno && !item.link_externo) {
+                      // Associar a primeira URL confiável encontrada, se não tiver link
+                      const melhorLink = linksWeb.find(l => this.classificarFonte(l) === 'NIVEL_A') || linksWeb[0];
+                      item.link_externo = melhorLink;
+                  }
+                  
+                  if (item.link_externo) {
+                      item.nivel_fonte = this.classificarFonte(item.link_externo);
+                  } else {
+                      item.nivel_fonte = 'INTERNO';
+                  }
+              });
+          }
+      } else if (respostaGerada.legislacao_aplicavel) {
+         respostaGerada.legislacao_aplicavel.forEach(item => { item.nivel_fonte = 'INTERNO'; });
+      }
 
       // 5. Salva na trilha de auditoria (nortis_ia_sugestoes)
       if (tenantId && userId) {
@@ -142,10 +207,29 @@ RELATO DO USUÁRIO (${contextoModulo}):
             relato_entrada: relato,
             documentos_recuperados: documentos.map(d => d.id),
             resposta_gerada: respostaGerada,
-            modelo_llm: "gemini-1.5-flash"
+            modelo_llm: "gemini-2.5-flash",
+            tipo_pesquisa: tipoPesquisa
         }]).select('id').single();
 
         respostaGerada._sugestao_id = sugestao?.id;
+
+        // Se houver normas externas de NIVEL_A ou NIVEL_B, envia para curadoria
+        if (respostaGerada.legislacao_aplicavel) {
+            for (let item of respostaGerada.legislacao_aplicavel) {
+                if (item.link_externo && (item.nivel_fonte === 'NIVEL_A' || item.nivel_fonte === 'NIVEL_B')) {
+                    // Inserir sugestão de curadoria
+                    await supabase.from('nortis_sugestoes_curadoria').insert([{
+                        tenant_id: tenantId,
+                        usuario_id: userId,
+                        tipo_sugestao: 'LEGISLACAO_WEB',
+                        titulo: item.referencia,
+                        url_origem: item.link_externo,
+                        justificativa: item.justificativa,
+                        nivel_confiabilidade: item.nivel_fonte
+                    }]);
+                }
+            }
+        }
       }
 
       return respostaGerada;

@@ -3,9 +3,10 @@ import { Check, X, EyeOff, ExternalLink, Sparkles, AlertTriangle } from 'lucide-
 import { nortisIaService } from '../services/nortisIaService';
 import { toast } from './ToastNotification';
 
-export default function NortisIAValidation({ sugestoesGeradas, onClose, onAcceptCitation, user }) {
+export default function NortisIAValidation({ sugestoesGeradas, onClose, onAcceptCitation, user, onReanalyze, isAnalyzing }) {
   const [decisions, setDecisions] = useState({});
   const [loadingAction, setLoadingAction] = useState(null);
+  const [tipoPesquisa, setTipoPesquisa] = useState('interno');
 
   if (!sugestoesGeradas) return null;
 
@@ -82,9 +83,17 @@ export default function NortisIAValidation({ sugestoesGeradas, onClose, onAccept
                     <h4 className="font-bold text-slate-900 dark:text-white text-base">
                       {item.referencia || item.tipo}
                     </h4>
+                    {item.nivel_fonte && (
+                          <div className="flex items-center gap-1 mt-1 mb-2">
+                              {item.nivel_fonte === 'INTERNO' && <span className="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Base NORTIS</span>}
+                              {item.nivel_fonte === 'NIVEL_A' && <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Nível A - Oficial</span>}
+                              {item.nivel_fonte === 'NIVEL_B' && <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Nível B - Técnico</span>}
+                              {item.nivel_fonte === 'NIVEL_C' && <span className="bg-rose-100 text-rose-700 text-[10px] px-2 py-0.5 rounded-full font-bold">Nível C - Informativo</span>}
+                          </div>
+                    )}
                   </div>
-                  {item.link_interno && (
-                    <a href={item.link_interno} target="_blank" rel="noreferrer" className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors">
+                  {(item.link_interno || item.link_externo) && (
+                    <a href={item.link_interno || item.link_externo} target="_blank" rel="noreferrer" className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors" title="Acessar Fonte">
                       <ExternalLink size={16} />
                     </a>
                   )}
@@ -102,10 +111,10 @@ export default function NortisIAValidation({ sugestoesGeradas, onClose, onAccept
                   <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
                     <button
                       onClick={() => handleAction(item, groupIndex, itemIndex, 'aceitar')}
-                      disabled={loadingAction === key}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                      disabled={loadingAction === key || item.nivel_fonte === 'NIVEL_C'}
+                      className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
                     >
-                      <Check size={14} /> Aceitar Citação
+                      <Check size={14} /> {item.nivel_fonte === 'NIVEL_C' ? 'Bloqueado (Nível C)' : 'Aceitar (Copiar)'}
                     </button>
                     <button
                       onClick={() => handleAction(item, groupIndex, itemIndex, 'rejeitar')}
@@ -148,6 +157,30 @@ export default function NortisIAValidation({ sugestoesGeradas, onClose, onAccept
           <X size={18} />
         </button>
       </div>
+
+      {onReanalyze && (
+        <div className="px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+            <p className="text-xs font-bold text-slate-500 mb-2 uppercase">Origem da Pesquisa</p>
+            <div className="flex gap-2 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg">
+                <button 
+                    onClick={() => { setTipoPesquisa('interno'); onReanalyze('interno'); }}
+                    disabled={isAnalyzing}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${tipoPesquisa === 'interno' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}
+                >NORTIS</button>
+                <button 
+                    onClick={() => { setTipoPesquisa('externo'); onReanalyze('externo'); }}
+                    disabled={isAnalyzing}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${tipoPesquisa === 'externo' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}
+                >WEB</button>
+                <button 
+                    onClick={() => { setTipoPesquisa('ambos'); onReanalyze('ambos'); }}
+                    disabled={isAnalyzing}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${tipoPesquisa === 'ambos' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}
+                >HÍBRIDO</button>
+            </div>
+            {isAnalyzing && <p className="text-xs text-indigo-600 mt-2 text-center animate-pulse">Pesquisando...</p>}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4">
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-6 flex gap-3 text-amber-800 dark:text-amber-400 text-xs leading-relaxed">

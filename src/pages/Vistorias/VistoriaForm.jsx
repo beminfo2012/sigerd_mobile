@@ -878,7 +878,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         }
     }
 
-    const handleNortisIA = async () => {
+    const handleNortisIA = async (tipoPesquisa = 'interno') => {
         const relatoContext = formData.observacoes || formData.descricaoProblema || '';
         if (relatoContext.trim().length < 15) {
             toast.error('Relato Insuficiente', 'Descreva o problema ou as observações técnicas com mais detalhes para que a IA possa analisar o contexto.');
@@ -892,7 +892,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 'vistoria', 
                 null, 
                 userProfile?.tenant_id, 
-                userProfile?.id
+                userProfile?.id,
+                tipoPesquisa
             );
             setSugestoesIA(sugestoes);
             setIsNortisIAOpen(true);
@@ -2692,6 +2693,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     <NortisIAValidation 
                         sugestoesGeradas={sugestoesIA} 
                         user={userProfile}
+                        isAnalyzing={analyzingIA}
+                        onReanalyze={handleNortisIA}
                         onClose={() => setIsNortisIAOpen(false)} 
                         onAcceptCitation={(citacao) => {
                             setFormData(prev => ({ 

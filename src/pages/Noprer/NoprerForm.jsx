@@ -352,7 +352,7 @@ const NoprerForm = () => {
         }
     };
 
-    const handleNortisIA = async () => {
+    const handleNortisIA = async (tipoPesquisa = 'interno') => {
         const relatoContext = formData.descricao_risco || '';
         if (relatoContext.trim().length < 15) {
             toast.error('Descreva o risco com mais detalhes para que a IA possa analisar o contexto.');
@@ -366,7 +366,8 @@ const NoprerForm = () => {
                 'noprer', 
                 null, 
                 userProfile?.tenant_id, 
-                userProfile?.id
+                userProfile?.id,
+                tipoPesquisa
             );
             setSugestoesIA(sugestoes);
             setIsNortisIAOpen(true);
@@ -1028,6 +1029,8 @@ const NoprerForm = () => {
                     <NortisIAValidation 
                         sugestoesGeradas={sugestoesIA}
                         user={userProfile} 
+                        isAnalyzing={analyzingIA}
+                        onReanalyze={handleNortisIA}
                         onClose={() => setIsNortisIAOpen(false)} 
                         onAcceptCitation={(citacao) => {
                             setFormData(prev => ({ 
