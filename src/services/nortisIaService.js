@@ -175,7 +175,7 @@ RELATO DO USUÁRIO (${contextoModulo}):
 
       // 4. Chamada ao Gemini
       const modelConfig = { 
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         generationConfig: {
           temperature: 0.2, // um pouco maior para grounding
         }
