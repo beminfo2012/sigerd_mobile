@@ -28,7 +28,6 @@ const NoprerForm = () => {
     const navigate = useNavigate();
     const userProfile = useContext(UserContext);
     const { fetchNoprerById, atualizarNoprer, criarNoprer, salvarNoprerRascunho, fetchRascunhoById, deletarRascunho } = useNoprer();
-    const userProfile = useContext(UserContext);
     const [salvando, setSalvando] = useState(false);
     const { calcularDatasFormulario } = usePrazo();
 
