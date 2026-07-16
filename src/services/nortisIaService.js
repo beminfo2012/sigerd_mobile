@@ -96,7 +96,7 @@ Sua função é ORGANIZAR, EXPLICAR e CALIBRAR A CONFIANÇA dos documentos recup
 
 REGRAS INVIOLÁVEIS
 1. Se basear nas informações recuperadas (contexto local ou resultados de busca web).
-2. Todo "trecho_destacado" deve ser CÓPIA LITERAL.
+2. Todo "trecho_destacado" deve ser a CÓPIA LITERAL e INTEGRAL do artigo, inciso ou parágrafo. NUNCA resuma ou trunque o texto com reticências (...).
 3. Repasse a situação das leis se informado.
 4. Nunca decida sozinho que uma sugestão é aprovada.`;
 

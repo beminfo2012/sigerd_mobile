@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X, EyeOff, ExternalLink, Sparkles, AlertTriangle } from 'lucide-react';
+import { Check, X, EyeOff, ExternalLink, Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
 import { nortisIaService } from '../services/nortisIaService';
 import { toast } from './ToastNotification';
 
@@ -178,25 +178,36 @@ export default function NortisIAValidation({ sugestoesGeradas, onClose, onAccept
                     className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${tipoPesquisa === 'ambos' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700'}`}
                 >HÍBRIDO</button>
             </div>
-            {isAnalyzing && <p className="text-xs text-indigo-600 mt-2 text-center animate-pulse">Pesquisando...</p>}
+            {/* Remover o "Pesquisando..." do header e mover para o corpo */}
         </div>
       )}
 
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-6 flex gap-3 text-amber-800 dark:text-amber-400 text-xs leading-relaxed">
-          <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-          <p>{sugestoesGeradas.aviso || "Sugestão gerada por IA — validação humana obrigatória antes de uso em ato oficial."}</p>
-        </div>
+        {isAnalyzing ? (
+            <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 p-6 animate-in fade-in duration-300">
+                <Loader2 size={40} className="text-indigo-500 animate-spin mb-4" />
+                <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-2">Pesquisando e Analisando...</h3>
+                <p className="text-sm">A inteligência artificial está processando seu relato e buscando o melhor embasamento técnico e jurídico.</p>
+                <p className="text-xs mt-4 text-slate-400">Isso pode levar alguns segundos, especialmente em pesquisas na web.</p>
+            </div>
+        ) : (
+            <div className="animate-in fade-in duration-500">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-6 flex gap-3 text-amber-800 dark:text-amber-400 text-xs leading-relaxed">
+                  <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                  <p>{sugestoesGeradas.aviso || "Sugestão gerada por IA — validação humana obrigatória antes de uso em ato oficial."}</p>
+                </div>
 
-        {sugestoesGeradas.observacao && (
-            <div className="mb-6 p-4 bg-slate-200 dark:bg-slate-800 rounded-lg text-sm text-center text-slate-600 dark:text-slate-400 italic">
-                {sugestoesGeradas.observacao}
+                {sugestoesGeradas.observacao && (
+                    <div className="mb-6 p-4 bg-slate-200 dark:bg-slate-800 rounded-lg text-sm text-center text-slate-600 dark:text-slate-400 italic">
+                        {sugestoesGeradas.observacao}
+                    </div>
+                )}
+
+                {renderGroup("Legislação Aplicável", sugestoesGeradas.legislacao_aplicavel, 'leg')}
+                {renderGroup("Normas Técnicas", sugestoesGeradas.normas_tecnicas_aplicaveis, 'norm')}
+                {renderGroup("Casos Similares", sugestoesGeradas.casos_similares, 'casos')}
             </div>
         )}
-
-        {renderGroup("Legislação Aplicável", sugestoesGeradas.legislacao_aplicavel, 'leg')}
-        {renderGroup("Normas Técnicas", sugestoesGeradas.normas_tecnicas_aplicaveis, 'norm')}
-        {renderGroup("Casos Similares", sugestoesGeradas.casos_similares, 'casos')}
       </div>
     </div>
   );
