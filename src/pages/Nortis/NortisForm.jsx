@@ -4,6 +4,13 @@ import { ArrowLeft, Save, UploadCloud, FileText, CheckCircle, Trash2, DownloadCl
 import { nortisService } from '../../services/nortisService';
 import { toast } from '../../components/ToastNotification';
 import { supabase } from '../../services/supabase';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+// Configuração do Worker do PDF.js via pacote local (Vite cuidará disso)
+if (typeof window !== 'undefined' && 'Worker' in window) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+}
 
 export default function NortisForm() {
   const navigate = useNavigate();
@@ -13,6 +20,7 @@ export default function NortisForm() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [extractingPdf, setExtractingPdf] = useState(false);
   const [file, setFile] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -58,9 +66,110 @@ export default function NortisForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      if (selectedFile.type === 'application/pdf') {
+        try {
+          setExtractingPdf(true);
+          toast.info('Aguarde', 'Lendo PDF e tentando extrair dados...');
+          
+          const arrayBuffer = await selectedFile.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let fullText = "";
+          
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            let lastY = -1;
+            let pageText = "";
+            for (let item of textContent.items) {
+              const currentY = item.transform[5];
+              // Diferenças muito grandes (ex: troca de página ou bloco muito distante) recebem quebra.
+              // Diferenças normais de linha recebem apenas espaço.
+              if (lastY !== -1 && Math.abs(currentY - lastY) > 30) {
+                 pageText += "\n\n";
+              } else if (lastY !== -1) {
+                 pageText += " "; 
+              }
+              pageText += item.str.trim();
+              lastY = currentY;
+            }
+            fullText += pageText + " ";
+          }
+          
+          // Heurísticas de Extração
+          let extractedNum = "";
+          let extractedAno = "";
+          let extractedEmenta = "";
+          let extractedOrgao = "Prefeitura Municipal";
+          let extractedDataPub = "";
+          
+          const matchLei = fullText.match(/(?:LEI|DECRETO|PORTARIA).*?(?:Nº|N|nº|n\.º)\s*([\d.]+).*?(?:DE|de)\s*(\d+).*?(?:DE|de)\s*([A-Za-zÇç]+)\s*(?:DE|de)\s*(\d{4})/i);
+          if (matchLei) {
+              extractedNum = matchLei[1].replace(/\.$/, ''); 
+              const day = matchLei[2].padStart(2, '0');
+              const monthName = matchLei[3].toUpperCase();
+              extractedAno = matchLei[4];
+              
+              const meses = {
+                  'JANEIRO': '01', 'FEVEREIRO': '02', 'MARÇO': '03', 'MARCO': '03',
+                  'ABRIL': '04', 'MAIO': '05', 'JUNHO': '06', 'JULHO': '07',
+                  'AGOSTO': '08', 'SETEMBRO': '09', 'OUTUBRO': '10',
+                  'NOVEMBRO': '11', 'DEZEMBRO': '12'
+              };
+              
+              if (meses[monthName]) {
+                  extractedDataPub = `${extractedAno}-${meses[monthName]}-${day}`;
+              }
+          }
+
+          const matchDisp = fullText.match(/(DISPÕE SOBRE|INSTITUI|ALTERA|REGULAMENTA)[\s\S]*?(?=\n\n|O PREFEITO|A CÂMARA|Art\.)/i);
+          if (matchDisp) {
+              extractedEmenta = matchDisp[0].replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+          }
+
+          let extractedUrl = "";
+          const matchUrl = fullText.match(/https?:\/\/[^\s]+/i);
+          if (matchUrl) {
+              extractedUrl = matchUrl[0].trim();
+          }
+
+          // Formatação cosmética do texto integral (recuos e quebras corretas baseadas na semântica)
+          // 1. Removemos quebras espúrias e normalizamos espaços
+          let formattedText = fullText.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' '); 
+          
+          // 2. Inserimos quebras antes de marcadores jurídicos
+          formattedText = formattedText
+             .replace(/\s(Art\.\s+\d+º?)/gi, '\n\n$1')
+             .replace(/\s(Parágrafo\s+único)/gi, '\n\n$1')
+             .replace(/\s(§\s+\d+º?)/gi, '\n\n$1')
+             .replace(/\s([IVXLCDM]+\s*-)/g, '\n\n$1')
+             .replace(/\s([a-z]\))/g, '\n\n$1')
+             .replace(/\s(CAPÍTULO|TÍTULO|SEÇÃO)\s+([IVXLCDM]+)/gi, '\n\n$1 $2\n')
+             .replace(/\s(DISPÕE SOBRE|INSTITUI|ALTERA|REGULAMENTA)/i, '\n\n$1');
+
+          setFormData(prev => ({
+            ...prev,
+            numero: prev.numero || extractedNum,
+            ano: prev.ano || extractedAno,
+            ementa: prev.ementa || extractedEmenta,
+            orgao_emissor: prev.orgao_emissor || extractedOrgao,
+            data_publicacao: prev.data_publicacao || extractedDataPub,
+            url_fonte_oficial: prev.url_fonte_oficial || extractedUrl,
+            texto_integral: formattedText.trim()
+          }));
+          
+          toast.success('Pronto!', 'Texto e metadados extraídos do PDF com sucesso.');
+        } catch (error) {
+          console.error("Erro ao extrair PDF:", error);
+          toast.warning('Aviso', 'Não foi possível extrair o texto perfeitamente. Você precisará revisar os campos.');
+        } finally {
+          setExtractingPdf(false);
+        }
+      }
     }
   };
 
@@ -481,9 +590,13 @@ export default function NortisForm() {
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Arquivo PDF Original</label>
               <div className="flex items-center gap-4">
                 <label className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors border border-dashed border-slate-300 dark:border-slate-600">
-                  <UploadCloud size={20} />
-                  <span className="text-sm font-bold">{file ? 'Alterar Arquivo' : 'Selecionar PDF'}</span>
-                  <input type="file" accept=".pdf" className="hidden" onChange={handleFileChange} />
+                  {extractingPdf ? (
+                    <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <UploadCloud size={20} />
+                  )}
+                  <span className="text-sm font-bold">{extractingPdf ? 'Extraindo Texto...' : file ? 'Alterar Arquivo' : 'Selecionar PDF'}</span>
+                  <input type="file" accept=".pdf" className="hidden" onChange={handleFileChange} disabled={extractingPdf} />
                 </label>
                 {file && (
                   <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">

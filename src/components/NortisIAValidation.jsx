@@ -31,7 +31,7 @@ export default function NortisIAValidation({ sugestoesGeradas, onClose, onAccept
       if (action === 'aceitar') {
         toast.success("Citação Adicionada", "A referência foi incorporada ao seu texto.");
         if (onAcceptCitation) {
-            onAcceptCitation(`Segundo a ${item.referencia}: "${item.trecho_destacado}"`);
+            onAcceptCitation(`<blockquote><em>Segundo a ${item.referencia}: "${item.trecho_destacado}"</em></blockquote><p><br></p>`, item);
         }
       } else if (action === 'rejeitar') {
         toast.info("Rejeitada", "O NORTIS aprenderá a não sugerir esta referência em casos similares.");

@@ -1442,6 +1442,7 @@ const PrazosAlertasCard = () => {
     const navigate = useNavigate();
     const [prazos, setPrazos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filterType, setFilterType] = useState('todos'); // 'todos' | 'noprer' | 'agenda'
     const { fetchNoprers } = useNoprer();
 
     useEffect(() => {
@@ -1465,9 +1466,9 @@ const PrazosAlertasCard = () => {
                         const cat = (item.categoria_risco || '').toLowerCase();
 
                         if (cat.includes('estrutural') || cat.includes('predial')) prazoDias = 3;
-                        else if (cat.includes('geológico') || cat.includes('geotécnico')) prazoDias = 3;
-                        else if (cat.includes('arvore') || cat.includes('árvore')) prazoDias = 10;
-                        else if (cat.includes('hidrológico') || cat.includes('alagamento')) prazoDias = 2;
+                        else if (cat.includes('geolgico') || cat.includes('geotǸcnico')) prazoDias = 3;
+                        else if (cat.includes('arvore') || cat.includes('ǭrvore')) prazoDias = 10;
+                        else if (cat.includes('hidrolgico') || cat.includes('alagamento')) prazoDias = 2;
 
                         if (item.categoria_risco === 'Outros' && item.data_prevista) {
                             const dataLimite = new Date(item.data_prevista);
@@ -1502,8 +1503,7 @@ const PrazosAlertasCard = () => {
                     });
 
                 const todos = [...processadosAgenda, ...processadosNoprer]
-                    .sort((a, b) => a.diasRestantes - b.diasRestantes)
-                    .slice(0, 4);
+                    .sort((a, b) => a.diasRestantes - b.diasRestantes);
 
                 setPrazos(todos);
             } catch (err) {
@@ -1529,30 +1529,46 @@ const PrazosAlertasCard = () => {
         return `vence em ${dias} dias`;
     };
 
+    const displayPrazos = prazos.filter(p => filterType === 'todos' || p.tipo === filterType);
+
     return (
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[24px] shadow-sm flex flex-col overflow-hidden h-full">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest flex items-center gap-2">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest flex items-center gap-2 shrink-0">
                     <Clock size={16} className="text-blue-500" />
                     Prazos e Alertas
                 </h3>
-                <div className="flex gap-3">
-                    <button onClick={() => navigate('/noprer')} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 uppercase tracking-widest transition-colors">
-                        NOPRERs
+                
+                {/* Filtros em forma de pílula */}
+                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl shrink-0 w-full sm:w-auto">
+                    <button 
+                        onClick={() => setFilterType('todos')}
+                        className={`flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${filterType === 'todos' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Todos
                     </button>
-                    <button onClick={() => navigate('/agenda')} className="text-[10px] font-bold text-blue-500 hover:text-blue-600 uppercase tracking-widest transition-colors">
-                        Ver Agenda
+                    <button 
+                        onClick={() => setFilterType('noprer')}
+                        className={`flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${filterType === 'noprer' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        NOPRER
+                    </button>
+                    <button 
+                        onClick={() => setFilterType('agenda')}
+                        className={`flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${filterType === 'agenda' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Agenda
                     </button>
                 </div>
             </div>
-            <div className="p-2 flex-1 flex flex-col justify-start">
+            <div className="p-2 flex-1 flex flex-col justify-start overflow-y-auto max-h-[350px] custom-scrollbar">
                 {loading ? (
                     <div className="text-center py-6">
                         <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2"></div>
                     </div>
-                ) : prazos.length > 0 ? (
+                ) : displayPrazos.length > 0 ? (
                     <div className="flex flex-col">
-                        {prazos.map((prazo, idx) => (
+                        {displayPrazos.map((prazo, idx) => (
                             <div key={idx} className="flex items-start gap-4 p-4 border-b border-slate-50 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer" onClick={() => navigate(prazo.tipo === 'noprer' ? `/noprer/detalhes/${prazo.id}` : '/agenda')}>
                                 <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shadow-sm shrink-0 ${getColor(prazo.diasRestantes)}`} />
                                 <div className="flex flex-col min-w-0">
@@ -1575,13 +1591,14 @@ const PrazosAlertasCard = () => {
                     </div>
                 ) : (
                     <div className="p-6 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                        Nenhum prazo próximo
+                        Nenhum prazo correspondente
                     </div>
                 )}
             </div>
         </div>
     );
 };
+
 
 const BoletinsCard = () => {
     const [activeTab, setActiveTab] = useState('ext');

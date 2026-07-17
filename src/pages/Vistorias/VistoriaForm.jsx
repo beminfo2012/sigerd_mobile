@@ -2747,11 +2747,28 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         isAnalyzing={analyzingIA}
                         onReanalyze={handleNortisIA}
                         onClose={() => setIsNortisIAOpen(false)} 
-                        onAcceptCitation={(citacao) => {
-                            setFormData(prev => ({ 
-                                ...prev, 
-                                observacoes: prev.observacoes ? `${prev.observacoes}\n\n${citacao}` : citacao 
-                            }));
+                        onAcceptCitation={(citacao, item) => {
+                            setFormData(prev => {
+                                let novasRefs = prev.referencias_normativas || [];
+                                if (item) {
+                                    const newRef = {
+                                        id: item.id || Date.now(),
+                                        tipo: item.tipo || 'LEGISLAÇÃO',
+                                        numero: item.referencia || item.numero || 'S/N',
+                                        ementa: item.ementa || item.trecho_destacado || '',
+                                        ano: item.ano || new Date().getFullYear(),
+                                        url_fonte_oficial: item.url_fonte_oficial
+                                    };
+                                    if (!novasRefs.some(r => r.numero === newRef.numero)) {
+                                        novasRefs = [...novasRefs, newRef];
+                                    }
+                                }
+                                return { 
+                                    ...prev, 
+                                    referencias_normativas: novasRefs,
+                                    observacoes: prev.observacoes ? `${prev.observacoes}<br><br>${citacao}` : citacao 
+                                };
+                            });
                         }}
                     />
                 </div>
