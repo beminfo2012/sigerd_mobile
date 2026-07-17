@@ -909,10 +909,42 @@ const VistoriaPrint = () => {
                                     <span className="section-header-title">{numObs}. Observações Técnicas</span>
                                     <div className="section-header-line"></div>
                                 </div>
-                                <div 
-                                    className="p-4 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-xs leading-relaxed text-justify rich-text-print-content"
-                                    dangerouslySetInnerHTML={{ __html: data.observacoes }}
-                                />
+                                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                                    <style dangerouslySetInnerHTML={{__html: `
+                                        .print-rich-text ul, .print-rich-text ol { 
+                                            padding-left: 1.5rem !important; 
+                                            margin: 0.5rem 0 !important; 
+                                        }
+                                        .print-rich-text ul li { 
+                                            list-style-type: disc !important; 
+                                            display: list-item !important; 
+                                            margin-bottom: 0.25rem !important;
+                                        }
+                                        .print-rich-text ol li { 
+                                            list-style-type: decimal !important; 
+                                            display: list-item !important; 
+                                            margin-bottom: 0.25rem !important;
+                                        }
+                                        .print-rich-text blockquote { 
+                                            border-left: 4px solid #94a3b8 !important; 
+                                            padding-left: 1rem !important; 
+                                            font-style: italic !important; 
+                                            color: #475569 !important; 
+                                            margin: 1rem 0 !important; 
+                                            background-color: #f1f5f9 !important; 
+                                            padding: 0.5rem 1rem !important; 
+                                            display: block !important;
+                                            -webkit-print-color-adjust: exact !important;
+                                            print-color-adjust: exact !important;
+                                        }
+                                        /* Overrides for quill specific pseudo elements if present */
+                                        .print-rich-text li::before { display: none !important; }
+                                    `}} />
+                                    <div 
+                                        className="print-rich-text text-slate-700 text-xs leading-relaxed text-justify"
+                                        dangerouslySetInnerHTML={{ __html: data.observacoes.replace(/<li data-list="[^"]*">/g, '<li>') }}
+                                    />
+                                </div>
                             </section>
                         )}
 
