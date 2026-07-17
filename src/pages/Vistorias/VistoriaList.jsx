@@ -72,27 +72,29 @@ const VistoriaList = ({ onNew, onEdit }) => {
                 const isSynced = localItem.synced === true || localItem.synced === 1;
 
                 // [FIX] More robust matching: Check UUIDs AND Vistoria IDs
-                const alreadyInCloud = merged.some(c =>
+                const cloudIndex = merged.findIndex(c =>
                     (vid && c.vistoria_id === vid) ||
                     (localItem.id && c.id === localItem.id) ||
                     (localItem.supabase_id && c.id === localItem.supabase_id)
                 )
 
                 // [DEFINITIVE FIX] Ghost Record Suppression v2
-                // ALWAYS show local item if it's not in the cloud yet.
-                // This covers:
-                // 1. Offline & Unsynced (synced=false) -> Shows as Pending
-                // 2. Online & Just Synced (synced=true) but not returned by API yet -> Shows as Synced
-                // 3. Online & Cloud has it -> alreadyInCloud=true -> Local ignored, Cloud version shown
-                if (!alreadyInCloud) {
-                    merged.push({
-                        ...localItem,
-                        id: localItem.id,
-                        vistoria_id: vid,
-                        created_at: localItem.createdAt || localItem.created_at || new Date().toISOString(),
-                        isLocal: true,
-                        synced: localItem.synced
-                    })
+                // ALWAYS show local item if it's not in the cloud yet OR if it has offline edits.
+                const mappedLocalItem = {
+                    ...localItem,
+                    id: localItem.id,
+                    vistoria_id: vid,
+                    created_at: localItem.createdAt || localItem.created_at || new Date().toISOString(),
+                    isLocal: true,
+                    synced: localItem.synced
+                }
+
+                if (cloudIndex !== -1) {
+                    if (localItem.synced === false || localItem.synced === 0) {
+                        merged[cloudIndex] = mappedLocalItem; // Overwrite with local pending edit
+                    }
+                } else {
+                    merged.push(mappedLocalItem)
                 }
             })
 

@@ -630,6 +630,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 grupos_vulneraveis: Array.isArray(item.gruposVulneraveis) ? item.gruposVulneraveis : (Array.isArray(item.grupos_vulneraveis) ? item.grupos_vulneraveis : []),
 
                 observacoes: item.observacoes || '',
+                referencias_normativas: Array.isArray(item.referencias_normativas) ? item.referencias_normativas : (Array.isArray(item.referenciasNormativas) ? item.referenciasNormativas : []),
                 medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
                 encaminhamentos: Array.isArray(item.encaminhamentos) ? item.encaminhamentos : (Array.isArray(item.encaminhamentos) ? item.encaminhamentos : []),
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},

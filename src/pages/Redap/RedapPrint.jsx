@@ -598,7 +598,49 @@ const RedapPrint = () => {
                             </div>
                         </section>
 
-                        {/* Seção 9: Assinaturas */}
+                        
+                        {/* Referências Técnicas */}
+                        {(data.referencias_normativas && data.referencias_normativas.length > 0) && (
+                            <section className="mb-6 avoid-break">
+                                <div className="section-header">
+                                    <span className="section-header-title">Referências Técnicas e Jurídicas</span>
+                                    <div className="section-header-line"></div>
+                                </div>
+                                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                                    {Object.entries(
+                                        data.referencias_normativas.reduce((acc, ref) => {
+                                            const cat = ref.categoria || 'Normas e Manuais';
+                                            if (!acc[cat]) acc[cat] = [];
+                                            acc[cat].push(ref);
+                                            return acc;
+                                        }, {})
+                                    ).map(([cat, refs]) => (
+                                        <div key={cat} className="mb-4 last:mb-0 avoid-break">
+                                            <div className="text-[10px] font-extrabold text-indigo-900 uppercase mb-2 pb-1 border-b border-slate-300">{cat}</div>
+                                            <div className="flex flex-col gap-2">
+                                                {refs.map((ref, idx) => (
+                                                    <div key={idx} className="flex flex-col text-[11px] text-slate-700">
+                                                        <div className="font-bold flex items-center gap-1.5 text-slate-800">
+                                                            <span className="text-slate-400">❖</span>
+                                                            {ref.numero}
+                                                            {ref.ano && `/${ref.ano}`}
+                                                            {ref.ambito && <span className="text-[8px] font-bold bg-slate-200 text-slate-600 px-1 py-0.5 rounded">{ref.ambito}</span>}
+                                                        </div>
+                                                        {(ref.ementa || ref.descricao_uso) && (
+                                                            <div className="ml-4 mt-0.5 text-slate-600 italic">
+                                                                {ref.ementa || ref.descricao_uso}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+{/* Seção 9: Assinaturas */}
                         <section className="mb-6 avoid-break">
                             <div className="section-header">
                                 <span className="section-header-title">Seção 9: Assinaturas e Homologação Final</span>

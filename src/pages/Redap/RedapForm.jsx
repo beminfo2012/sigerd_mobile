@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import NortisQuickSearch from '../../components/NortisQuickSearch';
+import RichTextEditor from '../../components/Editor/RichTextEditor';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Clock as ClockIcon, Calendar, Info, FileText, CheckCircle2, AlertTriangle, X, Camera, Save, Trash2, Home, Users, Leaf, Globe, Shield, Search, ChevronDown, ChevronUp, AlertCircle, Calculator, Sparkles, ArrowLeft, PenTool, Image as ImageIcon, FileStack, Navigation, Check } from 'lucide-react';
 import { CurrencyInput, NumberInput, DecimalInput } from '../../components/RedapInputs';
@@ -73,6 +75,8 @@ const RedapForm = () => {
         (user?.role?.startsWith('Redap_') ? user.role.replace('Redap_', '').toLowerCase() :
             (user?.role?.startsWith('S2id_') ? user.role.replace('S2id_', '').toLowerCase() : null));
     const [formData, setFormData] = useState(INITIAL_REDAP_STATE);
+    const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
+    
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showDocs, setShowDocs] = useState(false);
@@ -1914,7 +1918,32 @@ const RedapForm = () => {
                         <span className="text-[10px] font-black uppercase tracking-widest text-white leading-tight">
                             Você está offline. Alterações salvas localmente!
                         </span>
+                    
+            {isNortisIAOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                        <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
+                            <X size={20} className="text-slate-600" />
+                        </button>
+                        <NortisQuickSearch 
+                            onClose={() => setIsNortisIAOpen(false)} 
+                            onAcceptCitation={(citacao) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    observacoes: prev.observacoes ? prev.observacoes + "<br><br>" + citacao : citacao 
+                                }));
+                            }}
+                            onApplyReference={(newRef) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    referencias_normativas: [...(prev.referencias_normativas || []), newRef] 
+                                }));
+                            }}
+                        />
                     </div>
+                </div>
+            )}
+        </div>
                 )
             }
 

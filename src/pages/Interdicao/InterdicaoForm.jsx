@@ -117,10 +117,12 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
     const userProfile = useContext(UserContext)
     const { toast } = useToast()
     const navigate = useNavigate()
+    const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
     const [formData, setFormData] = useState({
         interdicaoId: '',
         dataHora: (() => {
             const now = new Date();
+
             const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
             const year = brasiliaTime.getFullYear();
             const month = String(brasiliaTime.getMonth() + 1).padStart(2, '0');
@@ -1408,6 +1410,31 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                     }}
                     onCancel={() => setEditingPhotoIndex(null)}
                 />
+            )}
+        
+            {isNortisIAOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                        <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
+                            <X size={20} className="text-slate-600" />
+                        </button>
+                        <NortisQuickSearch 
+                            onClose={() => setIsNortisIAOpen(false)} 
+                            onAcceptCitation={(citacao) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    observacoes: prev.observacoes ? prev.observacoes + "<br><br>" + citacao : citacao 
+                                }));
+                            }}
+                            onApplyReference={(newRef) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    referencias_normativas: [...(prev.referencias_normativas || []), newRef] 
+                                }));
+                            }}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     )

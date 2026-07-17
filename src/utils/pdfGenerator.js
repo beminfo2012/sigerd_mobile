@@ -39,6 +39,13 @@ const normalizeData = (data, type) => {
             populacaoEstimada: data.populacaoEstimada || data.populacao_estimada || '---',
             gruposVulneraveis: data.gruposVulneraveis || data.grupos_vulneraveis || [],
             observacoes: data.observacoes || '---',
+            referencias_normativas: (() => {
+                let r = data.referencias_normativas || data.referenciasNormativas || [];
+                if (typeof r === 'string') {
+                    try { r = JSON.parse(r); } catch (e) { r = []; }
+                }
+                return Array.isArray(r) ? r : [];
+            })(),
             medidasTomadas: data.medidasTomadas || data.medidas_tomadas || [],
             encaminhamentos: data.encaminhamentos || [],
             agente: data.agente || '---',
@@ -380,8 +387,8 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                     ${sectionTitle(`${secNum++}. Observações Técnicas`)}
                     <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
                         <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">RELATÓRIO TÉCNICO</div>
-                        <div style="font-style: italic; font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;">
-                            "${data.observacoes}"
+                        <div class="rich-text-content" style="font-size: 13px; color: #334155; line-height: 1.6;">
+                            ${data.observacoes}
                         </div>
                     </div>`;
                 }
@@ -478,6 +485,43 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 }
                 
                 htmlBlocks += renderRecomendacoesBlock();
+                
+                // Referências Técnicas
+                if (data.referencias_normativas && data.referencias_normativas.length > 0) {
+                    const refsGrouped = data.referencias_normativas.reduce((acc, ref) => {
+                        const cat = ref.categoria || 'Normas e Manuais'; // Simplified category logic if undefined
+                        if (!acc[cat]) acc[cat] = [];
+                        acc[cat].push(ref);
+                        return acc;
+                    }, {});
+
+                    let refsHtml = `
+                    ${sectionTitle(`${secNum++}. Referências Técnicas e Jurídicas`)}
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">`;
+
+                    Object.entries(refsGrouped).forEach(([cat, refs]) => {
+                        refsHtml += `
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 10px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #cbd5e1;">${cat}</div>
+                                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                                    ${refs.map(r => `
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <div style="font-size: 11px; font-weight: 700; color: #334155;">
+                                                ${r.tipo?.toUpperCase()} Nº ${r.numero}${r.ano ? `/${r.ano}` : ''} ${r.ambito ? `(${r.ambito.toUpperCase()})` : ''}
+                                            </div>
+                                            <div style="font-size: 10px; color: #64748b; font-style: italic; line-height: 1.4;">
+                                                ${r.descricao_uso || r.ementa || ''}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    refsHtml += `</div>`;
+                    htmlBlocks += refsHtml;
+                }
                 
                 return htmlBlocks;
             })()}

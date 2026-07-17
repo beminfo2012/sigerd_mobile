@@ -17,6 +17,7 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
     const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [lastGeneratedId, setLastGeneratedId] = useState(null)
     const [confirmDeleteModal, setConfirmDeleteModal] = useState(false)
+    const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         // Only store local numeric ID for edits; UUIDs go into supabase_id
@@ -48,6 +49,7 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                 matricula: userProfile.registration || userProfile.matricula || '',
                 cargo: userProfile.cargo || ''
             }));
+    
         }
     }, [userProfile, initialData]);
 
@@ -532,6 +534,31 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                                 Sair sem abrir PDF
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+        
+            {isNortisIAOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                        <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
+                            <X size={20} className="text-slate-600" />
+                        </button>
+                        <NortisQuickSearch 
+                            onClose={() => setIsNortisIAOpen(false)} 
+                            onAcceptCitation={(citacao) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    observacoes: prev.observacoes ? prev.observacoes + "<br><br>" + citacao : citacao 
+                                }));
+                            }}
+                            onApplyReference={(newRef) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    referencias_normativas: [...(prev.referencias_normativas || []), newRef] 
+                                }));
+                            }}
+                        />
                     </div>
                 </div>
             )}

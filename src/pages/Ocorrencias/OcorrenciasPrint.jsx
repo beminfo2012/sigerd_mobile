@@ -584,9 +584,7 @@ const OcorrenciasPrint = () => {
                                     <span className="section-header-title">{numObs}. Observações Técnicas</span>
                                     <div className="section-header-line"></div>
                                 </div>
-                                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-xs leading-relaxed whitespace-pre-wrap text-justify">
-                                    {data.observacoes}
-                                </div>
+                                <div className="rich-text-print-content text-justify p-4 border border-slate-200 rounded-lg bg-slate-50" dangerouslySetInnerHTML={{ __html: data.observacoes }}></div>
                             </section>
                         )}
 

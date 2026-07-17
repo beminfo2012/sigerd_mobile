@@ -4,7 +4,7 @@ import { Search, X, ExternalLink, ArrowLeft, Filter } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { toast } from './ToastNotification';
 
-export default function NortisQuickSearch({ onClose }) {
+export default function NortisQuickSearch({ onClose, onApplyReference }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -203,13 +203,27 @@ export default function NortisQuickSearch({ onClose }) {
                       onClick={() => setSelectedDoc(doc)}
                       className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-indigo-300 cursor-pointer transition-all"
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
-                          {doc.tipo} {doc.ambito ? `· ${doc.ambito}` : ''}
-                        </span>
-                        <span className="text-xs font-bold text-slate-500">
-                          Nº {doc.numero}/{doc.ano}
-                        </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
+                            {doc.tipo} {doc.ambito ? `· ${doc.ambito}` : ''}
+                          </span>
+                          <span className="text-xs font-bold text-slate-500">
+                            Nº {doc.numero}/{doc.ano}
+                          </span>
+                        </div>
+                        {onApplyReference && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onApplyReference(doc);
+                              toast.success('Referência Adicionada', `${doc.tipo} Nº ${doc.numero} foi adicionada ao documento.`);
+                            }}
+                            className="flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-400 px-2 py-1 rounded transition-colors"
+                          >
+                            📑 Aplicar
+                          </button>
+                        )}
                       </div>
                       <p className="text-sm font-medium text-slate-800 dark:text-slate-200 line-clamp-3">
                         {doc.ementa}
@@ -240,15 +254,28 @@ export default function NortisQuickSearch({ onClose }) {
               >
                 <ArrowLeft size={16} /> Voltar à Busca
               </button>
-              {selectedDoc.url_fonte_oficial && (
-                <a 
-                  href={selectedDoc.url_fonte_oficial} 
-                  target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline"
-                >
-                  Fonte Oficial <ExternalLink size={12} />
-                </a>
-              )}
+              <div className="flex items-center gap-3">
+                {onApplyReference && (
+                  <button
+                    onClick={() => {
+                      onApplyReference(selectedDoc);
+                      toast.success('Referência Adicionada', `${selectedDoc.tipo} Nº ${selectedDoc.numero} foi adicionada ao documento.`);
+                    }}
+                    className="flex items-center gap-2 text-xs font-bold bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                  >
+                    📑 Aplicar como Referência
+                  </button>
+                )}
+                {selectedDoc.url_fonte_oficial && (
+                  <a 
+                    href={selectedDoc.url_fonte_oficial} 
+                    target="_blank" rel="noreferrer"
+                    className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:underline"
+                  >
+                    Fonte Oficial <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6">

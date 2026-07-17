@@ -22,6 +22,8 @@ import { refineReportText } from '../../services/ai'
 import ConfirmModal from '../../components/ConfirmModal'
 import DespachoModal from '../../components/DespachoModal'
 import RiskAreaModal from '../../components/RiskAreaModal'
+import RichTextEditor from '../../components/Editor/RichTextEditor'
+import DocumentReferencesManager from '../../components/DocumentReferencesManager'
 import bairrosDataRaw from '../../data/Bairros.json'
 import logradourosDataRaw from '../../data/nomesderuas.json'
 
@@ -371,6 +373,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             porte_arvore: '',
             frequencia_ocupacao_alvo: ''
         },
+        referencias_normativas: [],
         temApoioTecnico: false
     })
 
@@ -505,6 +508,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 },
                 checklistRespostas: migratedChecklist,
                 avaliacaoArborea: parsedAvaliacao,
+                referencias_normativas: Array.isArray(initialData.referencias_normativas) ? initialData.referencias_normativas : [],
                 temApoioTecnico: !!(apoio?.nome || apoio?.assinatura),
                 fotos: (parseJSON(initialData.fotos, [])).map((f, i) =>
                     typeof f === 'string'
@@ -2025,13 +2029,13 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         </button>
                                     </div>
                                 </div>
-                                <textarea
-                                    rows="5"
-                                    className={`${inputClasses} py-3 text-sm leading-relaxed`}
-                                    placeholder="Descreva as condições técnicas, indícios de instabilidade e diagnóstico final..."
-                                    value={formData.observacoes}
-                                    onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
-                                />
+                                <div className="mt-2 bg-white dark:bg-slate-900 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                                    <RichTextEditor
+                                        value={formData.observacoes}
+                                        onChange={val => setFormData(prev => ({ ...prev, observacoes: val }))}
+                                        placeholder="Descreva as condições técnicas, indícios de instabilidade e diagnóstico final..."
+                                    />
+                                </div>
                             </div>
 
                             {/* Checklist Medidas */}
@@ -2127,6 +2131,24 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 )}
                             </div>
                         </div>
+                    </Card>
+
+                    {/* SEÇÃO: Referências NORTIS */}
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="flex justify-between items-center bg-indigo-900 text-white p-3 font-bold uppercase text-xs tracking-widest -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
+                            <span className="flex items-center gap-2"><BookOpen size={16} /> Referências Técnicas e Jurídicas</span>
+                            <button
+                                type="button"
+                                onClick={() => setShowNortisModal(true)}
+                                className="flex items-center gap-2 bg-indigo-700 hover:bg-indigo-600 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                                <Search size={14} /> NORTIS
+                            </button>
+                        </div>
+                        <DocumentReferencesManager 
+                            referencias={formData.referencias_normativas || []}
+                            onChange={(refs) => setFormData(prev => ({ ...prev, referencias_normativas: refs }))}
+                        />
                     </Card>
 
                     {/* 6. SEÇÃO: Assinaturas */}
@@ -2694,7 +2716,26 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             />
 
             {showNortisModal && (
-                <NortisQuickSearch onClose={() => setShowNortisModal(false)} />
+                <NortisQuickSearch 
+                    onClose={() => setShowNortisModal(false)}
+                    onApplyReference={(doc) => {
+                        const newRef = {
+                            id: doc.id + '-' + Date.now(),
+                            tipo: doc.tipo,
+                            numero: doc.numero,
+                            ano: doc.ano,
+                            ambito: doc.ambito,
+                            ementa: doc.ementa,
+                            url_fonte_oficial: doc.url_fonte_oficial,
+                            categoria: '',
+                            descricao_uso: ''
+                        };
+                        setFormData(prev => ({ 
+                            ...prev, 
+                            referencias_normativas: [...(prev.referencias_normativas || []), newRef] 
+                        }));
+                    }}
+                />
             )}
 
             {/* Sidebar NORTIS Validação de Citações */}

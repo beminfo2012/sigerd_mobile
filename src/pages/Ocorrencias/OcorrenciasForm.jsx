@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import NortisQuickSearch from '../../components/NortisQuickSearch';
+import RichTextEditor from '../../components/Editor/RichTextEditor';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft, Save, MapPin, Share2, Camera, ShieldAlert,
@@ -172,6 +174,8 @@ export default function OcorrenciasForm() {
     const [unrecognizedFields, setUnrecognizedFields] = useState({});
     const fileInputPdfRef = useRef(null);
     const [formData, setFormData] = useState(INITIAL_OCORRENCIA_STATE);
+    const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
+    
     const [expandedCategory, setExpandedCategory] = useState(null);
 
     // Photo and Signature states
@@ -751,13 +755,15 @@ export default function OcorrenciasForm() {
                         </div>
                     </div>
 
-                    <textarea
-                        name="descricao"
-                        placeholder="Descrição detalhada..."
+                    <div className="flex items-center justify-between mt-4 mb-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block">Descrição / Observações</label>
+                        <button type="button" onClick={() => setIsNortisIAOpen(true)} className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors">
+                            ✨ REFERÊNCIAS
+                        </button>
+                    </div>
+                    <RichTextEditor
                         value={formData.descricao || ''}
-                        onChange={handleInputChange}
-                        rows={4}
-                        className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold outline-none resize-none text-sm"
+                        onChange={val => setFormData(prev => ({ ...prev, descricao: val }))}
                     />
                 </div>
 
@@ -813,14 +819,16 @@ export default function OcorrenciasForm() {
                             {/* Medidas Adotadas Placeholder */}
                             <div>
                                 <h3 className="text-xs font-black text-red-800 uppercase tracking-widest mb-2">Medidas Adotadas</h3>
-                                <textarea
-                                    name="observacoes"
-                                    placeholder="Descreva as medidas adotadas (isolamento, evacuação, etc)..."
-                                    value={formData.observacoes || ''}
-                                    onChange={handleInputChange}
-                                    rows={3}
-                                    className="w-full bg-white p-3 rounded-xl border border-red-200 font-bold outline-none text-sm resize-none"
-                                />
+                                <div className="flex items-center justify-between mt-4 mb-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block">Observações</label>
+                        <button type="button" onClick={() => setIsNortisIAOpen(true)} className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors">
+                            ✨ REFERÊNCIAS
+                        </button>
+                    </div>
+                    <RichTextEditor
+                        value={formData.observacoes || ''}
+                        onChange={val => setFormData(prev => ({ ...prev, observacoes: val }))}
+                    />
                             </div>
                         </div>
                     )}
@@ -1054,6 +1062,31 @@ export default function OcorrenciasForm() {
                     }}
                     onCancel={() => setEditingPhotoIndex(null)}
                 />
+            )}
+        
+            {isNortisIAOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                        <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
+                            <X size={20} className="text-slate-600" />
+                        </button>
+                        <NortisQuickSearch 
+                            onClose={() => setIsNortisIAOpen(false)} 
+                            onAcceptCitation={(citacao) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    descricao: prev.descricao ? prev.descricao + "<br><br>" + citacao : citacao 
+                                }));
+                            }}
+                            onApplyReference={(newRef) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    referencias_normativas: [...(prev.referencias_normativas || []), newRef] 
+                                }));
+                            }}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );

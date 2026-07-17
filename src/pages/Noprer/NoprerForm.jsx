@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import RichTextEditor from '../../components/Editor/RichTextEditor';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { UserContext } from '../../App';
 import { supabase } from '../../services/supabase';
@@ -7,10 +8,10 @@ import { usePrazo } from './hooks/usePrazo';
 import { RISK_TYPES } from './data/riskTypes';
 import { GRAUS } from './data/graus';
 import SignaturePad from '../../components/SignaturePad';
-import { 
+import {  
     ChevronRight, ChevronLeft, MapPin, Search, 
     Camera, AlertTriangle, Info, Save, CheckCircle, X, Plus, Check, ShieldAlert, BookOpen
-} from 'lucide-react';
+, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import NortisQuickSearch from '../../components/NortisQuickSearch';
 import NortisIAValidation from '../../components/NortisIAValidation';
@@ -151,6 +152,7 @@ const NoprerForm = () => {
         test2_cpf: '',
         sign_test2: null,
     });
+    
 
     // Calcula datas do prazo dinamicamente
     const datas = calcularDatasFormulario(formData.prazo_dias);
@@ -254,7 +256,7 @@ const NoprerForm = () => {
             endereco: v.endereco || prev.endereco,
             nome_notificado: v.solicitante || prev.nome_notificado,
             grau_risco: mappedGrau,
-            tipo_risco: mappedCategoria === (p => p.tipo_risco) ? prev.tipo_risco : mappedCategoria,
+            tipo_risco: mappedCategoria === prev.tipo_risco ? prev.tipo_risco : mappedCategoria,
             sub_tipo: firstSubtipo || prev.sub_tipo,
             descricao_risco: v.informacoes_complementares || prev.descricao_risco,
             coordenadas: mappedCoordenadas || prev.coordenadas
@@ -1037,7 +1039,7 @@ const NoprerForm = () => {
             {/* Sidebar NORTIS Validação de Citações */}
             {isNortisIAOpen && (
                 <div className="fixed inset-0 z-[99999] flex justify-end bg-slate-900/20 backdrop-blur-sm transition-opacity">
-                    <NortisIAValidation 
+                    <NortisQuickSearchValidation 
                         sugestoesGeradas={sugestoesIA}
                         user={userProfile} 
                         isAnalyzing={analyzingIA}
