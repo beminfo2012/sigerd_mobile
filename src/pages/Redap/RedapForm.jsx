@@ -728,7 +728,7 @@ const RedapForm = () => {
                 </div>
             </header>
 
-            <div className="max-w-5xl mx-auto px-4 py-4 space-y-4">
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
                 {/* 2. TIPIGICAÇÃO & 3. DATA */}
                 <div className="bg-white border border-slate-200 shadow-sm overflow-hidden mb-6">
                     <SectionHeader
@@ -1921,7 +1921,7 @@ const RedapForm = () => {
                     
             {isNortisIAOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                    <div className="bg-white rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
                         <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
                             <X size={20} className="text-slate-600" />
                         </button>

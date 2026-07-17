@@ -1048,7 +1048,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32 font-sans animate-in fade-in duration-500">
             {/* Header */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 sm:px-6 py-4 shadow-sm sticky top-0 z-30 border-b border-slate-100 dark:border-slate-700">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={onBack}
@@ -1075,7 +1075,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 </div>
             </div>
 
-            <div className="max-w-5xl mx-auto px-4 pt-6 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 pt-6 space-y-6">
                 {detectedRiskArea && (
                     <Card className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 p-5 rounded-3xl flex items-start gap-4 animate-in slide-in-from-top-4 duration-300">
                         <div className="bg-red-100 dark:bg-red-900/50 p-3 rounded-2xl shadow-sm">
@@ -2519,7 +2519,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             {
                 comparisonContent && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setComparisonContent(null)}>
-                        <div className="bg-white rounded-2xl w-full max-w-5xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="bg-white rounded-2xl w-full max-w-7xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                             <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-4 flex justify-between items-center text-white">
                                 <h3 className="font-bold flex items-center gap-2 text-lg">
                                     <Sparkles size={20} className="text-yellow-300" />
@@ -2664,7 +2664,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     )}
 
                     {/* Imagem Central */}
-                    <div className="relative w-full max-w-5xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                    <div className="relative w-full max-w-7xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
                         <img
                             src={formData.fotos[selectedPhotoIndex]?.data || formData.fotos[selectedPhotoIndex]}
                             className="w-full h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"

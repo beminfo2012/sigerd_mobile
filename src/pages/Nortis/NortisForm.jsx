@@ -416,7 +416,7 @@ export default function NortisForm() {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4">
-        <form className="max-w-4xl mx-auto space-y-6" onSubmit={handleSubmit}>
+        <form className="max-w-7xl mx-auto space-y-6" onSubmit={handleSubmit}>
           
           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
             <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-2 mb-4">

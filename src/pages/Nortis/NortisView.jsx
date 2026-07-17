@@ -143,7 +143,7 @@ export default function NortisView() {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        <article className="max-w-4xl mx-auto bg-white dark:bg-slate-800 p-8 md:p-12 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+        <article className="max-w-7xl mx-auto bg-white dark:bg-slate-800 p-8 md:p-12 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
           
           <div className="mb-8 text-center">
             <span className="inline-block bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4">

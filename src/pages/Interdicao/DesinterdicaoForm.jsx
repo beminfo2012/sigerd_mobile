@@ -162,7 +162,7 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
         <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 pb-24">
             {/* Header */}
             <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 py-4">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <button onClick={onBack} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
                         <ArrowLeft size={24} />
                     </button>
@@ -174,7 +174,7 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
                 </div>
             </header>
 
-            <form onSubmit={handleSubmit} className="max-w-5xl mx-auto p-4 space-y-6 mt-4">
+            <form onSubmit={handleSubmit} className="max-w-7xl mx-auto p-4 space-y-6 mt-4">
                 {/* 1. SEÇÃO: Identificação */}
                 <section className={sectionClasses}>
                     <h3 className="bg-[#1e3a5f] text-white p-3 font-bold uppercase text-xs tracking-widest flex items-center gap-2 -mx-5 -mt-5 mb-5">1. Identificação</h3>
@@ -540,7 +540,7 @@ const DesinterdicaoForm = ({ interdicao, initialData, onBack }) => {
         
             {isNortisIAOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                    <div className="bg-white rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
                         <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
                             <X size={20} className="text-slate-600" />
                         </button>

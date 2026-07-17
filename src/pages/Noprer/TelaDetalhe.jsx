@@ -119,7 +119,7 @@ const TelaDetalhe = () => {
         <div className="bg-[#F1F5F9] dark:bg-slate-900 min-h-screen font-[Inter,sans-serif] pb-24 relative">
             {/* Header */}
             <div className="bg-white dark:bg-slate-800 border-b border-[#E2E8F0] dark:border-slate-700 px-4 py-4 md:px-6 sticky top-0 z-10 shadow-sm">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
                         <button onClick={() => navigate('/noprer')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:bg-slate-800 transition-colors mt-1">
                             <ArrowLeft size={24} className="text-[#64748B] dark:text-slate-400" />
@@ -186,7 +186,7 @@ const TelaDetalhe = () => {
                 </div>
             )}
 
-            <div className="max-w-6xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* COLUNA ESQUERDA - DADOS DA NOPRER */}
                 <div className="md:col-span-2 space-y-6">

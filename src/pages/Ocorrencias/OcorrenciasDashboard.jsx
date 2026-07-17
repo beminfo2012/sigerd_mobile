@@ -176,7 +176,7 @@ const OcorrenciasDashboard = () => {
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32 font-sans animate-in fade-in duration-500">
             {/* Header */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20 border-b border-slate-100 dark:border-slate-700 shadow-sm">
-                <div className="max-w-6xl mx-auto flex items-center justify-between">
+                <div className="w-full mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/')}
@@ -207,9 +207,9 @@ const OcorrenciasDashboard = () => {
                 </div>
             </div>
 
-            <main className="max-w-6xl mx-auto p-5 sm:p-8 space-y-8">
+            <main className="w-full mx-auto p-5 sm:p-8 space-y-8">
                 {/* Search and Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 w-full mx-auto">
                     <div className="relative group md:col-span-8 lg:col-span-9">
                         <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                         <input
@@ -242,7 +242,7 @@ const OcorrenciasDashboard = () => {
                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 px-10">Tudo limpo por aqui. Nenhuma ocorrência nestes critérios.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {filtered.map((record) => (
                                 <Card
                                     key={record.id}

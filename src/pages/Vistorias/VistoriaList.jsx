@@ -246,7 +246,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
         <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans animate-in fade-in duration-500">
             {/* Header */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20 border-b border-slate-100 dark:border-slate-700 shadow-sm">
-                <div className="max-w-6xl mx-auto">
+                <div className="w-full mx-auto">
                     <div className="flex justify-between items-center mb-6">
                         <div className="flex items-center gap-4">
                             <button
@@ -373,7 +373,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
             </div>
 
             {/* List */}
-            <div className="max-w-6xl mx-auto p-4 sm:p-6">
+            <div className="w-full mx-auto p-4 sm:p-6">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
                         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -391,7 +391,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                         </Button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredVistorias.map(vistoria => (
                             <Card
                                 key={vistoria.id}

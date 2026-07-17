@@ -150,7 +150,7 @@ const RedapDashboard = () => {
                 </div>
             </header>
 
-            <main className="p-4 max-w-5xl mx-auto space-y-4">
+            <main className="p-4 w-full mx-auto space-y-4">
                 {/* Search */}
                 <div className="relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 group-focus-within:text-blue-500 transition-colors" size={18} />

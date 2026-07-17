@@ -427,7 +427,7 @@ const NoprerForm = () => {
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="flex items-center px-6 pb-4 max-w-5xl mx-auto w-full">
+                <div className="flex items-center px-6 pb-4 max-w-7xl mx-auto w-full">
                     {STEPS.map((s, idx) => (
                         <React.Fragment key={s.id}>
                             <div className="flex flex-col items-center gap-1 z-10 relative">
@@ -455,7 +455,7 @@ const NoprerForm = () => {
                 </div>
             )}
 
-            <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6 mt-4">
+            <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 mt-4">
                 
                 {/* ETAPA 1 */}
                 {step === 1 && (
@@ -912,7 +912,7 @@ const NoprerForm = () => {
                 
                 {/* FOOTER NAVIGATION */}
                 <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-30">
-                    <div className="max-w-5xl mx-auto flex justify-between items-center gap-4">
+                    <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
                         <button 
                             onClick={() => step === 1 ? navigate(-1) : setStep(s => Math.max(1, s - 1))}
                             disabled={salvando}

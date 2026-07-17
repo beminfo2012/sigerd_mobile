@@ -343,7 +343,7 @@ const RedapSectorForm = () => {
                 )}
             </header>
 
-            <main className="p-4 max-w-5xl mx-auto space-y-6">
+            <main className="p-4 max-w-7xl mx-auto space-y-6">
                 {/* Cabeçalho do Bloco */}
                 <div className="bg-blue-600 dark:bg-blue-700 border border-slate-200 p-6 text-white shadow-xl flex items-center justify-between transition-all">
                     <div>

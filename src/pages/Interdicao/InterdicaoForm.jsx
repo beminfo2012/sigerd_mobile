@@ -528,7 +528,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
             </div>
 
             {detectedRiskArea && (
-                <div className="bg-red-50 max-w-5xl mx-auto mt-5 mb-0 px-5 p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+                <div className="bg-red-50 max-w-7xl mx-auto mt-5 mb-0 px-5 p-4 rounded-xl border-l-4 border-red-500 shadow-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
                     <div className="bg-red-100 p-2 rounded-full">
                         <Siren className="text-red-600 animate-pulse" size={24} />
                     </div>
@@ -540,7 +540,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-5xl mx-auto">
+            <form onSubmit={handleSubmit} className="p-5 space-y-6 max-w-7xl mx-auto">
 
                 {/* 1. SEÇÃO: Identificação */}
                 <section className={sectionClasses}>
@@ -1414,7 +1414,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
         
             {isNortisIAOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                    <div className="bg-white rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
                         <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
                             <X size={20} className="text-slate-600" />
                         </button>

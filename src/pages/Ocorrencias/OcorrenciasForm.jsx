@@ -466,7 +466,7 @@ export default function OcorrenciasForm() {
                 </div>
             </div>
 
-            <div className="p-4 space-y-4 max-w-5xl mx-auto">
+            <div className="p-4 space-y-4 max-w-7xl mx-auto">
                 {formData.origem === 'importacao_pdf' && (
                     <div className="bg-purple-50 border border-purple-200 text-purple-800 p-4 rounded-xl flex gap-3 text-sm font-medium">
                         <AlertCircle size={20} className="text-purple-600 flex-shrink-0" />
@@ -941,7 +941,7 @@ export default function OcorrenciasForm() {
 
                 {/* BOTTOM ACTIONS */}
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-                    <div className="max-w-5xl mx-auto flex flex-col gap-2">
+                    <div className="max-w-7xl mx-auto flex flex-col gap-2">
                         {(!isValid() && !saving) && (
                             <div className="text-[10px] text-center font-bold text-red-500 uppercase">
                                 Preencha os campos obrigatórios (Solicitante, Tipo, Gravidade, Órgãos)
@@ -1030,7 +1030,7 @@ export default function OcorrenciasForm() {
                         </>
                     )}
 
-                    <div className="relative w-full max-w-5xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
+                    <div className="relative w-full max-w-7xl max-h-[70vh] flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
                         <img
                             src={formData.fotos[selectedPhotoIndex]?.data || formData.fotos[selectedPhotoIndex]}
                             className="w-full h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in duration-300"
@@ -1066,7 +1066,7 @@ export default function OcorrenciasForm() {
         
             {isNortisIAOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+                    <div className="bg-white rounded-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
                         <button onClick={() => setIsNortisIAOpen(false)} className="absolute right-4 top-4 p-2 bg-slate-100 hover:bg-slate-200 rounded-full z-10 transition-colors">
                             <X size={20} className="text-slate-600" />
                         </button>

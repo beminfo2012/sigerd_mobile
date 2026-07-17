@@ -217,7 +217,7 @@ const VoluntarioForm = () => {
                 </button>
             </header>
 
-            <main className="p-4 max-w-5xl mx-auto space-y-6 mt-4">
+            <main className="p-4 max-w-7xl mx-auto space-y-6 mt-4">
                 {/* Dados Pessoais */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
                     <h2 className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2 mb-4">
