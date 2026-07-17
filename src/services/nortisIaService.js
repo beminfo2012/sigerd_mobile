@@ -5,6 +5,42 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const apiKeys = (import.meta.env.VITE_GOOGLE_API_KEY || '').split(',').map(k => k.trim()).filter(k => k);
 let currentKeyIndex = 0;
 
+// Circuit Breaker State
+let consecutiveFailures = 0;
+let circuitOpenUntil = null;
+const CIRCUIT_OPEN_DURATION_MS = 2 * 60 * 1000; // 2 minutos
+const MAX_FAILURES = 5;
+const LLM_TIMEOUT_MS = 3000; // 3 segundos
+
+function isEconomiaIAAtiva() {
+  return localStorage.getItem('NORTIS_ECONOMIA_IA') === 'true' || import.meta.env.VITE_NORTIS_ECONOMIA_IA === 'true';
+}
+
+function getFallbackResponse(documentos, motivo) {
+  return {
+    modo: "busca_direta",
+    motivo_fallback: motivo,
+    casos_similares: [],
+    normas_tecnicas_aplicaveis: [],
+    legislacao_aplicavel: documentos.map(d => ({
+        origem_id: d.id,
+        referencia: `${d.tipo || 'Documento'} Nº ${d.numero || 'S/N'}/${d.ano || ''}`,
+        situacao: d.situacao || 'vigente',
+        trecho_destacado: d.ementa || 'Sem ementa disponível',
+        justificativa: "Recuperado por busca direta (Assistente de IA indisponível).",
+        confianca: "media",
+        link_interno: `/nortis/visualizar/${d.id}`,
+        meta_tipo: d.tipo,
+        meta_numero: d.numero,
+        meta_ano: d.ano,
+        meta_orgao: d.orgao_emissor,
+        meta_ementa: d.ementa
+    })),
+    observacao: "Modo de busca direta ativado. Os resultados refletem a correspondência local sem síntese de IA.",
+    aviso: "Busca direta — assistente de IA indisponível no momento."
+  };
+}
+
 function getGenAI() {
   if (apiKeys.length === 0) throw new Error("Chave de API do Google não configurada.");
   return new GoogleGenerativeAI(apiKeys[currentKeyIndex]);
@@ -41,9 +77,7 @@ export const nortisIaService = {
     if (lowerUrl.match(/\.(edu\.br|org\.br)|scielo/)) return 'NIVEL_B';
     return 'NIVEL_C';
   },
-  /**
-   * Obtém o embedding para um texto usando o modelo text-embedding-004 do Gemini
-   */
+  
   async getEmbedding(text) {
     return executeWithKeyRotation(async (genAI) => {
       try {
@@ -88,23 +122,76 @@ export const nortisIaService = {
     return data || [];
   },
 
-  /**
-   * Chama o Gemini 2.5 Flash para atuar como Assistente NORTIS
-   * Agora suporta Pesquisa em Fontes Externas (Grounding)
-   */
+  async registrarTrilhaSugestoes(respostaGerada, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa) {
+    if (!tenantId || !userId) return;
+    
+    const dbPayload = {
+      tenant_id: tenantId,
+      usuario_id: userId,
+      contexto_modulo: contextoModulo,
+      relato_entrada: relato,
+      documentos_recuperados: documentos.map(d => d.id),
+      resposta_gerada: respostaGerada, // jsonb will hold modo and motivo_fallback
+      modelo_llm: "gemini-2.5-flash",
+      tipo_pesquisa: tipoPesquisa
+    };
+    
+    const { data: sugestao } = await supabase.from('nortis_ia_sugestoes').insert([dbPayload]).select('id').single();
+
+    respostaGerada._sugestao_id = sugestao?.id;
+
+    // Se houver normas externas de NIVEL_A ou NIVEL_B, envia para curadoria
+    if (respostaGerada.legislacao_aplicavel && respostaGerada.modo !== "busca_direta") {
+        for (let item of respostaGerada.legislacao_aplicavel) {
+            if (item.link_externo && (item.nivel_fonte === 'NIVEL_A' || item.nivel_fonte === 'NIVEL_B')) {
+                await supabase.from('nortis_sugestoes_curadoria').insert([{
+                    tenant_id: tenantId,
+                    usuario_id: userId,
+                    tipo_sugestao: 'LEGISLACAO_WEB',
+                    titulo: item.referencia,
+                    url_origem: item.link_externo,
+                    justificativa: item.justificativa,
+                    nivel_confiabilidade: item.nivel_fonte
+                }]);
+            }
+        }
+    }
+  },
+
   async analisarRelato(relato, contextoModulo, registroOrigemId = null, tenantId = null, userId = null, tipoPesquisa = 'interno') {
     try {
       // 1. Busca contexto interno SEMPRE, para saber o que já temos
       const documentos = await this.buscarContexto(relato);
 
+      // Verificação do modo economia de IA
+      if (isEconomiaIAAtiva()) {
+         const fallback = getFallbackResponse(documentos, 'modo_economia_ativo');
+         await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
+         return fallback;
+      }
+
+      // Verificação do Circuit Breaker
+      if (circuitOpenUntil && Date.now() < circuitOpenUntil) {
+         const fallback = getFallbackResponse(documentos, 'circuito_aberto');
+         await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
+         return fallback;
+      } else if (circuitOpenUntil) {
+         // Circuito fechou (tempo expirou), resetamos
+         circuitOpenUntil = null;
+         consecutiveFailures = 0;
+      }
+
       if (documentos.length === 0 && tipoPesquisa === 'interno') {
-        return { 
+        const fallbackVazio = { 
+          modo: "busca_direta",
           casos_similares: [], 
           normas_tecnicas_aplicaveis: [], 
           legislacao_aplicavel: [], 
           observacao: "Nenhum documento encontrado no acervo interno do NORTIS que corresponda aos temas descritos. Tente expandir para 'Fontes Externas'.",
           aviso: "Pesquisa restrita ao acervo local."
         };
+        await this.registrarTrilhaSugestoes(fallbackVazio, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
+        return fallbackVazio;
       }
 
       // 2. Prepara o contexto injetado para o LLM
@@ -173,29 +260,53 @@ ${contextText}
 RELATO DO USUÁRIO (${contextoModulo}):
 "${relato}"`;
 
-      // 4. Chamada ao Gemini
+      // 4. Chamada ao Gemini com Timeout (Circuit Breaker)
       const modelConfig = { 
         model: "gemini-2.5-flash",
         generationConfig: {
-          temperature: 0.2, // um pouco maior para grounding
+          temperature: 0.2,
         }
       };
 
       if (tipoPesquisa === 'interno') {
           modelConfig.generationConfig.responseMimeType = "application/json";
       } else {
-          // Quando ativamos o Grounding, alguns SDKs/Modelos não suportam force JSON MimeType, 
-          // então tiramos e extraímos o JSON manualmente do texto markdown.
           modelConfig.tools = [{ googleSearch: {} }];
       }
 
-      const result = await executeWithKeyRotation(async (genAI) => {
-          const model = genAI.getGenerativeModel(modelConfig);
-          return await model.generateContent([
-            { text: systemPrompt },
-            { text: userPrompt }
-          ]);
-      });
+      let result;
+      try {
+        const timeoutPromise = new Promise((_, reject) => {
+           setTimeout(() => reject(new Error('TIMEOUT_LLM')), LLM_TIMEOUT_MS);
+        });
+
+        result = await Promise.race([
+          executeWithKeyRotation(async (genAI) => {
+              const model = genAI.getGenerativeModel(modelConfig);
+              return await model.generateContent([
+                { text: systemPrompt },
+                { text: userPrompt }
+              ]);
+          }),
+          timeoutPromise
+        ]);
+        
+        // Sucesso, zera falhas
+        consecutiveFailures = 0;
+      } catch (err) {
+        // Tratar falha da Camada 2 (timeout ou erro)
+        consecutiveFailures++;
+        if (consecutiveFailures >= MAX_FAILURES) {
+           circuitOpenUntil = Date.now() + CIRCUIT_OPEN_DURATION_MS;
+        }
+        
+        const motivo = err.message === 'TIMEOUT_LLM' ? 'timeout' : 'erro_provedor';
+        console.warn(`[NORTIS] Fallback ativado (${motivo}). Falhas consecutivas: ${consecutiveFailures}`);
+        
+        const fallback = getFallbackResponse(documentos, motivo);
+        await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
+        return fallback;
+      }
 
       let responseText = result.response.text();
       
@@ -209,9 +320,17 @@ RELATO DO USUÁRIO (${contextoModulo}):
       let respostaGerada = {};
       try {
         respostaGerada = JSON.parse(responseText);
+        respostaGerada.modo = "completo";
       } catch(e) {
-        console.error("Falha ao fazer parse do JSON:", responseText);
-        throw new Error("A IA não retornou um formato JSON válido.");
+        // Erro de parse = fallback
+        consecutiveFailures++;
+        if (consecutiveFailures >= MAX_FAILURES) {
+           circuitOpenUntil = Date.now() + CIRCUIT_OPEN_DURATION_MS;
+        }
+        console.warn(`[NORTIS] Fallback ativado (parse error). Falhas consecutivas: ${consecutiveFailures}`);
+        const fallback = getFallbackResponse(documentos, 'erro_provedor');
+        await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
+        return fallback;
       }
 
       // Analisar metadados do Grounding (Links visitados)
@@ -220,14 +339,11 @@ RELATO DO USUÁRIO (${contextoModulo}):
           const linksWeb = grounding.groundingChunks.filter(c => c.web).map(c => c.web.uri);
           
           if (linksWeb.length > 0 && respostaGerada.legislacao_aplicavel) {
-              // Aplica URLs às sugestões vazias e avalia nível de confiança
               respostaGerada.legislacao_aplicavel.forEach(item => {
                   if (!item.link_interno && !item.link_externo) {
-                      // Associar a primeira URL confiável encontrada, se não tiver link
                       const melhorLink = linksWeb.find(l => this.classificarFonte(l) === 'NIVEL_A') || linksWeb[0];
                       item.link_externo = melhorLink;
                   }
-                  
                   if (item.link_externo) {
                       item.nivel_fonte = this.classificarFonte(item.link_externo);
                   } else {
@@ -240,50 +356,17 @@ RELATO DO USUÁRIO (${contextoModulo}):
       }
 
       // 5. Salva na trilha de auditoria (nortis_ia_sugestoes)
-      if (tenantId && userId) {
-        const { data: sugestao } = await supabase.from('nortis_ia_sugestoes').insert([{
-            tenant_id: tenantId,
-            usuario_id: userId,
-            contexto_modulo: contextoModulo,
-            relato_entrada: relato,
-            documentos_recuperados: documentos.map(d => d.id),
-            resposta_gerada: respostaGerada,
-            modelo_llm: "gemini-2.5-flash",
-            tipo_pesquisa: tipoPesquisa
-        }]).select('id').single();
-
-        respostaGerada._sugestao_id = sugestao?.id;
-
-        // Se houver normas externas de NIVEL_A ou NIVEL_B, envia para curadoria
-        if (respostaGerada.legislacao_aplicavel) {
-            for (let item of respostaGerada.legislacao_aplicavel) {
-                if (item.link_externo && (item.nivel_fonte === 'NIVEL_A' || item.nivel_fonte === 'NIVEL_B')) {
-                    // Inserir sugestão de curadoria
-                    await supabase.from('nortis_sugestoes_curadoria').insert([{
-                        tenant_id: tenantId,
-                        usuario_id: userId,
-                        tipo_sugestao: 'LEGISLACAO_WEB',
-                        titulo: item.referencia,
-                        url_origem: item.link_externo,
-                        justificativa: item.justificativa,
-                        nivel_confiabilidade: item.nivel_fonte
-                    }]);
-                }
-            }
-        }
-      }
+      await this.registrarTrilhaSugestoes(respostaGerada, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
 
       return respostaGerada;
 
     } catch (error) {
+      // Falhas não esperadas na orquestração inteira (ex: falha do supabase no buscarContexto)
       console.error('Erro na análise NORTIS IA:', error);
       throw error;
     }
   },
 
-  /**
-   * Feedback de auditoria e melhoria contínua
-   */
   async registrarRevisao(sugestaoId, status, userId, motivo = null) {
     const { error } = await supabase
       .from('nortis_ia_sugestoes')
@@ -299,15 +382,11 @@ RELATO DO USUÁRIO (${contextoModulo}):
     return true;
   },
 
-  /**
-   * Salva a normativa e o trecho destacado diretamente no Acervo NORTIS
-   */
   async salvarNormativaDireta(item, tenantId, userId) {
     if (!item.meta_numero || !item.meta_ementa) {
         throw new Error('A IA não conseguiu extrair os metadados necessários para salvamento automático.');
     }
 
-    // 1. Cadastra a Norma base
     const { data: norma, error: errNorma } = await supabase
       .from('nortis_normas')
       .insert({
@@ -315,7 +394,7 @@ RELATO DO USUÁRIO (${contextoModulo}):
         tipo: item.meta_tipo?.substring(0, 30) || 'outros',
         numero: item.meta_numero?.substring(0, 50) || 'S/N',
         ano: item.meta_ano || new Date().getFullYear(),
-        ambito: 'federal', // Assumido para pesquisa WEB Google (Grounding)
+        ambito: 'federal',
         orgao_emissor: item.meta_orgao?.substring(0, 150) || 'Fonte Externa',
         ementa: item.meta_ementa,
         url_fonte_oficial: item.link_externo,
@@ -327,7 +406,6 @@ RELATO DO USUÁRIO (${contextoModulo}):
 
     if (errNorma) throw errNorma;
 
-    // 2. Cadastra o dispositivo lido
     const { error: errDisp } = await supabase
       .from('nortis_dispositivos')
       .insert({
