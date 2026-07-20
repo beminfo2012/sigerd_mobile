@@ -55,33 +55,18 @@ export const compressImage = (base64Str, options = {}) => {
 
     return new Promise(async (resolve, reject) => {
         try {
-            // Tenta obter a orientação original via EXIF
-            let orientation = 1;
-            try {
-                const exif = await exifr.parse(base64Str, ['Orientation']).catch(() => null);
-                if (exif && exif.Orientation) {
-                    orientation = exif.Orientation;
-                }
-            } catch (e) {
-                console.warn('Erro ao ler orientação:', e);
-            }
-
             // Converter base64 para blob
             const res = await fetch(base64Str);
             const blob = await res.blob();
 
-            // Usar createImageBitmap com imageOrientation: 'none' para evitar auto-rotação duplicada do navegador
-            const img = await createImageBitmap(blob, { imageOrientation: 'none' });
+            // Deixar o navegador rotacionar automaticamente baseado no EXIF (padrão dos browsers modernos)
+            const img = await createImageBitmap(blob);
 
             const canvas = document.createElement('canvas');
 
-            // Determinar dimensões reais baseadas na orientação
+            // Dimensões já rotacionadas corretamente pelo navegador
             let width = img.width;
             let height = img.height;
-            if (orientation >= 5 && orientation <= 8) {
-                width = img.height;
-                height = img.width;
-            }
 
             // Calcular escala mantendo a proporção
             let scale = 1;
@@ -98,28 +83,9 @@ export const compressImage = (base64Str, options = {}) => {
             canvas.height = targetHeight;
 
             const ctx = canvas.getContext('2d');
-            ctx.save();
-
-            // Rotacionar o contexto do canvas com base na orientação EXIF
-            switch (orientation) {
-                case 2: ctx.transform(-1, 0, 0, 1, targetWidth, 0); break;
-                case 3: ctx.transform(-1, 0, 0, -1, targetWidth, targetHeight); break;
-                case 4: ctx.transform(1, 0, 0, -1, 0, targetHeight); break;
-                case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
-                case 6: ctx.transform(0, 1, -1, 0, targetWidth, 0); break;
-                case 7: ctx.transform(0, -1, -1, 0, targetWidth, targetHeight); break;
-                case 8: ctx.transform(0, -1, 1, 0, 0, targetHeight); break;
-                default: break; // Orientação 1 (Normal)
-            }
-
-            // Desenhar a imagem (dimensões invertidas se rotacionado 90/270 graus)
-            if (orientation >= 5 && orientation <= 8) {
-                ctx.drawImage(img, 0, 0, targetHeight, targetWidth);
-            } else {
-                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-            }
             
-            ctx.restore();
+            // O navegador já fez o auto-rotate, então basta desenhar normalmente
+            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
             // Adicionar Geostamp no rodapé (já com a imagem na orientação correta)
             if (coordinates || timestamp) {
