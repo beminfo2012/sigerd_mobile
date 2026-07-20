@@ -56,7 +56,6 @@ export const compressImage = (base64Str, options = {}) => {
     return new Promise((resolve, reject) => {
         try {
             const img = new Image();
-            img.crossOrigin = 'Anonymous';
             
             img.onload = () => {
                 const canvas = document.createElement('canvas');
