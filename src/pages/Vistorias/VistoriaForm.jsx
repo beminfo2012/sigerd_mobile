@@ -517,8 +517,47 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
                         : { ...f, id: f.id || `photo-${i}`, legenda: f.legenda || '' }
-                )
+                ),
+                aberturas: Array.isArray(initialData.aberturas) ? initialData.aberturas : []
             })
+            
+            // [NEW] Fetch aberturas from Supabase if online to sync cache with DB
+            if (navigator.onLine && (initialData.supabase_id || initialData.id)) {
+                const uuidToFetch = initialData.supabase_id || initialData.id;
+                if (String(uuidToFetch).length > 20) {
+                    supabase.from('abertura_patologica')
+                        .select('id, codigo_ponto, localizacao_descricao, categoria, status, criado_por, data_abertura, abertura_registro_fotografico(id, foto_url, hash_sha256, data_hora, fonte_data_hora, latitude, longitude, largura_mm_medida, classificacao_patologia, fonte_classificacao, validado_por, validado_em)')
+                        .eq('vistoria_id', uuidToFetch)
+                        .then(({data, error}) => {
+                            if (data && data.length > 0) {
+                                const fetchedAberturas = data.map(ab => {
+                                    const reg = ab.abertura_registro_fotografico && ab.abertura_registro_fotografico[0] ? ab.abertura_registro_fotografico[0] : {};
+                                    return {
+                                        id: ab.id,
+                                        codigo_ponto: ab.codigo_ponto,
+                                        localizacao_descricao: ab.localizacao_descricao,
+                                        categoria: ab.categoria,
+                                        status: ab.status,
+                                        foto_url: reg.foto_url,
+                                        hash_sha256: reg.hash_sha256,
+                                        data_hora: reg.data_hora ? new Date(reg.data_hora).toLocaleString('pt-BR') : '',
+                                        fonte_data_hora: reg.fonte_data_hora,
+                                        latitude: reg.latitude,
+                                        longitude: reg.longitude,
+                                        largura_mm_medida: reg.largura_mm_medida,
+                                        classificacao_patologia: reg.classificacao_patologia,
+                                        fonte_classificacao: reg.fonte_classificacao,
+                                        validado_por: reg.validado_por,
+                                        validado_em: reg.validado_em ? new Date(reg.validado_em).toLocaleString('pt-BR') : null
+                                    };
+                                });
+                                // Only update if it brings new/real data to prevent overwriting with empty
+                                setFormData(prev => ({...prev, aberturas: fetchedAberturas}));
+                            }
+                        })
+                        .catch(err => console.error("[VistoriaForm] Failed to fetch remote aberturas", err));
+                }
+            }
         } else {
             getNextId()
         }
@@ -1025,7 +1064,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 const meta = await extractMetadata(file);
                 
                 let finalCoords = meta.coords || null;
-                let finalTimestamp = meta.timestamp || new Date().toLocaleString('pt-BR');
+                let rawTimestamp = meta.timestamp || new Date();
+                let finalTimestamp = rawTimestamp instanceof Date ? rawTimestamp : new Date(rawTimestamp);
+                if (isNaN(finalTimestamp.getTime())) finalTimestamp = new Date();
                 let fonteMetadados = meta.coords ? 'exif_original' : 'ausente';
 
                 if (source === 'camera' && !finalCoords) {
@@ -1046,7 +1087,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     localizacao_descricao: 'Ponto de Monitoramento (Fissurômetro) ' + num,
                     foto_url: compressed,
                     hash_sha256: 'calculado_em_background...',
-                    data_hora: finalTimestamp instanceof Date ? finalTimestamp.toLocaleString('pt-BR') : finalTimestamp,
+                    data_hora: finalTimestamp.toLocaleString('pt-BR'),
                     fonte_data_hora: fonteMetadados,
                     latitude: finalCoords?.lat || null,
                     longitude: finalCoords?.lng || null,
@@ -1063,7 +1104,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         reader.readAsDataURL(file);
     };
 
-    const handleValidarAbertura = (id, largura) => {
+    const handleValidarAbertura = (id, largura, fotoAnotada = null) => {
         if (!largura || isNaN(largura)) return;
         const val = parseFloat(largura);
         setFormData(prev => ({
@@ -1073,6 +1114,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     return {
                         ...ab,
                         largura_mm_medida: val,
+                        ...(fotoAnotada && { foto_anotada_url: fotoAnotada }),
                         classificacao_patologia: classificarAbertura(val),
                         validado_por_nome: userProfile?.name || 'Agente Defesa Civil',
                         validado_em: new Date().toLocaleString('pt-BR')

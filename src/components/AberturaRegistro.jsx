@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import FissurometroAnalyzer from "./FissurometroAnalyzer";
+import { Camera } from "lucide-react";
 
 const ROTULO_CLASSIFICACAO = {
   fissura: "Fissura",
@@ -11,6 +13,7 @@ const ROTULO_CLASSIFICACAO = {
 export default function AberturaRegistro({ registro, onValidar }) {
   const [aba, setAba] = useState("original");
   const [largura, setLargura] = useState(registro.largura_mm_medida ?? "");
+  const [showAnalyzer, setShowAnalyzer] = useState(false);
 
   return (
     <div className="max-w-sm mx-auto border rounded-xl overflow-hidden bg-white dark:bg-slate-800 dark:border-slate-700">
@@ -60,13 +63,22 @@ export default function AberturaRegistro({ registro, onValidar }) {
             placeholder="0.0"
             />
         </div>
-        <button
-          type="button"
-          onClick={() => onValidar(registro.id, largura)}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded-lg transition-colors font-medium"
-        >
-          Confirmar medição
-        </button>
+        <div className="flex gap-2">
+            <button
+            type="button"
+            onClick={() => onValidar(registro.id, largura)}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded-lg transition-colors font-medium"
+            >
+            Confirmar medição
+            </button>
+            <button
+            type="button"
+            onClick={() => setShowAnalyzer(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm py-2 px-3 rounded-lg transition-colors font-medium flex items-center justify-center gap-1 shadow-sm"
+            >
+                <Camera size={16} /> Lab V2
+            </button>
+        </div>
 
         {registro.classificacao_patologia && (
           <div className="text-xs bg-orange-50 border border-orange-200 text-orange-800 dark:bg-orange-900/30 dark:border-orange-800/50 dark:text-orange-300 rounded-lg px-3 py-3">
@@ -84,6 +96,19 @@ export default function AberturaRegistro({ registro, onValidar }) {
           </p>
         )}
       </div>
+
+      {showAnalyzer && (
+          <FissurometroAnalyzer 
+              fotoUrl={registro.foto_url}
+              onCancel={() => setShowAnalyzer(false)}
+              onComplete={(mm, anotadaBase64) => {
+                  setLargura(mm);
+                  setAba("anotada");
+                  setShowAnalyzer(false);
+                  onValidar(registro.id, mm, anotadaBase64);
+              }}
+          />
+      )}
     </div>
   );
 }
