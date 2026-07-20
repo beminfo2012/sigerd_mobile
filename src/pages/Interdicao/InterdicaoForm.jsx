@@ -686,7 +686,6 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                                         }));
                                     }}
                                     options={logradourosData
-                                        .filter(l => !formData.bairro || l.bairro === formData.bairro)
                                         .map(l => l.nome)
                                         .sort()}
                                     icon={MapPin}

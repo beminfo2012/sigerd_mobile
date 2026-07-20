@@ -1041,7 +1041,6 @@ const Agenda = () => {
                                         }));
                                     }}
                                     options={logradourosData
-                                        .filter(l => !formData.bairro || l.bairro === formData.bairro)
                                         .map(l => l.nome)
                                         .sort()}
                                     labelClasses="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1"

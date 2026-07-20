@@ -589,7 +589,6 @@ export default function OcorrenciasForm() {
                                     setUnrecognizedFields(prev => ({ ...prev, endereco: false }));
                                 }}
                                 options={logradourosData
-                                    .filter(l => !formData.bairro || l.bairro === formData.bairro)
                                     .map(l => l.nome)
                                     .sort()}
                                 icon={MapPin}
