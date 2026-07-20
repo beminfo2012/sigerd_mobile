@@ -1090,6 +1090,66 @@ export const syncSingleItem = async (storeName, item, db) => {
                 const officialId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
                 record.vistoriaId = officialId;
                 record.vistoria_id = officialId;
+                
+                // [NEW] Sync Aberturas (Fissurômetro)
+                if (record.aberturas && record.aberturas.length > 0) {
+                    const vistoriaUuid = record.supabase_id || syncedItems?.[0]?.id;
+                    if (vistoriaUuid) {
+                        try {
+                            const { data: userSession } = await supabase.auth.getSession();
+                            const userId = userSession?.session?.user?.id;
+                            const tenantId = record.tenant_id || userSession?.session?.user?.user_metadata?.tenant_id;
+                            
+                            for (const ab of record.aberturas) {
+                                // 1. Upsert na tabela abertura_patologica
+                                const { data: aberturaData, error: aberturaError } = await supabase
+                                    .from('abertura_patologica')
+                                    .upsert([{
+                                        id: ab.id,
+                                        tenant_id: tenantId,
+                                        vistoria_id: vistoriaUuid,
+                                        codigo_ponto: ab.codigo_ponto,
+                                        localizacao_descricao: ab.localizacao_descricao,
+                                        categoria: ab.categoria || 'Estrutural',
+                                        status: ab.status || 'ativa',
+                                        criado_por: userId || vistoriaUuid
+                                    }], { onConflict: 'id' })
+                                    .select();
+                                    
+                                if (!aberturaError && aberturaData && aberturaData.length > 0) {
+                                    // 2. Upsert do registro fotográfico
+                                    let fotoUrl = ab.foto_url || '';
+                                    if (fotoUrl && fotoUrl.startsWith('data:image')) {
+                                        fotoUrl = await uploadSignature(fotoUrl, 'vistorias_fotos', `${officialId.replace('/', '_')}/aberturas/${ab.id}.jpg`);
+                                    }
+                                    
+                                    await supabase
+                                        .from('abertura_registro_fotografico')
+                                        .upsert([{
+                                            id: crypto.randomUUID(), // Assuming one record per save for MVP
+                                            tenant_id: tenantId,
+                                            abertura_id: ab.id,
+                                            foto_url: fotoUrl || 'pendente',
+                                            hash_sha256: ab.hash_sha256 || 'N/A',
+                                            data_hora: new Date().toISOString(),
+                                            fonte_data_hora: ab.fonte_data_hora || 'gps_dispositivo',
+                                            latitude: ab.latitude ? parseFloat(ab.latitude) : null,
+                                            longitude: ab.longitude ? parseFloat(ab.longitude) : null,
+                                            largura_mm_medida: ab.largura_mm_medida || null,
+                                            classificacao_patologia: ab.classificacao_patologia || null,
+                                            fonte_classificacao: ab.fonte_classificacao || 'IBAPE-MG',
+                                            validado_por: ab.validado_por_nome ? userId : null,
+                                            validado_em: ab.validado_em ? new Date().toISOString() : null
+                                        }]);
+                                } else if (aberturaError) {
+                                    console.error('[Sync] Erro Abertura:', aberturaError);
+                                }
+                            }
+                        } catch (abErr) {
+                            console.error('[Sync] Erro Crítico ao sincronizar aberturas:', abErr);
+                        }
+                    }
+                }
             } else if (storeName === 'interdicoes') {
                 const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
                 record.interdicaoId = officialId;

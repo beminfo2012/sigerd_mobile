@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>CRFP — Cartão de Referência Fotográfica Padronizada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15140F;
+    --paper:#FFFFFF;
+    --signal:#FF5A1F;
+    --steel:#445059;
+    --bg:#E9EEF0;
+    --card-w:105mm;
+    --card-h:148mm;
+    --ruler-t:8mm;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:10mm 0 16mm;
+  }
+  .toolbar{
+    width:var(--card-w);
+    max-width:92vw;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6mm;
+  }
+  .toolbar h1{
+    font-size:14px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    margin:0;
+    color:var(--steel);
+  }
+  .toolbar button{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:6px 12px;
+    cursor:pointer;
+    letter-spacing:.03em;
+  }
+  .toolbar button:hover{background:var(--signal);}
+
+  .stage{
+    transform:scale(2.35);
+    transform-origin:top center;
+    margin-bottom:52mm; /* compensate visual scale for layout flow */
+  }
+
+  .card{
+    position:relative;
+    width:var(--card-w);
+    height:var(--card-h);
+    background:var(--paper);
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+
+  /* ---- header zone ---- */
+  .topo{
+    position:absolute; top:2.5mm; left:0; width:97mm;
+    text-align:center;
+    font-size:3.6mm; font-weight:700; color:var(--signal);
+    letter-spacing:.08em;
+  }
+  .topo .tri{display:inline-block; transform:translateY(-0.3mm);}
+
+  .eyebrow{
+    position:absolute; top:8mm; left:4mm;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:2.3mm; letter-spacing:.12em; color:var(--steel);
+    text-transform:uppercase;
+  }
+  .title{
+    position:absolute; top:11mm; left:4mm;
+    font-size:5.2mm; font-weight:700; line-height:1;
+  }
+  .subtitle{
+    position:absolute; top:17.2mm; left:4mm;
+    font-size:2.4mm; color:var(--steel);
+  }
+
+  .fields{
+    position:absolute; top:22.5mm; left:4mm; width:89mm;
+    display:flex; gap:5mm;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .field{flex:1;}
+  .field label{
+    display:block; font-size:2mm; color:var(--steel);
+    letter-spacing:.08em; text-transform:uppercase; margin-bottom:1mm;
+  }
+  .field .line{
+    border-bottom:.3mm solid var(--ink);
+    height:5mm;
+    font-size:3mm;
+  }
+  .field.erasable .line{
+    border:.35mm dashed var(--signal);
+    background:#FFF8F4;
+  }
+  .field.erasable label::after{
+    content:" (apagável)";
+    color:var(--signal);
+    text-transform:none;
+    letter-spacing:0;
+  }
+
+  /* ---- marker zone (single, centered) ---- */
+  .markers{
+    position:absolute; top:31mm; left:4mm; width:89mm;
+    display:flex; justify-content:center;
+  }
+  .marker-block{width:40mm; text-align:center;}
+  .marker-block svg{width:40mm; height:40mm; display:block; margin:0 auto;}
+  .marker-cap{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:1.9mm; color:var(--steel); letter-spacing:.04em;
+    margin-top:1.5mm; line-height:1.3;
+  }
+
+  /* ---- level + calibration zone ---- */
+  .lowzone{
+    position:absolute; top:82mm; left:4mm; width:89mm;
+    display:flex; justify-content:space-between; align-items:flex-start;
+  }
+  .level-block{text-align:center;}
+  .level-block svg{width:22mm;height:22mm;display:block;margin:0 auto;}
+  .level-cap{font-family:'IBM Plex Mono',monospace;font-size:1.9mm;color:var(--steel);margin-top:1.5mm;}
+
+  .calib-block{text-align:right;}
+  .calib-strip{display:flex; height:8mm; width:44mm; border:.25mm solid var(--ink);}
+  .calib-strip div{flex:1;}
+  .calib-cap{font-family:'IBM Plex Mono',monospace;font-size:1.9mm;color:var(--steel);margin-top:1.5mm;}
+
+  /* ---- instructions ---- */
+  .instructions{
+    position:absolute; top:113mm; left:4mm; width:89mm;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:1.9mm; line-height:1.45; color:var(--ink);
+  }
+  .instructions .lead{
+    font-size:2mm; color:var(--steel); letter-spacing:.1em; text-transform:uppercase;
+    margin-bottom:1mm; display:block;
+  }
+  .instructions ol{margin:0; padding-left:4mm;}
+
+  .footer-id{
+    position:absolute; bottom:11mm; left:4mm; width:89mm;
+    font-family:'IBM Plex Mono',monospace; font-size:1.9mm; color:var(--steel);
+    border-top:.2mm solid #ccc; padding-top:1.5mm;
+  }
+
+  /* ---- ruler strips ---- */
+  .ruler-h{
+    position:absolute; left:0; bottom:0; width:97mm; height:var(--ruler-t);
+    border-top:.3mm solid var(--ink);
+  }
+  .ruler-v{
+    position:absolute; right:0; top:0; width:var(--ruler-t); height:var(--card-h);
+    border-left:.3mm solid var(--ink);
+  }
+  .ruler-corner{
+    position:absolute; right:0; bottom:0; width:var(--ruler-t); height:var(--ruler-t);
+    background:var(--ink); color:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:2mm; font-weight:600;
+  }
+
+  .legend{
+    width:var(--card-w);
+    max-width:92vw;
+    margin-top:10mm;
+    font-size:12px;
+    color:var(--steel);
+    line-height:1.6;
+  }
+  .legend h2{font-size:13px;color:var(--ink);margin:0 0 6px;}
+  .legend p{margin:0 0 10px;}
+  .legend code{background:#fff;padding:1px 4px;border:1px solid #d7dcde;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+
+  @media print{
+    body{background:var(--paper); padding:0; margin:0;}
+    .toolbar, .legend{display:none;}
+    .stage{transform:none; margin:0;}
+    .card{box-shadow:none;}
+    @page{ size:105mm 148mm; margin:0; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <h1>CRFP · mockup em escala real</h1>
+    <button onclick="window.print()">Imprimir 1:1</button>
+  </div>
+
+  <div class="stage">
+    <div class="card" id="card">
+
+      <div class="topo">
+        <svg class="tri-svg" width="3mm" height="3mm" viewBox="0 0 10 10" style="vertical-align:-0.4mm">
+          <polygon points="5,0 10,10 0,10" fill="#FF5A1F"/>
+        </svg>
+        TOPO
+      </div>
+      <div class="eyebrow">SIGERD · Diário de Abertura</div>
+      <div class="title">Cartão de Referência</div>
+      <div class="subtitle">Defesa Civil · Santa Maria de Jetibá / ES</div>
+
+      <div class="fields">
+        <div class="field erasable"><label>Ponto</label><div class="line">AB-</div></div>
+        <div class="field"><label>Data</label><div class="line">___/___/____</div></div>
+      </div>
+
+      <div class="markers">
+        <div class="marker-block">
+          <svg id="aruco" viewBox="0 0 40 40"></svg>
+          <div class="marker-cap">MARCADOR DE ESCALA<br>E CORREÇÃO DE PERSPECTIVA</div>
+        </div>
+      </div>
+
+      <div class="lowzone">
+        <div class="level-block">
+          <svg viewBox="0 0 22 22">
+            <circle cx="11" cy="11" r="10" fill="none" stroke="#15140F" stroke-width="0.5" stroke-dasharray="1.2 1"/>
+            <circle cx="11" cy="11" r="6" fill="none" stroke="#445059" stroke-width="0.3" stroke-dasharray="0.8 0.8"/>
+            <circle cx="11" cy="11" r="2.6" fill="none" stroke="#FF5A1F" stroke-width="0.4"/>
+          </svg>
+          <div class="level-cap">ÁREA P/ ADESIVO DE NÍVEL<br>(ver nota de fabricação)</div>
+        </div>
+        <div class="calib-block">
+          <div class="calib-strip">
+            <div style="background:#FFFFFF"></div>
+            <div style="background:#BFBFBF"></div>
+            <div style="background:#8C8C8C"></div>
+            <div style="background:#404040"></div>
+            <div style="background:#000000"></div>
+            <div style="background:#FF5A1F"></div>
+          </div>
+          <div class="calib-cap">REF. DE COR / CINZA</div>
+        </div>
+      </div>
+
+      <div class="instructions">
+        <span class="lead">Modo de uso</span>
+        <ol>
+          <li>Escrever o código do ponto no campo apagável (ex.: AB-014)</li>
+          <li>Alinhar a seta ao topo da imagem</li>
+          <li>Nivelar pela bolha antes de disparar</li>
+          <li>Manter o cartão rente à superfície, ao lado da abertura</li>
+          <li>Fotografar incluindo cartão inteiro + abertura completa</li>
+        </ol>
+      </div>
+
+      <div class="footer-id">CRFP v1 · cartão genérico e reutilizável · válido apenas com marcador legível · SIGERD/COMPDEC</div>
+
+      <div class="ruler-h"><svg id="ruler-h-svg" width="97mm" height="8mm" viewBox="0 0 97 8"></svg></div>
+      <div class="ruler-v"><svg id="ruler-v-svg" width="8mm" height="148mm" viewBox="0 0 8 148"></svg></div>
+      <div class="ruler-corner">0</div>
+
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2>Notas de implementação</h2>
+    <p><strong>Nível de bolha — atenção antes de imprimir:</strong> um círculo impresso no papel não nivela nada sozinho, é só um desenho. O marcador agora aparece como três círculos tracejados (guia de posicionamento). Recomendação: comprar um adesivo de nível de bolha real (venda avulsa, barato, usado em tripés e suportes de celular) e colar exatamente nessa posição depois de laminar o cartão — aí sim vira funcional. Sem o adesivo, trate a instrução "nivelar" como orientação de postura (segurar o cartão o mais reto possível), não como leitura instrumental.</p>
+    <p><strong>Papel e corte:</strong> o mais simples é imprimir direto em papel/cartolina no tamanho A6 (105×148mm) — muitas impressoras aceitam essa bandeja/tamanho nativamente, e a folha inteira já é o cartão final, sem corte. Se só tiver A4, configure tamanho de página personalizado (105×148mm) nas opções avançadas da impressora antes de imprimir, e use a própria borda impressa como guia de corte.</p>
+    <p><strong>Cor:</strong> imprimir em modo colorido, não em escala de cinza — o laranja institucional e a tira de calibração de cor/cinza perdem função se saírem em preto e branco.</p>
+    <p><strong>Nota terminológica:</strong> fissura, trinca e rachadura são patologias distintas, diferenciadas principalmente pela largura da abertura — não são sinônimos. Este cartão mede qualquer abertura; a classificação exata (fissura/trinca/rachadura/fenda/brecha) é feita pelo sistema depois, a partir da largura medida, seguindo a referência IBAPE-MG. Por isso o módulo chama-se "Diário de Abertura", não "Diário de Fissura".</p>
+    <p>Versão simplificada: cartão único e genérico, impresso uma vez por agente — não há mais QR nem geração sob demanda por ponto. A identificação do ponto acontece dentro do próprio módulo de vistoria do SIGERD (legenda/descrição da foto), não no cartão físico.</p>
+    <p>O campo "Ponto" tem borda tracejada e fundo diferenciado para sinalizar que é uma <strong>superfície apagável</strong> — sugestão de fabricação: laminação fosca + caneta tipo retroprojetor/quadro branco, para o agente escrever o código à mão antes de fotografar e apagar depois de usar. Funciona como referência visual extra dentro da própria foto, redundante à legenda digital.</p>
+    <p>O marcador de escala mostrado aqui é um <strong>padrão ilustrativo</strong> — na produção deve ser gerado por biblioteca real de marcadores fiduciais (ex.: <code>cv2.aruco.generateImageMarker</code>). Ele continua sendo o único elemento que precisa estar sempre legível: é o que permite ao pipeline de visão computacional corrigir perspectiva e calcular a escala pixel→mm, independente de qual abertura ou agente está fotografando. Para uso manual (sem visão computacional ainda), o marcador funciona apenas como referência visual de escala — sua leitura exata não importa, só o tamanho físico real do quadrado (40×40mm).</p>
+    <p>A régua corre nas bordas inferior e direita do cartão, com origem compartilhada (0) no canto inferior direito — permite medir largura e comprimento da abertura a partir do mesmo ponto de referência, em vez de uma régua de eixo único.</p>
+    <p>Botão "Imprimir 1:1" aplica <code>@page</code> em tamanho A6 sem margens — ao imprimir, desativar qualquer opção de "ajustar à página" para preservar a escala real em milímetros.</p>
+  </div>
+
+<script>
+// ---------- helpers ----------
+function seededRandom(seed){
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function(){
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+function makeSVG(el, tag, attrs){
+  const ns = "http://www.w3.org/2000/svg";
+  const node = document.createElementNS(ns, tag);
+  for(const k in attrs) node.setAttribute(k, attrs[k]);
+  el.appendChild(node);
+  return node;
+}
+
+// ---------- ArUco-style mock marker ----------
+(function(){
+  const svg = document.getElementById('aruco');
+  const rnd = seededRandom(42);
+  const n = 6; // 6x6 grid
+  const size = 40;
+  const cell = size/(n+2); // leave 1-cell black border margin
+  // white bg
+  makeSVG(svg,'rect',{x:0,y:0,width:size,height:size,fill:'#FFFFFF'});
+  // black border frame
+  makeSVG(svg,'rect',{x:0,y:0,width:size,height:size,fill:'none',stroke:'#15140F','stroke-width':cell});
+  // inner bits
+  for(let r=0;r<n;r++){
+    for(let c=0;c<n;c++){
+      if(rnd() > 0.5){
+        makeSVG(svg,'rect',{
+          x:cell*(1+c), y:cell*(1+r), width:cell, height:cell, fill:'#15140F'
+        });
+      }
+    }
+  }
+})();
+
+// ---------- horizontal ruler (origin at right = 0, going left to 97) ----------
+(function(){
+  const svg = document.getElementById('ruler-h-svg');
+  const totalMM = 97;
+  const ink = '#15140F';
+  for(let mm=0; mm<=totalMM; mm++){
+    const x = totalMM - mm; // 0 at right edge
+    let len = 2, w = 0.2;
+    if(mm % 10 === 0){ len = 5; w = 0.35; }
+    else if(mm % 5 === 0){ len = 3.5; w = 0.25; }
+    makeSVG(svg,'line',{x1:x,y1:8,x2:x,y2:8-len,stroke:ink,'stroke-width':w});
+    if(mm % 10 === 0 && mm>0){
+      const t = makeSVG(svg,'text',{x:x, y:8-len-0.6, 'font-size':1.8,'text-anchor':'middle','font-family':'IBM Plex Mono, monospace', fill:'#445059'});
+      t.textContent = mm;
+    }
+  }
+})();
+
+// ---------- vertical ruler (origin at bottom = 0, going up to 148) ----------
+(function(){
+  const svg = document.getElementById('ruler-v-svg');
+  const totalMM = 148;
+  const ink = '#15140F';
+  for(let mm=0; mm<=totalMM; mm++){
+    const y = totalMM - mm; // 0 at bottom edge
+    let len = 2, w = 0.2;
+    if(mm % 10 === 0){ len = 5; w = 0.35; }
+    else if(mm % 5 === 0){ len = 3.5; w = 0.25; }
+    makeSVG(svg,'line',{x1:8,y1:y,x2:8-len,y2:y,stroke:ink,'stroke-width':w});
+    if(mm % 10 === 0 && mm>0){
+      const t = makeSVG(svg,'text',{x:8-len-0.6, y:y+0.6, 'font-size':1.8,'text-anchor':'end','font-family':'IBM Plex Mono, monospace', fill:'#445059'});
+      t.textContent = mm;
+    }
+  }
+})();
+</script>
+
+</body>
+</html>

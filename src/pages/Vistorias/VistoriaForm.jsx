@@ -24,6 +24,8 @@ import DespachoModal from '../../components/DespachoModal'
 import RiskAreaModal from '../../components/RiskAreaModal'
 import RichTextEditor from '../../components/Editor/RichTextEditor'
 import DocumentReferencesManager from '../../components/DocumentReferencesManager'
+import AberturaRegistro from '../../components/AberturaRegistro'
+import { classificarAbertura } from '../../services/classificacaoPatologia'
 import bairrosDataRaw from '../../data/Bairros.json'
 import logradourosDataRaw from '../../data/nomesderuas.json'
 
@@ -358,6 +360,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         encaminhamentos: [],
 
         fotos: [],
+        aberturas: [],
         documentos: [],
         assinaturaAgente: null,
         apoioTecnico: {
@@ -1010,6 +1013,46 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             return;
         }
         window.open(`/vistorias/imprimir/${id}`, '_blank');
+    };
+
+    const handleAddAbertura = () => {
+        const num = (formData.aberturas?.length || 0) + 1;
+        const newAbertura = {
+            id: crypto.randomUUID(),
+            codigo_ponto: `AB-${String(num).padStart(3, '0')}`,
+            localizacao_descricao: 'Novo Ponto de Monitoramento (Fissurômetro) ' + num,
+            foto_url: null,
+            hash_sha256: 'pendente...',
+            data_hora: new Date().toLocaleString('pt-BR'),
+            fonte_data_hora: 'gps_dispositivo',
+            latitude: null,
+            longitude: null,
+            largura_mm_medida: null,
+            classificacao_patologia: null,
+            fonte_classificacao: 'IBAPE-MG'
+        };
+        setFormData(prev => ({ ...prev, aberturas: [...(prev.aberturas || []), newAbertura] }));
+    };
+
+    const handleValidarAbertura = (id, largura) => {
+        if (!largura || isNaN(largura)) return;
+        const val = parseFloat(largura);
+        setFormData(prev => ({
+            ...prev,
+            aberturas: prev.aberturas.map(ab => {
+                if (ab.id === id) {
+                    return {
+                        ...ab,
+                        largura_mm_medida: val,
+                        classificacao_patologia: classificarAbertura(val),
+                        validado_por_nome: userProfile?.name || 'Agente Defesa Civil',
+                        validado_em: new Date().toLocaleString('pt-BR')
+                    };
+                }
+                return ab;
+            })
+        }));
+        toast.success('Ação de Sucesso', 'Medição validada com sucesso');
     };
 
     const handleSubmit = async (e) => {
@@ -2372,6 +2415,44 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 </div>
                             </div>
                         )}
+                    </Card>
+
+                    {/* SEÇÃO: Aberturas Monitoradas (Fissurômetro) */}
+                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
+                            <h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">
+                                Aberturas Monitoradas (Fissurômetro)
+                            </h3>
+                            <span className="bg-white/10 text-white text-[10px] font-black px-3 py-1 rounded-sm">{formData.aberturas?.length || 0} PONTOS</span>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            {formData.aberturas && formData.aberturas.length > 0 ? (
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                    {formData.aberturas.map((abertura) => (
+                                        <AberturaRegistro 
+                                            key={abertura.id} 
+                                            registro={abertura} 
+                                            onValidar={handleValidarAbertura} 
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-sm text-slate-500 bg-slate-50 dark:bg-slate-900 p-8 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-2">
+                                    <div className="flex justify-center text-slate-300 dark:text-slate-600 mb-2">
+                                        <Crosshair size={32} />
+                                    </div>
+                                    <p>Nenhum ponto de abertura (fissura/trinca/rachadura) monitorado para esta vistoria.</p>
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleAddAbertura}
+                                className="w-full py-3 border-2 border-dashed border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-xl text-xs font-bold uppercase transition-colors"
+                            >
+                                + Adicionar Ponto de Monitoramento (Fissurômetro)
+                            </button>
+                        </div>
                     </Card>
 
                     {/* 7. SEÇÃO: Registro Fotográfico */}
