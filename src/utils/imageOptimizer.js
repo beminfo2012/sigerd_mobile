@@ -53,39 +53,36 @@ export const compressImage = (base64Str, options = {}) => {
         fonteMetadados = 'ausente'
     } = options;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         try {
-            // Converter base64 para blob
-            const res = await fetch(base64Str);
-            const blob = await res.blob();
-
-            // Deixar o navegador rotacionar automaticamente baseado no EXIF (padrão dos browsers modernos)
-            const img = await createImageBitmap(blob);
-
-            const canvas = document.createElement('canvas');
-
-            // Dimensões já rotacionadas corretamente pelo navegador
-            let width = img.width;
-            let height = img.height;
-
-            // Calcular escala mantendo a proporção
-            let scale = 1;
-            if (width > height) {
-                if (width > maxWidth) scale = maxWidth / width;
-            } else {
-                if (height > maxWidth) scale = maxWidth / height;
-            }
-
-            const targetWidth = width * scale;
-            const targetHeight = height * scale;
-
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-
-            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
             
-            // O navegador já fez o auto-rotate, então basta desenhar normalmente
-            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+
+                // Dimensões já rotacionadas corretamente pelo navegador no elemento Image
+                let width = img.width;
+                let height = img.height;
+
+                // Calcular escala mantendo a proporção
+                let scale = 1;
+                if (width > height) {
+                    if (width > maxWidth) scale = maxWidth / width;
+                } else {
+                    if (height > maxWidth) scale = maxWidth / height;
+                }
+
+                const targetWidth = width * scale;
+                const targetHeight = height * scale;
+
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                const ctx = canvas.getContext('2d');
+                
+                // O navegador já fez o auto-rotate, então basta desenhar normalmente
+                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
             // Adicionar Geostamp no rodapé (já com a imagem na orientação correta)
             if (coordinates || timestamp) {
@@ -154,6 +151,16 @@ export const compressImage = (base64Str, options = {}) => {
 
             const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
             resolve(compressedBase64);
+            };
+            
+            img.onerror = (err) => {
+                console.error('Erro ao carregar imagem para compressão:', err);
+                reject(err);
+            };
+
+            // Inicia o carregamento
+            img.src = base64Str;
+            
         } catch (error) {
             console.error('Erro ao processar imagem:', error);
             reject(error);

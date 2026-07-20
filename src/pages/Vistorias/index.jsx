@@ -17,13 +17,19 @@ const EditVistoriaLoader = () => {
     useEffect(() => {
         const fetchVistoria = async () => {
             try {
-                let fullData = await getVistoriaFull(id);
+                let targetId = id;
+                if (!isNaN(targetId) && !targetId.includes('-')) {
+                    targetId = parseInt(targetId, 10);
+                }
+                
+                let fullData = await getVistoriaFull(targetId);
 
-                if (!fullData) {
+                // Só pesquisa no Supabase se for um UUID (string com '-')
+                if (!fullData && typeof targetId === 'string' && targetId.includes('-')) {
                     const { data, error } = await supabase
                         .from('vistorias')
                         .select('*')
-                        .eq('id', id)
+                        .eq('id', targetId)
                         .single();
 
                     if (data) fullData = data;
@@ -100,7 +106,7 @@ const Vistorias = () => {
     }
 
     const handleEdit = (vistoriaPartial) => {
-        navigate(`/vistorias/editar/${vistoriaPartial.id || vistoriaPartial.supabase_id}`)
+        navigate(`/vistorias/editar/${vistoriaPartial.supabase_id || vistoriaPartial.id}`)
     }
 
     return (
