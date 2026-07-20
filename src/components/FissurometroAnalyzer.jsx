@@ -231,7 +231,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel }) 
             <div className="w-full max-w-lg bg-white dark:bg-slate-900 overflow-hidden flex flex-col h-full sm:h-[90vh] sm:rounded-2xl">
                 <div className="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
                     <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-sm">Laboratório V2 (Análise de Imagem)</h2>
-                    <button onClick={onCancel} className="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
+                    <button type="button" onClick={onCancel} className="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
                         <X size={20} />
                     </button>
                 </div>
@@ -270,6 +270,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel }) 
                                 Passo 1: O sistema precisa encontrar o cartão para gerar a escala.
                             </p>
                             <button 
+                                type="button"
                                 onClick={detectArUco}
                                 disabled={analyzing}
                                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex justify-center items-center gap-2 disabled:opacity-50 transition-colors"
@@ -282,6 +283,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel }) 
                                 <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
                             </div>
                             <button 
+                                type="button"
                                 onClick={() => { setMode('calibrating'); setPoints([]); }}
                                 className={`w-full py-3 rounded-xl font-bold text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'calibrating' ? 'border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                             >
@@ -292,12 +294,13 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel }) 
                         <div className="space-y-3">
                             <div className="flex justify-between items-center text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-lg border dark:border-slate-700">
                                 <span className="font-mono">Escala: {(1/scalePxPerMm).toFixed(3)} mm/px</span>
-                                <button onClick={() => {setScalePxPerMm(null); setMeasurements([]); setMode('idle'); setPoints([]);}} className="text-red-500 font-bold hover:underline">
+                                <button type="button" onClick={() => {setScalePxPerMm(null); setMeasurements([]); setMode('idle'); setPoints([]);}} className="text-red-500 font-bold hover:underline">
                                     Desfazer
                                 </button>
                             </div>
                             
                             <button 
+                                type="button"
                                 onClick={() => { setMode('measuring'); setPoints([]); }}
                                 className={`w-full py-3 rounded-xl font-bold text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'measuring' ? 'border-indigo-500 text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-900/20'}`}
                             >
@@ -308,6 +311,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel }) 
                     
                     {measurements.length > 0 && (
                         <button 
+                            type="button"
                             onClick={handleSave}
                             className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-emerald-600/20 mt-4 transition-transform active:scale-95"
                         >

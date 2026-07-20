@@ -298,7 +298,7 @@ const AppContent = ({
                                         <GeoRescue />
                                     </ProtectedRoute>
                                 } />
-                                <Route path="/vistorias" element={
+                                <Route path="/vistorias/*" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <Vistorias />
                                     </ProtectedRoute>

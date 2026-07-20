@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle } from 'lucide-react'
 import VistoriaForm from './VistoriaForm'
 import VistoriaList from './VistoriaList'
@@ -7,11 +7,80 @@ import VistoriaList from './VistoriaList'
 import { supabase } from '../../services/supabase'
 import { getVistoriaFull } from '../../services/db'
 
-const Vistorias = () => {
-    const [view, setView] = useState('list') // 'list' | 'form'
-    const [selectedVistoria, setSelectedVistoria] = useState(null)
-    const [loadingEdit, setLoadingEdit] = useState(false)
+// Componente para lidar com o carregamento da Vistoria para edição
+const EditVistoriaLoader = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [selectedVistoria, setSelectedVistoria] = useState(null);
 
+    useEffect(() => {
+        const fetchVistoria = async () => {
+            try {
+                let fullData = await getVistoriaFull(id);
+
+                if (!fullData) {
+                    const { data, error } = await supabase
+                        .from('vistorias')
+                        .select('*')
+                        .eq('id', id)
+                        .single();
+
+                    if (data) fullData = data;
+                }
+
+                if (!fullData) {
+                    alert("Vistoria não encontrada.");
+                    navigate('/vistorias', { replace: true });
+                    return;
+                }
+
+                const mappedData = {
+                    ...fullData,
+                    tipoInfo: fullData.tipo_info || fullData.tipoInfo,
+                    vistoriaId: fullData.vistoria_id || fullData.vistoriaId,
+                    dataHora: fullData.data_hora || fullData.dataHora || new Date().toISOString(),
+                    categoriaRisco: fullData.categoria_risco || fullData.categoriaRisco,
+                    subtiposRisco: fullData.subtipos_risco || fullData.subtiposRisco || [],
+                    nivelRisco: fullData.nivel_risco || fullData.nivelRisco,
+                    situacaoObservada: fullData.situacao_observada || fullData.situacaoObservada,
+                    populacaoEstimada: fullData.populacao_estimada || fullData.populacaoEstimada,
+                    gruposVulneraveis: fullData.grupos_vulneraveis || fullData.gruposVulneraveis || [],
+                    checklistRespostas: fullData.checklist_respostas || fullData.checklistRespostas || {},
+                    fotos: fullData.fotos || [],
+                    documentos: fullData.documentos || [],
+                    assinaturaAgente: fullData.assinatura_agente || fullData.assinaturaAgente,
+                    apoioTecnico: fullData.apoio_tecnico || fullData.apoioTecnico
+                };
+
+                setSelectedVistoria(mappedData);
+            } catch (e) {
+                console.error("Edit load failed:", e);
+                alert("Erro ao carregar detalhes da vistoria.");
+                navigate('/vistorias', { replace: true });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchVistoria();
+        }
+    }, [id, navigate]);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 gap-3">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Carregando Vistoria...</p>
+            </div>
+        );
+    }
+
+    return <VistoriaForm onBack={() => navigate('/vistorias')} initialData={selectedVistoria} />;
+};
+
+const Vistorias = () => {
     const [showBlockModal, setShowBlockModal] = useState(false)
     const navigate = useNavigate()
 
@@ -21,93 +90,26 @@ const Vistorias = () => {
         const checkKey = `equipment_check_v3_${today}`
         const hasCheck = localStorage.getItem(checkKey)
 
-        console.log(`[Protocol Check] Key: ${checkKey}, Value: ${hasCheck}`)
-
         if (!hasCheck) {
             console.warn('[Protocol Check] Failed - Blocking access')
             setShowBlockModal(true)
             return
         }
 
-        console.log('[Protocol Check] Passed')
-        setSelectedVistoria(null)
-        setView('form')
+        navigate('/vistorias/nova')
     }
 
-    const handleEdit = async (vistoriaPartial) => {
-        setLoadingEdit(true)
-        try {
-            console.log('[Edit] Fetching full details for:', vistoriaPartial.vistoria_id);
-
-            // 1. Try Local/Cache first via DB helper
-            let fullData = await getVistoriaFull(vistoriaPartial.id);
-
-            // 2. If not found locally, try Cloud (specific fetch)
-            if (!fullData) {
-                // If it's a cloud item, 'id' is likely the UUID
-                // If local item, 'supabase_id' would be the UUID
-                const targetId = vistoriaPartial.supabase_id || vistoriaPartial.id;
-
-                // Only try fetching if it looks like a UUID or we have a valid ID
-                if (targetId) {
-                    const { data, error } = await supabase
-                        .from('vistorias')
-                        .select('*')
-                        .eq('id', targetId)
-                        .single();
-
-                    if (data) fullData = data;
-                }
-            }
-
-            // Fallback to partial if absolutely nothing found
-            const vistoria = fullData || vistoriaPartial;
-
-            // Need to map DB fields to Form fields if they differ
-            // For now passing raw, but the Form expects camelCase mostly.
-            // Explicitly mapping critical fields to avoid missing sections (like Block 5)
-            const mappedData = {
-                ...vistoria,
-                tipoInfo: vistoria.tipo_info || vistoria.tipoInfo,
-                vistoriaId: vistoria.vistoria_id || vistoria.vistoriaId,
-                dataHora: vistoria.data_hora || vistoria.dataHora || new Date().toISOString(),
-                categoriaRisco: vistoria.categoria_risco || vistoria.categoriaRisco,
-                subtiposRisco: vistoria.subtipos_risco || vistoria.subtiposRisco || [],
-                nivelRisco: vistoria.nivel_risco || vistoria.nivelRisco,
-                situacaoObservada: vistoria.situacao_observada || vistoria.situacaoObservada,
-                populacaoEstimada: vistoria.populacao_estimada || vistoria.populacaoEstimada,
-                gruposVulneraveis: vistoria.grupos_vulneraveis || vistoria.gruposVulneraveis || [],
-                checklistRespostas: vistoria.checklist_respostas || vistoria.checklistRespostas || {},
-                fotos: vistoria.fotos || [],
-                documentos: vistoria.documentos || [],
-                assinaturaAgente: vistoria.assinatura_agente || vistoria.assinaturaAgente,
-                apoioTecnico: vistoria.apoio_tecnico || vistoria.apoioTecnico
-            }
-
-            setSelectedVistoria(mappedData)
-
-            setView('form')
-        } catch (e) {
-            console.error("Edit load failed:", e)
-            alert("Erro ao carregar detalhes da vistoria.")
-        } finally {
-            setLoadingEdit(false)
-        }
-    }
-
-    const handleBack = () => {
-        setView('list')
-        setSelectedVistoria(null)
+    const handleEdit = (vistoriaPartial) => {
+        navigate(`/vistorias/editar/${vistoriaPartial.id || vistoriaPartial.supabase_id}`)
     }
 
     return (
         <div>
-            {view === 'list' && (
-                <VistoriaList onNew={handleNew} onEdit={handleEdit} />
-            )}
-            {view === 'form' && (
-                <VistoriaForm onBack={handleBack} initialData={selectedVistoria} />
-            )}
+            <Routes>
+                <Route index element={<VistoriaList onNew={handleNew} onEdit={handleEdit} />} />
+                <Route path="nova" element={<VistoriaForm onBack={() => navigate('/vistorias')} initialData={null} />} />
+                <Route path="editar/:id" element={<EditVistoriaLoader />} />
+            </Routes>
 
             {/* Protocol Enforcement Modal */}
             {showBlockModal && (
