@@ -16,13 +16,15 @@ function isEconomiaIAAtiva() {
   return localStorage.getItem('NORTIS_ECONOMIA_IA') === 'true' || import.meta.env.VITE_NORTIS_ECONOMIA_IA === 'true';
 }
 
-function getFallbackResponse(documentos, motivo) {
+function getFallbackResponse(documentos, motivo, tipoPesquisa = 'interno') {
+  const docsValidos = tipoPesquisa === 'externo' ? [] : documentos;
+  
   return {
     modo: "busca_direta",
     motivo_fallback: motivo,
     casos_similares: [],
     normas_tecnicas_aplicaveis: [],
-    legislacao_aplicavel: documentos.map(d => ({
+    legislacao_aplicavel: docsValidos.map(d => ({
         origem_id: d.id,
         referencia: `${d.tipo || 'Documento'} Nº ${d.numero || 'S/N'}/${d.ano || ''}`,
         situacao: d.situacao || 'vigente',
@@ -36,7 +38,9 @@ function getFallbackResponse(documentos, motivo) {
         meta_orgao: d.orgao_emissor,
         meta_ementa: d.ementa
     })),
-    observacao: "Modo de busca direta ativado. Os resultados refletem a correspondência local sem síntese de IA.",
+    observacao: tipoPesquisa === 'externo'
+        ? "Modo de busca direta ativado. Como a origem selecionada é WEB, os resultados locais foram ocultados."
+        : "Modo de busca direta ativado. Os resultados refletem a correspondência local sem síntese de IA.",
     aviso: "Busca direta — assistente de IA indisponível no momento."
   };
 }
@@ -165,14 +169,14 @@ export const nortisIaService = {
 
       // Verificação do modo economia de IA
       if (isEconomiaIAAtiva()) {
-         const fallback = getFallbackResponse(documentos, 'modo_economia_ativo');
+         const fallback = getFallbackResponse(documentos, 'modo_economia_ativo', tipoPesquisa);
          await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
          return fallback;
       }
 
       // Verificação do Circuit Breaker
       if (circuitOpenUntil && Date.now() < circuitOpenUntil) {
-         const fallback = getFallbackResponse(documentos, 'circuito_aberto');
+         const fallback = getFallbackResponse(documentos, 'circuito_aberto', tipoPesquisa);
          await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
          return fallback;
       } else if (circuitOpenUntil) {
@@ -303,7 +307,7 @@ RELATO DO USUÁRIO (${contextoModulo}):
         const motivo = err.message === 'TIMEOUT_LLM' ? 'timeout' : 'erro_provedor';
         console.warn(`[NORTIS] Fallback ativado (${motivo}). Falhas consecutivas: ${consecutiveFailures}`);
         
-        const fallback = getFallbackResponse(documentos, motivo);
+        const fallback = getFallbackResponse(documentos, motivo, tipoPesquisa);
         await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
         return fallback;
       }
@@ -328,7 +332,7 @@ RELATO DO USUÁRIO (${contextoModulo}):
            circuitOpenUntil = Date.now() + CIRCUIT_OPEN_DURATION_MS;
         }
         console.warn(`[NORTIS] Fallback ativado (parse error). Falhas consecutivas: ${consecutiveFailures}`);
-        const fallback = getFallbackResponse(documentos, 'erro_provedor');
+        const fallback = getFallbackResponse(documentos, 'erro_provedor', tipoPesquisa);
         await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
         return fallback;
       }
