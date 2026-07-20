@@ -21,12 +21,14 @@ export default function AberturaRegistro({ registro, onValidar }) {
 
       <div className="flex gap-2 p-3">
         <button
+          type="button"
           className={`flex-1 text-xs py-2 rounded-lg transition-colors ${aba === "original" ? "bg-neutral-900 text-white dark:bg-slate-700 dark:text-white" : "bg-neutral-100 text-neutral-700 dark:bg-slate-900 dark:text-slate-300"}`}
           onClick={() => setAba("original")}
         >
           Foto original
         </button>
         <button
+          type="button"
           className={`flex-1 text-xs py-2 rounded-lg transition-colors ${aba === "anotada" ? "bg-neutral-900 text-white dark:bg-slate-700 dark:text-white" : "bg-neutral-100 text-neutral-700 dark:bg-slate-900 dark:text-slate-300"}`}
           onClick={() => setAba("anotada")}
         >
@@ -59,6 +61,7 @@ export default function AberturaRegistro({ registro, onValidar }) {
             />
         </div>
         <button
+          type="button"
           onClick={() => onValidar(registro.id, largura)}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded-lg transition-colors font-medium"
         >

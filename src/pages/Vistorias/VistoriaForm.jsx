@@ -1015,23 +1015,52 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         window.open(`/vistorias/imprimir/${id}`, '_blank');
     };
 
-    const handleAddAbertura = () => {
-        const num = (formData.aberturas?.length || 0) + 1;
-        const newAbertura = {
-            id: crypto.randomUUID(),
-            codigo_ponto: `AB-${String(num).padStart(3, '0')}`,
-            localizacao_descricao: 'Novo Ponto de Monitoramento (Fissurômetro) ' + num,
-            foto_url: null,
-            hash_sha256: 'pendente...',
-            data_hora: new Date().toLocaleString('pt-BR'),
-            fonte_data_hora: 'gps_dispositivo',
-            latitude: null,
-            longitude: null,
-            largura_mm_medida: null,
-            classificacao_patologia: null,
-            fonte_classificacao: 'IBAPE-MG'
+    const handleAberturaPhotoSelect = async (files, source) => {
+        if (!files || files.length === 0) return;
+        const file = files[0];
+        
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            try {
+                const meta = await extractMetadata(file);
+                
+                let finalCoords = meta.coords || null;
+                let finalTimestamp = meta.timestamp || new Date().toLocaleString('pt-BR');
+                let fonteMetadados = meta.coords ? 'exif_original' : 'ausente';
+
+                if (source === 'camera' && !finalCoords) {
+                    finalCoords = { lat: formData.latitude, lng: formData.longitude };
+                    if (finalCoords.lat) fonteMetadados = 'gps_device';
+                }
+
+                const compressed = await compressImage(reader.result, {
+                    coordinates: finalCoords,
+                    timestamp: finalTimestamp,
+                    fonteMetadados
+                });
+
+                const num = (formData.aberturas?.length || 0) + 1;
+                const newAbertura = {
+                    id: crypto.randomUUID(),
+                    codigo_ponto: `AB-${String(num).padStart(3, '0')}`,
+                    localizacao_descricao: 'Ponto de Monitoramento (Fissurômetro) ' + num,
+                    foto_url: compressed,
+                    hash_sha256: 'calculado_em_background...',
+                    data_hora: finalTimestamp instanceof Date ? finalTimestamp.toLocaleString('pt-BR') : finalTimestamp,
+                    fonte_data_hora: fonteMetadados,
+                    latitude: finalCoords?.lat || null,
+                    longitude: finalCoords?.lng || null,
+                    largura_mm_medida: null,
+                    classificacao_patologia: null,
+                    fonte_classificacao: 'IBAPE-MG'
+                };
+                setFormData(prev => ({ ...prev, aberturas: [...(prev.aberturas || []), newAbertura] }));
+            } catch (error) {
+                console.error("Erro ao adicionar foto de abertura:", error);
+                toast.error('Erro', 'Falha ao processar foto do fissurômetro');
+            }
         };
-        setFormData(prev => ({ ...prev, aberturas: [...(prev.aberturas || []), newAbertura] }));
+        reader.readAsDataURL(file);
     };
 
     const handleValidarAbertura = (id, largura) => {
@@ -2445,13 +2474,14 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                     <p>Nenhum ponto de abertura (fissura/trinca/rachadura) monitorado para esta vistoria.</p>
                                 </div>
                             )}
-                            <button
-                                type="button"
-                                onClick={handleAddAbertura}
-                                className="w-full py-3 border-2 border-dashed border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-xl text-xs font-bold uppercase transition-colors"
-                            >
-                                + Adicionar Ponto de Monitoramento (Fissurômetro)
-                            </button>
+                            <div className="w-full pt-4 mt-4 border-t border-dashed border-slate-200 dark:border-slate-700">
+                                <label className="block text-xs uppercase font-bold text-slate-500 mb-3 text-center">Registrar Nova Evidência</label>
+                                <FileInput 
+                                    onFileSelect={handleAberturaPhotoSelect} 
+                                    compact={true} 
+                                    label="Capturar Foto do Fissurômetro" 
+                                />
+                            </div>
                         </div>
                     </Card>
 
