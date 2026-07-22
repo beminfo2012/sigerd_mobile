@@ -4,22 +4,21 @@ import {
   BarChart3, Calendar, Filter, RefreshCw, FileText, FileSpreadsheet,
   MapPin, ShieldAlert, AlertTriangle, Activity, Layers, TrendingUp,
   PieChart as PieIcon, CheckCircle2, ArrowUpRight, ArrowDownRight, Compass,
-  Shield, AlertOctagon, HelpCircle, FileCheck, Landmark, Droplets, Info
+  Shield, AlertOctagon, HelpCircle, FileCheck, Landmark, Droplets, Info,
+  Clock, CheckSquare, ChevronRight, Search, ExternalLink, Ban, AlertCircle,
+  Users, Home, UserX
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend, PieChart as RePie, Pie, Cell, RadialBarChart, RadialBar
 } from 'recharts';
-import { MapContainer, TileLayer, CircleMarker, Popup, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import LimiteSMJLayer from '../../components/LimiteSMJLayer';
 import AreasRiscoLayer from '../../components/AreasRiscoLayer';
 import { biService } from '../../services/biService';
 
-
-
-// Categoria Colors oficiais do SIGERD
 const CATEGORY_COLORS = {
   'Estrutural': '#64748b',            // Cinza slate
   'Ambiental': '#10b981',             // Verde emerald
@@ -41,15 +40,13 @@ export default function BusinessIntelligence() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const moduloInicial = searchParams.get('modulo') || 'visao_geral';
-  const visaoInicial = searchParams.get('visao') || 'tipologia';
 
   const [activeTab, setActiveTab] = useState(
-    ['visao_geral', 'vistorias', 'ocorrencias', 'noprer', 'alertas', 'redap', 'placon', 'geoespacial', 'correlacoes'].includes(moduloInicial)
+    ['visao_geral', 'vistorias', 'ocorrencias', 'interdicoes', 'noprer', 'alertas', 'geoespacial', 'correlacoes'].includes(moduloInicial)
       ? moduloInicial
       : 'visao_geral'
   );
 
-  // Filtros Globais
   const [periodo, setPeriodo] = useState('12m');
   const [localidade, setLocalidade] = useState('todas');
   const [tipologia, setTipologia] = useState('todas');
@@ -58,6 +55,7 @@ export default function BusinessIntelligence() {
   const [data, setData] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [areasRiscoData, setAreasRiscoData] = useState(null);
+  const [drillDownItem, setDrillDownItem] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -111,12 +109,12 @@ export default function BusinessIntelligence() {
                 <h1 className="text-xl font-black tracking-tight leading-none text-slate-900 dark:text-white uppercase">
                   Business Intelligence — SIGERD
                 </h1>
-                <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Módulo Analítico Real
+                <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  Módulo Analítico Profundo
                 </span>
               </div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                Central Estratégica de Dados, Tendências e Decisão Multimodular
+                Análises Cruzadas, Tendências Temporais e Apoio à Decisão Estratégica
               </p>
             </div>
           </div>
@@ -131,10 +129,10 @@ export default function BusinessIntelligence() {
             onClick={loadData}
             disabled={loading}
             className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-            title="Atualizar dados reais"
+            title="Atualizar dados analíticos"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            Atualizar
+            Atualizar Dados
           </button>
 
           <div className="flex gap-2">
@@ -142,13 +140,13 @@ export default function BusinessIntelligence() {
               onClick={handleExportPDF}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm"
             >
-              <FileText size={14} /> PDF
+              <FileText size={14} /> Gerar PDF
             </button>
             <button
               onClick={handleExportExcel}
               className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm"
             >
-              <FileSpreadsheet size={14} /> Exportar JSON/Excel
+              <FileSpreadsheet size={14} /> Exportar Dataset
             </button>
           </div>
         </div>
@@ -162,7 +160,6 @@ export default function BusinessIntelligence() {
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Filtros Globais:</span>
           </div>
 
-          {/* Período */}
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <Calendar size={13} className="text-slate-400" />
             <select
@@ -176,7 +173,6 @@ export default function BusinessIntelligence() {
             </select>
           </div>
 
-          {/* Localidade / Bairro */}
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <MapPin size={13} className="text-slate-400" />
             <select
@@ -191,7 +187,6 @@ export default function BusinessIntelligence() {
             </select>
           </div>
 
-          {/* Tipologia */}
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <Layers size={13} className="text-slate-400" />
             <select
@@ -224,10 +219,9 @@ export default function BusinessIntelligence() {
             { id: 'visao_geral', label: 'Visão Geral', icon: BarChart3 },
             { id: 'vistorias', label: `Vistorias (${data?.rawCounts?.vistorias || 0})`, icon: Layers },
             { id: 'ocorrencias', label: `Ocorrências (${data?.rawCounts?.ocorrencias || 0})`, icon: AlertTriangle },
+            { id: 'interdicoes', label: `Interdições (${data?.rawCounts?.interdicoes || 0})`, icon: Ban },
             { id: 'noprer', label: `NOPRER (${data?.rawCounts?.noprer || 0})`, icon: Shield },
             { id: 'alertas', label: `Alertas (${data?.rawCounts?.alertas || 0})`, icon: ShieldAlert },
-            { id: 'redap', label: `REDAP (${data?.rawCounts?.redap || 0})`, icon: FileCheck },
-            { id: 'placon', label: `PLACON (${data?.rawCounts?.placon || 0})`, icon: Landmark },
             { id: 'geoespacial', label: 'Geoespacial Verificado', icon: Compass },
             { id: 'correlacoes', label: 'Matriz de Correlação', icon: TrendingUp }
           ].map(tab => {
@@ -265,7 +259,6 @@ export default function BusinessIntelligence() {
             {/* ABA: VISÃO GERAL */}
             {activeTab === 'visao_geral' && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                {/* Cards de KPIs Principais */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Total Vistorias Empreendidas</span>
@@ -293,7 +286,7 @@ export default function BusinessIntelligence() {
                       </span>
                     </div>
                     <p className="text-[10px] font-bold text-slate-400 mt-2">
-                      Abertas/Atendimento: <strong className="text-orange-500">{data?.kpis?.ocorrenciasAbertas || 0}</strong>
+                      Abertas: <strong className="text-orange-500">{data?.kpis?.ocorrenciasAbertas || 0}</strong>
                     </p>
                   </div>
 
@@ -313,30 +306,26 @@ export default function BusinessIntelligence() {
                   </div>
 
                   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Interdições Totais / Parciais</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Interdições Vigentes vs Desinterditadas</span>
                     <div className="flex items-baseline justify-between mt-2">
-                      <span className="text-3xl font-black text-slate-900 dark:text-white tabular-nums">
-                        {data?.kpis?.interdicoesTotais || 0}
+                      <span className="text-3xl font-black text-red-600 tabular-nums">
+                        {data?.kpis?.interdicoesVigentes || 0}
                       </span>
-                      <span className="text-xs font-bold text-red-500 font-mono">
-                        {data?.kpis?.interdicoesAtivas || 0} Ativas
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded">
+                        {data?.kpis?.interdicoesDesinterditadas || 0} Liberadas
                       </span>
                     </div>
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
-                      <div className="bg-red-600 h-full rounded-full w-[90%]" />
-                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 mt-2">
+                      Total Registrado: <strong>{data?.kpis?.interdicoesTotais || 0}</strong>
+                    </p>
                   </div>
                 </div>
 
-                {/* Gráfico de Tendência Temporal Combinada (Multi-Series Recharts) */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                      <TrendingUp size={16} className="text-blue-500" /> Evolução Histórica Multimodular (Últimos 12 Meses)
+                      <TrendingUp size={16} className="text-blue-500" /> Evolução Histórica Multimodular (12 Meses)
                     </h3>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg">
-                      Vistorias × Ocorrências × Alertas × NOPRER
-                    </span>
                   </div>
                   <div className="h-[340px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -354,54 +343,6 @@ export default function BusinessIntelligence() {
                     </ResponsiveContainer>
                   </div>
                 </div>
-
-                {/* Sub-grid: Tipologia & Top Localidades Críticas */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Tipologia */}
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
-                      Categorização por Tipologia de Risco (Vistorias)
-                    </h3>
-                    <div className="space-y-3">
-                      {data?.tipologiaDistribution?.map((item, idx) => (
-                        <div key={idx} className="group">
-                          <div className="flex justify-between text-xs font-bold mb-1">
-                            <span className="text-slate-700 dark:text-slate-300">{item.label}</span>
-                            <span className="tabular-nums font-mono">{item.count} ({item.percentage}%)</span>
-                          </div>
-                          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${item.percentage}%`,
-                                backgroundColor: CATEGORY_COLORS[item.label] || '#94a3b8'
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Top 10 Localidades Críticas */}
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
-                      Top Localidades com Maior Volume Registrado
-                    </h3>
-                    <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
-                      {data?.topLocalidades?.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
-                            <strong className="text-blue-600 dark:text-blue-400 mr-2">{idx + 1}.</strong> {item.localidade}
-                          </span>
-                          <span className="text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 px-3 py-1 rounded-lg">
-                            {item.count} registros
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -410,7 +351,7 @@ export default function BusinessIntelligence() {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
                   <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
-                    Matriz por Grau de Nível de Risco (R1 – R4)
+                    Distribuição por Nível de Risco Resultante (R1 – R4)
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {Object.entries(data?.riscoDistribution || {}).filter(([k]) => k !== 'Outros').map(([nivel, count]) => (
@@ -426,25 +367,398 @@ export default function BusinessIntelligence() {
                     ))}
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
+                      Matriz Comparativa: Tipologia × Localidade (Top 10 Bairros)
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-[11px]">
+                        <thead className="bg-slate-100 dark:bg-slate-800 font-bold uppercase text-slate-500">
+                          <tr>
+                            <th className="p-2">Localidade</th>
+                            <th className="p-2 text-center">Estrut.</th>
+                            <th className="p-2 text-center">Geol.</th>
+                            <th className="p-2 text-center">Hidro.</th>
+                            <th className="p-2 text-center">Amb.</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                          {data?.matrizTipologiaLocalidade?.map((row, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                              <td className="p-2 font-bold text-slate-800 dark:text-slate-100 truncate max-w-[120px]">{row.localidade}</td>
+                              <td className="p-2 text-center text-slate-600">{row['Estrutural'] || 0}</td>
+                              <td className="p-2 text-center text-orange-600 font-bold">{row['Geológico / Geotécnico'] || row['Risco Geológico'] || 0}</td>
+                              <td className="p-2 text-center text-blue-600">{row['Hidrológico'] || 0}</td>
+                              <td className="p-2 text-center text-emerald-600">{row['Ambiental'] || 0}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
+                      Evolução Mensal por Tipologia de Vistoria
+                    </h3>
+                    <div className="h-[280px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data?.evolucaoTipologia || []}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                          <XAxis dataKey="label" style={{ fontSize: '10px', fontWeight: 'bold' }} />
+                          <YAxis style={{ fontSize: '10px', fontWeight: 'bold' }} />
+                          <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', color: '#fff', fontSize: '11px' }} />
+                          <Bar dataKey="Geológico / Geotécnico" name="Geológico" stackId="a" fill="#f97316" />
+                          <Bar dataKey="Estrutural" name="Estrutural" stackId="a" fill="#64748b" />
+                          <Bar dataKey="Hidrológico" name="Hidrológico" stackId="a" fill="#3b82f6" />
+                          <Bar dataKey="Ambiental" name="Ambiental" stackId="a" fill="#10b981" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                      <Search size={16} className="text-blue-500" /> Drill-down: Listagem Completa de Vistorias Registradas
+                    </h3>
+                  </div>
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100 dark:bg-slate-800 font-bold uppercase text-[10px] text-slate-500">
+                        <tr>
+                          <th className="p-3">Código</th>
+                          <th className="p-3">Bairro / Localidade</th>
+                          <th className="p-3">Tipologia</th>
+                          <th className="p-3">Nível de Risco</th>
+                          <th className="p-3 text-center">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {(data?.vistoriasList || []).slice(0, 8).map((v, idx) => (
+                          <tr key={idx} className="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 cursor-pointer" onClick={() => setDrillDownItem(v)}>
+                            <td className="p-3 font-mono font-bold text-blue-600 dark:text-blue-400">{v.vistoria_id || v.vistoriaId || `VST-${v.id}`}</td>
+                            <td className="p-3 font-bold text-slate-700 dark:text-slate-200">{v.bairro || v.localidade || 'Não Informado'}</td>
+                            <td className="p-3">{v.categoria_risco || v.categoriaRisco || 'Outros'}</td>
+                            <td className="p-3 font-bold" style={{ color: RISK_COLORS[String(v.nivel_risco || '').toUpperCase()] || '#f97316' }}>
+                              {v.nivel_risco || 'R2'}
+                            </td>
+                            <td className="p-3 text-center">
+                              <button className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-100">
+                                Ver Detalhes
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* ABA: OCORRÊNCIAS */}
+            {/* ABA: OCORRÊNCIAS (EXPANDIDA COM IMPACTO HUMANO & NATUREZA) */}
             {activeTab === 'ocorrencias' && (
               <div className="space-y-6 animate-in fade-in duration-300">
+                {/* CARDS DE IMPACTO HUMANO */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center font-black shrink-0">
+                      <Users size={24} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Pessoas Afetadas</span>
+                      <span className="text-2xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data?.kpis?.totalAfetados || 0}</span>
+                      <span className="text-[10px] text-slate-400 font-semibold block">Registrados nos Atendimentos</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center font-black shrink-0">
+                      <Home size={24} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Pessoas Desabrigadas</span>
+                      <span className="text-2xl font-black text-red-600 tabular-nums">{data?.kpis?.totalDesabrigados || 0}</span>
+                      <span className="text-[10px] text-slate-400 font-semibold block">Encaminhadas a Abrigos Públicos</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center font-black shrink-0">
+                      <UserX size={24} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Pessoas Desalojadas</span>
+                      <span className="text-2xl font-black text-amber-600 tabular-nums">{data?.kpis?.totalDesalojados || 0}</span>
+                      <span className="text-[10px] text-slate-400 font-semibold block">Acolhidas em Casas de Parentes</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider mb-4">Status de Atendimento</h3>
+                    <div className="space-y-3">
+                      {data?.statusOcorrenciasDistribution?.map((st, idx) => (
+                        <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{st.label}</span>
+                          <span className="text-lg font-black text-blue-600">{st.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider mb-4">Origem da Chamada</h3>
+                    <div className="space-y-3">
+                      {data?.origemOcorrenciasDistribution?.map((og, idx) => (
+                        <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{og.label}</span>
+                          <span className="text-lg font-black text-orange-600">{og.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider mb-4">Classificação de Danos</h3>
+                    <div className="space-y-3">
+                      {Object.entries(data?.danosCount || {}).map(([dano, count], idx) => (
+                        <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{dano}</span>
+                          <span className="text-lg font-black text-red-600">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
                   <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
-                    Distribuição das Ocorrências por Status de Atendimento
+                    Listagem de Ocorrências Recentes
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {data?.statusOcorrenciasDistribution?.map((st, idx) => (
-                      <div key={idx} className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
-                        <span className="text-xs font-black uppercase text-slate-500 tracking-wider block">{st.label}</span>
-                        <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tabular-nums mt-1 block">{st.count}</span>
-                        <span className="text-[10px] font-bold text-blue-500 mt-1 block">{st.percentage}% do total</span>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100 dark:bg-slate-800 font-bold uppercase text-[10px] text-slate-500">
+                        <tr>
+                          <th className="p-3">Código</th>
+                          <th className="p-3">Bairro / Localidade</th>
+                          <th className="p-3">Natureza</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3 text-center">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {(data?.ocorrenciasList || []).slice(0, 8).map((o, idx) => (
+                          <tr key={idx} className="hover:bg-orange-50/50 dark:hover:bg-orange-900/20">
+                            <td className="p-3 font-mono font-bold text-orange-600">{o.ocorrencia_id_format || o.ocorrencia_id || `OC-${o.id}`}</td>
+                            <td className="p-3 font-bold text-slate-700 dark:text-slate-200">{o.bairro || o.localidade || 'Não Informado'}</td>
+                            <td className="p-3">{o.natureza || o.categoria_risco || 'Ocorrência Operacional'}</td>
+                            <td className="p-3 font-bold text-slate-600">{o.status || 'Pendente'}</td>
+                            <td className="p-3 text-center">
+                              <button onClick={() => setDrillDownItem(o)} className="px-2.5 py-1 bg-orange-50 dark:bg-orange-900/40 text-orange-600 rounded-lg text-[10px] font-bold uppercase hover:bg-orange-100">
+                                Ver Detalhes
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ABA: INTERDIÇÕES (VIGENTES E DESINTERDITADAS) */}
+            {activeTab === 'interdicoes' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider mb-4">
+                      Situação Cadastral das Interdições & Desinterdições
+                    </h3>
+                    <div className="space-y-3">
+                      {Object.entries(data?.interdicoesStatusDistribution || {}).map(([status, count], idx) => (
+                        <div key={idx} className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                            {status.includes('Desinterditado') ? (
+                              <CheckCircle2 size={16} className="text-emerald-500" />
+                            ) : (
+                              <Ban size={16} className="text-red-500" />
+                            )}
+                            {status}
+                          </span>
+                          <span className={`text-xl font-black ${status.includes('Desinterditado') ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                    <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider mb-4">Medidas Cautelares Aplicadas</h3>
+                    <div className="space-y-3">
+                      {Object.entries(data?.interdicoesMedidaCount || {}).map(([medida, count], idx) => (
+                        <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{medida}</span>
+                          <span className="text-lg font-black text-orange-600">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
+                    Listagem Geral de Interdições & Desinterdições Registradas
+                  </h3>
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100 dark:bg-slate-800 font-bold uppercase text-[10px] text-slate-500">
+                        <tr>
+                          <th className="p-3">Código</th>
+                          <th className="p-3">Localidade / Endereço</th>
+                          <th className="p-3">Tipo de Risco</th>
+                          <th className="p-3">Status Atual</th>
+                          <th className="p-3 text-center">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {(data?.interdicoesList || []).slice(0, 10).map((i, idx) => {
+                          const st = String(i.status_interdicao || i.status || i.situacao || '').toLowerCase();
+                          const isDesinterditado = st.includes('desinterdit') || st.includes('liberad') || st.includes('revogad') || Boolean(i.desinterdicao) || Boolean(i.data_desinterdicao);
+                          return (
+                            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                              <td className="p-3 font-mono font-bold text-blue-600">{i.interdicao_id || i.interdicaoId || `INT-${i.id}`}</td>
+                              <td className="p-3 font-bold text-slate-700 dark:text-slate-200">{i.bairro || i.logradouro || 'Não Informado'}</td>
+                              <td className="p-3">{i.risco_tipo || i.riscoTipo || 'Risco de Colapso'}</td>
+                              <td className="p-3 font-bold">
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] uppercase font-black ${
+                                  isDesinterditado
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                }`}>
+                                  {i.status_interdicao || i.status || 'Interditado'}
+                                </span>
+                              </td>
+                              <td className="p-3 text-center">
+                                <button onClick={() => setDrillDownItem(i)} className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold uppercase hover:bg-slate-200">
+                                  Ver Detalhes
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ABA: NOPRER */}
+            {activeTab === 'noprer' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm text-center">
+                    <span className="text-xs font-black uppercase text-slate-400 block">Tempo Médio de Emissão → Vistoria</span>
+                    <span className="text-4xl font-black text-blue-600 mt-2 block">{data?.kpis?.tempoMedioRespostaNoprer} dias</span>
+                    <span className="text-[10px] text-slate-400 font-bold mt-1 block">Indicador de Eficiência Operacional</span>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm text-center">
+                    <span className="text-xs font-black uppercase text-slate-400 block">Taxa de Vinculação NOPRER ↔ Vistoria</span>
+                    <span className="text-4xl font-black text-emerald-500 mt-2 block">{data?.kpis?.taxaVinculacaoNoprer}%</span>
+                    <span className="text-[10px] text-slate-400 font-bold mt-1 block">Rastreabilidade Bidirecional Confirmada</span>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm text-center">
+                    <span className="text-xs font-black uppercase text-slate-400 block">Notificações NOPRER R4 (Críticas)</span>
+                    <span className="text-4xl font-black text-red-600 mt-2 block">{data?.noprerRiscoCount?.R4 || 0}</span>
+                    <span className="text-[10px] text-slate-400 font-bold mt-1 block">Grau de Risco Iminente</span>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 mb-4">
+                    Registros Recentes de NOPRER
+                  </h3>
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100 dark:bg-slate-800 font-bold uppercase text-[10px] text-slate-500">
+                        <tr>
+                          <th className="p-3">Número NOPRER</th>
+                          <th className="p-3">Bairro / Localidade</th>
+                          <th className="p-3">Data Emissão</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3 text-center">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {(data?.noprersList || []).slice(0, 8).map((n, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td className="p-3 font-mono font-bold text-orange-600">{n.numero || `NOPRER-${n.id}`}</td>
+                            <td className="p-3 font-bold text-slate-700 dark:text-slate-200">{n.bairro || n.localidade || 'Não Informado'}</td>
+                            <td className="p-3">{new Date(n.created_at || Date.now()).toLocaleDateString('pt-BR')}</td>
+                            <td className="p-3 font-bold text-emerald-600">{n.status || 'Emitida'}</td>
+                            <td className="p-3 text-center">
+                              <button onClick={() => setDrillDownItem(n)} className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold uppercase hover:bg-slate-200">
+                                Ver Detalhes
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ABA: ALERTAS */}
+            {activeTab === 'alertas' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                      <ShieldAlert size={18} className="text-red-500" /> Alertas Meteorológicos e Hidrológicos Ativos ({data?.alertasLista?.length || 0})
+                    </h3>
+                  </div>
+
+                  {(!data?.alertasLista || data.alertasLista.length === 0) ? (
+                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-800">
+                      <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Nenhum alerta crítico ativo no momento.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {data.alertasLista.map((alerta, idx) => (
+                        <div key={idx} className="p-5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                          <div className="flex justify-between items-start">
+                            <span className="text-xs font-black uppercase text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 px-2.5 py-1 rounded-lg">
+                              {alerta.origem} • {alerta.tipo}
+                            </span>
+                            <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-900/40 px-2.5 py-1 rounded-lg uppercase">
+                              Nível: {alerta.nivel}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-black text-slate-800 dark:text-slate-100">{alerta.titulo}</h4>
+                          <p className="text-xs text-slate-500 leading-relaxed bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                            {alerta.detalhes}
+                          </p>
+                          <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                            <span>Município: {alerta.municipio}</span>
+                            <span>Emissão: {new Date(alerta.data).toLocaleDateString('pt-BR')}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -464,22 +778,19 @@ export default function BusinessIntelligence() {
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-semibold text-blue-800 dark:text-blue-300 flex items-start gap-3">
                   <Info size={18} className="shrink-0 mt-0.5" />
                   <p>
-                    <strong>Regra de Integridade Auditável & Mapeamento Geoespacial:</strong> Exibindo a camada oficial de Áreas de Risco Poligonais GeoJSON (classificadas de R1 a R4) em conjunto com pontos de ocorrências, vistorias e interdições com geolocalização real comprovada por GPS/EXIF.
+                    <strong>Regra de Integridade Auditável:</strong> Exibindo a camada oficial de Áreas de Risco Poligonais GeoJSON (classificadas de R1 a R4) em conjunto com pontos de ocorrências, vistorias e interdições com geolocalização real comprovada por GPS/EXIF.
                   </p>
                 </div>
 
-                {/* MAPA INTERATIVO LEAFLET COM GEOJSON DE ÁREAS DE RISCO */}
                 <div className="h-[480px] w-full rounded-2xl overflow-hidden relative z-0 border border-slate-200 dark:border-slate-800 shadow-inner">
                   <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true}>
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                     <LimiteSMJLayer keyId="limite-smj-bi" />
 
-                    {/* Camada GeoJSON de Áreas de Risco */}
                     {areasRiscoData && (
                       <AreasRiscoLayer data={areasRiscoData} tiposAtivos={new Set(['geologico', 'hidrologico', 'estrutural'])} />
                     )}
 
-                    {/* Marcadores das ocorrências/vistorias validadas */}
                     {(data?.geoData?.verifiedLocs || []).map((loc, idx) => (
                       <CircleMarker
                         key={idx}
@@ -503,36 +814,6 @@ export default function BusinessIntelligence() {
                       </CircleMarker>
                     ))}
                   </MapContainer>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <h4 className="text-xs font-black uppercase text-slate-500 mb-3">Últimas Coordenadas GPS Registradas</h4>
-                    <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
-                      {data?.geoData?.verifiedLocs?.slice(0, 15).map((g, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 text-xs">
-                          <span className="font-bold text-slate-700 dark:text-slate-200">{g.formattedId} ({g.bairro})</span>
-                          <span className="font-mono text-[11px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded">
-                            {g.lat.toFixed(4)}, {g.lng.toFixed(4)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <h4 className="text-xs font-black uppercase text-slate-500 mb-3">Registros sem Fonte de Geolocalização</h4>
-                    <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
-                      {data?.geoData?.unverifiedLocs?.slice(0, 15).map((u, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 text-xs">
-                          <span className="font-bold text-slate-700 dark:text-slate-200">{u.formattedId} - {u.bairro}</span>
-                          <span className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded font-semibold">
-                            {u.motivoSemGeolocalizacao}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -586,6 +867,26 @@ export default function BusinessIntelligence() {
           </>
         )}
       </main>
+
+      {/* MODAL DE DRILL-DOWN */}
+      {drillDownItem && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="text-xs font-black uppercase text-blue-600 tracking-widest">
+                Detalhamento Registro #{drillDownItem.vistoria_id || drillDownItem.ocorrencia_id_format || drillDownItem.interdicao_id || drillDownItem.id}
+              </span>
+              <button onClick={() => setDrillDownItem(null)} className="text-slate-400 hover:text-slate-600 text-xs font-bold uppercase">Fechar</button>
+            </div>
+            <div className="space-y-2.5 text-xs">
+              <div><strong className="text-slate-400 uppercase text-[10px]">Localidade / Bairro:</strong> <span className="font-bold text-slate-800 dark:text-slate-100">{drillDownItem.bairro || drillDownItem.localidade || 'Não informado'}</span></div>
+              <div><strong className="text-slate-400 uppercase text-[10px]">Categoria / Natureza:</strong> <span className="font-bold">{drillDownItem.categoria_risco || drillDownItem.natureza || 'Geral'}</span></div>
+              <div><strong className="text-slate-400 uppercase text-[10px]">Status / Nível:</strong> <span className="font-bold text-orange-600">{drillDownItem.status || drillDownItem.status_interdicao || drillDownItem.nivel_risco || 'Ativo'}</span></div>
+              <div><strong className="text-slate-400 uppercase text-[10px]">Data do Registro:</strong> <span>{new Date(drillDownItem.created_at || Date.now()).toLocaleDateString('pt-BR')}</span></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
