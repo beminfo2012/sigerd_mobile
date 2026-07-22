@@ -227,82 +227,89 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel }) 
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center">
-            <div className="w-full max-w-lg bg-white dark:bg-slate-900 overflow-hidden flex flex-col h-full sm:h-[90vh] sm:rounded-2xl">
-                <div className="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
-                    <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-sm">Laboratório V2 (Análise de Imagem)</h2>
-                    <button type="button" onClick={onCancel} className="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
+        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4">
+            <div className="w-full max-w-lg bg-white dark:bg-slate-900 overflow-hidden flex flex-col h-full max-h-full sm:max-h-[92vh] sm:rounded-2xl shadow-2xl">
+                {/* Header */}
+                <div className="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800 shrink-0">
+                    <div>
+                        <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-sm">Laboratório V2 (Análise de Imagem)</h2>
+                        <p className="text-[11px] text-slate-500">Fissurômetro digital de campo</p>
+                    </div>
+                    <button type="button" onClick={onCancel} className="p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
                         <X size={20} />
                     </button>
                 </div>
                 
-                <div className="flex-1 overflow-hidden bg-neutral-900 relative flex items-center justify-center p-2 sm:p-4">
+                {/* Canvas Area */}
+                <div className="flex-1 overflow-hidden bg-neutral-900 relative flex items-center justify-center p-2 min-h-[250px]">
                     {/* Tooltip Instruction */}
                     {mode === 'calibrating' && (
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-10 whitespace-nowrap">
-                            Clique nos 2 extremos do marcador (40mm)
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-10 whitespace-nowrap animate-bounce">
+                            Clique em 2 pontos no quadrado/marcador do cartão (40mm)
                         </div>
                     )}
                     {mode === 'measuring' && (
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-10 whitespace-nowrap">
-                            Clique nas 2 bordas da abertura para medir
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-10 whitespace-nowrap animate-bounce">
+                            Clique nas 2 bordas da abertura para medir a fissura
                         </div>
                     )}
 
                     <canvas 
                         ref={canvasRef} 
                         onClick={handleCanvasClick}
-                        className={`max-w-full shadow-2xl rounded ${mode !== 'idle' ? 'cursor-crosshair' : ''}`}
+                        className={`max-w-full max-h-full object-contain shadow-2xl rounded ${mode !== 'idle' ? 'cursor-crosshair' : ''}`}
                     />
                     
                     {analyzing && (
-                        <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white backdrop-blur-sm">
+                        <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white backdrop-blur-sm z-20">
                             <RefreshCw className="animate-spin mb-3 text-blue-400" size={36} />
                             <p className="font-mono text-sm tracking-wider">RODANDO VISÃO COMPUTACIONAL...</p>
                         </div>
                     )}
                 </div>
 
-                <div className="p-4 sm:p-5 border-t dark:border-slate-800 space-y-4 bg-white dark:bg-slate-900">
+                {/* Control Panel (Scrollable to guarantee access on small screens) */}
+                <div className="p-4 border-t dark:border-slate-800 space-y-3 bg-white dark:bg-slate-900 shrink-0 overflow-y-auto max-h-[45vh]">
                     {!scalePxPerMm ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             <p className="text-xs text-center text-slate-500 font-medium">
-                                Passo 1: O sistema precisa encontrar o cartão para gerar a escala.
+                                Passo 1: Calibre a escala usando o quadrado do cartão de referência (40mm).
                             </p>
-                            <button 
-                                type="button"
-                                onClick={detectArUco}
-                                disabled={analyzing}
-                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex justify-center items-center gap-2 disabled:opacity-50 transition-colors"
-                            >
-                                <Camera size={18} /> Detectar Cartão (Auto-IA)
-                            </button>
-                            <div className="flex items-center gap-3">
-                                <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
-                                <span className="text-xs text-slate-400 font-bold uppercase">Ou</span>
-                                <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button 
+                                    type="button"
+                                    onClick={() => { setMode('calibrating'); setPoints([]); }}
+                                    className={`py-3 px-4 rounded-xl font-bold text-sm flex justify-center items-center gap-2 border-2 transition-all ${mode === 'calibrating' ? 'border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 ring-2 ring-amber-400/50' : 'border-amber-500/80 text-amber-600 bg-amber-50/50 dark:border-amber-700 dark:text-amber-300 dark:bg-amber-950/20 hover:bg-amber-100/50'}`}
+                                >
+                                    <Maximize size={18} /> Calibrar Manualmente
+                                </button>
+
+                                <button 
+                                    type="button"
+                                    onClick={detectArUco}
+                                    disabled={analyzing}
+                                    className="py-3 px-4 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl font-bold text-sm flex justify-center items-center gap-2 disabled:opacity-50 transition-colors"
+                                >
+                                    <Camera size={18} /> Detectar Auto-IA
+                                </button>
                             </div>
-                            <button 
-                                type="button"
-                                onClick={() => { setMode('calibrating'); setPoints([]); }}
-                                className={`w-full py-3 rounded-xl font-bold text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'calibrating' ? 'border-amber-500 text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                            >
-                                <Maximize size={18} /> Calibrar Manualmente (Régua)
-                            </button>
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <div className="flex justify-between items-center text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-lg border dark:border-slate-700">
-                                <span className="font-mono">Escala: {(1/scalePxPerMm).toFixed(3)} mm/px</span>
-                                <button type="button" onClick={() => {setScalePxPerMm(null); setMeasurements([]); setMode('idle'); setPoints([]);}} className="text-red-500 font-bold hover:underline">
-                                    Desfazer
+                            <div className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-300 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                                <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                                    ✓ Escala Calibrada: {(1/scalePxPerMm).toFixed(3)} mm/px
+                                </span>
+                                <button type="button" onClick={() => {setScalePxPerMm(null); setMeasurements([]); setMode('idle'); setPoints([]);}} className="text-red-500 font-bold hover:underline ml-2">
+                                    Recalibrar
                                 </button>
                             </div>
                             
                             <button 
                                 type="button"
                                 onClick={() => { setMode('measuring'); setPoints([]); }}
-                                className={`w-full py-3 rounded-xl font-bold text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'measuring' ? 'border-indigo-500 text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-900/20'}`}
+                                className={`w-full py-3 rounded-xl font-bold text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'measuring' ? 'border-indigo-500 text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 ring-2 ring-indigo-400/50' : 'border-indigo-600 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-500 dark:text-indigo-300 hover:bg-indigo-100'}`}
                             >
                                 <MousePointer2 size={18} /> Adicionar Medição (Clicar 2 pontos)
                             </button>
@@ -313,9 +320,9 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel }) 
                         <button 
                             type="button"
                             onClick={handleSave}
-                            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-emerald-600/20 mt-4 transition-transform active:scale-95"
+                            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-emerald-600/20 transition-transform active:scale-95"
                         >
-                            <Check size={20} /> Concluir e Anexar Laudo
+                            <Check size={20} /> Concluir e Anexar Laudo ({measurements.length} {measurements.length === 1 ? 'medição' : 'medições'})
                         </button>
                     )}
                 </div>
