@@ -115,6 +115,10 @@ const NoprerModule = lazy(() => import('./pages/Noprer'))
 // NORTIS
 const NortisModule = lazy(() => import('./pages/Nortis'))
 
+// Business Intelligence (BI)
+const BusinessIntelligence = lazy(() => import('./pages/BI'))
+
+
 
 
 // Create context for user profile
@@ -356,6 +360,11 @@ const AppContent = ({
                                 <Route path="/monitoramento/gestao" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <ManagementDashboard />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/bi" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Secretário']}>
+                                        <BusinessIntelligence />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/usuarios" element={

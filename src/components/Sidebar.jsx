@@ -127,6 +127,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: AGENT_ROLES
         },
         {
+            label: 'Business Intelligence',
+            icon: Activity,
+            path: '/bi',
+            roles: AGENT_ROLES
+        },
+        {
             label: 'GeoRescue',
             icon: Map,
             path: '/georescue',

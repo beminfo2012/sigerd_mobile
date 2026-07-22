@@ -347,6 +347,22 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     </h3>
                     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl overflow-hidden flex flex-col">
                         
+                        <button
+                            onClick={() => navigate('/bi')}
+                            className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                        >
+                            <div className="flex items-center">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-2xl mr-4">
+                                    <BarChart3 size={22} />
+                                </div>
+                                <div className="flex-1">
+                                    <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Business Intelligence (BI)</span>
+                                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-tight">Painel Analítico & Indicadores</span>
+                                </div>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[9px] font-black px-2 py-1 rounded-lg uppercase">BI</div>
+                        </button>
+                        
                         {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin'].includes(userProfile?.role) && (
                             <button
                                 onClick={() => navigate('/contingencia')}

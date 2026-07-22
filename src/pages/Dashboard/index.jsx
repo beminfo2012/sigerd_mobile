@@ -14,6 +14,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import OrthofotsLayer from '../../components/OrthofotsLayer'
+import { BILinkFooter } from '../../components/dashboard/BILinkFooter'
+
 
 const createCustomPin = (color) => {
     return L.divIcon({
@@ -1923,7 +1925,7 @@ const WebViewDashboardView = ({
                         <AlertasCemadenCard navigate={navigate} />
 
                         {/* Card 4: Vistorias */}
-                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
+                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-center gap-2">
                                     <ClipboardList size={16} className="text-blue-600 opacity-70" />
@@ -1932,6 +1934,7 @@ const WebViewDashboardView = ({
                                 <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{data.stats.totalVistorias}</span>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">Total Registrado</p>
                             </div>
+                            <BILinkFooter modulo="vistorias" contexto={{ visao: 'tipologia' }} />
                         </div>
 
                         {/* Card 5: Pluviometria */}
@@ -2232,6 +2235,8 @@ const WebViewDashboardView = ({
                                 </div>
                             )}
                         </div>
+
+                        <BILinkFooter modulo={viewMode} contexto={{ visao: chartMode }} />
 
                         {/* Pluviômetros (Relocado para o final da lista situacional) */}
                         <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
