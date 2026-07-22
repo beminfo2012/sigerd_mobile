@@ -5,7 +5,8 @@ import { CHECKLIST_DATA } from '../../data/checklists'
 import NortisQuickSearch from '../../components/NortisQuickSearch'
 import NortisIAValidation from '../../components/NortisIAValidation'
 import { nortisIaService } from '../../services/nortisIaService'
-import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal } from '../../services/db'
+import { saveVistoriaOffline, getRemoteVistoriasCache, getAllVistoriasLocal, deleteVistoriaLocal, getDespachosByVistoriaId, deleteDespachoLocal } from '../../services/db'
+import { generateDespachoPDF } from '../../utils/despachoGenerator'
 import { supabase } from '../../services/supabase'
 import FileInput from '../../components/FileInput'
 import { UserContext } from '../../App'
@@ -387,6 +388,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' ou 'apoio'
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showDespachoModal, setShowDespachoModal] = useState(false)
+    const [despachosHistorico, setDespachosHistorico] = useState([])
+    const [selectedDespachoForEdit, setSelectedDespachoForEdit] = useState(null)
     const [editingPhotoIndex, setEditingPhotoIndex] = useState(null)
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null)
 
@@ -400,6 +403,25 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [sugestoesIA, setSugestoesIA] = useState(null);
     const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
     const [analyzingIA, setAnalyzingIA] = useState(false);
+
+    // Carregar histórico de despachos vinculados
+    const loadDespachos = async () => {
+        const vId = formData?.vistoriaId || formData?.id || initialData?.vistoriaId || initialData?.id;
+        const proc = formData?.processo || formData?.processo_origem || initialData?.processo;
+        const list = await getDespachosByVistoriaId(vId, proc);
+        setDespachosHistorico(list);
+    };
+
+    const handleDeleteDespacho = async (despacho) => {
+        if (window.confirm(`Deseja realmente excluir o Despacho Nº ${despacho.despacho_id || despacho.despachoId}?`)) {
+            await deleteDespachoLocal(despacho.id);
+            await loadDespachos();
+        }
+    };
+
+    useEffect(() => {
+        loadDespachos();
+    }, [formData?.vistoriaId, formData?.id, formData?.processo, initialData]);
 
     // Update agent info when user profile loads (if fields are empty)
     useEffect(() => {
@@ -2606,6 +2628,116 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         </div>
                     </Card>
 
+                    {/* Seção: Vinculação ao Processo & Histórico de Despachos */}
+                    <Card className="p-6 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 rounded-3xl">
+                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+                            <div>
+                                <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                    <BookOpen size={20} className="text-blue-600 dark:text-blue-400" />
+                                    Histórico do Processo & Despachos
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    Registro encadeado de vistorias e despachos oficiais emitidos
+                                </p>
+                            </div>
+                            {['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDespachoModal(true)}
+                                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/20"
+                                >
+                                    <FileText size={16} /> + Novo Despacho
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Árvore / Linha do Tempo do Processo */}
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-4 font-mono text-xs text-slate-700 dark:text-slate-300">
+                            <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold">
+                                <span className="text-blue-600">Processo:</span> {formData?.processo || formData?.processo_origem || '2026.001234'}
+                            </div>
+
+                            <div className="pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-3 font-sans">
+                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <div className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                                        <ClipboardCheck size={16} className="text-emerald-500" />
+                                        Vistoria {formData?.vistoriaId || formData?.id || '081/2026'}
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                                        <span>📷 {formData?.fotos?.length || 0} Fotos</span>
+                                        <span>📐 Croqui {formData?.croquiDataUrl ? 'Anexado' : 'Não incluso'}</span>
+                                        <span>📄 PDF da Vistoria Disponível</span>
+                                    </div>
+                                </div>
+
+                                {/* Despachos Vinculados */}
+                                {despachosHistorico.length === 0 ? (
+                                    <div className="text-[11px] text-slate-400 italic pl-2">
+                                        Nenhum despacho emitido para esta vistoria até o momento.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 pt-1">
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block pl-2">
+                                            Despachos Emitidos ({despachosHistorico.length})
+                                        </span>
+                                        {despachosHistorico.map((d, index) => (
+                                            <div 
+                                                key={d.id || index}
+                                                className="bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                            >
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-mono font-bold text-xs bg-blue-600 text-white px-2 py-0.5 rounded">
+                                                            Nº {d.despacho_id || d.despachoId}
+                                                        </span>
+                                                        <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                                                            {d.tipoDespacho || 'Despacho Administrativo'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-600 dark:text-slate-400 flex flex-wrap gap-3">
+                                                        <span>📍 <b>Destino:</b> {Array.isArray(d.destino) ? d.destino.join(', ') : d.destino}</span>
+                                                        <span>👤 <b>Emissor:</b> {d.responsavel}</span>
+                                                        <span>📅 {new Date(d.createdAt || d.dataEmissao || Date.now()).toLocaleDateString('pt-BR')}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 self-start sm:self-center shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedDespachoForEdit(d);
+                                                            setShowDespachoModal(true);
+                                                        }}
+                                                        className="px-2.5 py-1.5 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                                                        title="Visualizar ou Editar Despacho"
+                                                    >
+                                                        <Edit2 size={13} /> Editar
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => generateDespachoPDF(d)}
+                                                        className="px-2.5 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                                                        title="Reimprimir PDF Oficial"
+                                                    >
+                                                        <Printer size={13} /> PDF
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeleteDespacho(d)}
+                                                        className="px-2.5 py-1.5 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                                                        title="Excluir Despacho"
+                                                    >
+                                                        <Trash2 size={13} /> Excluir
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
+
                     {/* Botões de Ação */}
                     <div className="pt-8 space-y-4">
                         <Button
@@ -2647,7 +2779,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
                     <div className="fixed bottom-24 right-4 z-40">
                         <button
-                            onClick={() => setShowDespachoModal(true)}
+                            onClick={() => {
+                                setSelectedDespachoForEdit(null);
+                                setShowDespachoModal(true);
+                            }}
                             className="bg-slate-800 text-white p-4 rounded-full shadow-xl shadow-slate-900/30 flex items-center justify-center animate-in zoom-in spin-in-12 duration-500 hover:scale-110 transition-transform"
                             title="Gerar Despacho Administrativo"
                         >
@@ -2662,9 +2797,14 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
 
             <DespachoModal
                 isOpen={showDespachoModal}
-                onClose={() => setShowDespachoModal(false)}
+                onClose={() => {
+                    setShowDespachoModal(false);
+                    setSelectedDespachoForEdit(null);
+                }}
                 vistoriaData={formData}
                 userProfile={userProfile}
+                initialDespacho={selectedDespachoForEdit}
+                onDespachoCreated={loadDespachos}
             />
 
             {/* AI Comparison Modal - Safe & Explicit */}

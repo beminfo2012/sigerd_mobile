@@ -1741,17 +1741,21 @@ export const getInstallationsCount = async () => {
 
 export const saveDespachoOffline = async (data) => {
     const db = await initDB()
-    const id = await db.put('despachos', {
+    const record = {
         ...data,
-        createdAt: new Date().toISOString(),
+        despacho_id: data.despachoId || data.despacho_id,
+        vistoria_id: data.vistoriaRef || data.vistoria_id,
+        createdAt: data.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         synced: false
-    })
-
-    // Try sync if online
-    if (navigator.onLine) {
-        // await syncSingleItem('despachos', item, db) // Future implementation
     }
+    const id = await db.put('despachos', record)
     return id
+}
+
+export const deleteDespachoLocal = async (id) => {
+    const db = await initDB()
+    return db.delete('despachos', id)
 }
 
 export const getNextDespachoId = async () => {
@@ -1763,17 +1767,37 @@ export const getNextDespachoId = async () => {
     let maxNum = 0
 
     all.forEach(d => {
-        if (d.despacho_id && d.despacho_id.includes(`/${currentYear}`)) {
-            const num = parseInt(d.despacho_id.split('/')[0])
+        const idStr = d.despacho_id || d.despachoId;
+        if (idStr && idStr.includes(`/${currentYear}`)) {
+            const num = parseInt(idStr.split('/')[0])
             if (!isNaN(num) && num > maxNum) maxNum = num
         }
     })
 
-    // 2. Mock check for remote (In real app, we'd query Supabase count)
-    // For now, local consistency is enough for the requested scope
-
     return `${(maxNum + 1).toString().padStart(3, '0')}/${currentYear}`
 }
+
+export const getDespachosByVistoriaId = async (vistoriaId, processo) => {
+    const db = await initDB();
+    const all = await db.getAll('despachos');
+    if (!vistoriaId && !processo) {
+        return all.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+
+    const clean = (val) => val ? String(val).replace(/[^\w]/g, '').toLowerCase() : '';
+    const targetVistoria = clean(vistoriaId);
+    const targetProcesso = clean(processo);
+
+    return all.filter(d => {
+        const dVistoria = clean(d.vistoriaRef || d.vistoria_id);
+        const dProcesso = clean(d.processo);
+
+        if (targetVistoria && dVistoria && (dVistoria === targetVistoria || dVistoria.includes(targetVistoria) || targetVistoria.includes(dVistoria))) return true;
+        if (targetProcesso && dProcesso && (dProcesso === targetProcesso || dProcesso.includes(targetProcesso) || targetProcesso.includes(dProcesso))) return true;
+        return false;
+    }).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
 export const getRemoteVistoriasCache = async () => {
     const db = await initDB()
     return db.getAll('remote_vistorias_cache')
