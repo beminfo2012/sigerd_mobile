@@ -27,14 +27,11 @@ const Pluviometros = lazy(() => import('./pages/Pluviometros'))
 const Interdicao = lazy(() => import('./pages/Interdicao'))
 const Alerts = lazy(() => import('./pages/Alerts'))
 const GeoDashboard = lazy(() => import('./pages/Monitoramento/GeoDashboard'))
-const RiskDashboard = lazy(() => import('./pages/Monitoramento/RiskDashboard'))
 const ChecklistSaida = lazy(() => import('./pages/Checklist/ChecklistSaida'))
 const VistoriaPrint = lazy(() => import('./pages/Vistorias/VistoriaPrint'))
 const RelatorioSituacionalPrint = lazy(() => import('./pages/Dashboard/RelatorioSituacionalPrint'))
 const InterdicaoPrint = lazy(() => import('./pages/Interdicao/InterdicaoPrint'))
 const DesinterdicaoPrint = lazy(() => import('./pages/Interdicao/DesinterdicaoPrint'))
-const ManagementDashboard = lazy(() => import('./pages/Monitoramento/ManagementDashboard'))
-const MonitoramentoMenu = lazy(() => import('./pages/Monitoramento/MonitoramentoMenu'))
 const LegadoDashboard = lazy(() => import('./pages/Legado'))
 const Agenda = lazy(() => import('./pages/Agenda'))
 
@@ -349,17 +346,7 @@ const AppContent = ({
                                 } />
                                 <Route path="/monitoramento" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <MonitoramentoMenu />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/monitoramento/riscos" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <RiskDashboard hideHeader={location.search.includes('fullscreen=true')} />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/monitoramento/gestao" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <ManagementDashboard />
+                                        <Pluviometros />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/bi" element={

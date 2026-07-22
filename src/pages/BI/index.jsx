@@ -6,7 +6,7 @@ import {
   PieChart as PieIcon, CheckCircle2, ArrowUpRight, ArrowDownRight, Compass,
   Shield, AlertOctagon, HelpCircle, FileCheck, Landmark, Droplets, Info,
   Clock, CheckSquare, ChevronRight, Search, ExternalLink, Ban, AlertCircle,
-  Users, Home, UserX
+  Users, Home, UserX, ArrowLeft
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -101,9 +101,13 @@ export default function BusinessIntelligence() {
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black shadow-md shadow-blue-500/20">
-              <BarChart3 size={22} />
-            </div>
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700"
+              title="Voltar"
+            >
+              <ArrowLeft size={20} />
+            </button>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-black tracking-tight leading-none text-slate-900 dark:text-white uppercase">
