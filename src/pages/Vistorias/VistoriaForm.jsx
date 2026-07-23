@@ -1128,9 +1128,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         reader.readAsDataURL(file);
     };
 
-    const handleValidarAbertura = (id, largura, fotoAnotada = null) => {
+    const handleValidarAbertura = (id, largura, fotoAnotada = null, larguraAnterior = null) => {
         if (!largura || isNaN(largura)) return;
         const val = parseFloat(largura);
+        const antVal = (larguraAnterior && !isNaN(larguraAnterior)) ? parseFloat(larguraAnterior) : null;
         setFormData(prev => ({
             ...prev,
             aberturas: prev.aberturas.map(ab => {
@@ -1138,6 +1139,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     return {
                         ...ab,
                         largura_mm_medida: val,
+                        ...(antVal !== null && { largura_anterior_mm: antVal }),
                         ...(fotoAnotada && { foto_anotada_url: fotoAnotada }),
                         classificacao_patologia: classificarAbertura(val),
                         validado_por_nome: userProfile?.name || 'Agente Defesa Civil',
@@ -1147,7 +1149,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 return ab;
             })
         }));
-        toast.success('Ação de Sucesso', 'Medição validada com sucesso');
+        toast.success('Ação de Sucesso', 'Medição e monitoramento de evolução registrados');
     };
 
     const handleSubmit = async (e) => {

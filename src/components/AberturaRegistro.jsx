@@ -1,27 +1,29 @@
 import React, { useState } from "react";
 import FissurometroAnalyzer from "./FissurometroAnalyzer";
 import MarcadorQRModal from "./MarcadorQRModal";
-import { Camera, QrCode, Check, ShieldCheck } from "lucide-react";
-import { classificarAbertura, obterRotuloClassificacao } from "../services/classificacaoPatologia";
+import { Camera, QrCode, Check, ShieldCheck, Activity, TrendingUp, AlertTriangle } from "lucide-react";
+import { classificarAbertura, obterRotuloClassificacao, analisarEvolucaoAbertura } from "../services/classificacaoPatologia";
 
 export default function AberturaRegistro({ registro, onValidar }) {
   const [aba, setAba] = useState("original");
   const [largura, setLargura] = useState(registro.largura_mm_medida ?? "");
+  const [larguraAnterior, setLarguraAnterior] = useState(registro.largura_anterior_mm ?? "");
   const [fotoAnotadaUrl, setFotoAnotadaUrl] = useState(registro.foto_anotada_url || null);
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
 
   const classificacaoAtual = largura ? classificarAbertura(largura) : registro.classificacao_patologia;
+  const evolucao = (largura && larguraAnterior) ? analisarEvolucaoAbertura(largura, larguraAnterior) : null;
 
   const handleConfirmarMedicao = () => {
-    onValidar(registro.id, largura, fotoAnotadaUrl);
+    onValidar(registro.id, largura, fotoAnotadaUrl, larguraAnterior);
   };
 
   return (
     <div className="max-w-sm mx-auto border rounded-xl overflow-hidden bg-white dark:bg-slate-800 dark:border-slate-700 shadow-sm">
       <div className="p-4 border-b dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
         <div>
-          <p className="text-[11px] font-mono font-bold uppercase text-slate-500 dark:text-slate-400">Abertura {registro.codigo_ponto}</p>
+          <p className="text-[11px] font-mono font-bold uppercase text-slate-500 dark:text-slate-400">Ponto {registro.codigo_ponto}</p>
           <h1 className="text-sm font-bold dark:text-slate-200 line-clamp-1">{registro.localizacao_descricao || "Ponto de Monitoramento"}</h1>
         </div>
         <button
@@ -78,26 +80,69 @@ export default function AberturaRegistro({ registro, onValidar }) {
       </div>
 
       <div className="p-4 space-y-3">
-        <div>
+        {/* Medição Atual e Medição Anterior (Histórico de Abertura) */}
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] uppercase text-neutral-500 dark:text-slate-400 font-bold mb-1 block">Leitura Anterior (mm)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={larguraAnterior}
+              onChange={(e) => setLarguraAnterior(e.target.value)}
+              className="border rounded-lg px-2.5 py-1.5 w-full text-xs font-mono font-bold dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200"
+              placeholder="Ex: 1.50"
+            />
+          </div>
+
+          <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs uppercase text-neutral-500 dark:text-slate-400 font-bold">Medição (mm)</label>
-              {classificacaoAtual && (
-                <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                  {obterRotuloClassificacao(classificacaoAtual)}
-                </span>
-              )}
+              <label className="text-[10px] uppercase text-indigo-600 dark:text-indigo-400 font-bold block">Leitura Atual (mm)</label>
             </div>
             <input
               type="number"
               step="0.01"
               value={largura}
               onChange={(e) => setLargura(e.target.value)}
-              className="border rounded-lg px-3 py-2 w-full text-sm font-mono font-bold dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200"
+              className="border-2 border-indigo-500 rounded-lg px-2.5 py-1.5 w-full text-xs font-mono font-bold dark:bg-slate-900 dark:border-indigo-500 dark:text-slate-100"
               placeholder="0.00"
             />
+          </div>
         </div>
 
-        <div className="flex gap-2">
+        {/* Badge da Classificação IBAPE-MG */}
+        {classificacaoAtual && (
+          <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-900 p-2 rounded-lg text-xs font-medium border dark:border-slate-700">
+            <span className="text-slate-500 dark:text-slate-400 text-[11px]">Classificação IBAPE-MG:</span>
+            <span className="font-bold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+              {obterRotuloClassificacao(classificacaoAtual)}
+            </span>
+          </div>
+        )}
+
+        {/* Painel de Monitoramento de Evolução Estrutural (Abertura da Trinca/Fissura) */}
+        {evolucao && (
+          <div className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+            evolucao.status === 'expansao' 
+              ? 'bg-red-50 text-red-900 border-red-200 dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-300' 
+              : evolucao.status === 'estavel' 
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/60 dark:text-emerald-300' 
+                : 'bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800/60 dark:text-blue-300'
+          }`}>
+            <div className="flex items-center justify-between font-bold">
+              <span className="flex items-center gap-1.5 uppercase text-[10px] tracking-wider">
+                <Activity size={14} /> Monitoramento de Evolução
+              </span>
+              <span className="font-mono text-xs px-2 py-0.5 rounded bg-white/70 dark:bg-black/30 border border-current">
+                {evolucao.rotulo}
+              </span>
+            </div>
+            <p className="text-[11px] leading-tight font-medium">
+              {evolucao.alerta}
+            </p>
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-1">
             <button
               type="button"
               onClick={handleConfirmarMedicao}
@@ -114,15 +159,6 @@ export default function AberturaRegistro({ registro, onValidar }) {
               <Camera size={16} /> Lab V2
             </button>
         </div>
-
-        {classificacaoAtual && (
-          <div className="text-xs bg-orange-50 border border-orange-200 text-orange-800 dark:bg-orange-950/30 dark:border-orange-800/50 dark:text-orange-300 rounded-lg p-2.5">
-            <b>{obterRotuloClassificacao(classificacaoAtual)}</b> (ref. IBAPE-MG)
-            <p className="text-[10px] text-orange-700 dark:text-orange-400/80 mt-1 leading-tight">
-              Classificação descritiva com base na abertura. Monitorar evolução periódica.
-            </p>
-          </div>
-        )}
 
         {registro.validado_por && (
           <div className="text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1.5">
@@ -141,7 +177,7 @@ export default function AberturaRegistro({ registro, onValidar }) {
                   setFotoAnotadaUrl(anotadaBase64);
                   setAba("anotada");
                   setShowAnalyzer(false);
-                  onValidar(registro.id, mm, anotadaBase64);
+                  onValidar(registro.id, mm, anotadaBase64, larguraAnterior);
               }}
           />
       )}
