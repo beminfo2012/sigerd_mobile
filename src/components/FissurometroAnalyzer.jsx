@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Maximize, Check, X, MousePointer2, RefreshCw, HelpCircle, CornerDownRight, QrCode } from 'lucide-react';
+import { Camera, Maximize, Check, X, MousePointer2, RefreshCw, QrCode, CornerDownRight, RotateCcw } from 'lucide-react';
 import MarcadorQRModal from './MarcadorQRModal';
 
 export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, defaultQrSizeMm = 30.0 }) {
@@ -30,7 +30,6 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         script.src = 'https://docs.opencv.org/4.8.0/opencv.js';
         script.async = true;
         script.onload = () => {
-            // Pequeno atraso para garantir que a memória do WASM/Emscripten inicialize totalmente
             const checkCv = setInterval(() => {
                 if (window.cv && window.cv.Mat) {
                     setCvLoaded(true);
@@ -54,6 +53,13 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         img.src = fotoUrl;
     }, [fotoUrl]);
 
+    // Executar detecção automática do QR assim que a imagem e o OpenCV estiverem prontos
+    useEffect(() => {
+        if (cvLoaded && imageRef.current && !pxPerMm && !analyzing) {
+            detectQrAuto();
+        }
+    }, [cvLoaded]);
+
     // Redesenhar canvas quando o estado mudar
     useEffect(() => {
         redrawCanvas();
@@ -62,7 +68,6 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
     // Função de transformação de ponto (x,y) da foto original para o espaço retificado através de Homografia H (3x3)
     const transformPointWithHomography = (pt, H) => {
         if (!H) return pt;
-        // H é matriz 3x3: H00 H01 H02 / H10 H11 H12 / H20 H21 H22
         const x = pt.x;
         const y = pt.y;
         const X = H[0] * x + H[1] * y + H[2];
@@ -74,8 +79,6 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
 
     // Calcular matriz de homografia 3x3 a partir de 4 pontos de origem -> 4 pontos de destino (DLT algorithm)
     const calculateHomographyDLT = (srcPts, dstPts) => {
-        // srcPts: [{x,y}, {x,y}, {x,y}, {x,y}]
-        // dstPts: [{x,y}, {x,y}, {x,y}, {x,y}]
         if (window.cv && window.cv.getPerspectiveTransform) {
             try {
                 const cv = window.cv;
@@ -99,11 +102,11 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 srcMat.delete(); dstMat.delete(); hMat.delete();
                 return H;
             } catch (err) {
-                console.warn("[Homography] Error using OpenCV.js getPerspectiveTransform, falling back to JS solver:", err);
+                console.warn("[Homography] OpenCV error:", err);
             }
         }
 
-        // Native JS Fallback for Homography
+        // JS Fallback for Homography DLT
         const A = [];
         for (let i = 0; i < 4; i++) {
             const xs = srcPts[i].x, ys = srcPts[i].y;
@@ -112,7 +115,6 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
             A.push([0, 0, 0, -xs, -ys, -1, xs * yd, ys * yd, yd]);
         }
         
-        // Solve Ah = 0 via Gaussian elimination setting h8 = 1
         const M = A.map(row => [...row]);
         for (let i = 0; i < 8; i++) {
             let maxRow = i;
@@ -165,7 +167,6 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         
         // Desenhar pontos de interação atual
         if (mode === 'calibrating_qr4') {
-            // Desenhar polígono/pontos dos cantos do QR
             points.forEach((pt, idx) => {
                 drawPoint(ctx, pt.x * scale, pt.y * scale, '#F59E0B', `${idx + 1}`);
             });
@@ -185,7 +186,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 ctx.stroke();
             }
         } else if (points.length === 1) {
-            drawPoint(ctx, points[0].x * scale, points[0].y * scale, '#FF5A1F');
+            drawPoint(ctx, points[0].x * scale, points[0].y * scale, '#FF5A1F', '1');
         } else if (points.length === 2) {
             if (mode === 'calibrating_line2') {
                 drawLine(ctx, points[0].x * scale, points[0].y * scale, points[1].x * scale, points[1].y * scale, '#2E7D46');
@@ -198,7 +199,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
 
     const drawPoint = (ctx, x, y, color, label = '') => {
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
         ctx.fillStyle = color;
         ctx.fill();
         ctx.lineWidth = 2;
@@ -208,7 +209,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         if (label) {
             ctx.fillStyle = color;
             ctx.font = 'bold 12px sans-serif';
-            ctx.fillText(label, x + 8, y - 8);
+            ctx.fillText(label, x + 10, y - 10);
         }
     };
 
@@ -232,9 +233,9 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         const midY = (y1 + y2) / 2;
         ctx.fillStyle = 'rgba(255, 90, 31, 0.95)';
         const text = `${mm} mm`;
-        ctx.font = 'bold 13px monospace';
+        ctx.font = 'bold 14px monospace';
         const textWidth = ctx.measureText(text).width;
-        ctx.fillRect(midX - textWidth/2 - 6, midY - 14, textWidth + 12, 22);
+        ctx.fillRect(midX - textWidth/2 - 8, midY - 14, textWidth + 16, 24);
         ctx.fillStyle = '#FFF';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -244,52 +245,68 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
     // Calcular distância em mm entre 2 pontos na imagem original
     const calculateDistanceInMm = (p1, p2) => {
         if (homographyMatrix && pxPerMm) {
-            // Usar retificação de perspectiva via Homografia
             const p1Ret = transformPointWithHomography(p1, homographyMatrix);
             const p2Ret = transformPointWithHomography(p2, homographyMatrix);
             const distPxRet = Math.hypot(p2Ret.x - p1Ret.x, p2Ret.y - p1Ret.y);
             return (distPxRet / pxPerMm).toFixed(2);
         } else if (pxPerMm) {
-            // Fallback para escala linear simples
             const distPx = Math.hypot(p2.x - p1.x, p2.y - p1.y);
             return (distPx / pxPerMm).toFixed(2);
         }
         return '?';
     };
 
-    const handleCanvasClick = (e) => {
-        if (mode === 'idle') return;
+    const handleCanvasInteraction = (clientX, clientY) => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const rect = canvas.getBoundingClientRect();
         const viewScale = parseFloat(canvas.dataset.scale);
-        const x = (e.clientX - rect.left) / viewScale;
-        const y = (e.clientY - rect.top) / viewScale;
+        const x = (clientX - rect.left) / viewScale;
+        const y = (clientY - rect.top) / viewScale;
+
+        // Se o estado for idle mas a escala já estiver calibrada, muda para modo de medição
+        let currentMode = mode;
+        if (currentMode === 'idle' && pxPerMm) {
+            currentMode = 'measuring';
+            setMode('measuring');
+        }
+
+        if (currentMode === 'idle') return;
 
         const newPoints = [...points, { x, y }];
         setPoints(newPoints);
 
-        if (mode === 'calibrating_qr4') {
+        if (currentMode === 'calibrating_qr4') {
             if (newPoints.length === 4) {
-                // Calibração por 4 cantos do QR (TL, TR, BR, BL)
                 apply4PointHomography(newPoints, qrSizeMm);
-                setMode('idle');
-                setPoints([]);
             }
         } else if (newPoints.length === 2) {
-            if (mode === 'calibrating_line2') {
-                // Calibração por linha de tamanho conhecido (ex: 30mm)
+            if (currentMode === 'calibrating_line2') {
                 const distPx = Math.hypot(newPoints[1].x - newPoints[0].x, newPoints[1].y - newPoints[0].y);
                 setPxPerMm(distPx / qrSizeMm);
                 setHomographyMatrix(null);
-                setMode('idle');
+                setMode('measuring');
                 setPoints([]);
-                setStatusMessage(`Calibração linear concluída: ${(distPx / qrSizeMm).toFixed(2)} px/mm`);
-            } else if (mode === 'measuring') {
+                setStatusMessage(`✅ Escala linear calibrada (${(distPx / qrSizeMm).toFixed(2)} px/mm). Clique nas 2 bordas da fissura.`);
+            } else if (currentMode === 'measuring') {
                 const distMm = calculateDistanceInMm(newPoints[0], newPoints[1]);
-                setMeasurements([...measurements, { p1: newPoints[0], p2: newPoints[1], mm: distMm }]);
-                setMode('idle');
+                setMeasurements(prev => [...prev, { p1: newPoints[0], p2: newPoints[1], mm: distMm }]);
                 setPoints([]);
+                // Continua no modo de medição para permitir tocar em outros pontos se desejar
+                setMode('measuring');
+                setStatusMessage(`✓ Medição registrada: ${distMm} mm. Pode adicionar outra medição ou clicar em Concluir.`);
             }
+        }
+    };
+
+    const handleCanvasClick = (e) => {
+        handleCanvasInteraction(e.clientX, e.clientY);
+    };
+
+    const handleCanvasTouch = (e) => {
+        if (e.touches && e.touches[0]) {
+            e.preventDefault();
+            handleCanvasInteraction(e.touches[0].clientX, e.touches[0].clientY);
         }
     };
 
@@ -309,7 +326,9 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         const H = calculateHomographyDLT(srcCorners, dstCorners);
         setHomographyMatrix(H);
         setPxPerMm(targetPxPerMm);
-        setStatusMessage(`Homografia calibrada com sucesso! (${realMmSize}mm QR retificado)`);
+        setMode('measuring'); // Entra imediatamente em modo de medição
+        setPoints([]);
+        setStatusMessage(`✅ Homografia calibrada com sucesso! Clique nas 2 bordas da fissura na imagem para medir.`);
     };
 
     // Detecção Automática do QR Marcador via OpenCV.js QRCodeDetector
@@ -354,7 +373,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 }
             }
 
-            // 2. Fallback para ArUco / Contornos de Quadrado se QRCodeDetector não encontrar
+            // 2. Fallback para Contornos de Quadrado se QRCodeDetector não encontrar
             if (!detected && cv.findContours) {
                 const gray = new cv.Mat();
                 cv.cvtColor(srcMat, gray, cv.COLOR_RGBA2GRAY);
@@ -405,18 +424,24 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
             if (detected && corners.length === 4) {
                 apply4PointHomography(corners, qrSizeMm);
             } else {
-                alert("Nenhum Cartão QR (SIGERD:CRFP:v1) foi detectado com clareza. Por favor, use 'Calibrar Manualmente' para marcar os 4 cantos do cartão.");
+                setStatusMessage("⚠️ Cartão QR não detectado automaticamente. Clique em 'Calibrar 4 Cantos' para marcar o cartão na foto.");
             }
         } catch (err) {
             console.error("[Fissurometro] Erro na detecção automática:", err);
-            alert("A detecção automática falhou ou o módulo não está disponível neste navegador. Use a calibração manual por 4 cantos.");
+            setStatusMessage("⚠️ Não foi possível autodetectar o cartão. Use a calibração manual de 4 cantos.");
         }
         setAnalyzing(false);
     };
 
+    const handleUndoLastMeasurement = () => {
+        if (measurements.length > 0) {
+            setMeasurements(measurements.slice(0, -1));
+        }
+    };
+
     const handleSave = () => {
         if (measurements.length === 0) {
-            alert("Faça ao menos uma medição antes de salvar.");
+            alert("Faça ao menos uma medição da fissura antes de salvar.");
             return;
         }
         const finalCanvas = document.createElement('canvas');
@@ -441,12 +466,12 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 <div className="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800 shrink-0">
                     <div>
                         <div className="flex items-center gap-2">
-                            <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-xs sm:text-sm">Fissurômetro 2 — Retificação & Visão Computacional</h2>
+                            <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-xs sm:text-sm">Fissurômetro 2 — Medidor de Aberturas</h2>
                             <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
                                 CRFP v1 ({qrSizeMm}mm)
                             </span>
                         </div>
-                        <p className="text-[11px] text-slate-500">Medição de aberturas com correção de ângulo por Homografia</p>
+                        <p className="text-[11px] text-slate-500">Toque em 2 pontos na fissura para medir com correção de ângulo</p>
                     </div>
                     <div className="flex items-center gap-1">
                         <button 
@@ -465,7 +490,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 
                 {/* Canvas Area */}
                 <div className="flex-1 overflow-hidden bg-neutral-900 relative flex items-center justify-center p-2 min-h-[250px]">
-                    {/* Tooltip Instruction */}
+                    {/* Tooltip Instruction Banner */}
                     {mode === 'calibrating_qr4' && (
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-10 whitespace-nowrap animate-bounce flex items-center gap-1.5">
                             Clique nos 4 CANTOS do Cartão QR (TL, TR, BR, BL) — {points.length}/4 marcados
@@ -476,22 +501,25 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                             Clique nos 2 extremos do marcador ({qrSizeMm}mm)
                         </div>
                     )}
-                    {mode === 'measuring' && (
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-10 whitespace-nowrap animate-bounce flex items-center gap-1.5">
-                            Clique nas 2 bordas da abertura para medir a fissura
+                    {(mode === 'measuring' || (pxPerMm && mode === 'idle')) && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-xl z-10 whitespace-nowrap animate-pulse flex items-center gap-1.5 border border-indigo-400">
+                            <MousePointer2 size={16} />
+                            {points.length === 0 ? "👉 Toque na 1ª BORDA da fissura" : "👉 Toque na 2ª BORDA da fissura para medir"}
                         </div>
                     )}
 
                     <canvas 
                         ref={canvasRef} 
                         onClick={handleCanvasClick}
-                        className={`max-w-full max-h-full object-contain shadow-2xl rounded ${mode !== 'idle' ? 'cursor-crosshair' : ''}`}
+                        onTouchStart={handleCanvasTouch}
+                        style={{ touchAction: 'none' }}
+                        className={`max-w-full max-h-full object-contain shadow-2xl rounded cursor-crosshair`}
                     />
                     
                     {analyzing && (
                         <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-white backdrop-blur-sm z-20">
                             <RefreshCw className="animate-spin mb-3 text-blue-400" size={36} />
-                            <p className="font-mono text-sm tracking-wider font-bold">DETECTANDO MARCADOR E RETIFICANDO PERSPECTIVA...</p>
+                            <p className="font-mono text-sm tracking-wider font-bold">CALIBRANDO ESCRITA E HOMOGRAFIA DO QR...</p>
                         </div>
                     )}
                 </div>
@@ -559,13 +587,26 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                                 </button>
                             </div>
                             
-                            <button 
-                                type="button"
-                                onClick={() => { setMode('measuring'); setPoints([]); }}
-                                className={`w-full py-3 rounded-xl font-bold text-xs sm:text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'measuring' ? 'border-indigo-500 text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 ring-2 ring-indigo-400/50' : 'border-indigo-600 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-500 dark:text-indigo-300 hover:bg-indigo-100'}`}
-                            >
-                                <MousePointer2 size={18} /> Adicionar Medição de Abertura (Clicar 2 pontos)
-                            </button>
+                            <div className="flex gap-2">
+                                <button 
+                                    type="button"
+                                    onClick={() => { setMode('measuring'); setPoints([]); }}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-xs sm:text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'measuring' ? 'border-indigo-500 text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 ring-2 ring-indigo-400/50' : 'border-indigo-600 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-500 dark:text-indigo-300 hover:bg-indigo-100'}`}
+                                >
+                                    <MousePointer2 size={18} /> {points.length === 1 ? "Toque no 2º ponto" : "Nova Medição (Toque 2 pontos)"}
+                                </button>
+
+                                {measurements.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleUndoLastMeasurement}
+                                        className="py-3 px-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs flex justify-center items-center gap-1 transition-colors"
+                                        title="Desfazer última medição"
+                                    >
+                                        <RotateCcw size={16} /> Desfazer
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
                     
@@ -575,7 +616,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                             onClick={handleSave}
                             className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm sm:text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-emerald-600/20 transition-transform active:scale-95"
                         >
-                            <Check size={20} /> Concluir e Anexar Versão Anotada ({measurements.length} {measurements.length === 1 ? 'medição' : 'medições'})
+                            <Check size={20} /> Concluir e Anexar Versão Anotada ({measurements.length} {measurements.length === 1 ? 'medição' : 'medições'}) — Max: {Math.max(...measurements.map(m => parseFloat(m.mm))).toFixed(2)} mm
                         </button>
                     )}
                 </div>
