@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen, QrCode } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import NortisQuickSearch from '../../components/NortisQuickSearch'
 import NortisIAValidation from '../../components/NortisIAValidation'
@@ -26,6 +26,7 @@ import RiskAreaModal from '../../components/RiskAreaModal'
 import RichTextEditor from '../../components/Editor/RichTextEditor'
 import DocumentReferencesManager from '../../components/DocumentReferencesManager'
 import AberturaRegistro from '../../components/AberturaRegistro'
+import MarcadorQRModal from '../../components/MarcadorQRModal'
 import { classificarAbertura } from '../../services/classificacaoPatologia'
 import bairrosDataRaw from '../../data/Bairros.json'
 import logradourosDataRaw from '../../data/nomesderuas.json'
@@ -400,6 +401,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [showRiskModal, setShowRiskModal] = useState(false)
     const [showNortisModal, setShowNortisModal] = useState(false)
+    const [showQrModal, setShowQrModal] = useState(false)
     const [sugestoesIA, setSugestoesIA] = useState(null);
     const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
     const [analyzingIA, setAnalyzingIA] = useState(false);
@@ -2515,7 +2517,17 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                             <h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">
                                 Aberturas Monitoradas (Fissurômetro)
                             </h3>
-                            <span className="bg-white/10 text-white text-[10px] font-black px-3 py-1 rounded-sm">{formData.aberturas?.length || 0} PONTOS</span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowQrModal(true)}
+                                    className="bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold px-2.5 py-1 rounded flex items-center gap-1 transition-colors"
+                                    title="Imprimir / Baixar Cartão QR de Referência (30mm)"
+                                >
+                                    <QrCode size={13} /> Cartão QR (30mm)
+                                </button>
+                                <span className="bg-white/10 text-white text-[10px] font-black px-3 py-1 rounded-sm">{formData.aberturas?.length || 0} PONTOS</span>
+                            </div>
                         </div>
                         
                         <div className="space-y-4">
@@ -3065,6 +3077,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     />
                 </div>
             )}
+
+            <MarcadorQRModal isOpen={showQrModal} onClose={() => setShowQrModal(false)} />
         </div >
     )
 }

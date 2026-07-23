@@ -49,3 +49,7 @@ workbox-*.js
 SKILLS/ 
 .vercel
 .env*.local
+
+fissurometro2_extracted/
+*.zip
+
