@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Maximize, Check, X, MousePointer2, RefreshCw, QrCode, CornerDownRight, RotateCcw } from 'lucide-react';
+import { Camera, Maximize, Check, X, MousePointer2, RefreshCw, QrCode, CornerDownRight, RotateCcw, Sparkles, Activity, Layers } from 'lucide-react';
 import MarcadorQRModal from './MarcadorQRModal';
 
 export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, defaultQrSizeMm = 30.0 }) {
@@ -12,9 +12,14 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
     // Matriz de Homografia H (Array 3x3) para retificação de perspectiva
     const [homographyMatrix, setHomographyMatrix] = useState(null);
     const [pxPerMm, setPxPerMm] = useState(null);
+    const [detectedQrCorners, setDetectedQrCorners] = useState([]);
     
     const [points, setPoints] = useState([]); // [{x, y}]
     const [measurements, setMeasurements] = useState([]); // [{p1, p2, mm}]
+    
+    // Estrutura de rastreamento automático da trinca/fissura (AI Trace)
+    const [autoCrackResult, setAutoCrackResult] = useState(null); // { samples, pts, avgMm, peakMm }
+    
     const [cvLoaded, setCvLoaded] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
@@ -63,7 +68,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
     // Redesenhar canvas quando o estado mudar
     useEffect(() => {
         redrawCanvas();
-    }, [points, measurements, mode, pxPerMm, homographyMatrix]);
+    }, [points, measurements, mode, pxPerMm, homographyMatrix, autoCrackResult]);
 
     // Função de transformação de ponto (x,y) da foto original para o espaço retificado através de Homografia H (3x3)
     const transformPointWithHomography = (pt, H) => {
@@ -143,6 +148,151 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         return h;
     };
 
+    // Algoritmo de Visão Computacional para Detecção e Tracejamento Automático da Trinca/Fissura
+    const autoDetectCrackStructure = (img, H, scalePxMm, qrCorners = []) => {
+        if (!window.cv || !img) return null;
+        try {
+            const cv = window.cv;
+            const tmpCanvas = document.createElement('canvas');
+            tmpCanvas.width = img.width;
+            tmpCanvas.height = img.height;
+            const ctx = tmpCanvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            const src = cv.imread(tmpCanvas);
+            const gray = new cv.Mat();
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+            const blurred = new cv.Mat();
+            cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+
+            // Adaptive thresholding para isolar linhas escuras da fissura sobre a parede
+            const thresh = new cv.Mat();
+            cv.adaptiveThreshold(blurred, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 25, 5);
+
+            // Mascarar a região do cartão QR para evitar falsos positivos com as bordas do cartão
+            if (qrCorners && qrCorners.length === 4) {
+                const ptsData = new Int32Array([
+                    qrCorners[0].x, qrCorners[0].y,
+                    qrCorners[1].x, qrCorners[1].y,
+                    qrCorners[2].x, qrCorners[2].y,
+                    qrCorners[3].x, qrCorners[3].y
+                ]);
+                const ptsMat = cv.matFromArray(4, 1, cv.CV_32SC2, ptsData);
+                const ptsVector = new cv.MatVector();
+                ptsVector.push_back(ptsMat);
+                cv.fillPoly(thresh, ptsVector, new cv.Scalar(0, 0, 0));
+                ptsMat.delete(); ptsVector.delete();
+            }
+
+            const contours = new cv.MatVector();
+            const hierarchy = new cv.Mat();
+            cv.findContours(thresh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE);
+
+            let maxArc = 0;
+            let bestContour = null;
+
+            for (let i = 0; i < contours.size(); i++) {
+                const cnt = contours.get(i);
+                const area = cv.contourArea(cnt);
+                const arcLen = cv.arcLength(cnt, false);
+
+                if (arcLen > 60 && area > 30) {
+                    if (arcLen > maxArc) {
+                        maxArc = arcLen;
+                        bestContour = cnt;
+                    }
+                }
+            }
+
+            if (!bestContour) {
+                src.delete(); gray.delete(); blurred.delete(); thresh.delete(); contours.delete(); hierarchy.delete();
+                return null;
+            }
+
+            const data = bestContour.data32S;
+            const pts = [];
+            for (let i = 0; i < data.length; i += 2) {
+                pts.push({ x: data[i], y: data[i + 1] });
+            }
+
+            // Amostragem ao longo do traçado da fissura
+            const sampleStep = Math.max(10, Math.floor(pts.length / 25));
+            const samples = [];
+            let totalMm = 0;
+            let maxMm = 0;
+
+            for (let i = 0; i < pts.length - sampleStep; i += sampleStep) {
+                const p1 = pts[i];
+                const p2 = pts[Math.min(i + sampleStep, pts.length - 1)];
+
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const len = Math.hypot(dx, dy);
+                if (len < 1e-3) continue;
+
+                const nx = -dy / len;
+                const ny = dx / len;
+
+                // Sonar de largura na normal da fissura
+                let widthPx = 2;
+                for (let r = 1; r <= 35; r++) {
+                    const testX = Math.round(p1.x + nx * r);
+                    const testY = Math.round(p1.y + ny * r);
+                    if (testX >= 0 && testX < thresh.cols && testY >= 0 && testY < thresh.rows) {
+                        if (thresh.ucharAt(testY, testX) > 0) {
+                            widthPx = r * 2;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                const ptA = { x: p1.x - nx * (widthPx / 2), y: p1.y - ny * (widthPx / 2) };
+                const ptB = { x: p1.x + nx * (widthPx / 2), y: p1.y + ny * (widthPx / 2) };
+                
+                let localMm = 0;
+                if (H && scalePxMm) {
+                    const pA_ret = transformPointWithHomography(ptA, H);
+                    const pB_ret = transformPointWithHomography(ptB, H);
+                    localMm = Math.hypot(pB_ret.x - pA_ret.x, pB_ret.y - pA_ret.y) / scalePxMm;
+                } else {
+                    localMm = (widthPx / scalePxMm);
+                }
+
+                localMm = parseFloat(localMm.toFixed(2));
+                if (localMm >= 0.1 && localMm <= 40.0) {
+                    samples.push({
+                        center: p1,
+                        pA: ptA,
+                        pB: ptB,
+                        mm: localMm
+                    });
+                    totalMm += localMm;
+                    if (localMm > maxMm) maxMm = localMm;
+                }
+            }
+
+            src.delete(); gray.delete(); blurred.delete(); thresh.delete(); contours.delete(); hierarchy.delete();
+
+            if (samples.length === 0) return null;
+
+            const avgMm = parseFloat((totalMm / samples.length).toFixed(2));
+            const peakMm = parseFloat(maxMm.toFixed(2));
+
+            return {
+                samples,
+                pts,
+                avgMm,
+                peakMm,
+                sampleCount: samples.length
+            };
+        } catch (errCrack) {
+            console.warn("[AutoCrack] Segmentation error:", errCrack);
+            return null;
+        }
+    };
+
     const redrawCanvas = () => {
         const canvas = canvasRef.current;
         if (!canvas || !imageRef.current) return;
@@ -162,10 +312,68 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         
         ctx.drawImage(imageRef.current, 0, 0, canvas.width, canvas.height);
 
-        // Desenhar medições finalizadas
+        // 1. Desenhar Rastreamento Automático (AI Crack Trace line & ponto a ponto)
+        if (autoCrackResult && autoCrackResult.pts && autoCrackResult.pts.length > 0) {
+            const { pts, samples, avgMm, peakMm } = autoCrackResult;
+            
+            // Tracejamento em ciano neon ao longo de toda a fissura
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x * scale, pts[0].y * scale);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i].x * scale, pts[i].y * scale);
+            }
+            ctx.strokeStyle = '#00F0FF';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Desenhar barras de amostragem perpendicular ponto a ponto
+            samples.forEach((s, idx) => {
+                const x1 = s.pA.x * scale, y1 = s.pA.y * scale;
+                const x2 = s.pB.x * scale, y2 = s.pB.y * scale;
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = '#FF007A';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Pequeno ponto de amostragem
+                ctx.beginPath();
+                ctx.arc(s.center.x * scale, s.center.y * scale, 3, 0, 2 * Math.PI);
+                ctx.fillStyle = '#00F0FF';
+                ctx.fill();
+            });
+
+            // Badge com Largura Média e Máxima da Fissura
+            if (samples.length > 0) {
+                const firstPt = samples[0].center;
+                const midX = firstPt.x * scale;
+                const midY = firstPt.y * scale;
+
+                const textHeader = `MÉDIA: ${avgMm} mm | MÁX: ${peakMm} mm`;
+                ctx.font = 'bold 13px sans-serif';
+                const textW = ctx.measureText(textHeader).width;
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.fillRect(midX - textW/2 - 10, midY - 24, textW + 20, 26);
+                ctx.strokeStyle = '#00F0FF';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(midX - textW/2 - 10, midY - 24, textW + 20, 26);
+
+                ctx.fillStyle = '#00F0FF';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(textHeader, midX, midY - 11);
+            }
+        }
+
+        // 2. Desenhar medições manuais finalizadas
         measurements.forEach(m => drawMeasurement(ctx, m.p1, m.p2, m.mm, scale));
         
-        // Desenhar pontos de interação atual
+        // 3. Desenhar pontos de interação manual atual
         if (mode === 'calibrating_qr4') {
             points.forEach((pt, idx) => {
                 drawPoint(ctx, pt.x * scale, pt.y * scale, '#F59E0B', `${idx + 1}`);
@@ -264,7 +472,6 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         const x = (clientX - rect.left) / viewScale;
         const y = (clientY - rect.top) / viewScale;
 
-        // Se o estado for idle mas a escala já estiver calibrada, muda para modo de medição
         let currentMode = mode;
         if (currentMode === 'idle' && pxPerMm) {
             currentMode = 'measuring';
@@ -287,14 +494,13 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 setHomographyMatrix(null);
                 setMode('measuring');
                 setPoints([]);
-                setStatusMessage(`✅ Escala linear calibrada (${(distPx / qrSizeMm).toFixed(2)} px/mm). Clique nas 2 bordas da fissura.`);
+                setStatusMessage(`✅ Escala linear calibrada (${(distPx / qrSizeMm).toFixed(2)} px/mm). Rastreamento ativado.`);
             } else if (currentMode === 'measuring') {
                 const distMm = calculateDistanceInMm(newPoints[0], newPoints[1]);
                 setMeasurements(prev => [...prev, { p1: newPoints[0], p2: newPoints[1], mm: distMm }]);
                 setPoints([]);
-                // Continua no modo de medição para permitir tocar em outros pontos se desejar
                 setMode('measuring');
-                setStatusMessage(`✓ Medição registrada: ${distMm} mm. Pode adicionar outra medição ou clicar em Concluir.`);
+                setStatusMessage(`✓ Medição de ponto registrada: ${distMm} mm.`);
             }
         }
     };
@@ -310,7 +516,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         }
     };
 
-    // Aplicar Homografia a partir de 4 cantos (TL, TR, BR, BL)
+    // Aplicar Homografia a partir de 4 cantos (TL, TR, BR, BL) e executar rastreamento automático de trinca
     const apply4PointHomography = (srcCorners, realMmSize) => {
         const targetPxPerMm = 10.0;
         const sidePx = realMmSize * targetPxPerMm;
@@ -326,9 +532,20 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         const H = calculateHomographyDLT(srcCorners, dstCorners);
         setHomographyMatrix(H);
         setPxPerMm(targetPxPerMm);
-        setMode('measuring'); // Entra imediatamente em modo de medição
+        setDetectedQrCorners(srcCorners);
+        setMode('measuring');
         setPoints([]);
-        setStatusMessage(`✅ Homografia calibrada com sucesso! Clique nas 2 bordas da fissura na imagem para medir.`);
+
+        // Executar varredura e tracejamento automático da trinca
+        if (imageRef.current) {
+            const crackData = autoDetectCrackStructure(imageRef.current, H, targetPxPerMm, srcCorners);
+            if (crackData) {
+                setAutoCrackResult(crackData);
+                setStatusMessage(`⚡ Trinca tracejada automaticamente! Largura Média: ${crackData.avgMm} mm | Pico Máximo: ${crackData.peakMm} mm (${crackData.sampleCount} pontos amostrados).`);
+            } else {
+                setStatusMessage(`✅ Homografia calibrada (${realMmSize}mm). Toque na fissura para medir os pontos.`);
+            }
+        }
     };
 
     // Detecção Automática do QR Marcador via OpenCV.js QRCodeDetector
@@ -433,15 +650,33 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         setAnalyzing(false);
     };
 
+    const handleRunAutoScan = () => {
+        if (!imageRef.current || !pxPerMm) return;
+        setAnalyzing(true);
+        setTimeout(() => {
+            const crackData = autoDetectCrackStructure(imageRef.current, homographyMatrix, pxPerMm, detectedQrCorners);
+            if (crackData) {
+                setAutoCrackResult(crackData);
+                setStatusMessage(`⚡ Trinca detectada! Média: ${crackData.avgMm} mm | Pico Máximo: ${crackData.peakMm} mm (${crackData.sampleCount} pontos amostrados).`);
+            } else {
+                setStatusMessage("⚠️ Nenhuma linha contínua de fissura encontrada automaticamente. Você pode marcar 2 pontos manualmente na tela.");
+            }
+            setAnalyzing(false);
+        }, 100);
+    };
+
     const handleUndoLastMeasurement = () => {
         if (measurements.length > 0) {
             setMeasurements(measurements.slice(0, -1));
+        } else if (autoCrackResult) {
+            setAutoCrackResult(null);
+            setStatusMessage("Rastreamento automático removido.");
         }
     };
 
     const handleSave = () => {
-        if (measurements.length === 0) {
-            alert("Faça ao menos uma medição da fissura antes de salvar.");
+        if (measurements.length === 0 && !autoCrackResult) {
+            alert("Faça ao menos uma medição ou execute a varredura da fissura antes de salvar.");
             return;
         }
         const finalCanvas = document.createElement('canvas');
@@ -450,13 +685,63 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         const ctx = finalCanvas.getContext('2d');
         ctx.drawImage(imageRef.current, 0, 0);
 
-        // Desenhar todas as medições na imagem anotada final
+        // Desenhar tracejamento automático e medições na imagem anotada final
+        if (autoCrackResult && autoCrackResult.pts && autoCrackResult.pts.length > 0) {
+            const { pts, samples, avgMm, peakMm } = autoCrackResult;
+            
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i].x, pts[i].y);
+            }
+            ctx.strokeStyle = '#00F0FF';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            samples.forEach((s) => {
+                ctx.beginPath();
+                ctx.moveTo(s.pA.x, s.pA.y);
+                ctx.lineTo(s.pB.x, s.pB.y);
+                ctx.strokeStyle = '#FF007A';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
+
+            if (samples.length > 0) {
+                const firstPt = samples[0].center;
+                const textHeader = `MÉDIA: ${avgMm} mm | MÁX: ${peakMm} mm`;
+                ctx.font = 'bold 18px sans-serif';
+                const textW = ctx.measureText(textHeader).width;
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+                ctx.fillRect(firstPt.x - textW/2 - 12, firstPt.y - 30, textW + 24, 34);
+                ctx.strokeStyle = '#00F0FF';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(firstPt.x - textW/2 - 12, firstPt.y - 30, textW + 24, 34);
+
+                ctx.fillStyle = '#00F0FF';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(textHeader, firstPt.x, firstPt.y - 12);
+            }
+        }
+
         measurements.forEach(m => drawMeasurement(ctx, m.p1, m.p2, m.mm, 1));
         
         const annotatedDataUrl = finalCanvas.toDataURL('image/jpeg', 0.88);
-        const maxMm = Math.max(...measurements.map(m => parseFloat(m.mm)));
         
-        onComplete(maxMm, annotatedDataUrl);
+        let finalMm = 0;
+        if (autoCrackResult && autoCrackResult.peakMm) {
+            finalMm = autoCrackResult.peakMm;
+        }
+        if (measurements.length > 0) {
+            const manualMax = Math.max(...measurements.map(m => parseFloat(m.mm)));
+            finalMm = Math.max(finalMm, manualMax);
+        }
+        
+        onComplete(finalMm.toFixed(2), annotatedDataUrl);
     };
 
     return (
@@ -466,12 +751,12 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 <div className="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800 shrink-0">
                     <div>
                         <div className="flex items-center gap-2">
-                            <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-xs sm:text-sm">Fissurômetro 2 — Medidor de Aberturas</h2>
+                            <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-xs sm:text-sm">Fissurômetro 2 — Varredura & Visão Computacional</h2>
                             <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
                                 CRFP v1 ({qrSizeMm}mm)
                             </span>
                         </div>
-                        <p className="text-[11px] text-slate-500">Toque em 2 pontos na fissura para medir com correção de ângulo</p>
+                        <p className="text-[11px] text-slate-500">Tracejamento automático e amostragem ponto a ponto</p>
                     </div>
                     <div className="flex items-center gap-1">
                         <button 
@@ -501,10 +786,15 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                             Clique nos 2 extremos do marcador ({qrSizeMm}mm)
                         </div>
                     )}
-                    {(mode === 'measuring' || (pxPerMm && mode === 'idle')) && (
+                    {autoCrackResult && (
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-xl z-10 whitespace-nowrap flex items-center gap-1.5 border border-emerald-300">
+                            <Sparkles size={16} /> Fissura Tracejada (Média: {autoCrackResult.avgMm}mm | Pico: {autoCrackResult.peakMm}mm)
+                        </div>
+                    )}
+                    {!autoCrackResult && (mode === 'measuring' || (pxPerMm && mode === 'idle')) && (
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-xl z-10 whitespace-nowrap animate-pulse flex items-center gap-1.5 border border-indigo-400">
                             <MousePointer2 size={16} />
-                            {points.length === 0 ? "👉 Toque na 1ª BORDA da fissura" : "👉 Toque na 2ª BORDA da fissura para medir"}
+                            {points.length === 0 ? "👉 Toque na fissura para medir ponto a ponto" : "👉 Toque no 2º lado para fechar o trecho"}
                         </div>
                     )}
 
@@ -519,7 +809,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                     {analyzing && (
                         <div className="absolute inset-0 bg-black/75 flex flex-col items-center justify-center text-white backdrop-blur-sm z-20">
                             <RefreshCw className="animate-spin mb-3 text-blue-400" size={36} />
-                            <p className="font-mono text-sm tracking-wider font-bold">CALIBRANDO ESCRITA E HOMOGRAFIA DO QR...</p>
+                            <p className="font-mono text-sm tracking-wider font-bold">ANALISANDO TRINCA & RASTREADOR PONTO A PONTO...</p>
                         </div>
                     )}
                 </div>
@@ -582,41 +872,49 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                                         ✓ {homographyMatrix ? 'Homografia & Perspectiva Corrigidas' : 'Escala Calibrada'} ({(1/pxPerMm).toFixed(3)} mm/px)
                                     </span>
                                 </div>
-                                <button type="button" onClick={() => {setPxPerMm(null); setHomographyMatrix(null); setMeasurements([]); setMode('idle'); setPoints([]); setStatusMessage(null);}} className="text-red-500 font-bold hover:underline ml-2">
+                                <button type="button" onClick={() => {setPxPerMm(null); setHomographyMatrix(null); setMeasurements([]); setAutoCrackResult(null); setMode('idle'); setPoints([]); setStatusMessage(null);}} className="text-red-500 font-bold hover:underline ml-2">
                                     Recalibrar
                                 </button>
                             </div>
                             
-                            <div className="flex gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button 
+                                    type="button"
+                                    onClick={handleRunAutoScan}
+                                    disabled={analyzing}
+                                    className="py-3 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs sm:text-sm flex justify-center items-center gap-2 transition-colors shadow-md shadow-indigo-600/20"
+                                >
+                                    <Sparkles size={18} /> Auto-Scan Fissura (Tracejar)
+                                </button>
+
                                 <button 
                                     type="button"
                                     onClick={() => { setMode('measuring'); setPoints([]); }}
-                                    className={`flex-1 py-3 rounded-xl font-bold text-xs sm:text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'measuring' ? 'border-indigo-500 text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 ring-2 ring-indigo-400/50' : 'border-indigo-600 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:border-indigo-500 dark:text-indigo-300 hover:bg-indigo-100'}`}
+                                    className={`py-3 px-3.5 rounded-xl font-bold text-xs sm:text-sm flex justify-center items-center gap-2 border-2 transition-colors ${mode === 'measuring' ? 'border-indigo-500 text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400' : 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-200'}`}
                                 >
-                                    <MousePointer2 size={18} /> {points.length === 1 ? "Toque no 2º ponto" : "Nova Medição (Toque 2 pontos)"}
+                                    <MousePointer2 size={18} /> Medição Ponto a Ponto
                                 </button>
-
-                                {measurements.length > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={handleUndoLastMeasurement}
-                                        className="py-3 px-3.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs flex justify-center items-center gap-1 transition-colors"
-                                        title="Desfazer última medição"
-                                    >
-                                        <RotateCcw size={16} /> Desfazer
-                                    </button>
-                                )}
                             </div>
+
+                            {(autoCrackResult || measurements.length > 0) && (
+                                <button
+                                    type="button"
+                                    onClick={handleUndoLastMeasurement}
+                                    className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs flex justify-center items-center gap-1.5 transition-colors"
+                                >
+                                    <RotateCcw size={16} /> Limpar/Desfazer Varredura Atual
+                                </button>
+                            )}
                         </div>
                     )}
                     
-                    {measurements.length > 0 && (
+                    {(autoCrackResult || measurements.length > 0) && (
                         <button 
                             type="button"
                             onClick={handleSave}
                             className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm sm:text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-emerald-600/20 transition-transform active:scale-95"
                         >
-                            <Check size={20} /> Concluir e Anexar Versão Anotada ({measurements.length} {measurements.length === 1 ? 'medição' : 'medições'}) — Max: {Math.max(...measurements.map(m => parseFloat(m.mm))).toFixed(2)} mm
+                            <Check size={20} /> Concluir e Anexar Versão Anotada (Média: {autoCrackResult ? autoCrackResult.avgMm : measurements[0]?.mm} mm)
                         </button>
                     )}
                 </div>
