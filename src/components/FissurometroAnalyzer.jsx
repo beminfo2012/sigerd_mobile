@@ -148,7 +148,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         return h;
     };
 
-    // Algoritmo de Visão Computacional para Detecção e Tracejamento Automático da Trinca/Fissura
+    // Algoritmo de Visão Computacional com Máscara de Segurança Rígida (Exclui marca d'água DATA/hora e bordas externas)
     const autoDetectCrackStructure = (img, H, scalePxMm, qrCorners = []) => {
         if (!window.cv || !img) return null;
         try {
@@ -170,13 +170,28 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
             const thresh = new cv.Mat();
             cv.adaptiveThreshold(blurred, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 25, 5);
 
-            // Mascarar a região do cartão QR para evitar falsos positivos com as bordas do cartão
+            // MARGEM DE SEGURANÇA RÍGIDA: Zera bordas externas e rodape (apaga carimbo DATA: 24/07/2026...)
+            const marginX = Math.round(img.width * 0.04);
+            const marginYTop = Math.round(img.height * 0.04);
+            const marginYBottom = Math.round(img.height * 0.09); // 9% do rodape para isolar o carimbo de data/hora
+
+            // 1. Zera Topo
+            cv.rectangle(thresh, new cv.Point(0, 0), new cv.Point(thresh.cols, marginYTop), new cv.Scalar(0), -1);
+            // 2. Zera Rodapé (Carimbo DATA/Hora e borda inferior)
+            cv.rectangle(thresh, new cv.Point(0, thresh.rows - marginYBottom), new cv.Point(thresh.cols, thresh.rows), new cv.Scalar(0), -1);
+            // 3. Zera Lateral Esquerda
+            cv.rectangle(thresh, new cv.Point(0, 0), new cv.Point(marginX, thresh.rows), new cv.Scalar(0), -1);
+            // 4. Zera Lateral Direita
+            cv.rectangle(thresh, new cv.Point(thresh.cols - marginX, 0), new cv.Point(thresh.cols, thresh.rows), new cv.Scalar(0), -1);
+
+            // Mascarar a região do cartão QR (com margem de 10px) para evitar contornar as bordas do papel
             if (qrCorners && qrCorners.length === 4) {
+                const pad = 12;
                 const ptsData = new Int32Array([
-                    qrCorners[0].x, qrCorners[0].y,
-                    qrCorners[1].x, qrCorners[1].y,
-                    qrCorners[2].x, qrCorners[2].y,
-                    qrCorners[3].x, qrCorners[3].y
+                    qrCorners[0].x - pad, qrCorners[0].y - pad,
+                    qrCorners[1].x + pad, qrCorners[1].y - pad,
+                    qrCorners[2].x + pad, qrCorners[2].y + pad,
+                    qrCorners[3].x - pad, qrCorners[3].y + pad
                 ]);
                 const ptsMat = cv.matFromArray(4, 1, cv.CV_32SC2, ptsData);
                 const ptsVector = new cv.MatVector();
@@ -197,6 +212,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 const area = cv.contourArea(cnt);
                 const arcLen = cv.arcLength(cnt, false);
 
+                // Filtrar contornos válidos dentro da área útil da imagem
                 if (arcLen > 60 && area > 30) {
                     if (arcLen > maxArc) {
                         maxArc = arcLen;
@@ -213,7 +229,17 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
             const data = bestContour.data32S;
             const pts = [];
             for (let i = 0; i < data.length; i += 2) {
-                pts.push({ x: data[i], y: data[i + 1] });
+                const px = data[i];
+                const py = data[i + 1];
+                // Filtragem rigorosa de pontos dentro dos limites úteis da foto
+                if (px >= marginX && px <= (img.width - marginX) && py >= marginYTop && py <= (img.height - marginYBottom)) {
+                    pts.push({ x: px, y: py });
+                }
+            }
+
+            if (pts.length < 10) {
+                src.delete(); gray.delete(); blurred.delete(); thresh.delete(); contours.delete(); hierarchy.delete();
+                return null;
             }
 
             // Amostragem ao longo do traçado da fissura
@@ -234,17 +260,19 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 const nx = -dy / len;
                 const ny = dx / len;
 
-                // Sonar de largura na normal da fissura
+                // Sonar de largura na normal da fissura (limitado aos limites da imagem)
                 let widthPx = 2;
-                for (let r = 1; r <= 35; r++) {
+                for (let r = 1; r <= 30; r++) {
                     const testX = Math.round(p1.x + nx * r);
                     const testY = Math.round(p1.y + ny * r);
-                    if (testX >= 0 && testX < thresh.cols && testY >= 0 && testY < thresh.rows) {
+                    if (testX >= marginX && testX < (thresh.cols - marginX) && testY >= marginYTop && testY < (thresh.rows - marginYBottom)) {
                         if (thresh.ucharAt(testY, testX) > 0) {
                             widthPx = r * 2;
                         } else {
                             break;
                         }
+                    } else {
+                        break;
                     }
                 }
 
@@ -261,7 +289,8 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 }
 
                 localMm = parseFloat(localMm.toFixed(2));
-                if (localMm >= 0.1 && localMm <= 40.0) {
+                // Validação de limite realista da fenda de 0.1mm até 25.0mm (evita picos causados por fundos escuros fora da parede)
+                if (localMm >= 0.1 && localMm <= 25.0) {
                     samples.push({
                         center: p1,
                         pA: ptA,
@@ -316,7 +345,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
         if (autoCrackResult && autoCrackResult.pts && autoCrackResult.pts.length > 0) {
             const { pts, samples, avgMm, peakMm } = autoCrackResult;
             
-            // Tracejamento em ciano neon ao longo de toda a fissura
+            // Tracejamento em ciano neon ao longo da fissura
             ctx.beginPath();
             ctx.moveTo(pts[0].x * scale, pts[0].y * scale);
             for (let i = 1; i < pts.length; i++) {
@@ -349,7 +378,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
 
             // Badge com Largura Média e Máxima da Fissura
             if (samples.length > 0) {
-                const firstPt = samples[0].center;
+                const firstPt = samples[Math.floor(samples.length / 2)].center;
                 const midX = firstPt.x * scale;
                 const midY = firstPt.y * scale;
 
@@ -710,7 +739,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
             });
 
             if (samples.length > 0) {
-                const firstPt = samples[0].center;
+                const firstPt = samples[Math.floor(samples.length / 2)].center;
                 const textHeader = `MÉDIA: ${avgMm} mm | MÁX: ${peakMm} mm`;
                 ctx.font = 'bold 18px sans-serif';
                 const textW = ctx.measureText(textHeader).width;
@@ -746,9 +775,9 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
 
     return (
         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-0 sm:p-4">
-            <div className="w-full max-w-xl bg-white dark:bg-slate-900 overflow-hidden flex flex-col h-full max-h-full sm:max-h-[94vh] sm:rounded-2xl shadow-2xl">
+            <div className="w-full max-w-xl bg-white dark:bg-slate-900 overflow-hidden flex flex-col h-full max-h-full sm:max-h-[92vh] sm:rounded-2xl shadow-2xl">
                 {/* Header */}
-                <div className="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800 shrink-0">
+                <div className="p-3 sm:p-4 border-b dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800 shrink-0">
                     <div>
                         <div className="flex items-center gap-2">
                             <h2 className="font-bold text-slate-800 dark:text-white uppercase tracking-wide text-xs sm:text-sm">Fissurômetro 2 — Varredura & Visão Computacional</h2>
@@ -774,7 +803,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 </div>
                 
                 {/* Canvas Area */}
-                <div className="flex-1 overflow-hidden bg-neutral-900 relative flex items-center justify-center p-2 min-h-[250px]">
+                <div className="flex-1 min-h-0 overflow-hidden bg-neutral-900 relative flex items-center justify-center p-2">
                     {/* Tooltip Instruction Banner */}
                     {mode === 'calibrating_qr4' && (
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-10 whitespace-nowrap animate-bounce flex items-center gap-1.5">
@@ -815,7 +844,7 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                 </div>
 
                 {/* Control Panel */}
-                <div className="p-4 border-t dark:border-slate-800 space-y-3 bg-white dark:bg-slate-900 shrink-0 overflow-y-auto max-h-[48vh]">
+                <div className="p-3 sm:p-4 border-t dark:border-slate-800 space-y-3 bg-white dark:bg-slate-900 shrink-0 overflow-y-auto max-h-[50vh] pb-8 sm:pb-5">
                     {statusMessage && (
                         <div className="text-xs bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 p-2.5 rounded-lg border border-indigo-200 dark:border-indigo-800 font-medium">
                             {statusMessage}
@@ -909,13 +938,15 @@ export default function FissurometroAnalyzer({ fotoUrl, onComplete, onCancel, de
                     )}
                     
                     {(autoCrackResult || measurements.length > 0) && (
-                        <button 
-                            type="button"
-                            onClick={handleSave}
-                            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm sm:text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-emerald-600/20 transition-transform active:scale-95"
-                        >
-                            <Check size={20} /> Concluir e Anexar Versão Anotada (Média: {autoCrackResult ? autoCrackResult.avgMm : measurements[0]?.mm} mm)
-                        </button>
+                        <div className="sticky bottom-0 pt-2 bg-white dark:bg-slate-900">
+                            <button 
+                                type="button"
+                                onClick={handleSave}
+                                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm sm:text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-emerald-600/20 transition-transform active:scale-95 mb-2"
+                            >
+                                <Check size={20} /> Concluir e Anexar Versão Anotada (Média: {autoCrackResult ? autoCrackResult.avgMm : measurements[0]?.mm} mm)
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
