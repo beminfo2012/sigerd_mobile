@@ -93,40 +93,45 @@ const DespachoModal = ({ isOpen, onClose, vistoriaData, userProfile, initialDesp
             setAnexos([]);
 
             if (vistoriaData) {
-                const vistoriaIdStr = vistoriaData.vistoriaId || vistoriaData.id || '---';
-                updateDefaultConteudo('Encaminhamento', vistoriaIdStr);
-                if (vistoriaData.observacoes) {
-                    setFundamentacao(`Constatou-se situação de risco registrada no relatório de vistoria nº ${vistoriaIdStr}.`);
+                const isOcorrencia = Boolean(vistoriaData.ocorrencia_id_format || vistoriaData.tipo_ocorrencia || vistoriaData.isOcorrencia);
+                const docIdStr = vistoriaData.ocorrencia_id_format || vistoriaData.vistoriaId || vistoriaData.id || '---';
+                const docTypeStr = isOcorrencia ? 'Relatório de Ocorrência Técnica' : 'Relatório de Vistoria Técnica';
+
+                updateDefaultConteudo('Encaminhamento', docIdStr);
+                if (vistoriaData.observacoes || vistoriaData.descricao) {
+                    setFundamentacao(`Constatou-se situação de risco registrada no ${docTypeStr} nº ${docIdStr}.`);
                 }
             }
         }
     }, [initialDespacho, vistoriaData, isOpen]);
 
-    const updateDefaultConteudo = (tipo, vistoriaIdStr) => {
-        const vId = vistoriaIdStr || vistoriaData?.vistoriaId || vistoriaData?.id || '---';
+    const updateDefaultConteudo = (tipo, refIdStr) => {
+        const vId = refIdStr || vistoriaData?.ocorrencia_id_format || vistoriaData?.vistoriaId || vistoriaData?.id || '---';
+        const isOcorrencia = Boolean(vistoriaData?.ocorrencia_id_format || vistoriaData?.tipo_ocorrencia || vistoriaData?.isOcorrencia);
+        const docTypeStr = isOcorrencia ? 'Relatório de Ocorrência Técnica' : 'Relatório de Vistoria Técnica';
+
         let defaultText = '';
-        
         switch (tipo) {
             case 'Encaminhamento':
-                defaultText = `Considerando o Relatório de Vistoria Técnica nº ${vId}, encaminham-se os autos ao(s) setor(es) acima identificado(s) para adoção das providências cabíveis quanto às situações constatadas.`;
+                defaultText = `Considerando o ${docTypeStr} nº ${vId}, encaminham-se os autos ao(s) setor(es) acima identificado(s) para adoção das providências cabíveis quanto às situações constatadas.`;
                 break;
             case 'Solicitação de Providências':
-                defaultText = `Tendo em vista as irregularidades/riscos apontados no Relatório de Vistoria Técnica nº ${vId}, solicita-se a adoção urgente de providências operacionais/estruturais.`;
+                defaultText = `Tendo em vista as irregularidades/riscos apontados no ${docTypeStr} nº ${vId}, solicita-se a adoção urgente de providências operacionais/estruturais.`;
                 break;
             case 'Solicitação de Parecer':
-                defaultText = `Solicita-se a emissão de parecer técnico/jurídico especializado referente às constatações descritas no Relatório de Vistoria Técnica nº ${vId}.`;
+                defaultText = `Solicita-se a emissão de parecer técnico/jurídico especializado referente às constatações descritas no ${docTypeStr} nº ${vId}.`;
                 break;
             case 'Solicitação de Fiscalização':
                 defaultText = `Solicita-se vistoria e fiscalização in loco no endereço supracitado para verificação do cumprimento das normas técnicas e medidas mitigadoras.`;
                 break;
             case 'Interdição':
-                defaultText = `Determina-se a INTERDIÇÃO preventiva do imóvel/local indicado no Relatório de Vistoria nº ${vId}, até que sejam concluídas as obras de mitigação de risco.`;
+                defaultText = `Determina-se a INTERDIÇÃO preventiva do imóvel/local indicado no ${docTypeStr} nº ${vId}, até que sejam concluídas as obras de mitigação de risco.`;
                 break;
             case 'Desinterdição':
-                defaultText = `Diante do cumprimento das exigências técnicas comprovadas, determina-se a DESINTERDIÇÃO do imóvel/área vinculada ao Relatório nº ${vId}.`;
+                defaultText = `Diante do cumprimento das exigências técnicas comprovadas, determina-se a DESINTERDIÇÃO do imóvel/área vinculada ao ${docTypeStr} nº ${vId}.`;
                 break;
             default:
-                defaultText = `Considerando o Relatório de Vistoria Técnica nº ${vId}, encaminham-se os autos ao setor acima identificado para as medidas cabíveis.`;
+                defaultText = `Considerando o ${docTypeStr} nº ${vId}, encaminham-se os autos ao setor acima identificado para as medidas cabíveis.`;
                 break;
         }
         setConteudo(defaultText);

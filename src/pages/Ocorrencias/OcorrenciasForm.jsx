@@ -5,14 +5,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft, Save, MapPin, Share2, Camera, ShieldAlert,
     ChevronDown, ChevronUp, CheckCircle, Plus, Minus, FileText, Share,
-    Edit2, Trash2, ChevronLeft, ChevronRight, X, Download, Sparkles, Search, FileUp, AlertCircle
+    Edit2, Trash2, ChevronLeft, ChevronRight, X, Download, Sparkles, Search, FileUp, AlertCircle, Printer
 } from 'lucide-react';
 import FileInput from '../../components/FileInput';
 import ImageEditor from '../../components/ImageEditor';
 import SignaturePadComp from '../../components/SignaturePad';
+import DespachoModal from '../../components/DespachoModal';
+import { generateDespachoPDF } from '../../utils/despachoGenerator';
 import { extractMetadata, compressImage } from '../../utils/imageOptimizer';
 import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
-import { initDB } from '../../services/db';
+import { initDB, saveDespachoOffline, getDespachosByVistoriaId, deleteDespachoLocal } from '../../services/db';
 import { supabase } from '../../services/supabase';
 import { useToast } from '../../components/ToastNotification';
 import { UserContext } from '../../App';
@@ -185,6 +187,23 @@ export default function OcorrenciasForm() {
     const [showSignaturePad, setShowSignaturePad] = useState(false);
     const [activeSignatureType, setActiveSignatureType] = useState('agente');
     const [docType, setDocType] = useState('CPF');
+
+    // Despacho states
+    const [showDespachoModal, setShowDespachoModal] = useState(false);
+    const [despachosHistorico, setDespachosHistorico] = useState([]);
+    const [selectedDespachoForEdit, setSelectedDespachoForEdit] = useState(null);
+
+    const loadDespachos = async () => {
+        const docRef = formData.ocorrencia_id_format || id;
+        if (docRef) {
+            const list = await getDespachosByVistoriaId(docRef, formData.numero_referencia);
+            setDespachosHistorico(list || []);
+        }
+    };
+
+    useEffect(() => {
+        loadDespachos();
+    }, [formData.ocorrencia_id_format, id]);
 
     const labelClasses = "text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block ml-1";
     const baseInputClasses = "w-full p-3 rounded-xl border font-bold focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all";
@@ -1141,6 +1160,93 @@ export default function OcorrenciasForm() {
                     </div>
                 </div>
 
+                {/* DESPACHOS E EMISSÃO OFICIAL */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Despachos e Emissão Oficial</h2>
+                            <p className="text-[10px] text-slate-400 font-medium">Encaminhamentos oficiais e despachos administrativos</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedDespachoForEdit(null);
+                                setShowDespachoModal(true);
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
+                        >
+                            <FileText size={14} /> + Novo Despacho
+                        </button>
+                    </div>
+
+                    {despachosHistorico.length === 0 ? (
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs font-medium text-slate-400">
+                            Nenhum despacho emitido para esta ocorrência até o momento.
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {despachosHistorico.map((d, index) => (
+                                <div
+                                    key={d.id || index}
+                                    className="bg-blue-50/60 border border-blue-100 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                >
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono font-bold text-xs bg-blue-600 text-white px-2 py-0.5 rounded">
+                                                Nº {d.despacho_id || d.despachoId}
+                                            </span>
+                                            <span className="font-bold text-xs text-slate-800">
+                                                {d.tipoDespacho || 'Despacho Administrativo'}
+                                            </span>
+                                        </div>
+                                        <div className="text-[11px] text-slate-600 flex flex-wrap gap-3">
+                                            <span>📍 <b>Destino:</b> {Array.isArray(d.destino) ? d.destino.join(', ') : d.destino}</span>
+                                            <span>👤 <b>Emissor:</b> {d.responsavel}</span>
+                                            <span>📅 {new Date(d.createdAt || d.dataEmissao || Date.now()).toLocaleDateString('pt-BR')}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedDespachoForEdit(d);
+                                                setShowDespachoModal(true);
+                                            }}
+                                            className="px-2.5 py-1.5 bg-white text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                                            title="Editar Despacho"
+                                        >
+                                            <Edit2 size={13} /> Editar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => generateDespachoPDF(d)}
+                                            className="px-2.5 py-1.5 bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                                            title="Imprimir PDF"
+                                        >
+                                            <Printer size={13} /> PDF
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                if (window.confirm(`Deseja excluir o Despacho Nº ${d.despacho_id || d.despachoId}?`)) {
+                                                    await deleteDespachoLocal(d.id);
+                                                    toast.success('Despacho excluído.');
+                                                    loadDespachos();
+                                                }
+                                            }}
+                                            className="px-2.5 py-1.5 bg-white text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
+                                            title="Excluir Despacho"
+                                        >
+                                            <Trash2 size={13} /> Excluir
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {/* BOTTOM ACTIONS */}
                 <div className="fixed bottom-[64px] md:bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 sm:p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.08)]">
                     <div className="max-w-7xl mx-auto flex flex-col gap-2">
@@ -1289,6 +1395,32 @@ export default function OcorrenciasForm() {
                         />
                     </div>
                 </div>
+            )}
+            {showDespachoModal && (
+                <DespachoModal
+                    isOpen={showDespachoModal}
+                    onClose={() => {
+                        setShowDespachoModal(false);
+                        setSelectedDespachoForEdit(null);
+                    }}
+                    vistoriaData={{
+                        ...formData,
+                        vistoriaId: formData.ocorrencia_id_format || id,
+                        id: formData.ocorrencia_id_format || id,
+                        solicitante: formData.solicitante_nome || formData.solicitante,
+                        endereco: `${formData.endereco || ''}${formData.bairro ? `, ${formData.bairro}` : ''}`,
+                        grauRisco: formData.nivel_gravidade,
+                        tipo_ocorrencia: formData.tipo_ocorrencia,
+                        isOcorrencia: true
+                    }}
+                    userProfile={userProfile}
+                    initialDespacho={selectedDespachoForEdit}
+                    onDespachoCreated={() => {
+                        setShowDespachoModal(false);
+                        setSelectedDespachoForEdit(null);
+                        loadDespachos();
+                    }}
+                />
             )}
         </div>
     );

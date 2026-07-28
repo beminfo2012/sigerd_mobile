@@ -85,9 +85,13 @@ export const generateDespachoPDF = async (despachoData) => {
         ? new Date(despachoData.dataVistoria).toLocaleDateString('pt-BR') 
         : '';
 
+    const isOcorrenciaDoc = Boolean(despachoData.isOcorrencia || (despachoData.vistoriaRef && (despachoData.vistoriaRef.includes('OC') || despachoData.tipoOcorrencia)));
+    const docLabel = isOcorrenciaDoc ? 'Relatório de Ocorrência' : 'Relatório de Vistoria';
+    const dateLabel = isOcorrenciaDoc ? 'Data da Ocorrência' : 'Data da Vistoria';
+
     const processoRow = renderRow('Processo de Origem', despachoData.processo);
-    const vistoriaRow = renderRow('Relatório de Vistoria', despachoData.vistoriaRef ? `Nº ${despachoData.vistoriaRef}` : '');
-    const dataVistoriaRow = renderRow('Data da Vistoria', formattedDataVistoria);
+    const vistoriaRow = renderRow(docLabel, despachoData.vistoriaRef ? `Nº ${despachoData.vistoriaRef}` : '');
+    const dataVistoriaRow = renderRow(dateLabel, formattedDataVistoria);
     const solicitanteRow = renderRow('Solicitante', despachoData.solicitante);
     const interessadoRow = renderRow('Interessado', despachoData.interessado);
     const localRow = renderRow('Local da Ocorrência', despachoData.endereco);
