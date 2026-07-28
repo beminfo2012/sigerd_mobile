@@ -442,7 +442,7 @@ export default function OcorrenciasForm() {
     const showEncaminhamento = formData.orgao_solicitado !== formData.orgao_atendeu && formData.orgao_solicitado && formData.orgao_atendeu;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-32">
+        <div className="min-h-screen bg-slate-50 pb-52 sm:pb-36">
             {/* Topbar */}
             <div className="bg-white px-4 py-3 sticky top-0 z-30 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -833,51 +833,55 @@ export default function OcorrenciasForm() {
                     )}
                 </div>
 
-                    {/* FOTOS E ASSINATURAS */}
+                {/* FOTOS E ASSINATURAS */}
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Registro Fotográfico ({formData.fotos?.length || 0})</h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
-                        <FileInput onFileSelect={handlePhotoSelect} className="h-24 sm:h-32" />
-                        {formData.fotos?.map((foto, idx) => (
-                            <div key={foto.id} className="relative aspect-square rounded-xl overflow-hidden border border-slate-100 group shadow-sm bg-slate-50">
-                                <img
-                                    src={foto.data || foto}
-                                    className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
-                                    onClick={() => setSelectedPhotoIndex(idx)}
-                                />
-                                <div className="absolute top-1 inset-x-1 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all z-20">
-                                    <div className="flex gap-0.5">
-                                        {idx > 0 && (
-                                            <button type="button" onClick={() => movePhoto(foto.id, 'left')} className="bg-slate-800/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-slate-700">
-                                                <ChevronLeft size={14} />
-                                            </button>
-                                        )}
-                                        {idx < formData.fotos.length - 1 && (
-                                            <button type="button" onClick={() => movePhoto(foto.id, 'right')} className="bg-slate-800/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-slate-700">
-                                                <ChevronRight size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-0.5">
-                                        <button type="button" onClick={() => setEditingPhotoIndex(idx)} className="bg-blue-600/90 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-blue-600">
-                                            <Edit2 size={14} />
-                                        </button>
-                                        <button type="button" onClick={() => removePhoto(foto.id)} className="bg-red-600/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-red-600">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-1.5 z-10">
-                                    <input
-                                        className="w-full bg-transparent border-none text-[9px] text-white placeholder-white/70 focus:ring-0 p-0 font-bold"
-                                        placeholder="Legenda..."
-                                        value={foto.legenda || ''}
-                                        onChange={e => updatePhotoCaption(foto.id, e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                    <div className="mb-4">
+                        <FileInput onFileSelect={handlePhotoSelect} />
                     </div>
+                    {formData.fotos?.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+                            {formData.fotos.map((foto, idx) => (
+                                <div key={foto.id} className="relative aspect-square rounded-xl overflow-hidden border border-slate-100 group shadow-sm bg-slate-50">
+                                    <img
+                                        src={foto.data || foto}
+                                        className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
+                                        onClick={() => setSelectedPhotoIndex(idx)}
+                                    />
+                                    <div className="absolute top-1 inset-x-1 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all z-20">
+                                        <div className="flex gap-0.5">
+                                            {idx > 0 && (
+                                                <button type="button" onClick={() => movePhoto(foto.id, 'left')} className="bg-slate-800/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-slate-700">
+                                                    <ChevronLeft size={14} />
+                                                </button>
+                                            )}
+                                            {idx < formData.fotos.length - 1 && (
+                                                <button type="button" onClick={() => movePhoto(foto.id, 'right')} className="bg-slate-800/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-slate-700">
+                                                    <ChevronRight size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-0.5">
+                                            <button type="button" onClick={() => setEditingPhotoIndex(idx)} className="bg-blue-600/90 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-blue-600">
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button type="button" onClick={() => removePhoto(foto.id)} className="bg-red-600/80 backdrop-blur-md text-white p-1.5 rounded-lg shadow-sm hover:bg-red-600">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 inset-x-0 bg-black/50 backdrop-blur-sm p-1.5 z-10">
+                                        <input
+                                            className="w-full bg-transparent border-none text-[9px] text-white placeholder-white/70 focus:ring-0 p-0 font-bold"
+                                            placeholder="Legenda..."
+                                            value={foto.legenda || ''}
+                                            onChange={e => updatePhotoCaption(foto.id, e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 mt-6">Assinaturas</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -939,7 +943,7 @@ export default function OcorrenciasForm() {
                 </div>
 
                 {/* BOTTOM ACTIONS */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+                <div className="fixed bottom-[64px] md:bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 sm:p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.08)]">
                     <div className="max-w-7xl mx-auto flex flex-col gap-2">
                         {(!isValid() && !saving) && (
                             <div className="text-[10px] text-center font-bold text-red-500 uppercase">
@@ -964,9 +968,9 @@ export default function OcorrenciasForm() {
                                 {saving ? 'Salvando...' : 'Finalizar'}
                             </button>
                         </div>
-                        </div>
                     </div>
                 </div>
+            </div>
 
             {/* Modals and Overlays */}
             {showSignaturePad && (

@@ -101,19 +101,19 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
             <button
                 type="button"
                 onClick={handleCameraClick}
-                className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-[#2a5299] hover:text-[#2a5299] transition-all relative group ${type === 'photo' ? 'aspect-square' : ''}`}
+                className={`flex flex-col items-center justify-center py-3 px-1 min-h-[72px] border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-[#2a5299] hover:text-[#2a5299] transition-all relative group ${type === 'photo' ? 'sm:aspect-square' : ''}`}
             >
-                <Camera size={28} strokeWidth={1.5} />
-                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center">Câmera</span>
+                <Camera size={24} strokeWidth={1.5} />
+                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center truncate w-full px-1">Câmera</span>
             </button>
 
             <button
                 type="button"
                 onClick={handleGalleryClick}
-                className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-emerald-500 hover:text-emerald-500 transition-all relative group ${type === 'photo' ? 'aspect-square' : ''}`}
+                className={`flex flex-col items-center justify-center py-3 px-1 min-h-[72px] border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-emerald-500 hover:text-emerald-500 transition-all relative group ${type === 'photo' ? 'sm:aspect-square' : ''}`}
             >
-                <ImageIcon size={28} strokeWidth={1.5} />
-                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center">Galeria</span>
+                <ImageIcon size={24} strokeWidth={1.5} />
+                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center truncate w-full px-1">Galeria</span>
             </button>
 
             <button
@@ -123,13 +123,13 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                     e.stopPropagation();
                     if (refInputRef.current) refInputRef.current.click();
                 }}
-                className={`flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-500 hover:text-amber-500 transition-all relative group ${type === 'photo' ? 'aspect-square' : ''}`}
+                className={`flex flex-col items-center justify-center py-3 px-1 min-h-[72px] border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-500 hover:text-amber-500 transition-all relative group ${type === 'photo' ? 'sm:aspect-square' : ''}`}
             >
                 <div className="relative">
-                    <ImageIcon size={28} strokeWidth={1.5} />
+                    <ImageIcon size={24} strokeWidth={1.5} />
                     <span className="absolute -bottom-1 -right-1 bg-amber-500 text-white text-[8px] px-1 rounded-full font-bold">REF</span>
                 </div>
-                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center">Referência</span>
+                <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center truncate w-full px-1">Referência</span>
             </button>
         </div>
     )
