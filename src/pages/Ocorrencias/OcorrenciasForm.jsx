@@ -10,6 +10,7 @@ import {
 import FileInput from '../../components/FileInput';
 import ImageEditor from '../../components/ImageEditor';
 import SignaturePadComp from '../../components/SignaturePad';
+import { extractMetadata, compressImage } from '../../utils/imageOptimizer';
 import { saveOcorrenciaLocal, getOcorrenciaById, INITIAL_OCORRENCIA_STATE } from '../../services/ocorrenciasDb';
 import { initDB } from '../../services/db';
 import { supabase } from '../../services/supabase';
@@ -195,33 +196,140 @@ export default function OcorrenciasForm() {
     };
 
     // Handlers
-    const handlePhotoSelect = async (files) => {
+    const handlePhotoSelect = async (files, source = 'gallery') => {
         const currentFotos = Array.isArray(formData.fotos) ? formData.fotos : [];
         const newFotos = await Promise.all(Array.from(files).map(file => {
-            return new Promise((resolve) => {
-                // Se já for um objeto com dataUrl (da CameraModal, por ex)
-                if (file.dataUrl) {
-                    resolve({
-                        id: Math.random().toString(36).substr(2, 9),
-                        data: file.dataUrl,
-                        legenda: ''
-                    });
-                    return;
+            return new Promise(async (resolve) => {
+                try {
+                    // Se já for um objeto com dataUrl customizado (ex: retornado por modal de câmera)
+                    if (file.dataUrl) {
+                        const currentLat = formData.lat || formData.latitude;
+                        const currentLng = formData.lng || formData.longitude;
+                        const coords = currentLat && currentLng ? { lat: String(currentLat), lng: String(currentLng) } : null;
+
+                        const compressed = await compressImage(file.dataUrl, {
+                            coordinates: coords,
+                            timestamp: new Date(),
+                            fonteMetadados: coords ? 'gps_device' : 'ausente'
+                        }).catch(() => file.dataUrl);
+
+                        resolve({
+                            id: Math.random().toString(36).substr(2, 9),
+                            data: compressed,
+                            legenda: '',
+                            latitude: coords?.lat || null,
+                            longitude: coords?.lng || null,
+                            data_hora_captura: new Date().toISOString(),
+                            metadados_verificados: !!coords,
+                            fonte_metadados: coords ? 'gps_device' : 'ausente',
+                            tipo_captura: source
+                        });
+                        return;
+                    }
+
+                    // Se for um arquivo File (Câmera ou Galeria)
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                        try {
+                            const meta = await extractMetadata(file);
+
+                            let finalCoords = null;
+                            let finalTimestamp = null;
+                            let metadadosVerificados = false;
+                            let fonteMetadados = 'ausente';
+
+                            if (source === 'camera') {
+                                let currentLat = formData.lat || formData.latitude;
+                                let currentLng = formData.lng || formData.longitude;
+
+                                // Se o formulário não tiver GPS, tenta buscar no dispositivo
+                                if (!currentLat || !currentLng) {
+                                    try {
+                                        if (navigator.geolocation) {
+                                            const pos = await new Promise((res, rej) => {
+                                                navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 5000 });
+                                            });
+                                            currentLat = pos.coords.latitude.toFixed(6);
+                                            currentLng = pos.coords.longitude.toFixed(6);
+
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                lat: currentLat,
+                                                lng: currentLng,
+                                                latitude: currentLat,
+                                                longitude: currentLng
+                                            }));
+                                        }
+                                    } catch (geoErr) {
+                                        console.warn("Não foi possível obter GPS no momento da captura:", geoErr);
+                                    }
+                                }
+
+                                if (currentLat && currentLng) {
+                                    finalCoords = { lat: String(currentLat), lng: String(currentLng) };
+                                    finalTimestamp = new Date();
+                                    metadadosVerificados = true;
+                                    fonteMetadados = 'gps_device';
+                                }
+                            } else if (source === 'gallery') {
+                                // 1. Tentar extrair do EXIF original da foto carregada
+                                if (meta && meta.coords) {
+                                    finalCoords = meta.coords;
+                                    finalTimestamp = meta.timestamp || new Date();
+                                    metadadosVerificados = true;
+                                    fonteMetadados = 'exif_original';
+                                } else {
+                                    // 2. Fallback: Se a imagem da galeria não tem EXIF (ex: imagem recebida por WhatsApp), usa o GPS da Ocorrência
+                                    const currentLat = formData.lat || formData.latitude;
+                                    const currentLng = formData.lng || formData.longitude;
+                                    if (currentLat && currentLng) {
+                                        finalCoords = { lat: String(currentLat), lng: String(currentLng) };
+                                        finalTimestamp = meta?.timestamp || new Date();
+                                        metadadosVerificados = false;
+                                        fonteMetadados = 'form_gps';
+                                    }
+                                }
+                            }
+
+                            const compressed = await compressImage(reader.result, {
+                                coordinates: finalCoords,
+                                timestamp: finalTimestamp || new Date(),
+                                fonteMetadados
+                            });
+
+                            resolve({
+                                id: Math.random().toString(36).substr(2, 9),
+                                data: compressed,
+                                name: file.name || 'foto.jpg',
+                                legenda: '',
+                                latitude: finalCoords?.lat || null,
+                                longitude: finalCoords?.lng || null,
+                                data_hora_captura: finalTimestamp ? (finalTimestamp instanceof Date ? finalTimestamp.toISOString() : finalTimestamp) : new Date().toISOString(),
+                                metadados_verificados: metadadosVerificados,
+                                fonte_metadados: fonteMetadados,
+                                tipo_captura: source
+                            });
+                        } catch (err) {
+                            console.error("Erro ao otimizar foto:", err);
+                            resolve({
+                                id: Math.random().toString(36).substr(2, 9),
+                                data: reader.result,
+                                legenda: '',
+                                metadados_verificados: false,
+                                fonte_metadados: 'ausente'
+                            });
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } catch (e) {
+                    console.error("Erro ao carregar arquivo de foto:", e);
+                    resolve(null);
                 }
-                
-                // Se for um arquivo de galeria (File object)
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    resolve({
-                        id: Math.random().toString(36).substr(2, 9),
-                        data: reader.result,
-                        legenda: ''
-                    });
-                };
-                reader.readAsDataURL(file);
             });
         }));
-        setFormData(prev => ({ ...prev, fotos: [...currentFotos, ...newFotos] }));
+
+        const validFotos = newFotos.filter(Boolean);
+        setFormData(prev => ({ ...prev, fotos: [...currentFotos, ...validFotos] }));
     };
 
     const removePhoto = (id) => {
@@ -848,6 +956,12 @@ export default function OcorrenciasForm() {
                                         className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500"
                                         onClick={() => setSelectedPhotoIndex(idx)}
                                     />
+                                    {(foto.latitude && foto.longitude) && (
+                                        <div className="absolute top-1 left-1 bg-slate-900/80 backdrop-blur-md text-white text-[8px] font-black px-1.5 py-0.5 rounded-md flex items-center gap-1 z-10 border border-white/20">
+                                            <MapPin size={10} className="text-emerald-400" />
+                                            <span>GPS VERIFICADO</span>
+                                        </div>
+                                    )}
                                     <div className="absolute top-1 inset-x-1 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all z-20">
                                         <div className="flex gap-0.5">
                                             {idx > 0 && (
