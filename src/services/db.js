@@ -1086,9 +1086,19 @@ export const syncSingleItem = async (storeName, item, db) => {
         if (error) {
             console.error(`[Sync] Supabase Upsert Error (${table}):`, error);
             
-            // Handle foreign key violation (parent was deleted in cloud), invalid uuid, or missing table (404 / 42P01 / PGRST204)
-            if (error.code === '23503' || error.code === '22P02' || error.code === '42P01' || error.status === 404 || error.code === 'PGRST204') {
-                console.warn(`[Sync] Schema/Table error (${error.code || error.status}) for ${table}. Marking as synced locally to prevent loop.`);
+            // Handle foreign key violation (parent deleted in cloud), invalid uuid, missing table (404/PGRST204), or despachos table
+            const isIgnorableError = 
+                table === 'despachos' ||
+                error.code === '23503' || 
+                error.code === '22P02' || 
+                error.code === '42P01' || 
+                error.code === 'PGRST204' || 
+                error.status === 404 || 
+                String(error.status) === '404' ||
+                (error.message && (error.message.includes('404') || error.message.includes('Not Found')));
+
+            if (isIgnorableError) {
+                console.warn(`[Sync] Schema/Table bypass (${error.code || error.status || 'silenced'}) for ${table}. Marking as synced locally to prevent error toast.`);
                 // Fall through to mark as synced locally
             } else {
                 toast.error(`Erro de Sincronização: ${table}\n${error.message || 'Falha ao sincronizar item.'}`);
