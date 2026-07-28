@@ -476,13 +476,17 @@ export default function OcorrenciasForm() {
         if (!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition(
             (pos) => {
+                const latStr = pos.coords.latitude.toFixed(6);
+                const lngStr = pos.coords.longitude.toFixed(6);
                 setFormData(prev => ({
                     ...prev,
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
+                    lat: latStr,
+                    lng: lngStr,
+                    latitude: latStr,
+                    longitude: lngStr,
                     accuracy: pos.coords.accuracy
                 }));
-                toast.success('Localização atualizada');
+                toast.success('Localização GPS obtida!');
             },
             () => toast.error('Falha ao obter GPS'),
             { enableHighAccuracy: true }
@@ -732,11 +736,92 @@ export default function OcorrenciasForm() {
                                 />
                             </div>
                         </div>
-                        {(formData.lat && formData.lng) && (
-                            <div className="text-xs font-bold text-slate-500 bg-slate-50 p-2 rounded-lg text-center">
-                                Lat: {Number(formData.lat).toFixed(6)}, Lng: {Number(formData.lng).toFixed(6)}
+                        
+                        {/* COORDENADAS GPS MANUAIS */}
+                        <div className="pt-3 border-t border-slate-100 space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <MapPin size={12} className="text-blue-600" />
+                                    Coordenadas Geográficas (Manual / GPS)
+                                </span>
+                                {(formData.lat || formData.lng || formData.latitude || formData.longitude) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, lat: '', lng: '', latitude: '', longitude: '' }))}
+                                        className="text-[10px] font-bold text-red-500 hover:underline"
+                                    >
+                                        Limpar Coordenadas
+                                    </button>
+                                )}
                             </div>
-                        )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className={labelClasses}>Latitude</label>
+                                    <input
+                                        type="text"
+                                        className={getInputClass('lat')}
+                                        placeholder="Ex: -20.315500"
+                                        value={formData.lat ?? formData.latitude ?? ''}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val.includes(',')) {
+                                                const parts = val.split(',').map(s => s.trim());
+                                                const pLat = parts[0] || '';
+                                                const pLng = parts[1] || '';
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    lat: pLat,
+                                                    lng: pLng || prev.lng,
+                                                    latitude: pLat,
+                                                    longitude: pLng || prev.longitude
+                                                }));
+                                            } else {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    lat: val,
+                                                    latitude: val
+                                                }));
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className={labelClasses}>Longitude</label>
+                                    <input
+                                        type="text"
+                                        className={getInputClass('lng')}
+                                        placeholder="Ex: -40.312800"
+                                        value={formData.lng ?? formData.longitude ?? ''}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val.includes(',')) {
+                                                const parts = val.split(',').map(s => s.trim());
+                                                const pLat = parts[0] || '';
+                                                const pLng = parts[1] || '';
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    lat: pLat || prev.lat,
+                                                    lng: pLng,
+                                                    latitude: pLat || prev.latitude,
+                                                    longitude: pLng
+                                                }));
+                                            } else {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    lng: val,
+                                                    longitude: val
+                                                }));
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-medium">
+                                💡 Pode digitar manualmente, clicar no botão <strong>OBTER GPS</strong>, ou colar as coordenadas completas (ex: <code>-20.3155, -40.3128</code>) em qualquer um dos campos.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
