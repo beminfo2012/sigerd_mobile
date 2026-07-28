@@ -49,9 +49,20 @@ const OcorrenciasDashboard = () => {
                 try {
                     const { supabase } = await import('../../services/supabase');
                     
-                    // Fetch NOPRERs to link them
-                    const { data: noprersData } = await supabase.from('noprer').select('id, origem_id, numero_noprer');
-                    if (noprersData) setNoprers(noprersData);
+                    // Fetch NOPRERs to link them safely
+                    try {
+                        const { data: rawNoprers } = await supabase.from('noprer').select('*');
+                        if (rawNoprers) {
+                            const formattedNoprers = rawNoprers.map(n => ({
+                                ...n,
+                                origem_id: n.origem_id || n.vistoria_id || n.ocorrencia_id,
+                                numero_noprer: n.numero_noprer || n.numero || n.id
+                            }));
+                            setNoprers(formattedNoprers);
+                        }
+                    } catch (noprerErr) {
+                        console.warn('Busca silenciosa NOPRER falhou:', noprerErr);
+                    }
 
                     const { data: remoteData, error } = await supabase
                         .from('ocorrencias_operacionais')

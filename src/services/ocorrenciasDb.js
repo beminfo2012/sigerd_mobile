@@ -366,10 +366,15 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             id_local: ocorrencia.id_local === "" || ocorrencia.id_local === undefined ? null : Number(ocorrencia.id_local)
         };
         
-        // Ensure some snake_case mapping for database compatibility
+        // Ensure snake_case and camelCase compatibility for database columns
         const payload = {
             ...ocorrenciaHigienizada,
-            categoria_risco: ocorrenciaHigienizada.cobrade_subtipo || ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco,
+            tipo_ocorrencia: ocorrenciaHigienizada.tipo_ocorrencia || ocorrenciaHigienizada.tipoOcorrencia || '',
+            nivel_gravidade: ocorrenciaHigienizada.nivel_gravidade || ocorrenciaHigienizada.nivelGravidade || ocorrenciaHigienizada.nivel_risco || '',
+            nivel_risco: ocorrenciaHigienizada.nivel_gravidade || ocorrenciaHigienizada.nivelGravidade || ocorrenciaHigienizada.nivel_risco || 'Baixo',
+            descricao: ocorrenciaHigienizada.descricao || ocorrenciaHigienizada.observacoes || '',
+            observacoes: ocorrenciaHigienizada.descricao || ocorrenciaHigienizada.observacoes || '',
+            categoria_risco: ocorrenciaHigienizada.cobrade_subtipo || ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco || 'Outros',
             tem_apoio_tecnico: ocorrenciaHigienizada.temApoioTecnico || ocorrenciaHigienizada.tem_apoio_tecnico,
             apoio_tecnico: ocorrenciaHigienizada.apoioTecnico || ocorrenciaHigienizada.apoio_tecnico,
             medidas_tomadas: ocorrenciaHigienizada.medidas_adotadas || ocorrenciaHigienizada.medidasTomadas || ocorrenciaHigienizada.medidas_tomadas,
@@ -379,9 +384,9 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             telefone: ocorrenciaHigienizada.solicitante_telefone || ocorrenciaHigienizada.telefone
         };
         
-        // Delete all extra keys to keep DB clean and prevent schema errors
+        // Delete only frontend temporary keys (keep DB columns like tipo_ocorrencia, nivel_gravidade, descricao)
         const keysToDelete = [
-            'categoriaRisco', 'subtiposRisco', 'subtipoRiscoOutros', 'nivelRisco', 
+            'categoriaRisco', 'subtiposRisco', 'subtipoRiscoOutros', 'nivelRisco', 'nivelGravidade', 'tipoOcorrencia',
             'temApoioTecnico', 'apoioTecnico', 'temSolicitanteEspecifico', 
             'checklistRespostas', 'medidasTomadas', 'assinaturaAgente', 
             'assinaturaAssistido', 'id', 'synced', 'solicitante_nome', 'solicitante_telefone'

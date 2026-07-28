@@ -541,6 +541,16 @@ export default function OcorrenciasForm() {
         try {
             const finalData = {
                 ...formData,
+                tipo_ocorrencia: formData.tipo_ocorrencia || formData.tipoOcorrencia || '',
+                tipoOcorrencia: formData.tipo_ocorrencia || formData.tipoOcorrencia || '',
+                nivel_gravidade: formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || '',
+                nivel_risco: formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || 'Baixo',
+                descricao: formData.descricao || formData.observacoes || '',
+                observacoes: formData.descricao || formData.observacoes || '',
+                solicitante: formData.solicitante_nome || formData.solicitante || '',
+                solicitante_nome: formData.solicitante_nome || formData.solicitante || '',
+                telefone: formData.solicitante_telefone || formData.telefone || '',
+                solicitante_telefone: formData.solicitante_telefone || formData.telefone || '',
                 status: isDraft ? 'Aberta' : 'Finalizada',
                 encaminhada: formData.orgao_solicitado !== formData.orgao_atendeu
             };

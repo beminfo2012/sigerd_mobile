@@ -889,17 +889,31 @@ export const syncSingleItem = async (storeName, item, db) => {
                 ocorrencia_id_format: officialIdFormat,
                 agente: item.agente || '',
                 matricula: item.matricula || '',
-                cargo: item.cargo || '', // [ADDED]
-                solicitante: item.solicitante || '',
+                cargo: item.cargo || '',
+                solicitante: item.solicitante_nome || item.solicitante || '',
                 cpf: item.cpf || '',
-                telefone: item.telefone || '',
+                telefone: item.solicitante_telefone || item.telefone || '',
                 tem_solicitante_especifico: item.temSolicitanteEspecifico || item.tem_solicitante_especifico || false,
                 endereco: item.endereco || '',
                 bairro: item.bairro || '',
+                complemento: item.complemento || '',
                 data_ocorrencia: item.data_ocorrencia || '',
                 horario_ocorrencia: item.horario_ocorrencia || '',
-                lat: item.latitude || item.lat || null,
-                lng: item.longitude || item.lng || null,
+                orgao_solicitado: item.orgao_solicitado || 'Defesa Civil',
+                orgao_atendeu: item.orgao_atendeu || 'Defesa Civil',
+                tipo_ocorrencia: item.tipo_ocorrencia || item.tipoOcorrencia || '',
+                nivel_gravidade: item.nivel_gravidade || item.nivelGravidade || item.nivel_risco || item.nivelRisco || '',
+                nivel_risco: item.nivel_gravidade || item.nivelGravidade || item.nivel_risco || item.nivelRisco || 'Baixo',
+                descricao: item.descricao || item.observacoes || '',
+                observacoes: item.descricao || item.observacoes || '',
+                risco_pessoas_estruturas: item.risco_pessoas_estruturas || false,
+                encaminhada: item.encaminhada || false,
+                orgao_destino: item.orgao_destino || '',
+                horario_encaminhamento: item.horario_encaminhamento || null,
+                numero_ocorrencia_externa: item.numero_ocorrencia_externa || '',
+                observacao_encaminhamento: item.observacao_encaminhamento || '',
+                lat: item.lat ?? item.latitude ?? null,
+                lng: item.lng ?? item.longitude ?? null,
                 accuracy: item.accuracy || null,
                 gps_timestamp: item.gps_timestamp || null,
                 mortos: !item.mortos || item.mortos === "" ? 0 : Number(item.mortos),
@@ -910,16 +924,19 @@ export const syncSingleItem = async (storeName, item, db) => {
                 desaparecidos: !item.desaparecidos || item.desaparecidos === "" ? 0 : Number(item.desaparecidos),
                 outros_afetados: !item.outros_afetados || item.outros_afetados === "" ? 0 : Number(item.outros_afetados),
                 tem_danos_humanos: item.tem_danos_humanos || false,
-                categoria_risco: item.categoriaRisco || item.categoria_risco || 'Outros',
-                nivel_risco: item.nivelRisco || item.nivel_risco || 'Baixo',
-                subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco :
-                    (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
+                cobrade_grupo: item.cobrade_grupo || '',
+                cobrade_subgrupo: item.cobrade_subgrupo || '',
+                cobrade_tipo: item.cobrade_tipo || '',
+                cobrade_subtipo: item.cobrade_subtipo || '',
+                categoria_risco: item.cobrade_subtipo || item.categoriaRisco || item.categoria_risco || 'Outros',
+                subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
                 subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
+                danos_materiais: Array.isArray(item.danos_materiais) ? item.danos_materiais : [],
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
                 descricao_danos: item.descricao_danos || '',
                 informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
-                observacoes: item.observacoes || '',
-                medidas_tomadas: Array.isArray(item.medidasTomadas) ? item.medidasTomadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
+                medidas_adotadas: Array.isArray(item.medidas_adotadas) ? item.medidas_adotadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
+                medidas_tomadas: Array.isArray(item.medidas_adotadas) ? item.medidas_adotadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
                 unidade_consumidora: item.unidade_consumidora || '',
                 fotos: processedPhotos,
                 assinatura_agente: signatureAgenteUrl,
@@ -1069,10 +1086,10 @@ export const syncSingleItem = async (storeName, item, db) => {
         if (error) {
             console.error(`[Sync] Supabase Upsert Error (${table}):`, error);
             
-            // Handle foreign key violation (parent was deleted in cloud) or invalid uuid syntax
-            if (error.code === '23503' || error.code === '22P02') {
-                console.warn(`[Sync] Unrecoverable schema/FK error for ${table}. Marking as synced to prevent infinite loop.`);
-                // We will let it fall through to mark as synced locally
+            // Handle foreign key violation (parent was deleted in cloud), invalid uuid, or missing table (404 / 42P01 / PGRST204)
+            if (error.code === '23503' || error.code === '22P02' || error.code === '42P01' || error.status === 404 || error.code === 'PGRST204') {
+                console.warn(`[Sync] Schema/Table error (${error.code || error.status}) for ${table}. Marking as synced locally to prevent loop.`);
+                // Fall through to mark as synced locally
             } else {
                 toast.error(`Erro de Sincronização: ${table}\n${error.message || 'Falha ao sincronizar item.'}`);
                 return false;
