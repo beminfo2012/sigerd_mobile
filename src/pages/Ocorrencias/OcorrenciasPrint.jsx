@@ -197,7 +197,8 @@ const OcorrenciasPrint = () => {
 
     // Dynamic section numbers
     const hasChecklist = checklistItems.length > 0;
-    const hasObs = !!(data.observacoes && data.observacoes !== '---');
+    const descContent = data.descricao || data.observacoes || '';
+    const hasObs = !!(descContent && descContent.trim() !== '' && descContent !== '---');
     const hasPhotos = photos.length > 0;
 
     let secNum = 1;
@@ -390,7 +391,7 @@ const OcorrenciasPrint = () => {
                                         <th style={{ width: '30%' }}>Situação</th>
                                     </tr>
                                     <tr>
-                                        <td>{data.categoriaRisco || data.categoria_risco || 'Não Classificado'}</td>
+                                        <td>{data.tipo_ocorrencia || data.tipoOcorrencia || data.cobrade_subtipo || data.categoriaRisco || data.categoria_risco || 'Não Classificado'}</td>
                                         <td className={`font-black text-center ${
                                                 (data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente' || data.nivel_risco === 'Alto' || data.nivel_risco === 'Iminente') ? 'badge-risk-alto' :
                                                 (data.nivelRisco === 'Médio' || data.nivel_risco === 'Médio') ? 'badge-risk-medio' : 'badge-risk-baixo'
@@ -617,7 +618,7 @@ const OcorrenciasPrint = () => {
                                     `}} />
                                     <div 
                                         className="print-rich-text text-slate-700 text-xs leading-relaxed text-justify"
-                                        dangerouslySetInnerHTML={{ __html: data.observacoes.replace(/<li data-list="[^"]*">/g, '<li>') }}
+                                        dangerouslySetInnerHTML={{ __html: (data.descricao || data.observacoes || '').replace(/<li data-list="[^"]*">/g, '<li>') }}
                                     />
                                 </div>
                             </section>

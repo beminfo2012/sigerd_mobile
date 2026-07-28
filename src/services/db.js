@@ -928,7 +928,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 cobrade_subgrupo: item.cobrade_subgrupo || '',
                 cobrade_tipo: item.cobrade_tipo || '',
                 cobrade_subtipo: item.cobrade_subtipo || '',
-                categoria_risco: item.cobrade_subtipo || item.categoriaRisco || item.categoria_risco || 'Outros',
+                categoria_risco: item.tipo_ocorrencia || item.tipoOcorrencia || item.cobrade_subtipo || item.categoriaRisco || item.categoria_risco || 'Outros',
                 subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
                 subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
                 danos_materiais: Array.isArray(item.danos_materiais) ? item.danos_materiais : [],

@@ -402,7 +402,7 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             nivel_risco: ocorrenciaHigienizada.nivel_gravidade || ocorrenciaHigienizada.nivelGravidade || ocorrenciaHigienizada.nivel_risco || 'Baixo',
             descricao: ocorrenciaHigienizada.descricao || ocorrenciaHigienizada.observacoes || '',
             observacoes: ocorrenciaHigienizada.descricao || ocorrenciaHigienizada.observacoes || '',
-            categoria_risco: ocorrenciaHigienizada.cobrade_subtipo || ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco || 'Outros',
+            categoria_risco: ocorrenciaHigienizada.tipo_ocorrencia || ocorrenciaHigienizada.tipoOcorrencia || ocorrenciaHigienizada.cobrade_subtipo || ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco || 'Outros',
             tem_apoio_tecnico: ocorrenciaHigienizada.temApoioTecnico || ocorrenciaHigienizada.tem_apoio_tecnico,
             apoio_tecnico: ocorrenciaHigienizada.apoioTecnico || ocorrenciaHigienizada.apoio_tecnico,
             medidas_tomadas: ocorrenciaHigienizada.medidas_adotadas || ocorrenciaHigienizada.medidasTomadas || ocorrenciaHigienizada.medidas_tomadas,

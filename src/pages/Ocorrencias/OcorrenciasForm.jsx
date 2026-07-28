@@ -539,14 +539,22 @@ export default function OcorrenciasForm() {
     const saveRecord = async (isDraft, resetAfter = false) => {
         setSaving(true);
         try {
+            const tipoVal = formData.tipo_ocorrencia || formData.tipoOcorrencia || '';
+            const gravVal = formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || '';
+            const descVal = formData.descricao || formData.observacoes || '';
+            
             const finalData = {
                 ...formData,
-                tipo_ocorrencia: formData.tipo_ocorrencia || formData.tipoOcorrencia || '',
-                tipoOcorrencia: formData.tipo_ocorrencia || formData.tipoOcorrencia || '',
-                nivel_gravidade: formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || '',
-                nivel_risco: formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || 'Baixo',
-                descricao: formData.descricao || formData.observacoes || '',
-                observacoes: formData.descricao || formData.observacoes || '',
+                tipo_ocorrencia: tipoVal,
+                tipoOcorrencia: tipoVal,
+                categoria_risco: tipoVal || formData.cobrade_subtipo || formData.categoriaRisco || formData.categoria_risco || 'Outros',
+                categoriaRisco: tipoVal || formData.cobrade_subtipo || formData.categoriaRisco || formData.categoria_risco || 'Outros',
+                nivel_gravidade: gravVal,
+                nivelGravidade: gravVal,
+                nivel_risco: gravVal || 'Baixo',
+                nivelRisco: gravVal || 'Baixo',
+                descricao: descVal,
+                observacoes: descVal,
                 solicitante: formData.solicitante_nome || formData.solicitante || '',
                 solicitante_nome: formData.solicitante_nome || formData.solicitante || '',
                 telefone: formData.solicitante_telefone || formData.telefone || '',
