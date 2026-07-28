@@ -2513,54 +2513,56 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         )}
                     </Card>
 
-                    {/* SEÇÃO: Aberturas Monitoradas (Fissurômetro) */}
-                    <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
-                        <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
-                            <h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">
-                                Aberturas Monitoradas (Fissurômetro)
-                            </h3>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowQrModal(true)}
-                                    className="bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold px-2.5 py-1 rounded flex items-center gap-1 transition-colors"
-                                    title="Imprimir / Baixar Cartão QR de Referência (30mm)"
-                                >
-                                    <QrCode size={13} /> Cartão QR (30mm)
-                                </button>
-                                <span className="bg-white/10 text-white text-[10px] font-black px-3 py-1 rounded-sm">{formData.aberturas?.length || 0} PONTOS</span>
-                            </div>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            {formData.aberturas && formData.aberturas.length > 0 ? (
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                    {formData.aberturas.map((abertura) => (
-                                        <AberturaRegistro 
-                                            key={abertura.id} 
-                                            registro={abertura} 
-                                            onValidar={handleValidarAbertura} 
-                                        />
-                                    ))}
+                    {/* SEÇÃO: Aberturas Monitoradas (Fissurômetro) - Exibido apenas para Risco Estrutural */}
+                    {formData.categoriaRisco === 'Estrutural' && (
+                        <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
+                            <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
+                                <h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">
+                                    Aberturas Monitoradas (Fissurômetro)
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowQrModal(true)}
+                                        className="bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold px-2.5 py-1 rounded flex items-center gap-1 transition-colors"
+                                        title="Imprimir / Baixar Cartão QR de Referência (30mm)"
+                                    >
+                                        <QrCode size={13} /> Cartão QR (30mm)
+                                    </button>
+                                    <span className="bg-white/10 text-white text-[10px] font-black px-3 py-1 rounded-sm">{formData.aberturas?.length || 0} PONTOS</span>
                                 </div>
-                            ) : (
-                                <div className="text-sm text-slate-500 bg-slate-50 dark:bg-slate-900 p-8 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-2">
-                                    <div className="flex justify-center text-slate-300 dark:text-slate-600 mb-2">
-                                        <Crosshair size={32} />
+                            </div>
+                            
+                            <div className="space-y-4">
+                                {formData.aberturas && formData.aberturas.length > 0 ? (
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                        {formData.aberturas.map((abertura) => (
+                                            <AberturaRegistro 
+                                                key={abertura.id} 
+                                                registro={abertura} 
+                                                onValidar={handleValidarAbertura} 
+                                            />
+                                        ))}
                                     </div>
-                                    <p>Nenhum ponto de abertura (fissura/trinca/rachadura) monitorado para esta vistoria.</p>
+                                ) : (
+                                    <div className="text-sm text-slate-500 bg-slate-50 dark:bg-slate-900 p-8 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-2">
+                                        <div className="flex justify-center text-slate-300 dark:text-slate-600 mb-2">
+                                            <Crosshair size={32} />
+                                        </div>
+                                        <p>Nenhum ponto de abertura (fissura/trinca/rachadura) monitorado para esta vistoria.</p>
+                                    </div>
+                                )}
+                                <div className="w-full pt-4 mt-4 border-t border-dashed border-slate-200 dark:border-slate-700">
+                                    <label className="block text-xs uppercase font-bold text-slate-500 mb-3 text-center">Registrar Nova Evidência</label>
+                                    <FileInput 
+                                        onFileSelect={handleAberturaPhotoSelect} 
+                                        compact={true} 
+                                        label="Capturar Foto do Fissurômetro" 
+                                    />
                                 </div>
-                            )}
-                            <div className="w-full pt-4 mt-4 border-t border-dashed border-slate-200 dark:border-slate-700">
-                                <label className="block text-xs uppercase font-bold text-slate-500 mb-3 text-center">Registrar Nova Evidência</label>
-                                <FileInput 
-                                    onFileSelect={handleAberturaPhotoSelect} 
-                                    compact={true} 
-                                    label="Capturar Foto do Fissurômetro" 
-                                />
                             </div>
-                        </div>
-                    </Card>
+                        </Card>
+                    )}
 
                     {/* 7. SEÇÃO: Registro Fotográfico */}
                     <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">

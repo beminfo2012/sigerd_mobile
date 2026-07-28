@@ -339,6 +339,7 @@ export const saveVistoriaOffline = async (data) => {
         ...data,
         vistoria_id: data.vistoriaId || data.vistoria_id,
         vistoriaId: data.vistoriaId || data.vistoria_id,
+        aberturas: Array.isArray(data.aberturas) ? data.aberturas : [],
         createdAt: data.createdAt || data.created_at || new Date().toISOString(),
         synced: false
     })
@@ -1097,53 +1098,92 @@ export const syncSingleItem = async (storeName, item, db) => {
                     if (vistoriaUuid) {
                         try {
                             const { data: userSession } = await supabase.auth.getSession();
-                            const userId = userSession?.session?.user?.id;
-                            const tenantId = record.tenant_id || userSession?.session?.user?.user_metadata?.tenant_id;
+                            const isGuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+                            const defaultGuid = '00000000-0000-0000-0000-000000000000';
                             
-                            for (const ab of record.aberturas) {
+                            const rawUserId = userSession?.session?.user?.id;
+                            const userId = isGuid(rawUserId) ? rawUserId : null;
+                            
+                            const rawTenant = record.tenant_id || userSession?.session?.user?.user_metadata?.tenant_id;
+                            const tenantId = isGuid(rawTenant) ? rawTenant : defaultGuid;
+                            const criadoPor = userId || (isGuid(vistoriaUuid) ? vistoriaUuid : defaultGuid);
+                            
+                            let aberturasModificadas = false;
+                            const currentAberturas = [...record.aberturas];
+                            
+                            for (let i = 0; i < currentAberturas.length; i++) {
+                                const ab = { ...currentAberturas[i] };
+                                const abId = isGuid(ab.id) ? ab.id : crypto.randomUUID();
+                                ab.id = abId;
+                                
                                 // 1. Upsert na tabela abertura_patologica
                                 const { data: aberturaData, error: aberturaError } = await supabase
                                     .from('abertura_patologica')
                                     .upsert([{
-                                        id: ab.id,
+                                        id: abId,
                                         tenant_id: tenantId,
                                         vistoria_id: vistoriaUuid,
-                                        codigo_ponto: ab.codigo_ponto,
-                                        localizacao_descricao: ab.localizacao_descricao,
+                                        codigo_ponto: ab.codigo_ponto || `AB-${String(i + 1).padStart(3, '0')}`,
+                                        localizacao_descricao: ab.localizacao_descricao || `Ponto de Monitoramento ${i + 1}`,
                                         categoria: ab.categoria || 'Estrutural',
                                         status: ab.status || 'ativa',
-                                        criado_por: userId || vistoriaUuid
+                                        criado_por: criadoPor
                                     }], { onConflict: 'id' })
                                     .select();
                                     
-                                if (!aberturaError && aberturaData && aberturaData.length > 0) {
-                                    // 2. Upsert do registro fotográfico
+                                if (!aberturaError) {
+                                    // 2. Upload de foto original e foto anotada (se em base64)
                                     let fotoUrl = ab.foto_url || '';
                                     if (fotoUrl && fotoUrl.startsWith('data:image')) {
-                                        fotoUrl = await uploadSignature(fotoUrl, 'vistorias_fotos', `${officialId.replace('/', '_')}/aberturas/${ab.id}.jpg`);
+                                        const uploadedUrl = await uploadSignature(fotoUrl, 'vistorias_fotos', `${officialId.replace('/', '_')}/aberturas/${abId}.jpg`);
+                                        if (uploadedUrl) {
+                                            fotoUrl = uploadedUrl;
+                                            ab.foto_url = fotoUrl;
+                                            aberturasModificadas = true;
+                                        }
                                     }
                                     
+                                    let fotoAnotadaUrl = ab.foto_anotada_url || '';
+                                    if (fotoAnotadaUrl && fotoAnotadaUrl.startsWith('data:image')) {
+                                        const uploadedAnotada = await uploadSignature(fotoAnotadaUrl, 'vistorias_fotos', `${officialId.replace('/', '_')}/aberturas/${abId}_anotada.jpg`);
+                                        if (uploadedAnotada) {
+                                            fotoAnotadaUrl = uploadedAnotada;
+                                            ab.foto_anotada_url = fotoAnotadaUrl;
+                                            aberturasModificadas = true;
+                                        }
+                                    }
+                                    
+                                    // 3. Upsert do registro fotográfico
+                                    const finalFotoUrl = fotoAnotadaUrl || fotoUrl || 'pendente';
                                     await supabase
                                         .from('abertura_registro_fotografico')
                                         .upsert([{
-                                            id: crypto.randomUUID(), // Assuming one record per save for MVP
                                             tenant_id: tenantId,
-                                            abertura_id: ab.id,
-                                            foto_url: fotoUrl || 'pendente',
+                                            abertura_id: abId,
+                                            foto_url: finalFotoUrl,
                                             hash_sha256: ab.hash_sha256 || 'N/A',
-                                            data_hora: new Date().toISOString(),
+                                            data_hora: ab.data_hora ? new Date(ab.data_hora).toISOString() : new Date().toISOString(),
                                             fonte_data_hora: ab.fonte_data_hora || 'gps_dispositivo',
                                             latitude: ab.latitude ? parseFloat(ab.latitude) : null,
                                             longitude: ab.longitude ? parseFloat(ab.longitude) : null,
-                                            largura_mm_medida: ab.largura_mm_medida || null,
+                                            largura_mm_medida: ab.largura_mm_medida ? parseFloat(ab.largura_mm_medida) : null,
                                             classificacao_patologia: ab.classificacao_patologia || null,
                                             fonte_classificacao: ab.fonte_classificacao || 'IBAPE-MG',
-                                            validado_por: ab.validado_por_nome ? userId : null,
-                                            validado_em: ab.validado_em ? new Date().toISOString() : null
+                                            validado_por: (ab.validado_por_nome && userId) ? userId : null,
+                                            validado_em: ab.validado_em ? new Date().toISOString() : null,
+                                            observacoes: ab.largura_anterior_mm ? `Largura Anterior: ${ab.largura_anterior_mm} mm` : null
                                         }]);
-                                } else if (aberturaError) {
+                                        
+                                    currentAberturas[i] = ab;
+                                } else {
                                     console.error('[Sync] Erro Abertura:', aberturaError);
                                 }
+                            }
+                            
+                            if (aberturasModificadas) {
+                                record.aberturas = currentAberturas;
+                                const updateTx = db.transaction(storeName, 'readwrite');
+                                await updateTx.objectStore(storeName).put(record);
                             }
                         } catch (abErr) {
                             console.error('[Sync] Erro Crítico ao sincronizar aberturas:', abErr);
