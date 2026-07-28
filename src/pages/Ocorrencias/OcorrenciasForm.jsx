@@ -205,13 +205,13 @@ export default function OcorrenciasForm() {
         loadDespachos();
     }, [formData.ocorrencia_id_format, id]);
 
-    const labelClasses = "text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block ml-1";
+    const labelClasses = "text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block ml-1";
     const baseInputClasses = "w-full p-3 rounded-xl border font-bold focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all";
     const getInputClass = (fieldName) => {
         if (unrecognizedFields[fieldName]) {
-            return `${baseInputClasses} border-amber-400 bg-amber-50 ring-2 ring-amber-400/20 text-amber-900`;
+            return `${baseInputClasses} border-amber-400 bg-amber-50 dark:bg-amber-950/30 ring-2 ring-amber-400/20 text-amber-900 dark:text-amber-200`;
         }
-        return `${baseInputClasses} border-slate-200 bg-slate-50 text-slate-800`;
+        return `${baseInputClasses} border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100`;
     };
 
     // Handlers
@@ -583,16 +583,16 @@ export default function OcorrenciasForm() {
     const showEncaminhamento = formData.orgao_solicitado !== formData.orgao_atendeu && formData.orgao_solicitado && formData.orgao_atendeu;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-52 sm:pb-36">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-52 sm:pb-36 transition-colors duration-300">
             {/* Topbar */}
-            <div className="bg-white px-4 py-3 sticky top-0 z-30 shadow-sm flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-800 px-4 py-3 sticky top-0 z-30 shadow-sm flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/ocorrencias')} className="p-2 -ml-2 rounded-full active:bg-slate-100">
-                        <ArrowLeft size={24} className="text-slate-700" />
+                    <button onClick={() => navigate('/ocorrencias')} className="p-2 -ml-2 rounded-full active:bg-slate-100 dark:active:bg-slate-700">
+                        <ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" />
                     </button>
                     <div>
-                        <h1 className="font-black text-lg text-slate-800">Nova Ocorrência</h1>
-                        <p className="text-xs font-bold text-slate-400">{formData.data_chamado ? new Date(formData.data_chamado).toLocaleDateString('pt-BR') : ''}</p>
+                        <h1 className="font-black text-lg text-slate-800 dark:text-slate-100">Nova Ocorrência</h1>
+                        <p className="text-xs font-bold text-slate-400 dark:text-slate-400">{formData.data_chamado ? new Date(formData.data_chamado).toLocaleDateString('pt-BR') : ''}</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -618,7 +618,7 @@ export default function OcorrenciasForm() {
                     </div>
                 )}
                 {/* SOLICITANTE */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Solicitante</h2>
                     <div className="space-y-4">
                         <div className="space-y-2">
@@ -707,7 +707,7 @@ export default function OcorrenciasForm() {
                 </div>
 
                 {/* LOCALIZAÇÃO */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                     <div className="flex justify-between items-center mb-3">
                         <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Localização</h2>
                         <button onClick={getGPS} type="button" className="text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
@@ -855,7 +855,7 @@ export default function OcorrenciasForm() {
                 </div>
 
                 {/* ATENDIMENTO */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Atendimento</h2>
                     <div className="space-y-3">
                         <div>
@@ -908,7 +908,7 @@ export default function OcorrenciasForm() {
                 </div>
 
                 {/* CLASSIFICAÇÃO OPERACIONAL */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Classificação Operacional</h2>
                     
                     <select
@@ -1056,7 +1056,7 @@ export default function OcorrenciasForm() {
                 </div>
 
                 {/* FOTOS E ASSINATURAS */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Registro Fotográfico ({formData.fotos?.length || 0})</h2>
                     <div className="mb-4">
                         <FileInput onFileSelect={handlePhotoSelect} />
@@ -1171,7 +1171,7 @@ export default function OcorrenciasForm() {
                 </div>
 
                 {/* DESPACHOS E EMISSÃO OFICIAL */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 space-y-4">
                     <div className="flex justify-between items-center">
                         <div>
                             <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Despachos e Emissão Oficial</h2>
@@ -1258,7 +1258,7 @@ export default function OcorrenciasForm() {
                 </div>
 
                 {/* BOTTOM ACTIONS */}
-                <div className="fixed bottom-[64px] md:bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 sm:p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.08)]">
+                <div className="fixed bottom-[64px] md:bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.08)]">
                     <div className="max-w-7xl mx-auto flex flex-col gap-2">
                         {(!isValid() && !saving) && (
                             <div className="text-[10px] text-center font-bold text-red-500 uppercase">
@@ -1271,7 +1271,7 @@ export default function OcorrenciasForm() {
                             <button
                                 onClick={() => saveRecord(true)}
                                 disabled={saving}
-                                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg text-xs transition-colors uppercase tracking-wide"
+                                className="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-lg text-xs transition-colors uppercase tracking-wide"
                             >
                                 Salvar Rascunho
                             </button>

@@ -252,13 +252,41 @@ export const getOcorrenciaById = async (id) => {
             }
             
             const { data } = await query.single();
-            if (data) return data;
+            if (data) return {
+                ...data,
+                tipo_ocorrencia: data.tipo_ocorrencia || data.tipoOcorrencia || data.categoria_risco || '',
+                tipoOcorrencia: data.tipo_ocorrencia || data.tipoOcorrencia || data.categoria_risco || '',
+                nivel_gravidade: data.nivel_gravidade || data.nivelGravidade || data.nivel_risco || data.nivelRisco || '',
+                nivel_risco: data.nivel_gravidade || data.nivelGravidade || data.nivel_risco || data.nivelRisco || 'Baixo',
+                descricao: data.descricao || data.observacoes || '',
+                observacoes: data.observacoes || data.descricao || '',
+                solicitante_nome: data.solicitante_nome || data.solicitante || '',
+                solicitante: data.solicitante || data.solicitante_nome || '',
+                telefone: data.telefone || data.solicitante_telefone || '',
+                solicitante_telefone: data.solicitante_telefone || data.telefone || ''
+            };
         } catch (e) {
             console.warn('Erro ao buscar ocorrencia remotamente, usando fallback', e);
         }
     }
 
-    return localRecord;
+    if (localRecord) {
+        return {
+            ...localRecord,
+            tipo_ocorrencia: localRecord.tipo_ocorrencia || localRecord.tipoOcorrencia || localRecord.categoria_risco || '',
+            tipoOcorrencia: localRecord.tipo_ocorrencia || localRecord.tipoOcorrencia || localRecord.categoria_risco || '',
+            nivel_gravidade: localRecord.nivel_gravidade || localRecord.nivelGravidade || localRecord.nivel_risco || localRecord.nivelRisco || '',
+            nivel_risco: localRecord.nivel_gravidade || localRecord.nivelGravidade || localRecord.nivel_risco || localRecord.nivelRisco || 'Baixo',
+            descricao: localRecord.descricao || localRecord.observacoes || '',
+            observacoes: localRecord.observacoes || localRecord.descricao || '',
+            solicitante_nome: localRecord.solicitante_nome || localRecord.solicitante || '',
+            solicitante: localRecord.solicitante || localRecord.solicitante_nome || '',
+            telefone: localRecord.telefone || localRecord.solicitante_telefone || '',
+            solicitante_telefone: localRecord.solicitante_telefone || localRecord.telefone || ''
+        };
+    }
+
+    return null;
 };
 
 /**

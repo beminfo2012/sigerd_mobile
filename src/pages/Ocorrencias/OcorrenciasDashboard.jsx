@@ -66,7 +66,7 @@ const OcorrenciasDashboard = () => {
 
                     const { data: remoteData, error } = await supabase
                         .from('ocorrencias_operacionais')
-                        .select('id, ocorrencia_id, ocorrencia_id_format, agente, solicitante, endereco, bairro, data_ocorrencia, horario_ocorrencia, categoria_risco, nivel_risco, subtipos_risco, status, created_at, updated_at')
+                        .select('*')
                         .order('created_at', { ascending: false });
                         
                     if (!error && remoteData && remoteData.length > 0) {
