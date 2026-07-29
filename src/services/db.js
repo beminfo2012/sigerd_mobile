@@ -1063,22 +1063,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.destination_type;
         }
 
-        if (storeName === 'ocorrencias_operacionais') {
-            console.log("==========================================");
-            console.log(`[Sync Ocorrências] 📤 ENVIANDO PARA SUPABASE (tabela '${table}'):`, {
-                ocorrencia_id: payload.ocorrencia_id,
-                tipo_ocorrencia: payload.tipo_ocorrencia,
-                nivel_gravidade: payload.nivel_gravidade,
-                categoria_risco: payload.categoria_risco,
-                nivel_risco: payload.nivel_risco,
-                descricao: payload.descricao,
-                observacoes: payload.observacoes,
-                full_payload: payload
-            });
-            console.log("==========================================");
-        } else {
-            console.log(`[Sync] Upserting to Supabase table '${table}'...`, payload);
-        }
+        console.log(`[Sync] Upserting to Supabase table '${table}'...`, payload);
 
         const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {
             onConflict: storeName === 'vistorias' ? 'vistoria_id' :
@@ -1097,14 +1082,6 @@ export const syncSingleItem = async (storeName, item, db) => {
                                                                 ['redap_eventos', 'redap_registros', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(storeName) ? 'id' :
                                                                     undefined
         }).select();
-
-        if (storeName === 'ocorrencias_operacionais') {
-            if (error) {
-                console.error(`[Sync Ocorrências] ❌ ERRO SUPABASE (tabela '${table}'):`, error);
-            } else {
-                console.log(`[Sync Ocorrências] ✅ SUCESSO SUPABASE (tabela '${table}'):`, syncedItems);
-            }
-        }
 
         if (error) {
             console.error(`[Sync] Supabase Upsert Error (${table}):`, error);

@@ -342,17 +342,10 @@ export const triggerOcorrenciaSync = async (idOrUuid) => {
     }
 
     try {
-        console.log(`[triggerOcorrenciaSync] 🚀 Iniciando sync da ocorrência ${record.ocorrencia_id_format || record.ocorrencia_id}:`, {
-            tipo_ocorrencia: record.tipo_ocorrencia,
-            nivel_gravidade: record.nivel_gravidade,
-            descricao: record.descricao
-        });
         const { syncSingleItem } = await import('./db');
-        const success = await syncSingleItem('ocorrencias_operacionais', record, db);
-        console.log(`[triggerOcorrenciaSync] ✅ Resultado sync:`, success);
-        return success;
+        return await syncSingleItem('ocorrencias_operacionais', record, db);
     } catch (err) {
-        console.error('[triggerOcorrenciaSync] ❌ Erro no sync:', err);
+        console.error('[triggerOcorrenciaSync] Erro no sync:', err);
         return false;
     }
 };

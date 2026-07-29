@@ -570,15 +570,6 @@ export default function OcorrenciasForm() {
                 status: isDraft ? 'Aberta' : 'Finalizada',
                 encaminhada: formData.orgao_solicitado !== formData.orgao_atendeu
             };
-
-            console.log("==========================================");
-            console.log("💾 [OcorrenciasForm] SALVANDO OCORRÊNCIA:", {
-                tipo_ocorrencia: finalData.tipo_ocorrencia,
-                nivel_gravidade: finalData.nivel_gravidade,
-                descricao_preview: finalData.descricao?.substring(0, 100),
-                full_finalData: finalData
-            });
-            console.log("==========================================");
             
             await saveOcorrenciaLocal(finalData, !navigator.onLine);
             
