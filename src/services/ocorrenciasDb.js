@@ -323,16 +323,36 @@ export const getOcorrenciaById = async (id) => {
 /**
  * Sync single occurrence to Supabase using centralized syncSingleItem
  */
-export const triggerOcorrenciaSync = async (id) => {
+export const triggerOcorrenciaSync = async (idOrUuid) => {
     const db = await initDB();
-    const record = await db.get('ocorrencias_operacionais', id);
-    if (!record) return false;
+    let record = null;
+    if (typeof idOrUuid === 'number' || (!isNaN(parseInt(idOrUuid)) && String(parseInt(idOrUuid)) === String(idOrUuid))) {
+        record = await db.get('ocorrencias_operacionais', parseInt(idOrUuid));
+    }
+    if (!record && typeof idOrUuid === 'string') {
+        record = await db.getFromIndex('ocorrencias_operacionais', 'ocorrencia_id', idOrUuid);
+    }
+    if (!record) {
+        const all = await db.getAll('ocorrencias_operacionais');
+        record = all.find(r => r.ocorrencia_id === idOrUuid || r.ocorrencia_id_format === idOrUuid || String(r.id) === String(idOrUuid));
+    }
+    if (!record) {
+        console.warn(`[triggerOcorrenciaSync] ⚠️ Registro não encontrado no localDB para sync: ${idOrUuid}`);
+        return false;
+    }
 
     try {
+        console.log(`[triggerOcorrenciaSync] 🚀 Iniciando sync da ocorrência ${record.ocorrencia_id_format || record.ocorrencia_id}:`, {
+            tipo_ocorrencia: record.tipo_ocorrencia,
+            nivel_gravidade: record.nivel_gravidade,
+            descricao: record.descricao
+        });
+        const { syncSingleItem } = await import('./db');
         const success = await syncSingleItem('ocorrencias_operacionais', record, db);
+        console.log(`[triggerOcorrenciaSync] ✅ Resultado sync:`, success);
         return success;
     } catch (err) {
-        console.error('Ocorrencia Sync Error:', err);
+        console.error('[triggerOcorrenciaSync] ❌ Erro no sync:', err);
         return false;
     }
 };
@@ -425,15 +445,25 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             id_local: ocorrencia.id_local === "" || ocorrencia.id_local === undefined ? null : Number(ocorrencia.id_local)
         };
         
+        const finalType = (ocorrenciaHigienizada.tipo_ocorrencia && ocorrenciaHigienizada.tipo_ocorrencia !== 'Outros') ? ocorrenciaHigienizada.tipo_ocorrencia :
+                        (ocorrenciaHigienizada.tipoOcorrencia && ocorrenciaHigienizada.tipoOcorrencia !== 'Outros') ? ocorrenciaHigienizada.tipoOcorrencia :
+                        (ocorrenciaHigienizada.cobrade_subtipo && ocorrenciaHigienizada.cobrade_subtipo !== 'Outros') ? ocorrenciaHigienizada.cobrade_subtipo :
+                        (ocorrenciaHigienizada.categoria_risco && ocorrenciaHigienizada.categoria_risco !== 'Outros') ? ocorrenciaHigienizada.categoria_risco :
+                        (ocorrenciaHigienizada.categoriaRisco && ocorrenciaHigienizada.categoriaRisco !== 'Outros') ? ocorrenciaHigienizada.categoriaRisco :
+                        ocorrenciaHigienizada.tipo_ocorrencia || ocorrenciaHigienizada.tipoOcorrencia || ocorrenciaHigienizada.categoria_risco || ocorrenciaHigienizada.categoriaRisco || '';
+
+        const finalGrav = ocorrenciaHigienizada.nivel_gravidade || ocorrenciaHigienizada.nivelGravidade || ocorrenciaHigienizada.nivel_risco || ocorrenciaHigienizada.nivelRisco || '';
+        const finalDesc = ocorrenciaHigienizada.descricao || ocorrenciaHigienizada.observacoes || ocorrenciaHigienizada.informacoes_complementares || ocorrenciaHigienizada.descricao_danos || '';
+
         // Ensure snake_case and camelCase compatibility for database columns
         const payload = {
             ...ocorrenciaHigienizada,
-            tipo_ocorrencia: ocorrenciaHigienizada.tipo_ocorrencia || ocorrenciaHigienizada.tipoOcorrencia || '',
-            nivel_gravidade: ocorrenciaHigienizada.nivel_gravidade || ocorrenciaHigienizada.nivelGravidade || ocorrenciaHigienizada.nivel_risco || '',
-            nivel_risco: ocorrenciaHigienizada.nivel_gravidade || ocorrenciaHigienizada.nivelGravidade || ocorrenciaHigienizada.nivel_risco || 'Baixo',
-            descricao: ocorrenciaHigienizada.descricao || ocorrenciaHigienizada.observacoes || '',
-            observacoes: ocorrenciaHigienizada.descricao || ocorrenciaHigienizada.observacoes || '',
-            categoria_risco: ocorrenciaHigienizada.tipo_ocorrencia || ocorrenciaHigienizada.tipoOcorrencia || ocorrenciaHigienizada.cobrade_subtipo || ocorrenciaHigienizada.categoriaRisco || ocorrenciaHigienizada.categoria_risco || 'Outros',
+            tipo_ocorrencia: finalType,
+            nivel_gravidade: finalGrav,
+            nivel_risco: finalGrav || 'Baixo',
+            descricao: finalDesc,
+            observacoes: finalDesc,
+            categoria_risco: finalType || 'Outros',
             tem_apoio_tecnico: ocorrenciaHigienizada.temApoioTecnico || ocorrenciaHigienizada.tem_apoio_tecnico,
             apoio_tecnico: ocorrenciaHigienizada.apoioTecnico || ocorrenciaHigienizada.apoio_tecnico,
             medidas_tomadas: ocorrenciaHigienizada.medidas_adotadas || ocorrenciaHigienizada.medidasTomadas || ocorrenciaHigienizada.medidas_tomadas,

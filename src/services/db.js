@@ -884,6 +884,16 @@ export const syncSingleItem = async (storeName, item, db) => {
                 signatureApoioUrl = await uploadSignature(signatureApoioUrl, folder, `${oid}/signature_apoio.png`);
             }
 
+            const finalType = (item.tipo_ocorrencia && item.tipo_ocorrencia !== 'Outros') ? item.tipo_ocorrencia :
+                            (item.tipoOcorrencia && item.tipoOcorrencia !== 'Outros') ? item.tipoOcorrencia :
+                            (item.cobrade_subtipo && item.cobrade_subtipo !== 'Outros') ? item.cobrade_subtipo :
+                            (item.categoria_risco && item.categoria_risco !== 'Outros') ? item.categoria_risco :
+                            (item.categoriaRisco && item.categoriaRisco !== 'Outros') ? item.categoriaRisco :
+                            item.tipo_ocorrencia || item.tipoOcorrencia || item.categoria_risco || item.categoriaRisco || '';
+
+            const finalGrav = item.nivel_gravidade || item.nivelGravidade || item.nivel_risco || item.nivelRisco || '';
+            const finalDesc = item.descricao || item.observacoes || item.informacoes_complementares || item.descricao_danos || '';
+
             payload = {
                 ocorrencia_id: oid,
                 ocorrencia_id_format: officialIdFormat,
@@ -901,11 +911,11 @@ export const syncSingleItem = async (storeName, item, db) => {
                 horario_ocorrencia: item.horario_ocorrencia || '',
                 orgao_solicitado: item.orgao_solicitado || 'Defesa Civil',
                 orgao_atendeu: item.orgao_atendeu || 'Defesa Civil',
-                tipo_ocorrencia: item.tipo_ocorrencia || item.tipoOcorrencia || '',
-                nivel_gravidade: item.nivel_gravidade || item.nivelGravidade || item.nivel_risco || item.nivelRisco || '',
-                nivel_risco: item.nivel_gravidade || item.nivelGravidade || item.nivel_risco || item.nivelRisco || 'Baixo',
-                descricao: item.descricao || item.observacoes || '',
-                observacoes: item.descricao || item.observacoes || '',
+                tipo_ocorrencia: finalType,
+                nivel_gravidade: finalGrav,
+                nivel_risco: finalGrav || 'Baixo',
+                descricao: finalDesc,
+                observacoes: finalDesc,
                 risco_pessoas_estruturas: item.risco_pessoas_estruturas || false,
                 encaminhada: item.encaminhada || false,
                 orgao_destino: item.orgao_destino || '',
@@ -928,7 +938,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 cobrade_subgrupo: item.cobrade_subgrupo || '',
                 cobrade_tipo: item.cobrade_tipo || '',
                 cobrade_subtipo: item.cobrade_subtipo || '',
-                categoria_risco: item.tipo_ocorrencia || item.tipoOcorrencia || item.cobrade_subtipo || item.categoriaRisco || item.categoria_risco || 'Outros',
+                categoria_risco: finalType || 'Outros',
                 subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
                 subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
                 danos_materiais: Array.isArray(item.danos_materiais) ? item.danos_materiais : [],
@@ -1064,7 +1074,23 @@ export const syncSingleItem = async (storeName, item, db) => {
             delete payload.destination_type;
         }
 
-        console.log(`[Sync] Upserting to Supabase table '${table}'...`, payload);
+        if (storeName === 'ocorrencias_operacionais') {
+            console.log("==========================================");
+            console.log(`[Sync Ocorrências] 📤 ENVIANDO PARA SUPABASE (tabela '${table}'):`, {
+                ocorrencia_id: payload.ocorrencia_id,
+                tipo_ocorrencia: payload.tipo_ocorrencia,
+                nivel_gravidade: payload.nivel_gravidade,
+                categoria_risco: payload.categoria_risco,
+                nivel_risco: payload.nivel_risco,
+                descricao: payload.descricao,
+                observacoes: payload.observacoes,
+                full_payload: payload
+            });
+            console.log("==========================================");
+        } else {
+            console.log(`[Sync] Upserting to Supabase table '${table}'...`, payload);
+        }
+
         const { data: syncedItems, error } = await supabase.from(table).upsert([payload], {
             onConflict: storeName === 'vistorias' ? 'vistoria_id' :
                 storeName === 'interdicoes' ? 'interdicao_id' :
@@ -1082,6 +1108,14 @@ export const syncSingleItem = async (storeName, item, db) => {
                                                                 ['redap_eventos', 'redap_registros', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(storeName) ? 'id' :
                                                                     undefined
         }).select();
+
+        if (storeName === 'ocorrencias_operacionais') {
+            if (error) {
+                console.error(`[Sync Ocorrências] ❌ ERRO SUPABASE (tabela '${table}'):`, error);
+            } else {
+                console.log(`[Sync Ocorrências] ✅ SUCESSO SUPABASE (tabela '${table}'):`, syncedItems);
+            }
+        }
 
         if (error) {
             console.error(`[Sync] Supabase Upsert Error (${table}):`, error);

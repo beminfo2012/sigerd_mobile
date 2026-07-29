@@ -541,16 +541,22 @@ export default function OcorrenciasForm() {
     const saveRecord = async (isDraft, resetAfter = false) => {
         setSaving(true);
         try {
-            const tipoVal = formData.tipo_ocorrencia || formData.tipoOcorrencia || '';
-            const gravVal = formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || '';
-            const descVal = formData.descricao || formData.observacoes || '';
+            const tipoVal = (formData.tipo_ocorrencia && formData.tipo_ocorrencia !== 'Outros') ? formData.tipo_ocorrencia :
+                            (formData.tipoOcorrencia && formData.tipoOcorrencia !== 'Outros') ? formData.tipoOcorrencia :
+                            (formData.cobrade_subtipo && formData.cobrade_subtipo !== 'Outros') ? formData.cobrade_subtipo :
+                            (formData.categoria_risco && formData.categoria_risco !== 'Outros') ? formData.categoria_risco :
+                            (formData.categoriaRisco && formData.categoriaRisco !== 'Outros') ? formData.categoriaRisco :
+                            formData.tipo_ocorrencia || formData.tipoOcorrencia || formData.categoria_risco || formData.categoriaRisco || '';
+
+            const gravVal = formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || formData.nivelRisco || '';
+            const descVal = formData.descricao || formData.observacoes || formData.informacoes_complementares || formData.descricao_danos || '';
             
             const finalData = {
                 ...formData,
                 tipo_ocorrencia: tipoVal,
                 tipoOcorrencia: tipoVal,
-                categoria_risco: tipoVal || formData.cobrade_subtipo || formData.categoriaRisco || formData.categoria_risco || 'Outros',
-                categoriaRisco: tipoVal || formData.cobrade_subtipo || formData.categoriaRisco || formData.categoria_risco || 'Outros',
+                categoria_risco: tipoVal || 'Outros',
+                categoriaRisco: tipoVal || 'Outros',
                 nivel_gravidade: gravVal,
                 nivelGravidade: gravVal,
                 nivel_risco: gravVal || 'Baixo',
@@ -564,6 +570,15 @@ export default function OcorrenciasForm() {
                 status: isDraft ? 'Aberta' : 'Finalizada',
                 encaminhada: formData.orgao_solicitado !== formData.orgao_atendeu
             };
+
+            console.log("==========================================");
+            console.log("💾 [OcorrenciasForm] SALVANDO OCORRÊNCIA:", {
+                tipo_ocorrencia: finalData.tipo_ocorrencia,
+                nivel_gravidade: finalData.nivel_gravidade,
+                descricao_preview: finalData.descricao?.substring(0, 100),
+                full_finalData: finalData
+            });
+            console.log("==========================================");
             
             await saveOcorrenciaLocal(finalData, !navigator.onLine);
             
