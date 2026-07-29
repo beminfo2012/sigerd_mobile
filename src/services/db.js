@@ -908,7 +908,6 @@ export const syncSingleItem = async (storeName, item, db) => {
                 tem_solicitante_especifico: item.temSolicitanteEspecifico || item.tem_solicitante_especifico || false,
                 endereco: item.endereco || '',
                 bairro: item.bairro || '',
-                complemento: item.complemento || '',
                 data_ocorrencia: item.data_ocorrencia || '',
                 horario_ocorrencia: item.horario_ocorrencia || '',
                 orgao_solicitado: item.orgao_solicitado || 'Defesa Civil',
