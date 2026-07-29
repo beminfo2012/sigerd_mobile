@@ -874,14 +874,16 @@ export const syncSingleItem = async (storeName, item, db) => {
             let signatureAssistidoUrl = item.assinaturaAssistido || item.assinatura_assistido || null;
             let signatureApoioUrl = item.apoioTecnico?.assinatura || item.apoio_tecnico?.assinatura || null;
 
+            const sigFolder = 'ocorrencias_fotos';
+
             if (signatureAgenteUrl && signatureAgenteUrl.startsWith('data:image')) {
-                signatureAgenteUrl = await uploadSignature(signatureAgenteUrl, folder, `${oid}/signature_agente.png`);
+                signatureAgenteUrl = await uploadSignature(signatureAgenteUrl, sigFolder, `${oid}/signature_agente.png`);
             }
             if (signatureAssistidoUrl && signatureAssistidoUrl.startsWith('data:image')) {
-                signatureAssistidoUrl = await uploadSignature(signatureAssistidoUrl, folder, `${oid}/signature_assistido.png`);
+                signatureAssistidoUrl = await uploadSignature(signatureAssistidoUrl, sigFolder, `${oid}/signature_assistido.png`);
             }
             if (signatureApoioUrl && signatureApoioUrl.startsWith('data:image')) {
-                signatureApoioUrl = await uploadSignature(signatureApoioUrl, folder, `${oid}/signature_apoio.png`);
+                signatureApoioUrl = await uploadSignature(signatureApoioUrl, sigFolder, `${oid}/signature_apoio.png`);
             }
 
             const finalType = (item.tipo_ocorrencia && item.tipo_ocorrencia !== 'Outros') ? item.tipo_ocorrencia :
@@ -911,17 +913,6 @@ export const syncSingleItem = async (storeName, item, db) => {
                 horario_ocorrencia: item.horario_ocorrencia || '',
                 orgao_solicitado: item.orgao_solicitado || 'Defesa Civil',
                 orgao_atendeu: item.orgao_atendeu || 'Defesa Civil',
-                tipo_ocorrencia: finalType,
-                nivel_gravidade: finalGrav,
-                nivel_risco: finalGrav || 'Baixo',
-                descricao: finalDesc,
-                observacoes: finalDesc,
-                risco_pessoas_estruturas: item.risco_pessoas_estruturas || false,
-                encaminhada: item.encaminhada || false,
-                orgao_destino: item.orgao_destino || '',
-                horario_encaminhamento: item.horario_encaminhamento || null,
-                numero_ocorrencia_externa: item.numero_ocorrencia_externa || '',
-                observacao_encaminhamento: item.observacao_encaminhamento || '',
                 lat: item.lat ?? item.latitude ?? null,
                 lng: item.lng ?? item.longitude ?? null,
                 accuracy: item.accuracy || null,
@@ -934,20 +925,19 @@ export const syncSingleItem = async (storeName, item, db) => {
                 desaparecidos: !item.desaparecidos || item.desaparecidos === "" ? 0 : Number(item.desaparecidos),
                 outros_afetados: !item.outros_afetados || item.outros_afetados === "" ? 0 : Number(item.outros_afetados),
                 tem_danos_humanos: item.tem_danos_humanos || false,
-                cobrade_grupo: item.cobrade_grupo || '',
-                cobrade_subgrupo: item.cobrade_subgrupo || '',
-                cobrade_tipo: item.cobrade_tipo || '',
-                cobrade_subtipo: item.cobrade_subtipo || '',
+                tipo_ocorrencia: finalType,
                 categoria_risco: finalType || 'Outros',
+                nivel_gravidade: finalGrav,
+                nivel_risco: finalGrav || 'Baixo',
                 subtipos_risco: Array.isArray(item.subtiposRisco) ? item.subtiposRisco : (Array.isArray(item.subtipos_risco) ? item.subtipos_risco : []),
-                subtipo_risco_outros: item.subtipoRiscoOutros || item.subtipo_risco_outros || '',
-                danos_materiais: Array.isArray(item.danos_materiais) ? item.danos_materiais : [],
                 checklist_respostas: item.checklistRespostas || item.checklist_respostas || {},
                 descricao_danos: item.descricao_danos || '',
-                informacoes_complementares: item.informacoes_complementares || item.informacoesComplementares || '',
-                medidas_adotadas: Array.isArray(item.medidas_adotadas) ? item.medidas_adotadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
+                observacoes: finalDesc,
                 medidas_tomadas: Array.isArray(item.medidas_adotadas) ? item.medidas_adotadas : (Array.isArray(item.medidas_tomadas) ? item.medidas_tomadas : []),
-                unidade_consumidora: item.unidade_consumidora || '',
+                encaminhada: item.encaminhada || false,
+                horario_encaminhamento: item.horario_encaminhamento || null,
+                numero_ocorrencia_externa: item.numero_ocorrencia_externa || '',
+                observacao_encaminhamento: item.observacao_encaminhamento || '',
                 fotos: processedPhotos,
                 assinatura_agente: signatureAgenteUrl,
                 assinatura_assistido: signatureAssistidoUrl,
@@ -956,8 +946,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                     ...(item.apoioTecnico || item.apoio_tecnico || {}),
                     assinatura: signatureApoioUrl
                 },
-                id_local: item.id_local === "" || item.id_local === undefined ? null : Number(item.id_local),
                 status: item.status || 'Pendente',
+                id_local: item.id_local === "" || item.id_local === undefined ? null : Number(item.id_local),
                 updated_at: new Date().toISOString()
             };
 
@@ -1121,7 +1111,7 @@ export const syncSingleItem = async (storeName, item, db) => {
             console.error(`[Sync] Supabase Upsert Error (${table}):`, error);
             
             // Handle foreign key violation (parent deleted in cloud), invalid uuid, missing table (404/PGRST204), or despachos table
-            const isIgnorableError = 
+            const isIgnorableError = table !== 'ocorrencias_operacionais' && (
                 table === 'despachos' ||
                 error.code === '23503' || 
                 error.code === '22P02' || 
@@ -1129,7 +1119,8 @@ export const syncSingleItem = async (storeName, item, db) => {
                 error.code === 'PGRST204' || 
                 error.status === 404 || 
                 String(error.status) === '404' ||
-                (error.message && (error.message.includes('404') || error.message.includes('Not Found')));
+                (error.message && (error.message.includes('404') || error.message.includes('Not Found')))
+            );
 
             if (isIgnorableError) {
                 console.warn(`[Sync] Schema/Table bypass (${error.code || error.status || 'silenced'}) for ${table}. Marking as synced locally to prevent error toast.`);
