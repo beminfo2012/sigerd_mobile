@@ -214,7 +214,31 @@ export const getOcorrenciasLocal = async () => {
             dedupMap.set(key, r);
         });
 
-    const finalRecords = Array.from(dedupMap.values());
+    const finalRecords = Array.from(dedupMap.values()).map(r => {
+        const rawType = (r.tipo_ocorrencia && r.tipo_ocorrencia !== 'Outros') ? r.tipo_ocorrencia :
+                        (r.tipoOcorrencia && r.tipoOcorrencia !== 'Outros') ? r.tipoOcorrencia :
+                        (r.cobrade_subtipo && r.cobrade_subtipo !== 'Outros') ? r.cobrade_subtipo :
+                        (r.categoria_risco && r.categoria_risco !== 'Outros') ? r.categoria_risco :
+                        (r.categoriaRisco && r.categoriaRisco !== 'Outros') ? r.categoriaRisco :
+                        r.tipo_ocorrencia || r.tipoOcorrencia || r.categoria_risco || r.categoriaRisco || '';
+
+        const rawGrav = r.nivel_gravidade || r.nivelGravidade || r.nivel_risco || r.nivelRisco || '';
+        const rawDesc = r.descricao || r.observacoes || r.informacoes_complementares || r.descricao_danos || '';
+
+        return {
+            ...r,
+            tipo_ocorrencia: rawType,
+            tipoOcorrencia: rawType,
+            categoria_risco: rawType || 'Outros',
+            categoriaRisco: rawType || 'Outros',
+            nivel_gravidade: rawGrav,
+            nivelGravidade: rawGrav,
+            nivel_risco: rawGrav || 'Baixo',
+            nivelRisco: rawGrav || 'Baixo',
+            descricao: rawDesc,
+            observacoes: rawDesc
+        };
+    });
     return finalRecords.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
@@ -238,6 +262,37 @@ export const getOcorrenciaById = async (id) => {
         );
     }
 
+    const normalizeRecord = (r) => {
+        if (!r) return null;
+        const rawType = (r.tipo_ocorrencia && r.tipo_ocorrencia !== 'Outros') ? r.tipo_ocorrencia :
+                        (r.tipoOcorrencia && r.tipoOcorrencia !== 'Outros') ? r.tipoOcorrencia :
+                        (r.cobrade_subtipo && r.cobrade_subtipo !== 'Outros') ? r.cobrade_subtipo :
+                        (r.categoria_risco && r.categoria_risco !== 'Outros') ? r.categoria_risco :
+                        (r.categoriaRisco && r.categoriaRisco !== 'Outros') ? r.categoriaRisco :
+                        r.tipo_ocorrencia || r.tipoOcorrencia || r.categoria_risco || r.categoriaRisco || '';
+
+        const rawGrav = r.nivel_gravidade || r.nivelGravidade || r.nivel_risco || r.nivelRisco || '';
+        const rawDesc = r.descricao || r.observacoes || r.informacoes_complementares || r.descricao_danos || '';
+
+        return {
+            ...r,
+            tipo_ocorrencia: rawType,
+            tipoOcorrencia: rawType,
+            categoria_risco: rawType || 'Outros',
+            categoriaRisco: rawType || 'Outros',
+            nivel_gravidade: rawGrav,
+            nivelGravidade: rawGrav,
+            nivel_risco: rawGrav || 'Baixo',
+            nivelRisco: rawGrav || 'Baixo',
+            descricao: rawDesc,
+            observacoes: rawDesc,
+            solicitante_nome: r.solicitante_nome || r.solicitante || '',
+            solicitante: r.solicitante || r.solicitante_nome || '',
+            telefone: r.telefone || r.solicitante_telefone || '',
+            solicitante_telefone: r.solicitante_telefone || r.telefone || ''
+        };
+    };
+
     // Se não encontrou ou onLine, vamos sempre tentar puxar o online para garantir dados completos se não for registro 100% não syncado
     if (navigator.onLine && (!localRecord || localRecord.synced)) {
         try {
@@ -252,38 +307,14 @@ export const getOcorrenciaById = async (id) => {
             }
             
             const { data } = await query.single();
-            if (data) return {
-                ...data,
-                tipo_ocorrencia: data.tipo_ocorrencia || data.tipoOcorrencia || data.categoria_risco || '',
-                tipoOcorrencia: data.tipo_ocorrencia || data.tipoOcorrencia || data.categoria_risco || '',
-                nivel_gravidade: data.nivel_gravidade || data.nivelGravidade || data.nivel_risco || data.nivelRisco || '',
-                nivel_risco: data.nivel_gravidade || data.nivelGravidade || data.nivel_risco || data.nivelRisco || 'Baixo',
-                descricao: data.descricao || data.observacoes || '',
-                observacoes: data.observacoes || data.descricao || '',
-                solicitante_nome: data.solicitante_nome || data.solicitante || '',
-                solicitante: data.solicitante || data.solicitante_nome || '',
-                telefone: data.telefone || data.solicitante_telefone || '',
-                solicitante_telefone: data.solicitante_telefone || data.telefone || ''
-            };
+            if (data) return normalizeRecord(data);
         } catch (e) {
             console.warn('Erro ao buscar ocorrencia remotamente, usando fallback', e);
         }
     }
 
     if (localRecord) {
-        return {
-            ...localRecord,
-            tipo_ocorrencia: localRecord.tipo_ocorrencia || localRecord.tipoOcorrencia || localRecord.categoria_risco || '',
-            tipoOcorrencia: localRecord.tipo_ocorrencia || localRecord.tipoOcorrencia || localRecord.categoria_risco || '',
-            nivel_gravidade: localRecord.nivel_gravidade || localRecord.nivelGravidade || localRecord.nivel_risco || localRecord.nivelRisco || '',
-            nivel_risco: localRecord.nivel_gravidade || localRecord.nivelGravidade || localRecord.nivel_risco || localRecord.nivelRisco || 'Baixo',
-            descricao: localRecord.descricao || localRecord.observacoes || '',
-            observacoes: localRecord.observacoes || localRecord.descricao || '',
-            solicitante_nome: localRecord.solicitante_nome || localRecord.solicitante || '',
-            solicitante: localRecord.solicitante || localRecord.solicitante_nome || '',
-            telefone: localRecord.telefone || localRecord.solicitante_telefone || '',
-            solicitante_telefone: localRecord.solicitante_telefone || localRecord.telefone || ''
-        };
+        return normalizeRecord(localRecord);
     }
 
     return null;

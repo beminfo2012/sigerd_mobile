@@ -523,15 +523,17 @@ export default function OcorrenciasForm() {
 
     const isValid = () => {
         if (!formData.solicitante_nome && !formData.solicitante) return false;
-        if (!formData.tipo_ocorrencia) return false;
-        if (!formData.nivel_gravidade) return false;
+        const tipo = formData.tipo_ocorrencia || formData.tipoOcorrencia || formData.categoria_risco;
+        if (!tipo) return false;
+        const gravidade = formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || formData.nivelRisco;
+        if (!gravidade) return false;
         if (!formData.orgao_solicitado) return false;
         if (!formData.orgao_atendeu) return false;
         
         // Foto validation
         const totalFotos = formData.fotos?.length || 0;
-        if (formData.nivel_gravidade === 'Iminente' && totalFotos < 3) return false;
-        if (formData.nivel_gravidade === 'Alto' && totalFotos < 1) return false;
+        if ((gravidade === 'Iminente') && totalFotos < 3) return false;
+        if ((gravidade === 'Alto') && totalFotos < 1) return false;
 
         return true;
     };
@@ -921,8 +923,17 @@ export default function OcorrenciasForm() {
                     
                     <select
                         name="tipo_ocorrencia"
-                        value={formData.tipo_ocorrencia || ''}
-                        onChange={handleInputChange}
+                        value={formData.tipo_ocorrencia || formData.tipoOcorrencia || (formData.categoria_risco !== 'Outros' ? formData.categoria_risco : '') || ''}
+                        onChange={e => {
+                            const val = e.target.value;
+                            setFormData(prev => ({
+                                ...prev,
+                                tipo_ocorrencia: val,
+                                tipoOcorrencia: val,
+                                categoria_risco: val || 'Outros',
+                                categoriaRisco: val || 'Outros'
+                            }));
+                        }}
                         className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold mb-4 outline-none"
                     >
                         <option value="">Tipo de Ocorrência...</option>
@@ -935,9 +946,15 @@ export default function OcorrenciasForm() {
                             <button
                                 key={nivel}
                                 type="button"
-                                onClick={() => setFormData(prev => ({ ...prev, nivel_gravidade: nivel }))}
+                                onClick={() => setFormData(prev => ({
+                                    ...prev,
+                                    nivel_gravidade: nivel,
+                                    nivelGravidade: nivel,
+                                    nivel_risco: nivel,
+                                    nivelRisco: nivel
+                                }))}
                                 className={`p-2 rounded-xl text-sm font-bold border transition-colors ${
-                                    formData.nivel_gravidade === nivel
+                                    (formData.nivel_gravidade === nivel || formData.nivel_risco === nivel)
                                     ? 'bg-blue-600 text-white border-blue-600'
                                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                                 }`}
@@ -991,8 +1008,8 @@ export default function OcorrenciasForm() {
                         </button>
                     </div>
                     <RichTextEditor
-                        value={formData.descricao || ''}
-                        onChange={val => setFormData(prev => ({ ...prev, descricao: val }))}
+                        value={formData.descricao || formData.observacoes || ''}
+                        onChange={val => setFormData(prev => ({ ...prev, descricao: val, observacoes: val }))}
                     />
                 </div>
 
