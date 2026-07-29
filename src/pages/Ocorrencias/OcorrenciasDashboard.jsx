@@ -43,68 +43,63 @@ const OcorrenciasDashboard = () => {
 
     const loadRecords = async () => {
         try {
-            const data = await getOcorrenciasLocal();
-            
+            // 1. Carregamento local instantâneo (0ms de atraso na UI)
+            const localData = await getOcorrenciasLocal();
+            if (localData && localData.length > 0) {
+                setRecords(localData);
+                setLoading(false);
+            }
+
+            // 2. Revalidação em segundo plano se online
             if (navigator.onLine) {
                 try {
                     const { supabase } = await import('../../services/supabase');
                     
-                    // Fetch NOPRERs to link them safely
-                    try {
-                        const { data: rawNoprers } = await supabase.from('noprer').select('*');
-                        if (rawNoprers) {
-                            const formattedNoprers = rawNoprers.map(n => ({
-                                ...n,
-                                origem_id: n.origem_id || n.vistoria_id || n.ocorrencia_id,
-                                numero_noprer: n.numero_noprer || n.numero || n.id
-                            }));
-                            setNoprers(formattedNoprers);
-                        }
-                    } catch (noprerErr) {
-                        console.warn('Busca silenciosa NOPRER falhou:', noprerErr);
+                    // Busca paralela otimizada de NOPRERs e Ocorrências
+                    const [noprerRes, remoteRes] = await Promise.all([
+                        supabase.from('noprer').select('*').catch(() => null),
+                        supabase.from('ocorrencias_operacionais').select('*').order('created_at', { ascending: false }).catch(() => null)
+                    ]);
+
+                    if (noprerRes?.data) {
+                        const formattedNoprers = noprerRes.data.map(n => ({
+                            ...n,
+                            origem_id: n.origem_id || n.vistoria_id || n.ocorrencia_id,
+                            numero_noprer: n.numero_noprer || n.numero || n.id
+                        }));
+                        setNoprers(formattedNoprers);
                     }
 
-                    const { data: remoteData, error } = await supabase
-                        .from('ocorrencias_operacionais')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-                        
-                    if (!error && remoteData && remoteData.length > 0) {
+                    const remoteData = remoteRes?.data;
+                    if (remoteData && remoteData.length > 0) {
+                        const combined = [...localData];
                         remoteData.forEach(d => {
                             d.synced = true;
-                            data.push(d);
+                            combined.push(d);
                         });
                         
                         const dedupMap = new Map();
-                        // Sort by updated_at ascending so the most recent one (local or remote) overwrites in the Map
-                        data.sort((a, b) => {
+                        combined.sort((a, b) => {
                             const dateA = new Date(a.updated_at || a.created_at);
                             const dateB = new Date(b.updated_at || b.created_at);
                             return dateA - dateB;
                         }).forEach(r => {
                             const key = r.ocorrencia_id || r.id;
-                            // If we already have this record in the map, and the existing one is local and UNSYNCED, 
-                            // keep the local one unless the new one from cloud is strictly newer (already processed by sync)
                             const existing = dedupMap.get(key);
                             if (existing && !existing.synced && r.synced) {
-                                // Keep the unsynced local version as it has the latest user changes
                                 return;
                             }
                             dedupMap.set(key, r);
                         });
                         
                         setRecords(Array.from(dedupMap.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-                        setLoading(false);
-                        return;
                     }
                 } catch (e) {
-                    console.warn('Silent fail fetching remote ocorrencias in dash:', e);
+                    console.warn('Revalidação em segundo plano falhou silenciosamente:', e);
                 }
             }
-
-            setRecords(data);
         } catch (error) {
-            console.error('Error loading records:', error);
+            console.error('Erro ao carregar ocorrências:', error);
             toast.error('Erro ao carregar dados.');
         } finally {
             setLoading(false);
