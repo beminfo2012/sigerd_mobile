@@ -10,7 +10,7 @@ let consecutiveFailures = 0;
 let circuitOpenUntil = null;
 const CIRCUIT_OPEN_DURATION_MS = 2 * 60 * 1000; // 2 minutos
 const MAX_FAILURES = 5;
-const LLM_TIMEOUT_MS = 3000; // 3 segundos
+const LLM_TIMEOUT_MS = 30000; // 30 segundos (tempo necessário para busca WEB / Grounding + LLM)
 
 function isEconomiaIAAtiva() {
   return localStorage.getItem('NORTIS_ECONOMIA_IA') === 'true' || import.meta.env.VITE_NORTIS_ECONOMIA_IA === 'true';
@@ -305,7 +305,7 @@ RELATO DO USUÁRIO (${contextoModulo}):
         }
         
         const motivo = err.message === 'TIMEOUT_LLM' ? 'timeout' : 'erro_provedor';
-        console.warn(`[NORTIS] Fallback ativado (${motivo}). Falhas consecutivas: ${consecutiveFailures}`);
+        console.warn(`[NORTIS] Fallback ativado (${motivo}). Falhas consecutivas: ${consecutiveFailures}`, err);
         
         const fallback = getFallbackResponse(documentos, motivo, tipoPesquisa);
         await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
@@ -315,10 +315,10 @@ RELATO DO USUÁRIO (${contextoModulo}):
       let responseText = result.response.text();
       
       // Extract JSON se veio com markdown
-      if (responseText.includes('\`\`\`json')) {
-        responseText = responseText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-      } else if (responseText.includes('\`\`\`')) {
-        responseText = responseText.replace(/\`\`\`/g, '').trim();
+      if (responseText.includes('```json')) {
+        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      } else if (responseText.includes('```')) {
+        responseText = responseText.replace(/```/g, '').trim();
       }
 
       let respostaGerada = {};
@@ -326,15 +326,33 @@ RELATO DO USUÁRIO (${contextoModulo}):
         respostaGerada = JSON.parse(responseText);
         respostaGerada.modo = "completo";
       } catch(e) {
-        // Erro de parse = fallback
-        consecutiveFailures++;
-        if (consecutiveFailures >= MAX_FAILURES) {
-           circuitOpenUntil = Date.now() + CIRCUIT_OPEN_DURATION_MS;
+        const firstBrace = responseText.indexOf('{');
+        const lastBrace = responseText.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          try {
+            const cleanedJson = responseText.substring(firstBrace, lastBrace + 1);
+            respostaGerada = JSON.parse(cleanedJson);
+            respostaGerada.modo = "completo";
+          } catch (e2) {
+            consecutiveFailures++;
+            if (consecutiveFailures >= MAX_FAILURES) {
+               circuitOpenUntil = Date.now() + CIRCUIT_OPEN_DURATION_MS;
+            }
+            console.warn(`[NORTIS] Fallback ativado (parse error). Falhas consecutivas: ${consecutiveFailures}`, responseText);
+            const fallback = getFallbackResponse(documentos, 'erro_provedor', tipoPesquisa);
+            await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
+            return fallback;
+          }
+        } else {
+          consecutiveFailures++;
+          if (consecutiveFailures >= MAX_FAILURES) {
+             circuitOpenUntil = Date.now() + CIRCUIT_OPEN_DURATION_MS;
+          }
+          console.warn(`[NORTIS] Fallback ativado (parse error). Falhas consecutivas: ${consecutiveFailures}`, responseText);
+          const fallback = getFallbackResponse(documentos, 'erro_provedor', tipoPesquisa);
+          await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
+          return fallback;
         }
-        console.warn(`[NORTIS] Fallback ativado (parse error). Falhas consecutivas: ${consecutiveFailures}`);
-        const fallback = getFallbackResponse(documentos, 'erro_provedor', tipoPesquisa);
-        await this.registrarTrilhaSugestoes(fallback, documentos, relato, contextoModulo, tenantId, userId, tipoPesquisa);
-        return fallback;
       }
 
       // Analisar metadados do Grounding (Links visitados)
