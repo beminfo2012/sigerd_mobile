@@ -75,7 +75,11 @@ export default function AberturaRegistro({ registro, onValidar }) {
 
       <div className="p-3 text-[11px] font-mono text-neutral-500 dark:text-slate-400 space-y-0.5 border-b dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30">
         <p>SHA-256: {registro.hash_sha256?.slice(0, 16) || "Pendente..."}</p>
-        <p>Data: {registro.data_hora || new Date().toLocaleString('pt-BR')}</p>
+        <p>Data: {(() => {
+          if (!registro.data_hora) return new Date().toLocaleString('pt-BR');
+          const d = new Date(registro.data_hora);
+          return isNaN(d.getTime()) ? registro.data_hora : d.toLocaleString('pt-BR');
+        })()}</p>
         {registro.latitude && <p>Geo: {registro.latitude}, {registro.longitude}</p>}
       </div>
 

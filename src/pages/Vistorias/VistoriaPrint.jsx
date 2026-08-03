@@ -173,7 +173,8 @@ const VistoriaPrint = () => {
                                 .eq('vistoria_id', uuidToFetch);
                             if (remoteAberturas && remoteAberturas.length > 0) {
                                 const fetchedAberturas = remoteAberturas.map(ab => {
-                                    const reg = ab.abertura_registro_fotografico && ab.abertura_registro_fotografico[0] ? ab.abertura_registro_fotografico[0] : {};
+                                    const regs = (ab.abertura_registro_fotografico || []).sort((a, b) => new Date(b.data_hora || 0) - new Date(a.data_hora || 0));
+                                    const reg = regs[0] || {};
                                     return {
                                         id: ab.id,
                                         codigo_ponto: ab.codigo_ponto,

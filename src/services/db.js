@@ -5,6 +5,25 @@ import { toast } from '../components/ToastNotification'
 const DB_NAME = 'defesa-civil-db'
 const DB_VERSION = 34
 
+export const safeToIsoString = (dateVal) => {
+    if (!dateVal) return new Date().toISOString();
+    if (dateVal instanceof Date) {
+        return isNaN(dateVal.getTime()) ? new Date().toISOString() : dateVal.toISOString();
+    }
+    if (typeof dateVal === 'string') {
+        let d = new Date(dateVal);
+        if (!isNaN(d.getTime())) return d.toISOString();
+
+        // Tentar formato PT-BR DD/MM/YYYY [HH:mm:ss]
+        const match = dateVal.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[,\s]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+        if (match) {
+            const [, day, month, year, hours = 0, minutes = 0, seconds = 0] = match;
+            d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
+            if (!isNaN(d.getTime())) return d.toISOString();
+        }
+    }
+    return new Date().toISOString();
+};
 
 let dbPromise = null;
 
@@ -1144,22 +1163,27 @@ export const syncSingleItem = async (storeName, item, db) => {
                                 const abId = isGuid(ab.id) ? ab.id : crypto.randomUUID();
                                 ab.id = abId;
                                 
-                                // 1. Upsert na tabela abertura_patologica
-                                const { data: aberturaData, error: aberturaError } = await supabase
-                                    .from('abertura_patologica')
-                                    .upsert([{
-                                        id: abId,
-                                        tenant_id: tenantId,
-                                        vistoria_id: vistoriaUuid,
-                                        codigo_ponto: ab.codigo_ponto || `AB-${String(i + 1).padStart(3, '0')}`,
-                                        localizacao_descricao: ab.localizacao_descricao || `Ponto de Monitoramento ${i + 1}`,
-                                        categoria: ab.categoria || 'Estrutural',
-                                        status: ab.status || 'ativa',
-                                        criado_por: criadoPor
-                                    }], { onConflict: 'id' })
-                                    .select();
-                                    
-                                if (!aberturaError) {
+                                try {
+                                    // 1. Upsert na tabela abertura_patologica
+                                    const { data: aberturaData, error: aberturaError } = await supabase
+                                        .from('abertura_patologica')
+                                        .upsert([{
+                                            id: abId,
+                                            tenant_id: tenantId,
+                                            vistoria_id: vistoriaUuid,
+                                            codigo_ponto: ab.codigo_ponto || `AB-${String(i + 1).padStart(3, '0')}`,
+                                            localizacao_descricao: ab.localizacao_descricao || `Ponto de Monitoramento ${i + 1}`,
+                                            categoria: ab.categoria || 'Estrutural',
+                                            status: ab.status || 'ativa',
+                                            criado_por: criadoPor
+                                        }], { onConflict: 'id' })
+                                        .select();
+                                        
+                                    if (aberturaError) {
+                                        console.error('[Sync] Erro Abertura:', aberturaError);
+                                        continue;
+                                    }
+
                                     // 2. Upload de foto original e foto anotada (se em base64)
                                     let fotoUrl = ab.foto_url || '';
                                     if (fotoUrl && fotoUrl.startsWith('data:image')) {
@@ -1183,14 +1207,14 @@ export const syncSingleItem = async (storeName, item, db) => {
                                     
                                     // 3. Upsert do registro fotográfico
                                     const finalFotoUrl = fotoAnotadaUrl || fotoUrl || 'pendente';
-                                    await supabase
+                                    const { error: regError } = await supabase
                                         .from('abertura_registro_fotografico')
                                         .upsert([{
                                             tenant_id: tenantId,
                                             abertura_id: abId,
                                             foto_url: finalFotoUrl,
                                             hash_sha256: ab.hash_sha256 || 'N/A',
-                                            data_hora: ab.data_hora ? new Date(ab.data_hora).toISOString() : new Date().toISOString(),
+                                            data_hora: safeToIsoString(ab.data_hora),
                                             fonte_data_hora: ab.fonte_data_hora || 'gps_dispositivo',
                                             latitude: ab.latitude ? parseFloat(ab.latitude) : null,
                                             longitude: ab.longitude ? parseFloat(ab.longitude) : null,
@@ -1198,21 +1222,25 @@ export const syncSingleItem = async (storeName, item, db) => {
                                             classificacao_patologia: ab.classificacao_patologia || null,
                                             fonte_classificacao: ab.fonte_classificacao || 'IBAPE-MG',
                                             validado_por: (ab.validado_por_nome && userId) ? userId : null,
-                                            validado_em: ab.validado_em ? new Date().toISOString() : null,
+                                            validado_em: ab.validado_em ? safeToIsoString(ab.validado_em) : null,
                                             observacoes: ab.largura_anterior_mm ? `Largura Anterior: ${ab.largura_anterior_mm} mm` : null
                                         }]);
+
+                                    if (regError) {
+                                        console.error('[Sync] Erro Abertura Registro:', regError);
+                                    }
                                         
                                     currentAberturas[i] = ab;
-                                } else {
-                                    console.error('[Sync] Erro Abertura:', aberturaError);
+                                } catch (singleAbErr) {
+                                    console.error(`[Sync] Erro ao processar abertura #${i + 1}:`, singleAbErr);
                                 }
                             }
                             
                             if (aberturasModificadas) {
                                 record.aberturas = currentAberturas;
-                                const updateTx = db.transaction(storeName, 'readwrite');
-                                await updateTx.objectStore(storeName).put(record);
                             }
+                            const updateTx = db.transaction(storeName, 'readwrite');
+                            await updateTx.objectStore(storeName).put(record);
                         } catch (abErr) {
                             console.error('[Sync] Erro Crítico ao sincronizar aberturas:', abErr);
                         }

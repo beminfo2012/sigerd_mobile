@@ -555,7 +555,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         .then(({data, error}) => {
                             if (data && data.length > 0) {
                                 const fetchedAberturas = data.map(ab => {
-                                    const reg = ab.abertura_registro_fotografico && ab.abertura_registro_fotografico[0] ? ab.abertura_registro_fotografico[0] : {};
+                                    const regs = (ab.abertura_registro_fotografico || []).sort((a, b) => new Date(b.data_hora || 0) - new Date(a.data_hora || 0));
+                                    const reg = regs[0] || {};
                                     return {
                                         id: ab.id,
                                         codigo_ponto: ab.codigo_ponto,
@@ -563,8 +564,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         categoria: ab.categoria,
                                         status: ab.status,
                                         foto_url: reg.foto_url,
+                                        foto_anotada_url: reg.foto_url,
                                         hash_sha256: reg.hash_sha256,
-                                        data_hora: reg.data_hora ? new Date(reg.data_hora).toLocaleString('pt-BR') : '',
+                                        data_hora: reg.data_hora ? new Date(reg.data_hora).toISOString() : new Date().toISOString(),
                                         fonte_data_hora: reg.fonte_data_hora,
                                         latitude: reg.latitude,
                                         longitude: reg.longitude,
@@ -572,10 +574,9 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                         classificacao_patologia: reg.classificacao_patologia,
                                         fonte_classificacao: reg.fonte_classificacao,
                                         validado_por: reg.validado_por,
-                                        validado_em: reg.validado_em ? new Date(reg.validado_em).toLocaleString('pt-BR') : null
+                                        validado_em: reg.validado_em ? new Date(reg.validado_em).toISOString() : null
                                     };
                                 });
-                                // Only update if it brings new/real data to prevent overwriting with empty
                                 setFormData(prev => ({...prev, aberturas: fetchedAberturas}));
                             }
                         })
@@ -1111,7 +1112,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     localizacao_descricao: 'Ponto de Monitoramento (Fissurômetro) ' + num,
                     foto_url: compressed,
                     hash_sha256: 'calculado_em_background...',
-                    data_hora: finalTimestamp.toLocaleString('pt-BR'),
+                    data_hora: finalTimestamp instanceof Date && !isNaN(finalTimestamp.getTime()) ? finalTimestamp.toISOString() : new Date().toISOString(),
                     fonte_data_hora: fonteMetadados,
                     latitude: finalCoords?.lat || null,
                     longitude: finalCoords?.lng || null,
@@ -1143,7 +1144,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         ...(fotoAnotada && { foto_anotada_url: fotoAnotada }),
                         classificacao_patologia: classificarAbertura(val),
                         validado_por_nome: userProfile?.name || 'Agente Defesa Civil',
-                        validado_em: new Date().toLocaleString('pt-BR')
+                        validado_em: new Date().toISOString()
                     };
                 }
                 return ab;
