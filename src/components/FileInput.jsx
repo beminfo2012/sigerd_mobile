@@ -1,11 +1,32 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { Camera, Paperclip, X, Image as ImageIcon } from 'lucide-react'
 import CameraModal from './CameraModal'
+import { getCameraTempPhotos } from '../services/cameraStorage'
 
 const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAll = false, compact = false }) => {
     const galleryInputRef = useRef(null)
     const refInputRef = useRef(null)
     const [isCameraOpen, setIsCameraOpen] = useState(false)
+    const [savedPhotosCount, setSavedPhotosCount] = useState(0)
+
+    useEffect(() => {
+        const checkSavedPhotos = async () => {
+            try {
+                const saved = await getCameraTempPhotos();
+                if (saved && saved.length > 0) {
+                    setSavedPhotosCount(saved.length);
+                } else {
+                    setSavedPhotosCount(0);
+                }
+            } catch (e) {
+                console.warn('Erro ao checar fotos salvas:', e);
+            }
+        };
+
+        checkSavedPhotos();
+        const interval = setInterval(checkSavedPhotos, 3000);
+        return () => clearInterval(interval);
+    }, [isCameraOpen]);
 
     const handleCameraClick = (e) => {
         e.preventDefault()
@@ -43,6 +64,7 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
     const handleCameraCapture = (files) => {
         onFileSelect(files, 'camera')
         setIsCameraOpen(false)
+        setSavedPhotosCount(0)
     }
 
     if (compact) {
@@ -103,7 +125,14 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
                 onClick={handleCameraClick}
                 className={`flex flex-col items-center justify-center py-3 px-1 min-h-[72px] border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-2xl text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-[#2a5299] hover:text-[#2a5299] transition-all relative group ${type === 'photo' ? 'sm:aspect-square' : ''}`}
             >
-                <Camera size={24} strokeWidth={1.5} />
+                <div className="relative">
+                    <Camera size={24} strokeWidth={1.5} />
+                    {savedPhotosCount > 0 && (
+                        <span className="absolute -top-1 -right-2.5 bg-blue-600 text-white text-[9px] min-w-[16px] h-[16px] px-1 rounded-full flex items-center justify-center font-black animate-pulse shadow-sm shadow-blue-500/50">
+                            {savedPhotosCount}
+                        </span>
+                    )}
+                </div>
                 <span className="text-[9px] font-black uppercase mt-1 tracking-wider text-center truncate w-full px-1">Câmera</span>
             </button>
 
@@ -136,4 +165,3 @@ const FileInput = ({ onFileSelect, type = 'photo', label = 'Adicionar', acceptAl
 }
 
 export default FileInput
-
