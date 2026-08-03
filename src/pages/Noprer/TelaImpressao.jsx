@@ -28,6 +28,21 @@ const TelaImpressao = () => {
                     return;
                 }
 
+                if ((!data.nome_agente || data.nome_agente.trim().toUpperCase() === 'AGENTE' || data.nome_agente.trim().toUpperCase() === 'AGENTE DE DEFESA CIVIL') && data.criado_por) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name, cargo, role, matricula, assinatura')
+                        .eq('id', data.criado_por)
+                        .single();
+
+                    if (profile) {
+                        if (profile.full_name) data.nome_agente = profile.full_name;
+                        if (!data.funcao_agente && !data.cargo_agente) data.funcao_agente = profile.cargo || profile.role;
+                        if (!data.matricula_agente) data.matricula_agente = profile.matricula;
+                        if (!data.sign_agente && profile.assinatura) data.sign_agente = profile.assinatura;
+                    }
+                }
+
                 setNoprer(data);
             } catch (err) {
                 console.error('Erro na impressão:', err);
@@ -38,10 +53,7 @@ const TelaImpressao = () => {
 
     if (!noprer) return <div className="flex items-center justify-center min-h-screen">Carregando dados para impressão...</div>;
 
-    const nomeAgenteExibicao = (noprer.nome_agente && noprer.nome_agente.trim().toUpperCase() !== 'AGENTE')
-        ? noprer.nome_agente
-        : 'AGENTE DE DEFESA CIVIL';
-
+    const nomeAgenteExibicao = noprer.nome_agente || 'Agente de Defesa Civil';
     const matriculaAgenteExibicao = noprer.matricula_agente || '';
 
     const formatDate = (d) => {
@@ -345,9 +357,9 @@ const TelaImpressao = () => {
                             <div className="h-20 w-3/4 mx-auto flex items-end justify-center border-b-2 border-red-700 mb-2">
                                 {noprer.sign_agente && <img src={noprer.sign_agente} alt="Agente" className="max-h-16" />}
                             </div>
-                            <p className="font-black text-red-900 text-sm m-0 uppercase">{nomeAgenteExibicao}</p>
-                            <p className="text-xs font-bold text-slate-600 m-0 uppercase">{noprer.cargo_agente || noprer.funcao_agente || 'AGENTE DE DEFESA CIVIL'}</p>
-                            {matriculaAgenteExibicao && <p className="text-[10px] text-slate-400 m-0">Matrícula: {matriculaAgenteExibicao}</p>}
+                            <p className="font-black text-red-900 text-sm m-0">{nomeAgenteExibicao}</p>
+                            <p className="text-xs font-bold text-slate-700 m-0">{noprer.cargo_agente || noprer.funcao_agente || 'Coordenador de Proteção e Defesa Civil'}</p>
+                            {matriculaAgenteExibicao && <p className="text-xs text-slate-500 m-0">{matriculaAgenteExibicao.toLowerCase().startsWith('mat') ? matriculaAgenteExibicao : `Mat. ${matriculaAgenteExibicao}`}</p>}
                         </div>
                     </div>
                 </div>

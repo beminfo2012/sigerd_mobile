@@ -197,9 +197,9 @@ export const generateNoprerPDF = async (data, options = { autoOpen: true }) => {
                 <div style="height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 15px; border-bottom: 2px solid #b91c1c; width: 60%; margin-left: auto; margin-right: auto;">
                     ${data.sign_agente ? `<img src="${data.sign_agente}" style="max-height: 70px;" />` : ''}
                 </div>
-                <p style="margin: 0; font-size: 13px; font-weight: 800; color: #7f1d1d; text-transform: uppercase;">${(data.nome_agente && data.nome_agente.trim().toUpperCase() !== 'AGENTE') ? data.nome_agente : 'Agente de Defesa Civil'}</p>
-                <p style="margin: 0; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">${data.cargo_agente || data.funcao_agente || 'Agente de Defesa Civil'}</p>
-                ${data.matricula_agente ? `<p style="margin: 0; font-size: 10px; color: #94a3b8;">Matrícula: ${data.matricula_agente}</p>` : ''}
+                <p style="margin: 0; font-size: 13px; font-weight: 800; color: #7f1d1d;">${(data.nome_agente && data.nome_agente.trim().toUpperCase() !== 'AGENTE') ? data.nome_agente : 'Agente de Defesa Civil'}</p>
+                <p style="margin: 0; font-size: 11px; color: #334155; font-weight: 700;">${data.cargo_agente || data.funcao_agente || 'Coordenador de Proteção e Defesa Civil'}</p>
+                ${data.matricula_agente ? `<p style="margin: 0; font-size: 10px; color: #64748b;">${data.matricula_agente.toLowerCase().startsWith('mat') ? data.matricula_agente : `Mat. ${data.matricula_agente}`}</p>` : ''}
             </div>
         </div>
     `;

@@ -311,6 +311,10 @@ const NoprerForm = () => {
             // Ajusta formatação antes de enviar
             const payload = { 
                 ...formData,
+                criado_por: userProfile?.id || formData.criado_por,
+                nome_agente: formData.nome_agente || userProfile?.full_name || userProfile?.name || '',
+                funcao_agente: formData.funcao_agente || userProfile?.cargo || userProfile?.role || 'Coordenador de Proteção e Defesa Civil',
+                matricula_agente: formData.matricula_agente || userProfile?.matricula || '',
                 data_limite: datas.dataLimite.toISOString().split('T')[0],
                 data_revistoria: datas.dataRevistoria.toISOString().split('T')[0]
             };
