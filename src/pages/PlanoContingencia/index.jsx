@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { contingencyDb } from '../../services/contingencyDb'
 import { supabase } from '../../services/supabase'
-import { useToast } from '../../components/ToastNotification'
+import { toast } from '../../components/ToastNotification'
 import PlaconMatriz from './PlaconMatriz'
 
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet'
@@ -46,7 +46,10 @@ const SESSIONS = [
 
 const PlanoContingencia = () => {
     const navigate = useNavigate()
-    const { addToast } = useToast()
+    const addToast = (msg, type = 'info') => {
+        if (toast && toast[type]) toast[type](msg)
+        else if (typeof toast === 'function') toast(msg, type)
+    }
     const userProfile = useContext(UserContext)
     const [activePlan, setActivePlan] = useState(null)
     const [loading, setLoading] = useState(true)

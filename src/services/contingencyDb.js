@@ -136,12 +136,15 @@ export const contingencyDb = {
 
         const memberId = existing ? existing.id : `temp_${Date.now()}_${Math.random()}`
         
+        // Sanitize valid UUID for usuario_id
+        const validUserId = (usuarioId && typeof usuarioId === 'string' && !usuarioId.startsWith('temp_')) ? usuarioId : null
+
         const memberData = {
             id: memberId,
             plano_id: planoId,
             sessao,
             funcao,
-            usuario_id: usuarioId,
+            usuario_id: validUserId,
             atribuicao,
             status: 'Ativo',
             synced: false,
@@ -150,44 +153,60 @@ export const contingencyDb = {
 
         await db.put('sco_estrutura', memberData)
 
-        if (navigator.onLine) {
+        const isRealPlanoUuid = planoId && typeof planoId === 'string' && !planoId.startsWith('temp_')
+
+        if (navigator.onLine && isRealPlanoUuid) {
             try {
                 let result
+                const payload = {
+                    plano_id: planoId,
+                    sessao,
+                    funcao,
+                    usuario_id: validUserId,
+                    atribuicao,
+                    status: 'Ativo'
+                }
+
                 if (funcao === 'Chefia') {
-                    result = await supabase
+                    const { data: existingOnline } = await supabase
                         .from('sco_estrutura')
-                        .upsert({
-                            plano_id: planoId,
-                            sessao,
-                            funcao,
-                            usuario_id: usuarioId,
-                            atribuicao,
-                            status: 'Ativo'
-                        }, { onConflict: 'plano_id,sessao,funcao' })
-                        .select()
-                        .single()
+                        .select('id')
+                        .eq('plano_id', planoId)
+                        .eq('sessao', sessao)
+                        .eq('funcao', 'Chefia')
+                        .maybeSingle()
+
+                    if (existingOnline) {
+                        result = await supabase
+                            .from('sco_estrutura')
+                            .update(payload)
+                            .eq('id', existingOnline.id)
+                            .select()
+                            .single()
+                    } else {
+                        result = await supabase
+                            .from('sco_estrutura')
+                            .insert([payload])
+                            .select()
+                            .single()
+                    }
                 } else {
                     result = await supabase
                         .from('sco_estrutura')
-                        .insert([{
-                            plano_id: planoId,
-                            sessao,
-                            funcao,
-                            usuario_id: usuarioId,
-                            atribuicao,
-                            status: 'Ativo'
-                        }])
+                        .insert([payload])
                         .select()
                         .single()
                 }
 
-                if (!result.error && result.data) {
+                if (result && !result.error && result.data) {
                     if (existing) await db.delete('sco_estrutura', memberId)
                     await db.put('sco_estrutura', { ...result.data, synced: true })
                     return result.data
+                } else if (result?.error) {
+                    console.warn('[contingencyDb] Error returned by Supabase for SCO member:', result.error)
                 }
             } catch (err) {
-                console.error("Error syncing SCO member:", err)
+                console.error("[contingencyDb] Error syncing SCO member:", err)
             }
         }
         return memberData

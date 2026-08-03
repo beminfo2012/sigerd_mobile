@@ -245,7 +245,7 @@ const TelaImpressao = () => {
 
                     
                         {/* Referências Técnicas */}
-                        {(data.referencias_normativas && data.referencias_normativas.length > 0) && (
+                        {(noprer.referencias_normativas && noprer.referencias_normativas.length > 0) && (
                             <section className="mb-6 avoid-break">
                                 <div className="section-header">
                                     <span className="section-header-title">Referências Técnicas e Jurídicas</span>
@@ -253,7 +253,7 @@ const TelaImpressao = () => {
                                 </div>
                                 <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
                                     {Object.entries(
-                                        data.referencias_normativas.reduce((acc, ref) => {
+                                        noprer.referencias_normativas.reduce((acc, ref) => {
                                             const cat = ref.categoria || 'Normas e Manuais';
                                             if (!acc[cat]) acc[cat] = [];
                                             acc[cat].push(ref);
