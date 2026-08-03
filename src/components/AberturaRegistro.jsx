@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import FissurometroAnalyzer from "./FissurometroAnalyzer";
 import MarcadorQRModal from "./MarcadorQRModal";
-import { Camera, QrCode, Check, ShieldCheck, Activity, TrendingUp, AlertTriangle } from "lucide-react";
+import { Camera, QrCode, Check, ShieldCheck, Activity, TrendingUp, AlertTriangle, Trash2 } from "lucide-react";
 import { classificarAbertura, obterRotuloClassificacao, analisarEvolucaoAbertura } from "../services/classificacaoPatologia";
 
-export default function AberturaRegistro({ registro, onValidar }) {
+export default function AberturaRegistro({ registro, onValidar, onRemover }) {
   const [aba, setAba] = useState("original");
   const [largura, setLargura] = useState(registro.largura_mm_medida ?? "");
   const [larguraAnterior, setLarguraAnterior] = useState(registro.largura_anterior_mm ?? "");
@@ -26,14 +26,30 @@ export default function AberturaRegistro({ registro, onValidar }) {
           <p className="text-[11px] font-mono font-bold uppercase text-slate-500 dark:text-slate-400">Ponto {registro.codigo_ponto}</p>
           <h1 className="text-sm font-bold dark:text-slate-200 line-clamp-1">{registro.localizacao_descricao || "Ponto de Monitoramento"}</h1>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowQrModal(true)}
-          className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
-          title="Ver/Imprimir Cartão QR de Referência"
-        >
-          <QrCode size={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShowQrModal(true)}
+            className="p-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
+            title="Ver/Imprimir Cartão QR de Referência"
+          >
+            <QrCode size={18} />
+          </button>
+          {onRemover && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Deseja realmente remover o ponto ${registro.codigo_ponto || ''} e sua foto?`)) {
+                  onRemover(registro.id);
+                }
+              }}
+              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+              title="Excluir esta foto/ponto de fissurômetro"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-1 p-2 bg-slate-100 dark:bg-slate-900">

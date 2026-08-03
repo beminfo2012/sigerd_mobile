@@ -1153,6 +1153,23 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         toast.success('Ação de Sucesso', 'Medição e monitoramento de evolução registrados');
     };
 
+    const handleRemoveAbertura = async (id) => {
+        setFormData(prev => ({
+            ...prev,
+            aberturas: (prev.aberturas || []).filter(ab => ab.id !== id)
+        }));
+
+        const isGuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+        if (isGuid(id) && navigator.onLine) {
+            try {
+                await supabase.from('abertura_patologica').delete().eq('id', id);
+            } catch (err) {
+                console.warn("[VistoriaForm] Erro ao deletar abertura remota:", err);
+            }
+        }
+        toast.success("Ponto Removido", "Evidência do fissurômetro excluída com sucesso.");
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault()
 
@@ -2542,6 +2559,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                 key={abertura.id} 
                                                 registro={abertura} 
                                                 onValidar={handleValidarAbertura} 
+                                                onRemover={handleRemoveAbertura}
                                             />
                                         ))}
                                     </div>
