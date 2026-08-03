@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import { FileText, Printer, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { UserContext } from '../../App';
 
 const TelaImpressao = () => {
     const { id } = useParams();
     const [noprer, setNoprer] = useState(null);
+    const userProfile = useContext(UserContext);
 
     const [zoom, setZoom] = useState(1.0);
 
@@ -37,6 +39,12 @@ const TelaImpressao = () => {
     }, [id]);
 
     if (!noprer) return <div className="flex items-center justify-center min-h-screen">Carregando dados para impressão...</div>;
+
+    const nomeAgenteExibicao = (noprer.nome_agente && noprer.nome_agente.trim().toUpperCase() !== 'AGENTE')
+        ? noprer.nome_agente
+        : (userProfile?.full_name || userProfile?.name || 'AGENTE DE DEFESA CIVIL');
+
+    const matriculaAgenteExibicao = noprer.matricula_agente || userProfile?.matricula || '';
 
     const formatDate = (d) => {
         if (!d) return '---';
@@ -155,7 +163,7 @@ const TelaImpressao = () => {
                             </div>
                             <div className="border-b border-gray-100 pb-1">
                                 <span className="block text-[10px] font-bold text-gray-500 uppercase">Agente Emissor</span>
-                                <span className="block text-sm font-bold">{noprer.nome_agente}</span>
+                                <span className="block text-sm font-bold">{nomeAgenteExibicao}</span>
                             </div>
                         </div>
                     </div>
@@ -339,9 +347,9 @@ const TelaImpressao = () => {
                             <div className="h-20 w-3/4 mx-auto flex items-end justify-center border-b-2 border-red-700 mb-2">
                                 {noprer.sign_agente && <img src={noprer.sign_agente} alt="Agente" className="max-h-16" />}
                             </div>
-                            <p className="font-black text-red-900 text-sm m-0 uppercase">{noprer.nome_agente}</p>
-                            <p className="text-xs font-bold text-slate-600 m-0 uppercase">Agente de Defesa Civil</p>
-                            {noprer.matricula_agente && <p className="text-[10px] text-slate-400 m-0">Matrícula: {noprer.matricula_agente}</p>}
+                            <p className="font-black text-red-900 text-sm m-0 uppercase">{nomeAgenteExibicao}</p>
+                            <p className="text-xs font-bold text-slate-600 m-0 uppercase">{noprer.cargo_agente || noprer.funcao_agente || 'AGENTE DE DEFESA CIVIL'}</p>
+                            {matriculaAgenteExibicao && <p className="text-[10px] text-slate-400 m-0">Matrícula: {matriculaAgenteExibicao}</p>}
                         </div>
                     </div>
                 </div>

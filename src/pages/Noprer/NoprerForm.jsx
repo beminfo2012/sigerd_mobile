@@ -137,7 +137,7 @@ const NoprerForm = () => {
         prazo_dias: 30,
         medidas: [],
         medida_customizada: '',
-        nome_agente: userProfile?.full_name || '',
+        nome_agente: userProfile?.full_name || userProfile?.name || userProfile?.nome || '',
         matricula_agente: userProfile?.matricula || '',
         
         // Etapa 5
@@ -295,7 +295,7 @@ const NoprerForm = () => {
 
     const salvarRascunho = async () => {
         try {
-            const savedDraft = await salvarNoprerRascunho(draftId, formData, step, userProfile?.nome || 'Agente');
+            const savedDraft = await salvarNoprerRascunho(draftId, formData, step, userProfile?.full_name || userProfile?.name || userProfile?.nome || 'Agente');
             toast.success('Rascunho salvo com sucesso no banco de dados!');
             if (!draftId && savedDraft) {
                 navigate(`/noprer/novo?draftId=${savedDraft.id}`, { replace: true });
@@ -881,22 +881,50 @@ const NoprerForm = () => {
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-sm font-black text-[#1F3B5C] dark:text-slate-100">Assinatura do Agente {formData.modo_assinatura !== 'impresso' && '*'}</h3>
                             </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Nome do Agente</label>
+                                    <input 
+                                        type="text" 
+                                        value={formData.nome_agente} 
+                                        onChange={e => setFormData(p => ({...p, nome_agente: e.target.value}))} 
+                                        placeholder="Nome completo do agente" 
+                                        className="w-full p-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg outline-none focus:border-blue-500 bg-white dark:bg-slate-800"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1">Matrícula</label>
+                                    <input 
+                                        type="text" 
+                                        value={formData.matricula_agente} 
+                                        onChange={e => setFormData(p => ({...p, matricula_agente: e.target.value}))} 
+                                        placeholder="Ex: 52836" 
+                                        className="w-full p-2.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg outline-none focus:border-blue-500 bg-white dark:bg-slate-800"
+                                    />
+                                </div>
+                            </div>
                             
                             <div className="border border-slate-300 dark:border-slate-600 rounded-xl p-4 bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center">
                                 {formData.sign_agente ? (
                                     <div className="relative border border-green-200 bg-white dark:bg-slate-800 rounded-lg p-2 flex flex-col items-center">
                                         <img src={formData.sign_agente} alt="Assinatura Agente" className="h-20 object-contain" />
                                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-2">{formData.nome_agente}</span>
-                                        <button onClick={() => setFormData(p => ({...p, sign_agente: null, nome_agente: ''}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={12}/></button>
+                                        <button onClick={() => setFormData(p => ({...p, sign_agente: null}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={12}/></button>
                                     </div>
                                 ) : (
                                     <div className="flex gap-3">
                                         <button onClick={() => setSigModal('agente')} className="bg-[#1F3B5C] text-white px-6 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-800">
                                             Assinar na Tela
                                         </button>
-                                        {userProfile?.assinatura && (
+                                        {(userProfile?.assinatura || userProfile?.signature) && (
                                             <button 
-                                                onClick={() => setFormData(p => ({...p, sign_agente: userProfile.assinatura, nome_agente: userProfile.nome}))}
+                                                onClick={() => setFormData(p => ({
+                                                    ...p, 
+                                                    sign_agente: userProfile.assinatura || userProfile.signature, 
+                                                    nome_agente: p.nome_agente || userProfile.full_name || userProfile.name || userProfile.nome || '',
+                                                    matricula_agente: p.matricula_agente || userProfile.matricula || ''
+                                                }))}
                                                 className="bg-emerald-100 text-emerald-700 px-6 py-2 rounded-lg font-bold text-sm hover:bg-emerald-200"
                                             >
                                                 Auto-assinar
@@ -1021,7 +1049,8 @@ const NoprerForm = () => {
                             if (sigModal === 'notificado') updates.sign_notificado = sig;
                             if (sigModal === 'agente') {
                                 updates.sign_agente = sig;
-                                updates.nome_agente = userProfile?.nome || 'Agente';
+                                updates.nome_agente = p.nome_agente || userProfile?.full_name || userProfile?.name || userProfile?.nome || '';
+                                updates.matricula_agente = p.matricula_agente || userProfile?.matricula || '';
                             }
                             if (sigModal === 'test1') updates.sign_test1 = sig;
                             if (sigModal === 'test2') updates.sign_test2 = sig;
