@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import FissurometroAnalyzer from "./FissurometroAnalyzer";
 import MarcadorQRModal from "./MarcadorQRModal";
+import ConfirmModal from "./ConfirmModal";
 import { Camera, QrCode, Check, ShieldCheck, Activity, TrendingUp, AlertTriangle, Trash2 } from "lucide-react";
 import { classificarAbertura, obterRotuloClassificacao, analisarEvolucaoAbertura } from "../services/classificacaoPatologia";
 
@@ -11,6 +12,7 @@ export default function AberturaRegistro({ registro, onValidar, onRemover }) {
   const [fotoAnotadaUrl, setFotoAnotadaUrl] = useState(registro.foto_anotada_url || null);
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const classificacaoAtual = largura ? classificarAbertura(largura) : registro.classificacao_patologia;
   const evolucao = (largura && larguraAnterior) ? analisarEvolucaoAbertura(largura, larguraAnterior) : null;
@@ -38,11 +40,7 @@ export default function AberturaRegistro({ registro, onValidar, onRemover }) {
           {onRemover && (
             <button
               type="button"
-              onClick={() => {
-                if (window.confirm(`Deseja realmente remover o ponto ${registro.codigo_ponto || ''} e sua foto?`)) {
-                  onRemover(registro.id);
-                }
-              }}
+              onClick={() => setShowDeleteModal(true)}
               className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
               title="Excluir esta foto/ponto de fissurômetro"
             >
@@ -203,6 +201,17 @@ export default function AberturaRegistro({ registro, onValidar, onRemover }) {
       )}
 
       <MarcadorQRModal isOpen={showQrModal} onClose={() => setShowQrModal(false)} />
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => onRemover(registro.id)}
+        title="Remover Evidência?"
+        message={`Deseja realmente remover o ponto ${registro.codigo_ponto || ''} e sua foto? Esta ação não pode ser desfeita.`}
+        confirmText="Remover"
+        cancelText="Cancelar"
+        type="danger"
+      />
     </div>
   );
 }
