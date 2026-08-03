@@ -137,8 +137,9 @@ const NoprerForm = () => {
         prazo_dias: 30,
         medidas: [],
         medida_customizada: '',
-        nome_agente: userProfile?.full_name || userProfile?.name || userProfile?.nome || '',
-        matricula_agente: userProfile?.matricula || '',
+        nome_agente: userProfile?.full_name || userProfile?.name || localStorage.getItem('lastAgentName') || '',
+        funcao_agente: userProfile?.cargo || userProfile?.role || localStorage.getItem('lastAgentCargo') || 'Coordenador de Proteção e Defesa Civil',
+        matricula_agente: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
         
         // Etapa 5
         termo_lido: false,
@@ -152,6 +153,19 @@ const NoprerForm = () => {
         test2_cpf: '',
         sign_test2: null,
     });
+    
+    useEffect(() => {
+        if (userProfile) {
+            setFormData(p => ({
+                ...p,
+                nome_agente: (!p.nome_agente || p.nome_agente === 'Agente' || p.nome_agente === 'AGENTE')
+                    ? (userProfile.full_name || userProfile.name || localStorage.getItem('lastAgentName') || '')
+                    : p.nome_agente,
+                funcao_agente: p.funcao_agente || userProfile.cargo || userProfile.role || localStorage.getItem('lastAgentCargo') || 'Coordenador de Proteção e Defesa Civil',
+                matricula_agente: p.matricula_agente || userProfile.matricula || localStorage.getItem('lastAgentMatricula') || ''
+            }));
+        }
+    }, [userProfile]);
     
 
     // Calcula datas do prazo dinamicamente
@@ -295,7 +309,11 @@ const NoprerForm = () => {
 
     const salvarRascunho = async () => {
         try {
-            const savedDraft = await salvarNoprerRascunho(draftId, formData, step, userProfile?.full_name || userProfile?.name || userProfile?.nome || 'Agente');
+            const nomeAgenteRascunho = (formData.nome_agente && formData.nome_agente !== 'Agente' && formData.nome_agente !== 'AGENTE')
+                ? formData.nome_agente
+                : (userProfile?.full_name || userProfile?.name || localStorage.getItem('lastAgentName') || 'Agente de Defesa Civil');
+
+            const savedDraft = await salvarNoprerRascunho(draftId, formData, step, nomeAgenteRascunho);
             toast.success('Rascunho salvo com sucesso no banco de dados!');
             if (!draftId && savedDraft) {
                 navigate(`/noprer/novo?draftId=${savedDraft.id}`, { replace: true });
@@ -308,13 +326,25 @@ const NoprerForm = () => {
     const handleSubmit = async () => {
         try {
             setSalvando(true);
+
+            const nomeAgenteFinal = (formData.nome_agente && formData.nome_agente !== 'Agente' && formData.nome_agente !== 'AGENTE')
+                ? formData.nome_agente
+                : (userProfile?.full_name || userProfile?.name || localStorage.getItem('lastAgentName') || '');
+
+            const cargoAgenteFinal = formData.funcao_agente || userProfile?.cargo || userProfile?.role || localStorage.getItem('lastAgentCargo') || 'Coordenador de Proteção e Defesa Civil';
+            const matriculaAgenteFinal = formData.matricula_agente || userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '';
+
+            if (nomeAgenteFinal) localStorage.setItem('lastAgentName', nomeAgenteFinal);
+            if (cargoAgenteFinal) localStorage.setItem('lastAgentCargo', cargoAgenteFinal);
+            if (matriculaAgenteFinal) localStorage.setItem('lastAgentMatricula', matriculaAgenteFinal);
+
             // Ajusta formatação antes de enviar
             const payload = { 
                 ...formData,
                 criado_por: userProfile?.id || formData.criado_por,
-                nome_agente: formData.nome_agente || userProfile?.full_name || userProfile?.name || '',
-                funcao_agente: formData.funcao_agente || userProfile?.cargo || userProfile?.role || 'Coordenador de Proteção e Defesa Civil',
-                matricula_agente: formData.matricula_agente || userProfile?.matricula || '',
+                nome_agente: nomeAgenteFinal,
+                funcao_agente: cargoAgenteFinal,
+                matricula_agente: matriculaAgenteFinal,
                 data_limite: datas.dataLimite.toISOString().split('T')[0],
                 data_revistoria: datas.dataRevistoria.toISOString().split('T')[0]
             };
