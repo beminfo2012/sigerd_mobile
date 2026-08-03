@@ -1,14 +1,12 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import { FileText, Printer, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import { UserContext } from '../../App';
 
 const TelaImpressao = () => {
     const { id } = useParams();
     const [noprer, setNoprer] = useState(null);
-    const userProfile = useContext(UserContext);
 
     const [zoom, setZoom] = useState(1.0);
 
@@ -42,9 +40,9 @@ const TelaImpressao = () => {
 
     const nomeAgenteExibicao = (noprer.nome_agente && noprer.nome_agente.trim().toUpperCase() !== 'AGENTE')
         ? noprer.nome_agente
-        : (userProfile?.full_name || userProfile?.name || 'AGENTE DE DEFESA CIVIL');
+        : 'AGENTE DE DEFESA CIVIL';
 
-    const matriculaAgenteExibicao = noprer.matricula_agente || userProfile?.matricula || '';
+    const matriculaAgenteExibicao = noprer.matricula_agente || '';
 
     const formatDate = (d) => {
         if (!d) return '---';
