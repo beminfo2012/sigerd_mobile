@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { UserContext } from '../../App'
 import { 
     Shield, AlertTriangle, Users, Map as MapIcon, FileText, 
@@ -7,7 +7,7 @@ import {
     Menu, Bell, Settings, Info, Briefcase, Activity, Clock,
     UserPlus, ShieldAlert, Zap, ClipboardList, HelpingHand, Eye,
     Trash2, UserMinus, MoreVertical, ExternalLink, RefreshCcw,
-    Layers, LayoutDashboard, Target
+    Layers, LayoutDashboard, Target, ArrowLeft
 } from 'lucide-react'
 import { contingencyDb } from '../../services/contingencyDb'
 import { supabase } from '../../services/supabase'
@@ -54,6 +54,7 @@ const PlanoContingencia = () => {
     const [activePlan, setActivePlan] = useState(null)
     const [loading, setLoading] = useState(true)
     const [showActivationModal, setShowActivationModal] = useState(false)
+    const [showGerenciadorModal, setShowGerenciadorModal] = useState(false)
     const [showAssignModal, setShowAssignModal] = useState(false)
     const [showAtribuicaoPlanoModal, setShowAtribuicaoPlanoModal] = useState(false)
     
@@ -72,9 +73,39 @@ const PlanoContingencia = () => {
     })
     const [scoMembers, setScoMembers] = useState([])
     const [availableUsers, setAvailableUsers] = useState([])
-    const [activeTab, setActiveTab] = useState('Placon') // Main Tab
-    const [sidebarTab, setSidebarTab] = useState('agentes') // Right sidebar tab
+    const [activeTab, setActiveTab] = useState('Placon')
+    const [sidebarTab, setSidebarTab] = useState('agentes')
     const [searchTerm, setSearchTerm] = useState('')
+    const location = useLocation()
+
+    // Sincronizar subrotas da URL com as abas e modal de gerenciamento
+    useEffect(() => {
+        const path = location.pathname.toLowerCase()
+        if (path.includes('/tatico') || path.includes('/organograma')) {
+            if (!activePlan) {
+                navigate('/contingencia/matriz', { replace: true })
+                setActiveTab('Placon')
+            } else {
+                setActiveTab('Organograma')
+            }
+        } else if (path.includes('/mapa')) {
+            if (!activePlan) {
+                navigate('/contingencia/matriz', { replace: true })
+                setActiveTab('Placon')
+            } else {
+                setActiveTab('Mapa')
+            }
+        } else if (path.includes('/gerenciar')) {
+            setActiveTab('Placon')
+            setShowGerenciadorModal(true)
+        } else if (path.includes('/matriz')) {
+            setActiveTab('Placon')
+        } else {
+            // Acessando /contingencia -> direciona explicitamente para /contingencia/matriz na barra de endereço
+            navigate('/contingencia/matriz', { replace: true })
+            setActiveTab('Placon')
+        }
+    }, [location.pathname, activePlan, navigate])
 
     // Advanced SCO States
     const [setores, setSetores] = useState([])
@@ -499,47 +530,6 @@ const PlanoContingencia = () => {
         )
     }
 
-    if (!activePlan) {
-        return (
-            <div className="p-8 max-w-4xl mx-auto min-h-screen flex items-center justify-center">
-                <div className="bg-white dark:bg-slate-950 rounded-3xl p-10 border border-slate-200 dark:border-slate-800 shadow-2xl text-center space-y-8 animate-in fade-in zoom-in duration-300">
-                    <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-xl">
-                        <Shield size={40} />
-                    </div>
-                    <div className="space-y-2">
-                        <h1 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Plano de Contingência</h1>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Gestão tática e governança operacional de incidentes.</p>
-                    </div>
-                    <button onClick={() => setShowActivationModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-3 mx-auto text-xs">
-                        <Plus size={16} /> Ativar Novo Plano
-                    </button>
-                </div>
-                {showActivationModal && (
-                    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-white/5 p-8 space-y-6">
-                            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Ativação de SCO</h3>
-                            <div className="space-y-5">
-                                <div className="grid grid-cols-3 gap-3">
-                                    {LEVELS.map(l => (
-                                        <button key={l.id} onClick={() => setFormData({...formData, nivel: l.id})} className={`py-4 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${formData.nivel === l.id ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400'}`}>
-                                            <span className="text-sm font-black uppercase">{l.id}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                                <textarea value={formData.motivo} onChange={e => setFormData({...formData, motivo: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 text-xs font-bold border-none ring-1 ring-slate-100 dark:ring-slate-700 outline-none focus:ring-2 ring-blue-500" rows={2} placeholder="Motivo da ativação..." />
-                            </div>
-                            <div className="flex gap-3">
-                                <button onClick={() => setShowActivationModal(false)} className="flex-1 py-3 text-xs font-black uppercase text-slate-400">Cancelar</button>
-                                <button onClick={handleActivate} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-xs shadow-lg active:scale-95">Confirmar</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        )
-    }
-
-
     return (
         <>
             <div className="bg-[#f8fafc] dark:bg-slate-950 min-h-screen flex flex-col overflow-hidden select-none">
@@ -547,20 +537,58 @@ const PlanoContingencia = () => {
                 {/* Header */}
                 <header className="bg-white dark:bg-slate-900 h-16 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 z-50 shrink-0 shadow-sm">
                     <div className="flex items-center gap-6">
+                        {/* Botão de Voltar ao Dashboard Principal */}
+                        <button
+                            onClick={() => navigate('/')}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 active:scale-95 shadow-sm"
+                            title="Voltar ao Dashboard Principal do SIGERD"
+                        >
+                            <ArrowLeft size={14} className="text-slate-500 dark:text-slate-300" /> Dashboard
+                        </button>
+                        <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
+
                         <div className="flex items-center gap-2.5">
                             <div className="p-2 bg-blue-600 rounded-xl text-white shadow-md shadow-blue-500/10">
                                 <Shield size={18} />
                             </div>
-                            <h1 className="text-sm font-black tracking-tight uppercase">Sigerd <span className="text-blue-600">SCO</span></h1>
+                            <h1 className="text-sm font-black tracking-tight uppercase">Sigerd <span className="text-blue-600">PLACON 2026</span></h1>
                         </div>
                         <div className="h-6 w-px bg-slate-100 dark:bg-slate-800"></div>
-                        <div className="flex gap-2">
-                            <div className="px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-rose-100 dark:border-rose-900/30 flex items-center gap-1.5">
-                                <Activity size={10} className="animate-pulse" /> Ativo
-                            </div>
-                            <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${LEVELS.find(l => l.id === activePlan.nivel)?.color.replace('bg-', 'bg-opacity-10 text-').replace('-600', '-500')} border-current`}>
-                                {activePlan.nivel}
-                            </div>
+                        <div className="flex gap-2 items-center">
+                            {activePlan ? (
+                                <>
+                                    <div className="px-3 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-rose-100 dark:border-rose-900/30 flex items-center gap-1.5">
+                                        <Activity size={10} className="animate-pulse" /> Ativo em Operação
+                                    </div>
+                                    <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${LEVELS.find(l => l.id === activePlan.nivel)?.color.replace('bg-', 'bg-opacity-10 text-').replace('-600', '-500')} border-current`}>
+                                        {activePlan.nivel}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <div className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-100 dark:border-amber-900/30 flex items-center gap-1.5">
+                                        <Clock size={10} /> Fase de Prevenção / Planejamento
+                                    </div>
+                                    <button 
+                                        onClick={() => setShowActivationModal(true)}
+                                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all flex items-center gap-1"
+                                    >
+                                        <Zap size={10} /> Ativar Operação SCO
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Botão Gerenciar PLACON na Parte Superior */}
+                            <button
+                                onClick={() => {
+                                    setActiveTab('Placon')
+                                    setShowGerenciadorModal(true)
+                                }}
+                                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-1.5 border border-slate-700 active:scale-95 ml-2"
+                                title="Gerenciamento Geral do Plano de Contingência"
+                            >
+                                <Settings size={13} className="text-blue-400" /> Gerenciar PLACON
+                            </button>
                         </div>
                     </div>
 
@@ -572,28 +600,64 @@ const PlanoContingencia = () => {
                             <button onClick={() => setOrgScale(s => Math.min(1.5, s + 0.1))} className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg text-slate-400"><Search size={12}/></button>
                         </div>
 
-
-                        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-1 pr-3 rounded-2xl border border-slate-100 dark:border-slate-800">
-                            <img src={availableUsers.find(u => u.id === activePlan?.comandante)?.photo_url || `https://ui-avatars.com/api/?name=C`} className="w-8 h-8 rounded-xl object-cover shadow-sm bg-slate-200" />
-                            <span className="text-[10px] font-black uppercase tracking-tight truncate max-w-[100px]">{availableUsers.find(u => u.id === activePlan?.comandante)?.full_name}</span>
-                            <button onClick={handleClosePlan} className="ml-2 p-1.5 bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all"><X size={12}/></button>
-                        </div>
+                        {activePlan && (
+                            <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-1 pr-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <img src={availableUsers.find(u => u.id === activePlan?.comandante)?.photo_url || `https://ui-avatars.com/api/?name=C`} className="w-8 h-8 rounded-xl object-cover shadow-sm bg-slate-200" />
+                                <span className="text-[10px] font-black uppercase tracking-tight truncate max-w-[100px]">{availableUsers.find(u => u.id === activePlan?.comandante)?.full_name}</span>
+                                <button onClick={handleClosePlan} className="ml-2 p-1.5 bg-rose-50 dark:bg-rose-950 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all" title="Encerrar Operação"><X size={12}/></button>
+                            </div>
+                        )}
                     </div>
                 </header>
+
+                {/* Submenu Bar Estático (Sem sobreposição) */}
+                <div className="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-2.5 flex items-center justify-between shrink-0 z-30 shadow-inner">
+                    <div className="flex items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+                        <button 
+                            onClick={() => { setActiveTab('Placon'); navigate('/contingencia/matriz') }} 
+                            className={`px-5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                                activeTab === 'Placon' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                            }`}
+                        >
+                            <FileText size={13} /> PLACON (Matriz)
+                        </button>
+
+                        {activePlan && (
+                            <>
+                                <button 
+                                    onClick={() => { setActiveTab('Organograma'); navigate('/contingencia/tatico') }} 
+                                    className={`px-5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                                        activeTab === 'Organograma' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <Activity size={13} /> Tático (SCO)
+                                </button>
+                                <button 
+                                    onClick={() => { setActiveTab('Mapa'); navigate('/contingencia/mapa') }} 
+                                    className={`px-5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                                        activeTab === 'Mapa' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <MapIcon size={13} /> Mapa de Risco
+                                </button>
+                            </>
+                        )}
+                    </div>
+
+                    {!activePlan && (
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/60 px-3 py-1.5 rounded-lg border border-amber-200/60 dark:border-amber-900/40">
+                            ℹ️ Modo de Prevenção & Planejamento: Dados e atribuições editáveis no Gerenciador
+                        </span>
+                    )}
+                </div>
 
                 <div className="flex-1 flex overflow-hidden">
 
                     {/* MAIN DASHBOARD CENTER */}
                     <div className="flex-1 overflow-hidden flex flex-col bg-[#f0f2f5] dark:bg-slate-950 relative">
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-1 rounded-2xl shadow-xl border border-white/5 flex gap-1">
-                             <button onClick={() => setActiveTab('Placon')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Placon' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>PLACON</button>
-                             <button onClick={() => setActiveTab('Organograma')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Organograma' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Tático</button>
-                             <button onClick={() => setActiveTab('Mapa')} className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'Mapa' ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:text-slate-600'}`}>Mapa</button>
-                        </div>
-
-                        <div className="flex-1 overflow-auto custom-scrollbar p-10 flex flex-col items-center">
+                        <div className="flex-1 overflow-auto custom-scrollbar p-6 flex flex-col items-center">
                             {activeTab === 'Placon' ? (
-                                <PlaconMatriz />
+                                <PlaconMatriz showGerenciador={showGerenciadorModal} setShowGerenciador={setShowGerenciadorModal} />
                             ) : activeTab === 'Mapa' ? (
                                 <div className="w-full h-full bg-slate-50 dark:bg-slate-900 border border-slate-200 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl min-h-[500px]">
                                     <MapContainer center={[-20.0246, -40.7464]} zoom={15} style={{ height: '100%', width: '100%' }}>
@@ -1140,6 +1204,112 @@ const PlanoContingencia = () => {
                                     <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-md text-[7px] font-black uppercase">Empenhado</div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* MODAL: ATIVAR OPERAÇÃO SCO */}
+            {showActivationModal && (
+                <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-orange-600 to-rose-600 text-white flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-white/20 rounded-2xl backdrop-blur-md">
+                                    <Zap size={22} className="text-amber-300" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black uppercase tracking-tight">Ativar Operação de Contingência</h3>
+                                    <p className="text-[10px] font-bold opacity-90 uppercase tracking-widest mt-0.5">Mudança de Fase: Prevenção ➔ Operação Ativa</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowActivationModal(false)} className="p-1.5 text-white/80 hover:text-white rounded-full hover:bg-white/10 transition-all"><X size={22}/></button>
+                        </div>
+
+                        <div className="p-6 space-y-5 flex-1 overflow-y-auto custom-scrollbar">
+                            {/* Nível de Alerta */}
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-2">Nível de Alerta da Operação</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { id: 'Alerta', color: 'border-amber-500 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300', icon: '⚠️' },
+                                        { id: 'Emergência', color: 'border-orange-600 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300', icon: '🚨' },
+                                        { id: 'Calamidade', color: 'border-red-600 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300', icon: '🔥' }
+                                    ].map(level => (
+                                        <button
+                                            key={level.id}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, nivel: level.id })}
+                                            className={`p-3 rounded-2xl border-2 text-center transition-all flex flex-col items-center gap-1 ${
+                                                formData.nivel === level.id 
+                                                    ? `${level.color} shadow-md ring-2 ring-blue-500/20` 
+                                                    : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <span className="text-base">{level.icon}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-wider">{level.id}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Motivo da Ativação */}
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Motivo / Evento Adverso</label>
+                                <textarea 
+                                    required
+                                    rows={3}
+                                    placeholder="Ex: Acumulado de chuvas acima de 120mm em 24h com elevação do nível dos rios e risco de alagamentos..."
+                                    value={formData.motivo}
+                                    onChange={e => setFormData({ ...formData, motivo: e.target.value })}
+                                    className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            {/* Área Afetada */}
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Área Afetada / Bairros / Distritos</label>
+                                <input 
+                                    type="text"
+                                    placeholder="Ex: Sede Municipal, Alto Rio Novo, São Luís..."
+                                    value={formData.area_afetada}
+                                    onChange={e => setFormData({ ...formData, area_afetada: e.target.value })}
+                                    className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-orange-500"
+                                />
+                            </div>
+
+                            {/* Comandante das Operações */}
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Comandante das Operações (SCO)</label>
+                                <select
+                                    value={formData.comandante || userProfile?.id || ''}
+                                    onChange={e => setFormData({ ...formData, comandante: e.target.value })}
+                                    className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-orange-500"
+                                >
+                                    <option value={userProfile?.id || ''}>
+                                        {userProfile?.full_name || userProfile?.email || 'Usuário Atual'} (Comandante Padrão)
+                                    </option>
+                                    {availableUsers.map(u => (
+                                        <option key={u.id} value={u.id}>{u.full_name} ({u.role || 'Agente'})</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 flex gap-3">
+                            <button 
+                                type="button" 
+                                onClick={() => setShowActivationModal(false)}
+                                className="flex-1 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-wider hover:bg-slate-100 transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={handleActivate}
+                                className="flex-[2] py-3.5 bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-700 hover:to-rose-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                <Zap size={14} /> Confirmar & Ativar Operação
+                            </button>
                         </div>
                     </div>
                 </div>

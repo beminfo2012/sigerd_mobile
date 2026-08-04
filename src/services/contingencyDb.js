@@ -15,11 +15,9 @@ export const contingencyDb = {
                 
                 if (!error) {
                     if (data) {
-                        // Atualiza localmente com o que está no servidor
                         await db.put('planos_contingencia', data)
                         return data
                     } else {
-                        // Se no servidor não há nada ativo, limpamos estados locais que ficaram "presos"
                         const all = await db.getAll('planos_contingencia')
                         const stuckActive = all.find(p => p.status === 'Ativo')
                         if (stuckActive) {
@@ -35,7 +33,6 @@ export const contingencyDb = {
             }
         }
 
-        // Fallback para local (se offline ou erro na chamada)
         const all = await db.getAll('planos_contingencia')
         return all.find(p => p.status === 'Ativo') || null
     },
@@ -56,21 +53,29 @@ export const contingencyDb = {
         const id = newPlan.id
         
         if (navigator.onLine) {
-            const { data, error } = await supabase
-                .from('planos_contingencia')
-                .insert([{
-                    nivel: planData.nivel,
-                    motivo: planData.motivo,
-                    area_afetada: planData.area_afetada,
-                    comandante: planData.comandante,
-                    status: 'Ativo'
-                }])
-                .select()
-                .single()
-            
-            if (data && !error) {
-                await db.put('planos_contingencia', { ...newPlan, id: data.id, synced: true })
-                return data
+            try {
+                const isValidUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
+                const { data, error } = await supabase
+                    .from('planos_contingencia')
+                    .insert([{
+                        nivel: planData.nivel || 'Alerta',
+                        motivo: planData.motivo,
+                        area_afetada: planData.area_afetada || 'Município de Santa Maria de Jetibá',
+                        comandante: isValidUUID(planData.comandante) ? planData.comandante : null,
+                        status: 'Ativo'
+                    }])
+                    .select()
+                    .single()
+                
+                if (data && !error) {
+                    await db.put('planos_contingencia', { ...newPlan, id: data.id, synced: true })
+                    return data
+                } else if (error) {
+                    console.error("[contingencyDb] Erro Supabase ao ativar plano:", error)
+                }
+            } catch (err) {
+                console.error("[contingencyDb] Exceção ao ativar plano:", err)
             }
         }
         return { ...newPlan, id }
@@ -99,400 +104,229 @@ export const contingencyDb = {
                     data_encerramento: new Date().toISOString(),
                     relatorio_final: report
                 })
-                .eq('id', plan.id)
+                .eq('id', planId)
         }
     },
 
-    async loadScoStructure(planoId) {
-        const db = await initDB()
-        const all = await db.getAllFromIndex('sco_estrutura', 'plano_id', planoId)
+    async updateSCOStructure(planId, setorId, data) {
+        if (!navigator.onLine) return
+        await supabase
+            .from('sco_estrutura')
+            .upsert({
+                plano_id: planId,
+                setor_id: setorId,
+                ...data,
+                updated_at: new Date().toISOString()
+            })
+    },
+
+    async getSCOMembers(planId) {
+        if (!navigator.onLine) return []
+        const { data } = await supabase
+            .from('sco_membros')
+            .select('*, usuario:usuarios(*)')
+            .eq('plano_id', planId)
+        return data || []
+    },
+
+    async assignUserToSCO(planId, setorId, funcao, usuarioId) {
+        if (!navigator.onLine) return
+        const { data, error } = await supabase
+            .from('sco_membros')
+            .insert([{
+                plano_id: planId,
+                setor_id: setorId,
+                funcao,
+                usuario_id: usuarioId
+            }])
+            .select('*, usuario:usuarios(*)')
+            .single()
         
-        if (navigator.onLine) {
-            try {
-                const { data } = await supabase
-                    .from('sco_estrutura')
-                    .select('*, profiles(*)')
-                    .eq('plano_id', planoId)
-                
-                if (data) {
-                    for (const item of data) {
-                        await db.put('sco_estrutura', { ...item, synced: true })
+        if (error) throw error
+        return data
+    },
+
+    async removeUserFromSCO(membroId) {
+        if (!navigator.onLine) return
+        await supabase
+            .from('sco_membros')
+            .delete()
+            .eq('id', membroId)
+    },
+
+    async getAvailableUsers() {
+        if (!navigator.onLine) return []
+        const { data } = await supabase
+            .from('usuarios')
+            .select('id, full_name, email, role, photo_url')
+            .eq('active', true)
+        return data || []
+    },
+
+    async getOrgaos(usuarioId = null, isCoordenador = false, tenantId = null) {
+        let query = supabase.from('placon_orgaos').select('*').eq('ativo', true).order('ordem')
+        if (tenantId) query = query.eq('tenant_id', tenantId)
+
+        if (!isCoordenador && usuarioId) {
+            let uQuery = supabase.from('placon_usuario_orgao').select('orgao_id').eq('usuario_id', usuarioId)
+            if (tenantId) uQuery = uQuery.eq('tenant_id', tenantId)
+            const { data: userOrgaos } = await uQuery
+            
+            if (userOrgaos && userOrgaos.length > 0) {
+                const ids = userOrgaos.map(u => u.orgao_id)
+                query = query.in('id', ids)
+            }
+        }
+
+        const { data, error } = await query
+        if (!error && data) return data
+        return []
+    },
+
+    async getOrgaoCompleto(orgaoId, tenantId = null) {
+        try {
+            const [
+                { data: placonOrgao },
+                { data: contatos },
+                { data: atribuicoes },
+                { data: recursosBase },
+                { data: assinaturas }
+            ] = await Promise.all([
+                supabase.from('placon_orgaos').select('*').eq('id', orgaoId).maybeSingle(),
+                supabase.from('placon_contatos').select('*').eq('orgao_id', orgaoId),
+                supabase.from('placon_atribuicoes').select('*').eq('orgao_id', orgaoId).order('fase').order('ordem'),
+                supabase.from('placon_recursos').select('*').eq('orgao_id', orgaoId),
+                supabase.from('placon_assinaturas').select('*').eq('orgao_id', orgaoId).order('ordem')
+            ])
+
+            if (placonOrgao) {
+                let recursos = []
+                if (recursosBase && recursosBase.length > 0) {
+                    const mciIds = recursosBase.map(r => r.mci_recurso_id).filter(Boolean)
+                    let mciMap = {}
+                    if (mciIds.length > 0) {
+                        const { data: mciData } = await supabase.from('mci_recursos').select('*').in('id', mciIds)
+                        if (mciData) {
+                            mciData.forEach(m => { mciMap[m.id] = m })
+                        }
                     }
-                    return data
-                }
-            } catch (e) {
-                console.warn('Fallback to local SCO structure')
-            }
-        }
-        return all
-    },
-
-    async updateScoMember(planoId, sessao, funcao, usuarioId, atribuicao = '') {
-        const db = await initDB()
-        const allMembers = await db.getAllFromIndex('sco_estrutura', 'plano_id', planoId)
-        const existing = (funcao === 'Chefia')
-            ? allMembers.find(m => m.sessao === sessao && m.funcao === 'Chefia')
-            : null
-
-        const memberId = existing ? existing.id : `temp_${Date.now()}_${Math.random()}`
-        
-        // Sanitize valid UUID for usuario_id
-        const validUserId = (usuarioId && typeof usuarioId === 'string' && !usuarioId.startsWith('temp_')) ? usuarioId : null
-
-        const memberData = {
-            id: memberId,
-            plano_id: planoId,
-            sessao,
-            funcao,
-            usuario_id: validUserId,
-            atribuicao,
-            status: 'Ativo',
-            synced: false,
-            created_at: existing ? existing.created_at : new Date().toISOString()
-        }
-
-        await db.put('sco_estrutura', memberData)
-
-        const isRealPlanoUuid = planoId && typeof planoId === 'string' && !planoId.startsWith('temp_')
-
-        if (navigator.onLine && isRealPlanoUuid) {
-            try {
-                let result
-                const payload = {
-                    plano_id: planoId,
-                    sessao,
-                    funcao,
-                    usuario_id: validUserId,
-                    atribuicao,
-                    status: 'Ativo'
+                    recursos = recursosBase.map(r => ({
+                        ...r,
+                        alocado_no_plano: r.alocado_plano ?? r.alocado_no_plano ?? 0,
+                        mci_recursos: r.mci_recurso_id ? mciMap[r.mci_recurso_id] || null : null,
+                        disponivel_mci: r.mci_recurso_id && mciMap[r.mci_recurso_id] ? mciMap[r.mci_recurso_id].quantidade_disponivel : null
+                    }))
                 }
 
-                if (funcao === 'Chefia') {
-                    const { data: existingOnline } = await supabase
-                        .from('sco_estrutura')
-                        .select('id')
-                        .eq('plano_id', planoId)
-                        .eq('sessao', sessao)
-                        .eq('funcao', 'Chefia')
-                        .maybeSingle()
+                // Assinaturas possuem separação estrita de telefone e email
+                const assinaturasProcessadas = (assinaturas && assinaturas.length > 0 ? assinaturas : contatos || []).map(a => ({
+                    id: a.id,
+                    nome: a.nome || '',
+                    cargo: a.cargo || '',
+                    telefone: a.telefone || '',
+                    email: a.email || '',
+                    identificacao_assinatura_edocs: a.identificacao_assinatura_edocs || a.identificacao_edocs || ''
+                }))
 
-                    if (existingOnline) {
-                        result = await supabase
-                            .from('sco_estrutura')
-                            .update(payload)
-                            .eq('id', existingOnline.id)
-                            .select()
-                            .single()
-                    } else {
-                        result = await supabase
-                            .from('sco_estrutura')
-                            .insert([payload])
-                            .select()
-                            .single()
-                    }
-                } else {
-                    result = await supabase
-                        .from('sco_estrutura')
-                        .insert([payload])
-                        .select()
-                        .single()
+                return {
+                    ...placonOrgao,
+                    descricao_responsabilidade: placonOrgao.descricao || placonOrgao.descricao_responsabilidade,
+                    contatos: contatos || [],
+                    atribuicoes: (atribuicoes || []).map(a => ({
+                        ...a,
+                        fase: a.fase ? a.fase.charAt(0).toUpperCase() + a.fase.slice(1) : 'Prevenção'
+                    })),
+                    recursos: recursos || [],
+                    assinaturas: assinaturasProcessadas
+                }
+            }
+        } catch (e) {
+            console.error('[contingencyDb] Erro em getOrgaoCompleto:', e)
+        }
+        return null
+    },
+
+    async alocarRecursoPlacon(recursoId, novaQuantidade, usuarioId, tenantId) {
+        const { data: recurso } = await supabase.from('placon_recursos').select('*').eq('id', recursoId).maybeSingle()
+        if (recurso) {
+            if (recurso.mci_recurso_id) {
+                const { data: mci } = await supabase.from('mci_recursos').select('quantidade_disponivel').eq('id', recurso.mci_recurso_id).single()
+                if (mci && novaQuantidade > mci.quantidade_disponivel) {
+                    throw new Error(`MCI indica apenas ${mci.quantidade_disponivel} unidades disponíveis`)
+                }
+            }
+
+            if (usuarioId && tenantId) {
+                await supabase.from('placon_recursos_log').insert([{
+                    tenant_id: tenantId,
+                    recurso_id: recursoId,
+                    usuario_id: usuarioId,
+                    alocado_antes: recurso.alocado_plano || 0,
+                    alocado_depois: novaQuantidade
+                }])
+            }
+
+            const { data, error } = await supabase
+                .from('placon_recursos')
+                .update({ alocado_plano: novaQuantidade })
+                .eq('id', recursoId)
+                .select()
+                .single()
+
+            if (error) throw error
+            return data
+        }
+        return null
+    },
+
+    async getPlanoPublico(tenantId) {
+        try {
+            let orgsQuery = supabase.from('placon_orgaos').select('*').eq('ativo', true).order('ordem')
+            if (tenantId) orgsQuery = orgsQuery.eq('tenant_id', tenantId)
+            const { data: orgaos } = await orgsQuery
+
+            if (orgaos && orgaos.length > 0) {
+                const resultado = []
+                for (const orgao of orgaos) {
+                    const { data: atribuicoes } = await supabase.from('placon_atribuicoes').select('*').eq('orgao_id', orgao.id).order('fase').order('ordem')
+                    const { data: contatos } = await supabase.from('placon_contatos').select('*').eq('orgao_id', orgao.id)
+                    resultado.push({
+                        ...orgao,
+                        descricao_responsabilidade: orgao.descricao,
+                        atribuicoes: (atribuicoes || []).map(a => ({ ...a, fase: a.fase ? a.fase.charAt(0).toUpperCase() + a.fase.slice(1) : 'Prevenção' })),
+                        contatos: contatos || []
+                    })
                 }
 
-                if (result && !result.error && result.data) {
-                    if (existing) await db.delete('sco_estrutura', memberId)
-                    await db.put('sco_estrutura', { ...result.data, synced: true })
-                    return result.data
-                } else if (result?.error) {
-                    console.warn('[contingencyDb] Error returned by Supabase for SCO member:', result.error)
-                }
-            } catch (err) {
-                console.error("[contingencyDb] Error syncing SCO member:", err)
+                let versaoQuery = supabase.from('placon_versoes').select('*').order('created_at', { ascending: false }).limit(1)
+                if (tenantId) versaoQuery = versaoQuery.eq('tenant_id', tenantId)
+                const { data: versaoData } = await versaoQuery
+                const versao = versaoData && versaoData.length > 0 ? versaoData[0] : null
+
+                return { versao, orgaos: resultado }
             }
+        } catch (e) {
+            console.error('[contingencyDb] Erro em getPlanoPublico:', e)
         }
-        return memberData
-    },
-
-    async removeScoMember(memberId) {
-        const db = await initDB()
-        await db.delete('sco_estrutura', memberId)
-        
-        if (navigator.onLine && !String(memberId).startsWith('temp_')) {
-            await supabase.from('sco_estrutura').delete().eq('id', memberId)
-        }
-    },
-
-    async loadPlanoAtribuicoes(planoId) {
-        const db = await initDB()
-        const all = await db.getAllFromIndex('plano_atribuicoes', 'plano_id', planoId)
-        // Supabase sync removed as plano_atribuicoes is replaced by org-based atribuicoes
-        return all
-    },
-
-    async addPlanoAtribuicao(atribData) {
-        const db = await initDB()
-        const newAtrib = {
-            ...atribData,
-            id: `temp_atrib_${Date.now()}_${Math.random()}`,
-            synced: false,
-            created_at: new Date().toISOString()
-        }
-
-        await db.put('plano_atribuicoes', newAtrib)
-
-        // Supabase sync removed
-        return newAtrib
-    },
-
-    async removePlanoAtribuicao(atribId) {
-        const db = await initDB()
-        await db.delete('plano_atribuicoes', atribId)
-        // Supabase sync removed
-    },
-
-    // ADVANCED SCO (DYNAMIC ORGANOGRAM)
-    async addSetor(planoId, parentId, title, colorClass = '') {
-        const db = await initDB()
-        const tempId = `setor_${Date.now()}_${Math.random()}`
-        const setor = { id: tempId, plano_id: planoId, parent_id: parentId, title, color_class: colorClass, created_at: new Date().toISOString(), synced: false }
-        await db.put('sco_setores', setor)
-        
-        if (navigator.onLine && !String(planoId).startsWith('temp_') && (!parentId || !String(parentId).startsWith('temp_'))) {
-            const { data, error } = await supabase.from('sco_setores').insert([{ plano_id: planoId, parent_id: parentId, title, color_class: colorClass }]).select().single()
-            if (data && !error) {
-                await db.delete('sco_setores', tempId)
-                await db.put('sco_setores', { ...data, synced: true })
-                return data
-            }
-        }
-        await this.addLog(planoId, `Novo setor criado: ${title}`)
-        return setor
-    },
-
-    async removeSetor(setorId) {
-        const db = await initDB()
-        const sectors = await db.getAllFromIndex('sco_setores', 'parent_id', setorId)
-        for (const child of sectors) { await this.removeSetor(child.id) }
-        await db.delete('sco_setores', setorId)
-        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
-            await supabase.from('sco_setores').delete().eq('id', setorId)
-        }
-    },
-
-    async loadSetores(planoId) {
-        const db = await initDB()
-        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
-            const { data } = await supabase.from('sco_setores').select('*').eq('plano_id', planoId)
-            if (data) {
-                for (const item of data) { await db.put('sco_setores', { ...item, synced: true }) }
-                return data
-            }
-        }
-        return await db.getAllFromIndex('sco_setores', 'plano_id', planoId)
-    },
-
-    async addRecurso(planoId, name, type) {
-        const db = await initDB()
-        const tempId = `res_${Date.now()}`
-        const res = { id: tempId, plano_id: planoId, setor_id: null, name, type, status: 'Disponível', synced: false }
-        await db.put('sco_recursos', res)
-        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
-            const { data, error } = await supabase.from('sco_recursos').insert([{ plano_id: planoId, name, type, status: 'Disponível' }]).select().single()
-            if (data && !error) {
-                await db.delete('sco_recursos', tempId); await db.put('sco_recursos', { ...data, synced: true }); return data
-            }
-        }
-        return res
-    },
-
-    async loadRecursos(planoId) {
-        const db = await initDB()
-        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
-            const { data } = await supabase.from('sco_recursos').select('*').eq('plano_id', planoId)
-            if (data) {
-                for (const item of data) { await db.put('sco_recursos', { ...item, synced: true }) }
-                return data
-            }
-        }
-        return await db.getAllFromIndex('sco_recursos', 'plano_id', planoId)
-    },
-
-    async allocateRecurso(recursoId, setorId, tarefaId = null) {
-        const db = await initDB()
-        const res = await db.get('sco_recursos', recursoId)
-        if (res) {
-            res.setor_id = setorId; res.tarefa_id = tarefaId; res.status = (setorId || tarefaId) ? 'Em campo' : 'Disponível'
-            await db.put('sco_recursos', res)
-            if (navigator.onLine && !String(recursoId).startsWith('res_')) {
-                await supabase.from('sco_recursos').update({ setor_id: setorId, tarefa_id: tarefaId, status: res.status }).eq('id', recursoId)
-            }
-        }
-    },
-
-    async addTarefa(setorId, text) {
-        const db = await initDB()
-        const tempId = `task_${Date.now()}`
-        const t = { id: tempId, setor_id: setorId, text, done: false }
-        await db.put('sco_tarefas', t)
-        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
-            const { data, error } = await supabase.from('sco_tarefas').insert([{ setor_id: setorId, text }]).select().single()
-            if (data && !error) {
-                await db.delete('sco_tarefas', tempId); await db.put('sco_tarefas', { ...data, synced: true }); return data
-            }
-        }
-        return t
-    },
-
-    async toggleTarefa(taskId) {
-        const db = await initDB()
-        const t = await db.get('sco_tarefas', taskId)
-        if (t) {
-            t.done = !t.done; await db.put('sco_tarefas', t)
-            if (navigator.onLine && !String(taskId).startsWith('task_')) {
-                await supabase.from('sco_tarefas').update({ done: t.done }).eq('id', taskId)
-            }
-        }
-    },
-
-    async loadTarefas(setorId) {
-        const db = await initDB()
-        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
-            const { data } = await supabase.from('sco_tarefas').select('*').eq('setor_id', setorId)
-            if (data) {
-                for (const item of data) { await db.put('sco_tarefas', { ...item, synced: true }) }
-                return data
-            }
-        }
-        return await db.getAllFromIndex('sco_tarefas', 'setor_id', setorId)
-    },
-
-    async addMensagem(setorId, senderId, text) {
-        const db = await initDB()
-        const tempId = `msg_${Date.now()}`
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        const m = { id: tempId, setor_id: setorId, sender_id: senderId, text, time }
-        await db.put('sco_mensagens', m)
-        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
-            const { data } = await supabase.from('sco_mensagens').insert([{ setor_id: setorId, sender_id: senderId, text, time }]).select().single()
-            if (data) {
-                await db.delete('sco_mensagens', tempId); await db.put('sco_mensagens', { ...data, synced: true }); return data
-            }
-        }
-        return m
-    },
-
-    async loadMensagens(setorId) {
-        const db = await initDB()
-        if (navigator.onLine && !String(setorId).startsWith('setor_')) {
-            const { data } = await supabase.from('sco_mensagens').select('*').eq('setor_id', setorId)
-            if (data) {
-                for (const item of data) { await db.put('sco_mensagens', { ...item, synced: true }) }
-                return data
-            }
-        }
-        return await db.getAllFromIndex('sco_mensagens', 'setor_id', setorId)
-    },
-
-    async addLog(planoId, text) {
-        const db = await initDB()
-        const tempId = `log_${Date.now()}`
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        const l = { id: tempId, plano_id: planoId, time, text }
-        await db.put('sco_logs', l)
-        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
-            const { data } = await supabase.from('sco_logs').insert([{ plano_id: planoId, time, text }]).select().single()
-            if (data) {
-                await db.delete('sco_logs', tempId); await db.put('sco_logs', { ...data, synced: true }); return data
-            }
-        }
-        return l
-    },
-
-    async loadLogs(planoId) {
-        const db = await initDB()
-        if (navigator.onLine && !String(planoId).startsWith('temp_')) {
-            const { data } = await supabase.from('sco_logs').select('*').eq('plano_id', planoId)
-            if (data) {
-                for (const item of data) { await db.put('sco_logs', { ...item, synced: true }) }
-                return data.sort((a, b) => b.created_at?.localeCompare(a.created_at))
-            }
-        }
-        const logs = await db.getAllFromIndex('sco_logs', 'plano_id', planoId)
-        return logs.sort((a, b) => b.id.localeCompare(a.id))
-    },
-
-    // ----------------------------------------------------
-    // PLANO DE CONTINGÊNCIA - DADOS ESTRUTURAIS (PLACON)
-    // ----------------------------------------------------
-
-    async getOrgaos(usuarioId, isCoordenador) {
-        if (isCoordenador) {
-            const { data } = await supabase.from('orgaos').select('*').order('ordem_exibicao');
-            return data || [];
-        } else {
-            // Find user's bound organs
-            const { data: bindings } = await supabase
-                .from('usuario_orgao')
-                .select('orgao_id')
-                .eq('usuario_id', usuarioId);
-            
-            if (!bindings || bindings.length === 0) return [];
-            
-            const orgaoIds = bindings.map(b => b.orgao_id);
-            const { data } = await supabase
-                .from('orgaos')
-                .select('*')
-                .in('id', orgaoIds)
-                .order('ordem_exibicao');
-            return data || [];
-        }
-    },
-
-    async getOrgaoCompleto(orgaoId) {
-        // Fetch orgao
-        const { data: orgao } = await supabase.from('orgaos').select('*').eq('id', orgaoId).single();
-        if (!orgao) return null;
-
-        // Fetch contacts
-        const { data: contatos } = await supabase.from('contatos').select('*').eq('orgao_id', orgaoId);
-        
-        // Fetch atribuicoes
-        const { data: atribuicoes } = await supabase.from('atribuicoes').select('*').eq('orgao_id', orgaoId).order('fase');
-        
-        // Fetch recursos and merge with MCI data manually due to missing FK constraint
-        const { data: recursosBase } = await supabase.from('recursos_plano').select('*').eq('orgao_id', orgaoId);
-        let recursos = [];
-        
-        if (recursosBase && recursosBase.length > 0) {
-            const mciIds = recursosBase.map(r => r.mci_recurso_id);
-            const { data: mciData } = await supabase.from('mci_recursos').select('*').in('id', mciIds);
-            
-            recursos = recursosBase.map(r => ({
-                ...r,
-                mci_recursos: (mciData || []).find(m => m.id === r.mci_recurso_id) || null
-            }));
-        }
-
-        // Fetch assinaturas
-        const { data: assinaturas } = await supabase.from('plano_assinaturas').select('*').eq('orgao_id', orgaoId);
-
-        return {
-            ...orgao,
-            contatos: contatos || [],
-            atribuicoes: atribuicoes || [],
-            recursos: recursos || [],
-            assinaturas: assinaturas || []
-        };
+        return { versao: { numero_versao: '2026.1', descricao: 'Versão Inicial 2026' }, orgaos: [] }
     },
 
     async getAllAtribuicoes() {
-        const { data } = await supabase.from('atribuicoes').select('*, orgaos(*)').order('fase');
+        const { data } = await supabase.from('placon_atribuicoes').select('*, placon_orgaos(*)').order('fase');
         return data || [];
     },
 
     async createAtribuicao(atribuicaoData) {
         const { data, error } = await supabase
-            .from('atribuicoes')
-            .insert([atribuicaoData])
+            .from('placon_atribuicoes')
+            .insert([{
+                tenant_id: atribuicaoData.tenant_id || '00000000-0000-0000-0000-000000000001',
+                orgao_id: atribuicaoData.orgao_id,
+                fase: (atribuicaoData.fase || 'prevencao').toLowerCase(),
+                texto: atribuicaoData.texto,
+                base_legal: atribuicaoData.base_legal,
+                ordem: atribuicaoData.ordem_exibicao || 0
+            }])
             .select()
             .single();
         if (error) throw error;
@@ -500,19 +334,218 @@ export const contingencyDb = {
     },
 
     async getAllAssinaturas() {
-        const { data } = await supabase.from('plano_assinaturas').select('*, orgaos(*)');
+        const { data } = await supabase.from('placon_contatos').select('*, placon_orgaos(*)');
         return data || [];
     },
 
-    async updateAlocadoNoPlano(recursoPlanoId, quantidade) {
-        const { data, error } = await supabase
-            .from('recursos_plano')
-            .update({ alocado_no_plano: quantidade, updated_at: new Date().toISOString() })
-            .eq('id', recursoPlanoId)
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
+    // =========================================================================
+    // MODALIDADE TÁTICA (SCO — SISTEMA DE COMANDO DE OPERAÇÕES)
+    // =========================================================================
+    _setoresMemory: {},
+    _membersMemory: {},
+    _recursosMemory: {},
+    _atribuicoesPlanoMemory: {},
+    _tarefasMemory: {},
+    _logsMemory: {},
+
+    async loadScoStructure(planId) {
+        if (!planId) return []
+        if (navigator.onLine) {
+            try {
+                const { data } = await supabase.from('sco_membros').select('*').eq('plano_id', planId)
+                if (data && data.length > 0) {
+                    this._membersMemory[planId] = data
+                    return data
+                }
+            } catch (e) {
+                console.warn('[contingencyDb] loadScoStructure fallback:', e)
+            }
+        }
+        return this._membersMemory[planId] || []
+    },
+
+    async updateScoMember(planId, sessao, funcao, usuarioId, atribuicao = '') {
+        const newMember = {
+            id: crypto.randomUUID(),
+            plano_id: planId,
+            sessao,
+            funcao,
+            usuario_id: usuarioId,
+            atribuicao,
+            created_at: new Date().toISOString()
+        }
+        if (!this._membersMemory[planId]) this._membersMemory[planId] = []
+        this._membersMemory[planId] = this._membersMemory[planId].filter(m => !(m.usuario_id === usuarioId && m.sessao === sessao))
+        this._membersMemory[planId].push(newMember)
+
+        if (navigator.onLine) {
+            try {
+                await supabase.from('sco_membros').upsert([newMember])
+            } catch (e) {}
+        }
+        return newMember
+    },
+
+    async removeScoMember(membroId) {
+        Object.keys(this._membersMemory).forEach(pid => {
+            this._membersMemory[pid] = (this._membersMemory[pid] || []).filter(m => m.id !== membroId)
+        })
+        if (navigator.onLine) {
+            try {
+                await supabase.from('sco_membros').delete().eq('id', membroId)
+            } catch (e) {}
+        }
+    },
+
+    async loadSetores(planId) {
+        if (!planId) return []
+        let currentSets = this._setoresMemory[planId] || []
+
+        if (navigator.onLine) {
+            try {
+                const { data } = await supabase.from('sco_estrutura').select('*').eq('plano_id', planId)
+                if (data && data.length > 0) {
+                    currentSets = data
+                }
+            } catch (e) {
+                console.warn('[contingencyDb] loadSetores Supabase fallback:', e)
+            }
+        }
+
+        // Se não houver setores cadastrados, inicializar automaticamente a árvore padrão do SCO!
+        if (!currentSets || currentSets.length === 0) {
+            const rootId = crypto.randomUUID()
+            const defaultSets = [
+                { id: rootId, plano_id: planId, parent_id: null, title: 'Comando do Incidente (SCO)', color: 'bg-slate-900' },
+                { id: crypto.randomUUID(), plano_id: planId, parent_id: rootId, title: 'Segurança', color: 'bg-rose-700' },
+                { id: crypto.randomUUID(), plano_id: planId, parent_id: rootId, title: 'Informações Públicas', color: 'bg-blue-700' },
+                { id: crypto.randomUUID(), plano_id: planId, parent_id: rootId, title: 'Ligação / Articulação', color: 'bg-purple-700' },
+                { id: crypto.randomUUID(), plano_id: planId, parent_id: rootId, title: 'Seção de Operações', color: 'bg-emerald-700' },
+                { id: crypto.randomUUID(), plano_id: planId, parent_id: rootId, title: 'Seção de Planejamento', color: 'bg-amber-700' },
+                { id: crypto.randomUUID(), plano_id: planId, parent_id: rootId, title: 'Seção de Logística', color: 'bg-cyan-700' },
+                { id: crypto.randomUUID(), plano_id: planId, parent_id: rootId, title: 'Seção de Finanças', color: 'bg-indigo-700' }
+            ]
+            currentSets = defaultSets
+            this._setoresMemory[planId] = currentSets
+
+            if (navigator.onLine) {
+                try {
+                    await supabase.from('sco_estrutura').upsert(defaultSets)
+                } catch (e) {}
+            }
+        } else {
+            this._setoresMemory[planId] = currentSets
+        }
+
+        return currentSets
+    },
+
+    async addSetor(planId, parentId, title, color = 'bg-slate-800') {
+        const newSetor = {
+            id: crypto.randomUUID(),
+            plano_id: planId,
+            parent_id: parentId,
+            title,
+            color
+        }
+        if (!this._setoresMemory[planId]) this._setoresMemory[planId] = []
+        this._setoresMemory[planId].push(newSetor)
+
+        if (navigator.onLine) {
+            try {
+                await supabase.from('sco_estrutura').insert([newSetor])
+            } catch (e) {}
+        }
+        return newSetor
+    },
+
+    async removeSetor(setorId) {
+        Object.keys(this._setoresMemory).forEach(pid => {
+            this._setoresMemory[pid] = (this._setoresMemory[pid] || []).filter(s => s.id !== setorId && s.parent_id !== setorId)
+        })
+        if (navigator.onLine) {
+            try {
+                await supabase.from('sco_estrutura').delete().eq('id', setorId)
+            } catch (e) {}
+        }
+    },
+
+    async loadPlanoAtribuicoes(planId) {
+        if (navigator.onLine) {
+            try {
+                const { data } = await supabase.from('placon_atribuicoes').select('*')
+                if (data) return data
+            } catch (e) {}
+        }
+        return this._atribuicoesPlanoMemory[planId] || []
+    },
+
+    async addPlanoAtribuicao(data) {
+        const newItem = {
+            id: crypto.randomUUID(),
+            ...data,
+            created_at: new Date().toISOString()
+        }
+        if (!this._atribuicoesPlanoMemory[data.plano_id]) this._atribuicoesPlanoMemory[data.plano_id] = []
+        this._atribuicoesPlanoMemory[data.plano_id].push(newItem)
+        return newItem
+    },
+
+    async removePlanoAtribuicao(id) {
+        Object.keys(this._atribuicoesPlanoMemory).forEach(pid => {
+            this._atribuicoesPlanoMemory[pid] = (this._atribuicoesPlanoMemory[pid] || []).filter(a => a.id !== id)
+        })
+    },
+
+    async loadRecursos(planId) {
+        if (!this._recursosMemory[planId]) {
+            this._recursosMemory[planId] = [
+                { id: 'res_1', plano_id: planId, name: 'Viatura Defesa Civil 01', type: 'Veículo', status: 'Disponível' },
+                { id: 'res_2', plano_id: planId, name: 'Ambulância UTI Móvel 02', type: 'Veículo', status: 'Disponível' },
+                { id: 'res_3', plano_id: planId, name: 'Caminhão-Pipa 10.000L', type: 'Veículo', status: 'Disponível' },
+                { id: 'res_4', plano_id: planId, name: 'Gerador de Energia 15kVA', type: 'Equipamento', status: 'Disponível' },
+                { id: 'res_5', plano_id: planId, name: 'Motosserra de Resgate', type: 'Equipamento', status: 'Disponível' },
+                { id: 'res_6', plano_id: planId, name: 'Estação Rádio VHF/HF REMER', type: 'Comunicação', status: 'Disponível' }
+            ]
+        }
+        return this._recursosMemory[planId]
+    },
+
+    async addRecurso(planId, name, type) {
+        const newRes = {
+            id: 'res_' + crypto.randomUUID().slice(0, 8),
+            plano_id: planId,
+            name,
+            type,
+            status: 'Disponível'
+        }
+        if (!this._recursosMemory[planId]) this._recursosMemory[planId] = []
+        this._recursosMemory[planId].push(newRes)
+        return newRes
+    },
+
+    async loadLogs(planId) {
+        if (!this._logsMemory[planId]) {
+            this._logsMemory[planId] = [
+                { id: 'log_1', data: new Date().toISOString(), texto: 'Plano de Contingência ativado no nível Alerta.' },
+                { id: 'log_2', data: new Date().toISOString(), texto: 'Estrutura do Sistema de Comando de Operações (SCO) inicializada.' }
+            ]
+        }
+        return this._logsMemory[planId]
+    },
+
+    async loadTarefas(sectorId) {
+        return this._tarefasMemory[sectorId] || []
+    },
+
+    async addTarefa(sectorId, text) {
+        const newTask = { id: crypto.randomUUID(), sector_id: sectorId, text, done: false }
+        if (!this._tarefasMemory[sectorId]) this._tarefasMemory[sectorId] = []
+        this._tarefasMemory[sectorId].push(newTask)
+        return newTask
+    },
+
+    async loadMensagens(sectorId) {
+        return []
     }
 }

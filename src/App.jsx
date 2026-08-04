@@ -582,7 +582,12 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
 
-                                <Route path="/contingencia" element={
+                                <Route path="/contingencia/*" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <PlanoContingencia />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/plano-contingencia/*" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <PlanoContingencia />
                                     </ProtectedRoute>
