@@ -6,7 +6,7 @@ import {
     ClipboardList, ClipboardCheck, AlertTriangle, Timer, CloudRain, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
-    Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield
+    Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield, Waves
 } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap, Marker } from 'react-leaflet'
 import LimiteSMJLayer from '../../components/LimiteSMJLayer'
@@ -223,9 +223,9 @@ const processLocalidadeBreakdown = (records) => {
 const MapAutoBounds = ({ locations }) => {
     const map = useMap();
     useEffect(() => {
-        const validLocs = (locations || []).filter(l => l.lat && l.lng && !isNaN(l.lat));
+        const validLocs = (locations || []).filter(l => l.lat && (l.lng || l.lon) && !isNaN(l.lat));
         if (validLocs.length > 0) {
-            const bounds = validLocs.map(l => [l.lat, l.lng]);
+            const bounds = validLocs.map(l => [l.lat, l.lng || l.lon]);
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
         }
     }, [locations, map]);
@@ -324,11 +324,18 @@ const TvModeDashboardView = ({
     const [lastRefresh, setLastRefresh] = useState(new Date());
     const [areasRisco, setAreasRisco] = useState(null);
 
+    const [baciasData, setBaciasData] = useState(null);
+
     useEffect(() => {
         fetch('/Areas_de_risco.json')
             .then(res => res.json())
             .then(data => setAreasRisco(data))
             .catch(e => console.error('Erro ao baixar áreas de risco:', e));
+
+        fetch('/bacias_hidrograficas.geojson')
+            .then(res => res.json())
+            .then(data => setBaciasData(data))
+            .catch(e => console.warn('[Bacias] GeoJSON error:', e));
     }, []);
 
     useEffect(() => {
@@ -436,7 +443,7 @@ const TvModeDashboardView = ({
             {/* Strategic Content Area */}
             <div className="flex-1 min-h-0">
                 {currentView === 'resumo' && <TV_StrategicOverview data={data} statusInfo={statusInfo} isDark={false} rainfall={rainfall} getWeatherIcon={getWeatherIcon} limiteSMJ={limiteSMJ} />}
-                {currentView === 'chuva' && <TV_ClimateCenter rainfall={rainfall} weather={weather} isDark={false} getWeatherIcon={getWeatherIcon} limiteSMJ={limiteSMJ} />}
+                {currentView === 'chuva' && <TV_ClimateCenter rainfall={rainfall} weather={weather} isDark={false} getWeatherIcon={getWeatherIcon} limiteSMJ={limiteSMJ} baciasData={baciasData} />}
                 {currentView === 'ocorrencias' && <TV_OperationsCenter data={data} isDark={false} setViewMode={setViewMode} viewMode={viewMode} mapStyle={mapStyle} areasRisco={areasRisco} limiteSMJ={limiteSMJ} />}
                 {currentView === 'humanitaria' && <TV_HumanitarianStrategic />}
                 {currentView === 'sco' && <TV_SCOStrategic plan={activeContingencyPlan} />}
@@ -508,84 +515,165 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
     </div>
 );
 
-// --- 2. TV CLIMATE CENTER (Monitoramento Climático) ---
-const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ }) => {
+// --- 2. TV CLIMATE CENTER (Monitoramento Climático Full-Screen) ---
+const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, baciasData }) => {
+    const [selectedStation, setSelectedStation] = useState(null);
+    const [showBacias, setShowBacias] = useState(false);
+    const [mapStyle, setMapStyle] = useState('carto');
+
     const sortedRain = [...(rainfall || [])].sort((a, b) => (b.rainRaw || 0) - (a.rainRaw || 0));
+    const validStations = (rainfall || []).filter(s => s.lat && (s.lon || s.lng));
 
     return (
-        <div className="grid grid-cols-12 gap-6 h-full">
-            <div className="col-span-4 flex flex-col gap-6 overflow-hidden">
-                <div className="bg-white border border-slate-200 rounded-[48px] p-8 overflow-y-auto custom-scrollbar flex-1 shadow-md">
-                    <h3 className="text-lg font-black text-slate-800 uppercase tracking-[4px] mb-8 flex items-center gap-4">
-                        <BarChart3 className="text-blue-600" /> TOP ESTAÇÕES (24H)
-                    </h3>
-                    <div className="space-y-4">
-                        {sortedRain.map((s, idx) => (
-                            <div key={idx} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex justify-between items-center transition-all hover:bg-white hover:shadow-lg hover:border-blue-100">
-                                <div className="flex gap-4 items-center">
-                                    <div className={`w-3 h-4 rounded-full shadow-lg ${getPluvioColor(s.level)}`} />
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-black text-slate-700 uppercase tracking-tight">{s.name}</span>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{s.level}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-3xl font-black text-slate-800 tabular-nums">{(s.rainRaw || 0).toFixed(1)}</span>
-                                    <span className="text-xs text-slate-400 font-bold">mm</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-[48px] p-10 text-slate-800 shadow-lg relative overflow-hidden">
-                    <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-6">
-                            <span className="text-4xl">{getWeatherIcon(weather?.current?.code)}</span>
-                            <span className="text-[10px] font-black uppercase tracking-[4px] border border-slate-200 px-3 py-1 rounded-full bg-slate-50">Previsão Local</span>
-                        </div>
-                        <h4 className="text-6xl font-black tabular-nums leading-none mb-2">{Math.round(weather?.current?.temp || 0)}°C</h4>
-                        <p className="text-sm font-bold uppercase tracking-widest opacity-80 mb-8 font-black text-slate-500">Santa Maria de Jetibá</p>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
-                                <span className="block text-[8px] font-bold uppercase tracking-widest opacity-60 mb-1 text-slate-500">Umidade</span>
-                                <span className="text-lg font-black text-blue-600">{weather?.current?.humidity}%</span>
-                            </div>
-                            <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
-                                <span className="block text-[8px] font-bold uppercase tracking-widest opacity-60 mb-1 text-slate-500">Vento</span>
-                                <span className="text-lg font-black text-blue-600">{Math.round(weather?.current?.wind || 0)}kmh</span>
-                            </div>
-                            <div className="bg-slate-50 p-4 rounded-3xl text-center border border-slate-100">
-                                <span className="block text-[8px] font-bold uppercase tracking-widest opacity-60 mb-1 text-slate-500">Prob.</span>
-                                <span className="text-lg font-black text-blue-600">{weather?.daily?.[0]?.rainProb || 0}%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="col-span-8 bg-white border border-slate-200 rounded-[48px] overflow-hidden relative shadow-xl">
-                <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-                    <MapAutoBounds locations={(rainfall || []).filter(s => s.lat && (s.lon || s.lng))} />
-                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                    <LimiteSMJLayer keyId="limite-smj-climate" />
-                    {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
-                        <CircleMarker
+        <div className="relative h-full w-full rounded-[40px] overflow-hidden border border-slate-200 shadow-2xl bg-slate-100 flex flex-col">
+            {/* Full-Screen Map Container */}
+            <div className="absolute inset-0 z-0">
+                <MapContainer center={[-20.0246, -40.7464]} zoom={12} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                    <MapAutoBounds locations={validStations} />
+                    {mapStyle === 'carto' && (
+                        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                    )}
+                    {mapStyle === 'satellite' && (
+                        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                    )}
+                    {mapStyle === 'osm' && (
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    )}
+                    <LimiteSMJLayer keyId="limite-smj-climate-tv" />
+                    {showBacias && baciasData && <BaciasLayer data={baciasData} />}
+                    {validStations.map((station, idx) => (
+                        <Marker
                             key={idx}
-                            center={[station.lat, station.lon || station.lng]}
-                            radius={18}
-                            pathOptions={{ color: '#fff', fillColor: getPluvioColor(station.level), fillOpacity: 0.9, weight: 6 }}
-                        >
-                            <Popup className="tv-popup">
-                                <div className="p-2 text-center">
-                                    <div className="text-lg font-black">{station.name}</div>
-                                    <div className="text-2xl font-black text-blue-600">{(station.rainRaw || 0).toFixed(1)}mm</div>
-                                </div>
-                            </Popup>
-                        </CircleMarker>
+                            position={[station.lat, station.lon || station.lng]}
+                            icon={createPluvioIcon(station)}
+                            eventHandlers={{
+                                click: () => setSelectedStation(station),
+                                mouseover: () => setSelectedStation(station)
+                            }}
+                        />
                     ))}
                 </MapContainer>
             </div>
+
+            {/* Top-Right Map Controls Toolbar (Videowall Context) */}
+            <div className="absolute top-6 right-6 z-[1000] flex items-center gap-3">
+                <button
+                    onClick={() => setShowBacias(prev => !prev)}
+                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl backdrop-blur-md border ${showBacias ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/30' : 'bg-white/90 text-slate-700 hover:bg-white border-slate-200'}`}
+                >
+                    <Waves size={18} /> Bacias
+                </button>
+
+                <select
+                    value={mapStyle}
+                    onChange={(e) => setMapStyle(e.target.value)}
+                    className="bg-white/90 backdrop-blur-md text-slate-800 text-xs px-5 py-3 rounded-2xl border border-slate-200 font-black uppercase tracking-wider focus:outline-none cursor-pointer shadow-xl"
+                >
+                    <option value="carto">CartoDB Light</option>
+                    <option value="satellite">Satélite</option>
+                    <option value="osm">OpenStreetMap</option>
+                </select>
+            </div>
+
+            {/* Top-Left Floating Overlay: Top Estações (24h) */}
+            <div className="absolute top-6 left-6 z-[1000] w-96 max-h-[52vh] bg-white/95 backdrop-blur-md rounded-[32px] p-6 border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-[3px] flex items-center gap-3">
+                        <BarChart3 className="text-blue-600" size={20} /> TOP ESTAÇÕES (24H)
+                    </h3>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2.5 py-1 rounded-full">{sortedRain.length} ESTAÇÕES</span>
+                </div>
+                <div className="space-y-3 overflow-y-auto pr-1 custom-scrollbar flex-1">
+                    {sortedRain.length === 0 ? (
+                        <div className="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-widest">Sem dados pluviométricos</div>
+                    ) : (
+                        sortedRain.map((s, idx) => (
+                            <div
+                                key={idx}
+                                onClick={() => setSelectedStation(s)}
+                                className={`p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${selectedStation?.name === s.name ? 'bg-blue-50/90 border-blue-300 shadow-sm' : 'bg-slate-50/80 border-slate-100 hover:bg-white hover:border-blue-200'}`}
+                            >
+                                <div className="flex gap-3 items-center min-w-0 pr-2">
+                                    <div className={`w-3 h-3 rounded-full shrink-0 shadow-sm ${getPluvioColor(s.level)}`} />
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">{s.name}</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{s.level || 'Normal'}</span>
+                                    </div>
+                                </div>
+                                <div className="flex items-baseline gap-1 shrink-0">
+                                    <span className="text-2xl font-black text-slate-800 tabular-nums">{(s.rainRaw || 0).toFixed(1)}</span>
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase">mm</span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Bottom-Left Floating Overlay: Previsão Local */}
+            <div className="absolute bottom-6 left-6 z-[1000] w-96 bg-white/95 backdrop-blur-md rounded-[32px] p-6 border border-slate-200 shadow-2xl flex flex-col gap-4">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <span className="text-3xl">{getWeatherIcon(weather?.current?.code)}</span>
+                        <div>
+                            <span className="text-2xl font-black text-slate-800 tabular-nums leading-none block">{Math.round(weather?.current?.temp || 0)}°C</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</span>
+                        </div>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full bg-slate-50 text-slate-500">Previsão Local</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Umidade</span>
+                        <span className="text-sm font-black text-blue-600">{weather?.current?.humidity || 0}%</span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Vento</span>
+                        <span className="text-sm font-black text-blue-600">{Math.round(weather?.current?.wind || 0)} km/h</span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Prob. Chuva</span>
+                        <span className="text-sm font-black text-blue-600">{weather?.daily?.[0]?.rainProb || 0}%</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom-Right Floating Card: Informações do Pluviômetro */}
+            {selectedStation && (
+                <div className="absolute bottom-6 right-6 z-[1000] w-80 bg-white/95 backdrop-blur-md rounded-[32px] border border-slate-200 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-3 duration-250">
+                    <div className="bg-blue-600 text-white px-5 py-3 flex justify-between items-center font-black text-[10px] uppercase tracking-widest">
+                        <span>Informações do Pluviômetro</span>
+                        <button onClick={() => setSelectedStation(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+                            <X size={16} />
+                        </button>
+                    </div>
+                    <div className="p-5 space-y-2 text-xs text-slate-700 font-bold tracking-tight">
+                        <div className="text-slate-800 font-black text-sm border-b border-slate-100 pb-2">{selectedStation.name}</div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400 font-medium">Acumulado 24h:</span>
+                            <span className="font-black text-blue-600 text-sm">{(selectedStation.rainRaw || selectedStation.acc24hr || 0).toFixed(1)} mm</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400 font-medium">Nível:</span>
+                            <span className="font-black" style={{ color: getPluvioColor(selectedStation.level) }}>{selectedStation.level || 'Normal'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400 font-medium">Fonte:</span>
+                            <span className="font-bold text-slate-600">{selectedStation.isManual ? 'Manual / Defesa Civil' : 'CEMADEN'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400 font-medium">Município:</span>
+                            <span className="font-bold text-slate-600">SANTA MARIA DE JETIBÁ-ES</span>
+                        </div>
+                        {selectedStation.lat && (
+                            <div className="flex justify-between">
+                                <span className="text-slate-400 font-medium">Coordenadas:</span>
+                                <span className="font-mono text-[10px] text-slate-500">[{selectedStation.lat.toFixed(4)}, {(selectedStation.lon || selectedStation.lng || 0).toFixed(4)}]</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -762,7 +850,80 @@ const getPluvioColor = (level) => {
     if (level === 'Extremo') return '#ef4444';
     if (level === 'Alerta') return '#f97316';
     if (level === 'Atenção') return '#f59e0b';
-    return '#60a5fa';
+    return '#22c55e';
+};
+
+const createPluvioIcon = (station) => {
+    const rainVal = (station.rainRaw || station.acc24hr || 0).toFixed(1);
+    const level = station.level || 'Normal';
+    const color = getPluvioColor(level);
+
+    return L.divIcon({
+        className: 'custom-pluvio-active',
+        html: `
+            <div style="
+                background-color: ${color};
+                color: white;
+                font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+                font-size: 11px;
+                font-weight: 900;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid white;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            ">
+                ${rainVal}
+            </div>
+        `,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -14]
+    });
+};
+
+const BACIAS_COLORS = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'
+];
+const getBaciaColor = (name) => {
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) {
+        hash = (name || '').charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return BACIAS_COLORS[Math.abs(hash) % BACIAS_COLORS.length];
+};
+
+const BaciasLayer = ({ data }) => {
+    if (!data || !data.features || data.features.length === 0) return null;
+    return (
+        <GeoJSON
+            data={data}
+            style={(feature) => {
+                const color = getBaciaColor(feature.properties?.Name || 'Unknown');
+                return {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.25,
+                    weight: 2,
+                    opacity: 0.8
+                };
+            }}
+            onEachFeature={(feature, layer) => {
+                const p = feature.properties || {};
+                const color = getBaciaColor(p.Name || 'Unknown');
+                layer.bindPopup(`
+                    <div style="font-family:sans-serif;min-width:190px">
+                        <div style="font-size:10px;font-weight:900;color:${color};text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">Bacia Hidrográfica</div>
+                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:4px">${p.Name || 'Bacia'}</div>
+                        <div style="font-size:10px;color:#475569;max-height:150px;overflow-y:auto;line-height:1.4;">${p.description || ''}</div>
+                    </div>
+                `);
+            }}
+        />
+    );
 };
 
 // --- Tipos de risco disponíveis agrupados por categoria ---
@@ -2539,8 +2700,7 @@ const Dashboard = () => {
                         apiData = await res.json()
                     }
 
-                    const formattedApi = (apiData || []).map(st => {
-                        // Support both numeric and 'A' suffixed IDs from local metadata
+                    let formattedApi = (apiData || []).map(st => {
                         const meta = STATION_METADATA[st.id] || STATION_METADATA[st.id + 'A'] || {};
                         return {
                             id: st.id,
@@ -2548,28 +2708,48 @@ const Dashboard = () => {
                             lat: meta.lat || st.lat || null,
                             lon: meta.lon || st.lon || st.lng || null,
                             lng: meta.lon || st.lon || st.lng || null,
-                            rainRaw: st.acc24hr || 0,
+                            rainRaw: st.acc24hr ?? st.rainRaw ?? 0,
                             lastUpdate: st.lastUpdate || null
                         };
-                    })
+                    });
+
+                    // If API returned no stations, populate default CEMADEN stations
+                    if (formattedApi.length === 0) {
+                        const cemadenStations = await cemadenService.getRainfallData().catch(() => []);
+                        if (cemadenStations && cemadenStations.length > 0) {
+                            formattedApi = cemadenStations;
+                        } else {
+                            formattedApi = Object.keys(STATION_METADATA)
+                                .filter(id => id !== 'SEDE_DEFESA_CIVIL')
+                                .map(id => ({
+                                    id,
+                                    name: STATION_METADATA[id].name,
+                                    lat: STATION_METADATA[id].lat,
+                                    lon: STATION_METADATA[id].lon,
+                                    lng: STATION_METADATA[id].lon,
+                                    rainRaw: 0,
+                                    lastUpdate: new Date().toISOString()
+                                }));
+                        }
+                    }
 
                     const combined = [
                         {
                             ...manualStation,
-                            lat: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lat,
-                            lon: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon,
-                            lng: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon
+                            lat: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lat || -20.0406,
+                            lon: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon || -40.7456,
+                            lng: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon || -40.7456
                         },
                         ...formattedApi
                     ].map(station => {
                         let level = 'Normal';
-                        const acc24 = station.rainRaw;
+                        const acc24 = station.rainRaw || 0;
                         if (acc24 >= 80) level = 'Extremo';
                         else if (acc24 >= 50) level = 'Alerta';
                         else if (acc24 >= 30) level = 'Atenção';
 
                         return { ...station, level }
-                    }).filter(station => station && parseFloat(station.rainRaw) > 0 && station.lat && (station.lon || station.lng));
+                    }).filter(station => station && station.lat && (station.lon || station.lng));
 
                     setRainfall(combined);
                 } catch (e) {
