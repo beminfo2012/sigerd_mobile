@@ -51,7 +51,10 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const userMenuRef = useRef(null);
 
-    const isActive = (path) => location.pathname === path;
+    const isActive = (path) => {
+        if (path === '/legado/vistorias' || path === '/legado') return location.pathname.startsWith('/legado') || location.pathname.includes('legado');
+        return location.pathname === path;
+    };
 
     useEffect(() => {
         loadPendingCount();
@@ -200,10 +203,10 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             roles: [...AGENT_ROLES, ...REDAP_ROLES]
         },
         {
-            label: 'Legado',
+            label: 'Acervo Legado',
             icon: History,
-            path: '/monitoramento/legado',
-            roles: AGENT_ROLES
+            path: '/legado/vistorias',
+            roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Operador', ...AGENT_ROLES, ...REDAP_ROLES, ...HUMANITARIAN_ROLES]
         },
         {
             label: 'Configurações',

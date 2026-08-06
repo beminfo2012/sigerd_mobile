@@ -1,26 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, History, Filter, Map as MapIcon, BarChart3, Search, Calendar, User, Info, ShieldAlert, X, FileText, Upload, Loader2, Eye, Download, Trash2, ExternalLink } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { ArrowLeft, History, Filter, Map as MapIcon, BarChart3, Search, Calendar, User, Info, ShieldAlert, X, FileText, Upload, Loader2, Eye, Download, Trash2, ExternalLink, Plus, Send, CheckCircle2, FileCode, Lock } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
 import LimiteSMJLayer from '../../components/LimiteSMJLayer'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts'
 import { getLegadoPdf, uploadLegadoPdf } from '../../services/legadoService'
+import { getOficiosList, getLegadoResumo } from '../../services/oficiosService'
+import NovoOficioModal from './NovoOficioModal'
 import { supabase } from '../../services/supabase'
 import localforage from 'localforage'
 import 'leaflet/dist/leaflet.css'
 
-// Import legacy data
+// Import legacy vistorias
 import legacyData from '../../data/legacy_vistorias.json'
 
-// Converte URL do Google Drive (view/edit) para URL de preview incorporável
 const getDrivePreviewUrl = (url) => {
     if (!url) return null
-    // Extrai FILE_ID de formatos: /file/d/FILE_ID/view, /file/d/FILE_ID/edit, /d/FILE_ID/edit
     const match = url.match(/\/(?:file\/d\/|d\/)([a-zA-Z0-9_-]+)(?:\/|$)/)
     if (match && match[1]) {
         return `https://drive.google.com/file/d/${match[1]}/preview`
     }
-    // Google Docs fallback
     const docMatch = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)(?:\/|$)/)
     if (docMatch && docMatch[1]) {
         return `https://docs.google.com/document/d/${docMatch[1]}/preview`
@@ -30,8 +29,29 @@ const getDrivePreviewUrl = (url) => {
 
 const LegadoDashboard = () => {
     const navigate = useNavigate()
+    const location = useLocation()
+    const [activeTab, setActiveTab] = useState('vistorias') // 'vistorias' | 'pareceres' | 'oficios'
+
+    useEffect(() => {
+        if (location.pathname.includes('/oficios')) {
+            setActiveTab('oficios')
+        } else if (location.pathname.includes('/vistorias')) {
+            setActiveTab('vistorias')
+        }
+    }, [location.pathname])
+
+    const handleTabChange = (tab) => {
+        setActiveTab(tab)
+        if (tab === 'oficios') {
+            navigate('/legado/oficios', { replace: true })
+        } else {
+            navigate('/legado/vistorias', { replace: true })
+        }
+    }
+    
+    // Global filter states
     const [searchQuery, setSearchQuery] = useState('')
-    const [selectedYear, setSelectedYear] = useState('Todos')
+    const [selectedYear, setSelectedYear] = useState('Todos') // Default para 'Todos' para exibir todo o acervo histórico
     const [showFilters, setShowFilters] = useState(false)
     
     // PDF Modal states
@@ -41,7 +61,51 @@ const LegadoDashboard = () => {
     const [uploadingPdf, setUploadingPdf] = useState(false)
     const [showPdfViewerModal, setShowPdfViewerModal] = useState(false)
 
+    // Ofícios state
+    const [oficiosList, setOficiosList] = useState([])
+    const [oficiosResumo, setOficiosResumo] = useState({ totalGeral: 0, distribuicaoAno: [], topDestinatarios: [] })
+    const [loadingOficios, setLoadingOficios] = useState(false)
+    const [showNovoOficioModal, setShowNovoOficioModal] = useState(false)
 
+    // Anos disponíveis para seleção no acervo de ofícios
+    const availableOficioYears = ['Todos', '2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2015', '2014']
+
+    useEffect(() => {
+        if (activeTab === 'oficios') {
+            loadOficiosData()
+        }
+    }, [activeTab, selectedYear, searchQuery])
+
+    const loadOficiosData = async () => {
+        setLoadingOficios(true)
+        try {
+            const list = await getOficiosList({ year: selectedYear, searchQuery })
+            setOficiosList(list)
+
+            const resumo = await getLegadoResumo()
+            setOficiosResumo(resumo)
+        } catch (err) {
+            console.error('Erro ao carregar dados de ofícios:', err)
+        } finally {
+            setLoadingOficios(false)
+        }
+    }
+
+    const handleOpenDocumentView = (oficio) => {
+        let rawUrl = oficio.arquivo_pdf_url || oficio.arquivo_url || oficio.arquivo_original_scan_url;
+        if (rawUrl) {
+            rawUrl = rawUrl.replace('/vistorias_fotos/legado_oficios/', '/oficios_legados/');
+        }
+        const fileUrl = rawUrl ? (rawUrl.split('?')[0] + '?v=' + Date.now()) : null;
+        setPdfRecord({
+            pdf_url: fileUrl,
+            preview_url: fileUrl,
+            nome_arquivo: oficio.identificador_completo || `Ofício ${oficio.numero_formatado}`,
+            is_oficio: true,
+            oficio_data: oficio
+        })
+        setShowPdfViewerModal(true)
+    }
 
     const handleSelectItem = async (item) => {
         setSelectedItem(item)
@@ -117,28 +181,33 @@ const LegadoDashboard = () => {
         }
     }
 
-    // Calculate years from data
+    // Calculate years from data for Vistorias
     const availableYears = useMemo(() => {
-        const years = [...new Set(legacyData.map(item => item.year))].sort((a, b) => b - a)
+        const years = [...new Set(legacyData.map(item => String(item.year)))].sort((a, b) => b - a)
         return ['Todos', ...years]
     }, [])
 
     const filteredData = useMemo(() => {
         return legacyData.filter(item => {
-            const matchesYear = selectedYear === 'Todos' || item.year === selectedYear
+            const matchesYear = selectedYear === 'Todos' || String(item.year) === String(selectedYear)
             const searchLower = searchQuery.toLowerCase()
-            const matchesSearch = item.requester.toLowerCase().includes(searchLower) ||
-                item.number.includes(searchLower) ||
-                item.fullTitle.toLowerCase().includes(searchLower)
+            const matchesSearch = (item.requester || '').toLowerCase().includes(searchLower) ||
+                (item.number || '').includes(searchLower) ||
+                (item.fullTitle || '').toLowerCase().includes(searchLower)
+            
+            if (activeTab === 'pareceres') {
+                return matchesYear && matchesSearch && !!item.drive_url
+            }
+
             return matchesYear && matchesSearch
         })
-    }, [selectedYear, searchQuery])
+    }, [selectedYear, searchQuery, activeTab])
 
-    // Chart Data: Vistorias per Year
     const yearChartData = useMemo(() => {
         const counts = {}
         legacyData.forEach(item => {
-            counts[item.year] = (counts[item.year] || 0) + 1
+            const yr = String(item.year)
+            counts[yr] = (counts[yr] || 0) + 1
         })
         return Object.keys(counts).map(year => ({
             year,
@@ -147,7 +216,7 @@ const LegadoDashboard = () => {
     }, [])
 
     return (
-        <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
+        <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden font-sans">
             {/* Header */}
             <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between shadow-sm z-10 font-sans">
                 <div className="flex items-center gap-3">
@@ -157,478 +226,360 @@ const LegadoDashboard = () => {
                     <div>
                         <h1 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
                             <History size={24} className="text-blue-600" />
-                            Legado COMPDEC
+                            Acervo Legado COMPDEC
                         </h1>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Histórico de Vistorias 2015-2025</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Histórico Institucional COMPDEC 2014-2026</p>
                     </div>
                 </div>
 
+                {/* Tab Switcher */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-700 p-1 rounded-2xl border border-slate-200 dark:border-slate-600">
+                    <button
+                        onClick={() => handleTabChange('vistorias')}
+                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${activeTab === 'vistorias' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'}`}
+                    >
+                        Vistorias ({legacyData.length})
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('oficios')}
+                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${activeTab === 'oficios' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'}`}
+                    >
+                        Ofícios ({oficiosResumo.totalGeral || 353})
+                    </button>
+                </div>
+
                 <div className="flex items-center gap-2">
+                    {activeTab === 'oficios' && (
+                        <button
+                            onClick={() => setShowNovoOficioModal(true)}
+                            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition-all"
+                        >
+                            <Plus size={16} /> Novo Ofício
+                        </button>
+                    )}
+
                     <div className="relative group hidden md:block">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                         <input
                             type="text"
-                            placeholder="Buscar laudo ou requerente..."
+                            placeholder={activeTab === 'oficios' ? "Buscar por número, destinatário ou assunto..." : "Buscar laudo ou requerente..."}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-700 border-transparent focus:bg-white dark:focus:bg-slate-600 focus:ring-2 focus:ring-blue-500/20 rounded-xl text-sm w-64 transition-all outline-none"
                         />
                     </div>
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`p-2 rounded-xl transition-all ${showFilters ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
-                    >
-                        <Filter size={20} />
-                    </button>
                 </div>
             </header>
 
-            {/* Filters Row */}
-            {showFilters && (
-                <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex flex-wrap gap-4 animate-in slide-in-from-top-4 duration-300 z-10">
-                    <div className="flex flex-col gap-1.5 w-full">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">filtrar por ano</label>
+            {/* Main Content Body */}
+            {activeTab === 'oficios' ? (
+                /* TAB 3: OFÍCIOS COMPDEC */
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 font-sans">
+                    
+                    {/* Seletor de Anos Dedicado */}
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col gap-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                            <Calendar size={14} className="text-blue-600" /> Selecionar Ano de Exercício dos Ofícios:
+                        </label>
                         <div className="flex flex-wrap gap-2">
-                            {availableYears.map(year => (
+                            {availableOficioYears.map(yr => (
                                 <button
-                                    key={year}
-                                    onClick={() => setSelectedYear(year)}
-                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${selectedYear === year ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                                    key={yr}
+                                    onClick={() => setSelectedYear(yr)}
+                                    className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${selectedYear === yr ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
                                 >
-                                    {year}
+                                    {yr}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    {/* Search for mobile */}
-                    <div className="md:hidden w-full flex flex-col gap-1.5 mt-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">buscar</label>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Laudo ou requerente..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                            />
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total no Acervo (2014-2026)</p>
+                                <p className="text-3xl font-black text-slate-800 dark:text-white mt-1">{oficiosResumo.totalGeral}</p>
+                            </div>
+                            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 font-black">
+                                <FileText size={24} />
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ofícios no Ano ({selectedYear})</p>
+                                <p className="text-3xl font-black text-blue-600 mt-1">{oficiosList.length}</p>
+                            </div>
+                            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 font-black">
+                                <Calendar size={24} />
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Armazenamento Nuvem</p>
+                                <p className="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                                    <CheckCircle2 size={16} /> Supabase Storage Bucket
+                                </p>
+                            </div>
+                            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-600 font-black">
+                                <ShieldAlert size={24} />
+                            </div>
                         </div>
                     </div>
+
+                    {/* Tabela detalhada de Ofícios */}
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                        <div className="p-4 md:p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <h2 className="text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
+                                <FileText className="text-blue-600" size={18} />
+                                Listagem Sequencial do Exercício ({selectedYear})
+                            </h2>
+                            <span className="text-xs font-bold text-slate-500">{oficiosList.length} registro(s)</span>
+                        </div>
+
+                        {loadingOficios ? (
+                            <div className="p-12 text-center text-slate-400">
+                                <Loader2 className="animate-spin mx-auto mb-2 text-blue-600" size={32} />
+                                <p className="text-sm font-bold">Carregando acervo de ofícios...</p>
+                            </div>
+                        ) : oficiosList.length === 0 ? (
+                            <div className="p-12 text-center text-slate-400">
+                                <FileText size={48} className="mx-auto mb-2 opacity-30" />
+                                <p className="text-base font-bold">Nenhum ofício encontrado para o ano {selectedYear}.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-400 uppercase font-black tracking-wider border-b border-slate-200 dark:border-slate-700">
+                                        <tr>
+                                            <th className="py-3.5 px-4">Identificador / Ofício</th>
+                                            <th className="py-3.5 px-4">Ano</th>
+                                            <th className="py-3.5 px-4">Destinatário</th>
+                                            <th className="py-3.5 px-4">Assunto / Descrição</th>
+                                            <th className="py-3.5 px-4 text-center">Documento PDF (Supabase)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                        {oficiosList.map((oficio) => (
+                                            <tr key={oficio.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                                                <td className="py-3.5 px-4 font-black text-slate-800 dark:text-white">
+                                                    {oficio.identificador_completo}
+                                                </td>
+                                                <td className="py-3.5 px-4 font-bold text-slate-600 dark:text-slate-300">
+                                                    {oficio.ano}
+                                                </td>
+                                                <td className="py-3.5 px-4 font-bold text-slate-700 dark:text-slate-200">
+                                                    {oficio.destinatario_nome || oficio.destinatario_orgao || 'COMPDEC SMJ'}
+                                                </td>
+                                                <td className="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-400 max-w-md truncate">
+                                                    {oficio.assunto || 'Sem assunto especificado'}
+                                                </td>
+                                                <td className="py-3.5 px-4 text-center">
+                                                    <button
+                                                        onClick={() => handleOpenDocumentView(oficio)}
+                                                        className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-600 hover:text-white text-blue-600 dark:text-blue-400 rounded-xl font-bold transition-all flex items-center gap-1.5 mx-auto"
+                                                    >
+                                                        <Eye size={14} /> Abrir PDF
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
                 </div>
-            )}
-
-            {/* Content Body */}
-            <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-4 font-sans">
-
-                {/* Left Panel: Sidebar Stats & List */}
-                <div className="col-span-1 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-white dark:bg-slate-800 overflow-hidden h-[40vh] lg:h-auto z-10 shadow-xl">
-
-                    {/* Stats Header */}
-                    <div className="p-4 bg-slate-50/50 dark:bg-slate-700/30 border-b border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">Resumo Legado</h2>
-                            <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-[10px] font-black">{filteredData.length} Vistorias</span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Total Geral</p>
-                                <p className="text-xl font-black text-slate-800 dark:text-white">{legacyData.length}</p>
+            ) : (
+                /* TAB 1 e 2: VISTORIAS E PARECERES LEGADOS */
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    {/* Left Sidebar: Filters & Cards List */}
+                    <div className="w-full md:w-[420px] bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col h-full font-sans">
+                        
+                        {/* Seletor de Ano para Vistorias e Pareceres */}
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-700 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                    <Filter size={12} /> Exercício Histórico:
+                                </label>
+                                <span className="text-xs font-bold text-blue-600">{filteredData.length} registro(s)</span>
                             </div>
-                            <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">No Filtro</p>
-                                <p className="text-xl font-black text-blue-600">{filteredData.length}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Charts Scrollable */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                        {/* Vistorias per Year Chart */}
-                        <div>
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                                <BarChart3 size={14} /> Distribuição por Ano
-                            </h3>
-                            <div className="h-48 w-full bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl p-2 border border-slate-100 dark:border-slate-700">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={yearChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                        <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} />
-                                        <RechartsTooltip
-                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.12)', fontSize: '11px', fontWeight: 700 }}
-                                            cursor={{ fill: '#f1f5f9', opacity: 0.5 }}
-                                        />
-                                        <Bar dataKey="quantidade" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={24} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                            <div className="flex flex-wrap gap-1.5">
+                                {availableYears.map(yr => (
+                                    <button
+                                        key={yr}
+                                        onClick={() => setSelectedYear(yr)}
+                                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${selectedYear === yr ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}`}
+                                    >
+                                        {yr}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        {/* List of Vistorias (Top 100 or filtered) */}
-                        <div className="space-y-2 pb-10">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 sticky top-0 bg-white dark:bg-slate-800 py-2 z-10">
-                                <History size={14} /> Listagem Detalhada
-                            </h3>
-                            {filteredData.slice(0, 100).map(item => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => handleSelectItem(item)}
-                                    className="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-transparent hover:border-blue-500/30 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 cursor-pointer transition-all flex items-start gap-3 group"
-                                >
-                                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center flex-shrink-0 shadow-sm font-black text-[10px] text-blue-600 border border-slate-100 dark:border-slate-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                        {item.number}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate leading-snug">{item.requester}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">{item.year}</span>
-                                            <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                            <span className="text-[9px] text-blue-500 font-bold uppercase">Laudo DC</span>
+                        {/* Cards List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                            {filteredData.length === 0 ? (
+                                <div className="p-8 text-center text-slate-400 space-y-2">
+                                    <Info size={36} className="mx-auto opacity-30" />
+                                    <p className="text-sm font-bold">Nenhuma vistoria ou parecer encontrado para este filtro.</p>
+                                </div>
+                            ) : (
+                                filteredData.map(item => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => handleSelectItem(item)}
+                                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${selectedItem?.id === item.id ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/20 shadow-md' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300'}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-md text-[10px] font-black uppercase">
+                                                    {item.number}
+                                                </span>
+                                                <h3 className="font-bold text-sm text-slate-800 dark:text-white mt-1 leading-snug">
+                                                    {item.fullTitle}
+                                                </h3>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-400 shrink-0">{item.year}</span>
                                         </div>
+
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">
+                                            Requerente: <strong className="text-slate-700 dark:text-slate-200">{item.requester}</strong>
+                                        </p>
+
+                                        {item.drive_url && (
+                                            <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-[11px]">
+                                                <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                                    <CheckCircle2 size={12} /> Documento Digitalizado
+                                                </span>
+                                                <span className="text-blue-600 font-bold flex items-center gap-1">
+                                                    Visualizar <Eye size={12} />
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
-                            {filteredData.length > 100 && (
-                                <div className="text-center py-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 mt-4">
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                        Exibindo 100 de {filteredData.length} registros
-                                    </p>
-                                    <p className="text-[9px] text-slate-300 mt-1 uppercase">Aperte em um ponto no mapa para ver detalhes</p>
-                                </div>
+                                ))
                             )}
                         </div>
                     </div>
-                </div>
 
-                {/* Right Panel: Map */}
-                <div className="col-span-1 lg:col-span-3 relative h-[60vh] lg:h-auto">
-                    <MapContainer
-                        center={[-20.0246, -40.6976]}
-                        zoom={11}
-                        style={{ height: '100%', width: '100%', zIndex: 1 }}
-                        zoomControl={false}
-                    >
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                        />
+                    {/* Right Body: Interactive Map Container */}
+                    <div className="flex-1 relative bg-slate-100 dark:bg-slate-900 h-full">
+                        <MapContainer
+                            center={[-20.033, -40.755]}
+                            zoom={11}
+                            className="w-full h-full z-0"
+                        >
+                            <TileLayer
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                            />
+                            <LimiteSMJLayer />
 
-                        {/* Limite Municipal SMJ */}
-                        <LimiteSMJLayer keyId="limite-smj-legado" />
-
-                        {filteredData.filter(item => item.lat != null && item.lon != null && !isNaN(Number(item.lat))).map(item => (
-                            <CircleMarker
-                                key={item.id}
-                                center={[item.lat, item.lon]}
-                                radius={item.drive_url ? 8 : 6}
-                                pathOptions={{
-                                    color: item.drive_url ? '#1e3a8a' : '#1e40af',
-                                    fillColor: item.drive_url ? '#2563eb' : '#3b82f6',
-                                    fillOpacity: 0.7,
-                                    weight: item.drive_url ? 2.5 : 1.5
-                                }}
-                            >
-                                <Popup className="custom-popup">
-                                    <div className="p-1 min-w-[220px] font-sans">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center font-black text-sm text-white shadow-lg shadow-blue-500/20">
-                                                {item.number || '?'}
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Ano Referência</p>
-                                                <p className="text-sm font-black text-slate-800 uppercase">{item.year}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2 mb-3">
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-tight">Requerente / Objeto</span>
-                                                <p className="text-xs font-bold text-slate-700 leading-snug">{item.requester}</p>
+                            {filteredData.filter(item => item.lat && item.lng).map(item => (
+                                <CircleMarker
+                                    key={item.id}
+                                    center={[parseFloat(item.lat), parseFloat(item.lng)]}
+                                    radius={selectedItem?.id === item.id ? 10 : 7}
+                                    pathOptions={{
+                                        color: selectedItem?.id === item.id ? '#2563eb' : '#ef4444',
+                                        fillColor: selectedItem?.id === item.id ? '#3b82f6' : '#f87171',
+                                        fillOpacity: 0.8,
+                                        weight: 2
+                                    }}
+                                    eventHandlers={{
+                                        click: () => handleSelectItem(item)
+                                    }}
+                                >
+                                    <Popup className="font-sans">
+                                        <div className="p-1 max-w-xs">
+                                            <span className="text-[10px] font-black text-blue-600 uppercase">{item.number}</span>
+                                            <h4 className="font-bold text-sm text-slate-800 mt-0.5 leading-tight">{item.fullTitle}</h4>
+                                            <p className="text-xs text-slate-600 mt-1">Requerente: {item.requester}</p>
+                                            <p className="text-[10px] text-slate-400 mt-1">Ano: {item.year}</p>
+                                            <div className="mt-2 pt-2 border-t flex justify-end">
+                                                <button
+                                                    onClick={() => handleSelectItem(item)}
+                                                    className="px-2.5 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg"
+                                                >
+                                                    Ver Detalhes
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center justify-between pt-3 border-t border-slate-100 gap-2">
-                                            {item.drive_url && (
-                                                <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1">
-                                                    <FileText size={10}/> Parecer vinculado
-                                                </span>
-                                            )}
-                                            <button
-                                                onClick={() => handleSelectItem(item)}
-                                                className="ml-auto px-2.5 py-1 bg-blue-600 hover:bg-blue-750 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
-                                            >
-                                                Ver Detalhes
-                                            </button>
-                                        </div>
-                                    </div>
-                                </Popup>
-                            </CircleMarker>
-                        ))}
-                    </MapContainer>
-
-                    {/* Floating Controls */}
-                    <div className="absolute top-6 right-6 z-[1000] flex flex-col gap-2">
-                        <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-white/20 flex flex-col items-center">
-                            <button onClick={(e) => { e.stopPropagation(); navigate('/monitoramento/riscos'); }} title="Alternar para Áreas de Risco" className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all text-orange-500">
-                                <ShieldAlert size={20} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Floating Legend */}
-                    <div className="absolute bottom-6 left-6 lg:left-auto lg:right-6 z-[1000] bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-white/20 pointer-events-none">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Legenda Visual</h3>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></div>
-                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Vistoria Georreferenciada</span>
-                            </div>
-                            <p className="text-[8px] text-slate-400 max-w-[150px] leading-tight font-medium uppercase mt-1">Dados provenientes do arquivo COMPDEC (2015-2025)</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Modal de Detalhes da Vistoria Legada */}
-            {selectedItem && (
-                <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-4xl h-[85vh] border border-slate-200 shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
-                        {/* Header */}
-                        <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center font-black text-lg shadow-inner">
-                                    {selectedItem.number || 'S/N'}
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-black uppercase tracking-tight">Laudo Técnico {selectedItem.number}/{selectedItem.year}</h2>
-                                    <p className="text-[10px] font-bold text-blue-100 uppercase tracking-widest leading-none">Histórico Legado COMPDEC</p>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={() => { setSelectedItem(null); setPdfRecord(null); }} 
-                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Detalhes da Vistoria */}
-                            <div className="space-y-5">
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2">Informações Gerais</h3>
-                                
-                                <div className="space-y-4">
-                                    <div>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Requerente</span>
-                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{selectedItem.requester}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Ano de Referência</span>
-                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{selectedItem.year}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Título Original do Arquivo</span>
-                                        <p className="text-xs text-slate-600 dark:text-slate-400 italic">{selectedItem.fullTitle}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Coordenadas Geográficas</span>
-                                        <p className="text-xs font-mono font-bold text-slate-700 dark:text-slate-350">
-                                            Lat: {selectedItem.lat?.toFixed(6)} | Lon: {selectedItem.lon?.toFixed(6)}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Mini Mapa do ponto */}
-                                <div className="h-44 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 relative z-0">
-                                    <MapContainer center={[selectedItem.lat, selectedItem.lon]} zoom={15} style={{ height: '100%', width: '100%', zIndex: 1 }} zoomControl={false}>
-                                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                        <CircleMarker center={[selectedItem.lat, selectedItem.lon]} radius={8} pathOptions={{ color: '#1e40af', fillColor: '#3b82f6', fillOpacity: 0.8, weight: 2 }} />
-                                    </MapContainer>
-                                </div>
-                            </div>
-
-                            {/* Upload e Visualização do PDF */}
-                            <div className="flex flex-col border-l border-slate-100 dark:border-slate-800 md:pl-6">
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Laudo Digitalizado (PDF)</h3>
-
-                                {loadingPdf ? (
-                                    <div className="flex-1 flex flex-col items-center justify-center gap-3 py-10">
-                                        <Loader2 className="animate-spin text-blue-600" size={32} />
-                                        <span className="text-xs font-bold text-slate-400 uppercase">Buscando documento...</span>
-                                    </div>
-                                ) : pdfRecord ? (
-                                    <div className="flex-1 flex flex-col gap-4">
-                                        <div className="p-5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100/30 dark:border-blue-900/30 rounded-2xl flex flex-col gap-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shrink-0">
-                                                    <FileText size={24} />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">{pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}</p>
-                                                    <p className="text-[9px] text-slate-400 font-black uppercase mt-0.5">Anexado em {new Date(pdfRecord.created_at).toLocaleDateString('pt-BR')}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            {pdfRecord.is_drive ? (
-                                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-                                                    <button
-                                                        onClick={() => setShowPdfViewerModal(true)}
-                                                        className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25"
-                                                    >
-                                                        <Eye size={14} /> Visualizar Parecer no Sistema
-                                                    </button>
-                                                    <a 
-                                                        href={pdfRecord.pdf_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="w-full py-2 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-                                                    >
-                                                        <ExternalLink size={12} /> Abrir no Google Drive
-                                                    </a>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                                        <button 
-                                                            onClick={() => setShowPdfViewerModal(true)}
-                                                            className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-                                                        >
-                                                            <Eye size={14} /> Visualizar
-                                                        </button>
-                                                        <a 
-                                                            href={pdfRecord.pdf_url}
-                                                            download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-750 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-                                                        >
-                                                            <Download size={14} /> Baixar
-                                                        </a>
-                                                    </div>
-                                                    
-                                                    <button 
-                                                        onClick={() => handleDeletePdf(selectedItem.id)}
-                                                        className="w-full py-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                                                    >
-                                                        <Trash2 size={12} /> Remover PDF Anexo
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex-1 flex flex-col justify-center">
-                                        <div className="relative border-2 border-dashed border-slate-200 dark:border-slate-750 hover:border-blue-500 rounded-3xl p-8 text-center cursor-pointer transition-all bg-white dark:bg-slate-850 flex flex-col items-center justify-center gap-4">
-                                            <input
-                                                type="file"
-                                                accept="application/pdf"
-                                                onChange={(e) => handleUploadFile(e, selectedItem.id)}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                                disabled={uploadingPdf}
-                                            />
-                                            {uploadingPdf ? (
-                                                <>
-                                                    <Loader2 className="animate-spin text-blue-600" size={36} />
-                                                    <p className="text-xs font-black text-slate-750 dark:text-slate-300 uppercase tracking-widest">Enviando PDF para a Nuvem...</p>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600">
-                                                        <Upload size={28} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Carregar PDF do Laudo</p>
-                                                        <p className="text-[10px] text-slate-400 mt-1 font-medium leading-relaxed">Arraste ou clique para selecionar o arquivo PDF digitalizado oficial.</p>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                    </Popup>
+                                </CircleMarker>
+                            ))}
+                        </MapContainer>
                     </div>
                 </div>
             )}
 
-            {/* Modal de Visualização do PDF em Tela Cheia */}
+            {/* Modal de Novo Ofício Wizard */}
+            <NovoOficioModal
+                isOpen={showNovoOficioModal}
+                onClose={() => setShowNovoOficioModal(false)}
+                onSuccess={() => loadOficiosData()}
+            />
+
+            {/* Modal Leitor de PDF / Documento Legado em Tela Cheia (Somente Leitura - Supabase Storage) */}
             {showPdfViewerModal && pdfRecord && (
-                <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="bg-slate-900 w-full max-w-5xl h-[92vh] border border-slate-200 shadow-2xl overflow-hidden flex flex-col border border-slate-800">
-                        {/* Header */}
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 font-sans">
+                    <div className="bg-slate-900 w-full max-w-5xl h-[92vh] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+                        {/* Header do Leitor */}
                         <div className="p-4 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
-                                    <FileText size={18} className="text-white" />
+                                <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+                                    <FileText size={20} className="text-white" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-                                        {pdfRecord.is_drive ? 'Parecer Técnico · Google Drive' : 'Laudo Digitalizado'}
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                                            <Lock size={12} /> Supabase Storage (Somente Leitura)
+                                        </span>
+                                    </div>
+                                    <p className="text-sm font-black text-slate-200 truncate max-w-[250px] sm:max-w-xl leading-tight">
+                                        {pdfRecord.nome_arquivo || 'Ofício COMPDEC'}
                                     </p>
-                                    <p className="text-sm font-black text-slate-200 truncate max-w-[250px] sm:max-w-lg leading-tight">{pdfRecord.nome_arquivo || 'Documento'}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                {pdfRecord.is_drive ? (
+                                {pdfRecord.pdf_url && (
                                     <a 
                                         href={pdfRecord.pdf_url}
+                                        download={pdfRecord.nome_arquivo || 'oficio_compdec.pdf'}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-300 hover:text-white flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider"
-                                        title="Abrir no Drive"
+                                        className="px-3 py-1.5 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                                        title="Baixar Arquivo Oficial do Supabase Storage"
                                     >
-                                        <ExternalLink size={16} />
-                                        <span className="hidden sm:inline">Drive</span>
-                                    </a>
-                                ) : (
-                                    <a 
-                                        href={pdfRecord.pdf_url}
-                                        download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-300 hover:text-white"
-                                        title="Baixar PDF"
-                                    >
-                                        <Download size={18} />
+                                        <Download size={16} /> Baixar
                                     </a>
                                 )}
                                 <button 
                                     onClick={() => setShowPdfViewerModal(false)}
-                                    className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-300 hover:text-white"
+                                    className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-white"
                                 >
                                     <X size={20} />
                                 </button>
                             </div>
                         </div>
                         
-                        {/* Viewer Body */}
-                        <div className="flex-1 relative overflow-hidden">
-                            {/* Iframe - funciona para PDF do Supabase E para preview do Google Drive */}
-                            {(pdfRecord.preview_url || (pdfRecord.pdf_url && !pdfRecord.pdf_url.startsWith('data:'))) ? (
+                        {/* Viewer Frame Body */}
+                        <div className="flex-1 relative overflow-hidden bg-slate-950 flex items-center justify-center">
+                            {pdfRecord.pdf_url ? (
                                 <iframe 
-                                    src={pdfRecord.preview_url || pdfRecord.pdf_url} 
+                                    key={pdfRecord.pdf_url}
+                                    src={pdfRecord.pdf_url} 
                                     className="w-full h-full border-none"
-                                    title="Visualizador de Laudo Técnico"
-                                    allow="autoplay"
+                                    title="Visualizador do Ofício Legado Supabase Storage"
                                 />
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full p-8 text-center gap-5 text-white">
-                                    <div className="w-20 h-20 rounded-3xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                                        <FileText size={40} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-base font-black text-slate-200 uppercase tracking-wide">Documento em Cache Local</h4>
-                                        <p className="text-xs text-slate-400 mt-2 leading-relaxed max-w-md">Este laudo está armazenado localmente. Clique abaixo para abrir ou baixar o PDF.</p>
-                                    </div>
-                                    <a 
-                                        href={pdfRecord.pdf_url}
-                                        download={pdfRecord.nome_arquivo || 'laudo_tecnico.pdf'}
-                                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
-                                    >
-                                        <Download size={16} /> Abrir / Salvar Arquivo PDF
-                                    </a>
+                                <div className="text-center p-8 text-slate-400 space-y-3">
+                                    <FileText size={48} className="mx-auto text-slate-600" />
+                                    <p className="text-sm font-bold">Documento digitalizado não anexado ou em fase de transição de acervo.</p>
                                 </div>
                             )}
                         </div>
@@ -639,4 +590,4 @@ const LegadoDashboard = () => {
     )
 }
 
-export default LegadoDashboard;
+export default LegadoDashboard

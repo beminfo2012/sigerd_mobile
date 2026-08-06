@@ -533,11 +533,10 @@ const AppContent = ({
                                     </ProtectedRoute>
                                 } />
 
-                                <Route path="/monitoramento/legado" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
-                                        <LegadoDashboard />
-                                    </ProtectedRoute>
-                                } />
+                                <Route path="/monitoramento/legado" element={<Navigate to="/legado/vistorias" replace />} />
+                                <Route path="/legado" element={<Navigate to="/legado/vistorias" replace />} />
+                                <Route path="/legado/vistorias" element={<LegadoDashboard />} />
+                                <Route path="/legado/oficios" element={<LegadoDashboard />} />
 
                                 {/* REDAP Routes */}
                                 <Route path="/redap" element={

@@ -52,4 +52,7 @@ SKILLS/
 
 fissurometro2_extracted/
 *.zip
+*.rar
+temp_oficios_*/
+test_edge.*
 
