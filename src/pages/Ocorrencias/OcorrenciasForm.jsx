@@ -1399,6 +1399,7 @@ export default function OcorrenciasForm() {
             {editingPhotoIndex !== null && (
                 <ImageEditor
                     imageUrl={formData.fotos[editingPhotoIndex].data || formData.fotos[editingPhotoIndex]}
+                    photoData={formData.fotos[editingPhotoIndex]}
                     onSave={(newData) => {
                         const updatedFotos = [...formData.fotos];
                         if (typeof updatedFotos[editingPhotoIndex] === 'string') {
@@ -1406,7 +1407,7 @@ export default function OcorrenciasForm() {
                         } else {
                             updatedFotos[editingPhotoIndex].data = newData;
                         }
-                        setFormData({ ...formData, fotos: updatedFotos });
+                        setFormData(prev => ({ ...prev, fotos: updatedFotos }));
                         setEditingPhotoIndex(null);
                     }}
                     onCancel={() => setEditingPhotoIndex(null)}

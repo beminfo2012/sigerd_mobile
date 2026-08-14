@@ -1353,11 +1353,8 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                         />
                     </div>
 
-                    {/* Painel Inferior: Legenda e Miniaturas */}
-                    <div
-                        className="w-full bg-gradient-to-t from-slate-950 via-slate-900/90 to-transparent pt-12 pb-6 px-6 flex flex-col items-center gap-6 z-50"
-                        onClick={e => e.stopPropagation()}
-                    >
+                    {/* Footer - Legendas e Miniaturas */}
+                    <div className="w-full flex flex-col items-center gap-6 p-4" onClick={e => e.stopPropagation()}>
                         {/* Legenda Editável */}
                         <div className="w-full max-w-md">
                             <p className="text-white font-black text-[10px] uppercase tracking-widest opacity-50 text-center mb-2">Edite a Legenda</p>
@@ -1368,7 +1365,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                                 value={formData.fotos[selectedPhotoIndex]?.legenda || ''}
                                 onChange={(e) => {
                                     const newFotos = [...formData.fotos]
-                                    newFotos[selectedPhotoIndex].legenda = e.target.value
+                                    newFotos[selectedPhotoIndex].legenda = e.value
                                     handleChange('fotos', newFotos)
                                 }}
                             />
@@ -1393,6 +1390,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
             {editingPhotoIndex !== null && (
                 <ImageEditor
                     imageUrl={formData.fotos[editingPhotoIndex].data || formData.fotos[editingPhotoIndex]}
+                    photoData={formData.fotos[editingPhotoIndex]}
                     onSave={(newData) => {
                         const updatedFotos = [...formData.fotos];
                         if (typeof updatedFotos[editingPhotoIndex] === 'string') {

@@ -75,20 +75,7 @@ export const compressImage = (base64Str, options = {}) => {
                 const targetWidth = width * scale;
                 const targetHeight = height * scale;
 
-                canvas.width = targetWidth;
-                canvas.height = targetHeight;
-
-                const ctx = canvas.getContext('2d');
-                
-                // O navegador já fez o auto-rotate, então basta desenhar normalmente
-                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-            // Adicionar Geostamp no rodapé (já com a imagem na orientação correta)
-            if (coordinates || timestamp) {
-                const padding = targetWidth * 0.03;
-                const fontSize = Math.max(14, Math.round(targetWidth * 0.035));
-                ctx.font = `600 ${fontSize}px "Roboto Mono", monospace, sans-serif`;
-
+                // Preparar linhas do Geostamp
                 const lines = [];
                 if (coordinates && coordinates.lat && coordinates.lng) {
                     lines.push(`LAT: ${coordinates.lat} | LNG: ${coordinates.lng}`);
@@ -96,10 +83,12 @@ export const compressImage = (base64Str, options = {}) => {
 
                 if (timestamp) {
                     const dateObj = (timestamp instanceof Date) ? timestamp : new Date(timestamp);
-                    const formattedDate = dateObj.toLocaleString('pt-BR', {
-                        year: 'numeric', month: '2-digit', day: '2-digit',
-                        hour: '2-digit', minute: '2-digit', second: '2-digit'
-                    });
+                    const formattedDate = !isNaN(dateObj.getTime())
+                        ? dateObj.toLocaleString('pt-BR', {
+                            year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit', second: '2-digit'
+                        })
+                        : new Date().toLocaleString('pt-BR');
                     lines.push(`DATA: ${formattedDate}`);
                 }
                 
@@ -109,47 +98,64 @@ export const compressImage = (base64Str, options = {}) => {
                     lines.push(`FONTE: GPS DO DISPOSITIVO`);
                 }
 
+                let barHeight = 0;
+                let fontSize = 14;
+                let padding = 12;
+                let lineHeight = 20;
+
                 if (lines.length > 0) {
-                    const lineHeight = fontSize * 1.4;
+                    padding = Math.max(10, Math.round(targetWidth * 0.025));
+                    fontSize = Math.max(13, Math.round(targetWidth * 0.028));
+                    lineHeight = Math.round(fontSize * 1.45);
                     const totalTextHeight = lines.length * lineHeight;
-                    const barHeight = totalTextHeight + (padding * 1.5);
+                    barHeight = totalTextHeight + (padding * 1.6);
+                }
 
-                    const grad = ctx.createLinearGradient(0, targetHeight - barHeight, 0, targetHeight);
-                    grad.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
-                    grad.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(0, targetHeight - barHeight, targetWidth, barHeight);
+                // O canvas expande a altura para alocar a tarja na parte inferior, FORA da foto
+                canvas.width = targetWidth;
+                canvas.height = targetHeight + barHeight;
 
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                const ctx = canvas.getContext('2d');
+                
+                // 1. Desenha a foto completa mantendo 100% da sua visibilidade
+                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                // 2. Adicionar Geostamp na parte inferior, FORA da foto
+                if (lines.length > 0 && barHeight > 0) {
+                    ctx.fillStyle = '#0f172a'; // Fundo preto/slate-900 sólido e profissional
+                    ctx.fillRect(0, targetHeight, targetWidth, barHeight);
+
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
-                    ctx.moveTo(0, targetHeight - barHeight);
-                    ctx.lineTo(targetWidth, targetHeight - barHeight);
+                    ctx.moveTo(0, targetHeight);
+                    ctx.lineTo(targetWidth, targetHeight);
                     ctx.stroke();
 
-                    ctx.fillStyle = '#FFFFFF';
                     ctx.textAlign = 'left';
-                    ctx.shadowColor = "rgba(0,0,0,0.5)";
-                    ctx.shadowBlur = 4;
+                    ctx.textBaseline = 'middle';
 
                     lines.forEach((line, index) => {
-                        const yPos = targetHeight - barHeight + padding + (lineHeight * (index + 0.7));
+                        const yCenter = targetHeight + padding + (lineHeight * (index + 0.5));
                         const parts = line.split(':');
                         const labelPart = parts[0] + ':';
                         const valuePart = parts.slice(1).join(':');
 
                         ctx.font = `800 ${fontSize}px "Roboto Mono", monospace, sans-serif`;
-                        ctx.fillText(labelPart.toUpperCase(), padding, yPos);
+                        ctx.fillStyle = labelPart.includes('DATA') 
+                            ? '#34d399' 
+                            : (labelPart.includes('FONTE') ? '#fbbf24' : '#38bdf8');
+                        ctx.fillText(labelPart.toUpperCase(), padding, yCenter);
 
                         const labelWidth = ctx.measureText(labelPart.toUpperCase()).width;
-                        ctx.font = `400 ${fontSize}px "Roboto Mono", monospace, sans-serif`;
-                        ctx.fillText(valuePart, padding + labelWidth + 5, yPos);
+                        ctx.font = `500 ${fontSize}px "Roboto Mono", monospace, sans-serif`;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillText(valuePart, padding + labelWidth + 6, yCenter);
                     });
                 }
-            }
 
-            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-            resolve(compressedBase64);
+                const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                resolve(compressedBase64);
             };
             
             img.onerror = (err) => {

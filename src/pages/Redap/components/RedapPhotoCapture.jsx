@@ -61,23 +61,37 @@ const RedapPhotoCapture = ({ onSave, onCancel }) => {
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+        const barHeight = 90;
+
+        canvas.width = videoWidth;
+        canvas.height = videoHeight + barHeight;
+        context.drawImage(video, 0, 0, videoWidth, videoHeight);
 
         // Watermark formatting
         const timestamp = new Date().toLocaleString('pt-BR');
         const lat = coords?.lat?.toFixed(6) || '---';
         const lng = coords?.lng?.toFixed(6) || '---';
 
-        // Background for text
-        context.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        context.fillRect(0, canvas.height - 100, canvas.width, 100);
+        // Background for text (fora da foto)
+        context.fillStyle = '#0f172a';
+        context.fillRect(0, videoHeight, videoWidth, barHeight);
 
-        context.fillStyle = '#ffffff';
-        context.font = '24px Inter, Arial, sans-serif';
-        context.fillText(`📍 LAT: ${lat} | LNG: ${lng}`, 30, canvas.height - 60);
-        context.fillText(`🕒 DATA: ${timestamp}`, 30, canvas.height - 25);
+        context.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(0, videoHeight);
+        context.lineTo(videoWidth, videoHeight);
+        context.stroke();
+
+        context.textBaseline = 'middle';
+        context.font = 'bold 20px "Roboto Mono", Inter, Arial, sans-serif';
+        context.fillStyle = '#38bdf8';
+        context.fillText(`📍 LAT: ${lat} | LNG: ${lng}`, 25, videoHeight + 30);
+
+        context.fillStyle = '#34d399';
+        context.fillText(`🕒 DATA: ${timestamp}`, 25, videoHeight + 65);
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setPreviewUrl(dataUrl);

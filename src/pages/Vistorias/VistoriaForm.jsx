@@ -3017,6 +3017,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             {editingPhotoIndex !== null && (
                 <ImageEditor
                     imageUrl={formData.fotos[editingPhotoIndex].data || formData.fotos[editingPhotoIndex]}
+                    photoData={formData.fotos[editingPhotoIndex]}
                     onSave={(newData) => {
                         const updatedFotos = [...formData.fotos];
                         if (typeof updatedFotos[editingPhotoIndex] === 'string') {
